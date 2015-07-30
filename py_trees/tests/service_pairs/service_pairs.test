@@ -1,0 +1,9 @@
+<launch>
+
+  <test test-name="test_service_proxy"
+        pkg="rocon_python_comms" type="test_service_pair_client.py"
+        name="test_service_pairs" time-limit="30.0" />
+
+  <node pkg="rocon_python_comms" type="service_pair_server.py" name="example_server" />
+
+</launch>

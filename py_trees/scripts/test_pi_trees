@@ -1,0 +1,62 @@
+#!/usr/bin/env python
+#
+# License: BSD
+#   https://raw.github.com/yujinrobot/gopher_crazy_hospital/license/LICENSE
+#
+##############################################################################
+# Documentation
+##############################################################################
+"""
+Simple test program for py trees
+"""
+##############################################################################
+# Imports
+##############################################################################
+
+import rospy
+import py_trees.coroutines as pi_trees
+
+##############################################################################
+# Methods
+##############################################################################
+
+
+class Count(pi_trees.Behaviour):
+    def __init__(self, children=[], name="Count", *args, **kwargs):
+        super(Count, self).__init__(children, name, *args, **kwargs)
+
+    def tick(self):
+        for i in range(1, 10):
+            print i
+            # Since we use 'yield' here, the loop does not block the program.
+            # yield saves the state of the function so that when it is called again,
+            # the program returns to this line, rather than the beginning of the
+            # function.
+            yield pi_trees.Status.RUNNING
+        yield pi_trees.Status.SUCCESS
+
+##############################################################################
+# Main
+##############################################################################
+
+if __name__ == '__main__':
+    rospy.init_node('test_pi_trees')
+
+    tree = pi_trees.Selector()
+    tree.add_child(Count())
+    sequence = pi_trees.Sequence()
+    sequence.add_child(Count(name="SequenceCounter1"))
+    sequence.add_child(Count(name="SequenceCounter2"))
+    tree.add_child(sequence)
+    tree.add_child(Count())
+
+    # one step style, call the generator
+    # next(tree.iterator)
+    for status in tree.iterator:
+        print("Iterate %s" % status)
+    #print("Tick: %s" % tree.tick())
+    #print("Tick: %s" % tree.tick())
+
+    pi_trees.print_ascii_tree(tree)
+    pi_trees.print_dot_tree(tree)
+    

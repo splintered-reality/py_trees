@@ -1,0 +1,33 @@
+<package>
+  <name>py_trees</name>
+  <version>0.1.0</version>
+  <description>
+    Behaviour trees, initially from experiments by Patrick Goebel from PiRobot.
+  </description>
+  <maintainer email="d.stonier@gmail.com">Daniel Stonier</maintainer>
+  <license>BSD</license>
+  <url type="website">http://ros.org/wiki/py_trees</url>
+  <url type="repository">https://github.com/robotics-in-concert/gopher_crazy_hospital</url>
+  <url type="bugtracker">https://github.com/robotics-in-concert/gopher_crazy_hospital/issues</url>
+  <author email="d.stonier@gmail.com">Daniel Stonier</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <!-- for documentation -->
+  <build_depend>python-catkin-pkg</build_depend>
+  
+  <run_depend>rocon_console</run_depend>
+  <run_depend>rospy</run_depend>
+
+  <run_depend>python-pygraphviz</run_depend>
+  
+  <!-- not yet rosdep keys?
+    <run_depend>libgv-python</run_depend>
+    <run_depend>python-pygraph</run_depend>
+  -->
+  <test_depend>rosunit</test_depend>
+
+  <export>
+    <rosdoc config="rosdoc.yaml"/>
+  </export>
+</package>

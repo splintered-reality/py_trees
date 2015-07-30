@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<package>
+  <name>gopher_crazy_hospital</name>
+  <version>0.1.0</version>
+  <description>
+    The gophers must behave! This is where behavioural execution and higher level
+    goal oriented multi-map planning for gophers can be found.
+  </description>
+  <url type="repository">https://bitbucket.org/yujinrobot/gopher_crazy_hospital</url>
+  <url type="bugtracker">https://bitbucket.org/yujinrobot/gopher_crazy_hospital/issues</url>
+  <license>Yujin Robot</license>
+  <maintainer email="stonier@yujinrobot.com">Daniel Stonier</maintainer>
+  <author>Daniel Stonier</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <export>
+    <metapackage/>
+  </export>
+</package>

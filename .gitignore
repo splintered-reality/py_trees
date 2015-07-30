@@ -1,0 +1,6 @@
+*/doc/html
+*/doc/manifest.yaml
+*.pyc
+*.dot
+*.png
+*.svg
