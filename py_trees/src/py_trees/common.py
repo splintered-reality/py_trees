@@ -26,5 +26,14 @@ from enum import Enum
 # Status
 ##############################################################################
 
-""" An enumerator representing the status of a behaviour """
-Status = Enum('Status', 'SUCCESS FAILURE RUNNING INVALID')
+#""" An enumerator representing the status of a behaviour """
+#Status = Enum('Status', 'SUCCESS FAILURE RUNNING INVALID')
+
+
+class Status(Enum):
+    """ An enumerator representing the status of a behaviour """
+
+    SUCCESS = "SUCCESS"
+    FAILURE = "FAILURE"
+    RUNNING = "RUNNING"
+    INVALID = "INVALID"

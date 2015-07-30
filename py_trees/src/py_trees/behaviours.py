@@ -48,7 +48,14 @@ class Behaviour(object):
     def initialise(self):
         pass
 
-    def terminate(self):
+    def terminate(self, new_status):
+        """
+        :param Status new_status: compare with current status for decision logic.
+
+        User defined terminate (cleanup) function. For comparison tests, it is
+        often useful to check if the current status is Status.RUNNING and
+        the new status is different to trigger appropriate cleanup actions.
+        """
         pass
 
     def update(self):
@@ -65,15 +72,27 @@ class Behaviour(object):
 
         @return Status : resulting state after the tick is completed
         """
-        if self.status != Status.RUNNING:
-            self.initialise()
-        self.status = self.update()
-        if self.status != Status.RUNNING:
-            self.terminate()
-        return self.status
+        while True:
+            if self.status != Status.RUNNING:
+                self.initialise()
+            # don't set self.status yet, terminate() may need to check what the current state is first
+            new_status = self.update()
+            if new_status != Status.RUNNING:
+                self.abort(new_status)
+            self.status = new_status
+            yield self.status
 
-    def abort(self):
-        self.terminate()
+    def abort(self, new_status=Status.INVALID):
+        """
+        :param Status new_status: set the status to this once done.
+
+        This calls the user defined terminate() method and also resets the
+        generator. The specified status can be used to compare with the
+        current status field for decision making within the terminate function
+        itself.
+        """
+        self.terminate(new_status)
+        self.status = new_status
         self.iterator = self.tick()
 
     ############################################

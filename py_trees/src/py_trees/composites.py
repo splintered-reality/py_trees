@@ -23,6 +23,8 @@ versions are also included here.
 # Imports
 ##############################################################################
 
+import itertools
+
 from .behaviours import Behaviour
 from .common import Status
 
@@ -41,10 +43,9 @@ class Composite(Behaviour):
     # Worker Overrides
     ############################################
 
-    def abort(self):
+    def abort(self, new_status=Status.INVALID):
         for child in self.children:
-            child.abort()
-        self.terminate()
+            child.abort(Status.INVALID)
         self.iterator = self.tick()
 
     ############################################
@@ -75,24 +76,28 @@ class Selector(Composite):
 
     def __init__(self, children=[], name="Selector", *args, **kwargs):
         super(Selector, self).__init__(children, name, *args, **kwargs)
-        self.current_child = None
+        self.current = None
+
+    def update(self):
+        print("  %s : iterating" % self.name)
+        for child in self.children:
+            status = next(child.iterator)
+            if (status == Status.RUNNING) or (status == Status.SUCCESS):
+                self.current = child
+                return status
+        return Status.FAILURE
 
     def tick(self):
-        for child in self.children:
-            self.current_child = child
-            for status in child.iterator:
-                if status == Status.RUNNING:
-                    yield status
-                elif status == Status.FAILURE:
-                    yield Status.RUNNING
-                else:
-                    yield status
-                    return
-        yield Status.FAILURE
+        while True:
+            previous = self.current
+            self.status = self.update()
+            if (previous is not None) and (previous != self.current):
+                previous.abort(Status.INVALID)
+            yield self.status
 
-    def abort(self):
+    def abort(self, new_status=Status.INVALID):
         self.current_child = None
-        Composite.abort(self)
+        Composite.abort(self, new_status)
 
 ##############################################################################
 # Sequence
@@ -107,20 +112,26 @@ class Sequence(Composite):
     def __init__(self, children=[], name="Sequence", *args, **kwargs):
         super(Sequence, self).__init__(children, name, *args, **kwargs)
         self.current_child = None
+        self.current_index = 0
 
-    def tick(self):
-        for child in self.children:
-            self.current_child = child
-            for status in child.iterator:
-                if status == Status.RUNNING:
-                    yield status
-                elif status == Status.FAILURE:
-                    yield Status.FAILURE
-                    return
-                else:
-                    yield Status.RUNNING
-        yield Status.SUCCESS
-
-    def abort(self):
+    def initialise(self):
+        """
+        If it isn't already running, then start the sequence from the
+        beginning.
+        """
         self.current_child = None
-        Composite.abort(self)
+        self.current_index = 0
+
+    def update(self):
+        print("  %s : iterating" % self.name)
+        for child in itertools.islice(self.children, self.current_index, None):
+            status = next(child.iterator)
+            if status != Status.SUCCESS:
+                # don't worry about self.current_index, it will reset naturally via tick() & initialise() if necessary
+                return status
+            self.current_index += 1
+        return Status.SUCCESS
+
+    def abort(self, new_status=Status.INVALID):
+        self.current_child = None
+        Composite.abort(self, new_status)

@@ -25,16 +25,37 @@ import py_trees
 class Count(py_trees.Behaviour):
     def __init__(self, name="Count", *args, **kwargs):
         super(Count, self).__init__(name, *args, **kwargs)
+        self.count = 0
 
-    def tick(self):
-        for i in range(1, 10):
-            print i
-            # Since we use 'yield' here, the loop does not block the program.
-            # yield saves the state of the function so that when it is called again,
-            # the program returns to this line, rather than the beginning of the
-            # function.
-            yield py_trees.Status.RUNNING
-        yield py_trees.Status.SUCCESS
+    def terminate(self, unused_new_status):
+        self.count = 0
+
+    def update(self):
+        self.count += 1
+        if self.count <= 3:
+            print("  %s: %s -> FAILURE" % (self.name, self.count))
+            return py_trees.Status.FAILURE
+        elif self.count <= 5:
+            print("  %s: %s -> RUNNING" % (self.name, self.count))
+            return py_trees.Status.RUNNING
+        elif self.count == 6:
+            print("  %s: %s -> SUCCESS" % (self.name, self.count))
+            return py_trees.Status.SUCCESS
+        else:
+            print("  %s: %s -> FAILURE" % (self.name, self.count))
+            return py_trees.Status.FAILURE
+
+#     def tick(self):
+#         print("  Count::update() [%s]" % self.name)
+#         for i in range(1, 5):
+#             print("%s: %s -> RUNNING" % (self.name, i))
+#             # Since we use 'yield' here, the loop does not block the program.
+#             # yield saves the state of the function so that when it is called again,
+#             # the program returns to this line, rather than the beginning of the
+#             # function.
+#             yield py_trees.Status.RUNNING
+#         print("%s: -> SUCCESS" % self.name)
+#         yield py_trees.Status.SUCCESS
 
 ##############################################################################
 # Main
@@ -44,17 +65,19 @@ if __name__ == '__main__':
     rospy.init_node('test_pi_trees')
 
     tree = py_trees.Selector()
-    tree.add_child(Count())
+    tree.add_child(Count(name="PreCounter"))
     sequence = py_trees.Sequence()
     sequence.add_child(Count(name="SequenceCounter1"))
     sequence.add_child(Count(name="SequenceCounter2"))
     tree.add_child(sequence)
-    tree.add_child(Count())
+    tree.add_child(Count(name="PostCounter"))
 
     # one step style, call the generator
-    # next(tree.iterator)
-    for status in tree.iterator:
+    for i in range(1, 10):
+        status = next(tree.iterator)
         print("Iterate %s" % status)
+    # for status in tree.iterator:
+    #    print("Iterate %s" % status)
     #print("Tick: %s" % tree.tick())
     #print("Tick: %s" % tree.tick())
 
