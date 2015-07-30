@@ -14,16 +14,17 @@ Simple test program for py trees
 ##############################################################################
 
 import rospy
-import py_trees.coroutines as pi_trees
+#import py_trees.coroutines as pi_trees
+import py_trees
 
 ##############################################################################
 # Methods
 ##############################################################################
 
 
-class Count(pi_trees.Behaviour):
-    def __init__(self, children=[], name="Count", *args, **kwargs):
-        super(Count, self).__init__(children, name, *args, **kwargs)
+class Count(py_trees.Behaviour):
+    def __init__(self, name="Count", *args, **kwargs):
+        super(Count, self).__init__(name, *args, **kwargs)
 
     def tick(self):
         for i in range(1, 10):
@@ -32,8 +33,8 @@ class Count(pi_trees.Behaviour):
             # yield saves the state of the function so that when it is called again,
             # the program returns to this line, rather than the beginning of the
             # function.
-            yield pi_trees.Status.RUNNING
-        yield pi_trees.Status.SUCCESS
+            yield py_trees.Status.RUNNING
+        yield py_trees.Status.SUCCESS
 
 ##############################################################################
 # Main
@@ -42,9 +43,9 @@ class Count(pi_trees.Behaviour):
 if __name__ == '__main__':
     rospy.init_node('test_pi_trees')
 
-    tree = pi_trees.Selector()
+    tree = py_trees.Selector()
     tree.add_child(Count())
-    sequence = pi_trees.Sequence()
+    sequence = py_trees.Sequence()
     sequence.add_child(Count(name="SequenceCounter1"))
     sequence.add_child(Count(name="SequenceCounter2"))
     tree.add_child(sequence)
@@ -57,6 +58,5 @@ if __name__ == '__main__':
     #print("Tick: %s" % tree.tick())
     #print("Tick: %s" % tree.tick())
 
-    pi_trees.print_ascii_tree(tree)
-    pi_trees.print_dot_tree(tree)
-    
+    py_trees.display.print_ascii_tree(tree)
+    py_trees.display.print_dot_tree(tree)

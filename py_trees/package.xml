@@ -16,6 +16,7 @@
   <!-- for documentation -->
   <build_depend>python-catkin-pkg</build_depend>
   
+  <run_depend>python-enum34</run_depend>
   <run_depend>rocon_console</run_depend>
   <run_depend>rospy</run_depend>
 
