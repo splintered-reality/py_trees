@@ -72,6 +72,8 @@ class Composite(Behaviour):
 class Selector(Composite):
     """
     Runs all of its child behaviours in sequence until one succeeds.
+    If a node after than the one selected was previously running, then call
+    abort() on it.
     """
 
     def __init__(self, children=[], name="Selector", *args, **kwargs):
