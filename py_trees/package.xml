@@ -21,11 +21,9 @@
   <run_depend>rospy</run_depend>
 
   <run_depend>python-pygraphviz</run_depend>
+  <run_depend>libgv-python</run_depend>
+  <run_depend>python-pygraph</run_depend>
   
-  <!-- not yet rosdep keys?
-    <run_depend>libgv-python</run_depend>
-    <run_depend>python-pygraph</run_depend>
-  -->
   <test_depend>rosunit</test_depend>
 
   <export>

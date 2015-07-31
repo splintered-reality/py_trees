@@ -44,6 +44,7 @@ class Composite(Behaviour):
     ############################################
 
     def abort(self, new_status=Status.INVALID):
+        print("  %s [Composite::abort()]" % self.name)
         for child in self.children:
             child.abort(Status.INVALID)
         self.iterator = self.tick()
@@ -78,10 +79,10 @@ class Selector(Composite):
 
     def __init__(self, children=[], name="Selector", *args, **kwargs):
         super(Selector, self).__init__(children, name, *args, **kwargs)
-        self.current = None
+        self.current_child = None
 
     def update(self):
-        print("  %s : iterating" % self.name)
+        print("  %s [Selector::update()]" % self.name)
         for child in self.children:
             status = next(child.iterator)
             if (status == Status.RUNNING) or (status == Status.SUCCESS):
@@ -90,12 +91,27 @@ class Selector(Composite):
         return Status.FAILURE
 
     def tick(self):
-        while True:
-            previous = self.current
-            self.status = self.update()
-            if (previous is not None) and (previous != self.current):
-                previous.abort(Status.INVALID)
-            yield self.status
+        print("  %s [Selector::tick()]" % self.name)
+        previous = self.current_child
+        for child in self.children:
+            print("    Selector Child: %s" % child.name)
+            for node in child.tick():
+                yield node
+                if node.status == Status.RUNNING or node.status == Status.SUCCESS:
+                    self.current_child = child
+                    if self.current_child is not None:
+                        print("    Selector Current Child : %s" % self.current_child.name)
+                    if previous is not None:
+                        print("    Selector Previous Child: %s" % previous.name)
+                    self.status = node.status
+                    if (previous is not None) and (previous != self.current_child) and (previous.status == Status.RUNNING):
+                        print("***** Aborting old selection *****")
+                        print("    Previous: %s" % previous.name)
+                        previous.abort(Status.INVALID)
+                    yield self
+                    return
+        self.status = Status.FAILURE
+        yield self
 
     def abort(self, new_status=Status.INVALID):
         self.current_child = None
@@ -113,7 +129,6 @@ class Sequence(Composite):
 
     def __init__(self, children=[], name="Sequence", *args, **kwargs):
         super(Sequence, self).__init__(children, name, *args, **kwargs)
-        self.current_child = None
         self.current_index = 0
 
     def initialise(self):
@@ -121,19 +136,25 @@ class Sequence(Composite):
         If it isn't already running, then start the sequence from the
         beginning.
         """
+        print("  %s [Sequence::initialise()]" % self.name)
         self.current_child = None
         self.current_index = 0
 
-    def update(self):
-        print("  %s : iterating" % self.name)
+    def tick(self):
+        print("  %s [Sequence::tick()]" % self.name)
         for child in itertools.islice(self.children, self.current_index, None):
-            status = next(child.iterator)
-            if status != Status.SUCCESS:
-                # don't worry about self.current_index, it will reset naturally via tick() & initialise() if necessary
-                return status
+            for node in child.tick():
+                yield node
+                print("Next in line")
+                if node.status != Status.SUCCESS:
+                    self.status = node.status
+                    yield self
+                    return
             self.current_index += 1
-        return Status.SUCCESS
+        self.status = Status.SUCCESS
+        yield self
 
     def abort(self, new_status=Status.INVALID):
-        self.current_child = None
+        print("  %s [Sequence::abort()]" % self.name)
+        self.current_index = 0
         Composite.abort(self, new_status)

@@ -46,6 +46,7 @@ class Behaviour(object):
     ############################################
 
     def initialise(self):
+        print("  %s [Behaviour::initialise()]" % self.name)
         pass
 
     def terminate(self, new_status):
@@ -56,14 +57,25 @@ class Behaviour(object):
         often useful to check if the current status is Status.RUNNING and
         the new status is different to trigger appropriate cleanup actions.
         """
+        print("  %s [Behaviour::terminate()]" % self.name)
         pass
 
     def update(self):
+        print("  %s [Behaviour::update()]" % self.name)
         return Status.INVALID
 
     ############################################
     # Workers
     ############################################
+
+    def visit(self, visitor):
+        """
+        This is functionality permitting
+        visitors to run over the running part of
+        a behaviour tree.
+        :param visitor: the visiting class, must have a run(Behaviour) method.
+        """
+        visitor.run(self)
 
     def tick(self):
         """
@@ -72,15 +84,15 @@ class Behaviour(object):
 
         @return Status : resulting state after the tick is completed
         """
-        while True:
-            if self.status != Status.RUNNING:
-                self.initialise()
-            # don't set self.status yet, terminate() may need to check what the current state is first
-            new_status = self.update()
-            if new_status != Status.RUNNING:
-                self.abort(new_status)
-            self.status = new_status
-            yield self.status
+        print("  %s [Behaviour::tick()]" % self.name)
+        if self.status != Status.RUNNING:
+            self.initialise()
+        # don't set self.status yet, terminate() may need to check what the current state is first
+        new_status = self.update()
+        if new_status != Status.RUNNING:
+            self.abort(new_status)
+        self.status = new_status
+        yield self
 
     def abort(self, new_status=Status.INVALID):
         """
@@ -91,6 +103,7 @@ class Behaviour(object):
         current status field for decision making within the terminate function
         itself.
         """
+        print("  %s [Behaviour::abort()]" % self.name)
         self.terminate(new_status)
         self.status = new_status
         self.iterator = self.tick()
