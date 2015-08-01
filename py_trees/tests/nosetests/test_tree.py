@@ -251,6 +251,30 @@ def test_display():
 
     assert(True)
 
+def test_full_iteration():
+    print(console.bold + "\n****************************************************************************************" + console.reset)
+    print(console.bold + "* Visit Whole Tree" + console.reset)
+    print(console.bold + "****************************************************************************************\n" + console.reset)
+    visitor = Visitor()
+
+    a = Count(name="A")
+    sequence = py_trees.Sequence(name="Sequence")
+    b = Count(name="B")
+    c = Count(name="C")
+    sequence.add_child(b)
+    sequence.add_child(c)
+    d = Count(name="D")
+    root = py_trees.Selector(name="Root")
+    root.add_child(a)
+    root.add_child(sequence)
+    root.add_child(d)
+
+    visitations = 0
+    for child in root.iterate():
+        visitations += 1
+        child.visit(visitor)
+    assert(visitations == 6)
+    
 def test_behaviour_tree():
     print(console.bold + "\n****************************************************************************************" + console.reset)
     print(console.bold + "* Prune Behaviour Tree" + console.reset)

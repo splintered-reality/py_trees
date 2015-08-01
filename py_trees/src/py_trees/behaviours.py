@@ -99,6 +99,15 @@ class Behaviour(object):
         self.status = new_status
         yield self
 
+    def iterate(self):
+        """
+        Generator that provides iteration over this behaviour and all its children.
+        """
+        for child in self.children:
+            for node in child.iterate():
+                yield node
+        yield self
+
     def abort(self, new_status=Status.INVALID):
         """
         :param Status new_status: set the status to this once done.
