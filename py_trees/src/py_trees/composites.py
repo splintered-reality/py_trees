@@ -61,14 +61,38 @@ class Composite(Behaviour):
         Adds a child.
 
         :param child: child to add to the tree
-        :type child: an instance (or descendant) of py_trees.Behaviour
+        :type child: instance or descendant of :class:`Behaviour <py_trees.behaviours.Behaviour>`
         :return: a unique id for this child (store and use to form remove requests)
         """
         self.children.append(child)
+        child.parent = self
         return child.id
 
     def remove_child(self, child):
+        """
+        Remove the child behaviour from this composite.
+
+        :param child: child to remove from the tree
+        :type child: instance or descendant of :class:`Behaviour <py_trees.behaviours.Behaviour>`
+
+        .. todo:: error handling for when child is not in this list (what error is thrown?)
+        """
+        index = self.children.index(child)
         self.children.remove(child)
+        return index
+
+    def replace_child(self, child, replacement):
+        """
+        Replace the child behaviour.
+
+        :param child: child to remove from the tree
+        :type child: instance or descendant of :class:`Behaviour <py_trees.behaviours.Behaviour>`
+        :param replacement: child to insert
+        :type replacement: instance or descendant of :class:`Behaviour <py_trees.behaviours.Behaviour>`
+        """
+        index = self.children.index(child)
+        print("Replacing : %s->%s" % (child.name, replacement.name))
+        self.children[index] = replacement
 
     def remove_child_by_id(self, child_id):
         child = next((c for c in self.children if c.id == child_id), None)
@@ -79,10 +103,12 @@ class Composite(Behaviour):
 
     def prepend_child(self, child):
         self.children.insert(0, child)
+        child.parent = self
         return child.id
 
     def insert_child(self, child, index):
         self.children.insert(index, child)
+        child.parent = self
         return child.id
 
 ##############################################################################

@@ -40,10 +40,8 @@ class Behaviour(object):
         self.name = name
         self.status = Status.INVALID
         self.iterator = self.tick()
-        # Behaviours on their own are leaf nodes, forcibly require them to have
-        # no children, but include this variable so it is easy to stop at a leaf
-        # while parsing down the tree.
-        self.children = []
+        self.parent = None  # will get set if a behaviour is added to a composite
+        self.children = []  # only set by composite behaviours
         self.logger = logging.getLogger("py_trees.Behaviour")
 
     ############################################

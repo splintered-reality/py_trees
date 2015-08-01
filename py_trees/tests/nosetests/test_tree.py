@@ -275,7 +275,7 @@ def test_full_iteration():
         child.visit(visitor)
     assert(visitations == 6)
     
-def test_behaviour_tree():
+def test_prune_behaviour_tree():
     print(console.bold + "\n****************************************************************************************" + console.reset)
     print(console.bold + "* Prune Behaviour Tree" + console.reset)
     print(console.bold + "****************************************************************************************\n" + console.reset)
@@ -302,6 +302,38 @@ def test_behaviour_tree():
     py_trees.display.print_ascii_tree(tree.root)
     assert(len(root.children) == 2)
     
+def test_replace_behaviour_tree():
+    print(console.bold + "\n****************************************************************************************" + console.reset)
+    print(console.bold + "* Replace Behaviour Subtree" + console.reset)
+    print(console.bold + "****************************************************************************************\n" + console.reset)
+
+    a = Count(name="A")
+    sequence1 = py_trees.Sequence(name="Sequence1")
+    b = Count(name="B")
+    c = Count(name="C")
+    sequence1.add_child(b)
+    sequence1.add_child(c)
+    d = Count(name="D")
+    root = py_trees.Selector(name="Root")
+    root.add_child(a)
+    root.add_child(sequence1)
+    root.add_child(d)
+    
+    tree = py_trees.BehaviourTree(root)
+    py_trees.display.print_ascii_tree(tree.root)
+    assert(len(sequence1.children) == 2)
+
+    sequence2 = py_trees.Sequence(name="Sequence2")
+    e = Count(name="E")
+    f = Count(name="F")
+    g = Count(name="G")
+    sequence2.add_child(e)
+    sequence2.add_child(f)
+    sequence2.add_child(g)
+
+    tree.replace_subtree(sequence1.id, sequence2)
+    py_trees.display.print_ascii_tree(tree.root)
+    assert(len(sequence2.children) == 3)
 
 # def test_foo():
 #     print('--------- Nosetest Logs ---------')

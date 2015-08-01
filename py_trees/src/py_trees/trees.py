@@ -63,26 +63,49 @@ class BehaviourTree(object):
         :rtype: bool
         """
         assert self.root.id != unique_id, "may not prune the root node"
-        (parent, child) = self._find_parent_child_pair(self.root, unique_id)
-        if parent is not None:
-            parent.remove_child(child)
-            return True
-        else:
-            return False
+        for child in self.root.iterate():
+            if child.id == unique_id:
+                parent = child.parent
+                if parent is not None:
+                    parent.remove_child(child)
+                    return True
+        return False
+
+    def replace_subtree(self, unique_id, subtree):
+        """
+        Replace the subtree with the specified id for the new subtree.
+
+        This is a common pattern where we'd like to swap out a whole sub-behaviour for another one.
+
+        :param uuid.UUID unique_id: unique id of the subtree root
+        :param subtree: incoming subtree to replace the old one
+        :type subtree: instance or descendant of :class:`Behaviour <py_trees.behaviours.Behaviour>`
+        :raises AssertionError: if unique id is the behaviour tree's root node id
+        :return: success or failure of the replacement
+        :rtype: bool
+        """
+        assert self.root.id != unique_id, "may not replace the root node"
+        for child in self.root.iterate():
+            if child.id == unique_id:
+                parent = child.parent
+                if parent is not None:
+                    parent.replace_child(child, subtree)
+                    return True
+        return False
 
     def _find_parent_child_pair(self, subtree, unique_id):
         """
-        Find the parent of the child with the specified unique_id
+        Find the child with the specified unique_id
         :param subtree: the part of the behaviour tree to search over
         :type root: instance or descendant of :class:`Behaviour <py_trees.behaviours.Behaviour>`
         :param uuid.UUID unique_id: id of the child
-        :return: parent-child pair
-        :rtype: 2-tuple of instance or descendant of :class:`Behaviour <py_trees.behaviours.Behaviour>`
+        :return: child
+        :rtype: instance or descendant of :class:`Behaviour <py_trees.behaviours.Behaviour>`
         """
         for child in subtree.children:
             if child.id == unique_id:
-                return (subtree, child)
-            (descendant_parent, descendant_child) = self._find_parent_child_pair(child, unique_id)
-            if descendant_parent is not None:
-                return (descendant_parent, descendant_child)
-        return (None, None)
+                return child
+            descendant_child = self._find_parent_child_pair(child, unique_id)
+            if descendant_child is not None:
+                return descendant_child
+        return None
