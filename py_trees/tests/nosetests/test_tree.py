@@ -77,6 +77,10 @@ class Visitor:
     def run(self, behaviour):
         self.logger.debug("  %s [visited][%s]" % (behaviour.name, behaviour.status))
 
+class PreTickVisitor:
+    def run(self, behaviour_tree):
+        print("\n--------- Run %s ---------\n" % behaviour_tree.count)
+
 
 def tick_tree(tree, visitor, from_iteration, to_iteration):
     print("\n================== Iteration %s-%s ==================\n" % (from_iteration, to_iteration))
@@ -334,6 +338,34 @@ def test_replace_behaviour_tree():
     tree.replace_subtree(sequence1.id, sequence2)
     py_trees.display.print_ascii_tree(tree.root)
     assert(len(sequence2.children) == 3)
+
+def test_tick_tock_behaviour_tree():
+    print(console.bold + "\n****************************************************************************************" + console.reset)
+    print(console.bold + "* Tick Tock Behaviour Tree" + console.reset)
+    print(console.bold + "****************************************************************************************\n" + console.reset)
+
+    a = Count(name="A")
+    sequence = py_trees.Sequence(name="Sequence")
+    b = Count(name="B")
+    c = Count(name="C")
+    sequence.add_child(b)
+    sequence.add_child(c)
+    d = Count(name="D")
+    root = py_trees.Selector(name="Root")
+    root.add_child(a)
+    root.add_child(sequence)
+    root.add_child(d)
+    
+    tree = py_trees.BehaviourTree(root)
+    py_trees.display.print_ascii_tree(tree.root)
+
+    tree.visitors.append(Visitor())
+    tree.tick_tock(100, 5, pre_tick_visitor=PreTickVisitor())
+
+    print("\n--------- Assertions ---------\n")
+    print("a.status == py_trees.Status.RUNNING")
+    assert(a.status == py_trees.Status.RUNNING)
+    
 
 # def test_foo():
 #     print('--------- Nosetest Logs ---------')

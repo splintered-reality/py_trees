@@ -91,7 +91,7 @@ class Composite(Behaviour):
         :type replacement: instance or descendant of :class:`Behaviour <py_trees.behaviours.Behaviour>`
         """
         index = self.children.index(child)
-        print("Replacing : %s->%s" % (child.name, replacement.name))
+        self.logger.debug("  %s [replace_child()][%s->%s]" % (self.name, child.name, replacement.name))
         self.children[index] = replacement
 
     def remove_child_by_id(self, child_id):

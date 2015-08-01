@@ -23,7 +23,7 @@ This module creates tools for managing your entire behaviour tree.
 ##############################################################################
 
 #import logging
-
+import time
 from .behaviours import Behaviour
 
 ##############################################################################
@@ -40,6 +40,8 @@ class BehaviourTree(object):
     :vartype root: instance or descendant of :class:`Behaviour <py_trees.behaviours.Behaviour>`
     :ivar visitors: list of entities that visit the iterated parts of the tree when it ticks.
     :vartype visitors: list of classes that implement a run(py_trees.Behaviour) method.
+    :ivar interrupt_tick_tocking: interrupt tick-tock if it is a tick-tocking.
+    :vartype interrupt_tick_tocking: bool
     """
     def __init__(self, root):
         """
@@ -54,6 +56,7 @@ class BehaviourTree(object):
         assert isinstance(root, Behaviour), "root node must be an instance of or descendant of pytrees.Behaviour"
         self.root = root
         self.visitors = []
+        self.interrupt_tick_tocking = False
 
     def prune_subtree(self, unique_id):
         """
@@ -93,19 +96,51 @@ class BehaviourTree(object):
                     return True
         return False
 
-    def _find_parent_child_pair(self, subtree, unique_id):
+    def tick(self, pre_tick_visitor, post_tick_visitor):
         """
-        Find the child with the specified unique_id
-        :param subtree: the part of the behaviour tree to search over
-        :type root: instance or descendant of :class:`Behaviour <py_trees.behaviours.Behaviour>`
-        :param uuid.UUID unique_id: id of the child
-        :return: child
-        :rtype: instance or descendant of :class:`Behaviour <py_trees.behaviours.Behaviour>`
+        Tick over the tree just once.
+
+        :param pre_tick_visitor: visitor that runs on this class instance before the tick
+        :type pre_tick_visitor: any class with a run(py_trees.BehaviourTree) method
+        :param post_tick_visitor: visitor that runs on this class instance before the tick
+        :type post_tick_visitor: any class with a run(py_trees.BehaviourTree) method
         """
-        for child in subtree.children:
-            if child.id == unique_id:
-                return child
-            descendant_child = self._find_parent_child_pair(child, unique_id)
-            if descendant_child is not None:
-                return descendant_child
-        return None
+        if pre_tick_visitor is not None:
+            pre_tick_visitor.run(self)
+        for node in self.root.tick():
+            for visitor in self.visitors:
+                node.visit(visitor)
+        if post_tick_visitor is not None:
+            post_tick_visitor.run(self)
+        self.count += 1
+
+    def tick_tock(self, sleep_ms, number_of_iterations, pre_tick_visitor=None, post_tick_visitor=None):
+        """
+        Tick continuously with a sleep interval as specified.
+
+        :param float sleep_ms: sleep this much between ticks.
+        :param int number_of_iterations: number of tick-tocks (-1 for infinite)
+        :param pre_tick_visitor: visitor that runs on this class instance before the tick
+        :type pre_tick_visitor: any class with a run(py_trees.BehaviourTree) method
+        :param post_tick_visitor: visitor that runs on this class instance before the tick
+        :type post_tick_visitor: any class with a run(py_trees.BehaviourTree) method
+        """
+        tick_tocks = 0
+        while not self.interrupt_tick_tocking and tick_tocks < number_of_iterations:
+            if pre_tick_visitor is not None:
+                pre_tick_visitor.run(self)
+            for node in self.root.tick():
+                for visitor in self.visitors:
+                    node.visit(visitor)
+            if post_tick_visitor is not None:
+                post_tick_visitor.run(self)
+            time.sleep(sleep_ms / 1000.0)
+            tick_tocks += 1
+            self.count += 1
+        self.interrupt_tick_tocking = False
+
+    def interrupt(self):
+        """
+        Interrupt tick-tock if it is tick-tocking.
+        """
+        self.interrupt_tick_tocking = True
