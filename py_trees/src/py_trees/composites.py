@@ -57,16 +57,33 @@ class Composite(Behaviour):
     ############################################
 
     def add_child(self, child):
+        """
+        Adds a child.
+
+        :param child: child to add to the tree
+        :type child: an instance (or descendant) of py_trees.Behaviour
+        :return: a unique id for this child (store and use to form remove requests)
+        """
         self.children.append(child)
+        return child.id
 
     def remove_child(self, child):
         self.children.remove(child)
 
-    def prepend_child(self, c):
-        self.children.insert(0, c)
+    def remove_child_by_id(self, child_id):
+        child = next((c for c in self.children if c.id == child_id), None)
+        if child is not None:
+            self.children.remove(child)
+        else:
+            raise IndexError('child was not found with the specified id [%s]' % child_id)
 
-    def insert_child(self, c, i):
-        self.children.insert(i, c)
+    def prepend_child(self, child):
+        self.children.insert(0, child)
+        return child.id
+
+    def insert_child(self, child, index):
+        self.children.insert(index, child)
+        return child.id
 
 ##############################################################################
 # Selector

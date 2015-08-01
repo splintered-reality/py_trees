@@ -29,6 +29,7 @@ from .common import Status
 ##############################################################################
 
 import logging
+import uuid
 
 ##############################################################################
 # Behaviour
@@ -39,6 +40,7 @@ class Behaviour(object):
     """ A node in a behavior tree that uses coroutines in its tick function """
 
     def __init__(self, name="", *args, **kwargs):
+        self.id = uuid.uuid4()  # used to uniquely identify this node (helps with removing children from a tree)
         self.name = name
         self.status = Status.INVALID
         self.iterator = self.tick()
