@@ -248,10 +248,36 @@ def test_display():
     root.add_child(d)
 
     py_trees.display.print_ascii_tree(root)
-    
-    py_trees.display.render_dot_tree(root)
 
     assert(True)
+
+def test_behaviour_tree():
+    print(console.bold + "\n****************************************************************************************" + console.reset)
+    print(console.bold + "* Prune Behaviour Tree" + console.reset)
+    print(console.bold + "****************************************************************************************\n" + console.reset)
+
+    a = Count(name="A")
+    sequence = py_trees.Sequence(name="Sequence")
+    b = Count(name="B")
+    c = Count(name="C")
+    sequence.add_child(b)
+    sequence.add_child(c)
+    d = Count(name="D")
+    root = py_trees.Selector(name="Root")
+    root.add_child(a)
+    root.add_child(sequence)
+    root.add_child(d)
+    
+    tree = py_trees.BehaviourTree(root)
+    py_trees.display.print_ascii_tree(tree.root)
+    assert(len(sequence.children) == 2)
+    tree.prune_subtree(c.id)
+    py_trees.display.print_ascii_tree(tree.root)
+    assert(len(sequence.children) == 1)
+    tree.prune_subtree(sequence.id)
+    py_trees.display.print_ascii_tree(tree.root)
+    assert(len(root.children) == 2)
+    
 
 # def test_foo():
 #     print('--------- Nosetest Logs ---------')

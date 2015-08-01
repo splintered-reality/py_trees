@@ -22,14 +22,10 @@ This module defines the interface for behaviours to be used in py_trees.
 # Imports
 ##############################################################################
 
-from .common import Status
-
-##############################################################################
-# Imports
-##############################################################################
-
 import logging
 import uuid
+
+from .common import Status
 
 ##############################################################################
 # Behaviour
@@ -59,11 +55,12 @@ class Behaviour(object):
 
     def terminate(self, new_status):
         """
-        :param Status new_status: compare with current status for decision logic.
-
         User defined terminate (cleanup) function. For comparison tests, it is
         often useful to check if the current status is Status.RUNNING and
         the new status is different to trigger appropriate cleanup actions.
+
+        :param Status new_status: compare with current status for decision logic.
+
         """
         self.logger.debug("  %s [Behaviour::terminate()]" % self.name)
         pass

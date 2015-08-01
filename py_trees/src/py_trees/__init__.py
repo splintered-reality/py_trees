@@ -23,4 +23,5 @@ package. It provides ...
 from .behaviours import Behaviour
 from .common import Status
 from .composites import Composite, Selector, Sequence
+from .trees import BehaviourTree
 import display
