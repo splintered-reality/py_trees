@@ -25,6 +25,12 @@ This module defines the interface for behaviours to be used in py_trees.
 from .common import Status
 
 ##############################################################################
+# Imports
+##############################################################################
+
+import logging
+
+##############################################################################
 # Behaviour
 ##############################################################################
 
@@ -40,14 +46,14 @@ class Behaviour(object):
         # no children, but include this variable so it is easy to stop at a leaf
         # while parsing down the tree.
         self.children = []
+        self.logger = logging.getLogger("py_trees.Behaviour")
 
     ############################################
     # User Defined Functions (virtual)
     ############################################
 
     def initialise(self):
-        print("  %s [Behaviour::initialise()]" % self.name)
-        pass
+        self.logger.debug("  %s [initialise()]" % self.name)
 
     def terminate(self, new_status):
         """
@@ -57,11 +63,11 @@ class Behaviour(object):
         often useful to check if the current status is Status.RUNNING and
         the new status is different to trigger appropriate cleanup actions.
         """
-        print("  %s [Behaviour::terminate()]" % self.name)
+        self.logger.debug("  %s [Behaviour::terminate()]" % self.name)
         pass
 
     def update(self):
-        print("  %s [Behaviour::update()]" % self.name)
+        self.logger.debug("  %s [Behaviour::update()]" % self.name)
         return Status.INVALID
 
     ############################################
@@ -84,7 +90,7 @@ class Behaviour(object):
 
         @return Status : resulting state after the tick is completed
         """
-        print("  %s [Behaviour::tick()]" % self.name)
+        self.logger.debug("  %s [Behaviour::tick()]" % self.name)
         if self.status != Status.RUNNING:
             self.initialise()
         # don't set self.status yet, terminate() may need to check what the current state is first
@@ -102,8 +108,16 @@ class Behaviour(object):
         generator. The specified status can be used to compare with the
         current status field for decision making within the terminate function
         itself.
+
+        Do not think of this as an abort only for shutdown and invalid state setting
+        (though this is the default argument). Abort is also the proper call when
+        the behaviour returns success at which point the behaviour must abort
+        any processing and do any required cleanup so it doesn't sit around
+        consuming resources awaiting the next time it must be called (initialisation
+        should not be done here - it could be a long time before the behaviour gets
+        called again, and you shouldn't consume those resources in the meantime).
         """
-        print("  %s [Behaviour::abort()]" % self.name)
+        self.logger.debug("  %s [Behaviour::abort()]" % self.name)
         self.terminate(new_status)
         self.status = new_status
         self.iterator = self.tick()
@@ -123,15 +137,3 @@ class Behaviour(object):
 
     def is_terminated(self):
         return (self.status == Status.SUCCESS) or (self.status == Status.FAILURE)
-
-    def announce(self):
-        print("Executing behaviour " + str(self.name))
-
-    # These next two functions allow us to use the 'with' syntax
-    def __enter__(self):
-        return self.name
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if exc_type is not None:
-            return False
-        return True
