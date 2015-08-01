@@ -34,14 +34,17 @@ import gv
 ##############################################################################
 
 
-def print_ascii_tree(printTree, indent=0):
+def print_ascii_tree(tree, indent=0):
     """
-    Print the ASCII representation of an act tree.
-    :param tree: The root of an act tree
+    Print the ASCII representation of a behaviour tree.
+
+    :param tree: the root of the tree, or subtree you want to show
     :param indent: the number of characters to indent the tree
     :return: nothing
     """
-    for child in printTree.children:
+    if indent == 0:
+        print("%s" % tree.name)
+    for child in tree.children:
         print "    " * indent, "-->", child.name
 
         if child.children != []:

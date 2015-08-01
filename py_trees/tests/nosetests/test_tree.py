@@ -169,7 +169,7 @@ def test_sequence_composite():
     assert(a.status == py_trees.Status.FAILURE)
     print("tree.status == py_trees.Status.FAILURE")
     assert(tree.status == py_trees.Status.FAILURE)
-    
+
 def test_mixed_tree():
     print(console.bold + "\n****************************************************************************************" + console.reset)
     print(console.bold + "* Mixed Tree" + console.reset)
@@ -230,6 +230,25 @@ def test_mixed_tree():
     print("root.status == py_trees.Status.RUNNING")
     assert(root.status == py_trees.Status.RUNNING)
 
+def test_display():
+    print(console.bold + "\n****************************************************************************************" + console.reset)
+    print(console.bold + "* Display Tree" + console.reset)
+    print(console.bold + "****************************************************************************************\n" + console.reset)
+
+    a = Count(name="A")
+    sequence = py_trees.Sequence(name="Sequence")
+    b = Count(name="B")
+    c = Count(name="C")
+    sequence.add_child(b)
+    sequence.add_child(c)
+    d = Count(name="D")
+    root = py_trees.Selector(name="Root")
+    root.add_child(a)
+    root.add_child(sequence)
+    root.add_child(d)
+
+    py_trees.display.print_ascii_tree(root)
+    assert(True)
 
 # def test_foo():
 #     print('--------- Nosetest Logs ---------')
@@ -241,96 +260,3 @@ def test_mixed_tree():
 #     d.initialise()
 #     print("Done")
 #     assert(True)
-
-##############################################################################
-# Main
-##############################################################################
-
-# if __name__ == '__main__':
-#     print_logging()
-#     dude = py_trees.Behaviour(name="dude")
-#    test_selector()
-
-# def test_invalid_elements():
-#     print(console.bold + "\n****************************************************************************************" + console.reset)
-#     print(console.bold + "* Raising on invalid elements" + console.reset)
-#     print(console.bold + "****************************************************************************************" + console.reset)
-# 
-#     rocon_uri_string = 'rocon:/turtlebot2/dude/hydro/precise#rocon_apps/chirp'
-#     # rocon_uri_string = 'rocon:/turtlebot2/dude/hydro/precise#rocon_apps/chirp'  # the empty hier-part also works
-# 
-#     invalid_schema = rocon_uri_string.replace('rocon', 'http')
-#     print(console.cyan + " - %s" % invalid_schema + console.reset)
-#     assert_raises(rocon_uri.RoconURIValueError, rocon_uri.parse, invalid_schema)
-# 
-#     invalid_hardware_platform = rocon_uri_string.replace('turtlebot2', 'foobar')
-#     print(console.cyan + " - %s" % invalid_hardware_platform + console.reset)
-#     assert_raises(rocon_uri.RoconURIValueError, rocon_uri.parse, invalid_hardware_platform)
-# 
-#     invalid_application_framework = rocon_uri_string.replace('hydro', 'dont_box_me_in')
-#     print(console.cyan + " - %s" % invalid_application_framework + console.reset)
-#     assert_raises(rocon_uri.RoconURIValueError, rocon_uri.parse, invalid_application_framework)
-# 
-#     invalid_operating_system = rocon_uri_string.replace('precise', 'bados')
-#     print(console.cyan + " - %s" % invalid_operating_system + console.reset)
-#     assert_raises(rocon_uri.RoconURIValueError, rocon_uri.parse, invalid_operating_system)
-# 
-# def test_stringify():
-#     print(console.bold + "\n****************************************************************************************" + console.reset)
-#     print(console.bold + "* String representation" + console.reset)
-#     print(console.bold + "****************************************************************************************" + console.reset)
-# 
-#     rocon_uri_string = 'rocon:/turtlebot2/dude/hydro/precise#rocon_apps/chirp'
-# 
-#     print(console.cyan + " - %s" % rocon_uri_string + console.reset)
-#     rocon_uri_object = rocon_uri.parse(rocon_uri_string)
-#     assert str(rocon_uri_object) == rocon_uri_string
-# def test_compatibility():
-#     print(console.bold + "\n****************************************************************************************" + console.reset)
-#     print(console.bold + "* Compatibility" + console.reset)
-#     print(console.bold + "****************************************************************************************" + console.reset)
-# 
-#     rocon_uri_string = 'rocon:/turtlebot2/dude/hydro/precise'
-#     print(console.cyan + " - %s  ~ %s" % (rocon_uri_string, rocon_uri_string) + console.reset)
-#     assert(rocon_uri.is_compatible(rocon_uri_string, rocon_uri_string) == True)
-#     # Missing operating system
-#     modified_rocon_uri_string = 'rocon:/turtlebot2/dude/hydro'
-#     print(console.cyan + " - %s  ~ %s" % (rocon_uri_string, modified_rocon_uri_string) + console.reset)
-#     assert(rocon_uri.is_compatible(rocon_uri_string, modified_rocon_uri_string) == True)
-#     # Missing application_framework/operating system
-#     modified_rocon_uri_string = 'rocon:/turtlebot2/dude'
-#     print(console.cyan + " - %s  ~ %s" % (rocon_uri_string, modified_rocon_uri_string) + console.reset)
-#     assert(rocon_uri.is_compatible(rocon_uri_string, modified_rocon_uri_string) == True)
-#     # Missing everything
-#     modified_rocon_uri_string = 'rocon:/'
-#     print(console.cyan + " - %s  ~ %s" % (rocon_uri_string, modified_rocon_uri_string) + console.reset)
-#     assert(rocon_uri.is_compatible(rocon_uri_string, modified_rocon_uri_string) == True)
-#     # Wildcards
-#     modified_rocon_uri_string = 'rocon:/*/*/*/*'
-#     print(console.cyan + " - %s  ~ %s" % (rocon_uri_string, modified_rocon_uri_string) + console.reset)
-#     assert(rocon_uri.is_compatible(rocon_uri_string, modified_rocon_uri_string) == True)
-#     # Regex names
-#     modified_rocon_uri_string = 'rocon:/turtlebot2/dud*/hydro/precise'
-#     print(console.cyan + " - %s  ~ %s" % (rocon_uri_string, modified_rocon_uri_string) + console.reset)
-#     assert(rocon_uri.is_compatible(rocon_uri_string, modified_rocon_uri_string) == True)
-#     modified_rocon_uri_string = 'rocon:/turtlebot2/dud*/hydro/precise'
-#     print(console.cyan + " - %s  ~ %s" % (modified_rocon_uri_string, rocon_uri_string) + console.reset)
-#     assert(rocon_uri.is_compatible(modified_rocon_uri_string, rocon_uri_string) == True)
-#     doubly_modified_rocon_uri_string = 'rocon:/turtlebot2/dudette*/hydro/precise'
-#     print(console.cyan + " - %s  ~ %s" % (modified_rocon_uri_string, doubly_modified_rocon_uri_string) + console.reset)
-#     assert(rocon_uri.is_compatible(modified_rocon_uri_string, doubly_modified_rocon_uri_string) == True)
-#     # No matching hardware platform
-#     modified_rocon_uri_string = 'rocon:/pr2|waiterbot/dude'
-#     print(console.cyan + " - %s !~ %s" % (rocon_uri_string, modified_rocon_uri_string) + console.reset)
-#     assert(rocon_uri.is_compatible(rocon_uri_string, modified_rocon_uri_string) == False)
-#     # Modified field
-#     modified_rocon_uri_string = 'rocon:/turtlebot2/dudette/hydro/precise'
-#     print(console.cyan + " - %s !~ %s" % (rocon_uri_string, modified_rocon_uri_string) + console.reset)
-#     assert(rocon_uri.is_compatible(rocon_uri_string, modified_rocon_uri_string) == False)
-# 
-#     invalid_rocon_uri = 'rocon:/lala|turtlebot2'
-#     try:
-#         rocon_uri.is_compatible(rocon_uri_string, invalid_rocon_uri)
-#     except rocon_uri.RoconURIValueError as e:
-#         print(console.cyan + " - %s FAILS %s [%s]" % (rocon_uri_string, invalid_rocon_uri, str(e)) + console.reset)
-#     assert_raises(rocon_uri.RoconURIValueError, rocon_uri.is_compatible, rocon_uri_string, invalid_rocon_uri)
