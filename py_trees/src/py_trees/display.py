@@ -22,12 +22,8 @@ Various graph drawing tools.
 # Imports
 ##############################################################################
 
-import pygraphviz as pgv
-from pygraph.classes.digraph import digraph
-from pygraph.algorithms.searching import breadth_first_search
-from pygraph.readwrite.dot import write
-import gv
-
+import pydot
+from .composites import Sequence, Selector
 
 ##############################################################################
 # Behaviour
@@ -51,30 +47,35 @@ def print_ascii_tree(tree, indent=0):
             print_ascii_tree(child, indent + 1)
 
 
-def print_dot_tree(root):
-    """
-        Print an output compatible with the DOT synatax and Graphiz
-    """
-    gr = pgv.AGraph(rotate='0', bgcolor='lightyellow')
-    gr.node_attr['fontsize'] = '9'
+def render_dot_tree(root):
+    def get_node_attributes(node):
+        if isinstance(node, Selector):
+            return ('box', 'cyan')
+        elif isinstance(node, Sequence):
+            return ('box', 'green')
+        else:
+            return ('ellipse', 'gray')
+
+    fontsize = 11
+    graph = pydot.Dot(graph_type='digraph')
+    graph.set_name(root.name)
+    (unused_node_shape, node_colour) = get_node_attributes(root)
+    node_root = pydot.Node(root.name, shape="house", style="filled", fillcolor=node_colour, fontsize=fontsize)
+    graph.add_node(node_root)
 
     def add_edges(root):
         for c in root.children:
-            gr.add_edge((root.name, c.name))
+            (node_shape, node_colour) = get_node_attributes(c)
+            node = pydot.Node(c.name, shape=node_shape, style="filled", fillcolor=node_colour, fontsize=fontsize)
+            graph.add_node(node)
+            edge = pydot.Edge(root.name, c.name)
+            graph.add_edge(edge)
             if c.children != []:
                 add_edges(c)
 
     add_edges(root)
-
-    st, unused_order = breadth_first_search(gr, root=root.name)
-
-    gst = digraph()
-    gst.add_spanning_tree(st)
-
-    dot = write(gst)
-    gvv = gv.readstring(dot)
-
-    gv.layout(gvv, 'dot')
-    gv.render(gvv, 'png', 'tree.png')
-    gv.render(gvv, 'svg', 'tree.svg')
-    gv.write(gvv, 'tree.dot')
+    print("Writing tree.png")
+    name = root.name.lower()
+    graph.write(name + '.dot')
+    graph.write_png(name + '.png')
+    graph.write_svg(name + '.svg')

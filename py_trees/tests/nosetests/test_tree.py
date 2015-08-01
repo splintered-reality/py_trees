@@ -248,6 +248,9 @@ def test_display():
     root.add_child(d)
 
     py_trees.display.print_ascii_tree(root)
+    
+    py_trees.display.render_dot_tree(root)
+
     assert(True)
 
 # def test_foo():
