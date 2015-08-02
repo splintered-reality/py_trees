@@ -26,7 +26,8 @@ from .behaviours import (
     Failure,
     SuccessEveryN,
     Count,
-    create_behaviour_from_function
+    create_behaviour_from_function,
+    behaviour_update_inverter
     )
 from .common import Status
 from .composites import Composite, Selector, Sequence

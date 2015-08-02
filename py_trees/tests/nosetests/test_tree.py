@@ -330,8 +330,10 @@ def test_success_failure_tree():
     print(console.bold + "****************************************************************************************\n" + console.reset)
     root = py_trees.Selector("Root")
     failure = py_trees.Failure("Failure")
+    failure2 = py_trees.behaviour_update_inverter(py_trees.Success("Failure2"))
     success = py_trees.Success("Success")
     root.add_child(failure)
+    root.add_child(failure2)
     root.add_child(success)
     py_trees.display.print_ascii_tree(root)
     visitor = Visitor()
@@ -344,6 +346,8 @@ def test_success_failure_tree():
     assert(root.status == py_trees.Status.SUCCESS)
     print("failure.status == py_trees.Status.FAILURE")
     assert(failure.status == py_trees.Status.FAILURE)
+    print("failure2.status == py_trees.Status.FAILURE")
+    assert(failure2.status == py_trees.Status.FAILURE)
 
 
 # def test_foo():
