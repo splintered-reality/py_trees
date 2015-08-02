@@ -20,7 +20,14 @@ package. It provides ...
 #import pi_trees
 #import coroutines
 
-from .behaviours import Behaviour
+from .behaviours import (
+    Behaviour,
+    Success,
+    Failure,
+    SuccessEveryN,
+    Count,
+    create_behaviour_from_function
+    )
 from .common import Status
 from .composites import Composite, Selector, Sequence
 from .trees import BehaviourTree

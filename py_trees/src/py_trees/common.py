@@ -33,7 +33,11 @@ from enum import Enum
 class Status(Enum):
     """ An enumerator representing the status of a behaviour """
 
+    """Behaviour reports success."""
     SUCCESS = "SUCCESS"
+    """Behaviour, or condition check failed."""
     FAILURE = "FAILURE"
+    """Behaviour is executing"""
     RUNNING = "RUNNING"
+    """Behaviour is in an invalid state"""
     INVALID = "INVALID"

@@ -28,7 +28,7 @@ import uuid
 from .common import Status
 
 ##############################################################################
-# Behaviour
+# Behaviour BluePrint
 ##############################################################################
 
 
@@ -64,6 +64,11 @@ class Behaviour(object):
         pass
 
     def update(self):
+        """
+        User customisable update function called on by the :py:meth:`tick() <py_trees.behaviours.Behaviour.tick>` method.
+
+        :return: the behaviour's current :py:class:`Status <py_trees.common.Status>`
+        """
         self.logger.debug("  %s [Behaviour::update()]" % self.name)
         return Status.INVALID
 
@@ -85,7 +90,7 @@ class Behaviour(object):
         The update mechanism for the behaviour. Customisation goes
         into the update() function.
 
-        @return Status : resulting state after the tick is completed
+        :return Status: resulting state after the tick is completed
         """
         self.logger.debug("  %s [Behaviour::tick()]" % self.name)
         if self.status != Status.RUNNING:
@@ -143,3 +148,141 @@ class Behaviour(object):
 
     def is_terminated(self):
         return (self.status == Status.SUCCESS) or (self.status == Status.FAILURE)
+
+##############################################################################
+# Behaviour Metaprogramming
+##############################################################################
+
+
+def create_behaviour_from_function(func):
+    """
+    Create a behaviour from the specified function, swapping it in place of
+    the default update function.
+
+    :param func: function to be used in place of the default :py:meth:`Behaviour.update() <py_trees.behaviours.Behaviour.update>` function.
+    :type func: any function with just one argument for 'self', must return Status
+    """
+    class_name = func.__name__.capitalize()
+    #globals()[class_name] = type(class_name, (Behaviour,), dict(update=func))
+    return type(class_name, (Behaviour,), dict(update=func))
+
+
+# Inverter Decorator
+def invert(func):
+    """Inverts the function, used for the inverter decorator."""
+    def wrapped(*args, **kwargs):
+        status = func(*args, **kwargs)
+        return Status.FAILURE if (status == Status.SUCCESS) else Status.SUCCESS
+    return wrapped
+
+
+def behaviour_update_inverter(cls):
+    """
+    Inverts the result of a class's update function.
+
+    .. code-block:: python
+
+       @behaviour_update_inverter
+       class Failure(Success)
+           pass
+
+    or
+
+    .. code-block:: python
+
+       failure = behaviour_update_inverter(Success("Failure"))
+    """
+    update = getattr(cls, "update")
+    setattr(cls, "update", invert(update))
+    return cls
+
+
+##############################################################################
+# Function Behaviours
+##############################################################################
+
+
+def success(self):
+    self.logger.debug("  %s [Success::update()]" % self.name)
+    return Status.SUCCESS
+
+
+def failure(self):
+    self.logger.debug("  %s [Success::update()]" % self.name)
+    return Status.FAILURE
+
+
+Success = create_behaviour_from_function(success)
+Failure = create_behaviour_from_function(failure)
+
+# Another way of doing this via the inverter decorator
+# @behaviour_update_inverter
+# class Failure(Success):
+#    pass
+
+##############################################################################
+# Other Behaviours
+##############################################################################
+
+
+class SuccessEveryN(Behaviour):
+    """
+    Return success once every N ticks, failure otherwise.
+    """
+    def __init__(self, name, n):
+        super(SuccessEveryN, self).__init__(name)
+        self.count = 0
+        self.every_n = n
+
+    def initialise(self):
+        self.count = 0
+
+    def update(self):
+        self.count += 1
+        if self.count % self.every_n == 0:
+            return Status.SUCCESS
+        else:
+            return Status.FAILURE
+
+
+class Count(Behaviour):
+    def __init__(self, name="Count", fail_until=3, running_until=5, success_until=6, *args, **kwargs):
+        super(Count, self).__init__(name, *args, **kwargs)
+        self.count = 0
+        self.fail_until = fail_until
+        self.running_until = running_until
+        self.success_until = success_until
+        self.number_count_resets = 0
+        self.number_updated = 0
+        self.logger = logging.getLogger("py_trees.Count")
+
+    def terminate(self, new_status):
+        self.logger.debug("  %s [terminate()]" % self.name)
+        # reset only if udpate got us into an invalid state
+        if new_status == Status.INVALID:
+            self.count = 0
+            self.number_count_resets += 1
+
+    def update(self):
+        self.number_updated += 1
+        self.count += 1
+        if self.count <= self.fail_until:
+            self.logger.debug("  %s [update()][%s -> FAILURE]" % (self.name, self.count))
+            return Status.FAILURE
+        elif self.count <= self.running_until:
+            self.logger.debug("  %s [update()][%s -> RUNNING]" % (self.name, self.count))
+            return Status.RUNNING
+        elif self.count <= self.success_until:
+            self.logger.debug("  %s [update()][%s -> SUCCESS]" % (self.name, self.count))
+            return Status.SUCCESS
+        else:
+            self.logger.debug("  %s [update()][%s -> FAILURE]" % (self.name, self.count))
+            return Status.FAILURE
+
+    def __repr__(self):
+        s = "%s\n" % self.name
+        s += "  Status : %s\n" % self.status
+        s += "  Count  : %s\n" % self.count
+        s += "  Resets : %s\n" % self.number_count_resets
+        s += "  Updates: %s\n" % self.number_updated
+        return s

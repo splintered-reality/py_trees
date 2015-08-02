@@ -28,48 +28,6 @@ logger = logging.getLogger("py_trees.Test")
 # Classes
 ##############################################################################
 
-class Count(py_trees.Behaviour):
-    def __init__(self, name="Count", fail_until=3, running_until=5, success_until=6, *args, **kwargs):
-        super(Count, self).__init__(name, *args, **kwargs)
-        self.count = 0
-        self.fail_until = fail_until
-        self.running_until = running_until
-        self.success_until = success_until
-        self.number_count_resets = 0
-        self.number_updated = 0
-        self.logger = logging.getLogger("py_trees.Count")
-
-    def terminate(self, new_status):
-        self.logger.debug("  %s [terminate()]" % self.name)
-        # reset only if udpate got us into an invalid state
-        if new_status == py_trees.Status.INVALID:
-            self.count = 0
-            self.number_count_resets += 1
-
-    def update(self):
-        self.number_updated += 1
-        self.count += 1
-        if self.count <= self.fail_until:
-            self.logger.debug("  %s [update()][%s -> FAILURE]" % (self.name, self.count))
-            return py_trees.Status.FAILURE
-        elif self.count <= self.running_until:
-            self.logger.debug("  %s [update()][%s -> RUNNING]" % (self.name, self.count))
-            return py_trees.Status.RUNNING
-        elif self.count <= self.success_until:
-            self.logger.debug("  %s [update()][%s -> SUCCESS]" % (self.name, self.count))
-            return py_trees.Status.SUCCESS
-        else:
-            self.logger.debug("  %s [update()][%s -> FAILURE]" % (self.name, self.count))
-            return py_trees.Status.FAILURE
-    
-    def __repr__(self):
-        s =  "%s\n" % self.name
-        s += "  Status : %s\n" % self.status
-        s += "  Count  : %s\n" % self.count
-        s += "  Resets : %s\n" % self.number_count_resets
-        s += "  Updates: %s\n" % self.number_updated
-        return s
-
 class Visitor:
     def __init__(self):
         self.logger = logging.getLogger("py_trees.Visitor")
@@ -104,9 +62,9 @@ def test_selector_composite():
     print(console.bold + "****************************************************************************************" + console.reset)
     visitor = Visitor()
     tree = py_trees.Selector(name='Selector')
-    a = Count(name="A")
-    b = Count(name="B")
-    c = Count(name="C", fail_until=0, running_until=3, success_until=15)
+    a = py_trees.Count(name="A")
+    b = py_trees.Count(name="B")
+    c = py_trees.Count(name="C", fail_until=0, running_until=3, success_until=15)
     tree.add_child(a)
     tree.add_child(b)
     tree.add_child(c)
@@ -140,9 +98,9 @@ def test_sequence_composite():
     print(console.bold + "****************************************************************************************" + console.reset)
     visitor = Visitor()
     tree = py_trees.Sequence(name='Sequence')
-    a = Count(name="A", fail_until=0, running_until=3, success_until=6)
-    b = Count(name="B", fail_until=0, running_until=3, success_until=6)
-    c = Count(name="C", fail_until=0, running_until=3, success_until=6)
+    a = py_trees.Count(name="A", fail_until=0, running_until=3, success_until=6)
+    b = py_trees.Count(name="B", fail_until=0, running_until=3, success_until=6)
+    c = py_trees.Count(name="C", fail_until=0, running_until=3, success_until=6)
     tree.add_child(a)
     tree.add_child(b)
     tree.add_child(c)
@@ -180,15 +138,15 @@ def test_mixed_tree():
     print(console.bold + "****************************************************************************************" + console.reset)
     visitor = Visitor()
     
-    a = Count(name="A", fail_until=3, running_until=5, success_until=7)
+    a = py_trees.Count(name="A", fail_until=3, running_until=5, success_until=7)
 
     sequence = py_trees.Sequence(name="Sequence")
-    b = Count(name="B", fail_until=0, running_until=3, success_until=5)
-    c = Count(name="C", fail_until=0, running_until=3, success_until=5)
+    b = py_trees.Count(name="B", fail_until=0, running_until=3, success_until=5)
+    c = py_trees.Count(name="C", fail_until=0, running_until=3, success_until=5)
     sequence.add_child(b)
     sequence.add_child(c)
 
-    d = Count(name="D", fail_until=0, running_until=3, success_until=15)
+    d = py_trees.Count(name="D", fail_until=0, running_until=3, success_until=15)
 
     root = py_trees.Selector(name="Root")
     print("Root.children: %s " % [child.name for child in root.children])
@@ -239,13 +197,13 @@ def test_display():
     print(console.bold + "* Display Tree" + console.reset)
     print(console.bold + "****************************************************************************************\n" + console.reset)
 
-    a = Count(name="A")
+    a = py_trees.Count(name="A")
     sequence = py_trees.Sequence(name="Sequence")
-    b = Count(name="B")
-    c = Count(name="C")
+    b = py_trees.Count(name="B")
+    c = py_trees.Count(name="C")
     sequence.add_child(b)
     sequence.add_child(c)
-    d = Count(name="D")
+    d = py_trees.Count(name="D")
     root = py_trees.Selector(name="Root")
     root.add_child(a)
     root.add_child(sequence)
@@ -261,13 +219,13 @@ def test_full_iteration():
     print(console.bold + "****************************************************************************************\n" + console.reset)
     visitor = Visitor()
 
-    a = Count(name="A")
+    a = py_trees.Count(name="A")
     sequence = py_trees.Sequence(name="Sequence")
-    b = Count(name="B")
-    c = Count(name="C")
+    b = py_trees.Count(name="B")
+    c = py_trees.Count(name="C")
     sequence.add_child(b)
     sequence.add_child(c)
-    d = Count(name="D")
+    d = py_trees.Count(name="D")
     root = py_trees.Selector(name="Root")
     root.add_child(a)
     root.add_child(sequence)
@@ -284,13 +242,13 @@ def test_prune_behaviour_tree():
     print(console.bold + "* Prune Behaviour Tree" + console.reset)
     print(console.bold + "****************************************************************************************\n" + console.reset)
 
-    a = Count(name="A")
+    a = py_trees.Count(name="A")
     sequence = py_trees.Sequence(name="Sequence")
-    b = Count(name="B")
-    c = Count(name="C")
+    b = py_trees.Count(name="B")
+    c = py_trees.Count(name="C")
     sequence.add_child(b)
     sequence.add_child(c)
-    d = Count(name="D")
+    d = py_trees.Count(name="D")
     root = py_trees.Selector(name="Root")
     root.add_child(a)
     root.add_child(sequence)
@@ -311,13 +269,13 @@ def test_replace_behaviour_tree():
     print(console.bold + "* Replace Behaviour Subtree" + console.reset)
     print(console.bold + "****************************************************************************************\n" + console.reset)
 
-    a = Count(name="A")
+    a = py_trees.Count(name="A")
     sequence1 = py_trees.Sequence(name="Sequence1")
-    b = Count(name="B")
-    c = Count(name="C")
+    b = py_trees.Count(name="B")
+    c = py_trees.Count(name="C")
     sequence1.add_child(b)
     sequence1.add_child(c)
-    d = Count(name="D")
+    d = py_trees.Count(name="D")
     root = py_trees.Selector(name="Root")
     root.add_child(a)
     root.add_child(sequence1)
@@ -328,9 +286,9 @@ def test_replace_behaviour_tree():
     assert(len(sequence1.children) == 2)
 
     sequence2 = py_trees.Sequence(name="Sequence2")
-    e = Count(name="E")
-    f = Count(name="F")
-    g = Count(name="G")
+    e = py_trees.Count(name="E")
+    f = py_trees.Count(name="F")
+    g = py_trees.Count(name="G")
     sequence2.add_child(e)
     sequence2.add_child(f)
     sequence2.add_child(g)
@@ -344,13 +302,13 @@ def test_tick_tock_behaviour_tree():
     print(console.bold + "* Tick Tock Behaviour Tree" + console.reset)
     print(console.bold + "****************************************************************************************\n" + console.reset)
 
-    a = Count(name="A")
+    a = py_trees.Count(name="A")
     sequence = py_trees.Sequence(name="Sequence")
-    b = Count(name="B")
-    c = Count(name="C")
+    b = py_trees.Count(name="B")
+    c = py_trees.Count(name="C")
     sequence.add_child(b)
     sequence.add_child(c)
-    d = Count(name="D")
+    d = py_trees.Count(name="D")
     root = py_trees.Selector(name="Root")
     root.add_child(a)
     root.add_child(sequence)
@@ -366,6 +324,27 @@ def test_tick_tock_behaviour_tree():
     print("a.status == py_trees.Status.RUNNING")
     assert(a.status == py_trees.Status.RUNNING)
     
+def test_success_failure_tree():
+    print(console.bold + "\n****************************************************************************************" + console.reset)
+    print(console.bold + "* Success Failure Tree" + console.reset)
+    print(console.bold + "****************************************************************************************\n" + console.reset)
+    root = py_trees.Selector("Root")
+    failure = py_trees.Failure("Failure")
+    success = py_trees.Success("Success")
+    root.add_child(failure)
+    root.add_child(success)
+    py_trees.display.print_ascii_tree(root)
+    visitor = Visitor()
+    tick_tree(root, visitor, 1, 1)
+    
+    print("\n--------- Assertions ---------\n")
+    print("success.status == py_trees.Status.SUCCESS")
+    assert(success.status == py_trees.Status.SUCCESS)
+    print("root.status == py_trees.Status.SUCCESS")
+    assert(root.status == py_trees.Status.SUCCESS)
+    print("failure.status == py_trees.Status.FAILURE")
+    assert(failure.status == py_trees.Status.FAILURE)
+
 
 # def test_foo():
 #     print('--------- Nosetest Logs ---------')
@@ -373,7 +352,7 @@ def test_tick_tock_behaviour_tree():
 #     py_trees.foo1()
 #     py_trees.foo2()
 #     print('--------- Behaviour Logs ---------')
-#     d = Count(name="D")
+#     d = py_trees.Count(name="D")
 #     d.initialise()
 #     print("Done")
 #     assert(True)
