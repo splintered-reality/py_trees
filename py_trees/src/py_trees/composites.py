@@ -174,7 +174,7 @@ class Sequence(Composite):
     Runs all of its children in sequence until all succeed
     """
 
-    def __init__(self, children=None, name="Sequence", *args, **kwargs):
+    def __init__(self, name="Sequence", children=None, *args, **kwargs):
         super(Sequence, self).__init__(name, children, *args, **kwargs)
         self.current_index = 0
         self.logger = logging.getLogger("py_trees.Sequence")

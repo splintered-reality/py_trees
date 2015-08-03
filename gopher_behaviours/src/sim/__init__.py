@@ -7,7 +7,7 @@
 ##############################################################################
 
 """
-Imports for the gopher_behaviours_ package.
+Imports for the gopher_behaviours_ simulated modules (e.g. battery).
 
 .. _gopher_behaviours: http://wiki.ros.org/gopher_behaviours
 
@@ -16,6 +16,3 @@ Imports for the gopher_behaviours_ package.
 # Imports
 ##############################################################################
 
-import battery
-from .compulsion import GopherCompulsion
-from .delivery import GopherDeliveries

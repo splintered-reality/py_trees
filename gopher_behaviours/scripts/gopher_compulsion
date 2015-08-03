@@ -1,0 +1,57 @@
+#!/usr/bin/env python
+#
+# License: BSD
+#   https://raw.github.com/yujinrobot/gopher_crazy_hospital/license/LICENSE
+#
+##############################################################################
+# Documentation
+##############################################################################
+"""
+Simple demo program for py trees
+"""
+##############################################################################
+# Imports
+##############################################################################
+
+import argparse
+import logging
+import py_trees
+import gopher_behaviours
+
+##############################################################################
+# Logging Level
+##############################################################################
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger("gopher_behaviours.GopherCompulsion")
+
+##############################################################################
+# Classes
+##############################################################################
+
+
+def show_usage(root):
+    print("")
+    print("************************************************************************************")
+    print("                                 Gopher Compulsion")
+    print("************************************************************************************")
+    print("")
+    print("Warm, fuzzy, furry, behavioural experiments")
+    print("")
+    py_trees.display.print_ascii_tree(root)
+    print("")
+    print("************************************************************************************")
+    print("")
+
+##############################################################################
+# Main
+##############################################################################
+
+if __name__ == '__main__':
+    gopher_compulsion = gopher_behaviours.GopherCompulsion()
+
+    parser = argparse.ArgumentParser(description='Gopher Compulsion', usage=show_usage(gopher_compulsion.tree.root))
+    unused_args = parser.parse_args()
+
+    #tree.visitors.append(Visitor())
+    #tree.tick_tock(sleep_ms=500, number_of_iterations=py_trees.CONTINUOUS_TICK_TOCK, pre_tick_visitor=PreTickVisitor())

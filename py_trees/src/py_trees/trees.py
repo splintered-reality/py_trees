@@ -120,26 +120,26 @@ class BehaviourTree(object):
             post_tick_visitor.run(self)
         self.count += 1
 
-    def tick_tock(self, sleep_ms, number_of_iterations=CONTINUOUS_TICK_TOCK, pre_tick_visitor=None, post_tick_visitor=None):
+    def tick_tock(self, sleep_ms, number_of_iterations=CONTINUOUS_TICK_TOCK, pre_tick_visitor=None, post_tock_visitor=None):
         """
         Tick continuously with a sleep interval as specified.
 
         :param float sleep_ms: sleep this much between ticks.
         :param int number_of_iterations: number of tick-tocks (-1 for infinite)
         :param pre_tick_visitor: visitor that runs on this class instance before the tick
-        :type pre_tick_visitor: any class with a run(py_trees.BehaviourTree) method
+        :type pre_tick_visitor: any function or class with a __call__ method taking a py_trees.BehaviourTree arg
         :param post_tick_visitor: visitor that runs on this class instance before the tick
-        :type post_tick_visitor: any class with a run(py_trees.BehaviourTree) method
+        :type post_tick_visitor: any function or class with a __call__ method taking a py_trees.BehaviourTree arg
         """
         tick_tocks = 0
         while not self.interrupt_tick_tocking and (tick_tocks < number_of_iterations or number_of_iterations == CONTINUOUS_TICK_TOCK):
             if pre_tick_visitor is not None:
-                pre_tick_visitor.run(self)
+                pre_tick_visitor(self)
             for node in self.root.tick():
                 for visitor in self.visitors:
                     node.visit(visitor)
             if post_tick_visitor is not None:
-                post_tick_visitor.run(self)
+                post_tick_visitor(self)
             try:
                 time.sleep(sleep_ms / 1000.0)
             except KeyboardInterrupt:

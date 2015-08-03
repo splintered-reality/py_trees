@@ -68,6 +68,19 @@ class Foo(object):
 class Bar(Foo):
     pass
 
+
+class Outer(object):
+    class Inner(object):
+        def __init__(self):
+            pass
+
+        def foo(self):
+            print("x: %s" % self.x)
+
+    def __init__(self):
+        self.x = 5
+        self.inner = Outer.Inner()
+
 ##############################################################################
 # Main
 ##############################################################################
@@ -83,3 +96,6 @@ if __name__ == '__main__':
 
     foobar = class_inverter(Foo("FooBar"))
     print("Result: %s" % foobar.update())
+
+    outer = Outer()
+    outer.inner.foo()
