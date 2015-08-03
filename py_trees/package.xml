@@ -20,7 +20,7 @@
   <run_depend>rocon_console</run_depend>
   <run_depend>rospy</run_depend>
 
-  <run_depend>pydot</run_depend>
+  <run_depend>python-pydot</run_depend>
   
   <test_depend>rosunit</test_depend>
 
