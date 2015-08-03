@@ -1,0 +1,23 @@
+<package>
+  <name>gopher_behaviours</name>
+  <version>0.1.0</version>
+  <description>
+    Behaviours for gophers.
+  </description>
+  <maintainer email="d.stonier@gmail.com">Daniel Stonier</maintainer>
+  <license>BSD</license>
+  <url type="website">http://ros.org/wiki/gopher_behaviours</url>
+  <url type="repository">https://github.com/robotics-in-concert/gopher_crazy_hospital</url>
+  <url type="bugtracker">https://github.com/robotics-in-concert/gopher_crazy_hospital/issues</url>
+  <author email="d.stonier@gmail.com">Daniel Stonier</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <run_depend>python-enum34</run_depend>
+  <run_depend>rocon_console</run_depend>
+  <run_depend>rospy</run_depend>
+  <run_depend>py_trees</run_depend>
+  
+  <test_depend>rosunit</test_depend>
+
+</package>
