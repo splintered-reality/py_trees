@@ -1,0 +1,101 @@
+#!/usr/bin/env python
+#
+# License: BSD
+#   https://raw.github.com/yujinrobot/gopher_crazy_hospital/license/LICENSE
+#
+##############################################################################
+# Documentation
+##############################################################################
+"""
+Simple demo program for py trees
+"""
+##############################################################################
+# Imports
+##############################################################################
+
+import argparse
+import logging
+import py_trees
+
+##############################################################################
+# Logging Level
+##############################################################################
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger("py_trees.Test")
+
+##############################################################################
+# Classes
+##############################################################################
+
+
+class Visitor:
+    def __init__(self):
+        self.logger = logging.getLogger("py_trees.Visitor")
+
+    def run(self, behaviour):
+        self.logger.debug("  %s [visited][%s]" % (behaviour.name, behaviour.status))
+
+
+class PreTickVisitor:
+    def run(self, behaviour_tree):
+        print("\n--------- Run %s ---------\n" % behaviour_tree.count)
+
+
+def tick_tree(tree, visitor, from_iteration, to_iteration):
+    print("\n================== Iteration %s-%s ==================\n" % (from_iteration, to_iteration))
+    for i in range(from_iteration, to_iteration + 1):
+        print("\n--------- Run %s ---------\n" % i)
+        for node in tree.tick():
+            node.visit(visitor)
+
+
+def show_usage(root):
+    print("")
+    print("************************************************************************************")
+    print("                                 Babo Demo")
+    print("************************************************************************************")
+    print("")
+    print("TREE")
+    print("")
+    py_trees.display.print_ascii_tree(root)
+    print("")
+    print("EVENTS")
+    print("")
+    print(" - 3 : sequence switches from running to success")
+    print(" - 4 : selector's first child flicks to success once only")
+    print(" - 8 : the fallback idler kicks in as everything else fails")
+    print(" -14 : the first child kicks in again, aborting a running sequence behind it")
+    print("")
+    print("************************************************************************************")
+    print("")
+
+##############################################################################
+# Main
+##############################################################################
+
+if __name__ == '__main__':
+    every_n_success = py_trees.behaviours.SuccessEveryN("EveryN", 5)
+
+    sequence = py_trees.Sequence(name="Sequence")
+    guard = py_trees.behaviours.Success("Guard")
+    periodic_success = py_trees.behaviours.Periodic("Periodic", 3)
+    finisher = py_trees.behaviours.Success("Finisher")
+    sequence.add_child(guard)
+    sequence.add_child(periodic_success)
+    sequence.add_child(finisher)
+
+    idle = py_trees.behaviours.Success("Idle")
+
+    root = py_trees.Selector(name="Root")
+    root.add_child(every_n_success)
+    root.add_child(sequence)
+    root.add_child(idle)
+
+    tree = py_trees.BehaviourTree(root)
+
+    parser = argparse.ArgumentParser(description='Demo the behaviour trees', usage=show_usage(tree.root))
+    unused_args = parser.parse_args()
+
+    tree.visitors.append(Visitor())
+    tree.tick_tock(sleep_ms=500, number_of_iterations=py_trees.CONTINUOUS_TICK_TOCK, pre_tick_visitor=PreTickVisitor())

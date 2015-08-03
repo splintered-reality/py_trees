@@ -22,14 +22,11 @@ package. It provides ...
 
 from .behaviours import (
     Behaviour,
-    Success,
-    Failure,
-    SuccessEveryN,
-    Count,
     create_behaviour_from_function,
     behaviour_update_inverter
     )
+import behaviours  # puts all specific behaviours under the .behaviours namespace
 from .common import Status
 from .composites import Composite, Selector, Sequence
-from .trees import BehaviourTree
+from .trees import BehaviourTree, CONTINUOUS_TICK_TOCK
 import display

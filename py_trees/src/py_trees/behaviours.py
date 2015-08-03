@@ -211,7 +211,6 @@ def failure(self):
     self.logger.debug("  %s [Success::update()]" % self.name)
     return Status.FAILURE
 
-
 Success = create_behaviour_from_function(success)
 Failure = create_behaviour_from_function(failure)
 
@@ -225,6 +224,29 @@ Failure = create_behaviour_from_function(failure)
 ##############################################################################
 
 
+class Periodic(Behaviour):
+    """
+    Return running for N ticks, success for N ticks, failure for N ticks...
+    """
+    def __init__(self, name, n):
+        super(Periodic, self).__init__(name)
+        self.count = 0
+        self.period = n
+        self.response = Status.RUNNING
+
+    def update(self):
+        self.count += 1
+        if self.count > self.period:
+            if self.response == Status.FAILURE:
+                self.response = Status.RUNNING
+            elif self.response == Status.RUNNING:
+                self.response = Status.SUCCESS
+            else:
+                self.response = Status.FAILURE
+            self.count = 0
+        return self.response
+
+
 class SuccessEveryN(Behaviour):
     """
     Return success once every N ticks, failure otherwise.
@@ -234,13 +256,12 @@ class SuccessEveryN(Behaviour):
         self.count = 0
         self.every_n = n
 
-    def initialise(self):
-        self.count = 0
-
     def update(self):
         self.count += 1
+        self.logger.debug("  %s [SuccessEveryN::update()][%s]" % (self.name, self.count))
         if self.count % self.every_n == 0:
             return Status.SUCCESS
+            self.count = 0
         else:
             return Status.FAILURE
 

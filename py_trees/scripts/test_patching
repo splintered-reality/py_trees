@@ -1,0 +1,56 @@
+#!/usr/bin/env python
+#
+# License: BSD
+#   https://raw.github.com/yujinrobot/gopher_crazy_hospital/license/LICENSE
+#
+##############################################################################
+# Documentation
+##############################################################################
+"""
+Simple test program for py trees
+"""
+##############################################################################
+# Imports
+##############################################################################
+
+import rospy
+
+##############################################################################
+# Methods
+##############################################################################
+
+
+class Dog:
+    def __init__(self, name):
+        self.name = name
+
+    def angry(self):
+        print("%s barks!" % self.name)
+
+
+class Turtle:
+    def __init__(self, name):
+        self.name = name
+        self.sound = "bark"
+
+    def angry(self):
+        print("%s grunts!" % self.name)
+
+##############################################################################
+# Main
+##############################################################################
+
+# Monky patching a class with another classes' method - this will use that
+# other classes variables.
+
+if __name__ == '__main__':
+    dog = Dog("Fred")
+    print("Making a copy of the original angry dog behaviour")
+    angry = dog.angry
+    turtle = Turtle("Guimul")
+    print("Giving the dog the turtle's angry behaviour")
+    dog.angry = turtle.angry
+    print("Note the dog has not just gotten the behaviour, but he has BECOME the turtle (i.e. using the turtle's variables)")
+    dog.angry()  # new turtle angry
+    print("However, the copy of the angry dog behaviour hasn't been updated with the monkey patching")
+    angry()  # original dog angry
