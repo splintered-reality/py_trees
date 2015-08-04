@@ -25,7 +25,6 @@ of planning and behavioural compulsion.
 
 import gopher_std_msgs.msg as gopher_std_msgs
 import gopher_std_msgs.srv as gopher_std_srvs
-import logging
 import py_trees
 import rospy
 
@@ -39,7 +38,7 @@ from . import delivery
 
 class Visitor:
     def __init__(self):
-        self.logger = logging.getLogger("gopher_behaviours.Visitor")
+        self.logger = py_trees.logging.get_logger("Visitor")
 
     def run(self, behaviour):
         if behaviour.feedback_message:
@@ -48,21 +47,14 @@ class Visitor:
             self.logger.debug("  %s [visited][%s]" % (behaviour.name, behaviour.status))
 
 
-class PreTickVisitor:
-    def __init__(self):
-        self.logger = logging.getLogger("gopher_behaviours.PreTick")
-
-    def run(self, behaviour_tree):
-        self.logger.debug("\n--------- Run %s ---------\n" % behaviour_tree.count)
-
-
-class GopherCompulsion(object):
+class GopherMindControl(object):
     def __init__(self):
         self.battery_subtree = battery.create_battery_tree(name="Eating Disorder")
         self.quirky_deliveries = delivery.GopherDeliveries(name="Quirky Deliveries", locations=["beer_fridge", "pizza_shop", "sofa_in_front_of_tv", "anywhere_not_near_the_wife"])
         self.idle = py_trees.behaviours.Success("Idle")
-        self.root = py_trees.Selector(name="Gopher Compulsion", children=[self.battery_subtree, self.idle])
+        self.root = py_trees.Selector(name="Mind Control", children=[self.battery_subtree, self.idle])
         self.tree = py_trees.BehaviourTree(self.root)
+        self.logger = py_trees.logging.get_logger("MindControl")
 
         ##################################
         # Ros Components
@@ -72,11 +64,18 @@ class GopherCompulsion(object):
         self._delivery_feedback_publisher = rospy.Publisher('delivery/feedback', gopher_std_msgs.DeliveryFeedback, queue_size=1, latch=True)
         self._delivery_result_publisher = rospy.Publisher('delivery/result', gopher_std_msgs.DeliveryResult, queue_size=1, latch=True)
 
+    ##############################################################################
+    # Tick Tock
+    ##############################################################################
+
     def tick_tock(self):
         self.tree.visitors.append(Visitor())
         self.tree.tick_tock(sleep_ms=500, number_of_iterations=py_trees.CONTINUOUS_TICK_TOCK, pre_tick_visitor=self.pre_tick_visitor, post_tock_visitor=self.post_tock_visitor)
 
     def pre_tick_visitor(self, behaviour_tree):
+        self.logger.debug("")
+        self.logger.debug("{:-^30}".format(" Run %s " % behaviour_tree.count))
+        self.logger.debug("")
         self.quirky_deliveries.pre_tick_update()
         if self.quirky_deliveries.has_a_new_goal:
             if self.quirky_deliveries.old_goal_id is not None:
@@ -91,6 +90,13 @@ class GopherCompulsion(object):
             py_trees.display.print_ascii_tree(self.tree.root)
             print("************************************************************************************")
             print("")
+
+    def post_tock_visitor(self, behaviour_tree):
+        self.quirky_deliveries.post_tock_update()
+
+    ##############################################################################
+    # Ros Methods
+    ##############################################################################
 
     def _goal_service_callback(self, request):
         '''
@@ -119,6 +125,3 @@ class GopherCompulsion(object):
 
     def shutdown(self):
         self.tree.interrupt_tick_tocking = True
-
-    def post_tock_visitor(self, behaviour_tree):
-        self.quirky_deliveries.post_tock_update()

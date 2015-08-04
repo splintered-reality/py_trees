@@ -1,0 +1,10 @@
+<!--
+  Launches gopher mind control.
+
+  Eventually as part of the rapp
+ -->
+<launch>
+  <node name="mind_control" type="gopher_mind_control" pkg="gopher_behaviours">
+    <remap from="mind_control/battery" to="/gopher/status/battery"/>
+  </node>
+</launch>

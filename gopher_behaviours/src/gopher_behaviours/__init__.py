@@ -17,5 +17,5 @@ Imports for the gopher_behaviours_ package.
 ##############################################################################
 
 import battery
-from .compulsion import GopherCompulsion
+from gopher_behaviours.mind_control import GopherMindControl
 from .delivery import GopherDeliveries

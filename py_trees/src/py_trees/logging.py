@@ -113,7 +113,7 @@ class Logger(object):
     """
 
     def __init__(self, name=None):
-        self.prefix = name + " : " if name else ""
+        self.prefix = '{:<12}'.format(name) + " : " if name else ""
 
     def debug(self, msg):
         logdebug(self.prefix + msg)

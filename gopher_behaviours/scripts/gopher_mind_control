@@ -13,7 +13,6 @@ Simple demo program for py trees
 # Imports
 ##############################################################################
 
-import argparse
 import gopher_behaviours
 import py_trees
 import rospy
@@ -44,9 +43,5 @@ if __name__ == '__main__':
     rospy.init_node("gopher_compulsion", log_level=rospy.DEBUG)
     py_trees.logging.level = py_trees.logging.Level.DEBUG
 
-    gopher_compulsion = gopher_behaviours.GopherCompulsion()
-
-    parser = argparse.ArgumentParser(description='Gopher Compulsion', usage=show_usage(gopher_compulsion.tree.root))
-    unused_args = parser.parse_args()
-
+    gopher_compulsion = gopher_behaviours.GopherMindControl()
     gopher_compulsion.tick_tock()
