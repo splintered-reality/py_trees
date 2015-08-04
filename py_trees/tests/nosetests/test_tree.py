@@ -12,7 +12,6 @@
 # (unicode_literals not compatible with python2 uuid module)
 from __future__ import absolute_import, print_function
 
-import logging
 from nose.tools import assert_raises
 import py_trees
 import rocon_console.console as console
@@ -21,8 +20,8 @@ import rocon_console.console as console
 # Logging Level
 ##############################################################################
 
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger("py_trees.Test")
+py_trees.logging.level = py_trees.logging.Level.DEBUG
+logger = py_trees.logging.get_logger("Nosetest")
 
 ##############################################################################
 # Classes
@@ -30,7 +29,7 @@ logger = logging.getLogger("py_trees.Test")
 
 class Visitor:
     def __init__(self):
-        self.logger = logging.getLogger("py_trees.Visitor")
+        self.logger = py_trees.logging.get_logger("Visitor")
 
     def run(self, behaviour):
         self.logger.debug("  %s [visited][%s]" % (behaviour.name, behaviour.status))

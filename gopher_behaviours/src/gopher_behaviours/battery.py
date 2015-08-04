@@ -26,6 +26,7 @@ import logging
 import py_trees
 import rospy
 import somanet_msgs.msg as somanet_msgs
+import std_msgs.msg as std_msgs
 
 from . import moveit
 
@@ -36,13 +37,20 @@ from . import moveit
 
 class CheckBatteryLevel(py_trees.Behaviour):
     def __init__(self, name):
+        # setup
         super(CheckBatteryLevel, self).__init__(name)
-        self.battery_critical_threshold = rospy.get_param("battery_critical_threshold", 30)
+        self.battery_critical_threshold = rospy.get_param("battery/critical_threshold", 30)
         self.battery_percentage = 100
-        rospy.Subscriber("battery", somanet_msgs.SmartBatteryStatus, self.battery_callback)
+        #rospy.Subscriber("battery", somanet_msgs.SmartBatteryStatus, self.battery_callback)
+
+        # this should be in a separate node (not part of the behaviour)
+        #self._battery_charging_publisher = rospy.Publisher('battery/charging', std_msgs.Bool, queue_size=1, latch=True)
+        rospy.sleep(0.1)  # publishers need a small time to be ready
+        #self._battery_charging_publisher.publish(std_msgs.Bool(False))
 
     def update(self):
-        self.logger.debug("  %s [CheckBatteryLevel::update()]" % self.name)
+        self.feedback_message = "battery %s%%" % self.battery_percentage
+        self.logger.debug("  %s [update()]" % self.name)
         if self.battery_percentage < self.battery_critical_threshold:
             return py_trees.Status.SUCCESS
         else:
@@ -50,6 +58,7 @@ class CheckBatteryLevel(py_trees.Behaviour):
 
     def battery_callback(self, msg):
         self.battery_percentage = msg.percentage
+        self._battery_charging_publisher.publish(std_msgs.Bool(msg.charge_state == somanet_msgs.SmartBatteryStatus.CHARGING))
 
 
 def create_battery_tree(name):

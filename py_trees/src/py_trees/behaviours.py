@@ -22,9 +22,9 @@ This module defines the interface for behaviours to be used in py_trees.
 # Imports
 ##############################################################################
 
-import logging
 import uuid
 
+from . import logging
 from .common import Status
 
 ##############################################################################
@@ -42,7 +42,8 @@ class Behaviour(object):
         self.iterator = self.tick()
         self.parent = None  # will get set if a behaviour is added to a composite
         self.children = []  # only set by composite behaviours
-        self.logger = logging.getLogger("py_trees.Behaviour")
+        self.logger = logging.get_logger("Behaviour")
+        self.feedback_message = ""  # useful for debugging, or human readable updates, but not necessary to implement
 
     ############################################
     # User Defined Functions (virtual)
@@ -60,7 +61,7 @@ class Behaviour(object):
         :param Status new_status: compare with current status for decision logic.
 
         """
-        self.logger.debug("  %s [Behaviour::terminate()]" % self.name)
+        self.logger.debug("  %s [terminate()]" % self.name)
         pass
 
     def update(self):
@@ -69,7 +70,7 @@ class Behaviour(object):
 
         :return: the behaviour's current :py:class:`Status <py_trees.common.Status>`
         """
-        self.logger.debug("  %s [Behaviour::update()]" % self.name)
+        self.logger.debug("  %s [update()]" % self.name)
         return Status.INVALID
 
     ############################################
@@ -92,7 +93,7 @@ class Behaviour(object):
 
         :return Status: resulting state after the tick is completed
         """
-        self.logger.debug("  %s [Behaviour::tick()]" % self.name)
+        self.logger.debug("  %s [tick()]" % self.name)
         if self.status != Status.RUNNING:
             self.initialise()
         # don't set self.status yet, terminate() may need to check what the current state is first
@@ -128,7 +129,7 @@ class Behaviour(object):
         should not be done here - it could be a long time before the behaviour gets
         called again, and you shouldn't consume those resources in the meantime).
         """
-        self.logger.debug("  %s [Behaviour::abort()]" % self.name)
+        self.logger.debug("  %s [abort()]" % self.name)
         self.terminate(new_status)
         self.status = new_status
         self.iterator = self.tick()
@@ -275,7 +276,7 @@ class Count(Behaviour):
         self.success_until = success_until
         self.number_count_resets = 0
         self.number_updated = 0
-        self.logger = logging.getLogger("py_trees.Count")
+        self.logger = logging.get_logger("Count")
 
     def terminate(self, new_status):
         self.logger.debug("  %s [terminate()]" % self.name)

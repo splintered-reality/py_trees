@@ -3,6 +3,8 @@
 	<name>gopher_behaviours</name>
 	<comment></comment>
 	<projects>
+		<project>gopher_std_msgs</project>
+		<project>py_trees</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

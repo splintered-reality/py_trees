@@ -23,9 +23,11 @@ versions are also included here.
 # Imports
 ##############################################################################
 
-import itertools
-import logging
+from __future__ import absolute_import
 
+import itertools
+
+from . import logging
 from .behaviours import Behaviour
 from .common import Status
 
@@ -39,7 +41,7 @@ class Composite(Behaviour):
     def __init__(self, name="", children=None, *args, **kwargs):
         super(Composite, self).__init__(name, *args, **kwargs)
         self.children = children if children is not None else []
-        self.logger = logging.getLogger("py_trees.Composite")
+        self.logger = logging.get_logger("Composite")
 
     ############################################
     # Worker Overrides
@@ -126,7 +128,7 @@ class Selector(Composite):
     def __init__(self, name="Selector", children=None, *args, **kwargs):
         super(Selector, self).__init__(name, children, *args, **kwargs)
         self.current_child = None
-        self.logger = logging.getLogger("py_trees.Selector")
+        self.logger = logging.get_logger("Selector ")
 
     def update(self):
         self.logger.debug("  %s [update()]" % self.name)
@@ -177,7 +179,7 @@ class Sequence(Composite):
     def __init__(self, name="Sequence", children=None, *args, **kwargs):
         super(Sequence, self).__init__(name, children, *args, **kwargs)
         self.current_index = 0
-        self.logger = logging.getLogger("py_trees.Sequence")
+        self.logger = logging.get_logger("Sequence ")
 
     def initialise(self):
         """
@@ -185,7 +187,6 @@ class Sequence(Composite):
         beginning.
         """
         self.logger.debug("  %s [initialise()]" % self.name)
-        self.current_child = None
         self.current_index = 0
 
     def tick(self):
@@ -201,6 +202,9 @@ class Sequence(Composite):
         # At this point, all children are happy with their SUCCESS, so we should be happy with SUCCESS too
         self.abort(Status.SUCCESS)
         yield self
+
+    def current_child(self):
+        return self.children[self.current_index] if self.children else None
 
     def abort(self, new_status=Status.INVALID):
         self.logger.debug("  %s [abort()][%s]" % (self.name, self.status))

@@ -25,6 +25,7 @@ This module creates tools for managing your entire behaviour tree.
 #import logging
 import time
 from .behaviours import Behaviour
+from .composites import Composite
 
 ##############################################################################
 # Classes
@@ -78,6 +79,29 @@ class BehaviourTree(object):
                 if parent is not None:
                     parent.remove_child(child)
                     return True
+        return False
+
+    def insert_subtree(self, child, unique_id, index):
+        """
+        Insert subtree as a child of the specified parent.
+
+        :param uuid.UUID unique_id: id of the parent container (usually Selector or Sequence)
+        :param int index: insert the child at this index, pushing all children after it back one.
+        :return: False if parent node was not found, True if inserted
+
+        .. todo::
+
+           Could use better, more informative error handling here. Especially if the insertion
+           has its own error handling (e.g. index out of range).
+
+           Could also use a different api that relies on the id
+           of the sibling node it should be inserted before/after.
+        """
+        for node in self.root.iterate():
+            if node.id == unique_id:
+                assert isinstance(node, Composite), "parent must be a Composite behaviour."
+                node.insert_child(child, index)
+                return True
         return False
 
     def replace_subtree(self, unique_id, subtree):
@@ -138,8 +162,8 @@ class BehaviourTree(object):
             for node in self.root.tick():
                 for visitor in self.visitors:
                     node.visit(visitor)
-            if post_tick_visitor is not None:
-                post_tick_visitor(self)
+            if post_tock_visitor is not None:
+                post_tock_visitor(self)
             try:
                 time.sleep(sleep_ms / 1000.0)
             except KeyboardInterrupt:
