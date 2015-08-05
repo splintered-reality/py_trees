@@ -262,9 +262,9 @@ class ROSBehaviourTree(BehaviourTree):
         """
         super(ROSBehaviourTree, self).__init__(root)
         self.ascii_tree_publisher = rospy.Publisher('~ascii_tree', std_msgs.String, queue_size=1, latch=True)
-        self.snapshot_ascii_tree_publisher = rospy.Publisher('~snapshot/ascii_tree', std_msgs.String, queue_size=1, latch=True)
+        self.snapshot_ascii_tree_publisher = rospy.Publisher('~tick/ascii_tree', std_msgs.String, queue_size=1, latch=True)
         self.dot_tree_publisher = rospy.Publisher('~dot_tree', std_msgs.String, queue_size=1, latch=True)
-        self.snapshot_dot_tree_publisher = rospy.Publisher('~snapshot/dot_tree', std_msgs.String, queue_size=1, latch=True)
+        self.snapshot_dot_tree_publisher = rospy.Publisher('~tick/dot_tree', std_msgs.String, queue_size=1, latch=True)
         # tree_update_handler is in the base class, set this to the callback function here.
         self.tree_update_handler = self.publish_tree_modifications
         self.snapshot_visitor = ROSBehaviourTree.SnapshotVisitor()
