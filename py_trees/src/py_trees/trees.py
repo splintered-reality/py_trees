@@ -22,10 +22,14 @@ This module creates tools for managing your entire behaviour tree.
 # Imports
 ##############################################################################
 
-#import logging
+import rospy
+import std_msgs.msg as std_msgs
 import time
+
+from . import display
 from .behaviours import Behaviour
 from .composites import Composite
+
 
 ##############################################################################
 # Classes
@@ -64,6 +68,7 @@ class BehaviourTree(object):
         self.root = root
         self.visitors = []
         self.interrupt_tick_tocking = False
+        self.tree_update_handler = None  # child classes can utilise this one
 
     def prune_subtree(self, unique_id):
         """
@@ -78,6 +83,8 @@ class BehaviourTree(object):
                 parent = child.parent
                 if parent is not None:
                     parent.remove_child(child)
+                    if self.tree_update_handler is not None:
+                        self.tree_update_handler(self.root)
                     return True
         return False
 
@@ -101,6 +108,8 @@ class BehaviourTree(object):
             if node.id == unique_id:
                 assert isinstance(node, Composite), "parent must be a Composite behaviour."
                 node.insert_child(child, index)
+                if self.tree_update_handler is not None:
+                    self.tree_update_handler(self.root)
                 return True
         return False
 
@@ -123,6 +132,8 @@ class BehaviourTree(object):
                 parent = child.parent
                 if parent is not None:
                     parent.replace_child(child, subtree)
+                    if self.tree_update_handler is not None:
+                        self.tree_update_handler(self.root)
                     return True
         return False
 
@@ -177,3 +188,43 @@ class BehaviourTree(object):
         Interrupt tick-tock if it is tick-tocking.
         """
         self.interrupt_tick_tocking = True
+
+
+class ROSBehaviourTree(BehaviourTree):
+    """
+    Wrap the :py:class:`BehaviourTree <py_trees.trees.BehaviourTree>` class with
+    a few latched publishers that publish representations of both the full tree and the
+    runtime iteration on that tree.
+
+    Publishers:
+
+     - ~/ascii_tree (std_msgs/String) : ascii representation of the entire tree.
+     - ~/snapshot/ascii_tree (std_msgs/String) : runtime snapshot of the ascii tree.
+     - ~/dot_tree (std_msgs/String) : dot graph representation of the entire tree.
+     - ~/snapshot/dot_tree (std_msgs/String) : runtime snapshot of the dot tree.
+    """
+    def __init__(self, root):
+        """
+        Initialise the tree with a root.
+
+        :param root: root node of the tree.
+        :type root: instance or descendant of :class:`Behaviour <py_trees.behaviours.Behaviour>`
+        :raises AssertionError: if incoming root variable is not the correct type.
+        """
+        super(ROSBehaviourTree, self).__init__(root)
+        self.ascii_tree_publisher = rospy.Publisher('~ascii_tree', std_msgs.String, queue_size=1, latch=True)
+        self.snapshot_ascii_tree_publisher = rospy.Publisher('~snapshot/ascii_tree', std_msgs.String, queue_size=1, latch=True)
+        self.dot_tree_publisher = rospy.Publisher('~dot_tree', std_msgs.String, queue_size=1, latch=True)
+        self.snapshot_dot_tree_publisher = rospy.Publisher('~snapshot/dot_tree', std_msgs.String, queue_size=1, latch=True)
+        # tree_update_handler is in the base class, set this to the callback function here.
+        self.tree_update_handler = self.tree_modifications_callback
+
+    def tree_modifications_callback(self, root):
+        """
+        Publishes updates when the whole tree has been modified.
+
+        This function is passed in as a visitor to the underlying behaviour tree and triggered
+        when there has been a change.
+        """
+        self.ascii_tree_publisher.publish(std_msgs.String(display.ascii_tree(self.root)))
+        self.dot_tree_publisher.publish(std_msgs.String(display.stringify_dot_tree(self.root)))

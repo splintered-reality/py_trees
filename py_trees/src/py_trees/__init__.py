@@ -17,16 +17,13 @@ package. It provides ...
 # Imports
 ##############################################################################
 
-#import pi_trees
-#import coroutines
-
 from .behaviours import (
     Behaviour,
     create_behaviour_from_function,
     behaviour_update_inverter
-    )
+)
 import behaviours  # puts all specific behaviours under the .behaviours namespace
 from .common import Status
 from .composites import Composite, Selector, Sequence
-from .trees import BehaviourTree, CONTINUOUS_TICK_TOCK
+from .trees import BehaviourTree, ROSBehaviourTree, CONTINUOUS_TICK_TOCK
 import display

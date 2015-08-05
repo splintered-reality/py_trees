@@ -62,9 +62,10 @@ class GopherHiveMind(object):
         self.quirky_deliveries = gopher_behaviours.delivery.GopherDeliveries(name="Quirky Deliveries", locations=starting_goal_locations)
         self.idle = py_trees.behaviours.Success("Idle")
         self.root = py_trees.Selector(name="HiveMind", children=[self.battery_subtree, self.idle])
-        self.tree = py_trees.BehaviourTree(self.root)
+        self.tree = py_trees.ROSBehaviourTree(self.root)
         self.logger = py_trees.logging.get_logger("MindControl")
-        self.render = True
+        self.render = False
+
         ##################################
         # Ros Components
         ##################################

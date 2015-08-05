@@ -30,6 +30,39 @@ from .composites import Sequence, Selector
 ##############################################################################
 
 
+def generate_ascii_tree(tree, indent=0):
+    """
+    Generate the ascii tree (worker function).
+
+    :param tree: the root of the tree, or subtree you want to show
+    :param indent: the number of characters to indent the tree
+    :return: a generator that yields ascii representations of nodes one by one
+    """
+    if indent == 0:
+        yield "%s" % tree.name
+    for child in tree.children:
+        yield "    " * indent + "-->" + child.name
+        if child.children != []:
+            for line in generate_ascii_tree(child, indent + 1):
+                yield line
+
+
+def ascii_tree(tree, indent=0):
+    """
+    Build the ascii tree representation as a string for redirecting
+    to elsewhere other than stdout (e.g. ros publisher)
+
+    :param tree: the root of the tree, or subtree you want to show
+    :param indent: the number of characters to indent the tree
+    :return: ascii_tree as a string
+
+    """
+    s = ""
+    for line in generate_ascii_tree(tree, indent):
+        s += "%s\n" % line
+    return s
+
+
 def print_ascii_tree(tree, indent=0):
     """
     Print the ASCII representation of a behaviour tree.
@@ -38,16 +71,18 @@ def print_ascii_tree(tree, indent=0):
     :param indent: the number of characters to indent the tree
     :return: nothing
     """
-    if indent == 0:
-        print("%s" % tree.name)
-    for child in tree.children:
-        print "    " * indent, "-->", child.name
-
-        if child.children != []:
-            print_ascii_tree(child, indent + 1)
+    for line in generate_ascii_tree(tree, indent):
+        print("%s" % line)
 
 
-def render_dot_tree(root):
+def generate_pydot_graph(root):
+    """
+    Render the dot tree to files - _name_.dot, .svg, .png.
+    These files will be created in the present working directory.
+
+    :param root: the root of the tree, or subtree you want to generate
+    :return: the dot graph as a pydot.Dot graph
+    """
     def get_node_attributes(node):
         if isinstance(node, Selector):
             return ('box', 'cyan')
@@ -74,6 +109,28 @@ def render_dot_tree(root):
                 add_edges(c)
 
     add_edges(root)
+    return graph
+
+
+def stringify_dot_tree(root):
+    """
+    Generate dot tree graphs and return a string representation of the dot graph.
+
+    :param root: the root of the tree, or subtree you want to show
+    :return: dot graph as a string
+    """
+    graph = generate_pydot_graph(root)
+    return graph.to_string()
+
+
+def render_dot_tree(root):
+    """
+    Render the dot tree to files - _name_.dot, .svg, .png.
+    These files will be created in the present working directory.
+
+    :param root: the root of the tree, or subtree you want to show
+    """
+    graph = generate_pydot_graph(root)
     name = root.name.lower()
     print("Writing %s.dot/svg/png" % name)
     graph.write(name + '.dot')
