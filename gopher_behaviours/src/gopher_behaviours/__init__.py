@@ -20,5 +20,4 @@ import battery
 import delivery
 
 # bring these into the root namespace of the package
-from gopher_behaviours.mind_control import GopherMindControl
 from .delivery import GopherDeliveries

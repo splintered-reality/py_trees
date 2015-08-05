@@ -71,6 +71,12 @@ class Blackboard:
 ##############################################################################
 
 class Waiting(py_trees.Behaviour):
+    """
+    Requires blackboard variables:
+
+     - traversed_locations [list of strings]
+     - remaining locations [list of strings]
+    """
     def __init__(self, name, location, dont_wait_for_hoomans_flag):
         super(Waiting, self).__init__(name)
         self.location = location
@@ -109,6 +115,12 @@ class Waiting(py_trees.Behaviour):
 
 class GopherDeliveries(object):
     """
+    Big picture view for bundling delivery behaviours.
+
+    Requires blackboard variables:
+
+     - is_waiting [bool]
+
     :ivar root: root of the behaviour subtree for deliveries.
 
     .. todo::
@@ -187,6 +199,20 @@ class GopherDeliveries(object):
         children.append(moveit.GoHome(name="Heading Home"))
         return children
 
+    def is_executing(self):
+        """
+        Is the robot currently mid-delivery?
+        """
+        return ((self.state == State.WAITING) or (self.state == State.TRAVELLING))
+
+    def succeeded_on_last_tick(self):
+        """
+        Did the behaviour subtree succeed on the last tick?
+        """
+        if self.root is not None:
+            return self.root.status == py_trees.Status.SUCCESS
+        return False
+
     def post_tock_update(self):
         if self.root is not None and self.root.status == py_trees.Status.RUNNING:
             if isinstance(self.root.current_child(), moveit.MoveToGoal):
@@ -198,7 +224,6 @@ class GopherDeliveries(object):
             elif isinstance(self.root.current_child, Waiting):
                 self.state = State.WAITING
                 self.feedback_message = self.root.current_child.feedback_message
-        elif self.root is not None and self.root.status == py_trees.Status.SUCCESS:
         else:
             self.state = State.IDLE
             self.feedback_message = "idling"

@@ -6,34 +6,36 @@
 ##############################################################################
 # Documentation
 ##############################################################################
-
 """
-.. module:: compulsion
-   :platform: Unix
-   :synopsis: Mind control the little suckers.
-
-Coerce the gophers into doing what you want them to do. Just a little bit
-of planning and behavioural compulsion.
-
-----
-
+Simple demo program for py trees
 """
-
 ##############################################################################
 # Imports
 ##############################################################################
 
+import gopher_behaviours
 import gopher_std_msgs.msg as gopher_std_msgs
 import gopher_std_msgs.srv as gopher_std_srvs
 import py_trees
 import rospy
 
-from . import battery
-from . import delivery
+##############################################################################
+# Support Classes
+##############################################################################
 
-##############################################################################
-# Classes
-##############################################################################
+
+def show_usage(root):
+    print("")
+    print("************************************************************************************")
+    print("                                 Gopher Compulsion")
+    print("************************************************************************************")
+    print("")
+    print("Warm, fuzzy, furry, behavioural experiments")
+    print("")
+    py_trees.display.print_ascii_tree(root)
+    print("")
+    print("************************************************************************************")
+    print("")
 
 
 class Visitor:
@@ -47,15 +49,22 @@ class Visitor:
             self.logger.debug("  %s [visited][%s]" % (behaviour.name, behaviour.status))
 
 
-class GopherMindControl(object):
+##############################################################################
+# Core Controller
+##############################################################################
+
+
+class GopherHiveMind(object):
     def __init__(self):
-        self.battery_subtree = battery.create_battery_tree(name="Eating Disorder")
-        self.quirky_deliveries = delivery.GopherDeliveries(name="Quirky Deliveries", locations=delivery.desirable_destinations)
+        self.battery_subtree = gopher_behaviours.battery.create_battery_tree(name="Eating Disorder")
+        start_with_goal = rospy.get_param("~start_with_goal", False)
+        starting_goal_locations = gopher_behaviours.delivery.desirable_destinations if start_with_goal else []
+        self.quirky_deliveries = gopher_behaviours.delivery.GopherDeliveries(name="Quirky Deliveries", locations=starting_goal_locations)
         self.idle = py_trees.behaviours.Success("Idle")
-        self.root = py_trees.Selector(name="Mind Control", children=[self.battery_subtree, self.idle])
+        self.root = py_trees.Selector(name="HiveMind", children=[self.battery_subtree, self.idle])
         self.tree = py_trees.BehaviourTree(self.root)
         self.logger = py_trees.logging.get_logger("MindControl")
-
+        self.render = True
         ##################################
         # Ros Components
         ##################################
@@ -92,17 +101,31 @@ class GopherMindControl(object):
             print("")
 
     def post_tock_visitor(self, behaviour_tree):
+        """
+        Post results on the delivery feedback/results publishers.
+
+        Could/should possibly move this into the delivery class itself.
+        """
+        if self.render:
+            py_trees.display.render_dot_tree(self.root)
+            self.render = False
         self.quirky_deliveries.post_tock_update()
-        msg = gopher_std_msgs.DeliveryFeedback()
-        msg.header.stamp = rospy.Time.now()
-        msg.state = self.quirky_deliveries.state
-        if msg.state == delivery.State.WAITING or msg.state == delivery.State.RUNNING:
+        if self.quirky_deliveries.is_executing():
+            msg = gopher_std_msgs.DeliveryFeedback()
+            msg.header.stamp = rospy.Time.now()
+            msg.state = self.quirky_deliveries.state
             msg.traversed_locations = self.quirky_deliveries.blackboard.traversed_locations
             msg.remaining_locations = self.quirky_deliveries.blackboard.remaining_locations
-        else:
-            msg.traversed_locations = []
-            msg.remaining_locations = []
-        msg.status_message = self.quirky_deliveries.feedback_message
+            msg.status_message = self.quirky_deliveries.feedback_message
+            self._delivery_feedback_publisher.publish(msg)
+        elif self.quirky_deliveries.succeeded_on_last_tick():
+            msg = gopher_std_msgs.DeliveryResult()
+            msg.header.stamp = rospy.Time.now()
+            msg.traversed_locations = self.quirky_deliveries.blackboard.traversed_locations
+            msg.remaining_locations = self.quirky_deliveries.blackboard.remaining_locations
+            msg.result = gopher_std_msgs.DeliveryErrorCodes.SUCCESS
+            msg.error_message = ""
+            self._delivery_result_publisher.publish(msg)
 
     ##############################################################################
     # Ros Methods
@@ -135,3 +158,17 @@ class GopherMindControl(object):
 
     def shutdown(self):
         self.tree.interrupt_tick_tocking = True
+
+##############################################################################
+# Main
+##############################################################################
+
+if __name__ == '__main__':
+    rospy.init_node("gopher_compulsion", log_level=rospy.INFO)
+    debug_mode = rospy.get_param("~debug", False)
+
+    if debug_mode:
+        py_trees.logging.level = py_trees.logging.Level.DEBUG
+
+    gopher_compulsion = GopherHiveMind()
+    gopher_compulsion.tick_tock()

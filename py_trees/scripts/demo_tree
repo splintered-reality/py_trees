@@ -15,6 +15,7 @@ Simple demo program for py trees
 
 import argparse
 import py_trees
+import sys
 
 ##############################################################################
 # Logging Level
@@ -67,6 +68,10 @@ def show_usage(root):
     print("************************************************************************************")
     print("")
 
+def render(root):
+    print("Rendering the behaviour tree")
+    py_trees.display.render_dot_tree(root)
+
 ##############################################################################
 # Main
 ##############################################################################
@@ -92,7 +97,12 @@ if __name__ == '__main__':
     tree = py_trees.BehaviourTree(root)
 
     parser = argparse.ArgumentParser(description='Demo the behaviour trees', usage=show_usage(tree.root))
-    unused_args = parser.parse_args()
+    parser.add_argument('-r', '--render', action='store_true', help='render dot tree to file.')
+    args = parser.parse_args()
+
+    if args.render:
+        render(root)
+        sys.exit()
 
     tree.visitors.append(Visitor())
     tree.tick_tock(sleep_ms=500, number_of_iterations=py_trees.CONTINUOUS_TICK_TOCK, pre_tick_visitor=pre_tick_visitor)

@@ -74,8 +74,8 @@ def render_dot_tree(root):
                 add_edges(c)
 
     add_edges(root)
-    print("Writing tree.png")
     name = root.name.lower()
+    print("Writing %s.dot/svg/png" % name)
     graph.write(name + '.dot')
     graph.write_png(name + '.png')
     graph.write_svg(name + '.svg')

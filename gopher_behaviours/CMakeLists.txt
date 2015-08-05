@@ -20,11 +20,12 @@ catkin_python_setup()
 
 #install(FILES src/rocon_uri/rules/rules.yaml DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/rules.yaml)
 
-#install(
-#    PROGRAMS 
-#        scripts/rocon_uri
-#    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-#    )
+catkin_install_python(
+    PROGRAMS
+        scripts/gopher_deliveries
+    DESTINATION
+        ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 ##############################################################################
 # Unit Tests
