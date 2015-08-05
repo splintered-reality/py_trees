@@ -40,7 +40,7 @@ def show_usage(root):
 ##############################################################################
 
 if __name__ == '__main__':
-    rospy.init_node("gopher_compulsion", log_level=rospy.DEBUG)
+    rospy.init_node("gopher_compulsion", log_level=rospy.INFO)
     py_trees.logging.level = py_trees.logging.Level.DEBUG
 
     gopher_compulsion = gopher_behaviours.GopherMindControl()

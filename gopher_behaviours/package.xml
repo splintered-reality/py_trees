@@ -13,6 +13,7 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
+  <run_depend>actionlib</run_depend>
   <run_depend>python-enum34</run_depend>
   <run_depend>gopher_std_msgs</run_depend>
   <run_depend>rocon_console</run_depend>

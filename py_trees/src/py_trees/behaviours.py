@@ -62,7 +62,6 @@ class Behaviour(object):
 
         """
         self.logger.debug("  %s [terminate()]" % self.name)
-        pass
 
     def update(self):
         """

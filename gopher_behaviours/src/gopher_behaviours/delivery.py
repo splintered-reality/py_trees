@@ -22,7 +22,7 @@ Gopher delivery behaviours! Are they good for anothing else?
 # Imports
 ##############################################################################
 
-from enum import Enum
+from enum import IntEnum
 import py_trees
 import rospy
 import gopher_std_msgs.msg as gopher_std_msgs
@@ -30,21 +30,28 @@ import std_msgs.msg as std_msgs
 from . import moveit
 
 ##############################################################################
-# Class
+# Dummy Delivery Locations List (for testing)
+##############################################################################
+
+desirable_destinations = ["beer_fridge", "pizza_shop", "sofa_in_front_of_tv", "anywhere_not_near_the_wife"]
+
+##############################################################################
+# Machinery
 ##############################################################################
 
 
-class State(Enum):
-    """ An enumerator representing the status of a behaviour """
+# this exactly matches the codes in gopher_std_msgs/DeliveryFeedback
+class State(IntEnum):
+    """ An enumerator representing the status of a delivery behaviour """
 
     """Behaviour has no current goal."""
-    IDLE = "IDLE"
+    IDLE = 0
     """Behaviour is waiting for a hooman interaction"""
-    WAITING = "WAITING"
+    WAITING = 1
     """Behaviour is executing"""
-    TRAVELLING = "TRAVELLING"
+    TRAVELLING = 2
     """Behaviour is in an invalid state"""
-    INVALID = "INVALID"
+    INVALID = 3
 
 
 class Blackboard:
@@ -59,6 +66,10 @@ class Blackboard:
         self.__dict__ = self.__shared_state
 
 
+##############################################################################
+# Delivery Specific Behaviours
+##############################################################################
+
 class Waiting(py_trees.Behaviour):
     def __init__(self, name, location, dont_wait_for_hoomans_flag):
         super(Waiting, self).__init__(name)
@@ -66,8 +77,10 @@ class Waiting(py_trees.Behaviour):
         self.blackboard = Blackboard()
         self.dont_wait_for_hoomans = dont_wait_for_hoomans_flag
         self.go_requested = False
-        self.feedback_message = "hanging around at '%s' waiting for the lazy bastards to do something" % location
-        # could potentially have this
+        self.feedback_message = "hanging around at '%s' waiting for lazy bastards" % (location)
+
+        # ros communications
+        # could potentially have this in the waiting behaviour
         self._go_button_subscriber = rospy.Subscriber("delivery/go", std_msgs.Empty, self._go_button_callback)
 
     def initialise(self):
@@ -87,9 +100,10 @@ class Waiting(py_trees.Behaviour):
         status = py_trees.Status.SUCCESS if self.dont_wait_for_hoomans else py_trees.Status.RUNNING
         if status == py_trees.Status.RUNNING and self.go_requested:
             status = py_trees.Status.SUCCESS
+        self.feedback_message = "remaining: %s" % self.blackboard.remaining_locations
         return status
 
-    def _go_button_callback(self):
+    def _go_button_callback(self, unused_msg):
         self.go_requested = True if self.status == py_trees.Status.RUNNING else False
 
 
@@ -105,6 +119,8 @@ class GopherDeliveries(object):
        Possibly have an idle state that replaces this root instead of just deleting it
        when it has no current goal? We can then check its status to see if it's the active
        branch or not...
+
+       also need to mutex the self.incoming_goal variable
     """
 
     def __init__(self, name, locations=None):
@@ -115,7 +131,7 @@ class GopherDeliveries(object):
         self.state = State.IDLE
         self.locations = []
         self.has_a_new_goal = False
-        self.dont_wait_for_hoomans = rospy.get_param("dont_wait_for_hoomans", True)
+        self.dont_wait_for_hoomans = rospy.get_param("~dont_wait_for_hoomans", False)
         self.feedback_message = ""
         self.old_goal_id = None
 
@@ -125,16 +141,17 @@ class GopherDeliveries(object):
         :return: tuple of (gopher_std_msgs.DeliveryErrorCodes, string)
         """
         # don't need a lock: http://effbot.org/pyfaq/what-kinds-of-global-value-mutation-are-thread-safe.htm
+        print("New goal: %s" % locations)
         if locations is None or not locations:
             return (gopher_std_msgs.DeliveryErrorCodes.GOAL_EMPTY_NOTHING_TO_DO, "goal empty, nothing to do.")
         if self.state == State.IDLE:
             self.incoming_goal = locations
             return (gopher_std_msgs.DeliveryErrorCodes.SUCCESS, "assigned new goal")
-        elif self._state_handler.state == State.WAITING:
+        elif self.state == State.WAITING:
             self.incoming_goal = locations
             return (gopher_std_msgs.DeliveryErrorCodes.SUCCESS, "pre-empting current goal")
         else:
-            return (gopher_std_msgs.DeliveryErrorCodes.ALREADY_ASSIGNED_A_GOAL, ".")
+            return (gopher_std_msgs.DeliveryErrorCodes.ALREADY_ASSIGNED_A_GOAL, "sorry, busy (already assigned a goal)")
 
     def pre_tick_update(self):
         """
@@ -144,35 +161,44 @@ class GopherDeliveries(object):
         """
         if self.incoming_goal is not None and self.incoming_goal:
             self.old_goal_id = self.root.id if self.root is not None else None
-            children = []
-            for location in self.incoming_goal:
-                children.append(moveit.MoveToGoal(name=location.replace("_", " ").title()))
-                children.append(Waiting(name="Waiting at " + location.replace("_", " ").title(),
-                                        location=location,
-                                        dont_wait_for_hoomans_flag=self.dont_wait_for_hoomans)
-                                )
-            children.append(moveit.GoHome(name="Heading Home"))
+            children = self.locations_to_behaviours(self.incoming_goal)
             self.root = py_trees.Sequence(name="Balli Balli Deliveries", children=children)
+            self.blackboard.traversed_locations = [] if not self.root else self.blackboard.traversed_locations
             self.blackboard.remaining_locations = self.incoming_goal
             self.locations = self.incoming_goal
             self.has_a_new_goal = True
             self.incoming_goal = None
         elif self.root is not None and self.root.status == py_trees.Status.SUCCESS:
+            # last goal was achieved and no new goal, so swap this current subtree out
             self.old_goal_id = self.root.id if self.root is not None else None
             self.root = None
-            # new goal, even if it the none goal, this is the notification upstream that the tree needs to be swapped
             self.has_a_new_goal = True
         else:
             self.has_a_new_goal = False
+
+    def locations_to_behaviours(self, locations):
+        children = [] if self.root is not None else [moveit.UnDock("UnDock")]
+        for location in self.incoming_goal:
+            children.append(moveit.MoveToGoal(name=location.replace("_", " ").title()))
+            children.append(Waiting(name="Waiting at " + location.replace("_", " ").title(),
+                                    location=location,
+                                    dont_wait_for_hoomans_flag=self.dont_wait_for_hoomans)
+                            )
+        children.append(moveit.GoHome(name="Heading Home"))
+        return children
 
     def post_tock_update(self):
         if self.root is not None and self.root.status == py_trees.Status.RUNNING:
             if isinstance(self.root.current_child(), moveit.MoveToGoal):
                 self.state = State.TRAVELLING
-                self.feedback_message = "moving from '%s' to '%s'" % (self.blackboard.traversed_locations[-1], self.blackboard.remaining_locations[0])
+                if self.blackboard.traversed_locations:
+                    self.feedback_message = "moving from '%s' to '%s'" % (self.blackboard.traversed_locations[-1], self.blackboard.remaining_locations[0])
+                else:
+                    self.feedback_message = "moving to '%s'" % self.blackboard.remaining_locations[0]
             elif isinstance(self.root.current_child, Waiting):
                 self.state = State.WAITING
                 self.feedback_message = self.root.current_child.feedback_message
+        elif self.root is not None and self.root.status == py_trees.Status.SUCCESS:
         else:
             self.state = State.IDLE
             self.feedback_message = "idling"

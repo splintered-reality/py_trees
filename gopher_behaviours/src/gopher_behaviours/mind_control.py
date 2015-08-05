@@ -50,7 +50,7 @@ class Visitor:
 class GopherMindControl(object):
     def __init__(self):
         self.battery_subtree = battery.create_battery_tree(name="Eating Disorder")
-        self.quirky_deliveries = delivery.GopherDeliveries(name="Quirky Deliveries", locations=["beer_fridge", "pizza_shop", "sofa_in_front_of_tv", "anywhere_not_near_the_wife"])
+        self.quirky_deliveries = delivery.GopherDeliveries(name="Quirky Deliveries", locations=delivery.desirable_destinations)
         self.idle = py_trees.behaviours.Success("Idle")
         self.root = py_trees.Selector(name="Mind Control", children=[self.battery_subtree, self.idle])
         self.tree = py_trees.BehaviourTree(self.root)
@@ -93,6 +93,16 @@ class GopherMindControl(object):
 
     def post_tock_visitor(self, behaviour_tree):
         self.quirky_deliveries.post_tock_update()
+        msg = gopher_std_msgs.DeliveryFeedback()
+        msg.header.stamp = rospy.Time.now()
+        msg.state = self.quirky_deliveries.state
+        if msg.state == delivery.State.WAITING or msg.state == delivery.State.RUNNING:
+            msg.traversed_locations = self.quirky_deliveries.blackboard.traversed_locations
+            msg.remaining_locations = self.quirky_deliveries.blackboard.remaining_locations
+        else:
+            msg.traversed_locations = []
+            msg.remaining_locations = []
+        msg.status_message = self.quirky_deliveries.feedback_message
 
     ##############################################################################
     # Ros Methods
@@ -117,10 +127,10 @@ class GopherMindControl(object):
         (result, message) = self.quirky_deliveries.set_goal(request.semantic_locations)
         if result == gopher_std_msgs.DeliveryErrorCodes.SUCCESS:
             message = "received goal request [%s]" % message
-            rospy.loginfo("Delivery : " % message)
+            rospy.loginfo("Delivery : [%s]" % message)
         else:
             message = "refused goal request [%s]" % message
-            rospy.logwarn("Delivery : " % message)
+            rospy.logwarn("Delivery : [%s]" % message)
         return gopher_std_srvs.DeliveryGoalResponse(result, message)
 
     def shutdown(self):
