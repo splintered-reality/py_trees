@@ -23,14 +23,24 @@ Various graph drawing tools.
 ##############################################################################
 
 import pydot
+import rocon_console.console as console
 from .composites import Sequence, Selector
+from .common import Status
 
 ##############################################################################
 # Behaviour
 ##############################################################################
 
+# hide from public exposure
+_behaviour_status_to_ascii = {
+    Status.SUCCESS: console.green + "*" + console.reset,
+    Status.FAILURE: console.yellow + "x" + console.reset,
+    Status.INVALID: console.yellow + "*" + console.reset,
+    Status.RUNNING: console.blue + "*" + console.reset
+}
 
-def generate_ascii_tree(tree, indent=0):
+
+def generate_ascii_tree(tree, indent=0, snapshot_information=None):
     """
     Generate the ascii tree (worker function).
 
@@ -38,16 +48,30 @@ def generate_ascii_tree(tree, indent=0):
     :param indent: the number of characters to indent the tree
     :return: a generator that yields ascii representations of nodes one by one
     """
+    nodes = {} if snapshot_information is None else snapshot_information.nodes
+    previously_running_nodes = [] if snapshot_information is None else snapshot_information.previously_running_nodes
+    running_nodes = [] if snapshot_information is None else snapshot_information.running_nodes
+
     if indent == 0:
-        yield "%s" % tree.name
+        if tree.id in nodes:
+            yield "%s [%s]" % (tree.name, _behaviour_status_to_ascii[nodes[tree.id]])
+        elif tree.id in previously_running_nodes and tree.id not in running_nodes:
+            yield "%s" % tree.name + " [" + console.red + "x" + console.reset + "]"
+        else:
+            yield "%s" % tree.name
     for child in tree.children:
-        yield "    " * indent + "-->" + child.name
+        if child.id in nodes:
+            yield "    " * indent + "--> " + child.name + " [%s]" % _behaviour_status_to_ascii[nodes[child.id]]
+        elif child.id in previously_running_nodes and child.id not in running_nodes:
+            yield "    " * indent + "--> " + child.name + " [" + console.red + "x" + console.reset + "]"
+        else:
+            yield "    " * indent + "--> " + child.name
         if child.children != []:
-            for line in generate_ascii_tree(child, indent + 1):
+            for line in generate_ascii_tree(child, indent + 1, snapshot_information):
                 yield line
 
 
-def ascii_tree(tree, indent=0):
+def ascii_tree(tree, indent=0, snapshot_information=None):
     """
     Build the ascii tree representation as a string for redirecting
     to elsewhere other than stdout (e.g. ros publisher)
@@ -58,7 +82,7 @@ def ascii_tree(tree, indent=0):
 
     """
     s = ""
-    for line in generate_ascii_tree(tree, indent):
+    for line in generate_ascii_tree(tree, indent, snapshot_information):
         s += "%s\n" % line
     return s
 

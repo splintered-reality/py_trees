@@ -210,5 +210,4 @@ class Sequence(Composite):
         self.logger.debug("  %s [abort()][%s]" % (self.name, self.status))
         self.current_index = 0
         self.status = new_status
-        # all of the children will already have aborted themselves, so no need to call abort on them again
-        # Composite.abort(self, new_status)
+        Composite.abort(self, new_status)

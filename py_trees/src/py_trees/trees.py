@@ -26,6 +26,7 @@ import rospy
 import std_msgs.msg as std_msgs
 import time
 
+from . import common
 from . import display
 from .behaviours import Behaviour
 from .composites import Composite
@@ -50,7 +51,11 @@ class BehaviourTree(object):
     :ivar root: root node of the tree.
     :vartype root: instance or descendant of :class:`Behaviour <py_trees.behaviours.Behaviour>`
     :ivar visitors: list of entities that visit the iterated parts of the tree when it ticks.
-    :vartype visitors: list of classes that implement a run(py_trees.Behaviour) method.
+    :vartype visitors: list of classes that implement an initialise() and run(py_trees.Behaviour) method.
+    :ivar pre_tick_handlers: methods that run before the entire tree is ticked
+    :vartype pre_tick_handlers: list of methods that take this instance as an arg
+    :ivar post_tick_handlers: methods that run after the entire tree is ticked
+    :vartype post_tick_handlers: list of methods that take this instance as an arg
     :ivar interrupt_tick_tocking: interrupt tick-tock if it is a tick-tocking.
     :vartype interrupt_tick_tocking: bool
     """
@@ -67,6 +72,8 @@ class BehaviourTree(object):
         assert isinstance(root, Behaviour), "root node must be an instance of or descendant of pytrees.Behaviour"
         self.root = root
         self.visitors = []
+        self.pre_tick_handlers = []
+        self.post_tick_handlers = []
         self.interrupt_tick_tocking = False
         self.tree_update_handler = None  # child classes can utilise this one
 
@@ -146,16 +153,25 @@ class BehaviourTree(object):
         :param post_tick_visitor: visitor that runs on this class instance before the tick
         :type post_tick_visitor: any class with a run(py_trees.BehaviourTree) method
         """
+        # pre
+        for visitor in self.pre_tick_handlers:
+            visitor.run(self)
         if pre_tick_visitor is not None:
             pre_tick_visitor.run(self)
+        for visitor in self.visitors:
+            visitor.initialise()
+        # tick
         for node in self.root.tick():
             for visitor in self.visitors:
                 node.visit(visitor)
+        # post
+        for visitor in self.post_tick_handlers:
+            visitor.run(self)
         if post_tick_visitor is not None:
             post_tick_visitor.run(self)
         self.count += 1
 
-    def tick_tock(self, sleep_ms, number_of_iterations=CONTINUOUS_TICK_TOCK, pre_tick_visitor=None, post_tock_visitor=None):
+    def tick_tock(self, sleep_ms, number_of_iterations=CONTINUOUS_TICK_TOCK, pre_tick_handler=None, post_tick_handler=None):
         """
         Tick continuously with a sleep interval as specified.
 
@@ -168,13 +184,22 @@ class BehaviourTree(object):
         """
         tick_tocks = 0
         while not self.interrupt_tick_tocking and (tick_tocks < number_of_iterations or number_of_iterations == CONTINUOUS_TICK_TOCK):
-            if pre_tick_visitor is not None:
-                pre_tick_visitor(self)
+            # pre
+            for visitor in self.pre_tick_handlers:
+                visitor.run(self)
+            if pre_tick_handler is not None:
+                pre_tick_handler(self)
+            for visitor in self.visitors:
+                visitor.initialise()
+            # tick
             for node in self.root.tick():
                 for visitor in self.visitors:
                     node.visit(visitor)
-            if post_tock_visitor is not None:
-                post_tock_visitor(self)
+            # post
+            for handler in self.post_tick_handlers:
+                handler(self)
+            if post_tick_handler is not None:
+                post_tick_handler(self)
             try:
                 time.sleep(sleep_ms / 1000.0)
             except KeyboardInterrupt:
@@ -203,12 +228,36 @@ class ROSBehaviourTree(BehaviourTree):
      - ~/dot_tree (std_msgs/String) : dot graph representation of the entire tree.
      - ~/snapshot/dot_tree (std_msgs/String) : runtime snapshot of the dot tree.
     """
+
+    class SnapshotVisitor:
+        """
+        Visits the tree in tick-tock, recording runtime information for publishing
+        the information as a snapshot view of the tree after the iteration has
+        finished.
+
+        Puts all iterated nodes into a dictionary, key: unique id value: status
+        """
+        def __init__(self):
+            self.nodes = {}
+            self.running_nodes = []
+            self.previously_running_nodes = []
+
+        def initialise(self):
+            self.nodes = {}
+            self.previously_running_nodes = self.running_nodes
+            self.running_nodes = []
+
+        def run(self, behaviour):
+            self.nodes[behaviour.id] = behaviour.status
+            if behaviour.status == common.Status.RUNNING:
+                self.running_nodes.append(behaviour.id)
+
     def __init__(self, root):
         """
         Initialise the tree with a root.
 
         :param root: root node of the tree.
-        :type root: instance or descendant of :class:`Behaviour <py_trees.behaviours.Behaviour>`
+        :type root: instance or descendant of :py:class:`Behaviour <py_trees.behaviours.Behaviour>`
         :raises AssertionError: if incoming root variable is not the correct type.
         """
         super(ROSBehaviourTree, self).__init__(root)
@@ -217,9 +266,12 @@ class ROSBehaviourTree(BehaviourTree):
         self.dot_tree_publisher = rospy.Publisher('~dot_tree', std_msgs.String, queue_size=1, latch=True)
         self.snapshot_dot_tree_publisher = rospy.Publisher('~snapshot/dot_tree', std_msgs.String, queue_size=1, latch=True)
         # tree_update_handler is in the base class, set this to the callback function here.
-        self.tree_update_handler = self.tree_modifications_callback
+        self.tree_update_handler = self.publish_tree_modifications
+        self.snapshot_visitor = ROSBehaviourTree.SnapshotVisitor()
+        self.visitors.append(self.snapshot_visitor)
+        self.post_tick_handlers.append(self.publish_tree_snapshots)
 
-    def tree_modifications_callback(self, root):
+    def publish_tree_modifications(self, root):
         """
         Publishes updates when the whole tree has been modified.
 
@@ -228,3 +280,14 @@ class ROSBehaviourTree(BehaviourTree):
         """
         self.ascii_tree_publisher.publish(std_msgs.String(display.ascii_tree(self.root)))
         self.dot_tree_publisher.publish(std_msgs.String(display.stringify_dot_tree(self.root)))
+
+    def publish_tree_snapshots(self, tree):
+        """
+        Callback that runs on a :py:class:`BehaviourTree <py_trees.trees.BehaviourTree>` after
+        it has ticked.
+
+        :param tree: the behaviour tree
+        :type tree: :py:class:`BehaviourTree <py_trees.trees.BehaviourTree>`
+        """
+        snapshot = "\n\n%s" % display.ascii_tree(self.root, snapshot_information=self.snapshot_visitor)
+        self.snapshot_ascii_tree_publisher.publish(std_msgs.String(snapshot))
