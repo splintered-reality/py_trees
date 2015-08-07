@@ -22,11 +22,9 @@ Behaviours related to checking and reacting to battery notifications.
 # Imports
 ##############################################################################
 
-import logging
 import py_trees
 import rospy
 import somanet_msgs.msg as somanet_msgs
-import std_msgs.msg as std_msgs
 
 from . import moveit
 

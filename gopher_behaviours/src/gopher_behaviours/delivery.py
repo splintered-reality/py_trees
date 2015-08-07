@@ -25,6 +25,8 @@ Gopher delivery behaviours! Are they good for anothing else?
 from enum import IntEnum
 import os
 import py_trees
+import rocon_python_comms
+import rocon_console.console as console
 import rospkg
 import rospy
 import gopher_std_msgs.msg as gopher_std_msgs
@@ -36,16 +38,25 @@ from . import moveit
 # Dummy Delivery Locations List (for testing)
 ##############################################################################
 
-desirable_destinations = ["beer_fridge", "pizza_shop", "sofa_in_front_of_tv", "anywhere_not_near_the_wife", "ashokas_hell", "penthouse"]
 
-
-def _load_desirable_locations():
+def desirable_destinations():
+    """
+    :return: list of gopher_std_msgs.Location objects
+    """
     rospack = rospkg.RosPack()
     pkg_path = rospack.get_path("gopher_rocon_bootstrap")
-    filename = os.path.join(pkg_path, "param", "desirable_destinations.yaml")
-    desirables_yaml = yaml.load(filename)
-    for key, value in yaml.load(open(filename))['desirable_destinations'].iteritems():
-        msg = gopher_std_msgs.Location()
+    filename = os.path.join(pkg_path, "param", "semantic_locations", "desirable_destinations.yaml")
+    desirables = []
+    for key, value in yaml.load(open(filename))['semantic_locations'].iteritems():
+        location = gopher_std_msgs.Location()
+        location.unique_name = key
+        location.name = value['name']
+        location.description = value['description']
+        location.x = value['x']
+        location.y = value['y']
+        location.keyframe_id = value['keyframe_id']
+        desirables.append(location)
+    return desirables
 
 ##############################################################################
 # Machinery
@@ -90,6 +101,10 @@ class Waiting(py_trees.Behaviour):
      - remaining locations [list of strings]
     """
     def __init__(self, name, location, dont_wait_for_hoomans_flag):
+        """
+        :param str name: used for display
+        :param str location: unique name of the location
+        """
         super(Waiting, self).__init__(name)
         self.location = location
         self.blackboard = Blackboard()
@@ -129,11 +144,22 @@ class GopherDeliveries(object):
     """
     Big picture view for bundling delivery behaviours.
 
+    Can preload the delivery system with a set of semantic locations (in all their detail) or
+    can reach out to a ros served set of semantic locations.
+
     Requires blackboard variables:
 
      - is_waiting [bool]
 
     :ivar root: root of the behaviour subtree for deliveries.
+    :ivar blackboard:
+    :ivar incoming_goal:
+    :ivar locations:
+    :ivar has_a_new_goal
+    :ivar dont_wait_for_hoomans:
+    :ivar feedback_message:
+    :ivar old_goal_id:
+    :ivar semantic_locations: pre-load the system with some semantic locations (list of gopher_std_msgs.Location)
 
     .. todo::
 
@@ -146,11 +172,9 @@ class GopherDeliveries(object):
 
        also need to mutex the self.incoming_goal variable
     """
-
-    def __init__(self, name, locations=None):
+    def __init__(self, name, semantic_locations=None):
         self.blackboard = Blackboard()
         self.blackboard.is_waiting = False
-        self.incoming_goal = locations
         self.root = None
         self.state = State.IDLE
         self.locations = []
@@ -158,10 +182,28 @@ class GopherDeliveries(object):
         self.dont_wait_for_hoomans = rospy.get_param("~dont_wait_for_hoomans", False)
         self.feedback_message = ""
         self.old_goal_id = None
+        self.semantic_locations = {}
+        if semantic_locations is not None:
+            self.incoming_goal = [location.unique_name for location in semantic_locations]
+        else:
+            self.incoming_goal = None
+            semantic_locations = []  # fill this up from the map locations server
+            try:
+                response = rocon_python_comms.SubscriberProxy('~semantic_locations', gopher_std_msgs.Locations)(rospy.Duration(5))  # TODO validate this is long enough for our purposes
+                if response is not None:
+                    rospy.loginfo("Gopher Deliveries : served semantic locations from the map locations server [%s]" % [location.unique_name for location in response.locations])
+                    semantic_locations = response.locations
+            except rospy.exceptions.ROSInterruptException:  # make sure to handle a Ros shutdown
+                rospy.logwarn("Gopher Deliveries : ros shutdown(?) while attempting to connect to the map locations server")
+                return
+        for semantic_location in semantic_locations:
+            self.semantic_locations[semantic_location.unique_name] = semantic_location
+        rospy.logdebug("Gopher Deliveries : semantic locations served: \n%s" % self.semantic_locations)
 
     def set_goal(self, locations):
         """
         Callback for receipt of a new goal
+        :param: list of semantic location strings (try to match these against the system served Map Locations list via the unique_name)
         :return: tuple of (gopher_std_msgs.DeliveryErrorCodes, string)
         """
         # don't need a lock: http://effbot.org/pyfaq/what-kinds-of-global-value-mutation-are-thread-safe.htm
@@ -174,7 +216,7 @@ class GopherDeliveries(object):
         elif self.state == State.WAITING:
             self.incoming_goal = locations
             return (gopher_std_msgs.DeliveryErrorCodes.SUCCESS, "pre-empting current goal")
-        else:
+        else:  # we're travelling between locations
             return (gopher_std_msgs.DeliveryErrorCodes.ALREADY_ASSIGNED_A_GOAL, "sorry, busy (already assigned a goal)")
 
     def pre_tick_update(self):
@@ -201,11 +243,18 @@ class GopherDeliveries(object):
             self.has_a_new_goal = False
 
     def locations_to_behaviours(self, locations):
+        """
+        Find the semantic locations corresponding to the incoming string location identifier and
+        create the appropariate behaviours.
+
+        :param: string list of location unique names given to us by the delivery goal.
+        """
         children = [] if self.root is not None else [moveit.UnDock("UnDock")]
-        for location in self.incoming_goal:
-            children.append(moveit.MoveToGoal(name=location.replace("_", " ").title()))
-            children.append(Waiting(name="Waiting at " + location.replace("_", " ").title(),
-                                    location=location,
+        for location in locations:
+            semantic_location = self.semantic_locations[location]  # this is the full gopher_std_msgs.Location structure
+            children.append(moveit.MoveToGoal(name=semantic_location.name))
+            children.append(Waiting(name="Waiting at " + semantic_location.name,
+                                    location=semantic_location.unique_name,
                                     dont_wait_for_hoomans_flag=self.dont_wait_for_hoomans)
                             )
         children.append(moveit.GoHome(name="Heading Home"))

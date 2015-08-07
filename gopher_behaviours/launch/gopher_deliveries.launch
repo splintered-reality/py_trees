@@ -4,23 +4,24 @@
   Eventually as part of the rapp
  -->
 <launch>
-  <arg name="go"    default="false" doc="automate hooman interaction via the 'go' button." />
-  <arg name="debug" default="false" doc="get debug level logging from py_trees"/>
-  <arg name="goal"  default="false" doc="autoload a delivery goal on startup"/>
+  <arg name="go"      default="false" doc="automate hooman interaction via the 'go' button." />
+  <arg name="debug"   default="false" doc="get debug level logging from py_trees"/>
+  <arg name="autorun" default="false" doc="automatically load a test semantic locations list and drop a delivery goal to run on startup"/>
 
   <node name="gopher_deliveries" type="gopher_deliveries" pkg="gopher_behaviours">
     <remap from="gopher_deliveries/battery"            to="/gopher/status/battery"/>
-    <remap from="gopher_deliveries/move_base/cancel"   to="/move_base/cancel"/>
-    <remap from="gopher_deliveries/move_base/feedback" to="/move_base/feedback"/>
-    <remap from="gopher_deliveries/move_base/goal"     to="/move_base/goal"/>
-    <remap from="gopher_deliveries/move_base/result"   to="/move_base/result"/>
-    <remap from="gopher_deliveries/move_base/status"   to="/move_base/status"/>
+    <remap from="gopher_deliveries/move_base/cancel"   to="/navi/move_base/cancel"/>
+    <remap from="gopher_deliveries/move_base/feedback" to="/navi/move_base/feedback"/>
+    <remap from="gopher_deliveries/move_base/goal"     to="/navi/move_base/goal"/>
+    <remap from="gopher_deliveries/move_base/result"   to="/navi/move_base/result"/>
+    <remap from="gopher_deliveries/move_base/status"   to="/navi/move_base/status"/>
+    <remap from="gopher_deliveries/semantic_locations" to="/navi/semantic_locations"/>
     <remap from="delivery/goal"                        to="/rocon/delivery/goal"/>
     <remap from="delivery/feedback"                    to="/rocon/delivery/feedback"/>
     <remap from="delivery/result"                      to="/rocon/delivery/result"/>
     <remap from="delivery/go"                          to="/gopher/buttons/go"/>
     <rosparam param="dont_wait_for_hoomans" subst_value="True">$(arg go)</rosparam>
     <rosparam param="debug" subst_value="True">$(arg debug)</rosparam>
-    <rosparam param="start_with_goal" subst_value="True">$(arg goal)</rosparam>
+    <rosparam param="autorun" subst_value="True">$(arg autorun)</rosparam>
   </node>
 </launch>
