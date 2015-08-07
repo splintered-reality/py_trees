@@ -23,6 +23,7 @@ Gopher delivery behaviours! Are they good for anothing else?
 ##############################################################################
 
 from enum import IntEnum
+import collections
 import os
 import py_trees
 import rocon_python_comms
@@ -48,7 +49,8 @@ def desirable_destinations():
     pkg_path = rospack.get_path("gopher_rocon_bootstrap")
     filename = os.path.join(pkg_path, "param", "semantic_locations", "desirable_destinations.yaml")
     desirables = []
-    for key, value in yaml.load(open(filename))['semantic_locations'].iteritems():
+    loaded_locations = collections.OrderedDict(sorted(yaml.load(open(filename))['semantic_locations'].items()))
+    for key, value in loaded_locations.iteritems():
         location = gopher_std_msgs.Location()
         location.unique_name = key
         location.name = value['name']

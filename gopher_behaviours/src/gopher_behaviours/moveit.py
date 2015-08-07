@@ -67,12 +67,13 @@ class MoveToGoal(py_trees.Behaviour):
     def initialise(self):
         self.logger.debug("  %s [MoveToGoal::initialise()]" % self.name)
         self.action_client = actionlib.SimpleActionClient('~move_base', move_base_msgs.MoveBaseAction)
-        connected = self.action_client.wait_for_server(rospy.Duration(0.2))
+        connected = self.action_client.wait_for_server(rospy.Duration(0.5))
         if not connected:
             rospy.logwarn("MoveToGoal : could not connect with move base.")
             self.action_client = None
         else:
             goal = move_base_msgs.MoveBaseGoal()  # don't yet care about the target
+            goal.target_pose.header.frame_id = "map"
             goal.target_pose.pose.position.x = self.pose.x
             goal.target_pose.pose.position.y = self.pose.y
             quaternion = tf.transformations.quaternion_from_euler(0, 0, self.pose.theta)

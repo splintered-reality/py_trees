@@ -178,7 +178,7 @@ class GopherHiveMind(object):
 
 
     def shutdown(self):
-        self.tree.destroy() # destroy the tree on shutdown to stop the behaviour
+        self.tree.destroy()  # destroy the tree on shutdown to stop the behaviour
         self.tree.interrupt()
 
 ##############################################################################
