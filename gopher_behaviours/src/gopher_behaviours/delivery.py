@@ -23,9 +23,12 @@ Gopher delivery behaviours! Are they good for anothing else?
 ##############################################################################
 
 from enum import IntEnum
+import os
 import py_trees
+import rospkg
 import rospy
 import gopher_std_msgs.msg as gopher_std_msgs
+import yaml
 import std_msgs.msg as std_msgs
 from . import moveit
 
@@ -33,7 +36,16 @@ from . import moveit
 # Dummy Delivery Locations List (for testing)
 ##############################################################################
 
-desirable_destinations = ["beer_fridge", "pizza_shop", "sofa_in_front_of_tv", "anywhere_not_near_the_wife"]
+desirable_destinations = ["beer_fridge", "pizza_shop", "sofa_in_front_of_tv", "anywhere_not_near_the_wife", "ashokas_hell", "penthouse"]
+
+
+def _load_desirable_locations():
+    rospack = rospkg.RosPack()
+    pkg_path = rospack.get_path("gopher_rocon_bootstrap")
+    filename = os.path.join(pkg_path, "param", "desirable_destinations.yaml")
+    desirables_yaml = yaml.load(filename)
+    for key, value in yaml.load(open(filename))['desirable_destinations'].iteritems():
+        msg = gopher_std_msgs.Location()
 
 ##############################################################################
 # Machinery
