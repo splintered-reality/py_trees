@@ -29,6 +29,7 @@ import rocon_python_comms
 import rocon_console.console as console
 import rospkg
 import rospy
+from geometry_msgs.msg import Pose2D
 import gopher_std_msgs.msg as gopher_std_msgs
 import yaml
 import std_msgs.msg as std_msgs
@@ -52,8 +53,10 @@ def desirable_destinations():
         location.unique_name = key
         location.name = value['name']
         location.description = value['description']
-        location.x = value['x']
-        location.y = value['y']
+        location.pose = Pose2D()
+        location.pose.x = value['pose']['x']
+        location.pose.y = value['pose']['y']
+        location.pose.theta = value['pose']['x']
         location.keyframe_id = value['keyframe_id']
         desirables.append(location)
     return desirables
