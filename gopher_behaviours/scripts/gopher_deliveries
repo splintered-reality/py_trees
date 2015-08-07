@@ -168,11 +168,15 @@ class GopherHiveMind(object):
 ##############################################################################
 
 if __name__ == '__main__':
-    rospy.init_node("gopher_compulsion", log_level=rospy.INFO)
-    debug_mode = rospy.get_param("~debug", False)
-
+    # have to read debug param before initialising node, it's not possible to
+    # change the log level after node is initialised.
+    debug_mode = rospy.get_param("/gopher_deliveries/debug", False)
+    log_lev = rospy.INFO
     if debug_mode:
         py_trees.logging.level = py_trees.logging.Level.DEBUG
+        log_lev = rospy.DEBUG
+
+    rospy.init_node("gopher_compulsion", log_level=log_lev)
 
     gopher_compulsion = GopherHiveMind()
     gopher_compulsion.tick_tock()
