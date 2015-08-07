@@ -282,9 +282,9 @@ class GopherDeliveries(object):
                     self.feedback_message = "moving from '%s' to '%s'" % (self.blackboard.traversed_locations[-1], self.blackboard.remaining_locations[0])
                 else:
                     self.feedback_message = "moving to '%s'" % self.blackboard.remaining_locations[0]
-            elif isinstance(self.root.current_child, Waiting):
+            elif isinstance(self.root.current_child(), Waiting):
                 self.state = State.WAITING
-                self.feedback_message = self.root.current_child.feedback_message
+                self.feedback_message = self.root.current_child().feedback_message
         else:
             self.state = State.IDLE
             self.feedback_message = "idling"
