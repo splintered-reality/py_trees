@@ -214,6 +214,12 @@ class BehaviourTree(object):
         """
         self.interrupt_tick_tocking = True
 
+    def destroy(self):
+        """
+        Destroy the tree by aborting the root node
+        """
+        self.root.abort()
+
 
 class ROSBehaviourTree(BehaviourTree):
     """

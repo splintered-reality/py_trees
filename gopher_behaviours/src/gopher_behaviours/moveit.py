@@ -96,7 +96,7 @@ class MoveToGoal(py_trees.Behaviour):
             self.feedback_message = "moving"
             return py_trees.Status.RUNNING
 
-    def terminate(self, new_status):
+    def abort(self, new_status):
         if self.action_client is not None:
             self.action_client.cancel_all_goals()
 

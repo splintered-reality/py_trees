@@ -161,7 +161,8 @@ class GopherHiveMind(object):
         return gopher_std_srvs.DeliveryGoalResponse(result, message)
 
     def shutdown(self):
-        self.tree.interrupt_tick_tocking = True
+        self.tree.destroy() # destroy the tree on shutdown to stop the behaviour
+        self.tree.interrupt()
 
 ##############################################################################
 # Main
