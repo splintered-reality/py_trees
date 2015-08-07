@@ -61,7 +61,7 @@ class GopherHiveMind(object):
     def __init__(self):
         self.battery_subtree = gopher_behaviours.battery.create_battery_tree(name="Eating Disorder")
         autorun = rospy.get_param("~autorun", False)
-        preloaded_semantic_locations = gopher_behaviours.delivery.desirable_destinations() if autorun else []  # list of gopher_std_msgs.Location objects
+        preloaded_semantic_locations = gopher_behaviours.delivery.desirable_destinations() if autorun else None  # list of gopher_std_msgs.Location objects
         self.quirky_deliveries = gopher_behaviours.delivery.GopherDeliveries(name="Quirky Deliveries", semantic_locations=preloaded_semantic_locations)
         self.idle = py_trees.behaviours.Success("Idle")
         self.root = py_trees.Selector(name="HiveMind", children=[self.battery_subtree, self.idle])

@@ -189,7 +189,7 @@ class GopherDeliveries(object):
             self.incoming_goal = None
             semantic_locations = []  # fill this up from the map locations server
             try:
-                response = rocon_python_comms.SubscriberProxy('~semantic_locations', gopher_std_msgs.Locations)(rospy.Duration(5))  # TODO validate this is long enough for our purposes
+                response = rocon_python_comms.SubscriberProxy('/navi/semantic_locations', gopher_std_msgs.Locations)(rospy.Duration(5))  # TODO validate this is long enough for our purposes
                 if response is not None:
                     rospy.loginfo("Gopher Deliveries : served semantic locations from the map locations server [%s]" % [location.unique_name for location in response.locations])
                     semantic_locations = response.locations
