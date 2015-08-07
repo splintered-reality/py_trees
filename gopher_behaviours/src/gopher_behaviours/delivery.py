@@ -255,7 +255,7 @@ class GopherDeliveries(object):
         children = [] if self.root is not None else [moveit.UnDock("UnDock")]
         for location in locations:
             semantic_location = self.semantic_locations[location]  # this is the full gopher_std_msgs.Location structure
-            children.append(moveit.MoveToGoal(name=semantic_location.name))
+            children.append(moveit.MoveToGoal(name=semantic_location.name, pose=semantic_location.pose))
             children.append(Waiting(name="Waiting at " + semantic_location.name,
                                     location=semantic_location.unique_name,
                                     dont_wait_for_hoomans_flag=self.dont_wait_for_hoomans)

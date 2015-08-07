@@ -25,6 +25,7 @@ Kick the gophers around with these behaviours.
 import actionlib
 import move_base_msgs.msg as move_base_msgs
 import py_trees
+import tf
 import rospy
 
 ##############################################################################
@@ -58,9 +59,9 @@ class UnDock(py_trees.Behaviour):
 
 
 class MoveToGoal(py_trees.Behaviour):
-    def __init__(self, name, semantic_location="somewhere"):
+    def __init__(self, name, pose):
         super(MoveToGoal, self).__init__(name)
-        self.semantic_location = semantic_location
+        self.pose = pose
         self.action_client = None
 
     def initialise(self):
@@ -72,6 +73,13 @@ class MoveToGoal(py_trees.Behaviour):
             self.action_client = None
         else:
             goal = move_base_msgs.MoveBaseGoal()  # don't yet care about the target
+            goal.target_pose.pose.position.x = self.pose.x
+            goal.target_pose.pose.position.y = self.pose.y
+            quaternion = tf.transformations.quaternion_from_euler(0, 0, self.pose.theta)
+            goal.target_pose.pose.orientation.x = quaternion[0]
+            goal.target_pose.pose.orientation.y = quaternion[1]
+            goal.target_pose.pose.orientation.z = quaternion[2]
+            goal.target_pose.pose.orientation.w = quaternion[3]
             self.action_client.send_goal(goal)
 
     def update(self):
