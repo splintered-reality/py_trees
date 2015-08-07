@@ -231,8 +231,8 @@ class GopherDeliveries(object):
         if self.incoming_goal is not None and self.incoming_goal:
             self.old_goal_id = self.root.id if self.root is not None else None
             children = self.locations_to_behaviours(self.incoming_goal)
-            self.root = py_trees.Sequence(name="Balli Balli Deliveries", children=children)
             self.blackboard.traversed_locations = [] if not self.root else self.blackboard.traversed_locations
+            self.root = py_trees.Sequence(name="Balli Balli Deliveries", children=children)
             self.blackboard.remaining_locations = self.incoming_goal
             self.locations = self.incoming_goal
             self.has_a_new_goal = True
@@ -253,14 +253,18 @@ class GopherDeliveries(object):
         :param: string list of location unique names given to us by the delivery goal.
         """
         children = [] if self.root is not None else [moveit.UnDock("UnDock")]
-        for location in locations:
+        for location in locations[:-1]:
             semantic_location = self.semantic_locations[location]  # this is the full gopher_std_msgs.Location structure
             children.append(moveit.MoveToGoal(name=semantic_location.name, pose=semantic_location.pose))
             children.append(Waiting(name="Waiting at " + semantic_location.name,
                                     location=semantic_location.unique_name,
                                     dont_wait_for_hoomans_flag=self.dont_wait_for_hoomans)
                             )
-        children.append(moveit.GoHome(name="Heading Home"))
+        # special treatment for the last location
+        semantic_location = self.semantic_locations[locations[-1]]  # this is the full gopher_std_msgs.Location structure
+        children.append(moveit.MoveToGoal(name=semantic_location.name, pose=semantic_location.pose))
+        #children.append(moveit.GoHome(name="Delivery Done"))
+
         return children
 
     def is_executing(self):

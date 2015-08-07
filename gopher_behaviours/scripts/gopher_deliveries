@@ -68,6 +68,7 @@ class GopherHiveMind(object):
         self.tree = py_trees.ROSBehaviourTree(self.root)
         self.logger = py_trees.logging.get_logger("HiveMind")
         self.render = False
+        self.success = None  # non goal
 
         ##################################
         # Ros Components
@@ -75,7 +76,7 @@ class GopherHiveMind(object):
         rospy.on_shutdown(self.shutdown)
         self._delivery_goal_service = rospy.Service('delivery/goal', gopher_std_srvs.DeliveryGoal, self._goal_service_callback)
         self._delivery_feedback_publisher = rospy.Publisher('delivery/feedback', gopher_std_msgs.DeliveryFeedback, queue_size=1, latch=True)
-        self._delivery_result_publisher = rospy.Publisher('delivery/result', gopher_std_msgs.DeliveryResult, queue_size=1, latch=True)
+        self._delivery_result_service = rospy.Service('delivery/result', gopher_std_srvs.DeliveryResult, self._result_service_callback)
 
     ##############################################################################
     # Tick Tock
@@ -123,13 +124,7 @@ class GopherHiveMind(object):
             msg.status_message = self.quirky_deliveries.feedback_message
             self._delivery_feedback_publisher.publish(msg)
         elif self.quirky_deliveries.succeeded_on_last_tick():
-            msg = gopher_std_msgs.DeliveryResult()
-            msg.header.stamp = rospy.Time.now()
-            msg.traversed_locations = self.quirky_deliveries.blackboard.traversed_locations
-            msg.remaining_locations = self.quirky_deliveries.blackboard.remaining_locations
-            msg.result = gopher_std_msgs.DeliveryErrorCodes.SUCCESS
-            msg.error_message = ""
-            self._delivery_result_publisher.publish(msg)
+            self.success = True
 
     ##############################################################################
     # Ros Methods
@@ -155,10 +150,32 @@ class GopherHiveMind(object):
         if result == gopher_std_msgs.DeliveryErrorCodes.SUCCESS:
             message = "received goal request [%s]" % message
             rospy.loginfo("Delivery : [%s]" % message)
+            self.success = False
         else:
             message = "refused goal request [%s]" % message
             rospy.logwarn("Delivery : [%s]" % message)
         return gopher_std_srvs.DeliveryGoalResponse(result, message)
+
+
+    def _result_service_callback(self, request):
+        '''
+        Returns the result if success
+        '''
+
+        msg = gopher_std_srvs.DeliveryResultResponse()
+        msg.header.stamp = rospy.Time.now()
+        msg.traversed_locations = self.quirky_deliveries.blackboard.traversed_locations
+        msg.remaining_locations = self.quirky_deliveries.blackboard.remaining_locations
+
+        if self.success:
+            msg.result = gopher_std_msgs.DeliveryErrorCodes.SUCCESS
+            msg.error_message = "Success !"
+        else:
+            msg.result = gopher_std_msgs.DeliveryErrorCodes.UNKNOWN
+            msg.error_message = "Not finished yet..."
+
+        return msg
+
 
     def shutdown(self):
         self.tree.destroy() # destroy the tree on shutdown to stop the behaviour
