@@ -58,7 +58,7 @@ def desirable_destinations():
         location.pose = Pose2D()
         location.pose.x = value['pose']['x']
         location.pose.y = value['pose']['y']
-        location.pose.theta = value['pose']['x']
+        location.pose.theta = value['pose']['theta']
         location.keyframe_id = value['keyframe_id']
         desirables.append(location)
     return desirables
