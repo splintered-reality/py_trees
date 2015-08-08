@@ -60,8 +60,8 @@ class Visitor:
 class GopherHiveMind(object):
     def __init__(self):
         self.battery_subtree = gopher_behaviours.battery.create_battery_tree(name="Eating Disorder")
-        autorun = rospy.get_param("~autorun", False)
-        preloaded_semantic_locations = gopher_behaviours.delivery.desirable_destinations() if autorun else None  # list of gopher_std_msgs.Location objects
+        autoload_test_delivery = rospy.get_param("~autoload_test_delivery", False)
+        preloaded_semantic_locations = gopher_behaviours.delivery.desirable_destinations() if autoload_test_delivery else None  # list of gopher_std_msgs.Location objects
         self.quirky_deliveries = gopher_behaviours.delivery.GopherDeliveries(name="Quirky Deliveries", semantic_locations=preloaded_semantic_locations)
         self.idle = py_trees.behaviours.Success("Idle")
         self.root = py_trees.Selector(name="HiveMind", children=[self.battery_subtree, self.idle])
@@ -156,7 +156,6 @@ class GopherHiveMind(object):
             rospy.logwarn("Delivery : [%s]" % message)
         return gopher_std_srvs.DeliveryGoalResponse(result, message)
 
-
     def _result_service_callback(self, request):
         '''
         Returns the result if success
@@ -175,7 +174,6 @@ class GopherHiveMind(object):
             msg.error_message = "Not finished yet..."
 
         return msg
-
 
     def shutdown(self):
         self.tree.destroy()  # destroy the tree on shutdown to stop the behaviour
