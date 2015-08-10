@@ -265,8 +265,7 @@ class GopherDeliveries(object):
         # special treatment for the last location
         semantic_location = self.semantic_locations[locations[-1]]  # this is the full gopher_std_msgs.Location structure
         children.append(moveit.MoveToGoal(name=semantic_location.name, pose=semantic_location.pose))
-        #children.append(moveit.GoHome(name="Delivery Done"))
-
+        
         return children
 
     def is_executing(self):
@@ -295,5 +294,10 @@ class GopherDeliveries(object):
                 self.state = State.WAITING
                 self.feedback_message = self.root.current_child().feedback_message
         else:
+            if self.blackboard.remaining_locations:
+                self.blackboard.traversed_locations.append(self.blackboard.remaining_locations.pop(0)) # hacky
             self.state = State.IDLE
             self.feedback_message = "idling"
+
+
+

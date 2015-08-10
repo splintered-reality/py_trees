@@ -115,7 +115,8 @@ class GopherHiveMind(object):
             py_trees.display.render_dot_tree(self.root)
             self.render = False
         self.quirky_deliveries.post_tock_update()
-        if self.quirky_deliveries.is_executing():
+        # make sure to publish one last message to the feedback publisher once the task has succeded
+        if self.quirky_deliveries.is_executing() or (self.quirky_deliveries.succeeded_on_last_tick() and not self.success):
             msg = gopher_std_msgs.DeliveryFeedback()
             msg.header.stamp = rospy.Time.now()
             msg.state = self.quirky_deliveries.state
@@ -123,8 +124,9 @@ class GopherHiveMind(object):
             msg.remaining_locations = self.quirky_deliveries.blackboard.remaining_locations
             msg.status_message = self.quirky_deliveries.feedback_message
             self._delivery_feedback_publisher.publish(msg)
-        elif self.quirky_deliveries.succeeded_on_last_tick():
+        if self.quirky_deliveries.succeeded_on_last_tick():
             self.success = True
+
 
     ##############################################################################
     # Ros Methods
