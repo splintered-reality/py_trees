@@ -256,12 +256,16 @@ class GopherDeliveries(object):
         """
         children = [] if self.root is not None else [moveit.UnDock("UnDock")]
         for location in locations[:-1]:
-            semantic_location = self.semantic_locations[location]  # this is the full gopher_std_msgs.Location structure
-            children.append(moveit.MoveToGoal(name=semantic_location.name, pose=semantic_location.pose))
-            children.append(Waiting(name="Waiting at " + semantic_location.name,
-                                    location=semantic_location.unique_name,
-                                    dont_wait_for_hoomans_flag=self.dont_wait_for_hoomans)
-                            )
+            try:
+                semantic_location = self.semantic_locations[location]  # this is the full gopher_std_msgs.Location structure
+                children.append(moveit.MoveToGoal(name=semantic_location.name, pose=semantic_location.pose))
+                children.append(Waiting(name="Waiting at " + semantic_location.name,
+                                        location=semantic_location.unique_name,
+                                        dont_wait_for_hoomans_flag=self.dont_wait_for_hoomans)
+                                )
+            except KeyError, ke:  # a location passed was unknown : ignore it
+                rospy.logwarn("{0} is not in semantic_locations".format(location))
+                continue
         # special treatment for the last location
         semantic_location = self.semantic_locations[locations[-1]]  # this is the full gopher_std_msgs.Location structure
         children.append(moveit.MoveToGoal(name=semantic_location.name, pose=semantic_location.pose))
