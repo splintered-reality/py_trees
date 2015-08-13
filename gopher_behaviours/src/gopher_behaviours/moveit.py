@@ -23,6 +23,7 @@ Kick the gophers around with these behaviours.
 ##############################################################################
 
 import actionlib
+from actionlib_msgs.msg import GoalStatus
 import move_base_msgs.msg as move_base_msgs
 import py_trees
 import tf
@@ -67,6 +68,7 @@ class MoveToGoal(py_trees.Behaviour):
     def initialise(self):
         self.logger.debug("  %s [MoveToGoal::initialise()]" % self.name)
         self.action_client = actionlib.SimpleActionClient('~move_base', move_base_msgs.MoveBaseAction)
+        
         connected = self.action_client.wait_for_server(rospy.Duration(0.5))
         if not connected:
             rospy.logwarn("MoveToGoal : could not connect with move base.")
@@ -98,9 +100,10 @@ class MoveToGoal(py_trees.Behaviour):
             return py_trees.Status.RUNNING
 
     def abort(self, new_status):
-        if self.action_client is not None:
-            self.action_client.cancel_all_goals()
-
+        # if we have an action client and the current goal has not already
+        # succeeded, send a message to cancel the goal for this action client.
+        if self.action_client is not None and self.action_client.get_state() != GoalStatus.SUCCEEDED:
+            self.action_client.cancel_goal()
 
 class GoHome(py_trees.Behaviour):
     def __init__(self, name):
