@@ -116,10 +116,20 @@ class Waiting(py_trees.Behaviour):
         self.dont_wait_for_hoomans = dont_wait_for_hoomans_flag
         self.go_requested = False
         self.feedback_message = "hanging around at '%s' waiting for lazy bastards" % (location)
-
+        
         # ros communications
         # could potentially have this in the waiting behaviour
         self._go_button_subscriber = rospy.Subscriber("delivery/go", std_msgs.Empty, self._go_button_callback)
+
+        # for sending honk
+        self._honk_publisher = None
+        try:
+            if rospy.get_param("~enable_honks"):
+                honk_topic = rospy.get_param("~waiting_honk")
+                self._honk_publisher = rospy.Publisher("/gopher/commands/sounds/" + honk_topic, std_msgs.Empty, queue_size=1)
+        except KeyError:
+            rospy.logwarn("Gopher Deliveries : Could not find param to initialise honks.")
+            pass
 
     def initialise(self):
         """
@@ -129,6 +139,9 @@ class Waiting(py_trees.Behaviour):
         """
         self.go_requested = False  # needs to be reset, just in case it's already true
         self.blackboard.traversed_locations.append(self.blackboard.remaining_locations.pop(0))
+        if self._honk_publisher:
+            self._honk_publisher.publish(std_msgs.Empty())
+        
 
     def update(self):
         """

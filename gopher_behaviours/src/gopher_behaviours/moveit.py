@@ -25,6 +25,7 @@ Kick the gophers around with these behaviours.
 import actionlib
 from actionlib_msgs.msg import GoalStatus
 import move_base_msgs.msg as move_base_msgs
+import std_msgs.msg as std_msgs
 import py_trees
 import tf
 import rospy
@@ -65,6 +66,15 @@ class MoveToGoal(py_trees.Behaviour):
         self.pose = pose
         self.action_client = None
 
+        self._honk_publisher = None
+        try:
+            if rospy.get_param("~enable_honks"):
+                honk_topic = rospy.get_param("~moving_honk")
+                self._honk_publisher = rospy.Publisher("/gopher/commands/sounds/" + honk_topic, std_msgs.Empty, queue_size=1)
+        except KeyError:
+            rospy.logwarn("Gopher Deliveries : Could not find param to initialise honks.")
+            pass
+
     def initialise(self):
         self.logger.debug("  %s [MoveToGoal::initialise()]" % self.name)
         self.action_client = actionlib.SimpleActionClient('~move_base', move_base_msgs.MoveBaseAction)
@@ -84,6 +94,9 @@ class MoveToGoal(py_trees.Behaviour):
             goal.target_pose.pose.orientation.z = quaternion[2]
             goal.target_pose.pose.orientation.w = quaternion[3]
             self.action_client.send_goal(goal)
+
+        if self._honk_publisher:
+            self._honk_publisher.publish(std_msgs.Empty())
 
     def update(self):
         self.logger.debug("  %s [MoveToGoal::update()]" % self.name)
