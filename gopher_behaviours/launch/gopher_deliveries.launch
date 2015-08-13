@@ -26,6 +26,6 @@
     <rosparam param="autoload_test_delivery" subst_value="True">$(arg autoload_test_delivery)</rosparam>
     <param name="enable_honks" value="$(arg enable_honks)"/>
     <param name="waiting_honk" value="i_am_groot"/>
-    <param name="moving_honk" value="jabba_silly"/>
+    <param name="moving_honk" value="nothing"/>
   </node>
 </launch>

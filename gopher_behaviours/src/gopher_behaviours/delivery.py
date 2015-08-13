@@ -116,7 +116,7 @@ class Waiting(py_trees.Behaviour):
         self.dont_wait_for_hoomans = dont_wait_for_hoomans_flag
         self.go_requested = False
         self.feedback_message = "hanging around at '%s' waiting for lazy bastards" % (location)
-        
+
         # ros communications
         # could potentially have this in the waiting behaviour
         self._go_button_subscriber = rospy.Subscriber("delivery/go", std_msgs.Empty, self._go_button_callback)
