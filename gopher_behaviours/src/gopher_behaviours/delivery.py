@@ -266,6 +266,10 @@ class GopherDeliveries(object):
         create the appropariate behaviours.
 
         :param: string list of location unique names given to us by the delivery goal.
+
+        .. todo::
+
+           Clean up the key error handling
         """
         children = [] if self.root is not None else [moveit.UnDock("UnDock")]
         for location in locations[:-1]:
@@ -280,9 +284,12 @@ class GopherDeliveries(object):
                 rospy.logwarn("{0} is not in semantic_locations".format(location))
                 continue
         # special treatment for the last location
-        semantic_location = self.semantic_locations[locations[-1]]  # this is the full gopher_std_msgs.Location structure
+        try:
+            semantic_location = self.semantic_locations[locations[-1]]  # this is the full gopher_std_msgs.Location structure
+        except KeyError, ke:  # a location passed was unknown : ignore it
+            rospy.logwarn("{0} is not in semantic_locations".format(location))
         children.append(moveit.MoveToGoal(name=semantic_location.name, pose=semantic_location.pose))
-        
+
         return children
 
     def is_executing(self):
