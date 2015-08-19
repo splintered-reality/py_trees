@@ -5,10 +5,8 @@
 ##############################################################################
 
 import rospy
-import rocon_python_comms
 import delivery
 import moveit
-import gopher_std_msgs.msg as gopher_std_msgs
 
 ##############################################################################
 # Implementation
@@ -16,22 +14,13 @@ import gopher_std_msgs.msg as gopher_std_msgs
 
 class Planner():
 
-    def __init__(self, auto_go):
+    def __init__(self, locations, auto_go):
+        self.current_location = None
         self.auto_go = auto_go
         self.semantic_locations = {}
-
-        semantic_locations = []  # fill this up from the map locations server
-        try:
-            response = rocon_python_comms.SubscriberProxy('/navi/semantic_locations', gopher_std_msgs.Locations)(rospy.Duration(5))  # TODO validate this is long enough for our purposes
-            if response is not None:
-                rospy.loginfo("Gopher Deliveries Planner : served semantic locations from the map locations server [%s]" % [location.unique_name for location in response.locations])
-                semantic_locations = response.locations
-        except rospy.exceptions.ROSInterruptException:  # make sure to handle a Ros shutdown
-            rospy.logwarn("Gopher Deliveries Planner : ros shutdown(?) while attempting to connect to the map locations server")
-            return
-        for semantic_location in semantic_locations:
+        
+        for semantic_location in locations:
             self.semantic_locations[semantic_location.unique_name] = semantic_location
-        rospy.logdebug("Gopher Deliveries Planner : semantic locations served: \n%s" % self.semantic_locations)
         
     def create_tree(self, locations, undock=True):
         """

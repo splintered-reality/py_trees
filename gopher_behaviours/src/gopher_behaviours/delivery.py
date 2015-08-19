@@ -242,6 +242,9 @@ class GopherDeliveries(object):
             self.has_a_new_goal = True
             self.incoming_goal = None
         elif self.root is not None and self.root.status == py_trees.Status.SUCCESS:
+            # if we succeeded, then we should be at the previously traversed
+            # location (assuming that no task can occur in between locations.)
+            self.planner.current_location = self.blackboard.traversed_locations[-1] if len(self.blackboard.traversed_locations) != 0 else None
             # last goal was achieved and no new goal, so swap this current subtree out
             self.old_goal_id = self.root.id if self.root is not None else None
             self.root = None
