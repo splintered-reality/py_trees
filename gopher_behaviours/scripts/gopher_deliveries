@@ -14,6 +14,7 @@ Simple demo program for py trees
 ##############################################################################
 
 import gopher_behaviours
+from gopher_behaviours.planner import Planner
 import gopher_std_msgs.msg as gopher_std_msgs
 import gopher_std_msgs.srv as gopher_std_srvs
 import py_trees
@@ -62,7 +63,8 @@ class GopherHiveMind(object):
         self.battery_subtree = gopher_behaviours.battery.create_battery_tree(name="Eating Disorder")
         autoload_test_delivery = rospy.get_param("~autoload_test_delivery", False)
         preloaded_semantic_locations = gopher_behaviours.delivery.desirable_destinations() if autoload_test_delivery else None  # list of gopher_std_msgs.Location objects
-        self.quirky_deliveries = gopher_behaviours.delivery.GopherDeliveries(name="Quirky Deliveries", semantic_locations=preloaded_semantic_locations)
+        self.planner = Planner(auto_go=rospy.get_param("~dont_wait_for_hoomans", False))
+        self.quirky_deliveries = gopher_behaviours.delivery.GopherDeliveries(name="Quirky Deliveries", planner=self.planner, semantic_locations=preloaded_semantic_locations)
         self.idle = py_trees.behaviours.Success("Idle")
         self.root = py_trees.Selector(name="HiveMind", children=[self.battery_subtree, self.idle])
         self.tree = py_trees.ROSBehaviourTree(self.root)

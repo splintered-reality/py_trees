@@ -26,7 +26,6 @@ from enum import IntEnum
 import collections
 import os
 import py_trees
-import rocon_python_comms
 import rocon_console.console as console
 import rospkg
 import rospy
@@ -190,33 +189,21 @@ class GopherDeliveries(object):
 
        also need to mutex the self.incoming_goal variable
     """
-    def __init__(self, name, semantic_locations=None):
+    def __init__(self, name, planner, semantic_locations=None):
         self.blackboard = Blackboard()
         self.blackboard.is_waiting = False
         self.root = None
         self.state = State.IDLE
         self.locations = []
         self.has_a_new_goal = False
-        self.dont_wait_for_hoomans = rospy.get_param("~dont_wait_for_hoomans", False)
         self.feedback_message = ""
         self.old_goal_id = None
-        self.semantic_locations = {}
+        self.planner = planner
+
         if semantic_locations is not None:
             self.incoming_goal = [location.unique_name for location in semantic_locations]
         else:
             self.incoming_goal = None
-            semantic_locations = []  # fill this up from the map locations server
-            try:
-                response = rocon_python_comms.SubscriberProxy('/navi/semantic_locations', gopher_std_msgs.Locations)(rospy.Duration(5))  # TODO validate this is long enough for our purposes
-                if response is not None:
-                    rospy.loginfo("Gopher Deliveries : served semantic locations from the map locations server [%s]" % [location.unique_name for location in response.locations])
-                    semantic_locations = response.locations
-            except rospy.exceptions.ROSInterruptException:  # make sure to handle a Ros shutdown
-                rospy.logwarn("Gopher Deliveries : ros shutdown(?) while attempting to connect to the map locations server")
-                return
-        for semantic_location in semantic_locations:
-            self.semantic_locations[semantic_location.unique_name] = semantic_location
-        rospy.logdebug("Gopher Deliveries : semantic locations served: \n%s" % self.semantic_locations)
 
     def set_goal(self, locations):
         """
@@ -245,7 +232,9 @@ class GopherDeliveries(object):
         """
         if self.incoming_goal is not None and self.incoming_goal:
             self.old_goal_id = self.root.id if self.root is not None else None
-            children = self.locations_to_behaviours(self.incoming_goal)
+            # use the planner to initialise the behaviours that we are to follow
+            # to get to the delivery location.
+            children = self.planner.create_tree(self.incoming_goal, undock=False if self.root else True)
             self.blackboard.traversed_locations = [] if not self.root else self.blackboard.traversed_locations
             self.root = py_trees.Sequence(name="Balli Balli Deliveries", children=children)
             self.blackboard.remaining_locations = self.incoming_goal
@@ -259,38 +248,6 @@ class GopherDeliveries(object):
             self.has_a_new_goal = True
         else:
             self.has_a_new_goal = False
-
-    def locations_to_behaviours(self, locations):
-        """
-        Find the semantic locations corresponding to the incoming string location identifier and
-        create the appropariate behaviours.
-
-        :param: string list of location unique names given to us by the delivery goal.
-
-        .. todo::
-
-           Clean up the key error handling
-        """
-        children = [] if self.root is not None else [moveit.UnDock("UnDock")]
-        for location in locations[:-1]:
-            try:
-                semantic_location = self.semantic_locations[location]  # this is the full gopher_std_msgs.Location structure
-                children.append(moveit.MoveToGoal(name=semantic_location.name, pose=semantic_location.pose))
-                children.append(Waiting(name="Waiting at " + semantic_location.name,
-                                        location=semantic_location.unique_name,
-                                        dont_wait_for_hoomans_flag=self.dont_wait_for_hoomans)
-                                )
-            except KeyError, ke:  # a location passed was unknown : ignore it
-                rospy.logwarn("{0} is not in semantic_locations".format(location))
-                continue
-        # special treatment for the last location
-        try:
-            semantic_location = self.semantic_locations[locations[-1]]  # this is the full gopher_std_msgs.Location structure
-        except KeyError, ke:  # a location passed was unknown : ignore it
-            rospy.logwarn("{0} is not in semantic_locations".format(location))
-        children.append(moveit.MoveToGoal(name=semantic_location.name, pose=semantic_location.pose))
-
-        return children
 
     def is_executing(self):
         """
