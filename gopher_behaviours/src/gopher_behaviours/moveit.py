@@ -29,6 +29,7 @@ import std_msgs.msg as std_msgs
 import py_trees
 import tf
 import rospy
+from .blackboard import Blackboard
 
 ##############################################################################
 # Class
@@ -65,7 +66,8 @@ class MoveToGoal(py_trees.Behaviour):
         super(MoveToGoal, self).__init__(name)
         self.pose = pose
         self.action_client = None
-
+        self.blackboard = Blackboard()
+        
         self._honk_publisher = None
         try:
             if rospy.get_param("~enable_honks"):
@@ -107,6 +109,7 @@ class MoveToGoal(py_trees.Behaviour):
         # self.action_client.wait_for_result(rospy.Duration(0.1))  # < 0.1 is moot here - the internal loop is 0.1
         if result:
             self.feedback_message = "goal reached"
+            self.blackboard.traversed_locations.append(self.blackboard.remaining_locations.pop(0))
             return py_trees.Status.SUCCESS
         else:
             self.feedback_message = "moving"

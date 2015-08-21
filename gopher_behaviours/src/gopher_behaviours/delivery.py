@@ -33,6 +33,7 @@ from geometry_msgs.msg import Pose2D
 import gopher_std_msgs.msg as gopher_std_msgs
 import yaml
 import std_msgs.msg as std_msgs
+from .blackboard import Blackboard
 from . import moveit
 
 ##############################################################################
@@ -45,8 +46,8 @@ def desirable_destinations():
     :return: list of gopher_std_msgs.Location objects
     """
     rospack = rospkg.RosPack()
-    pkg_path = rospack.get_path("gopher_rocon_bootstrap")
-    filename = os.path.join(pkg_path, "param", "semantic_locations", "desirable_destinations.yaml")
+    pkg_path = rospack.get_path("gopher_semantics")
+    filename = os.path.join(pkg_path, "param", "desirable_destinations.yaml")
     desirables = []
     loaded_locations = collections.OrderedDict(sorted(yaml.load(open(filename))['semantic_locations'].items()))
     for key, value in loaded_locations.iteritems():
@@ -79,19 +80,6 @@ class State(IntEnum):
     TRAVELLING = 2
     """Behaviour is in an invalid state"""
     INVALID = 3
-
-
-class Blackboard:
-    """ Data store for the gopher delivery behaviours"""
-    __shared_state = {
-        'is_waiting': False,
-        'traversed_locations': [],
-        'remaining_locations': []
-    }
-
-    def __init__(self):
-        self.__dict__ = self.__shared_state
-
 
 ##############################################################################
 # Delivery Specific Behaviours
@@ -155,7 +143,6 @@ class Waiting(py_trees.Behaviour):
 
     def _go_button_callback(self, unused_msg):
         self.go_requested = True if self.status == py_trees.Status.RUNNING else False
-
 
 class GopherDeliveries(object):
     """
@@ -278,8 +265,6 @@ class GopherDeliveries(object):
                 self.state = State.WAITING
                 self.feedback_message = self.root.current_child().feedback_message
         else:
-            if self.blackboard.remaining_locations:
-                self.blackboard.traversed_locations.append(self.blackboard.remaining_locations.pop(0)) # hacky
             self.state = State.IDLE
             self.feedback_message = "idling"
 

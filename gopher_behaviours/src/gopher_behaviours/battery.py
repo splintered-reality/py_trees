@@ -38,6 +38,7 @@ class CheckBatteryLevel(py_trees.Behaviour):
         # setup
         super(CheckBatteryLevel, self).__init__(name)
         self.battery_critical_threshold = rospy.get_param("battery/critical_threshold", 30)
+        self.successes = 0
         self.battery_percentage = 100
         rospy.Subscriber("~battery", somanet_msgs.SmartBatteryStatus, self.battery_callback)
 
@@ -45,6 +46,9 @@ class CheckBatteryLevel(py_trees.Behaviour):
         self.feedback_message = "battery %s%%" % self.battery_percentage
         self.logger.debug("  %s [update()]" % self.name)
         if self.battery_percentage < self.battery_critical_threshold:
+            if self.successes % 10 == 0:
+                rospy.logwarn("Battery is low! I'm outta here!")
+            self.successes += 1
             return py_trees.Status.SUCCESS
         else:
             return py_trees.Status.FAILURE
