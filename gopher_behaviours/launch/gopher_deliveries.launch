@@ -27,5 +27,6 @@
     <param name="enable_honks" value="$(arg enable_honks)"/>
     <param name="waiting_honk" value="i_am_groot"/>
     <param name="moving_honk" value="nothing"/>
+    <remap from="gopher_deliveries/semantic_locations" to="/navi/semantic_locations"/>
   </node>
 </launch>

@@ -5,6 +5,7 @@
 ##############################################################################
 
 import rospy
+from gopher_semantics.map_locations import SemanticLocations
 import delivery
 import moveit
 
@@ -14,13 +15,10 @@ import moveit
 
 class Planner():
 
-    def __init__(self, locations, auto_go):
+    def __init__(self, auto_go):
         self.current_location = None
         self.auto_go = auto_go
-        self.semantic_locations = {}
-        
-        for semantic_location in locations:
-            self.semantic_locations[semantic_location.unique_name] = semantic_location
+        self.semantic_locations = SemanticLocations()
         
     def create_tree(self, locations, undock=True):
         """
@@ -49,6 +47,10 @@ class Planner():
             except KeyError, ke:  # a location passed was unknown : ignore it
                 rospy.logwarn("{0} is not in semantic_locations".format(location))
                 continue
+                
+        # assume that we will go back to somewhere with a dock at the end of
+        # each task
+        children.append(moveit.Dock("Dock"))
 
         return children
 

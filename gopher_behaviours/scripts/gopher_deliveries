@@ -65,17 +65,7 @@ class GopherHiveMind(object):
         autoload_test_delivery = rospy.get_param("~autoload_test_delivery", False)
         preloaded_semantic_locations = gopher_behaviours.delivery.desirable_destinations() if autoload_test_delivery else None  # list of gopher_std_msgs.Location objects
 
-        semantic_locations = [] # list of semantic locations from the semantic map node
-        try:
-            response = rocon_python_comms.SubscriberProxy('/navi/semantic_locations', gopher_std_msgs.Locations)(rospy.Duration(5))  # TODO validate this is long enough for our purposes
-            if response is not None:
-                rospy.loginfo("Gopher HiveMind : served semantic locations from the map locations server [%s]" % [location.unique_name for location in response.locations])
-                semantic_locations = response.locations
-        except rospy.exceptions.ROSInterruptException:  # make sure to handle a Ros shutdown
-            rospy.logwarn("Gopher HiveMind : ros shutdown(?) while attempting to connect to the map locations server")
-            return
-            
-        self.planner = Planner(locations=semantic_locations, auto_go=rospy.get_param("~dont_wait_for_hoomans", False))
+        self.planner = Planner(auto_go=rospy.get_param("~dont_wait_for_hoomans", False))
         self.quirky_deliveries = gopher_behaviours.delivery.GopherDeliveries(name="Quirky Deliveries", planner=self.planner, semantic_locations=preloaded_semantic_locations)
         self.idle = py_trees.behaviours.Success("Idle")
         self.root = py_trees.Selector(name="HiveMind", children=[self.battery_subtree, self.idle])
