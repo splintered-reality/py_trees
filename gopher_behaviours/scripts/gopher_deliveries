@@ -18,6 +18,7 @@ import gopher_std_msgs.msg as gopher_std_msgs
 import gopher_std_msgs.srv as gopher_std_srvs
 import std_msgs.msg as std_msgs
 import py_trees
+from py_trees.common import Status
 import rospy
 
 ##############################################################################
@@ -152,14 +153,21 @@ class GopherHiveMind(object):
            * check the first preempted goal location isn't the same as the current location and handle it
         '''
         rospy.loginfo("Delivery : received a goal request: {0}".format(request))
-        (result, message) = self.quirky_deliveries.set_goal(request.semantic_locations)
-        if result == gopher_std_msgs.DeliveryErrorCodes.SUCCESS:
-            message = "received goal request [%s]" % message
-            rospy.loginfo("Delivery : [%s]" % message)
-            self.success = False
-        else:
-            message = "refused goal request [%s]" % message
+        # first, check if we're already doing something in the battery monitor
+        # part of the tree. If we are, we do not accept any new goals.
+        if self.battery_subtree.status != Status.FAILURE:
+            result = gopher_std_msgs.DeliveryErrorCodes.NOT_ENOUGH_JUICE
+            message = "refused goal request : [Not enough battery power to accept a goal right now.]"
             rospy.logwarn("Delivery : [%s]" % message)
+        else:
+            (result, message) = self.quirky_deliveries.set_goal(request.semantic_locations)
+            if result == gopher_std_msgs.DeliveryErrorCodes.SUCCESS:
+                message = "received goal request [%s]" % message
+                rospy.loginfo("Delivery : [%s]" % message)
+                self.success = False
+            else:
+                message = "refused goal request [%s]" % message
+                rospy.logwarn("Delivery : [%s]" % message)
         return gopher_std_srvs.DeliveryGoalResponse(result, message)
 
     def _goal_cancel_callback(self, cancel):
