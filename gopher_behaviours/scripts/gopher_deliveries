@@ -171,8 +171,10 @@ class GopherHiveMind(object):
         return gopher_std_srvs.DeliveryGoalResponse(result, message)
 
     def _goal_cancel_callback(self, cancel):
-        # prune the subtree containing the current delivery goal
-        self.tree.prune_subtree(self.quirky_deliveries.root.id)
+        # if the delivery root has been initialised
+        if self.quirky_deliveries.root:
+            # prune the subtree containing the current delivery goal
+            self.tree.prune_subtree(self.quirky_deliveries.root.id)
         self.cancelled = True # set cancelled flag to use in result service
 
         print("")
