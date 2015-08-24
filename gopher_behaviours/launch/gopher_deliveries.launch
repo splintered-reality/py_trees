@@ -19,6 +19,7 @@
     <remap from="gopher_deliveries/semantic_locations" to="/navi/semantic_locations"/>
     <remap from="delivery/goal"                        to="/rocon/delivery/goal"/>
     <remap from="delivery/feedback"                    to="/rocon/delivery/feedback"/>
+    <remap from="delivery/cancel"                      to="/rocon/delivery/cancel"/>
     <remap from="delivery/result"                      to="/rocon/delivery/result"/>
     <remap from="delivery/go"                          to="/gopher/buttons/go"/>
     <rosparam param="dont_wait_for_hoomans" subst_value="True">$(arg dont_wait_for_hoomans)</rosparam>

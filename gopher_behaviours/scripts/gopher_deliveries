@@ -16,6 +16,7 @@ Simple demo program for py trees
 import gopher_behaviours
 import gopher_std_msgs.msg as gopher_std_msgs
 import gopher_std_msgs.srv as gopher_std_srvs
+import std_msgs.msg as std_msgs
 import py_trees
 import rospy
 
@@ -69,6 +70,7 @@ class GopherHiveMind(object):
         self.logger = py_trees.logging.get_logger("HiveMind")
         self.render = False
         self.success = None  # non goal
+        self.cancelled = False
 
         ##################################
         # Ros Components
@@ -76,6 +78,7 @@ class GopherHiveMind(object):
         rospy.on_shutdown(self.shutdown)
         self._delivery_goal_service = rospy.Service('delivery/goal', gopher_std_srvs.DeliveryGoal, self._goal_service_callback)
         self._delivery_feedback_publisher = rospy.Publisher('delivery/feedback', gopher_std_msgs.DeliveryFeedback, queue_size=1, latch=True)
+        self._delivery_goal_cancel_sub = rospy.Subscriber('delivery/cancel', std_msgs.Empty, self._goal_cancel_callback)
         self._delivery_result_service = rospy.Service('delivery/result', gopher_std_srvs.DeliveryResult, self._result_service_callback)
 
     ##############################################################################
@@ -97,6 +100,7 @@ class GopherHiveMind(object):
             if self.quirky_deliveries.root:
                 self.tree.insert_subtree(self.quirky_deliveries.root, self.root.id, 1)
             self.quirky_deliveries.has_a_new_goal = False
+            self.cancelled = False # reset cancelled flag upon receiving a new goal
             print("")
             print("************************************************************************************")
             print("                   Gopher Compelled (Behaviour Tree Update)")
@@ -158,6 +162,28 @@ class GopherHiveMind(object):
             rospy.logwarn("Delivery : [%s]" % message)
         return gopher_std_srvs.DeliveryGoalResponse(result, message)
 
+    def _goal_cancel_callback(self, cancel):
+        # prune the subtree containing the current delivery goal
+        self.tree.prune_subtree(self.quirky_deliveries.root.id)
+        self.cancelled = True # set cancelled flag to use in result service
+
+        print("")
+        print("************************************************************************************")
+        print("                   Gopher Compelled (Behaviour Tree Update)")
+        print("************************************************************************************")
+        py_trees.display.print_ascii_tree(self.tree.root)
+        print("************************************************************************************")
+        print("")
+
+        
+        msg = gopher_std_msgs.DeliveryFeedback()
+        msg.header.stamp = rospy.Time.now()
+        msg.state = gopher_std_msgs.DeliveryFeedback.CANCELLED
+        msg.traversed_locations = self.quirky_deliveries.blackboard.traversed_locations
+        msg.remaining_locations = self.quirky_deliveries.blackboard.remaining_locations
+        msg.status_message = "Cancellation message was received."
+        self._delivery_feedback_publisher.publish(msg)
+        
     def _result_service_callback(self, request):
         '''
         Returns the result if success
@@ -172,8 +198,12 @@ class GopherHiveMind(object):
             msg.result = gopher_std_msgs.DeliveryErrorCodes.SUCCESS
             msg.error_message = "Success !"
         else:
-            msg.result = gopher_std_msgs.DeliveryErrorCodes.UNKNOWN
-            msg.error_message = "Not finished yet..."
+            if self.cancelled:
+                msg.result = gopher_std_msgs.DeliveryErrorCodes.CANCELLED
+                msg.error_message = "Delivery was cancelled."
+            else:
+                msg.result = gopher_std_msgs.DeliveryErrorCodes.UNKNOWN
+                msg.error_message = "Not finished yet..."
 
         return msg
 
