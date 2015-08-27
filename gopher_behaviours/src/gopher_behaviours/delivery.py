@@ -125,7 +125,6 @@ class Waiting(py_trees.Behaviour):
         .. seealso:: :py:meth:`Behaviour.initialise() <py_trees.behaviours.Behaviour.initialise>`
         """
         self.go_requested = False  # needs to be reset, just in case it's already true
-        self.blackboard.traversed_locations.append(self.blackboard.remaining_locations.pop(0))
         if self._honk_publisher:
             self._honk_publisher.publish(std_msgs.Empty())
         
