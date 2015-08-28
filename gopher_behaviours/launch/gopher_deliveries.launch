@@ -16,12 +16,15 @@
     <remap from="gopher_deliveries/move_base/goal"     to="/navi/move_base/goal"/>
     <remap from="gopher_deliveries/move_base/result"   to="/navi/move_base/result"/>
     <remap from="gopher_deliveries/move_base/status"   to="/navi/move_base/status"/>
-    <remap from="gopher_deliveries/semantic_locations" to="/navi/semantic_locations"/>
+    <remap from="gopher_semantics/semantic_locations"  to="/navi/semantic_locations"/>
     <remap from="delivery/goal"                        to="/rocon/delivery/goal"/>
     <remap from="delivery/feedback"                    to="/rocon/delivery/feedback"/>
     <remap from="delivery/cancel"                      to="/rocon/delivery/cancel"/>
     <remap from="delivery/result"                      to="/rocon/delivery/result"/>
     <remap from="delivery/go"                          to="/gopher/buttons/go"/>
+    <!-- Battery level information parameters for activating the low battery
+         tree-->
+    <rosparam command="load" file="$(gopher_meta)/resources/yaml/diagnostics/battery_levels.yaml"/>
     <rosparam param="dont_wait_for_hoomans" subst_value="True">$(arg dont_wait_for_hoomans)</rosparam>
     <rosparam param="debug" subst_value="True">$(arg debug)</rosparam>
     <rosparam param="autoload_test_delivery" subst_value="True">$(arg autoload_test_delivery)</rosparam>
