@@ -25,7 +25,7 @@
     <remap from="delivery/go"                          to="/gopher/buttons/go"/>
     <!-- Battery level information parameters for activating the low battery
          tree-->
-    <rosparam command="load" file="$(gopher_meta)/resources/yaml/diagnostics/battery_levels.yaml"/>
+    <rosparam command="load" file="$(find gopher_meta)/resources/yaml/diagnostics/battery_levels.yaml"/>
     <rosparam param="dont_wait_for_hoomans" subst_value="True">$(arg dont_wait_for_hoomans)</rosparam>
     <rosparam param="debug" subst_value="True">$(arg debug)</rosparam>
     <rosparam param="autoload_test_delivery" subst_value="True">$(arg autoload_test_delivery)</rosparam>
