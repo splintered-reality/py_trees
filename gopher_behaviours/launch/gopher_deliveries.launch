@@ -9,23 +9,25 @@
   <arg name="autoload_test_delivery"     default="false" doc="automatically load a test semantic locations list and drop a delivery goal to run on startup"/>
   <arg name="enable_honks"               default="false" doc="honk when certain behaviours are executed"/>
   <!-- <arg name="battery_levels_config_file" default="" doc="configuration for the battery levels"/> -->
+  <arg name="battery_levels_yaml"        default="$(find gopher_rocon_bootstrap)/param/battery_levels.yaml"/>
 
   <node name="gopher_deliveries" type="gopher_deliveries" pkg="gopher_behaviours">
-    <remap from="gopher_deliveries/battery"            to="/gopher/status/battery_slow"/>
-    <remap from="gopher_deliveries/move_base/cancel"   to="/navi/move_base/cancel"/>
-    <remap from="gopher_deliveries/move_base/feedback" to="/navi/move_base/feedback"/>
-    <remap from="gopher_deliveries/move_base/goal"     to="/navi/move_base/goal"/>
-    <remap from="gopher_deliveries/move_base/result"   to="/navi/move_base/result"/>
-    <remap from="gopher_deliveries/move_base/status"   to="/navi/move_base/status"/>
+    <remap from="gopher_deliveries/battery"             to="/gopher/status/battery_slow"/>
+    <remap from="gopher_deliveries/move_base/cancel"    to="/navi/move_base/cancel"/>
+    <remap from="gopher_deliveries/move_base/feedback"  to="/navi/move_base/feedback"/>
+    <remap from="gopher_deliveries/move_base/goal"      to="/navi/move_base/goal"/>
+    <remap from="gopher_deliveries/move_base/result"    to="/navi/move_base/result"/>
+    <remap from="gopher_deliveries/move_base/status"    to="/navi/move_base/status"/>
     <remap from="gopher_deliveries/semantic_locations"  to="/navi/semantic_locations"/>
-    <remap from="delivery/goal"                        to="/rocon/delivery/goal"/>
-    <remap from="delivery/feedback"                    to="/rocon/delivery/feedback"/>
-    <remap from="delivery/cancel"                      to="/rocon/delivery/cancel"/>
-    <remap from="delivery/result"                      to="/rocon/delivery/result"/>
-    <remap from="delivery/go"                          to="/gopher/buttons/go"/>
+    <remap from="delivery/goal"                         to="/rocon/delivery/goal"/>
+    <remap from="delivery/feedback"                     to="/rocon/delivery/feedback"/>
+    <remap from="delivery/cancel"                       to="/rocon/delivery/cancel"/>
+    <remap from="delivery/result"                       to="/rocon/delivery/result"/>
+    <remap from="delivery/go"                           to="/gopher/buttons/go"/>
     <!-- Battery level information parameters for activating the low battery
          tree-->
-    <rosparam command="load" file="$(find gopher_meta)/resources/yaml/diagnostics/battery_levels.yaml"/>
+
+    <rosparam command="load" file="$(arg battery_levels_yaml)"/>
     <rosparam param="dont_wait_for_hoomans" subst_value="True">$(arg dont_wait_for_hoomans)</rosparam>
     <rosparam param="debug" subst_value="True">$(arg debug)</rosparam>
     <rosparam param="autoload_test_delivery" subst_value="True">$(arg autoload_test_delivery)</rosparam>
