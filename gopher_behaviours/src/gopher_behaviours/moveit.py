@@ -25,6 +25,7 @@ Kick the gophers around with these behaviours.
 import actionlib
 from actionlib_msgs.msg import GoalStatus
 import move_base_msgs.msg as move_base_msgs
+import gopher_std_msgs.msg as gopher_std_msgs
 import std_msgs.msg as std_msgs
 import py_trees
 import tf
@@ -42,24 +43,106 @@ class Dock(py_trees.Behaviour):
     """
     def __init__(self, name):
         super(Dock, self).__init__(name)
+        self.action_client = None
+        self._honk_publisher = None
+        try:
+            if rospy.get_param("~enable_honks") and rospy.get_param("~docking_honk"):
+                honk_topic = rospy.get_param("~docking_honk")
+                self._honk_publisher = rospy.Publisher("/gopher/commands/sounds/" + honk_topic, std_msgs.Empty, queue_size=1)
+        except KeyError:
+            rospy.logwarn("Gopher Deliveries : Could not find param to initialise honks.")
+            pass
+
+    def initialise(self):
+        if not self.action_client:
+            self.action_client = actionlib.SimpleActionClient('autonomous_docking', gopher_std_msgs.AutonomousDockingAction)
+        connected = self.action_client.wait_for_server(rospy.Duration(0.5))
+        if not connected:
+            rospy.logwarn("Dock : could not connect to autonomous docking server.")
+            self.action_client = None
+        else:
+            goal = gopher_std_msgs.AutonomousDockingGoal
+            goal.command = gopher_std_msgs.AutonomousDockingGoal.DOCK
+            self.action_client.send_goal(goal)
+
+        if self._honk_publisher:
+            self._honk_publisher.publish(std_msgs.Empty())
 
     def update(self):
         self.logger.debug("  %s [Dock::update()]" % self.name)
-        return py_trees.Status.SUCCESS
+        if self.action_client is None:
+            self.feedback_message = "Action client failed to connect"
+            return py_trees.Status.INVALID
+
+        result = self.action_client.get_result()
+        if result:
+            if result.value == gopher_std_msgs.AutonomousDockingResult.SUCCESS:
+                self.feedback_message = result.message
+                return py_trees.Status.SUCCESS
+            elif result.value == gopher_std_msgs.AutonomousDockingResult.ABORTED_OBSTACLES:
+                self.feedback_message = result.message
+                return py_trees.Status.FAILURE
+            else:
+                self.feedback_message = "Got unknown result value from docking controller"
+                return py_trees.Status.INVALID
+        else:
+            self.feedback_message = "Docking in progress"
+            return py_trees.Status.RUNNING
 
 
-class UnDock(py_trees.Behaviour):
+class Undock(py_trees.Behaviour):
     """
     Leave the docking bay. This is typically a specialised maneuvre so that
     the robot can begin localising.
     """
     def __init__(self, name):
-        super(UnDock, self).__init__(name)
+        super(Undock, self).__init__(name)
+        self.action_client = None
+        self._honk_publisher = None
+        try:
+            if rospy.get_param("~enable_honks") and rospy.get_param("~undocking_honk"):
+                honk_topic = rospy.get_param("~undocking_honk")
+                self._honk_publisher = rospy.Publisher("/gopher/commands/sounds/" + honk_topic, std_msgs.Empty, queue_size=1)
+        except KeyError:
+            rospy.logwarn("Gopher Deliveries : Could not find param to initialise honks.")
+            pass
+
+    def initialise(self):
+        self.action_client = actionlib.SimpleActionClient('autonomous_docking', gopher_std_msgs.AutonomousDockingAction)
+
+        connected = self.action_client.wait_for_server(rospy.Duration(0.5))
+        if not connected:
+            rospy.logwarn("Undock : could not connect to autonomous docking server.")
+            self.action_client = None
+        else:
+            goal = gopher_std_msgs.AutonomousDockingGoal
+            goal.command = gopher_std_msgs.AutonomousDockingGoal.UNDOCK
+            self.action_client.send_goal(goal)
+
+        if self._honk_publisher:
+            self._honk_publisher.publish(std_msgs.Empty())
+
 
     def update(self):
-        self.logger.debug("  %s [UnDock::update()]" % self.name)
-        return py_trees.Status.SUCCESS
+        self.logger.debug("  %s [Undock::update()]" % self.name)
+        if self.action_client is None:
+            self.feedback_message = "Action client failed to connect"
+            return py_trees.Status.INVALID
 
+        result = self.action_client.get_result()
+        if result:
+            if result.value == gopher_std_msgs.AutonomousDockingResult.SUCCESS:
+                self.feedback_message = result.message
+                return py_trees.Status.SUCCESS
+            elif result.value == gopher_std_msgs.AutonomousDockingResult.ABORTED_OBSTACLES:
+                self.feedback_message = result.message
+                return py_trees.Status.FAILURE
+            else:
+                self.feedback_message = "Got unknown result value from undocking controller"
+                return py_trees.Status.INVALID
+        else:
+            self.feedback_message = "Unocking in progress"
+            return py_trees.Status.RUNNING
 
 class MoveToGoal(py_trees.Behaviour):
     def __init__(self, name, pose):
@@ -70,7 +153,7 @@ class MoveToGoal(py_trees.Behaviour):
         
         self._honk_publisher = None
         try:
-            if rospy.get_param("~enable_honks"):
+            if rospy.get_param("~enable_honks") and rospy.get_param("~moving_honk"):
                 honk_topic = rospy.get_param("~moving_honk")
                 self._honk_publisher = rospy.Publisher("/gopher/commands/sounds/" + honk_topic, std_msgs.Empty, queue_size=1)
         except KeyError:
