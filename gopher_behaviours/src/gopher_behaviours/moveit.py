@@ -27,6 +27,7 @@ from actionlib_msgs.msg import GoalStatus
 import move_base_msgs.msg as move_base_msgs
 import gopher_std_msgs.msg as gopher_std_msgs
 import std_msgs.msg as std_msgs
+import somanet_msgs.msg as somanet_msgs
 import py_trees
 import tf
 import rospy
@@ -54,8 +55,7 @@ class Dock(py_trees.Behaviour):
             pass
 
     def initialise(self):
-        if not self.action_client:
-            self.action_client = actionlib.SimpleActionClient('autonomous_docking', gopher_std_msgs.AutonomousDockingAction)
+        self.action_client = actionlib.SimpleActionClient('autonomous_docking', gopher_std_msgs.AutonomousDockingAction)
         connected = self.action_client.wait_for_server(rospy.Duration(0.5))
         if not connected:
             rospy.logwarn("Dock : could not connect to autonomous docking server.")
@@ -89,6 +89,35 @@ class Dock(py_trees.Behaviour):
             self.feedback_message = "Docking in progress"
             return py_trees.Status.RUNNING
 
+class WaitForCharge(py_trees.Behaviour):
+
+    def __init__(self, name):
+        super(WaitForCharge, self).__init__(name)
+        self._notify_publisher = rospy.Publisher('~display_notification', gopher_std_msgs.Notification, queue_size=1)
+        self._battery_subscriber = rospy.Subscriber("~battery", somanet_msgs.SmartBatteryStatus, self.battery_callback)
+        self.charge_state = somanet_msgs.SmartBatteryStatus.DISCHARGING
+        
+    def initialise(self):
+        # Notifications last for some amount of time before LEDs go back to
+        # displaying the battery status. Need to send message repeatedly until
+        # the behaviour completes.
+        self.notify_timer = rospy.Timer(rospy.Duration(5), self.send_notification)
+
+    def send_notification(self, timer):
+        self._notify_publisher.publish(gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.SOLID_RED))
+
+    def battery_callback(self, msg):
+        self.charge_state = msg.charge_state
+
+    def update(self):
+        if self.charge_state == somanet_msgs.SmartBatteryStatus.CHARGING:
+            return py_trees.Status.SUCCESS
+        else:
+            return py_trees.Status.RUNNING
+
+    def abort(self, new_status):
+        if self.notify_timer:
+            self.notify_timer.shutdown()
 
 class Undock(py_trees.Behaviour):
     """
@@ -109,7 +138,6 @@ class Undock(py_trees.Behaviour):
 
     def initialise(self):
         self.action_client = actionlib.SimpleActionClient('autonomous_docking', gopher_std_msgs.AutonomousDockingAction)
-
         connected = self.action_client.wait_for_server(rospy.Duration(0.5))
         if not connected:
             rospy.logwarn("Undock : could not connect to autonomous docking server.")

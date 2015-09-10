@@ -19,6 +19,7 @@
     <remap from="gopher_deliveries/move_base/result"    to="/navi/move_base/result"/>
     <remap from="gopher_deliveries/move_base/status"    to="/navi/move_base/status"/>
     <remap from="gopher_deliveries/semantic_locations"  to="/navi/semantic_locations"/>
+    <remap from="gopher_deliveries/display_notification"  to="/gopher/status_notifier/display_notification"/>
     <remap from="delivery/goal"                         to="/rocon/delivery/goal"/>
     <remap from="delivery/feedback"                     to="/rocon/delivery/feedback"/>
     <remap from="delivery/cancel"                       to="/rocon/delivery/cancel"/>
