@@ -11,6 +11,8 @@
   <!-- <arg name="battery_levels_config_file" default="" doc="configuration for the battery levels"/> -->
   <arg name="battery_levels_yaml"        default="$(find gopher_rocon_bootstrap)/param/battery_levels.yaml" doc="location of battery level yaml"/>
   <arg name="enable_dock_interrupt"      default="true"  doc="allow the docking behaviour to be interrupted when a message is received on the cancel button topic "/>
+  <arg name="docking_mode"               default="default" doc="default will try to dock with AR, fake will just move forwards a bit"/>
+  <arg name="fake_dock_distance"         default="2"    doc="fake docking will move forwards this much before stopping to wait for charge"/>
 
   <node name="gopher_deliveries" type="gopher_deliveries" pkg="gopher_behaviours">
     <remap from="gopher_deliveries/battery"               to="/gopher/status/battery_slow"/>
@@ -22,11 +24,17 @@
     <remap from="gopher_deliveries/semantic_locations"    to="/navi/semantic_locations"/>
     <remap from="gopher_deliveries/display_notification"  to="/gopher/status_notifier/display_notification"/>
     
-    <remap from="gopher_deliveries/autonomous_docking/cancel"    to="/autonomous_docking/cancel"/>
-    <remap from="gopher_deliveries/autonomous_docking/feedback"  to="/autonomous_docking/feedback"/>
-    <remap from="gopher_deliveries/autonomous_docking/goal"      to="/autonomous_docking/goal"/>
-    <remap from="gopher_deliveries/autonomous_docking/result"    to="/autonomous_docking/result"/>
-    <remap from="gopher_deliveries/autonomous_docking/status"    to="/autonomous_docking/status"/>
+    <remap from="gopher_deliveries/autonomous_docking/cancel"    to="/gopher/autonomous_docking/cancel"/>
+    <remap from="gopher_deliveries/autonomous_docking/feedback"  to="/gopher/autonomous_docking/feedback"/>
+    <remap from="gopher_deliveries/autonomous_docking/goal"      to="/gopher/autonomous_docking/goal"/>
+    <remap from="gopher_deliveries/autonomous_docking/result"    to="/gopher/autonomous_docking/result"/>
+    <remap from="gopher_deliveries/autonomous_docking/status"    to="/gopher/autonomous_docking/status"/>
+
+    <remap from="gopher_deliveries/simple_motion_controller/cancel"    to="/gopher/simple_motion_controller/cancel"/>
+    <remap from="gopher_deliveries/simple_motion_controller/feedback"  to="/gopher/simple_motion_controller/feedback"/>
+    <remap from="gopher_deliveries/simple_motion_controller/goal"      to="/gopher/simple_motion_controller/goal"/>
+    <remap from="gopher_deliveries/simple_motion_controller/result"    to="/gopher/simple_motion_controller/result"/>
+    <remap from="gopher_deliveries/simple_motion_controller/status"    to="/gopher/simple_motion_controller/status"/>
     
     <remap from="delivery/goal"                         to="/rocon/delivery/goal"/>
     <remap from="delivery/feedback"                     to="/rocon/delivery/feedback"/>
@@ -44,5 +52,7 @@
     <param name="waiting_honk" value="i_am_groot"/>
     <param name="moving_honk" value="nothing"/>
     <param name="enable_dock_interrupt" value="$(arg enable_dock_interrupt)"/>
+    <param name="docking_mode" value="$(arg docking_mode)"/>
+    <param name="fake_dock_distance" value="$(arg fake_dock_distance)"/>
   </node>
 </launch>

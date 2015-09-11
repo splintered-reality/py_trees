@@ -40,7 +40,13 @@ from .blackboard import Blackboard
 class DockSelector(py_trees.Selector):
 
     def __init__(self, name):
-        super(DockSelector, self).__init__(name, children=[Dock('Attempt Docking'), WaitForCharge('Wait for help')])
+        mode = rospy.get_param("~docking_mode")
+        if mode == "fake":
+            children=[FakeDock('Attempt Docking (fake)'), WaitForCharge('Wait for help')]
+        else: # use the default docking action
+            children=[Dock('Attempt Docking'), WaitForCharge('Wait for help')]
+            
+        super(DockSelector, self).__init__(name, children)
 
 class Dock(py_trees.Behaviour):
     """
@@ -50,7 +56,7 @@ class Dock(py_trees.Behaviour):
     # until the waitforcharge behaviour successfully completes
     def __init__(self, name):
         super(Dock, self).__init__(name)
-        self.action_client = actionlib.SimpleActionClient('autonomous_docking', gopher_std_msgs.AutonomousDockingAction)
+        self.action_client = actionlib.SimpleActionClient('~autonomous_docking', gopher_std_msgs.AutonomousDockingAction)
         self.interrupted = False
 
         self._interrupt_sub = None
@@ -113,13 +119,49 @@ class Dock(py_trees.Behaviour):
             self.feedback_message = "Docking in progress"
             return py_trees.Status.RUNNING
 
+class FakeDock(py_trees.Behaviour):
+    def __init__(self, name):
+        super(FakeDock, self).__init__(name)
+        self.action_client = actionlib.SimpleActionClient('~simple_motion_controller', gopher_std_msgs.SimpleMotionAction)
+
+    def initialise(self):
+        self.connected = self.action_client.wait_for_server(rospy.Duration(0.5))
+        if not self.connected:
+            rospy.logwarn("FakeDock : could not connect to simple motion controller.")
+        else:
+            goal = gopher_std_msgs.SimpleMotionGoal()
+            goal.motion_type = gopher_std_msgs.SimpleMotionGoal.MOTION_TRANSLATE
+            # keyerror if it doesn't exist - should crash things
+            goal.motion_amount = rospy.get_param("~fake_dock_distance")
+            self.action_client.send_goal(goal)
+
+    def update(self):
+        self.logger.debug("  %s [FakeDock::update()]" % self.name)
+        
+        if not self.connected:
+            self.feedback_message = "Action client failed to connect"
+            return py_trees.Status.INVALID
+            
+        result = self.action_client.get_result()
+        if result:
+            self.feedback_message = result.message
+            if result.value == gopher_std_msgs.SimpleMotionResult.SUCCESS:
+                return py_trees.Status.SUCCESS
+            else: # anything else is a failure state
+                return py_trees.Status.FAILURE
+        else:
+            self.feedback_message = "Moving in progress"
+            return py_trees.Status.RUNNING
+
 class WaitForCharge(py_trees.Behaviour):
 
     def __init__(self, name):
         super(WaitForCharge, self).__init__(name)
-        self._notify_publisher = rospy.Publisher('~display_notification', gopher_std_msgs.Notification, queue_size=1)
+        self._notify_publisher = rospy.Publisher("~display_notification", gopher_std_msgs.Notification, queue_size=1)
         self._battery_subscriber = rospy.Subscriber("~battery", somanet_msgs.SmartBatteryStatus, self.battery_callback)
+        self._button_subscriber = rospy.Subscriber("/gopher/buttons/stop", std_msgs.Empty, self.button_callback)
         self.notify_timer = None
+        self.button_pressed = False
         self.charge_state = somanet_msgs.SmartBatteryStatus.DISCHARGING
         
     def initialise(self):
@@ -135,8 +177,11 @@ class WaitForCharge(py_trees.Behaviour):
     def battery_callback(self, msg):
         self.charge_state = msg.charge_state
 
+    def button_callback(self, msg):
+        self.button_pressed = True
+
     def update(self):
-        if self.charge_state == somanet_msgs.SmartBatteryStatus.CHARGING:
+        if self.charge_state == somanet_msgs.SmartBatteryStatus.CHARGING or self.button_pressed:
             return py_trees.Status.SUCCESS
         else:
             return py_trees.Status.RUNNING
@@ -152,7 +197,7 @@ class Undock(py_trees.Behaviour):
     """
     def __init__(self, name):
         super(Undock, self).__init__(name)
-        self.action_client = actionlib.SimpleActionClient('autonomous_docking', gopher_std_msgs.AutonomousDockingAction)
+        self.action_client = actionlib.SimpleActionClient("~autonomous_docking", gopher_std_msgs.AutonomousDockingAction)
         self._honk_publisher = None
         try:
             if rospy.get_param("~enable_honks") and rospy.get_param("~undocking_honk"):
