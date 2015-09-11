@@ -31,11 +31,45 @@ import somanet_msgs.msg as somanet_msgs
 import py_trees
 import tf
 import rospy
+import math
 from .blackboard import Blackboard
 
 ##############################################################################
 # Class
 ##############################################################################
+
+class RotateToStation(py_trees.Behaviour):
+    def __init__(self, name):
+        super(RotateToStation, self).__init__(name)
+        self.action_client = actionlib.SimpleActionClient('~autonomous_docking', gopher_std_msgs.AutonomousDockingAction)
+
+    def initialise(self):
+        self.connected = self.action_client.wait_for_server(rospy.Duration(0.5))
+        if not self.connected:
+            rospy.logwarn("Dock : could not connect to autonomous docking server.")
+        else:
+            goal = gopher_std_msgs.SimpleMotionGoal()
+            goal.motion_type = gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE
+            goal.motion_amount = math.pi/4.0
+            self.action_client.send_goal(goal)
+
+    def update(self):
+        self.logger.debug("  %s [RotateToStation::update()]" % self.name)
+
+        if not self.connected:
+            self.feedback_message = "Action client failed to connect"
+            return py_trees.Status.INVALID
+
+        result = self.action_client.get_result()
+        if result:
+            self.feedback_message = result.message
+            if result.value == gopher_std_msgs.SimpleMotionResult.SUCCESS:
+                return py_trees.Status.SUCCESS
+            else: # anything else is a failure state
+                return py_trees.Status.FAILURE
+        else:
+            self.feedback_message = "Rotation in progress"
+            return py_trees.Status.RUNNING
 
 class DockSelector(py_trees.Selector):
 
