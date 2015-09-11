@@ -217,15 +217,21 @@ class GopherDeliveries(object):
         flag (self.has_a_new_goal) that this subtree has changed.
         """
         if self.incoming_goal is not None and self.incoming_goal:
-            self.old_goal_id = self.root.id if self.root is not None else None
             # use the planner to initialise the behaviours that we are to follow
-            # to get to the delivery location.
+            # to get to the delivery location. If this is empty/None, then the
+            # semantic locations provided were wrong.
             children = self.planner.create_tree(self.incoming_goal, undock=False if self.root else True)
-            self.blackboard.traversed_locations = [] if not self.root else self.blackboard.traversed_locations
-            self.root = py_trees.Sequence(name="Balli Balli Deliveries", children=children)
-            self.blackboard.remaining_locations = self.incoming_goal
-            self.locations = self.incoming_goal
-            self.has_a_new_goal = True
+            if not children:
+                #TODO is this enough?
+                rospy.logwarn("Gopher Deliveries : Received a goal, but none of the locations were valid.")
+            else:
+                self.old_goal_id = self.root.id if self.root is not None else None
+                self.blackboard.traversed_locations = [] if not self.root else self.blackboard.traversed_locations
+                self.root = py_trees.Sequence(name="Balli Balli Deliveries", children=children)
+                self.blackboard.remaining_locations = self.incoming_goal
+                self.locations = self.incoming_goal
+                self.has_a_new_goal = True
+                
             self.incoming_goal = None
         elif self.root is not None and self.root.status == py_trees.Status.SUCCESS:
             # if we succeeded, then we should be at the previously traversed

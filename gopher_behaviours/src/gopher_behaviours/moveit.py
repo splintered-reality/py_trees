@@ -51,6 +51,15 @@ class Dock(py_trees.Behaviour):
     def __init__(self, name):
         super(Dock, self).__init__(name)
         self.action_client = actionlib.SimpleActionClient('autonomous_docking', gopher_std_msgs.AutonomousDockingAction)
+        self.interrupted = False
+
+        self._interrupt_sub = None
+        try:
+            if rospy.get_param("~enable_dock_interrupt"):
+                self._interrupt_sub = rospy.Subscriber("/gopher/buttons/stop", std_msgs.Empty, self.interrupt_cb)
+        except KeyError:
+            pass
+        
         self._honk_publisher = None
         try:
             if rospy.get_param("~enable_honks") and rospy.get_param("~docking_honk"):
@@ -75,12 +84,20 @@ class Dock(py_trees.Behaviour):
         if self._honk_publisher:
             self._honk_publisher.publish(std_msgs.Empty())
 
+    def interrupt_cb(self, msg):
+        rospy.loginfo("Dock behaviour got interrupt from button")
+        self.interrupted = True
+        self.action_client.cancel_goal()
+
     def update(self):
         self.logger.debug("  %s [Dock::update()]" % self.name)
         if not self.connected:
             self.feedback_message = "Action client failed to connect"
             return py_trees.Status.INVALID
 
+        if self.interrupted:
+            return py_trees.Status.FAILURE
+            
         result = self.action_client.get_result()
         if result:
             if result.value == gopher_std_msgs.AutonomousDockingResult.SUCCESS:
@@ -88,7 +105,6 @@ class Dock(py_trees.Behaviour):
                 return py_trees.Status.SUCCESS
             elif result.value == gopher_std_msgs.AutonomousDockingResult.ABORTED_OBSTACLES:
                 self.feedback_message = result.message
-                Dock.failed = True
                 return py_trees.Status.FAILURE
             else:
                 self.feedback_message = "Got unknown result value from docking controller"
@@ -107,7 +123,6 @@ class WaitForCharge(py_trees.Behaviour):
         self.charge_state = somanet_msgs.SmartBatteryStatus.DISCHARGING
         
     def initialise(self):
-        rospy.loginfo("init charge")
         self.send_notification(None)
         # Notifications last for some amount of time before LEDs go back to
         # displaying the battery status. Need to send message repeatedly until
@@ -121,16 +136,12 @@ class WaitForCharge(py_trees.Behaviour):
         self.charge_state = msg.charge_state
 
     def update(self):
-        rospy.loginfo("update charge")
         if self.charge_state == somanet_msgs.SmartBatteryStatus.CHARGING:
-            rospy.loginfo("charge done!")
             return py_trees.Status.SUCCESS
         else:
-            rospy.loginfo("charge wating...")
             return py_trees.Status.RUNNING
 
     def abort(self, new_status):
-        rospy.loginfo("charge aborted")
         if self.notify_timer:
             self.notify_timer.shutdown()
 

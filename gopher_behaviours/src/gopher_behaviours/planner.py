@@ -32,7 +32,7 @@ class Planner():
            Clean up the key error handling
         """
         # if we are constructing a "complete" 
-        children = [moveit.Undock("Undock")] if undock else []
+        children = []
         for ind, location in enumerate(locations):
             try:
                 semantic_location = self.semantic_locations[location]  # this is the full gopher_std_msgs.Location structure
@@ -47,7 +47,13 @@ class Planner():
             except KeyError, ke:  # a location passed was unknown : ignore it
                 rospy.logwarn("{0} is not in semantic_locations".format(location))
                 continue
-                
+
+        # this can happen if none of the locations provided are in the semantic locations
+        if not children:
+            return None
+            
+        if undock:
+            children.insert(0, moveit.Undock("Undock"))
         # assume that we will go back to somewhere with a dock at the end of
         # each task
         children.append(moveit.DockSelector("Docking Group"))
