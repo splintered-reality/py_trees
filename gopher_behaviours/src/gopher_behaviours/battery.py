@@ -60,6 +60,6 @@ class CheckBatteryLevel(py_trees.Behaviour):
 def create_battery_tree(name):
     check_battery_level = CheckBatteryLevel("Check Battery Level")
     go_home = moveit.GoHome("Go Home To Sleep")
-    dock = moveit.Dock("Dock")
+    dock = moveit.DockSelector("Docking Group")
     root = py_trees.Sequence(children=[check_battery_level, go_home, dock], name=name)
     return root

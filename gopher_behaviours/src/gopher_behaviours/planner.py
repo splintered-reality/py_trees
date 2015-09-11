@@ -32,7 +32,7 @@ class Planner():
            Clean up the key error handling
         """
         # if we are constructing a "complete" 
-        children = [moveit.UnDock("UnDock")] if undock else []
+        children = [moveit.Undock("Undock")] if undock else []
         for ind, location in enumerate(locations):
             try:
                 semantic_location = self.semantic_locations[location]  # this is the full gopher_std_msgs.Location structure
@@ -50,7 +50,7 @@ class Planner():
                 
         # assume that we will go back to somewhere with a dock at the end of
         # each task
-        children.append(moveit.Dock("Dock"))
+        children.append(moveit.DockSelector("Docking Group"))
 
         return children
 
