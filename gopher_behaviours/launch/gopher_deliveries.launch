@@ -11,8 +11,6 @@
   <!-- <arg name="battery_levels_config_file" default="" doc="configuration for the battery levels"/> -->
   <arg name="battery_levels_yaml"        default="$(find gopher_rocon_bootstrap)/param/battery_levels.yaml" doc="location of battery level yaml"/>
   <arg name="enable_dock_interrupt"      default="true"  doc="allow the docking behaviour to be interrupted when a message is received on the cancel button topic "/>
-  <arg name="docking_mode"               default="default" doc="default will try to dock with AR, fake will just move forwards a bit"/>
-  <arg name="fake_dock_distance"         default="2"    doc="fake docking will move forwards this much before stopping to wait for charge"/>
 
   <node name="gopher_deliveries" type="gopher_deliveries" pkg="gopher_behaviours">
     <remap from="gopher_deliveries/battery"               to="/gopher/status/battery_slow"/>
@@ -52,7 +50,5 @@
     <param name="waiting_honk" value="i_am_groot"/>
     <param name="moving_honk" value="nothing"/>
     <param name="enable_dock_interrupt" value="$(arg enable_dock_interrupt)"/>
-    <param name="docking_mode" value="$(arg docking_mode)"/>
-    <param name="fake_dock_distance" value="$(arg fake_dock_distance)"/>
   </node>
 </launch>

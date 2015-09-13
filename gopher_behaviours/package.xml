@@ -25,6 +25,9 @@
   <run_depend>tf</run_depend>
   <run_depend>std_msgs</run_depend>
   <run_depend>geometry_msgs</run_depend>
+  <run_depend>nav_msgs</run_depend>
+  <run_depend>dslam_msgs</run_depend>
+  <run_depend>geometry</run_depend>
   
   <test_depend>rosunit</test_depend>
 

@@ -27,70 +27,306 @@ from actionlib_msgs.msg import GoalStatus
 import move_base_msgs.msg as move_base_msgs
 import gopher_std_msgs.msg as gopher_std_msgs
 import std_msgs.msg as std_msgs
+import dslam_msgs.msg as dslam_msgs
 import somanet_msgs.msg as somanet_msgs
+import nav_msgs.msg as nav_msgs
+import geometry_msgs.msg as geometry_msgs
 import py_trees
 import tf
 import rospy
 import math
+import numpy
+from gopher_semantics.map_locations import SemanticLocations
 from .blackboard import Blackboard
+
+##############################################################################
+# Functions
+##############################################################################
+
+
+# compute tf1 multiplied by the inverse of tf2 - this gives the transformation
+# between the two transformations. Assumes transforms in the form ((x,y,z),
+# (x,y,z,w)) where the first part of the tuple is the translation and the second
+# part the rotation quaternion. The result is the transform T_tf1_rel_tf2 or
+# T^{tf1}_{tf2} or T_tf2_to_tf1
+
+# Based on code at
+# http://docs.ros.org/jade/api/tf/html/c++/Transform_8h_source.html
+def inverseTimes(tf1, tf2):
+    # matrix to allow vector-matrix multiplication to generate a vector
+    # this is the difference between the translations of the two transforms
+    v = numpy.matrix(tf2[0]) - numpy.matrix(tf1[0])
+    # create quaternion matrices from the vectors
+    q1 = numpy.matrix(tf.transformations.quaternion_matrix(tf1[1]))
+    q2 = numpy.matrix(tf.transformations.quaternion_matrix(tf2[1]))
+    # difference between the quaternions of the two transforms - relative
+    # rotation
+    diffq = tf.transformations.quaternion_from_matrix(numpy.transpose(q1) * q2)
+    # strip row+column 4 from q1 to multiply with vector
+    q1nonhom = q1[numpy.ix_([0,1,2],[0,1,2])]
+    difft = v * q1
+
+    return (tuple(difft), tuple(diffq))
+
+##############################################################################
+# Combined behaviour classes
+##############################################################################
+
+class Starting(py_trees.Selector):
+    def __init__(self, name):
+        undockseq = py_trees.Sequence("Undock", [IsDocked("Check for dock"), Undock("Undock")])
+        children = [undockseq,  Unpark("Unpark")]
+        super(Starting, self).__init__(name, children)
+
+class Finishing(py_trees.Sequence):
+    def __init__(self, name):
+        dockseq = py_trees.Sequence("Dock", [WasDocked("Was I docked?"), Dock("Dock")])
+        dockparkselect = py_trees.Selector("Dock or park?", [dockseq, Park("Park")])
+        children = [dockparkselect, WaitForCharge("Wait for charge")]
+        super(Finishing, self).__init__(name, children)
 
 ##############################################################################
 # Class
 ##############################################################################
 
-class RotateToStation(py_trees.Behaviour):
-    def __init__(self, name):
-        super(RotateToStation, self).__init__(name)
-        self.action_client = actionlib.SimpleActionClient('~autonomous_docking', gopher_std_msgs.AutonomousDockingAction)
+class SimpleMotion():
+    def __init__(self):
+        self.action_client = actionlib.SimpleActionClient('~simple_motion_controller', gopher_std_msgs.SimpleMotionAction)
 
-    def initialise(self):
+    # Motion is either rotation or translation, value is corresponding rotation in radians, or distance in metres
+    def execute(self, motion, value):
         self.connected = self.action_client.wait_for_server(rospy.Duration(0.5))
         if not self.connected:
-            rospy.logwarn("Dock : could not connect to autonomous docking server.")
-        else:
-            goal = gopher_std_msgs.SimpleMotionGoal()
+            rospy.logwarn("SimpleMotion : could not connect to simple motion controller server.")
+            return False
+
+        goal = gopher_std_msgs.SimpleMotionGoal()
+        if motion == "rotate":
             goal.motion_type = gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE
-            goal.motion_amount = math.pi/4.0
-            self.action_client.send_goal(goal)
+        elif motion == "translate":
+            goal.motion_type = else gopher_std_msgs.SimpleMotionGoal.MOTION_TRANSLATE
+        else:
+            rospy.logerr("SimpleMotion : received unknown motion type {0}".format(motion))
+            return False
+
+        goal.motion_amount = value
+        self.action_client.send_goal(goal)
+        
+    def complete(self):
+        result = self.action_client.get_result()
+        if not result:
+            return False
+
+        return True
+
+    def success(self):
+        result = self.action_client.get_result()
+        if not result:
+            return False
+        elif result.value == gopher_std_msgs.SimpleMotionResult.SUCCESS:
+            return True
+        else: # anything else is a failure state
+            return False
+
+class IsDocked(py_trees.Behaviour):
+    def __init__(self, name):
+        super(IsDocked, self).__init__(name)
+        self._battery_subscriber = self._battery_subscriber = rospy.Subscriber("~battery", somanet_msgs.SmartBatteryStatus, self.battery_callback)
+        self.docked = None
+
+    def battery_callback(self, msg):
+        self.docked = msg.charging_source == somanet_msgs.SmartBatteryStatus.CHARGING_SOURCE_DOCK
 
     def update(self):
-        self.logger.debug("  %s [RotateToStation::update()]" % self.name)
-
-        if not self.connected:
-            self.feedback_message = "Action client failed to connect"
-            return py_trees.Status.INVALID
-
-        result = self.action_client.get_result()
-        if result:
-            self.feedback_message = result.message
-            if result.value == gopher_std_msgs.SimpleMotionResult.SUCCESS:
-                return py_trees.Status.SUCCESS
-            else: # anything else is a failure state
-                return py_trees.Status.FAILURE
-        else:
-            self.feedback_message = "Rotation in progress"
+        if self.docked == None: # no message yet
             return py_trees.Status.RUNNING
+        elif self.docked: # is docked
+            return py_trees.Status.SUCCESS
+        else: # is not docked
+            return py_trees.Status.FAILURE
 
-class DockSelector(py_trees.Selector):
-
+class WasDocked(py_trees.Behaviour):
     def __init__(self, name):
-        mode = rospy.get_param("~docking_mode")
-        if mode == "fake":
-            children=[FakeDock('Attempt Docking (fake)'), WaitForCharge('Wait for help')]
-        else: # use the default docking action
-            children=[Dock('Attempt Docking'), WaitForCharge('Wait for help')]
-            
-        super(DockSelector, self).__init__(name, children)
+        super(WasDocked, self).__init__(name)
 
+    def update(self):
+        return py_trees.Status.FAILURE
+
+class Park(py_trees.Behaviour):
+    def __init__(self, name):
+        super(Park, self).__init__(name)
+        self.rotated = False
+        self.tf_listener = tf.TransformListener()
+        self.motion = SimpleMotion()
+        self.blackboard = Blackboard()
+        
+    def initialise(self):
+        # assume map frame is 0,0,0 with no rotation; translation of
+        # homebase is the position of the homebase specified in semantic
+        # locations
+        hb_translation = numpy.array((self.homebase['pose']['x'], self.homebase['pose']['y'], 0))
+        # quaternion specified by rotating theta radians around the yaw axis
+        hb_rotation = tf.transformations.quaternion_about_axis(self.homebase['pose']['theta'], (0,0,1))
+
+        # get the current position of the robot as a transform from map to base link
+        self.tf_listener.waitForTransform("map", "base_link", rospy.Duration(15))
+        self.start_transform = self.tf_listener.lookupTransform("map", "base_link", rospy.Time(0))
+
+        # get the relative rotation and translation between the homebase and the current position
+        T_hb_to_current = inverseTimes(self.start_transform, (hb_translation, hb_rotation))
+        # get the relative rotation between the homebase and the parking location
+        T_hb_to_parking = self.blackboard.T_hb_to_parking
+
+        # create transformstamped objects for the transformations from homebase to the two locations
+        t = tf.Transformer(True, rospy.Duration(10))
+        cur = geometry_msgs.TransformStamped() # hb_to_current
+        cur.header.frame_id = "homebase"
+        cur.child_frame_id = "current"
+        cur.transform.translation.x = T_hb_to_current[0][0]
+        cur.transform.translation.y = T_hb_to_current[0][1]
+        cur.transform.translation.z = T_hb_to_current[0][2]
+
+        cur.transform.translation.rotation.x = T_hb_to_current[1][0]
+        cur.transform.translation.rotation.y = T_hb_to_current[1][1]
+        cur.transform.translation.rotation.z = T_hb_to_current[1][2]
+        cur.transform.translation.rotation.w = T_hb_to_current[1][2]
+        t.setTransform(cur)
+
+        park = geometry_msgs.TransformStamped() # hb_to_parking
+        park.header.frame_id = "homebase"
+        park.child_frame_id = "parking"
+        park.transform.translation.x = T_hb_to_parking[0][0]
+        park.transform.translation.y = T_hb_to_parking[0][1]
+        park.transform.translation.z = T_hb_to_parking[0][2]
+
+        park.transform.translation.rotation.x = T_hb_to_parking[1][0]
+        park.transform.translation.rotation.y = T_hb_to_parking[1][1]
+        park.transform.translation.rotation.z = T_hb_to_parking[1][2]
+        park.transform.translation.rotation.w = T_hb_to_parking[1][2]
+        t.setTransform(park)
+
+        # Transform from current to parking computed by looking up the transform
+        # through the transformer. Current is our current frame of reference, so
+        # we know the location of the parking point in that frame. We need to
+        # compute the bearing to that point so that we can rotate to it, before
+        # moving in its direction.
+        T_current_to_parking = t.lookupTransform("current", "parking", rospy.Time(0))
+
+        # straight line distance between current location and parking
+        self.distance = numpy.norm(T_current_to_parking[0][:2])
+        # compute the angle between the x axis and the translation vector to the
+        # parking spot
+        xaxis = [1,0]
+        translation = [T_current_to_parking[0][0], T_current_to_parking[0][1]]
+        cross = numpy.cross(xaxis, translation) # the sign tells us whether this is a positive or negative rotation
+        # tan formula from https://newtonexcelbach.wordpress.com/2014/03/01/the-angle-between-two-vectors-python-version/
+        angle = numpy.sign(cross) * numpy.arctan2(numpy.linalg.norm(cross, numpy.dot(xaxis,translation))
+
+        # Start execution of the rotation motion. Update will check if the
+        # motion is complete and whether or not it was successful
+        self.motion.execute("rotate", angle)
+        
+    def update(self):
+        # if the motion isn't complete, we're running
+        if not self.motion.complete():
+            return py_trees.Status.RUNNING
+        else:
+            # Otherwise, the motion is finished. If either of the motions fail,
+            # the behaviour fails.
+            if not self.motion.success():
+                return py_trees.Status.FAILURE
+            else:
+                # The motion successfully completed
+                if not self.rotated:
+                    # if we weren't rotated, the behaviour completed was a
+                    # rotation
+                    self.rotated = True
+                    # once the rotation is complete, we execute the translation
+                    self.motion.execute("translate", self.distance)
+                else:
+                    # if we were rotated, this means that the translation
+                    # succeeded, so the rotation/translation pair succeeded.
+                    return py_trees.Status.SUCCESS
+
+class Unpark(py_trees.Behaviour):
+    def __init__(self, name):
+        super(Unpark, self)._init__(name)
+        self._notify_publisher = rospy.Publisher("~display_notification", gopher_std_msgs.Notification, queue_size=1)
+        self._battery_subscriber = self._battery_subscriber = rospy.Subscriber("~battery", somanet_msgs.SmartBatteryStatus, self.battery_callback)
+        self._button_subscriber = rospy.Subscriber("/gopher/buttons/stop", std_msgs.Empty, self.button_callback)
+        self._dslam_subscriber = rospy.Subscriber("/dslam/diagnostics", dslam_msgs.Diagnostics, self.dslam_callback)
+        self.tf_listener = tf.TransformListener()
+        self.blackboard = Blackboard()
+        self.homebase = SemanticLocations()['homebase']
+        
+    def initialise(self):
+        self.dslam_initialised = self.last_dslam.state == dslam_msgs.Diagnostics.WORKING
+        if self.dslam_initialised:
+            # if dslam is initialised, the map->base_link transform gives us the
+            # actual position of the robot, i.e. the position of the parking
+            # spot. Save this as the starting position
+            self.tf_listener.waitForTransform("map", "base_link", rospy.Time(), rospy.Duration(15))
+            self.start_transform = self.tf_listener.lookupTransform("map", "base_link", rospy.Time(0))
+        else:
+            # save the latest odom message received so that we can use it to compute
+            # a transform back to the starting position
+            self.tf_listener.waitForTransform("odom", "base_link", rospy.Time(), rospy.Duration(15))
+            self.start_transform = self.tf_listener.lookupTransform("odom", "base_link", rospy.Time(0))
+
+    def battery_callback(self, msg):
+        self.still_charging = msg.charge_state == somanet_msgs.SmartBatteryStatus.CHARGING
+
+    def button_callback(self, msg):
+        self.button_pressed = True
+        # when the button is pressed, save the latest odom value so we can get
+        # the transform between the start and end poses
+        self.end_transform = self.tf_listener.lookupTransform("odom", "base_link", rospy.Time(0))
+
+    def dslam_callback(self, msg):
+        self.last_dslam = msg
+
+    def update(self):
+        # need to be unplugged before we can move or be moved
+        if self.still_charging:
+            self._notify_publisher.publish(gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.FLASH_YELLOW))
+        else: # was unplugged, should start moving
+            if self.dslam_initialised:
+                # if dslam is initialised, we have the map-relative position of
+                # the parking spot. Need to compute the relative position of the
+                # parking spot to the homebase - this is the difference
+                # transform between the parking spot and the homebase
+                
+                # assume map frame is 0,0,0 with no rotation; translation of
+                # homebase is the position of the homebase specified in semantic
+                # locations
+                hb_translation = numpy.array((self.homebase['pose']['x'], self.homebase['pose']['y'], 0))
+                # quaternion specified by rotating theta radians around the yaw axis
+                hb_rotation = tf.transformations.quaternion_about_axis(self.homebase['pose']['theta'], (0,0,1))
+
+                # transform homebase to parking spot
+                self.blackboard.T_hb_to_parking = inverseTimes(self.start_transform, (hb_translation, hb_rotation))
+                print(self.blackboard.T_hb_to_parking)
+                return py_trees.Status.SUCCESS
+            else:
+                # otherwise, the robot needs to be guided to the homebase by
+                # someone - pressing the go button indicates that the homebase
+                # has been reached.
+                if self.button_pressed:
+                    self.blackboard.T_hb_to_parking = inverseTimes(self.start_transform, self.end_transform)
+                    print(self.blackboard.T_hb_to_parking)
+                    return py_trees.Status.SUCCESS
+                self._notify_publisher.publish(gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.FLASH_PURPLE))
+                
+        return py_trees.Status.RUNNING
+        
 class Dock(py_trees.Behaviour):
     """
     Engage the docking behaviour
     """
-    # if one dock object failed to dock, then all others will not do anything
-    # until the waitforcharge behaviour successfully completes
     def __init__(self, name):
         super(Dock, self).__init__(name)
-        self.action_client = actionlib.SimpleActionClient('~autonomous_docking', gopher_std_msgs.AutonomousDockingAction)
+        self.moving_client = actionlib.SimpleActionClient('~simple_motion_controller', gopher_std_msgs.SimpleMotionAction)
+        self.docking_client = actionlib.SimpleActionClient('~autonomous_docking', gopher_std_msgs.AutonomousDockingAction)
         self.interrupted = False
 
         self._interrupt_sub = None
@@ -113,13 +349,13 @@ class Dock(py_trees.Behaviour):
         if self.status == py_trees.Status.FAILURE:
             return
             
-        self.connected = self.action_client.wait_for_server(rospy.Duration(0.5))
+        self.connected = self.docking_client.wait_for_server(rospy.Duration(0.5))
         if not self.connected:
             rospy.logwarn("Dock : could not connect to autonomous docking server.")
         else:
             goal = gopher_std_msgs.AutonomousDockingGoal
             goal.command = gopher_std_msgs.AutonomousDockingGoal.DOCK
-            self.action_client.send_goal(goal)
+            self.docking_client.send_goal(goal)
 
         if self._honk_publisher:
             self._honk_publisher.publish(std_msgs.Empty())
@@ -127,7 +363,8 @@ class Dock(py_trees.Behaviour):
     def interrupt_cb(self, msg):
         rospy.loginfo("Dock behaviour got interrupt from button")
         self.interrupted = True
-        self.action_client.cancel_goal()
+        self.docking_client.cancel_goal()
+        self.moving_client.cancel_goal()
 
     def update(self):
         self.logger.debug("  %s [Dock::update()]" % self.name)
@@ -138,7 +375,7 @@ class Dock(py_trees.Behaviour):
         if self.interrupted:
             return py_trees.Status.FAILURE
             
-        result = self.action_client.get_result()
+        result = self.docking_client.get_result()
         if result:
             if result.value == gopher_std_msgs.AutonomousDockingResult.SUCCESS:
                 self.feedback_message = result.message
@@ -152,77 +389,6 @@ class Dock(py_trees.Behaviour):
         else:
             self.feedback_message = "Docking in progress"
             return py_trees.Status.RUNNING
-
-class FakeDock(py_trees.Behaviour):
-    def __init__(self, name):
-        super(FakeDock, self).__init__(name)
-        self.action_client = actionlib.SimpleActionClient('~simple_motion_controller', gopher_std_msgs.SimpleMotionAction)
-
-    def initialise(self):
-        self.connected = self.action_client.wait_for_server(rospy.Duration(0.5))
-        if not self.connected:
-            rospy.logwarn("FakeDock : could not connect to simple motion controller.")
-        else:
-            goal = gopher_std_msgs.SimpleMotionGoal()
-            goal.motion_type = gopher_std_msgs.SimpleMotionGoal.MOTION_TRANSLATE
-            # keyerror if it doesn't exist - should crash things
-            goal.motion_amount = rospy.get_param("~fake_dock_distance")
-            self.action_client.send_goal(goal)
-
-    def update(self):
-        self.logger.debug("  %s [FakeDock::update()]" % self.name)
-        
-        if not self.connected:
-            self.feedback_message = "Action client failed to connect"
-            return py_trees.Status.INVALID
-            
-        result = self.action_client.get_result()
-        if result:
-            self.feedback_message = result.message
-            if result.value == gopher_std_msgs.SimpleMotionResult.SUCCESS:
-                return py_trees.Status.SUCCESS
-            else: # anything else is a failure state
-                return py_trees.Status.FAILURE
-        else:
-            self.feedback_message = "Moving in progress"
-            return py_trees.Status.RUNNING
-
-class WaitForCharge(py_trees.Behaviour):
-
-    def __init__(self, name):
-        super(WaitForCharge, self).__init__(name)
-        self._notify_publisher = rospy.Publisher("~display_notification", gopher_std_msgs.Notification, queue_size=1)
-        self._battery_subscriber = rospy.Subscriber("~battery", somanet_msgs.SmartBatteryStatus, self.battery_callback)
-        self._button_subscriber = rospy.Subscriber("/gopher/buttons/stop", std_msgs.Empty, self.button_callback)
-        self.notify_timer = None
-        self.button_pressed = False
-        self.charge_state = somanet_msgs.SmartBatteryStatus.DISCHARGING
-        
-    def initialise(self):
-        self.send_notification(None)
-        # Notifications last for some amount of time before LEDs go back to
-        # displaying the battery status. Need to send message repeatedly until
-        # the behaviour completes.
-        self.notify_timer = rospy.Timer(rospy.Duration(5), self.send_notification)
-
-    def send_notification(self, timer):
-        self._notify_publisher.publish(gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.SOLID_RED))
-
-    def battery_callback(self, msg):
-        self.charge_state = msg.charge_state
-
-    def button_callback(self, msg):
-        self.button_pressed = True
-
-    def update(self):
-        if self.charge_state == somanet_msgs.SmartBatteryStatus.CHARGING or self.button_pressed:
-            return py_trees.Status.SUCCESS
-        else:
-            return py_trees.Status.RUNNING
-
-    def abort(self, new_status):
-        if self.notify_timer:
-            self.notify_timer.shutdown()
 
 class Undock(py_trees.Behaviour):
     """
@@ -274,6 +440,43 @@ class Undock(py_trees.Behaviour):
         else:
             self.feedback_message = "Unocking in progress"
             return py_trees.Status.RUNNING
+
+class WaitForCharge(py_trees.Behaviour):
+
+    def __init__(self, name):
+        super(WaitForCharge, self).__init__(name)
+        self._notify_publisher = rospy.Publisher("~display_notification", gopher_std_msgs.Notification, queue_size=1)
+        self._battery_subscriber = rospy.Subscriber("~battery", somanet_msgs.SmartBatteryStatus, self.battery_callback)
+        self._button_subscriber = rospy.Subscriber("/gopher/buttons/stop", std_msgs.Empty, self.button_callback)
+        self.notify_timer = None
+        self.button_pressed = False
+        self.charge_state = somanet_msgs.SmartBatteryStatus.DISCHARGING
+        
+    def initialise(self):
+        self.send_notification(None)
+        # Notifications last for some amount of time before LEDs go back to
+        # displaying the battery status. Need to send message repeatedly until
+        # the behaviour completes.
+        self.notify_timer = rospy.Timer(rospy.Duration(5), self.send_notification)
+
+    def send_notification(self, timer):
+        self._notify_publisher.publish(gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.SOLID_RED))
+
+    def battery_callback(self, msg):
+        self.charge_state = msg.charge_state
+
+    def button_callback(self, msg):
+        self.button_pressed = True
+
+    def update(self):
+        if self.charge_state == somanet_msgs.SmartBatteryStatus.CHARGING or self.button_pressed:
+            return py_trees.Status.SUCCESS
+        else:
+            return py_trees.Status.RUNNING
+
+    def abort(self, new_status):
+        if self.notify_timer:
+            self.notify_timer.shutdown()
 
 class MoveToGoal(py_trees.Behaviour):
     def __init__(self, name, pose):
