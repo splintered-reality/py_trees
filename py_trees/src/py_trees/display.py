@@ -46,6 +46,7 @@ def generate_ascii_tree(tree, indent=0, snapshot_information=None):
 
     :param tree: the root of the tree, or subtree you want to show
     :param indent: the number of characters to indent the tree
+    :param snapshot_information: a visitor recording information about the tree runtime (e.g. ROSBehaviourTree.SnapshotVisitor)
     :return: a generator that yields ascii representations of nodes one by one
     """
     nodes = {} if snapshot_information is None else snapshot_information.nodes
@@ -78,6 +79,7 @@ def ascii_tree(tree, indent=0, snapshot_information=None):
 
     :param tree: the root of the tree, or subtree you want to show
     :param indent: the number of characters to indent the tree
+    :param snapshot_information: a visitor recording information about the tree runtime (e.g. ROSBehaviourTree.SnapshotVisitor)
     :return: ascii_tree as a string
 
     """

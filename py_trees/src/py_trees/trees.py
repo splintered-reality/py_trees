@@ -177,10 +177,10 @@ class BehaviourTree(object):
 
         :param float sleep_ms: sleep this much between ticks.
         :param int number_of_iterations: number of tick-tocks (-1 for infinite)
-        :param pre_tick_visitor: visitor that runs on this class instance before the tick
-        :type pre_tick_visitor: any function or class with a __call__ method taking a py_trees.BehaviourTree arg
-        :param post_tick_visitor: visitor that runs on this class instance before the tick
-        :type post_tick_visitor: any function or class with a __call__ method taking a py_trees.BehaviourTree arg
+        :param pre_tick_handler: visitor that runs on this class instance before the tick
+        :type pre_tick_handler: any function or class with a __call__ method taking a py_trees.BehaviourTree arg
+        :param post_tick_handler: visitor that runs on this class instance before the tick
+        :type post_tick_handler: any function or class with a __call__ method taking a py_trees.BehaviourTree arg
         """
         tick_tocks = 0
         while not self.interrupt_tick_tocking and (tick_tocks < number_of_iterations or number_of_iterations == CONTINUOUS_TICK_TOCK):
