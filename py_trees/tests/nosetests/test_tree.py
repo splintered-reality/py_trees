@@ -31,6 +31,9 @@ class Visitor:
     def __init__(self):
         self.logger = py_trees.logging.get_logger("Visitor")
 
+    def initialise(self):
+        pass
+
     def run(self, behaviour):
         self.logger.debug("  %s [visited][%s]" % (behaviour.name, behaviour.status))
 
@@ -89,7 +92,7 @@ def test_selector_composite():
     tick_tree(tree, visitor, 5, 8)
     print_summary(nodes=[a, b, c])
     print("Done")
-
+ 
 def test_sequence_composite():
     print(console.bold + "\n****************************************************************************************" + console.reset)
     print(console.bold + "* Sequence" + console.reset)
@@ -135,23 +138,23 @@ def test_mixed_tree():
     print(console.bold + "* Mixed Tree" + console.reset)
     print(console.bold + "****************************************************************************************" + console.reset)
     visitor = Visitor()
-    
+     
     a = py_trees.behaviours.Count(name="A", fail_until=3, running_until=5, success_until=7)
-
+ 
     sequence = py_trees.Sequence(name="Sequence")
     b = py_trees.behaviours.Count(name="B", fail_until=0, running_until=3, success_until=5)
     c = py_trees.behaviours.Count(name="C", fail_until=0, running_until=3, success_until=5)
     sequence.add_child(b)
     sequence.add_child(c)
-
+ 
     d = py_trees.behaviours.Count(name="D", fail_until=0, running_until=3, success_until=15)
-
+ 
     root = py_trees.Selector(name="Root")
     print("Root.children: %s " % [child.name for child in root.children])
     root.add_child(a)
     root.add_child(sequence)
     root.add_child(d)
-
+ 
     tick_tree(root, visitor, 1, 2)
     print_summary(nodes=[a, b, c, d])
     print("--------- Assertions ---------\n")
@@ -163,8 +166,20 @@ def test_mixed_tree():
     assert(b.status == py_trees.Status.RUNNING)
     print("root.status == py_trees.Status.RUNNING")
     assert(root.status == py_trees.Status.RUNNING)
-
+ 
     tick_tree(root, visitor, 3, 11)
+    print_summary(nodes=[a, b, c, d])
+    print("--------- Assertions ---------\n")
+    print("a.status == py_trees.Status.FAILURE")
+    assert(a.status == py_trees.Status.FAILURE)
+    print("sequence.status == py_trees.Status.RUNNING")
+    assert(sequence.status == py_trees.Status.RUNNING)
+    print("c.status == py_trees.Status.RUNNING")
+    assert(c.status == py_trees.Status.RUNNING)
+    print("root.status == py_trees.Status.RUNNING")
+    assert(root.status == py_trees.Status.RUNNING)
+
+    tick_tree(root, visitor, 12, 14)
     print_summary(nodes=[a, b, c, d])
     print("--------- Assertions ---------\n")
     print("a.status == py_trees.Status.FAILURE")
@@ -175,8 +190,8 @@ def test_mixed_tree():
     assert(c.status == py_trees.Status.SUCCESS)
     print("root.status == py_trees.Status.SUCCESS")
     assert(root.status == py_trees.Status.SUCCESS)
-
-    tick_tree(root, visitor, 12, 13)
+  
+    tick_tree(root, visitor, 15, 16)
     print_summary(nodes=[a, b, c, d])
     print("--------- Assertions ---------\n")
     print("a.status == py_trees.Status.FAILURE")
@@ -189,12 +204,12 @@ def test_mixed_tree():
     assert(d.status == py_trees.Status.RUNNING)
     print("root.status == py_trees.Status.RUNNING")
     assert(root.status == py_trees.Status.RUNNING)
-
+ 
 def test_display():
     print(console.bold + "\n****************************************************************************************" + console.reset)
     print(console.bold + "* Display Tree" + console.reset)
     print(console.bold + "****************************************************************************************\n" + console.reset)
-
+  
     a = py_trees.behaviours.Count(name="A")
     sequence = py_trees.Sequence(name="Sequence")
     b = py_trees.behaviours.Count(name="B")
@@ -206,17 +221,17 @@ def test_display():
     root.add_child(a)
     root.add_child(sequence)
     root.add_child(d)
-
+  
     py_trees.display.print_ascii_tree(root)
-
+  
     assert(True)
-
+  
 def test_full_iteration():
     print(console.bold + "\n****************************************************************************************" + console.reset)
     print(console.bold + "* Visit Whole Tree" + console.reset)
     print(console.bold + "****************************************************************************************\n" + console.reset)
     visitor = Visitor()
-
+  
     a = py_trees.behaviours.Count(name="A")
     sequence = py_trees.Sequence(name="Sequence")
     b = py_trees.behaviours.Count(name="B")
@@ -228,18 +243,18 @@ def test_full_iteration():
     root.add_child(a)
     root.add_child(sequence)
     root.add_child(d)
-
+  
     visitations = 0
     for child in root.iterate():
         visitations += 1
         child.visit(visitor)
     assert(visitations == 6)
-    
+      
 def test_prune_behaviour_tree():
     print(console.bold + "\n****************************************************************************************" + console.reset)
     print(console.bold + "* Prune Behaviour Tree" + console.reset)
     print(console.bold + "****************************************************************************************\n" + console.reset)
-
+  
     a = py_trees.behaviours.Count(name="A")
     sequence = py_trees.Sequence(name="Sequence")
     b = py_trees.behaviours.Count(name="B")
@@ -251,7 +266,7 @@ def test_prune_behaviour_tree():
     root.add_child(a)
     root.add_child(sequence)
     root.add_child(d)
-    
+      
     tree = py_trees.BehaviourTree(root)
     py_trees.display.print_ascii_tree(tree.root)
     assert(len(sequence.children) == 2)
@@ -261,12 +276,12 @@ def test_prune_behaviour_tree():
     tree.prune_subtree(sequence.id)
     py_trees.display.print_ascii_tree(tree.root)
     assert(len(root.children) == 2)
-    
+      
 def test_replace_behaviour_tree():
     print(console.bold + "\n****************************************************************************************" + console.reset)
     print(console.bold + "* Replace Behaviour Subtree" + console.reset)
     print(console.bold + "****************************************************************************************\n" + console.reset)
-
+  
     a = py_trees.behaviours.Count(name="A")
     sequence1 = py_trees.Sequence(name="Sequence1")
     b = py_trees.behaviours.Count(name="B")
@@ -278,11 +293,11 @@ def test_replace_behaviour_tree():
     root.add_child(a)
     root.add_child(sequence1)
     root.add_child(d)
-    
+      
     tree = py_trees.BehaviourTree(root)
     py_trees.display.print_ascii_tree(tree.root)
     assert(len(sequence1.children) == 2)
-
+  
     sequence2 = py_trees.Sequence(name="Sequence2")
     e = py_trees.behaviours.Count(name="E")
     f = py_trees.behaviours.Count(name="F")
@@ -290,16 +305,16 @@ def test_replace_behaviour_tree():
     sequence2.add_child(e)
     sequence2.add_child(f)
     sequence2.add_child(g)
-
+  
     tree.replace_subtree(sequence1.id, sequence2)
     py_trees.display.print_ascii_tree(tree.root)
     assert(len(sequence2.children) == 3)
-
+  
 def test_tick_tock_behaviour_tree():
     print(console.bold + "\n****************************************************************************************" + console.reset)
     print(console.bold + "* Tick Tock Behaviour Tree" + console.reset)
     print(console.bold + "****************************************************************************************\n" + console.reset)
-
+  
     a = py_trees.behaviours.Count(name="A")
     sequence = py_trees.Sequence(name="Sequence")
     b = py_trees.behaviours.Count(name="B")
@@ -311,24 +326,24 @@ def test_tick_tock_behaviour_tree():
     root.add_child(a)
     root.add_child(sequence)
     root.add_child(d)
-    
+      
     tree = py_trees.BehaviourTree(root)
     py_trees.display.print_ascii_tree(tree.root)
-
+  
     tree.visitors.append(Visitor())
-    tree.tick_tock(100, 5, pre_tick_visitor=pre_tick_visitor)
-
+    tree.tick_tock(100, 5, pre_tick_handler=pre_tick_visitor)
+  
     print("\n--------- Assertions ---------\n")
     print("a.status == py_trees.Status.RUNNING")
     assert(a.status == py_trees.Status.RUNNING)
-    
+      
 def test_success_failure_tree():
     print(console.bold + "\n****************************************************************************************" + console.reset)
     print(console.bold + "* Success Failure Tree" + console.reset)
     print(console.bold + "****************************************************************************************\n" + console.reset)
     root = py_trees.Selector("Root")
     failure = py_trees.behaviours.Failure("Failure")
-    failure2 = py_trees.behaviour_update_inverter(py_trees.behaviours.Success("Failure2"))
+    failure2 = py_trees.meta.inverter(py_trees.behaviours.Success("Failure2"))
     success = py_trees.behaviours.Success("Success")
     root.add_child(failure)
     root.add_child(failure2)
@@ -336,7 +351,7 @@ def test_success_failure_tree():
     py_trees.display.print_ascii_tree(root)
     visitor = Visitor()
     tick_tree(root, visitor, 1, 1)
-    
+      
     print("\n--------- Assertions ---------\n")
     print("success.status == py_trees.Status.SUCCESS")
     assert(success.status == py_trees.Status.SUCCESS)

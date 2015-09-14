@@ -17,12 +17,11 @@ package. It provides ...
 # Imports
 ##############################################################################
 
-from .behaviours import (
-    Behaviour,
-    create_behaviour_from_function,
-    behaviour_update_inverter
-)
-import behaviours  # puts all specific behaviours under the .behaviours namespace
+from .behaviour import Behaviour
+
+import meta        # factories and operators on behaviours
+import behaviours  # specific behaviours
+
 from .common import Status
 from .composites import Composite, Selector, Sequence
 from .trees import BehaviourTree, ROSBehaviourTree, CONTINUOUS_TICK_TOCK

@@ -48,9 +48,9 @@ class Composite(Behaviour):
     ############################################
 
     def abort(self, new_status=Status.INVALID):
-        self.logger.debug("  %s [abort()]" % self.name)
+        self.logger.debug("  %s [Composite.abort()][%s->%s]" % (self.name, self.status, new_status))
         for child in self.children:
-            child.abort(Status.INVALID)
+            child.abort(new_status)
         self.status = new_status
         self.iterator = self.tick()
 
@@ -207,7 +207,7 @@ class Sequence(Composite):
         return self.children[self.current_index] if self.children else None
 
     def abort(self, new_status=Status.INVALID):
-        self.logger.debug("  %s [abort()][%s]" % (self.name, self.status))
+        self.logger.debug("  %s [abort()][%s->%s]" % (self.name, self.status, new_status))
         self.current_index = 0
         self.status = new_status
         Composite.abort(self, new_status)
