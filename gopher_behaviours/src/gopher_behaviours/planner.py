@@ -53,11 +53,10 @@ class Planner():
             return None
             
         if undock:
-            children.insert(0, moveit.Undock("Undock"))
+            children.insert(0, moveit.Starting("Starting"))
         # assume that we will go back to somewhere with a dock at the end of
         # each task
-        children.append(moveit.RotateToStation("Face Station"))
-        children.append(moveit.DockSelector("Docking Group"))
-
+        children.append(moveit.Finishing("Finishing"))
+        
         return children
 
