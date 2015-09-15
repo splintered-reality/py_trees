@@ -177,22 +177,24 @@ class WasDocked(py_trees.Behaviour):
         else:
             return py_trees.Status.SUCCESS
 
+
 class Park(py_trees.Behaviour):
     def __init__(self, name):
         super(Park, self).__init__(name)
         self.rotated = False
         self.tf_listener = tf.TransformListener()
-        self.homebase = SemanticLocations()['homebase']
+        self.semantic_locations = SemanticLocations()
         self.motion = SimpleMotion()
         self.blackboard = Blackboard()
-        
+        self.homebase = None  # we do delayed retrieval in initialise()
+
     def initialise(self):
         # assume map frame is 0,0,0 with no rotation; translation of
-        # homebase is the position of the homebase specified in semantic
-        # locations
+        self.homebase = self.semantic_locations['homebase']
+
         hb_translation = numpy.array((self.homebase.pose.x, self.homebase.pose.y, 0))
         # quaternion specified by rotating theta radians around the yaw axis
-        hb_rotation = tf.transformations.quaternion_about_axis(self.homebase.pose.theta, (0,0,1))
+        hb_rotation = tf.transformations.quaternion_about_axis(self.homebase.pose.theta, (0, 0, 1))
 
         rospy.loginfo("Park : waiting for transform from map to base_link")
         # get the current position of the robot as a transform from map to base link
@@ -255,7 +257,7 @@ class Park(py_trees.Behaviour):
         # motion is complete and whether or not it was successful
         self.motion.execute("rotate", transform_bearing(T_current_to_parking))
         rospy.loginfo("Park : relative rotation is {0}".format(transform_bearing(T_current_to_parking)))
-        
+
     def update(self):
         # if the motion isn't complete, we're running
         if not self.motion.complete():
