@@ -279,7 +279,6 @@ class Park(py_trees.Behaviour):
                     # succeeded, so the rotation/translation pair succeeded.
                     return py_trees.Status.SUCCESS
 
-            
 
 class Unpark(py_trees.Behaviour):
     def __init__(self, name):
@@ -289,16 +288,18 @@ class Unpark(py_trees.Behaviour):
 
         self.tf_listener = tf.TransformListener()
         self.blackboard = Blackboard()
-        self.homebase = SemanticLocations()['homebase']
+        self.semantic_locations = SemanticLocations()
         self.last_dslam = None
         self.button_pressed = False
-        
+        self.homebase = None  # set this in the initialise() step
+
     def initialise(self):
-        self.blackboard.parked = True # set this to true to indicate that the robot was parked, for the wasdocked behaviour
+        self.blackboard.parked = True  # set this to true to indicate that the robot was parked, for the wasdocked behaviour
         # only initialise subscribers when the behaviour starts running
         self._battery_subscriber = self._battery_subscriber = rospy.Subscriber("~battery", somanet_msgs.SmartBatteryStatus, self.battery_callback)
         self._button_subscriber = rospy.Subscriber("/gopher/buttons/go", std_msgs.Empty, self.button_callback)
         self._dslam_subscriber = rospy.Subscriber("/dslam/diagnostics", dslam_msgs.Diagnostics, self.dslam_callback)
+        self.homebase = self.semantic_locations['homebase']
 
         # assume map frame is 0,0,0 with no rotation; translation of homebase is
         # the position of the homebase specified in semantic locations. We need
@@ -310,7 +311,7 @@ class Unpark(py_trees.Behaviour):
         while not self.last_dslam and not rospy.is_shutdown():
             rospy.loginfo("Unpark : waiting for dslam state update")
             rospy.sleep(2)
-            
+
         self.dslam_initialised = self.last_dslam.state == dslam_msgs.Diagnostics.WORKING
         if self.dslam_initialised:
             # if dslam is initialised, the map->base_link transform gives us the
