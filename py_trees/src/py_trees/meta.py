@@ -51,7 +51,12 @@ def _invert(func):
     """Inverts the function, used for the inverter decorator."""
     def wrapped(*args, **kwargs):
         status = func(*args, **kwargs)
-        return common.Status.FAILURE if (status == common.Status.SUCCESS) else status
+        if status == common.Status.SUCCESS:
+            return common.Status.FAILURE
+        elif status == common.Status.FAILURE:
+            return common.Status.SUCCESS
+        else:
+            return status
     return wrapped
 
 
