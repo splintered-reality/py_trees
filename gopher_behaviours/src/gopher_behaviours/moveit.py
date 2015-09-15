@@ -132,6 +132,7 @@ class SimpleMotion():
             return False
 
         goal.motion_amount = value
+        goal.unsafe = False
         self.action_client.send_goal(goal)
         
     def complete(self):
