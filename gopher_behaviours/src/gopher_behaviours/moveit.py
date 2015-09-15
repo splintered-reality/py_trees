@@ -275,6 +275,7 @@ class Park(py_trees.Behaviour):
             # Otherwise, the motion is finished. If either of the motions fail,
             # the behaviour fails.
             if not self.motion.success():
+                self.blackboard.unpark_success = False
                 return py_trees.Status.FAILURE
             else:
                 # The motion successfully completed
