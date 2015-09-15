@@ -263,8 +263,8 @@ class Park(py_trees.Behaviour):
         # Start execution of the rotation motion which will orient us facing the
         # parking location. Update will check if the motion is complete and
         # whether or not it was successful
-        self.motion.execute("rotate", rotation_to_parking)
-        rospy.logdebug("Park : relative rotation is {0}".format(rotation_to_parking))
+        self.motion.execute("rotate", self.rotation_to_parking)
+        rospy.logdebug("Park : relative rotation is {0}".format(self.rotation_to_parking))
 
     def update(self):
         # if the motion isn't complete, we're running
@@ -306,6 +306,12 @@ class Unpark(py_trees.Behaviour):
 
         self.tf_listener = tf.TransformListener()
         self.blackboard = Blackboard()
+        # use unpark success variable to allow dslam-based unparking only when
+        # dslam actually has an accurate location lock. If we never successfully
+        # unparked before, this is unlikely to be the case.
+        if not hasattr(self.blackboard, 'unpark_success'):
+            self.blackboard.unpark_success = False
+            
         self.semantic_locations = SemanticLocations()
         self.last_dslam = None
         self.button_pressed = False
@@ -331,7 +337,7 @@ class Unpark(py_trees.Behaviour):
             rospy.sleep(2)
 
         self.dslam_initialised = self.last_dslam.state == dslam_msgs.Diagnostics.WORKING
-        if self.dslam_initialised:
+        if self.dslam_initialised and self.blackboard.unpark_success:
             # if dslam is initialised, the map->base_link transform gives us the
             # actual position of the robot, i.e. the position of the parking
             # spot. Save this as the starting position
@@ -365,7 +371,7 @@ class Unpark(py_trees.Behaviour):
             # reset the button just in case it was accidentally pressed
             self.button_pressed = False
         else: # was unplugged, should start moving
-            if self.dslam_initialised:
+            if self.dslam_initialised and self.blackboard.unpark_success:
                 # if dslam is initialised, we have the map-relative position of
                 # the parking spot. Need to compute the relative position of the
                 # parking spot to the homebase - this is the difference
@@ -375,6 +381,7 @@ class Unpark(py_trees.Behaviour):
                 self.blackboard.T_hb_to_parking = inverse_times((self.hb_translation, self.hb_rotation), self.start_transform)
                 rospy.logdebug("Unpark : transform from homebase to parking location")
                 print(human_transform(self.blackboard.T_hb_to_parking))
+                self.blackboard.unpark_success = True
                 return py_trees.Status.SUCCESS
             else:
                 rospy.logdebug("Unpark : waiting for go button to be pressed to indicate homebase")
@@ -397,6 +404,7 @@ class Unpark(py_trees.Behaviour):
                     pose.pose.pose.orientation.z = self.hb_rotation[2]
                     pose.pose.pose.orientation.w = self.hb_rotation[3]
                     self._location_publisher.publish(pose)
+                    self.blackboard.unpark_success = True
                     return py_trees.Status.SUCCESS
                 self._notify_publisher.publish(gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.FLASH_PURPLE))
                 
