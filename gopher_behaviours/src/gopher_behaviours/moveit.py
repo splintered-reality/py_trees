@@ -38,6 +38,7 @@ import rospy
 import math
 import numpy
 from gopher_semantics.map_locations import SemanticLocations
+from gopher_semantics.docking_stations import DockingStations
 from .blackboard import Blackboard
 
 ##############################################################################
@@ -189,12 +190,13 @@ class Park(py_trees.Behaviour):
         self.homebase = None  # we do delayed retrieval in initialise()
 
     def initialise(self):
-        # assume map frame is 0,0,0 with no rotation; translation of
         self.homebase = self.semantic_locations['homebase']
-
-        hb_translation = numpy.array((self.homebase.pose.x, self.homebase.pose.y, 0))
+        # assume map frame is 0,0,0 with no rotation; translation of
+        # homebase is the position of the homebase specified in semantic
+        # locations
+        hb_translation = (self.homebase.pose.x, self.homebase.pose.y, 0)
         # quaternion specified by rotating theta radians around the yaw axis
-        hb_rotation = tf.transformations.quaternion_about_axis(self.homebase.pose.theta, (0, 0, 1))
+        hb_rotation = tuple(tf.transformations.quaternion_about_axis(self.homebase.pose.theta, (0,0,1)))
 
         rospy.loginfo("Park : waiting for transform from map to base_link")
         # get the current position of the robot as a transform from map to base link
@@ -298,17 +300,17 @@ class Unpark(py_trees.Behaviour):
     def initialise(self):
         self.blackboard.parked = True  # set this to true to indicate that the robot was parked, for the wasdocked behaviour
         # only initialise subscribers when the behaviour starts running
+        self.homebase = self.semantic_locations['homebase']
         self._battery_subscriber = self._battery_subscriber = rospy.Subscriber("~battery", somanet_msgs.SmartBatteryStatus, self.battery_callback)
         self._button_subscriber = rospy.Subscriber("/gopher/buttons/go", std_msgs.Empty, self.button_callback)
         self._dslam_subscriber = rospy.Subscriber("/dslam/diagnostics", dslam_msgs.Diagnostics, self.dslam_callback)
-        self.homebase = self.semantic_locations['homebase']
 
         # assume map frame is 0,0,0 with no rotation; translation of homebase is
         # the position of the homebase specified in semantic locations. We need
         # the homebase location regardless of whether dslam is initialised.
-        self.hb_translation = numpy.array((self.homebase.pose.x, self.homebase.pose.y, 0))
+        self.hb_translation = (self.homebase.pose.x, self.homebase.pose.y, 0)
         # quaternion specified by rotating theta radians around the yaw axis
-        self.hb_rotation = tf.transformations.quaternion_about_axis(self.homebase.pose.theta, (0,0,1))
+        self.hb_rotation = tuple(tf.transformations.quaternion_about_axis(self.homebase.pose.theta, (0,0,1)))
 
         while not self.last_dslam and not rospy.is_shutdown():
             rospy.loginfo("Unpark : waiting for dslam state update")
@@ -405,7 +407,12 @@ class Dock(py_trees.Behaviour):
         super(Dock, self).__init__(name)
         self.moving_client = actionlib.SimpleActionClient('~simple_motion_controller', gopher_std_msgs.SimpleMotionAction)
         self.docking_client = actionlib.SimpleActionClient('~autonomous_docking', gopher_std_msgs.AutonomousDockingAction)
-        self.interrupted = False
+        self.blackboard = Blackboard()
+        self.semantic_locations = SemanticLocations()
+        self.tf_listener = tf.TransformListener()
+        self.interrupted = False # button pressed to interrupt docking procedure?
+        self.goal_sent = False # docking goal sent?
+        self.motion = SimpleMotion()
 
         self._interrupt_sub = None
         try:
@@ -426,15 +433,60 @@ class Dock(py_trees.Behaviour):
     def initialise(self):
         if self.status == py_trees.Status.FAILURE:
             return
-            
+
+        self.homebase = self.semantic_locations['homebase']
+        hb_translation = (self.homebase.pose.x, self.homebase.pose.y, 0)
+        hb_rotation = tuple(tf.transformations.quaternion_about_axis(self.homebase.pose.theta, (0,0,1)))
+
+        rospy.loginfo("Dock : waiting for transform from map to base_link")
+        self.tf_listener.waitForTransform("map", "base_link", rospy.Time(0), rospy.Duration(15))
+        start_transform = self.tf_listener.lookupTransform("map", "base_link", rospy.Time(0))
+        T_hb_to_current = inverse_times(start_transform, (hb_translation, hb_rotation))
+        T_hb_to_dock = self.blackboard.T_homebase_to_dock
+        
+        rospy.loginfo("Park : transform from homebase to current location")
+        rospy.loginfo(human_transform(T_hb_to_current))
+        rospy.loginfo("Park : transform from homebase to docking location")
+        rospy.loginfo(human_transform(T_hb_to_dock))
+
+        # create transformstamped objects for the transformations from homebase to the two locations
+        t = tf.Transformer(True, rospy.Duration(10))
+        cur = geometry_msgs.TransformStamped() # hb_to_current
+        cur.header.frame_id = "homebase"
+        cur.child_frame_id = "current"
+        cur.transform.translation.x = T_hb_to_current[0][0]
+        cur.transform.translation.y = T_hb_to_current[0][1]
+        cur.transform.translation.z = T_hb_to_current[0][2]
+
+        cur.transform.rotation.x = T_hb_to_current[1][0]
+        cur.transform.rotation.y = T_hb_to_current[1][1]
+        cur.transform.rotation.z = T_hb_to_current[1][2]
+        cur.transform.rotation.w = T_hb_to_current[1][3]
+        t.setTransform(cur)
+
+        dock = geometry_msgs.TransformStamped() # hb_to_dock
+        dock.header.frame_id = "homebase"
+        dock.child_frame_id = "docking"
+        dock.transform.translation.x = T_hb_to_dock[0][0]
+        dock.transform.translation.y = T_hb_to_dock[0][1]
+        dock.transform.translation.z = T_hb_to_dock[0][2]
+
+        dock.transform.rotation.x = T_hb_to_dock[1][0]
+        dock.transform.rotation.y = T_hb_to_dock[1][1]
+        dock.transform.rotation.z = T_hb_to_dock[1][2]
+        dock.transform.rotation.w = T_hb_to_dock[1][3]
+        t.setTransform(dock)
+
+        T_current_to_dock = t.lookupTransform("current", "docking", rospy.Time(0))
+
+        rospy.loginfo("Dock : transform from current location to dock")
+        rospy.loginfo(human_transform(T_current_to_parking))
+        
+        self.motion.execute("rotate", transform_bearing(T_current_to_parking))
+        
         self.connected = self.docking_client.wait_for_server(rospy.Duration(0.5))
         if not self.connected:
             rospy.logwarn("Dock : could not connect to autonomous docking server.")
-        else:
-            goal = gopher_std_msgs.AutonomousDockingGoal
-            goal.command = gopher_std_msgs.AutonomousDockingGoal.DOCK
-            self.docking_client.send_goal(goal)
-
         if self._honk_publisher:
             self._honk_publisher.publish(std_msgs.Empty())
 
@@ -452,7 +504,24 @@ class Dock(py_trees.Behaviour):
 
         if self.interrupted:
             return py_trees.Status.FAILURE
-            
+
+        # running if the rotation motion is still executing
+        if not self.motion.complete():
+            return py_trees.Status.RUNNING
+
+        # if the rotation motion fails, the behaviour fails
+        if not self.motion.success():
+            return py_trees.Status.FAILURE
+        else:
+            if not self.goal_sent:
+                # the rotation succeeded, now send the docking goal
+                goal = gopher_std_msgs.AutonomousDockingGoal
+                goal.command = gopher_std_msgs.AutonomousDockingGoal.DOCK
+                self.docking_client.send_goal(goal)
+                self.goal_sent = True
+
+        # at this point, we have sent the docking goal - check whether it's
+        # succeeded or failed, or if it's still running.
         result = self.docking_client.get_result()
         if result:
             if result.value == gopher_std_msgs.AutonomousDockingResult.SUCCESS:
@@ -476,9 +545,12 @@ class Undock(py_trees.Behaviour):
     def __init__(self, name):
         super(Undock, self).__init__(name)
         self.action_client = actionlib.SimpleActionClient("~autonomous_docking", gopher_std_msgs.AutonomousDockingAction)
-        # self._ar_long_subscriber = rospy.Subscriber("ar_pose_marker_long_range", ar_track_alvar_msgs.AlvarMarkers, self.ar_cb_long)
-        # self._ar_short_subscriber = rospy.Subscriber("ar_pose_marker_short_range", ar_track_alvar_msgs.AlvarMarkers, self.ar_cb_short)
+        self._location_publisher = rospy.Publisher("/navi/initial_pose", geometry_msgs.PoseWithCovarianceStamped, queue_size=1)
         self._honk_publisher = None
+        self.blackboard = Blackboard()
+        self.docking_stations = DockingStations()
+        self.semantic_locations = SemanticLocations()
+
         try:
             if rospy.get_param("~enable_honks") and rospy.get_param("~undocking_honk"):
                 honk_topic = rospy.get_param("~undocking_honk")
@@ -488,9 +560,40 @@ class Undock(py_trees.Behaviour):
             pass
 
     def initialise(self):
-        self.connected = self.action_client.wait_for_server(rospy.Duration(0.5))
+        self.homebase = self.semantic_locations['homebase']
+        self.blackboard.parked = False
+        self._ar_long_subscriber = rospy.Subscriber("ar_pose_marker_long_range", ar_track_alvar_msgs.AlvarMarkers, self.ar_cb_long)
+        self._ar_short_subscriber = rospy.Subscriber("ar_pose_marker_short_range", ar_track_alvar_msgs.AlvarMarkers, self.ar_cb_short)
+        rospy.sleep(rospy.Duration(2)) # sleep to wait for ar marker messages
         self.blackboard.dock_ar_marker_large = self.ar_marker_long
-        self.blackboard.dock_ar_marker_small = self.ar_markers_short
+        self.blackboard.dock_ar_markers_small = self.ar_markers_short
+
+        # retrieve information about this docking station
+        ds = self.docking_stations.find_docking_stations_with_ar_marker_id(self.ar_marker_long)[0]
+        # initialise a transform with the pose of the station
+        ds_translation = (ds.pose.x, ds.pose.y, 0)
+        # quaternion specified by rotating theta radians around the yaw axis
+        ds_rotation = tuple(tf.transformations.quaternion_about_axis(ds.pose.theta, (0,0,1)))
+
+        hb_translation = (self.homebase.pose.x, self.homebase.pose.y, 0)
+        hb_rotation = tuple(tf.transformations.quaternion_about_axis(self.homebase.pose.theta, (0,0,1)))
+
+        # publish that information to initialise navigation, and save for the
+        # docking procedure
+        self.blackboard.T_homebase_to_dock = inverseTimes((hb_translation, hb_rotation), (ds_translation, ds_rotation))
+        pose = geometry_msgs.PoseWithCovarianceStamped()
+        pose.header.stamp = rospy.Time.now()
+        pose.header.frame_id = "map"
+        pose.pose.pose.position.x = ds_translation[0]
+        pose.pose.pose.position.y = ds_translation[1]
+        pose.pose.pose.position.z = ds_translation[2]
+        pose.pose.pose.orientation.x = ds_rotation[0]
+        pose.pose.pose.orientation.y = ds_rotation[1]
+        pose.pose.pose.orientation.z = ds_rotation[2]
+        pose.pose.pose.orientation.w = ds_rotation[3]
+        self._location_publisher.publish(pose)
+        
+        self.connected = self.action_client.wait_for_server(rospy.Duration(0.5))
         if not self.connected:
             rospy.logwarn("Undock : could not connect to autonomous docking server.")
         else:
