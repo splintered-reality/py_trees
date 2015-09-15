@@ -49,8 +49,8 @@ from .blackboard import Blackboard
 # compute tf1 multiplied by the inverse of tf2 - this gives the transformation
 # between the two transformations. Assumes transforms in the form ((x,y,z),
 # (x,y,z,w)) where the first part of the tuple is the translation and the second
-# part the rotation quaternion. The result is the transform T_tf1_rel_tf2 or
-# T^{tf1}_{tf2} or T_tf2_to_tf1
+# part the rotation quaternion. The result is the transform T_tf2_rel_tf1 or
+# T^{tf2}_{tf1} or T_tf1_to_tf2
 
 # Based on code at
 # http://docs.ros.org/jade/api/tf/html/c++/Transform_8h_source.html
@@ -206,7 +206,7 @@ class Park(py_trees.Behaviour):
         self.start_transform = self.tf_listener.lookupTransform("map", "base_link", rospy.Time(0))
 
         # get the relative rotation and translation between the homebase and the current position
-        T_hb_to_current = inverse_times(self.start_transform, (hb_translation, hb_rotation))
+        T_hb_to_current = inverse_times((hb_translation, hb_rotation), self.start_transform)
         # get the relative rotation between the homebase and the parking location
         T_hb_to_parking = self.blackboard.T_hb_to_parking
 
@@ -334,7 +334,6 @@ class Unpark(py_trees.Behaviour):
         self.hb_translation = (self.homebase.pose.x, self.homebase.pose.y, 0)
         # quaternion specified by rotating theta radians around the yaw axis
         self.hb_rotation = tuple(tf.transformations.quaternion_about_axis(self.homebase.pose.theta, (0,0,1)))
-
         while not self.last_dslam and not rospy.is_shutdown():
             rospy.logdebug("Unpark : waiting for dslam state update")
             rospy.sleep(2)
@@ -384,6 +383,7 @@ class Unpark(py_trees.Behaviour):
                 self.blackboard.T_hb_to_parking = inverse_times((self.hb_translation, self.hb_rotation), self.start_transform)
                 rospy.logdebug("Unpark : transform from homebase to parking location")
                 print(human_transform(self.blackboard.T_hb_to_parking))
+
                 self.blackboard.unpark_success = True
                 return py_trees.Status.SUCCESS
             else:
@@ -396,6 +396,7 @@ class Unpark(py_trees.Behaviour):
                     self.blackboard.T_hb_to_parking = inverse_times(self.end_transform, self.start_transform)
                     rospy.logdebug("Unpark : transform from homebase to parking location")
                     print(human_transform(self.blackboard.T_hb_to_parking))
+
                     pose = geometry_msgs.PoseWithCovarianceStamped()
                     pose.header.stamp = rospy.Time.now()
                     pose.header.frame_id = "map"
