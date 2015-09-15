@@ -187,6 +187,7 @@ class Park(py_trees.Behaviour):
         self.semantic_locations = SemanticLocations()
         self.motion = SimpleMotion()
         self.blackboard = Blackboard()
+        self.translated = False
         self.homebase = None  # we do delayed retrieval in initialise()
 
     def initialise(self):
