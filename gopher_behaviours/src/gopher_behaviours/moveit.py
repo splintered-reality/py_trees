@@ -359,17 +359,6 @@ class Unpark(py_trees.Behaviour):
                 self.blackboard.T_hb_to_parking = inverse_times((self.hb_translation, self.hb_rotation), self.start_transform)
                 rospy.loginfo("Unpark : transform from homebase to parking location")
                 print(human_transform(self.blackboard.T_hb_to_parking))
-                pose = geometry_msgs.PoseWithCovarianceStamped()
-                pose.header.stamp = rospy.Time.now()
-                pose.header.frame_id = "map"
-                pose.pose.pose.position.x = self.hb_translation[0]
-                pose.pose.pose.position.y = self.hb_translation[1]
-                pose.pose.pose.position.z = self.hb_translation[2]
-                pose.pose.pose.orientation.x = self.hb_rotation[0]
-                pose.pose.pose.orientation.y = self.hb_rotation[1]
-                pose.pose.pose.orientation.z = self.hb_rotation[2]
-                pose.pose.pose.orientation.w = self.hb_rotation[3]
-                self._location_publisher.publish(pose)
                 return py_trees.Status.SUCCESS
             else:
                 rospy.loginfo("Unpark : waiting for go button to be pressed to indicate homebase")
