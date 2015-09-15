@@ -198,7 +198,7 @@ class Park(py_trees.Behaviour):
         # quaternion specified by rotating theta radians around the yaw axis
         hb_rotation = tuple(tf.transformations.quaternion_about_axis(self.homebase.pose.theta, (0,0,1)))
 
-        rospy.loginfo("Park : waiting for transform from map to base_link")
+        rospy.logdebug("Park : waiting for transform from map to base_link")
         # get the current position of the robot as a transform from map to base link
         self.tf_listener.waitForTransform("map", "base_link", rospy.Time(0), rospy.Duration(15))
         self.start_transform = self.tf_listener.lookupTransform("map", "base_link", rospy.Time(0))
@@ -208,10 +208,10 @@ class Park(py_trees.Behaviour):
         # get the relative rotation between the homebase and the parking location
         T_hb_to_parking = self.blackboard.T_hb_to_parking
 
-        rospy.loginfo("Park : transform from homebase to current location")
-        rospy.loginfo(human_transform(T_hb_to_current))
-        rospy.loginfo("Park : transform from homebase to parking location")
-        rospy.loginfo(human_transform(T_hb_to_parking))
+        rospy.logdebug("Park : transform from homebase to current location")
+        rospy.logdebug(human_transform(T_hb_to_current))
+        rospy.logdebug("Park : transform from homebase to parking location")
+        rospy.logdebug(human_transform(T_hb_to_parking))
 
         # create transformstamped objects for the transformations from homebase to the two locations
         t = tf.Transformer(True, rospy.Duration(10))
@@ -248,17 +248,23 @@ class Park(py_trees.Behaviour):
         # moving in its direction.
         T_current_to_parking = t.lookupTransform("current", "parking", rospy.Time(0))
 
-        rospy.loginfo("Park : transform from current location to parking")
-        rospy.loginfo(human_transform(T_current_to_parking))
+        rospy.logdebug("Park : transform from current location to parking")
+        rospy.logdebug(human_transform(T_current_to_parking))
 
         # straight line distance between current location and parking
         self.distance = numpy.linalg.norm(T_current_to_parking[0][:2])
-        rospy.loginfo("Park : straight line distance is {0}".format(self.distance))
+        rospy.logdebug("Park : straight line distance is {0}".format(self.distance))
 
-        # Start execution of the rotation motion. Update will check if the
-        # motion is complete and whether or not it was successful
-        self.motion.execute("rotate", transform_bearing(T_current_to_parking))
-        rospy.loginfo("Park : relative rotation is {0}".format(transform_bearing(T_current_to_parking)))
+        # rotation to perform at the current position to align us with the
+        # parking location position so we can drive towards it
+        self.rotation_to_parking = transform_bearing(T_current_to_parking)
+        # rotation to perform when at the parking location to align us as before
+        self.rotation_at_parking = tf.transformations.euler_from_quaternion(T_current_to_parking[1])[2] - self.rotation_to_parking
+        # Start execution of the rotation motion which will orient us facing the
+        # parking location. Update will check if the motion is complete and
+        # whether or not it was successful
+        self.motion.execute("rotate", rotation_to_parking)
+        rospy.logdebug("Park : relative rotation is {0}".format(rotation_to_parking))
 
     def update(self):
         # if the motion isn't complete, we're running
@@ -279,9 +285,17 @@ class Park(py_trees.Behaviour):
                     self.motion.execute("translate", self.distance)
                     return py_trees.Status.RUNNING
                 else:
-                    # if we were rotated, this means that the translation
-                    # succeeded, so the rotation/translation pair succeeded.
-                    return py_trees.Status.SUCCESS
+                    if not self.translated:
+                        # successfully completed the translation - start the
+                        # rotation at the parking spot.
+                        self.translated = True
+                        self.motion.execute("rotate", self.rotation_at_parking)
+                        return py_trees.Status.RUNNING
+                    else:
+                        # if we were rotated and translated, this means that the
+                        # rotation at the parking spot succeeded, so all three
+                        # actions were successful
+                        return py_trees.Status.SUCCESS
 
 
 class Unpark(py_trees.Behaviour):
@@ -313,7 +327,7 @@ class Unpark(py_trees.Behaviour):
         self.hb_rotation = tuple(tf.transformations.quaternion_about_axis(self.homebase.pose.theta, (0,0,1)))
 
         while not self.last_dslam and not rospy.is_shutdown():
-            rospy.loginfo("Unpark : waiting for dslam state update")
+            rospy.logdebug("Unpark : waiting for dslam state update")
             rospy.sleep(2)
 
         self.dslam_initialised = self.last_dslam.state == dslam_msgs.Diagnostics.WORKING
@@ -321,13 +335,13 @@ class Unpark(py_trees.Behaviour):
             # if dslam is initialised, the map->base_link transform gives us the
             # actual position of the robot, i.e. the position of the parking
             # spot. Save this as the starting position
-            rospy.loginfo("Unpark : waiting for transform from map to base_link")
+            rospy.logdebug("Unpark : waiting for transform from map to base_link")
             self.tf_listener.waitForTransform("map", "base_link", rospy.Time(), rospy.Duration(15))
             self.start_transform = self.tf_listener.lookupTransform("map", "base_link", rospy.Time(0))
         else:
             # save the latest odom message received so that we can use it to compute
             # a transform back to the starting position
-            rospy.loginfo("Unpark : waiting for transform from odom to base_link")
+            rospy.logdebug("Unpark : waiting for transform from odom to base_link")
             self.tf_listener.waitForTransform("odom", "base_link", rospy.Time(), rospy.Duration(15))
             self.start_transform = self.tf_listener.lookupTransform("odom", "base_link", rospy.Time(0))
 
@@ -346,7 +360,7 @@ class Unpark(py_trees.Behaviour):
     def update(self):
         # need to be unplugged before we can move or be moved
         if self.still_charging:
-            rospy.loginfo("Unpark : robot is still charging")
+            rospy.logdebug("Unpark : robot is still charging")
             self._notify_publisher.publish(gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.FLASH_YELLOW))
             # reset the button just in case it was accidentally pressed
             self.button_pressed = False
@@ -359,7 +373,7 @@ class Unpark(py_trees.Behaviour):
                 
                 # transform homebase to parking spot
                 self.blackboard.T_hb_to_parking = inverse_times((self.hb_translation, self.hb_rotation), self.start_transform)
-                rospy.loginfo("Unpark : transform from homebase to parking location")
+                rospy.logdebug("Unpark : transform from homebase to parking location")
                 print(human_transform(self.blackboard.T_hb_to_parking))
                 pose = geometry_msgs.PoseWithCovarianceStamped()
                 pose.header.stamp = rospy.Time.now()
@@ -374,14 +388,14 @@ class Unpark(py_trees.Behaviour):
                 self._location_publisher.publish(pose)
                 return py_trees.Status.SUCCESS
             else:
-                rospy.loginfo("Unpark : waiting for go button to be pressed to indicate homebase")
+                rospy.logdebug("Unpark : waiting for go button to be pressed to indicate homebase")
                 # otherwise, the robot needs to be guided to the homebase by
                 # someone - pressing the go button indicates that the homebase
                 # has been reached.
-                rospy.loginfo(human_transform(self.tf_listener.lookupTransform("odom", "base_link", rospy.Time(0))))
+                rospy.logdebug(human_transform(self.tf_listener.lookupTransform("odom", "base_link", rospy.Time(0))))
                 if self.button_pressed:
                     self.blackboard.T_hb_to_parking = inverse_times(self.end_transform, self.start_transform)
-                    rospy.loginfo("Unpark : transform from homebase to parking location")
+                    rospy.logdebug("Unpark : transform from homebase to parking location")
                     print(human_transform(self.blackboard.T_hb_to_parking))
                     pose = geometry_msgs.PoseWithCovarianceStamped()
                     pose.header.stamp = rospy.Time.now()
@@ -438,16 +452,16 @@ class Dock(py_trees.Behaviour):
         hb_translation = (self.homebase.pose.x, self.homebase.pose.y, 0)
         hb_rotation = tuple(tf.transformations.quaternion_about_axis(self.homebase.pose.theta, (0,0,1)))
 
-        rospy.loginfo("Dock : waiting for transform from map to base_link")
+        rospy.logdebug("Dock : waiting for transform from map to base_link")
         self.tf_listener.waitForTransform("map", "base_link", rospy.Time(0), rospy.Duration(15))
         start_transform = self.tf_listener.lookupTransform("map", "base_link", rospy.Time(0))
         T_hb_to_current = inverse_times(start_transform, (hb_translation, hb_rotation))
         T_hb_to_dock = self.blackboard.T_homebase_to_dock
         
-        rospy.loginfo("Park : transform from homebase to current location")
-        rospy.loginfo(human_transform(T_hb_to_current))
-        rospy.loginfo("Park : transform from homebase to docking location")
-        rospy.loginfo(human_transform(T_hb_to_dock))
+        rospy.logdebug("Park : transform from homebase to current location")
+        rospy.logdebug(human_transform(T_hb_to_current))
+        rospy.logdebug("Park : transform from homebase to docking location")
+        rospy.logdebug(human_transform(T_hb_to_dock))
 
         # create transformstamped objects for the transformations from homebase to the two locations
         t = tf.Transformer(True, rospy.Duration(10))
@@ -479,8 +493,8 @@ class Dock(py_trees.Behaviour):
 
         T_current_to_dock = t.lookupTransform("current", "docking", rospy.Time(0))
 
-        rospy.loginfo("Dock : transform from current location to dock")
-        rospy.loginfo(human_transform(T_current_to_parking))
+        rospy.logdebug("Dock : transform from current location to dock")
+        rospy.logdebug(human_transform(T_current_to_parking))
         
         self.motion.execute("rotate", transform_bearing(T_current_to_parking))
         
@@ -491,7 +505,7 @@ class Dock(py_trees.Behaviour):
             self._honk_publisher.publish(std_msgs.Empty())
 
     def interrupt_cb(self, msg):
-        rospy.loginfo("Dock behaviour got interrupt from button")
+        rospy.logdebug("Dock behaviour got interrupt from button")
         self.interrupted = True
         self.docking_client.cancel_goal()
         self.moving_client.cancel_goal()
