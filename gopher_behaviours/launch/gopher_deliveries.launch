@@ -4,7 +4,6 @@
   Eventually as part of the rapp
  -->
 <launch>
-  <arg name="debug"                      default="false" doc="get debug level logging from py_trees"/>
   <arg name="dont_wait_for_hoomans"      default="false" doc="automate hooman interaction via the 'go' button." />
   <arg name="autoload_test_delivery"     default="false" doc="automatically load a test semantic locations list and drop a delivery goal to run on startup"/>
   <arg name="enable_honks"               default="false" doc="honk when certain behaviours are executed"/>
@@ -44,7 +43,6 @@
          tree-->
     <rosparam command="load" file="$(arg battery_levels_yaml)"/>
     <rosparam param="dont_wait_for_hoomans" subst_value="True">$(arg dont_wait_for_hoomans)</rosparam>
-    <rosparam param="debug" subst_value="True">$(arg debug)</rosparam>
     <rosparam param="autoload_test_delivery" subst_value="True">$(arg autoload_test_delivery)</rosparam>
     <param name="enable_honks" value="$(arg enable_honks)"/>
     <param name="waiting_honk" value="i_am_groot"/>
