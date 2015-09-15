@@ -48,9 +48,16 @@ class Composite(Behaviour):
     ############################################
 
     def abort(self, new_status=Status.INVALID):
+        """
+        This updates all the children. We generally have two use cases here - whenever the composite has
+        gone to a recognised state (i.e. FAILURE or SUCCESS), or when a higher level parent calls on
+        it to truly abort (INVALID). We only really want to update everything below if we are in
+        the second use case. The first use case will subehaviours will have already handled themselves.
+        """
         self.logger.debug("  %s [Composite.abort()][%s->%s]" % (self.name, self.status, new_status))
-        for child in self.children:
-            child.abort(new_status)
+        if new_status == Status.INVALID:
+            for child in self.children:
+                child.abort(new_status)
         self.status = new_status
         self.iterator = self.tick()
 
