@@ -50,5 +50,6 @@
     <param name="waiting_honk" value="i_am_groot"/>
     <param name="moving_honk" value="nothing"/>
     <param name="enable_dock_interrupt" value="$(arg enable_dock_interrupt)"/>
+    <param name="semantics_parameter_namespace" value="/rocon/semantics"/>
   </node>
 </launch>
