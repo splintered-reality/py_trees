@@ -1,0 +1,42 @@
+#!/usr/bin/env python
+#
+# License: Yujin
+#
+##############################################################################
+# Documentation
+##############################################################################
+"""
+Simple demo program for the gopher behaviour parameter store.
+"""
+##############################################################################
+# Imports
+##############################################################################
+
+import gopher_behaviours
+import os
+import rocon_console.console as console
+import rospkg
+import yaml
+
+##############################################################################
+# Core Controller
+##############################################################################
+
+
+##############################################################################
+# Main
+##############################################################################
+
+if __name__ == '__main__':
+    gopher_behaviours.Parameters.load_defaults()
+    parameters = gopher_behaviours.Parameters()
+    print("%s" % parameters)
+    # following is the ros way of getting them from a launch file:
+    # <launch>
+    #   <node name="demo_parameters" type="demo_parameters" pkg="gopher_behaviours">
+    #     <rosparam command="load" file="$(find gopher_behaviours)/param/defaults.yaml"/>
+    #   </node>
+    # </launch>
+    #
+    # rosparam_defaults = rospy.get_param("~")
+    # print("%s" % rosparam_defaults)

@@ -136,7 +136,6 @@ class GopherHiveMind(object):
         if self.quirky_deliveries.succeeded_on_last_tick():
             self.success = True
 
-
     ##############################################################################
     # Ros Methods
     ##############################################################################
@@ -179,7 +178,7 @@ class GopherHiveMind(object):
         if self.quirky_deliveries.root:
             # prune the subtree containing the current delivery goal
             self.tree.prune_subtree(self.quirky_deliveries.root.id)
-        self.cancelled = True # set cancelled flag to use in result service
+        self.cancelled = True  # set cancelled flag to use in result service
 
         print("")
         print("************************************************************************************")
@@ -189,7 +188,6 @@ class GopherHiveMind(object):
         print("************************************************************************************")
         print("")
 
-        
         msg = gopher_std_msgs.DeliveryFeedback()
         msg.header.stamp = rospy.Time.now()
         msg.state = gopher_std_msgs.DeliveryFeedback.CANCELLED
@@ -197,7 +195,7 @@ class GopherHiveMind(object):
         msg.remaining_locations = self.quirky_deliveries.blackboard.remaining_locations
         msg.status_message = "Cancellation message was received."
         self._delivery_feedback_publisher.publish(msg)
-        
+
     def _result_service_callback(self, request):
         '''
         Returns the result if success

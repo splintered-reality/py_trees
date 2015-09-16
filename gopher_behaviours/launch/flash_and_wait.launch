@@ -1,0 +1,8 @@
+<!--
+  An experiment with some simple gopher components - flash, pause, wait for button, honk
+ -->
+<launch>
+  <node name="flash_and_wait" type="flash_and_wait" pkg="gopher_behaviours">
+    <rosparam command="load" file="$(find gopher_behaviours)/param/defaults.yaml"/>
+  </node>
+</launch>
