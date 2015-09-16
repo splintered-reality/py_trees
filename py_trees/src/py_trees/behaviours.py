@@ -22,8 +22,6 @@ This module defines the interface for behaviours to be used in py_trees.
 # Imports
 ##############################################################################
 
-import uuid
-
 from . import logging
 from .common import Status
 from .behaviour import Behaviour

@@ -197,6 +197,8 @@ class Sequence(Composite):
         self.current_index = 0
 
     def tick(self):
+        if self.status != Status.RUNNING:
+            self.initialise()
         self.logger.debug("  %s [tick()]" % self.name)
         for child in itertools.islice(self.children, self.current_index, None):
             for node in child.tick():
