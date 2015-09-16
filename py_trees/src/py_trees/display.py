@@ -157,7 +157,7 @@ def render_dot_tree(root):
     :param root: the root of the tree, or subtree you want to show
     """
     graph = generate_pydot_graph(root)
-    name = root.name.lower()
+    name = root.name.lower().replace(" ", "_")
     print("Writing %s.dot/svg/png" % name)
     graph.write(name + '.dot')
     graph.write_png(name + '.png')
