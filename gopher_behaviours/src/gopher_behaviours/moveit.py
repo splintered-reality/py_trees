@@ -144,6 +144,9 @@ class SimpleMotion():
 
         return True
 
+    def get_state(self):
+        return self.action_client.get_state()
+
     def success(self):
         result = self.action_client.get_result()
         if not result:
@@ -153,7 +156,7 @@ class SimpleMotion():
         else: # anything else is a failure state
             return False
 
-    def abort(self, new_status):
+    def abort(self):
         self.action_client.cancel_goal()
 
 class IsDocked(py_trees.Behaviour):
@@ -201,7 +204,7 @@ class Park(py_trees.Behaviour):
         # if the homebase to dock transform is unset, we didn't do an unparking
         # action - this could mean that the run was started without doing any
         # undock or unpark action
-        if self.blackboard.T_homebase_to_dock == None:
+        if self.blackboard.T_hb_to_parking == None:
             self.not_unparked = True
             return
             
@@ -317,7 +320,9 @@ class Park(py_trees.Behaviour):
                         return py_trees.Status.SUCCESS
 
     def abort(self, new_status):
-        self.motion.abort()
+        motion_state = self.motion.get_state()
+        if new_status == py_trees.Status.FAILURE and (motion_state == GoalStatus.PENDING or motion_state == GoalStatus.ACTIVE):
+            self.motion.abort()
         # set to none to use later as a flag to inidicate not having performed
         # unparking behaviour
         self.blackboard.T_hb_to_parking = None
@@ -585,7 +590,9 @@ class Dock(py_trees.Behaviour):
             return py_trees.Status.RUNNING
 
     def abort(self, new_status):
-        self.motion.abort()
+        motion_status = self.motion.get_status()
+        if new_status == py_trees.Status.FAILURE and (motion_status == GoalStatus.PENDING or motion_status == GoalStatus.ACTIVE):
+            self.motion.abort()
         self.docking_client.cancel_goal()
         # reset the homebase to dock transform to none so we can use it as a
         # flag to indicate that there was no undock performed
@@ -688,7 +695,9 @@ class Undock(py_trees.Behaviour):
             return py_trees.Status.RUNNING
 
     def abort(self, new_status):
-        self.action_client.cancel_goal()
+        action_status = self.action_client.get_status()
+        if motion_status == GoalStatus.PENDING or motion_status == GoalStatus.ACTIVE:
+            self.action_client.cancel_goal()
 
 class NotifyComplete(py_trees.Behaviour):
     def __init__(self, name):
