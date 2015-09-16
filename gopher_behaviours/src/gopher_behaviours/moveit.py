@@ -151,6 +151,9 @@ class SimpleMotion():
         else: # anything else is a failure state
             return False
 
+    def abort(self):
+        self.action_client.cancel_goal()
+
 class IsDocked(py_trees.Behaviour):
     def __init__(self, name):
         super(IsDocked, self).__init__(name)
@@ -300,6 +303,9 @@ class Park(py_trees.Behaviour):
                         # actions were successful
                         return py_trees.Status.SUCCESS
 
+    def abort(self):
+        self.motion.abort()
+
 
 class Unpark(py_trees.Behaviour):
     def __init__(self, name):
@@ -420,7 +426,6 @@ class Dock(py_trees.Behaviour):
     """
     def __init__(self, name):
         super(Dock, self).__init__(name)
-        self.moving_client = actionlib.SimpleActionClient('~simple_motion_controller', gopher_std_msgs.SimpleMotionAction)
         self.docking_client = actionlib.SimpleActionClient('~autonomous_docking', gopher_std_msgs.AutonomousDockingAction)
         self.blackboard = Blackboard()
         self.semantic_locations = SemanticLocations()
@@ -509,7 +514,7 @@ class Dock(py_trees.Behaviour):
         rospy.logdebug("Dock behaviour got interrupt from button")
         self.interrupted = True
         self.docking_client.cancel_goal()
-        self.moving_client.cancel_goal()
+        self.motion.abort()
 
     def update(self):
         self.logger.debug("  %s [Dock::update()]" % self.name)
@@ -551,6 +556,10 @@ class Dock(py_trees.Behaviour):
         else:
             self.feedback_message = "Docking in progress"
             return py_trees.Status.RUNNING
+
+    def abort(self):
+        self.motion.abort()
+        self.docking_client.cancel_goal()
 
 class Undock(py_trees.Behaviour):
     """
@@ -647,6 +656,9 @@ class Undock(py_trees.Behaviour):
         else:
             self.feedback_message = "Unocking in progress"
             return py_trees.Status.RUNNING
+
+    def abort(self):
+        self.action_client.cancel_goal()
 
 class WaitForCharge(py_trees.Behaviour):
 

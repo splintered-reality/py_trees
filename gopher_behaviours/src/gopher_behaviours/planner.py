@@ -51,12 +51,14 @@ class Planner():
         # this can happen if none of the locations provided are in the semantic locations
         if not children:
             return None
-            
+
         if undock:
             children.insert(0, moveit.Starting("Starting"))
+
         # assume that we will go back to somewhere with a dock at the end of
-        # each task
-        children.append(moveit.Finishing("Finishing"))
+        # each task, but only if the last location is homebase
+        if locations[-1] == 'homebase':
+            children.append(moveit.Finishing("Finishing"))
         
         return children
 
