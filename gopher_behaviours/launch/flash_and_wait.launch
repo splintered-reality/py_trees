@@ -1,5 +1,7 @@
 <!--
   An experiment with some simple gopher components - flash, pause, wait for button, honk
+
+  Run this on top of minimal.launch.
  -->
 <launch>
   <node name="flash_and_wait" type="flash_and_wait" pkg="gopher_behaviours">
