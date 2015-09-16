@@ -153,7 +153,7 @@ class SimpleMotion():
         else: # anything else is a failure state
             return False
 
-    def abort(self):
+    def abort(self, new_status):
         self.action_client.cancel_goal()
 
 class IsDocked(py_trees.Behaviour):
@@ -194,9 +194,17 @@ class Park(py_trees.Behaviour):
         self.motion = SimpleMotion()
         self.blackboard = Blackboard()
         self.translated = False
+        self.not_unparked = False
         self.homebase = None  # we do delayed retrieval in initialise()
 
     def initialise(self):
+        # if the homebase to dock transform is unset, we didn't do an unparking
+        # action - this could mean that the run was started without doing any
+        # undock or unpark action
+        if self.blackboard.T_homebase_to_dock == None:
+            self.not_unparked = True
+            return
+            
         self.homebase = self.semantic_locations['homebase']
         # assume map frame is 0,0,0 with no rotation; translation of
         # homebase is the position of the homebase specified in semantic
@@ -274,6 +282,9 @@ class Park(py_trees.Behaviour):
         rospy.logdebug("Park : relative rotation is {0}".format(self.rotation_to_parking))
 
     def update(self):
+        if self.not_unparked:
+            self.feedback_message = "transform to parking is undefined - probably no unpark action was performed"
+            return py_trees.Status.FAILURE
         # if the motion isn't complete, we're running
         if not self.motion.complete():
             return py_trees.Status.RUNNING
@@ -305,9 +316,11 @@ class Park(py_trees.Behaviour):
                         # actions were successful
                         return py_trees.Status.SUCCESS
 
-    def abort(self):
+    def abort(self, new_status):
         self.motion.abort()
-
+        # set to none to use later as a flag to inidicate not having performed
+        # unparking behaviour
+        self.blackboard.T_hb_to_parking = None
 
 class Unpark(py_trees.Behaviour):
     def __init__(self, name):
@@ -435,6 +448,7 @@ class Dock(py_trees.Behaviour):
         self.interrupted = False # button pressed to interrupt docking procedure?
         self.goal_sent = False # docking goal sent?
         self.motion = SimpleMotion()
+        self.not_undocked = False
 
         self._interrupt_sub = None
         try:
@@ -454,6 +468,13 @@ class Dock(py_trees.Behaviour):
 
     def initialise(self):
         if self.status == py_trees.Status.FAILURE:
+            return
+
+        # if the homebase to dock transform is unset, we didn't do a docking
+        # action - this could mean that the run was started without doing any
+        # undock or unpark action
+        if self.blackboard.T_homebase_to_dock == None:
+            self.not_undocked = True
             return
 
         self.homebase = self.semantic_locations['homebase']
@@ -520,6 +541,10 @@ class Dock(py_trees.Behaviour):
 
     def update(self):
         self.logger.debug("  %s [Dock::update()]" % self.name)
+        if self.not_undocked:
+            self.feedback_message = "Transform to dock was unset - no undock action was performed"
+            return py_trees.Status.FAILURE
+
         if not self.connected:
             self.feedback_message = "Action client failed to connect"
             return py_trees.Status.INVALID
@@ -559,9 +584,12 @@ class Dock(py_trees.Behaviour):
             self.feedback_message = "Docking in progress"
             return py_trees.Status.RUNNING
 
-    def abort(self):
+    def abort(self, new_status):
         self.motion.abort()
         self.docking_client.cancel_goal()
+        # reset the homebase to dock transform to none so we can use it as a
+        # flag to indicate that there was no undock performed
+        self.blackboard.T_homebase_to_dock = None
 
 class Undock(py_trees.Behaviour):
     """
@@ -659,7 +687,7 @@ class Undock(py_trees.Behaviour):
             self.feedback_message = "Unocking in progress"
             return py_trees.Status.RUNNING
 
-    def abort(self):
+    def abort(self, new_status):
         self.action_client.cancel_goal()
 
 class NotifyComplete(py_trees.Behaviour):
