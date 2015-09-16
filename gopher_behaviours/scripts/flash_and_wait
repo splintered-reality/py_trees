@@ -35,7 +35,6 @@ class Visitor:
         else:
             self.logger.debug("  %s [visited][%s]" % (behaviour.name, behaviour.status))
 
-
 ##############################################################################
 # Core Controller
 ##############################################################################
@@ -49,12 +48,9 @@ class FlashAndWait(object):
 
         flash_leds_need_input = gopher_behaviours.interactions.FlashLEDs("Waiting for Input", led_pattern=self.parameters.led_patterns.humans_give_me_input)
         flash_leds_need_input.add_child(gopher_behaviours.interactions.WaitForButton("Wait for Button", self.parameters.buttons.go))
+        honk = gopher_behaviours.interactions.Articulate("Honk", self.parameters.sounds.honk)
         flash_leds_pause = gopher_behaviours.interactions.FlashLEDs("Waiting", led_pattern=self.parameters.led_patterns.holding)
         flash_leds_pause.add_child(gopher_behaviours.time.Pause("Pause 5s", 5.0))
-
-        print("Honk: %s" %  self.parameters.sounds.honk)
-
-        honk = gopher_behaviours.interactions.Articulate("Honk", self.parameters.sounds.honk)
 
         self.root.add_child(flash_leds_need_input)
         self.root.add_child(honk)
@@ -71,15 +67,12 @@ class FlashAndWait(object):
 
     def tick_tock(self):
         self.tree.visitors.append(Visitor())
-        self.tree.tick_tock(sleep_ms=500, number_of_iterations=py_trees.CONTINUOUS_TICK_TOCK, pre_tick_handler=self.pre_tick_handler, post_tick_handler=self.post_tick_handler)
+        self.tree.tick_tock(sleep_ms=500, number_of_iterations=py_trees.CONTINUOUS_TICK_TOCK, pre_tick_handler=self.pre_tick_handler)
 
     def pre_tick_handler(self, behaviour_tree):
         self.logger.debug("")
         self.logger.debug("{:-^30}".format(" Run %s " % behaviour_tree.count))
         self.logger.debug("")
-
-    def post_tick_handler(self, behaviour_tree):
-        pass
 
     def shutdown(self):
         self.tree.destroy()  # destroy the tree on shutdown to stop the behaviour
@@ -91,9 +84,6 @@ class FlashAndWait(object):
 
 if __name__ == '__main__':
     py_trees.logging.level = py_trees.logging.Level.DEBUG
-    log_lev = rospy.DEBUG
-
-    rospy.init_node("flash_and_wait", log_level=log_lev)
-
+    rospy.init_node("flash_and_wait", log_level=rospy.DEBUG)
     flash_and_wait = FlashAndWait()
     flash_and_wait.tick_tock()
