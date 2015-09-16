@@ -100,11 +100,13 @@ class Starting(py_trees.Selector):
 
 class Finishing(py_trees.Selector):
     def __init__(self, name):
-        docksel = py_trees.Selector("Dock or wait on fail", [Dock("Dock"), WaitForCharge("Wait for help")])
-        dockseq = py_trees.Sequence("Dock", [WasDocked("Was I docked?"), docksel])
-        parkseq = py_trees.Sequence("Park", [py_trees.meta.inverter(WasDocked("Was I parked?")), py_trees.meta.failure_is_success(Park("Park")), WaitForCharge("Wait for charge")])
-        dockparkselect = py_trees.Selector("Dock or park?", [parkseq, dockseq])
-        children = [dockparkselect, WaitForCharge("Wait for charge")]
+        dodock = py_trees.Sequence("Dock/notify", [Dock("Dock"), NotifyComplete("Notify")])
+        dockseq = py_trees.Sequence("Maybe dock", [WasDocked("Was I docked?"), dodock])
+        
+        dopark = py_trees.Sequence("Park/notify", [Park("Park"), NotifyComplete("Notify")])
+        parkseq = py_trees.Sequence("Maybe park", [py_trees.meta.inverter(WasDocked("Was I parked?")), dopark])
+        
+        children = [parkseq, dockseq, WaitForCharge("Wait for help")]
         super(Finishing, self).__init__(name, children)
 
 ##############################################################################
@@ -660,6 +662,16 @@ class Undock(py_trees.Behaviour):
     def abort(self):
         self.action_client.cancel_goal()
 
+class NotifyComplete(py_trees.Behaviour):
+    def __init__(self, name):
+        super(NotifyComplete, self).__init__(name)
+        self._notify_publisher = rospy.Publisher("~display_notification", gopher_std_msgs.Notification, queue_size=1)
+
+    def update(self):
+        # always returns success
+        self._notify_publisher.publish(gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.FLASH_GREEN))
+        return py_trees.Status.SUCCESS
+        
 class WaitForCharge(py_trees.Behaviour):
 
     def __init__(self, name):
@@ -669,7 +681,7 @@ class WaitForCharge(py_trees.Behaviour):
         self._button_subscriber = rospy.Subscriber("/gopher/buttons/stop", std_msgs.Empty, self.button_callback)
         self.notify_timer = None
         self.button_pressed = False
-        self.charge_state = somanet_msgs.SmartBatteryStatus.DISCHARGING
+        self.charge_state = None
         
     def initialise(self):
         self.send_notification(None)
