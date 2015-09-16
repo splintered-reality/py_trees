@@ -100,11 +100,13 @@ class Starting(py_trees.Selector):
 
 class Finishing(py_trees.Selector):
     def __init__(self, name):
-        docksel = py_trees.Selector("Dock or wait on fail", [Dock("Dock"), WaitForCharge("Wait for help")])
-        dockseq = py_trees.Sequence("Dock", [WasDocked("Was I docked?"), docksel])
-        parkseq = py_trees.Sequence("Park", [py_trees.meta.inverter(WasDocked("Was I parked?")), py_trees.meta.failure_is_success(Park("Park")), WaitForCharge("Wait for charge")])
-        dockparkselect = py_trees.Selector("Dock or park?", [parkseq, dockseq])
-        children = [dockparkselect, WaitForCharge("Wait for charge")]
+        dodock = py_trees.Sequence("Dock/notify", [Dock("Dock"), NotifyComplete("Notify")])
+        dockseq = py_trees.Sequence("Maybe dock", [WasDocked("Was I docked?"), dodock])
+        
+        dopark = py_trees.Sequence("Park/notify", [Park("Park"), NotifyComplete("Notify")])
+        parkseq = py_trees.Sequence("Maybe park", [py_trees.meta.inverter(WasDocked("Was I parked?")), dopark])
+        
+        children = [parkseq, dockseq, WaitForCharge("Wait for help")]
         super(Finishing, self).__init__(name, children)
 
 ##############################################################################
@@ -142,6 +144,9 @@ class SimpleMotion():
 
         return True
 
+    def get_state(self):
+        return self.action_client.get_state()
+
     def success(self):
         result = self.action_client.get_result()
         if not result:
@@ -150,6 +155,9 @@ class SimpleMotion():
             return True
         else: # anything else is a failure state
             return False
+
+    def abort(self):
+        self.action_client.cancel_goal()
 
 class IsDocked(py_trees.Behaviour):
     def __init__(self, name):
@@ -189,9 +197,17 @@ class Park(py_trees.Behaviour):
         self.motion = SimpleMotion()
         self.blackboard = Blackboard()
         self.translated = False
+        self.not_unparked = False
         self.homebase = None  # we do delayed retrieval in initialise()
 
     def initialise(self):
+        # if the homebase to dock transform is unset, we didn't do an unparking
+        # action - this could mean that the run was started without doing any
+        # undock or unpark action
+        if self.blackboard.T_hb_to_parking == None:
+            self.not_unparked = True
+            return
+            
         self.homebase = self.semantic_locations['homebase']
         # assume map frame is 0,0,0 with no rotation; translation of
         # homebase is the position of the homebase specified in semantic
@@ -269,6 +285,9 @@ class Park(py_trees.Behaviour):
         rospy.logdebug("Park : relative rotation is {0}".format(self.rotation_to_parking))
 
     def update(self):
+        if self.not_unparked:
+            self.feedback_message = "transform to parking is undefined - probably no unpark action was performed"
+            return py_trees.Status.FAILURE
         # if the motion isn't complete, we're running
         if not self.motion.complete():
             return py_trees.Status.RUNNING
@@ -300,6 +319,13 @@ class Park(py_trees.Behaviour):
                         # actions were successful
                         return py_trees.Status.SUCCESS
 
+    def abort(self, new_status):
+        motion_state = self.motion.get_state()
+        if new_status == py_trees.Status.FAILURE and (motion_state == GoalStatus.PENDING or motion_state == GoalStatus.ACTIVE):
+            self.motion.abort()
+        # set to none to use later as a flag to inidicate not having performed
+        # unparking behaviour
+        self.blackboard.T_hb_to_parking = None
 
 class Unpark(py_trees.Behaviour):
     def __init__(self, name):
@@ -334,11 +360,17 @@ class Unpark(py_trees.Behaviour):
         self.hb_translation = (self.homebase.pose.x, self.homebase.pose.y, 0)
         # quaternion specified by rotating theta radians around the yaw axis
         self.hb_rotation = tuple(tf.transformations.quaternion_about_axis(self.homebase.pose.theta, (0,0,1)))
-        while not self.last_dslam and not rospy.is_shutdown():
-            rospy.logdebug("Unpark : waiting for dslam state update")
-            rospy.sleep(2)
+        
+        rospy.logdebug("Unpark : waiting for dslam state update")
+        rospy.sleep(2)
 
-        self.dslam_initialised = self.last_dslam.state == dslam_msgs.Diagnostics.WORKING
+        if not self.last_dslam:
+            rospy.logdebug("Unpark : didn't get a message from dslam - assuming uninitialised")
+            self.dslam_initialised = False
+        else:
+            rospy.logdebug("Unpark : got dslam message")
+            self.dslam_initialised = self.last_dslam.state == dslam_msgs.Diagnostics.WORKING
+
         if self.dslam_initialised and self.blackboard.unpark_success:
             # if dslam is initialised, the map->base_link transform gives us the
             # actual position of the robot, i.e. the position of the parking
@@ -420,7 +452,6 @@ class Dock(py_trees.Behaviour):
     """
     def __init__(self, name):
         super(Dock, self).__init__(name)
-        self.moving_client = actionlib.SimpleActionClient('~simple_motion_controller', gopher_std_msgs.SimpleMotionAction)
         self.docking_client = actionlib.SimpleActionClient('~autonomous_docking', gopher_std_msgs.AutonomousDockingAction)
         self.blackboard = Blackboard()
         self.semantic_locations = SemanticLocations()
@@ -428,6 +459,7 @@ class Dock(py_trees.Behaviour):
         self.interrupted = False # button pressed to interrupt docking procedure?
         self.goal_sent = False # docking goal sent?
         self.motion = SimpleMotion()
+        self.not_undocked = False
 
         self._interrupt_sub = None
         try:
@@ -447,6 +479,13 @@ class Dock(py_trees.Behaviour):
 
     def initialise(self):
         if self.status == py_trees.Status.FAILURE:
+            return
+
+        # if the homebase to dock transform is unset, we didn't do a docking
+        # action - this could mean that the run was started without doing any
+        # undock or unpark action
+        if self.blackboard.T_homebase_to_dock == None:
+            self.not_undocked = True
             return
 
         self.homebase = self.semantic_locations['homebase']
@@ -509,10 +548,14 @@ class Dock(py_trees.Behaviour):
         rospy.logdebug("Dock behaviour got interrupt from button")
         self.interrupted = True
         self.docking_client.cancel_goal()
-        self.moving_client.cancel_goal()
+        self.motion.abort()
 
     def update(self):
         self.logger.debug("  %s [Dock::update()]" % self.name)
+        if self.not_undocked:
+            self.feedback_message = "Transform to dock was unset - no undock action was performed"
+            return py_trees.Status.FAILURE
+
         if not self.connected:
             self.feedback_message = "Action client failed to connect"
             return py_trees.Status.INVALID
@@ -551,6 +594,15 @@ class Dock(py_trees.Behaviour):
         else:
             self.feedback_message = "Docking in progress"
             return py_trees.Status.RUNNING
+
+    def abort(self, new_status):
+        motion_status = self.motion.get_status()
+        if new_status == py_trees.Status.FAILURE and (motion_status == GoalStatus.PENDING or motion_status == GoalStatus.ACTIVE):
+            self.motion.abort()
+        self.docking_client.cancel_goal()
+        # reset the homebase to dock transform to none so we can use it as a
+        # flag to indicate that there was no undock performed
+        self.blackboard.T_homebase_to_dock = None
 
 class Undock(py_trees.Behaviour):
     """
@@ -648,6 +700,21 @@ class Undock(py_trees.Behaviour):
             self.feedback_message = "Unocking in progress"
             return py_trees.Status.RUNNING
 
+    def abort(self, new_status):
+        action_status = self.action_client.get_status()
+        if motion_status == GoalStatus.PENDING or motion_status == GoalStatus.ACTIVE:
+            self.action_client.cancel_goal()
+
+class NotifyComplete(py_trees.Behaviour):
+    def __init__(self, name):
+        super(NotifyComplete, self).__init__(name)
+        self._notify_publisher = rospy.Publisher("~display_notification", gopher_std_msgs.Notification, queue_size=1)
+
+    def update(self):
+        # always returns success
+        self._notify_publisher.publish(gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.FLASH_GREEN))
+        return py_trees.Status.SUCCESS
+        
 class WaitForCharge(py_trees.Behaviour):
 
     def __init__(self, name):
@@ -657,7 +724,7 @@ class WaitForCharge(py_trees.Behaviour):
         self._button_subscriber = rospy.Subscriber("/gopher/buttons/stop", std_msgs.Empty, self.button_callback)
         self.notify_timer = None
         self.button_pressed = False
-        self.charge_state = somanet_msgs.SmartBatteryStatus.DISCHARGING
+        self.charge_state = None
         
     def initialise(self):
         self.send_notification(None)
