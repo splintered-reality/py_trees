@@ -360,11 +360,17 @@ class Unpark(py_trees.Behaviour):
         self.hb_translation = (self.homebase.pose.x, self.homebase.pose.y, 0)
         # quaternion specified by rotating theta radians around the yaw axis
         self.hb_rotation = tuple(tf.transformations.quaternion_about_axis(self.homebase.pose.theta, (0,0,1)))
-        while not self.last_dslam and not rospy.is_shutdown():
-            rospy.logdebug("Unpark : waiting for dslam state update")
-            rospy.sleep(2)
+        
+        rospy.logdebug("Unpark : waiting for dslam state update")
+        rospy.sleep(2)
 
-        self.dslam_initialised = self.last_dslam.state == dslam_msgs.Diagnostics.WORKING
+        if not self.last_dslam:
+            rospy.logdebug("Unpark : didn't get a message from dslam - assuming uninitialised")
+            self.dslam_initialised = False
+        else:
+            rospy.logdebug("Unpark : got dslam message")
+            self.dslam_initialised = self.last_dslam.state == dslam_msgs.Diagnostics.WORKING
+
         if self.dslam_initialised and self.blackboard.unpark_success:
             # if dslam is initialised, the map->base_link transform gives us the
             # actual position of the robot, i.e. the position of the parking
