@@ -199,8 +199,6 @@ class Park(py_trees.Behaviour):
         self.blackboard = Blackboard()
 
     def initialise(self):
-        self.rotated = False
-        self.translated = False
         self.not_unparked = False
 
         # if the homebase to dock transform is unset, we didn't do an unparking
@@ -220,8 +218,12 @@ class Park(py_trees.Behaviour):
 
         rospy.logdebug("Park : waiting for transform from map to base_link")
         # get the current position of the robot as a transform from map to base link
-        self.tf_listener.waitForTransform("map", "base_link", rospy.Time(0), rospy.Duration(15))
-        self.start_transform = self.tf_listener.lookupTransform("map", "base_link", rospy.Time(0))
+        try:
+            self.start_transform = self.tf_listener.lookupTransform("map", "base_link", rospy.Time(0))
+        except tf.Exception:
+            rospy.logdebug("Park : failed to get transform from map to base_link")
+            self.start_transform = None
+            return
 
         # get the relative rotation and translation between the homebase and the current position
         T_hb_to_current = inverse_times((hb_translation, hb_rotation), self.start_transform)
@@ -278,15 +280,29 @@ class Park(py_trees.Behaviour):
         # rotation to perform at the current position to align us with the
         # parking location position so we can drive towards it
         self.rotation_to_parking = transform_bearing(T_current_to_parking)
-        # rotation to perform when at the parking location to align us as before
-        self.rotation_at_parking = tf.transformations.euler_from_quaternion(T_current_to_parking[1])[2] - self.rotation_to_parking
+
+        # if the distance to the parking spot is small, do not rotate and
+        # translate, just do the final translation to face the same orientation.
+        if self.distance < 0.5:
+            self.rotation_at_parking = tf.transformations.euler_from_quaternion(T_current_to_parking[1])[2]
+            self.motions_to_execute = [["rotate", self.rotation_at_parking]]
+        else:
+            # rotation to perform when at the parking location to align us as
+            # before - need to subtract the rotation we made to face the parking
+            # location
+            self.rotation_at_parking = tf.transformations.euler_from_quaternion(T_current_to_parking[1])[2] - self.rotation_to_parking
+            self.motions_to_execute = [["rotate", self.rotation_to_parking],
+                                       ["translate", self.distance], ["rotate", self.rotation_at_parking]]
+        
         # Start execution of the rotation motion which will orient us facing the
         # parking location. Update will check if the motion is complete and
         # whether or not it was successful
-        self.motion.execute("rotate", self.rotation_to_parking)
-        rospy.logdebug("Park : relative rotation is {0}".format(self.rotation_to_parking))
+        motion = self.motions_to_execute.pop(0)
+        self.motion.execute(motion[0], motion[1])
 
     def update(self):
+        if self.start_transform is None:
+            return py_trees.Status.FAILURE
         if self.not_unparked:
             self.feedback_message = "transform to parking is undefined - probably no unpark action was performed"
             return py_trees.Status.FAILURE
@@ -300,26 +316,15 @@ class Park(py_trees.Behaviour):
                 self.blackboard.unpark_success = False
                 return py_trees.Status.FAILURE
             else:
-                # The motion successfully completed
-                if not self.rotated:
-                    # if we weren't rotated, the behaviour completed was a
-                    # rotation
-                    self.rotated = True
-                    # once the rotation is complete, we execute the translation
-                    self.motion.execute("translate", self.distance)
-                    return py_trees.Status.RUNNING
+                # The motion successfully completed. Check if there is another
+                # motion to do, and execute it if there is, otherwise return
+                # success
+                if len(self.motions_to_execute) == 0:
+                    return py_trees.Status.SUCCESS
                 else:
-                    if not self.translated:
-                        # successfully completed the translation - start the
-                        # rotation at the parking spot.
-                        self.translated = True
-                        self.motion.execute("rotate", self.rotation_at_parking)
-                        return py_trees.Status.RUNNING
-                    else:
-                        # if we were rotated and translated, this means that the
-                        # rotation at the parking spot succeeded, so all three
-                        # actions were successful
-                        return py_trees.Status.SUCCESS
+                    motion = self.motions_to_execute.pop(0)
+                    self.motion.execute(motion[0], motion[1])
+                    return py_trees.Status.RUNNING
 
     def abort(self, new_status):
         motion_state = self.motion.get_state()
