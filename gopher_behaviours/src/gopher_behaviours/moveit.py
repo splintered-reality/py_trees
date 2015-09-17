@@ -37,6 +37,7 @@ import tf
 import rospy
 import math
 import numpy
+from .time import Pause
 from gopher_semantics.map_locations import SemanticLocations
 from gopher_semantics.docking_stations import DockingStations
 from .blackboard import Blackboard
@@ -94,8 +95,9 @@ def transform_bearing(transform):
 
 class Starting(py_trees.Selector):
     def __init__(self, name):
-        undockseq = py_trees.Sequence("Undock", [IsDocked("Check for dock"), Undock("Undock")])
-        children = [undockseq,  Unpark("Unpark")]
+        undockseq = py_trees.Sequence("Undock", [IsDocked("Check for dock"), Undock("Undock"), Pause("Pause", 2)])
+        unparkseq = py_trees.Sequence("Unpark", [Unpark("Unpark"), Pause("Pause", 2)])
+        children = [undockseq,  unparkseq]
         super(Starting, self).__init__(name, children)
 
 class Finishing(py_trees.Selector):
