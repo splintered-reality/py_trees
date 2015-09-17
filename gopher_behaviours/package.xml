@@ -17,6 +17,7 @@
   <run_depend>gopher_std_msgs</run_depend>
   <run_depend>py_trees</run_depend>
   <run_depend>python-enum34</run_depend>
+  <run_depend>python-rospkg</run_depend>
   <run_depend>rocon_console</run_depend>
   <run_depend>rocon_python_comms</run_depend>
   <run_depend>rospy</run_depend>

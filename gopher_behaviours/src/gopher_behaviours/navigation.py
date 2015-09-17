@@ -22,9 +22,11 @@ Bless my noggin with a tickle from your noodly appendages!
 ##############################################################################
 
 import geometry_msgs.msg as geometry_msgs
+import os
 import py_trees
 import rospy
 import std_msgs.msg as std_msgs
+from . import utilities
 
 ##############################################################################
 # Behaviours
@@ -72,7 +74,7 @@ class SwitchMap(py_trees.Behaviour):
 
         A pastafarian at a higher level should take care of that before construction.
 
-        :param str map_filename: full pathname to the dslam map file.
+        :param str map_filename: full pathname to the dslam map.
         :param str topic_name:
         """
         super(SwitchMap, self).__init__(name)

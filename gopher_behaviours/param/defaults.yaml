@@ -11,7 +11,7 @@
 topics:
   display_notification: /gopher/status_notifier/display_notification
   initial_pose: /navi/initial_pose
-  switch_map: /dslam/switch_map
+  switch_map: /dslam/map/switch
 
 namespaces:
   semantics: /rocon/semantics

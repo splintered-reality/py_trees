@@ -1,0 +1,14 @@
+<!--
+  An experiment with some simple gopher components - switch map and init pose.
+
+  Run this on top of minimal.launch and make sure there exists
+
+   - ROS_HOME/gopher/maps/earth.dslam
+   - ROS_HOME/gopher/maps/heaven.dslam
+   - ROS_HOME/gopher/maps/hell.dslam
+ -->
+<launch>
+  <node name="switch_map" type="demo_switch_map" pkg="gopher_behaviours">
+    <rosparam command="load" file="$(find gopher_behaviours)/param/defaults.yaml"/>
+  </node>
+</launch>
