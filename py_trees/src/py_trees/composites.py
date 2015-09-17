@@ -86,6 +86,8 @@ class Composite(Behaviour):
 
         .. todo:: error handling for when child is not in this list (what error is thrown?)
         """
+        if child.status == Status.RUNNING:
+            child.abort(Status.INVALID)
         index = self.children.index(child)
         self.children.remove(child)
         return index
@@ -99,6 +101,8 @@ class Composite(Behaviour):
         :param replacement: child to insert
         :type replacement: instance or descendant of :class:`Behaviour <py_trees.behaviours.Behaviour>`
         """
+        if child.status == Status.RUNNING:
+            child.abort(Status.INVALID)
         index = self.children.index(child)
         self.logger.debug("  %s [replace_child()][%s->%s]" % (self.name, child.name, replacement.name))
         self.children[index] = replacement
@@ -106,6 +110,8 @@ class Composite(Behaviour):
     def remove_child_by_id(self, child_id):
         child = next((c for c in self.children if c.id == child_id), None)
         if child is not None:
+            if child.status == Status.RUNNING:
+                child.abort(Status.INVALID)
             self.children.remove(child)
         else:
             raise IndexError('child was not found with the specified id [%s]' % child_id)
