@@ -193,16 +193,16 @@ class WasDocked(py_trees.Behaviour):
 class Park(py_trees.Behaviour):
     def __init__(self, name):
         super(Park, self).__init__(name)
-        self.rotated = False
         self.tf_listener = tf.TransformListener()
         self.semantic_locations = SemanticLocations()
         self.motion = SimpleMotion()
         self.blackboard = Blackboard()
-        self.translated = False
-        self.not_unparked = False
-        self.homebase = None  # we do delayed retrieval in initialise()
 
     def initialise(self):
+        self.rotated = False
+        self.translated = False
+        self.not_unparked = False
+
         # if the homebase to dock transform is unset, we didn't do an unparking
         # action - this could mean that the run was started without doing any
         # undock or unpark action
@@ -344,11 +344,16 @@ class Unpark(py_trees.Behaviour):
             self.blackboard.unpark_success = False
             
         self.semantic_locations = SemanticLocations()
-        self.last_dslam = None
-        self.button_pressed = False
-        self.homebase = None  # set this in the initialise() step
 
     def initialise(self):
+        self.last_dslam = None
+        self.button_pressed = False
+        # indicate whether transforms have been setup from map or odom to base link
+        self.transform_setup = False
+        self.homebase = None  # set this in the initialise() step
+        self.end_transform = None
+        self.start_transform = None
+        self.lookup_attempts = 0
         self.blackboard.parked = True  # set this to true to indicate that the robot was parked, for the wasdocked behaviour
         # only initialise subscribers when the behaviour starts running
         self.homebase = self.semantic_locations['homebase']
@@ -362,31 +367,10 @@ class Unpark(py_trees.Behaviour):
         self.hb_translation = (self.homebase.pose.x, self.homebase.pose.y, 0)
         # quaternion specified by rotating theta radians around the yaw axis
         self.hb_rotation = tuple(tf.transformations.quaternion_about_axis(self.homebase.pose.theta, (0,0,1)))
+
+        # Wait on a message from dslam for a bit. If one doesn't show up, assume dslam isn't initialised
+        self.timeout = rospy.Time.now() + rospy.Duration(3)
         
-        rospy.logdebug("Unpark : waiting for dslam state update")
-        rospy.sleep(2)
-
-        if not self.last_dslam:
-            rospy.logdebug("Unpark : didn't get a message from dslam - assuming uninitialised")
-            self.dslam_initialised = False
-        else:
-            rospy.logdebug("Unpark : got dslam message")
-            self.dslam_initialised = self.last_dslam.state == dslam_msgs.Diagnostics.WORKING
-
-        if self.dslam_initialised and self.blackboard.unpark_success:
-            # if dslam is initialised, the map->base_link transform gives us the
-            # actual position of the robot, i.e. the position of the parking
-            # spot. Save this as the starting position
-            rospy.logdebug("Unpark : waiting for transform from map to base_link")
-            self.tf_listener.waitForTransform("map", "base_link", rospy.Time(), rospy.Duration(15))
-            self.start_transform = self.tf_listener.lookupTransform("map", "base_link", rospy.Time(0))
-        else:
-            # save the latest odom message received so that we can use it to compute
-            # a transform back to the starting position
-            rospy.logdebug("Unpark : waiting for transform from odom to base_link")
-            self.tf_listener.waitForTransform("odom", "base_link", rospy.Time(), rospy.Duration(15))
-            self.start_transform = self.tf_listener.lookupTransform("odom", "base_link", rospy.Time(0))
-
     def battery_callback(self, msg):
         self.still_charging = msg.charge_state == somanet_msgs.SmartBatteryStatus.CHARGING
 
@@ -394,12 +378,50 @@ class Unpark(py_trees.Behaviour):
         self.button_pressed = True
         # when the button is pressed, save the latest odom value so we can get
         # the transform between the start and end poses
-        self.end_transform = self.tf_listener.lookupTransform("odom", "base_link", rospy.Time(0))
+        try:
+            self.end_transform = self.tf_listener.lookupTransform("odom", "base_link", rospy.Time(0))
+        except tf.Exception:
+            rospy.logdebug("Unpark : failed to lookup transform from odom to base link on button press")
 
     def dslam_callback(self, msg):
         self.last_dslam = msg
 
     def update(self):
+        if not self.transform_setup:
+            if not self.last_dslam: # no message from dslam yet
+                # waited longer than the timeout, so assume dslam is uninitialised and continue
+                if rospy.Time.now() > self.timeout:
+                    rospy.logdebug("Unpark : didn't get a message from dslam - assuming uninitialised")
+                    self.dslam_initialised = False
+                else:
+                    rospy.logdebug("Unpark : waiting for dslam state update")
+                    return py_trees.Status.RUNNING
+                else:
+                    rospy.logdebug("Unpark : got dslam message")
+                    self.dslam_initialised = self.last_dslam.state == dslam_msgs.Diagnostics.WORKING
+
+            if self.dslam_initialised and self.blackboard.unpark_success:
+                # if dslam is initialised, the map->base_link transform gives us the
+                # actual position of the robot, i.e. the position of the parking
+                # spot. Save this as the starting position
+                rospy.logdebug("Unpark : waiting for transform from map to base_link")
+                try:
+                    self.start_transform = self.tf_listener.lookupTransform("map", "base_link", rospy.Time(0))
+                except tf.Exception:
+                    self.lookup_attempts += 1
+            else:
+                # save the latest odom message received so that we can use it to compute
+                # a transform back to the starting position
+                rospy.logdebug("Unpark : waiting for transform from odom to base_link")
+                try:
+                    self.start_transform = self.tf_listener.lookupTransform("odom", "base_link", rospy.Time(0))
+                except tf.Exception:
+                    self.lookup_attempts += 1
+
+            if self.lookup_attempts >= 4:
+                rospy.logdebug("Unpark : failed to get transform for current location")
+                return py_trees.Status.FAILURE
+        
         # need to be unplugged before we can move or be moved
         if self.still_charging:
             rospy.logdebug("Unpark : robot is still charging")
@@ -425,8 +447,10 @@ class Unpark(py_trees.Behaviour):
                 # otherwise, the robot needs to be guided to the homebase by
                 # someone - pressing the go button indicates that the homebase
                 # has been reached.
-                rospy.logdebug(human_transform(self.tf_listener.lookupTransform("odom", "base_link", rospy.Time(0))))
                 if self.button_pressed:
+                    if self.end_transform is None:
+                        return py_trees.Status.FAILURE
+                        
                     self.blackboard.T_hb_to_parking = inverse_times(self.end_transform, self.start_transform)
                     rospy.logdebug("Unpark : transform from homebase to parking location")
                     print(human_transform(self.blackboard.T_hb_to_parking))
@@ -458,10 +482,8 @@ class Dock(py_trees.Behaviour):
         self.blackboard = Blackboard()
         self.semantic_locations = SemanticLocations()
         self.tf_listener = tf.TransformListener()
-        self.interrupted = False # button pressed to interrupt docking procedure?
-        self.goal_sent = False # docking goal sent?
         self.motion = SimpleMotion()
-        self.not_undocked = False
+
 
         self._interrupt_sub = None
         try:
@@ -482,6 +504,10 @@ class Dock(py_trees.Behaviour):
     def initialise(self):
         if self.status == py_trees.Status.FAILURE:
             return
+
+        self.interrupted = False # button pressed to interrupt docking procedure?
+        self.goal_sent = False # docking goal sent?
+        self.not_undocked = False            
 
         # if the homebase to dock transform is unset, we didn't do a docking
         # action - this could mean that the run was started without doing any
