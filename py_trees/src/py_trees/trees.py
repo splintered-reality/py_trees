@@ -144,7 +144,7 @@ class BehaviourTree(object):
                     return True
         return False
 
-    def tick(self, pre_tick_visitor=None, post_tick_visitor=None):
+    def tick(self, pre_tick_handler=None, post_tick_handler=None):
         """
         Tick over the tree just once.
 
@@ -154,10 +154,10 @@ class BehaviourTree(object):
         :type post_tick_visitor: any class with a run(py_trees.BehaviourTree) method
         """
         # pre
-        for visitor in self.pre_tick_handlers:
-            visitor.run(self)
-        if pre_tick_visitor is not None:
-            pre_tick_visitor.run(self)
+        for handler in self.pre_tick_handlers:
+            handler(self)
+        if pre_tick_handler is not None:
+            pre_tick_handler(self)
         for visitor in self.visitors:
             visitor.initialise()
         # tick
@@ -167,8 +167,8 @@ class BehaviourTree(object):
         # post
         for handler in self.post_tick_handlers:
             handler(self)
-        if post_tick_visitor is not None:
-            post_tick_visitor.run(self)
+        if post_tick_handler is not None:
+            post_tick_handler(self)
         self.count += 1
 
     def tick_tock(self, sleep_ms, number_of_iterations=CONTINUOUS_TICK_TOCK, pre_tick_handler=None, post_tick_handler=None):

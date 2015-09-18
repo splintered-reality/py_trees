@@ -24,9 +24,12 @@ Bless my noggin with a tickle from your noodly appendages!
 import geometry_msgs.msg as geometry_msgs
 import os
 import py_trees
+import rocon_python_comms
 import rospy
 import std_msgs.msg as std_msgs
+import tf
 from . import utilities
+from .parameters import Parameters
 
 ##############################################################################
 # Behaviours
@@ -47,14 +50,34 @@ class InitPose(py_trees.Behaviour):
         :param geometry_msgs.PoseStamped initial_pose: where to init after loading the map.
         :param str topic_name:
         """
-        super(SwitchMap, self).__init__(name)
+        super(InitPose, self).__init__(name)
+        self.parameters = Parameters()
         self.initial_pose = initial_pose
-        self.publisher = rospy.Publisher(topic_name, geometry_msgs.PoseStamped, queue_size=1)
+        self.publisher = rocon_python_comms.Publisher(topic_name, geometry_msgs.PoseWithCovarianceStamped, queue_size=1)
 
     def update(self):
-        rospy.loginfo("Gopher Deliveries : initialising the pose {x: %s, y: %s, theta: %s}" % (self.initial_pose.pose.x, self.initial_pose.pose.y, self.initial_pose.pose.theta))
-        self.publisher.publish(geometry_msgs.PoseStamped())
-        return py_trees.Status.SUCCESS
+        if self.publisher.is_ready():
+            rospy.loginfo("Gopher Deliveries : initialising the pose {x: %s, y: %s, theta: %s}" % (self.initial_pose.x, self.initial_pose.y, self.initial_pose.theta))
+            self.publisher.publish(self.to_msg_pose_with_covariance_stamped(self.initial_pose))
+            return py_trees.Status.SUCCESS
+        else:
+            return py_trees.Status.RUNNING
+
+    def to_msg_pose_with_covariance_stamped(self, pose_2d):
+        msg = geometry_msgs.PoseWithCovarianceStamped()
+        msg.header.stamp = rospy.Time.now()
+        msg.header.frame_id = self.parameters.frames.map
+        quaternion = tf.transformations.quaternion_from_euler(0, 0, self.initial_pose.theta)
+        msg_pose = geometry_msgs.Pose()
+        msg_pose.position.x = self.initial_pose.x
+        msg_pose.position.y = self.initial_pose.y
+        msg_pose.position.z = 0.0
+        msg_pose.orientation.x = quaternion[0]
+        msg_pose.orientation.y = quaternion[1]
+        msg_pose.orientation.z = quaternion[2]
+        msg_pose.orientation.w = quaternion[3]
+        msg.pose.pose = msg_pose
+        return msg
 
 
 class SwitchMap(py_trees.Behaviour):
@@ -79,9 +102,12 @@ class SwitchMap(py_trees.Behaviour):
         """
         super(SwitchMap, self).__init__(name)
         self.dslam_map = std_msgs.String(map_filename)
-        self.publisher = rospy.Publisher(topic_name, std_msgs.String, queue_size=1)
+        self.publisher = rocon_python_comms.Publisher(topic_name, std_msgs.String, queue_size=1)
 
     def update(self):
-        rospy.loginfo("Gopher Deliveries : switching map [%s]" % self.dslam_map.data)
-        self.publisher.publish(self.dslam_map)
-        return py_trees.Status.SUCCESS
+        if self.publisher.is_ready():
+            rospy.loginfo("Gopher Deliveries : switching map [%s]" % self.dslam_map.data)
+            self.publisher.publish(self.dslam_map)
+            return py_trees.Status.SUCCESS
+        else:
+            return py_trees.Status.RUNNING

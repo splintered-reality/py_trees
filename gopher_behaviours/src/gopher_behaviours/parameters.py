@@ -88,6 +88,17 @@ class Buttons(ParameterGroup):
         return (True, None)
 
 
+class Frames(ParameterGroup):
+    def __init__(self, frames_dict):
+        self.__dict__ = frames_dict
+
+    def validate(self):
+        for key in ['map']:
+            if key not in self.__dict__.keys():
+                return (False, "no definition for button '%s'" % key)
+        return (True, None)
+
+
 class Sounds(ParameterGroup):
     def __init__(self, sounds_dict):
         self.__dict__ = sounds_dict
@@ -153,11 +164,12 @@ class Parameters(object):
     def __init__(self, error_logger=_error_logger):
         if not Parameters.__shared_state:
             Parameters.load_from_rosparam_server()
-        core = ['buttons', 'namespaces', 'topics', 'sounds', 'led_patterns']
+        core = ['buttons', 'namespaces', 'frames', 'topics', 'sounds', 'led_patterns']
         try:
             # catch our special groups
             self.buttons      = Buttons(Parameters.__shared_state['buttons'])        # @IgnorePep8
             self.namespaces   = Namespaces(Parameters.__shared_state['namespaces'])  # @IgnorePep8
+            self.frames       = Frames(Parameters.__shared_state['frames'])          # @IgnorePep8
             self.sounds       = Sounds(Parameters.__shared_state['sounds'])          # @IgnorePep8
             self.topics       = Topics(Parameters.__shared_state['topics'])          # @IgnorePep8
             self.led_patterns = LEDPatterns()

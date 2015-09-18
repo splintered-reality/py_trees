@@ -8,7 +8,11 @@
    - ROS_HOME/gopher/maps/hell.dslam
  -->
 <launch>
+
+  <arg name="map" default="hell" doc="one of [heaven, hell, earth]." />
+ 
   <node name="switch_map" type="demo_switch_map" pkg="gopher_behaviours">
     <rosparam command="load" file="$(find gopher_behaviours)/param/defaults.yaml"/>
+    <rosparam param="map" subst_value="True">$(arg map)</rosparam>
   </node>
 </launch>

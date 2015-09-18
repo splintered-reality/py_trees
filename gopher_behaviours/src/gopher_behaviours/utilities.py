@@ -43,10 +43,10 @@ class DebugVisitor:
         else:
             self.logger.debug("  %s [visited][%s]" % (behaviour.name, behaviour.status))
 
-
 ##############################################################################
 # Configuration
 ##############################################################################
+
 
 def get_gopher_home():
     '''

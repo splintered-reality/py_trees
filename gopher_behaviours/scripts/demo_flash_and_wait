@@ -7,7 +7,9 @@
 # Documentation
 ##############################################################################
 """
-Simple demo program for py trees
+USE THE ROS LAUNCHER INSTEAD!!!
+
+gopher_behaviours/demo_flash_and_wait.launch
 """
 ##############################################################################
 # Imports
