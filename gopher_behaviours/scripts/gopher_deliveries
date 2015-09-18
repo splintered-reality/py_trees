@@ -158,6 +158,7 @@ class GopherHiveMind(object):
            * check the first preempted goal location isn't the same as the current location and handle it
         '''
         rospy.loginfo("Delivery : received a goal request: {0}".format(request))
+        self.cancelled = False
         # first, check if we're already doing something in the battery monitor
         # part of the tree. If we are, we do not accept any new goals.
         if self.battery_subtree.status != Status.FAILURE:
