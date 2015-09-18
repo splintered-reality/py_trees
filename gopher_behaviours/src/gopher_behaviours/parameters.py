@@ -166,11 +166,8 @@ class Parameters(object):
         Parameters.__shared_state = yaml.load(open(filename))
 
     @staticmethod
-    def load_from_rosparam_server():
-        """
-        Loads with all parameters from the ros param server.
-        """
-        Parameters.__shared_state = rospy.get_param("~")
+    def load_from_rosparam_server(namespace='~'):
+        Parameters.__shared_state = rospy.get_param(namespace)
 
     def __init__(self, error_logger=_error_logger):
         if not Parameters.__shared_state:

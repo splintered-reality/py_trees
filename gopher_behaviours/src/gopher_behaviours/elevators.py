@@ -22,11 +22,8 @@ Bless my noggin with a tickle from your noodly appendages!
 ##############################################################################
 
 import gopher_semantics
-import gopher_std_msgs.msg as gopher_std_msgs
 import os
 import py_trees
-import rospy
-import std_msgs.msg as std_msgs
 
 from . import interactions
 from . import moveit
@@ -109,9 +106,9 @@ class HumanAssistedElevators(py_trees.Selector):
             switch_maps = navigation.SwitchMap("Switch Map (%s)" % map_filename, self.parameters.topics.switch_map)
 
             flash_leds_init = interactions.FlashLEDs("Initialising", led_pattern=self.parameters.led_patterns.holding)
-            flash_leds_init.add_child(Pause("Pause 1s", 1.0))
             flash_leds_init.add_child(navigation.InitPose("Init Pose", elevator_level_destination.exit, self.parameters.topics.initial_pose))
-            flash_leds_init.add_child(Pause("Pause 1s", 1.0))
+            flash_leds_init.add_child(Pause("Wait For Init", 2.0))
+            flash_leds_init.add_child(navigation.ClearCostmaps("ClearCostmaps"))
 
             elevator_sequence.add_child(move_to_elevator)
             elevator_sequence.add_child(honk)

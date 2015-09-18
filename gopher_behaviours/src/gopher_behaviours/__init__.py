@@ -16,13 +16,15 @@ Imports for the gopher_behaviours_ package.
 # Imports
 ##############################################################################
 
+from .parameters import Parameters
+
+# behaviours
 from . import battery
 from . import delivery
 from . import interactions
 from . import navigation
 from . import time
 from . import utilities
+from . import elevators
 
-# bring these into the root namespace of the package
 from .delivery import GopherDeliveries
-from .parameters import Parameters
