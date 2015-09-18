@@ -13,6 +13,9 @@ topics:
   initial_pose: /navi/initial_pose
   switch_map: /dslam/map/switch
 
+services:
+  clear_costmaps: /navi/move_base/clear_costmaps
+
 namespaces:
   semantics: /rocon/semantics
 

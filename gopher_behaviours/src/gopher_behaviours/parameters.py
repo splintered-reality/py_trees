@@ -95,7 +95,18 @@ class Frames(ParameterGroup):
     def validate(self):
         for key in ['map']:
             if key not in self.__dict__.keys():
-                return (False, "no definition for button '%s'" % key)
+                return (False, "no definition for frame '%s'" % key)
+        return (True, None)
+
+
+class Services(ParameterGroup):
+    def __init__(self, services_dict):
+        self.__dict__ = services_dict
+
+    def validate(self):
+        for key in ['clear_costmaps']:
+            if key not in self.__dict__.keys():
+                return (False, "no definition for service '%s'" % key)
         return (True, None)
 
 
@@ -164,13 +175,14 @@ class Parameters(object):
     def __init__(self, error_logger=_error_logger):
         if not Parameters.__shared_state:
             Parameters.load_from_rosparam_server()
-        core = ['buttons', 'namespaces', 'frames', 'topics', 'sounds', 'led_patterns']
+        core = ['buttons', 'namespaces', 'frames', 'topics', 'services', 'sounds', 'led_patterns']
         try:
             # catch our special groups
             self.buttons      = Buttons(Parameters.__shared_state['buttons'])        # @IgnorePep8
             self.namespaces   = Namespaces(Parameters.__shared_state['namespaces'])  # @IgnorePep8
             self.frames       = Frames(Parameters.__shared_state['frames'])          # @IgnorePep8
             self.sounds       = Sounds(Parameters.__shared_state['sounds'])          # @IgnorePep8
+            self.services     = Services(Parameters.__shared_state['services'])      # @IgnorePep8
             self.topics       = Topics(Parameters.__shared_state['topics'])          # @IgnorePep8
             self.led_patterns = LEDPatterns()
         except KeyError:
