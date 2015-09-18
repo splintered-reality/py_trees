@@ -188,7 +188,10 @@ class SimpleMotion():
             return False
 
     def abort(self):
-        self.action_client.cancel_goal()
+        if self.has_goal:
+            motion_state = self.action_client.get_state()
+            if (motion_state == GoalStatus.PENDING or motion_state == GoalStatus.ACTIVE):
+                self.action_client.cancel_goal()
 
 class IsDocked(py_trees.Behaviour):
     def __init__(self, name):
@@ -340,13 +343,11 @@ class Park(py_trees.Behaviour):
                     return py_trees.Status.RUNNING
 
     def abort(self, new_status):
-        if self.motion.has_goal:
-            motion_status = self.motion.get_status()
-            if new_status == py_trees.Status.FAILURE and (motion_status == GoalStatus.PENDING or motion_status == GoalStatus.ACTIVE):
-                self.motion.abort()
-        # set to none to use later as a flag to inidicate not having performed
+        self.motion.abort()
+        # set to none to use later as a flag to indicate not having performed
         # unparking behaviour
-        self.blackboard.T_hb_to_parking = None
+        if new_status == py_trees.Status.FAILURE:
+            self.blackboard.T_hb_to_parking = None
 
 class Unpark(py_trees.Behaviour):
     def __init__(self, name):
@@ -521,6 +522,7 @@ class Dock(py_trees.Behaviour):
         self.interrupted = False # button pressed to interrupt docking procedure?
         self.goal_sent = False # docking goal sent?
         self.not_undocked = False
+        self.transform_attempts = 0
 
         # if the homebase to dock transform is unset, we didn't do a docking
         # action - this could mean that the run was started without doing any
@@ -533,39 +535,6 @@ class Dock(py_trees.Behaviour):
         hb_translation = (self.homebase.pose.x, self.homebase.pose.y, 0)
         hb_rotation = tuple(tf.transformations.quaternion_about_axis(self.homebase.pose.theta, (0,0,1)))
 
-        rospy.logdebug("Dock : waiting for transform from map to base_link")
-        self.tf_listener.waitForTransform("map", "base_link", rospy.Time(0), rospy.Duration(15))
-        start_transform = self.tf_listener.lookupTransform("map", "base_link", rospy.Time(0))
-        T_hb_to_current = inverse_times(start_transform, (hb_translation, hb_rotation))
-        T_hb_to_dock = self.blackboard.T_homebase_to_dock
-        
-        rospy.logdebug("Park : transform from homebase to current location")
-        rospy.logdebug(human_transform(T_hb_to_current))
-        rospy.logdebug("Park : transform from homebase to docking location")
-        rospy.logdebug(human_transform(T_hb_to_dock))
-
-        # create transformstamped objects for the transformations from homebase to the two locations
-        t = tf.Transformer(True, rospy.Duration(10))
-        cur = transform_to_transform_stamped(T_hb_to_current)
-        cur.header.frame_id = "homebase"
-        cur.child_frame_id = "current"
-        t.setTransform(cur)
-
-        dock = transform_to_transform_stamped(T_hb_to_dock)
-        dock.header.frame_id = "homebase"
-        dock.child_frame_id = "docking"
-        t.setTransform(dock)
-
-        T_current_to_dock = t.lookupTransform("current", "docking", rospy.Time(0))
-
-        rospy.logdebug("Dock : transform from current location to dock")
-        rospy.logdebug(human_transform(T_current_to_parking))
-        
-        self.motion.execute("rotate", transform_bearing(T_current_to_parking))
-        
-        self.connected = self.docking_client.wait_for_server(rospy.Duration(0.5))
-        if not self.connected:
-            rospy.logwarn("Dock : could not connect to autonomous docking server.")
         if self._honk_publisher:
             self._honk_publisher.publish(std_msgs.Empty())
 
@@ -581,9 +550,43 @@ class Dock(py_trees.Behaviour):
             self.feedback_message = "Transform to dock was unset - no undock action was performed"
             return py_trees.Status.FAILURE
 
-        if not self.connected:
-            self.feedback_message = "Action client failed to connect"
-            return py_trees.Status.INVALID
+        if self.transform_attempts < 4:
+            rospy.logdebug("Dock : waiting for transform from map to base_link")
+            try:
+                start_transform = self.tf_listener.lookupTransform("map", "base_link", rospy.Time(0))
+            except tf.Exception:
+                return py_trees.Status.RUNNING
+
+            T_hb_to_current = inverse_times(start_transform, (hb_translation, hb_rotation))
+            T_hb_to_dock = self.blackboard.T_homebase_to_dock
+
+            rospy.logdebug("Park : transform from homebase to current location")
+            rospy.logdebug(human_transform(T_hb_to_current))
+            rospy.logdebug("Park : transform from homebase to docking location")
+            rospy.logdebug(human_transform(T_hb_to_dock))
+
+            # create transformstamped objects for the transformations from homebase to the two locations
+            t = tf.Transformer(True, rospy.Duration(10))
+            cur = transform_to_transform_stamped(T_hb_to_current)
+            cur.header.frame_id = "homebase"
+            cur.child_frame_id = "current"
+            t.setTransform(cur)
+
+            dock = transform_to_transform_stamped(T_hb_to_dock)
+            dock.header.frame_id = "homebase"
+            dock.child_frame_id = "docking"
+            t.setTransform(dock)
+
+            T_current_to_dock = t.lookupTransform("current", "docking", rospy.Time(0))
+
+            rospy.logdebug("Dock : transform from current location to dock")
+            rospy.logdebug(human_transform(T_current_to_parking))
+
+            self.motion.execute("rotate", transform_bearing(T_current_to_parking))
+            return py_trees.Status.RUNNING
+        else:
+            self.feedback_message = "Could not get transform from map to base link"
+            return py_trees.Status.FAILURE
 
         if self.interrupted:
             return py_trees.Status.FAILURE
@@ -597,6 +600,12 @@ class Dock(py_trees.Behaviour):
             return py_trees.Status.FAILURE
         else:
             if not self.goal_sent:
+                self.connected = self.docking_client.wait_for_server(rospy.Duration(0.5))
+                if not self.connected:
+                    rospy.logwarn("Dock : could not connect to autonomous docking server.")
+                    self.feedback_message = "Action client failed to connect"
+                    return py_trees.Status.INVALID
+
                 # the rotation succeeded, now send the docking goal
                 goal = gopher_std_msgs.AutonomousDockingGoal
                 goal.command = gopher_std_msgs.AutonomousDockingGoal.DOCK
@@ -621,15 +630,13 @@ class Dock(py_trees.Behaviour):
             return py_trees.Status.RUNNING
 
     def abort(self, new_status):
-        if self.motion.has_goal:
-            motion_status = self.motion.get_status()
-            if new_status == py_trees.Status.FAILURE and (motion_status == GoalStatus.PENDING or motion_status == GoalStatus.ACTIVE):
-                self.motion.abort()
+        self.motion.abort()
         if self.goal_sent:
             self.docking_client.cancel_goal()
         # reset the homebase to dock transform to none so we can use it as a
         # flag to indicate that there was no undock performed
-        self.blackboard.T_homebase_to_dock = None
+        if new_status == py_trees.Status.FAILURE:
+            self.blackboard.T_homebase_to_dock = None
 
 class Undock(py_trees.Behaviour):
     """
@@ -742,8 +749,8 @@ class Undock(py_trees.Behaviour):
 
     def abort(self, new_status):
         if self.sent_goal:
-            action_status = self.action_client.get_status()
-            if motion_status == GoalStatus.PENDING or motion_status == GoalStatus.ACTIVE:
+            action_state = self.action_client.get_state()
+            if action_state == GoalStatus.PENDING or action_state == GoalStatus.ACTIVE:
                 self.action_client.cancel_goal()
 
 class NotifyComplete(py_trees.Behaviour):
