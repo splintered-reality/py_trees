@@ -232,6 +232,7 @@ class Park(py_trees.Behaviour):
 
     def initialise(self):
         self.not_unparked = False
+        self.start_transform = None
 
         # if the homebase to dock transform is unset, we didn't do an unparking
         # action - this could mean that the run was started without doing any
@@ -254,7 +255,6 @@ class Park(py_trees.Behaviour):
             self.start_transform = self.tf_listener.lookupTransform("map", "base_link", rospy.Time(0))
         except tf.Exception:
             rospy.logdebug("Park : failed to get transform from map to base_link")
-            self.start_transform = None
             return
 
         # get the relative rotation and translation between the homebase and the current position
@@ -427,16 +427,20 @@ class Unpark(py_trees.Behaviour):
                 rospy.logdebug("Unpark : waiting for transform from map to base_link")
                 try:
                     self.start_transform = self.tf_listener.lookupTransform("map", "base_link", rospy.Time(0))
+                    self.transform_setup = True
                 except tf.Exception:
                     self.lookup_attempts += 1
+                    return py_trees.Status.RUNNING
             else:
                 # save the latest odom message received so that we can use it to compute
                 # a transform back to the starting position
                 rospy.logdebug("Unpark : waiting for transform from odom to base_link")
                 try:
                     self.start_transform = self.tf_listener.lookupTransform("odom", "base_link", rospy.Time(0))
+                    self.transform_setup = True
                 except tf.Exception:
                     self.lookup_attempts += 1
+                    return py_trees.Status.RUNNING
 
             if self.lookup_attempts >= 4:
                 rospy.logdebug("Unpark : failed to get transform for current location")
