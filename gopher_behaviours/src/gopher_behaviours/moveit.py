@@ -143,7 +143,8 @@ class Finishing(py_trees.Selector):
 class SimpleMotion():
     def __init__(self):
         self.action_client = actionlib.SimpleActionClient('~simple_motion_controller', gopher_std_msgs.SimpleMotionAction)
-
+        self.has_goal = False
+        
     # Motion is either rotation or translation, value is corresponding rotation in radians, or distance in metres
     def execute(self, motion, value):
         self.connected = self.action_client.wait_for_server(rospy.Duration(0.5))
@@ -160,6 +161,7 @@ class SimpleMotion():
             rospy.logerr("SimpleMotion : received unknown motion type {0}".format(motion))
             return False
 
+        self.has_goal = True
         goal.motion_amount = value
         goal.unsafe = False
         self.action_client.send_goal(goal)
@@ -168,10 +170,11 @@ class SimpleMotion():
         result = self.action_client.get_result()
         if not result:
             return False
-
+            
+        self.has_goal = False
         return True
 
-    def get_state(self):
+    def get_status(self):
         return self.action_client.get_state()
 
     def success(self):
@@ -179,6 +182,7 @@ class SimpleMotion():
         if not result:
             return False
         elif result.value == gopher_std_msgs.SimpleMotionResult.SUCCESS:
+            self.has_goal = False
             return True
         else: # anything else is a failure state
             return False
@@ -336,9 +340,10 @@ class Park(py_trees.Behaviour):
                     return py_trees.Status.RUNNING
 
     def abort(self, new_status):
-        motion_state = self.motion.get_state()
-        if new_status == py_trees.Status.FAILURE and (motion_state == GoalStatus.PENDING or motion_state == GoalStatus.ACTIVE):
-            self.motion.abort()
+        if self.motion.has_goal:
+            motion_status = self.motion.get_status()
+            if new_status == py_trees.Status.FAILURE and (motion_status == GoalStatus.PENDING or motion_status == GoalStatus.ACTIVE):
+                self.motion.abort()
         # set to none to use later as a flag to inidicate not having performed
         # unparking behaviour
         self.blackboard.T_hb_to_parking = None
@@ -491,7 +496,7 @@ class Dock(py_trees.Behaviour):
         self.semantic_locations = Semantics()
         self.tf_listener = tf.TransformListener()
         self.motion = SimpleMotion()
-
+        self.goal_sent = False
 
         self._interrupt_sub = None
         try:
@@ -515,7 +520,7 @@ class Dock(py_trees.Behaviour):
 
         self.interrupted = False # button pressed to interrupt docking procedure?
         self.goal_sent = False # docking goal sent?
-        self.not_undocked = False            
+        self.not_undocked = False
 
         # if the homebase to dock transform is unset, we didn't do a docking
         # action - this could mean that the run was started without doing any
@@ -616,10 +621,12 @@ class Dock(py_trees.Behaviour):
             return py_trees.Status.RUNNING
 
     def abort(self, new_status):
-        motion_status = self.motion.get_status()
-        if new_status == py_trees.Status.FAILURE and (motion_status == GoalStatus.PENDING or motion_status == GoalStatus.ACTIVE):
-            self.motion.abort()
-        self.docking_client.cancel_goal()
+        if self.motion.has_goal:
+            motion_status = self.motion.get_status()
+            if new_status == py_trees.Status.FAILURE and (motion_status == GoalStatus.PENDING or motion_status == GoalStatus.ACTIVE):
+                self.motion.abort()
+        if self.goal_sent:
+            self.docking_client.cancel_goal()
         # reset the homebase to dock transform to none so we can use it as a
         # flag to indicate that there was no undock performed
         self.blackboard.T_homebase_to_dock = None
@@ -637,6 +644,7 @@ class Undock(py_trees.Behaviour):
         self.blackboard = Blackboard()
         self.docking_stations = DockingStations()
         self.semantic_locations = Semantics()
+        self.sent_goal = False
 
         try:
             if rospy.get_param("~enable_honks") and rospy.get_param("~undocking_honk"):
@@ -650,6 +658,7 @@ class Undock(py_trees.Behaviour):
         self.homebase = self.semantic_locations.semantic_modules['locations']['homebase']
         self.blackboard.parked = False
         self.got_ar_markers = False
+        self.sent_goal = False
         self._ar_long_subscriber = rospy.Subscriber("ar_pose_marker_long_range", ar_track_alvar_msgs.AlvarMarkers, self.ar_cb_long)
         self._ar_short_subscriber = rospy.Subscriber("ar_pose_marker_short_range", ar_track_alvar_msgs.AlvarMarkers, self.ar_cb_short)
 
@@ -707,6 +716,7 @@ class Undock(py_trees.Behaviour):
                 goal = gopher_std_msgs.AutonomousDockingGoal
                 goal.command = gopher_std_msgs.AutonomousDockingGoal.UNDOCK
                 self.action_client.send_goal(goal)
+                self.sent_goal = True
 
             if self._honk_publisher:
                 self._honk_publisher.publish(std_msgs.Empty())
@@ -731,9 +741,10 @@ class Undock(py_trees.Behaviour):
             return py_trees.Status.RUNNING
 
     def abort(self, new_status):
-        action_status = self.action_client.get_status()
-        if motion_status == GoalStatus.PENDING or motion_status == GoalStatus.ACTIVE:
-            self.action_client.cancel_goal()
+        if self.sent_goal:
+            action_status = self.action_client.get_status()
+            if motion_status == GoalStatus.PENDING or motion_status == GoalStatus.ACTIVE:
+                self.action_client.cancel_goal()
 
 class NotifyComplete(py_trees.Behaviour):
     def __init__(self, name):
