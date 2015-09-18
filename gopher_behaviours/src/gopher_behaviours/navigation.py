@@ -22,18 +22,39 @@ Bless my noggin with a tickle from your noodly appendages!
 ##############################################################################
 
 import geometry_msgs.msg as geometry_msgs
-import os
 import py_trees
 import rocon_python_comms
 import rospy
 import std_msgs.msg as std_msgs
+import std_srvs.srv as std_srvs
 import tf
-from . import utilities
 from .parameters import Parameters
 
 ##############################################################################
 # Behaviours
 ##############################################################################
+
+
+class ClearCostmaps(py_trees.Behaviour):
+    """
+    Clear costmaps. Always returns success, even if it didn't successfully
+    call the service, since if it fails, it's not usually critical. If we
+    ever need that critical behaviour, make it an option in the init args.
+    """
+    def __init__(self, name):
+        super(ClearCostmaps, self).__init__(name)
+        self.parameters = Parameters()
+
+    def update(self):
+        rospy.loginfo("Gopher Behaviours : clearing costmaps [%s]" % (type(self).__name__))
+        try:
+            clear_costmaps_service = rospy.ServiceProxy(self.parameters.services.clear_costmaps, std_srvs.Empty)
+            clear_costmaps_service()
+        except rospy.ServiceException as e:
+            rospy.logwarn("Gopher Behaviours : failed to clear costmaps, wrong service name name? [%s][%s][%s]" % (self.parameters.services.clear_costmap, type(self).__name__, str(e)))
+        except rospy.ROSInterruptException:
+            rospy.logwarn("Gopher Behaviours : interrupted while trying to clear costmaps, probably ros shutting down [%s]" % type(self).__name__)
+        return py_trees.Status.SUCCESS
 
 
 class InitPose(py_trees.Behaviour):
@@ -102,11 +123,12 @@ class SwitchMap(py_trees.Behaviour):
         """
         super(SwitchMap, self).__init__(name)
         self.dslam_map = std_msgs.String(map_filename)
+        self.parameters = Parameters()
         self.publisher = rocon_python_comms.Publisher(topic_name, std_msgs.String, queue_size=1)
 
     def update(self):
         if self.publisher.is_ready():
-            rospy.loginfo("Gopher Deliveries : switching map [%s]" % self.dslam_map.data)
+            rospy.loginfo("Gopher Behaviours : switching map [%s]" % self.dslam_map.data)
             self.publisher.publish(self.dslam_map)
             return py_trees.Status.SUCCESS
         else:

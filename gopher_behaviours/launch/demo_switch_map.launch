@@ -6,6 +6,10 @@
    - ROS_HOME/gopher/maps/earth.dslam
    - ROS_HOME/gopher/maps/heaven.dslam
    - ROS_HOME/gopher/maps/hell.dslam
+   
+  Usage:
+  
+  roslaunch gopher_behaviours demo_switch_map.launch map:=hell
  -->
 <launch>
 

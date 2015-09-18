@@ -38,12 +38,15 @@ class SwitchMap(object):
         try:
             destination = self.semantics.elevators.find_level_on_elevator('highway_to_hell', map_name)
             init_pose = gopher_behaviours.navigation.InitPose("InitPose", destination.exit, self.parameters.topics.initial_pose)
+            clear_costmaps = gopher_behaviours.navigation.ClearCostmaps("ClearCostmaps")
         except AttributeError:
             rospy.logerr("Switch Map: no elevators found, wrong semantics loaded [%s]?\n%s" % (self.parameters.namespaces.semantics, str(self.semantics)))
             return
 
         self.root.add_child(switch_map)
         self.root.add_child(init_pose)
+        self.root.add_child(gopher_behaviours.time.Pause("Pause1", 2.0))
+        self.root.add_child(clear_costmaps)
         self.tree = py_trees.ROSBehaviourTree(self.root)
 
         rospy.on_shutdown(self.shutdown)
