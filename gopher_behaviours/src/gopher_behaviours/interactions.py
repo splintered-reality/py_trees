@@ -21,12 +21,11 @@ Bless my noggin with a tickle from your noodly appendages!
 # Imports
 ##############################################################################
 
+import gopher_configuration
 import gopher_std_msgs.msg as gopher_std_msgs
 import py_trees
 import rospy
 import std_msgs.msg as std_msgs
-
-from gopher_configuration.parameters import Parameters
 
 ##############################################################################
 # Interactions
@@ -106,8 +105,8 @@ class FlashLEDs(py_trees.Sequence):
         :param str led_pattern: any one of the string constants from gopher_std_msgs.Notification
         """
         super(FlashLEDs, self).__init__(name)
-        self.parameters = Parameters()
-        self.topic_name = self.parameters.topics.display_notification
+        self.gopher = gopher_configuration.Configuration()
+        self.topic_name = self.gopher.topics.display_notification
         self.publisher = rospy.Publisher(self.topic_name, gopher_std_msgs.Notification, queue_size=1)
         self.timer = None
         self.led_pattern = led_pattern

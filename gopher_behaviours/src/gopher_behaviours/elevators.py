@@ -21,6 +21,7 @@ Bless my noggin with a tickle from your noodly appendages!
 # Imports
 ##############################################################################
 
+import gopher_configuration
 import gopher_semantics
 import os
 import py_trees
@@ -30,7 +31,6 @@ from . import moveit
 from . import navigation
 
 from .time import Pause
-from gopher_configuration.parameters import Parameters
 
 ##############################################################################
 # Behaviours
@@ -48,8 +48,8 @@ class ElevatorFailure(py_trees.Sequence):
         :param str name: behaviour name
         """
         super(ElevatorFailure, self).__init__(name)
-        self.parameters = Parameters()
-        flash_leds = interactions.FlashLEDs("Warning", led_pattern=self.parameters.led_patterns.humans_i_need_help)
+        self.gopher = gopher_configuration.Configuration()
+        flash_leds = interactions.FlashLEDs("Warning", led_pattern=self.gopher.led_patterns.humans_i_need_help)
         wait_for_button = interactions.WaitForButton("go")
         flash_leds.add_child(wait_for_button)
         self.add_child(flash_leds)
@@ -73,8 +73,8 @@ class HumanAssistedElevators(py_trees.Selector):
         ###########################################
         # Load goodies from the rosparam server
         ###########################################
-        self.parameters = Parameters()
-        self.semantics = gopher_semantics.Semantics(self.parameters.namespaces.semantics)
+        self.gopher = gopher_configuration.Configuration()
+        self.semantics = gopher_semantics.Semantics(self.gopher.namespaces.semantics)
 
         ###########################################
         # Checks
@@ -96,17 +96,17 @@ class HumanAssistedElevators(py_trees.Selector):
 
             # DJS : might need a delivery free MoveToGoal here
             move_to_elevator = moveit.MoveToGoal("To Elevator", elevator_level_origin.entry)
-            honk = interactions.Articulate("Honk", self.parameters.sounds.honk)
+            honk = interactions.Articulate("Honk", self.gopher.sounds.honk)
 
-            flash_leds_travelling = interactions.FlashLEDs("Travelling", led_pattern=self.parameters.led_patterns.humans_give_me_input)
-            flash_leds_travelling.add_child(interactions.WaitForButton("Wait for Button", self.parameters.buttons.go))
+            flash_leds_travelling = interactions.FlashLEDs("Travelling", led_pattern=self.gopher.led_patterns.humans_give_me_input)
+            flash_leds_travelling.add_child(interactions.WaitForButton("Wait for Button", self.gopher.buttons.go))
 
             # TODO - get the map directory variable
             map_filename = os.path.join('somewhere', destination.world + ".dslam")
-            switch_maps = navigation.SwitchMap("Switch Map (%s)" % map_filename, self.parameters.topics.switch_map)
+            switch_maps = navigation.SwitchMap("Switch Map (%s)" % map_filename, self.gopher.topics.switch_map)
 
-            flash_leds_init = interactions.FlashLEDs("Initialising", led_pattern=self.parameters.led_patterns.holding)
-            flash_leds_init.add_child(navigation.InitPose("Init Pose", elevator_level_destination.exit, self.parameters.topics.initial_pose))
+            flash_leds_init = interactions.FlashLEDs("Initialising", led_pattern=self.gopher.led_patterns.holding)
+            flash_leds_init.add_child(navigation.InitPose("Init Pose", elevator_level_destination.exit, self.gopher.topics.initial_pose))
             flash_leds_init.add_child(Pause("Wait For Init", 2.0))
             flash_leds_init.add_child(navigation.ClearCostmaps("ClearCostmaps"))
 

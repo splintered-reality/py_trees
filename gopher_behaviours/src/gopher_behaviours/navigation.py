@@ -22,13 +22,13 @@ Bless my noggin with a tickle from your noodly appendages!
 ##############################################################################
 
 import geometry_msgs.msg as geometry_msgs
+import gopher_configuration
 import py_trees
 import rocon_python_comms
 import rospy
 import std_msgs.msg as std_msgs
 import std_srvs.srv as std_srvs
 import tf
-from gopher_configuration.parameters import Parameters
 
 ##############################################################################
 # Behaviours
@@ -43,15 +43,15 @@ class ClearCostmaps(py_trees.Behaviour):
     """
     def __init__(self, name):
         super(ClearCostmaps, self).__init__(name)
-        self.parameters = Parameters()
+        self.gopher = gopher_configuration.Configuration()
 
     def update(self):
         rospy.loginfo("Gopher Behaviours : clearing costmaps [%s]" % (type(self).__name__))
         try:
-            clear_costmaps_service = rospy.ServiceProxy(self.parameters.services.clear_costmaps, std_srvs.Empty)
+            clear_costmaps_service = rospy.ServiceProxy(self.gopher.services.clear_costmaps, std_srvs.Empty)
             clear_costmaps_service()
         except rospy.ServiceException as e:
-            rospy.logwarn("Gopher Behaviours : failed to clear costmaps, wrong service name name? [%s][%s][%s]" % (self.parameters.services.clear_costmap, type(self).__name__, str(e)))
+            rospy.logwarn("Gopher Behaviours : failed to clear costmaps, wrong service name name? [%s][%s][%s]" % (self.gopher.services.clear_costmap, type(self).__name__, str(e)))
         except rospy.ROSInterruptException:
             rospy.logwarn("Gopher Behaviours : interrupted while trying to clear costmaps, probably ros shutting down [%s]" % type(self).__name__)
         return py_trees.Status.SUCCESS
@@ -72,7 +72,7 @@ class InitPose(py_trees.Behaviour):
         :param str topic_name:
         """
         super(InitPose, self).__init__(name)
-        self.parameters = Parameters()
+        self.gopher = gopher_configuration.Configuration()
         self.initial_pose = initial_pose
         self.publisher = rocon_python_comms.Publisher(topic_name, geometry_msgs.PoseWithCovarianceStamped, queue_size=1)
 
@@ -87,7 +87,7 @@ class InitPose(py_trees.Behaviour):
     def to_msg_pose_with_covariance_stamped(self, pose_2d):
         msg = geometry_msgs.PoseWithCovarianceStamped()
         msg.header.stamp = rospy.Time.now()
-        msg.header.frame_id = self.parameters.frames.map
+        msg.header.frame_id = self.gopher.frames.map
         quaternion = tf.transformations.quaternion_from_euler(0, 0, self.initial_pose.theta)
         msg_pose = geometry_msgs.Pose()
         msg_pose.position.x = self.initial_pose.x
@@ -123,7 +123,7 @@ class SwitchMap(py_trees.Behaviour):
         """
         super(SwitchMap, self).__init__(name)
         self.dslam_map = std_msgs.String(map_filename)
-        self.parameters = Parameters()
+        self.gopher = gopher_configuration.Configuration()
         self.publisher = rocon_python_comms.Publisher(topic_name, std_msgs.String, queue_size=1)
 
     def update(self):
