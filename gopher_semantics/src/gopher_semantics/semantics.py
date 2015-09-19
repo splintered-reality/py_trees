@@ -52,7 +52,11 @@ class Semantics(object):
     - ~locations [gopher_semantic_msgs.Locations]
     - ~worlds [gopher_semantic_msgs.World]
     '''
-    def __init__(self, semantics_parameter_namespace=None):
+    def __init__(self, semantics_parameter_namespace=None, create_publishers=False):
+        """
+        :param str semantics_parameter_naemspace: this is where you can find the parameters on the rosparam serer
+        :param bool create_publishers: only the node is interested in doing this.
+        """
         # right now, overkill for one bloody variable...
         self.parameters = Parameters(semantics_parameter_namespace)
         semantics = rospy.get_param(self.parameters.semantics_parameter_namespace, {})
@@ -62,35 +66,43 @@ class Semantics(object):
         latched = True
         queue_size_five = 5
         self.semantic_modules = {}
-        if 'worlds' in semantics:
-            self.semantic_modules['worlds'] = Worlds(self.parameters.semantics_parameter_namespace)
-            publisher_details.append(('~worlds', gopher_semantic_msgs.Worlds, latched, queue_size_five))
-        if 'docking_stations' in semantics:
-            self.semantic_modules['docking_stations'] = DockingStations(self.parameters.semantics_parameter_namespace)
-            publisher_details.append(('~docking_stations', gopher_semantic_msgs.DockingStations, latched, queue_size_five))
+        # special case - supporting legacy
         if 'semantic_locations' in semantics or 'locations' in semantics:
             self.semantic_modules['locations'] = Locations(self.parameters.semantics_parameter_namespace)
-            publisher_details.append(('~locations', gopher_semantic_msgs.Locations, latched, queue_size_five))
+        if 'worlds' in semantics:
+            self.semantic_modules['worlds'] = Worlds(self.parameters.semantics_parameter_namespace)
+        if 'docking_stations' in semantics:
+            self.semantic_modules['docking_stations'] = DockingStations(self.parameters.semantics_parameter_namespace)
         if 'elevators' in semantics:
             self.semantic_modules['elevators'] = Elevators(self.parameters.semantics_parameter_namespace)
-            publisher_details.append(('~elevators', gopher_semantic_msgs.Elevators, latched, queue_size_five))
         for module_name, module in self.semantic_modules.iteritems():
             setattr(self, module_name, module)
 
-        publisher_details.append(('~introspection/parameters', std_msgs.String, latched, queue_size_five)),
-        publisher_details.append(('~introspection/semantics', std_msgs.String, latched, queue_size_five)),
-        self.publishers = rocon_python_comms.utils.Publishers(publisher_details)
+        if create_publishers:
+            # special case - supporting legacy
+            if 'semantic_locations' in semantics or 'locations' in semantics:
+                publisher_details.append(('~locations', gopher_semantic_msgs.Locations, latched, queue_size_five))
+            if 'worlds' in semantics:
+                publisher_details.append(('~worlds', gopher_semantic_msgs.Worlds, latched, queue_size_five))
+            if 'docking_stations' in semantics:
+                publisher_details.append(('~docking_stations', gopher_semantic_msgs.DockingStations, latched, queue_size_five))
+            if 'elevators' in semantics:
+                publisher_details.append(('~elevators', gopher_semantic_msgs.Elevators, latched, queue_size_five))
 
-        # validate
-        # TODO check if there are any locations assigned to worlds, not in worlds
+            publisher_details.append(('~introspection/parameters', std_msgs.String, latched, queue_size_five)),
+            publisher_details.append(('~introspection/semantics', std_msgs.String, latched, queue_size_five)),
+            self.publishers = rocon_python_comms.utils.Publishers(publisher_details)
 
-        # publish
-        semantics_string = std_msgs.String()
-        for name, module in sorted(self.semantic_modules.iteritems()):
-            self.publishers.__dict__[name].publish(module.to_msg())
-            semantics_string.data += "%s" % module
-        self.publishers.parameters.publish(std_msgs.String("%s" % self.parameters))
-        self.publishers.semantics.publish(semantics_string)
+            # validate
+            # TODO check if there are any locations assigned to worlds, not in worlds
+
+            # publish
+            semantics_string = std_msgs.String()
+            for name, module in sorted(self.semantic_modules.iteritems()):
+                self.publishers.__dict__[name].publish(module.to_msg())
+                semantics_string.data += "%s" % module
+            self.publishers.parameters.publish(std_msgs.String("%s" % self.parameters))
+            self.publishers.semantics.publish(semantics_string)
 
     def spin(self):
         rospy.spin()

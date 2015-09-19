@@ -15,5 +15,8 @@ import rospy
 
 if __name__ == '__main__':
     rospy.init_node('semantics')
-    semantics = gopher_semantics.Semantics()
+    semantics = gopher_semantics.Semantics(
+        semantics_parameter_namespace=None,  # None tells it to go lookup the default
+        create_publishers=True
+    )
     semantics.spin()
