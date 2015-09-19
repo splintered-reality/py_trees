@@ -102,6 +102,17 @@ class Frames(ConfigurationGroup):
         return (True, None)
 
 
+class Actions(ConfigurationGroup):
+    def __init__(self, actions_dict):
+        self.__dict__ = actions_dict
+
+    def validate(self):
+        for key in ['teleport']:
+            if key not in self.__dict__.keys():
+                return (False, "no definition for action '%s'" % key)
+        return (True, None)
+
+
 class Services(ConfigurationGroup):
     def __init__(self, services_dict):
         self.__dict__ = services_dict
@@ -232,9 +243,10 @@ class Configuration(object):
     def __init__(self, error_logger=_error_logger):
         if not Configuration.__shared_state:
             Configuration.load_from_rosparam_server()
-        core = ['buttons', 'namespaces', 'frames', 'topics', 'services', 'sounds', 'led_patterns']
+        core = ['actions', 'buttons', 'namespaces', 'frames', 'topics', 'services', 'sounds', 'led_patterns']
         try:
             # catch our special groups
+            self.actions      = Actions(Configuration.__shared_state['actions'])        # @IgnorePep8
             self.buttons      = Buttons(Configuration.__shared_state['buttons'])        # @IgnorePep8
             self.namespaces   = Namespaces(Configuration.__shared_state['namespaces'])  # @IgnorePep8
             self.frames       = Frames(Configuration.__shared_state['frames'])          # @IgnorePep8
@@ -243,13 +255,13 @@ class Configuration(object):
             self.topics       = Topics(Configuration.__shared_state['topics'])          # @IgnorePep8
             self.led_patterns = LEDPatterns()
         except KeyError:
-            error_logger("Gopher Deliveries : at least one of the core parameter groups missing %s" % core)
+            error_logger("at least one of the core parameter groups missing %s" % core)
             return
         for name in core:
             parameter_group = getattr(self, name)
             (result, error_message) = parameter_group.validate()
             if not result:
-                error_logger("Gopher Deliveries : %s" % error_message)
+                error_logger("%s" % error_message)
         # catch everything else
         for key, value in Configuration.__shared_state.iteritems():
             if key not in core:

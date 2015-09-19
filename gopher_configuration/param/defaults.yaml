@@ -18,6 +18,9 @@ topics:
 services:
   clear_costmaps: /navi/move_base/clear_costmaps
 
+actions:
+  teleport: /navi/teleport
+
 namespaces:
   semantics: /rocon/semantics
 
