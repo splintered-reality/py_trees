@@ -2,8 +2,10 @@
 # About
 ##############################################################################
 
-# Unused yet, but basic idea is to use this to feed gopher behaviours with the correct names/topics for your
-# robot so that you don't have to 1) hardcode everything, or 2) do massive amounts of params/remaps in launchers.
+# Basic idea is to use this to feed gopher behaviours with the correct
+# names/topics for your robot so that you don't have to 1) hardcode everything
+# or 2) do massive amounts of params/remaps in launchers. It also lets
+# you conveniently standardise various ideas.
 
 ##############################################################################
 # Names

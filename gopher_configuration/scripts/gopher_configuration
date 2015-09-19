@@ -6,29 +6,32 @@
 # Documentation
 ##############################################################################
 """
-Simple demo program for the gopher behaviour parameter store.
+Simple utility to display a gopher's configuration on the command line.
 """
 ##############################################################################
 # Imports
 ##############################################################################
 
+import argparse
 import gopher_configuration
-import os
 import rocon_console.console as console
-import rospkg
-import yaml
-
-##############################################################################
-# Core Controller
-##############################################################################
-
+import rospy
+import sys
 
 ##############################################################################
 # Main
 ##############################################################################
 
 if __name__ == '__main__':
-    gopher_configuration.Configuration.load_defaults()
+    # just use argparse to show about and usage
+    parser = argparse.ArgumentParser(description=console.green + 'Utility to display global gopher configuration on the command line.' + console.reset,
+                                     usage="\n    " + console.cyan + "gopher_configuration" + console.reset,
+                                     epilog="And his noodly appendage reached forth to tickle the blessed...",
+                                     formatter_class=argparse.RawTextHelpFormatter
+                                     )
+    # don't know why I have to strip the first arg out (the executable)
+    args = parser.parse_args(rospy.myargv(argv=sys.argv)[1:])
+
     gopher = gopher_configuration.Configuration()
     print("%s" % gopher)
 

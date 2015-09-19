@@ -147,10 +147,40 @@ class Configuration(object):
     """
     Shared parameter storage/instantiation for gopher behaviours.
 
-    This uses the Borg pattern.
-        http://code.activestate.com/recipes/66531-singleton-we-dont-need-no-stinkin-singleton-the-bo/
-    """
+    This uses the `Borg Pattern`_, so feel free to instantiate as many times
+    inside a process as you wish.
 
+
+    *Usage*:
+
+    The simplest use case is to load your configuration and its customisation on the
+    rosparam server in the ``/gopher/configuration`` namespace. This namespace is
+    the default lookup location for this class.
+
+    To do this, include a snippet like that below to load it for your robot:
+
+    .. code-block:: xml
+           :linenos:
+
+           <launch>
+               <rosparam ns="/gopher/configuration" command="load" file="$(find gopher_configuration)/param/defaults.yaml"/>
+               <rosparam ns="/gopher/configuration" command="load" file="$(find foo_configuration)/param/customisation.yaml"/>
+           <launch>
+
+    And then instantiate this class as an interface to that configuration.
+
+    .. code-block:: python
+       :linenos:
+
+       gopher = gopher_configuration.Configuration()
+       print("%s" % gopher)
+       print("%s" % gopher.topics)
+       print("Honk topic name: %s" % gopher.sounds.honk)
+       print("Global frame id: %s" % gopher.frames.global)
+
+    .. _Borg Pattern: http://code.activestate.com/recipes/66531-singleton-we-dont-need-no-stinkin-singleton-the-bo/
+
+    """
     # two underscores for class private variable
     #   http://stackoverflow.com/questions/1301346/the-meaning-of-a-single-and-a-double-underscore-before-an-object-name-in-python
     __shared_state = {}
@@ -158,7 +188,8 @@ class Configuration(object):
     @staticmethod
     def load_defaults():
         """
-        Loads the default yaml, useful for testing.
+        Loads the default yaml, useful for referencing the default configuration.
+        This is used by the ``gopher_configuration`` command line script.
         """
         rospack = rospkg.RosPack()
         pkg_path = rospack.get_path("gopher_configuration")
@@ -166,7 +197,33 @@ class Configuration(object):
         Configuration.__shared_state = yaml.load(open(filename))
 
     @staticmethod
-    def load_from_rosparam_server(namespace='~'):
+    def load_from_rosparam_server(namespace='/gopher/configuration'):
+        """
+        This automatically gets called if you try to instantiate before
+        it has retrieved anything from the rosparam server.
+        It can also be called by the user to point the configuration
+        to a different location on the rosparam server for all
+        future instances of this class. This is not a common use
+        case though.
+
+        As an example, to load and retrieve configuration from a
+        namespace called ``foo``:
+
+        .. code-block:: xml
+           :linenos:
+
+           <launch>
+               <rosparam ns="/foo/configuration" command="load" file="$(find gopher_configuration)/param/defaults.yaml"/>
+               <rosparam ns="/foo/configuration" command="load" file="$(find foo_configuration)/param/customisation.yaml"/>
+           <launch>
+
+        .. code-block:: python
+           :linenos:
+
+           gopher_configuration.Configuration.load_from_rosparam_server(namespace='/foo/configuration')
+           gopher = gopher_configuration.Configuration()
+
+        """
         Configuration.__shared_state = rospy.get_param(namespace)
 
     def __init__(self, error_logger=_error_logger):
