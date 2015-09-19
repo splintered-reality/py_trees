@@ -25,6 +25,15 @@ This package defines core configurations for
 It also lets you define any other configurations you wish for the purposes of experimentation or
 customisation of a particular gopher.
 
+Demo
+----
+
+This loads the defaults onto the rosparam server where they are loaded and viewed.
+
+.. code-block:: bash
+   
+   $ roslaunch gopher_configuration demo_defaults.launch
+
 Usage
 -----
 
@@ -55,3 +64,16 @@ Include your extensions/overrides of the defaults in a custom yaml configuration
 
 Python access to this configuration is provided via the :class:`.Configuration` class. See that class itself
 for more information and usage instructions.
+
+**Convenient Access - C++**
+
+TODO
+
+**Viewing - Command Line**
+
+To view the current runtime configuration simply run the command line program:
+
+.. code-block:: bash
+   
+   $ gopher_configuration
+

@@ -1,6 +1,5 @@
 #
-# License: BSD
-#   https://raw.github.com/yujinrobot/gopher_crazy_hospital/license/LICENSE
+# License: Yujin
 #
 ##############################################################################
 # Documentation

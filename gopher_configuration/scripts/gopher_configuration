@@ -12,11 +12,16 @@ Simple utility to display a gopher's configuration on the command line.
 # Imports
 ##############################################################################
 
+import sys
+
+# Move the current directory to the end so it won't clash with python modules
+# of the same name.
+sys.path.append(sys.path.pop(0)) 
+
 import argparse
 import gopher_configuration
 import rocon_console.console as console
 import rospy
-import sys
 
 ##############################################################################
 # Main
@@ -24,7 +29,7 @@ import sys
 
 if __name__ == '__main__':
     # just use argparse to show about and usage
-    parser = argparse.ArgumentParser(description=console.green + 'Utility to display global gopher configuration on the command line.' + console.reset,
+    parser = argparse.ArgumentParser(description=console.green + 'Utility to display a running gopher configuration on the command line.' + console.reset,
                                      usage="\n    " + console.cyan + "gopher_configuration" + console.reset,
                                      epilog="And his noodly appendage reached forth to tickle the blessed...",
                                      formatter_class=argparse.RawTextHelpFormatter

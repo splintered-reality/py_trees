@@ -1,12 +1,12 @@
-.. py_trees documentation master file, created by
+.. gopher_configuration documentation master file, created by
    sphinx-quickstart on Thu Jul 30 16:43:58 2015.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Py Trees
-========
+Gopher Configuration
+====================
 
-Behaviour trees for ros in python.
+Centralised configuration via yaml/rosparam server for gophers.
 
 Contents:
 
