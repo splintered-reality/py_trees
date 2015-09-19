@@ -11,7 +11,7 @@ REMOTE_SSH:=files@files.yujin.com
 docs:
 	rosdoc_lite .
 
-dude:
+details:
 	@echo ${VERSION}
 	@echo ${NAME}
 
