@@ -1,0 +1,231 @@
+#!/usr/bin/env python
+#
+# License: Yujin
+#
+##############################################################################
+# Documentation
+##############################################################################
+"""
+Node that manages map switching and teleports.
+"""
+##############################################################################
+# Imports
+##############################################################################
+
+import actionlib
+import argparse
+import gopher_configuration
+import gopher_navi_msgs.msg as gopher_navi_msgs
+import gopher_semantics
+import marco_polo
+import rocon_console.console as console
+import rospy
+import sys
+
+##############################################################################
+# Command Handler
+##############################################################################
+
+
+def show_usage():
+    s = "\n"
+    s += console.bold + "    Introspection" + console.reset + "\n"
+    s += console.cyan + "            gopher_teleport" + console.yellow + " [option]" + console.reset + "\n"
+    s += "\n"
+    s += console.bold + "    Command" + console.reset + "\n"
+    s += console.cyan + "            gopher_teleport" + console.yellow + " <command>" + console.blue + console.bold + " [<args>]" + console.reset + "\n"
+    s += "\n"
+    s += "       where command is one of:\n"
+    s += console.cyan + "            pose         " + console.yellow + "teleport to another pose no the current world (map), rviz style." + console.reset + "\n"
+    s += console.cyan + "            world_pose   " + console.yellow + "teleport to a pose on another world" + console.reset + "\n"
+    s += console.cyan + "            world        " + console.yellow + "teleport to another world, but don't change pose" + console.reset + "\n"
+    s += console.cyan + "            location     " + console.yellow + "teleport to a semantically defined location" + console.reset + "\n"
+    s += console.cyan + "            elevator     " + console.yellow + "teleport to an elevator semantically defined location" + console.reset + "\n"
+    s += "\n"
+    return s
+
+
+def show_world_usage():
+    s = "\n"
+    s += console.cyan + "         gopher_teleport world" + console.yellow + " <world_name>" + console.reset + "\n"
+    s += "\n"
+    s += "    where world (map) name is the name of any map file in ROS_HOME/gopher/maps\n"
+    return s
+
+
+def parse_world_arguments(command_line_args):
+    parser = argparse.ArgumentParser(description=console.green + 'Teleport to another world, but dont change pose.' + console.reset,
+                                     usage=show_world_usage(),
+                                     epilog="And his noodly appendage reached forth to tickle the blessed...",
+                                     formatter_class=argparse.RawTextHelpFormatter
+                                     )
+    parser.add_argument('world', help='world (map) to load.')
+    args = parser.parse_args(command_line_args)
+    return args
+
+
+def show_location_usage():
+    s = "\n"
+    s += console.cyan + "        gopher_teleport location" + console.yellow + " <location>" + console.reset + "\n"
+    s += "\n"
+    s += "    Where location is from the list of semantic locations"
+    return s
+
+
+def parse_location_arguments(command_line_args):
+    parser = argparse.ArgumentParser(description=console.green + 'Teleport to another location, shifting worlds if needed.' + console.reset,
+                                     usage=show_location_usage(),
+                                     epilog="And his noodly appendage reached forth to tickle the blessed...",
+                                     formatter_class=argparse.RawTextHelpFormatter
+                                     )
+    parser.add_argument('location', help='semantic location to shift to.')
+    args = parser.parse_args(command_line_args)
+    return args
+
+
+def show_elevator_usage():
+    s = "\n"
+    s += console.cyan + "        gopher_teleport elevator" + console.yellow + " <elevator> <world> <location>" + console.reset + "\n"
+    s += "\n"
+    s += "    Where elevator is a semantically defined bridge between worlds and location is either 'entry' or 'exit'." + console.reset
+    return s
+
+
+def parse_elevator_arguments(command_line_args):
+    parser = argparse.ArgumentParser(description=console.green + 'Teleport to another elevator location, shifting worlds if needed.' + console.reset,
+                                     usage=show_elevator_usage(),
+                                     epilog="And his noodly appendage reached forth to tickle the blessed...",
+                                     formatter_class=argparse.RawTextHelpFormatter
+                                     )
+    parser.add_argument('elevator', help='elevator to use.')
+    parser.add_argument('world', help='world to shift to.')
+    parser.add_argument('location', help='world to shift to.')
+    args = parser.parse_args(command_line_args)
+    if args.location not in ['entry', 'exit']:
+        # default to exit.
+        args.location = 'exit'
+    return args
+
+
+class WhipMe(object):
+    def __init__(self, default_namespace, command_line_args):
+        self.command_line_args = command_line_args
+        # switch to the rosbag style heirarchical format
+        parser = argparse.ArgumentParser(description=console.green + 'Teleport around the world with marco polo!' + console.reset,
+                                         usage=show_usage(),
+                                         epilog="And his noodly appendage reached forth to tickle the blessed...",
+                                         formatter_class=argparse.RawTextHelpFormatter
+                                         )
+        parser.add_argument('-m', '--maps', action='store_true', help='list available maps')
+        parser.add_argument('-w', '--worlds', action='store_true', help='list available worlds')
+        parser.add_argument('-e', '--elevators', action='store_true', help='list available elevators')
+        parser.add_argument('-l', '--locations', action='store_true', help='list available locations')
+        parser.add_argument('-n', '--namespace', action='store', default=default_namespace, help='namespace for the teleport action.')
+        parser.add_argument('command', nargs='*', default=None, help='subcommand to run')
+        args = parser.parse_args(self.command_line_args)
+
+        self.args = args
+        self.namespace = args.namespace
+        self.introspection = True if args.maps or args.worlds or args.elevators or args.locations else False
+        self.get_maps = args.maps
+        self.get_worlds = args.worlds
+        self.get_locations = args.locations
+        self.get_elevators = args.elevators
+
+        self.goal = None
+        if not self.introspection:
+            if not args.command:
+                print(console.red + "\nError: no command provided" + console.reset)
+                print("%s" % show_usage())
+                sys.exit()
+            self.sub_command_line_args = args.command[1:]
+            if not hasattr(self, args.command[0]):
+                print(console.red + "\nError: unrecognised command, aborting.\n" + console.reset)
+                sys.exit()
+            self.goal = getattr(self, args.command[0])()
+
+    def pose(self):
+        print("Not yet implemented")
+        return None
+        # args = parse_pose_arguments(self.sub_command_line_args)
+
+    def world_pose(self):
+        # args = parse_world_pose_arguments(self.sub_command_line_args)
+        print("Not yet implemented")
+        return None
+
+    def world(self):
+        args = parse_world_arguments(self.sub_command_line_args)
+        goal = gopher_navi_msgs.TeleportGoal()
+        goal.world = args.world
+        return goal
+
+    def location(self):
+        args = parse_location_arguments(self.sub_command_line_args)
+        goal = gopher_navi_msgs.TeleportGoal()
+        goal.location = args.location
+        return goal
+
+    def elevator(self):
+        args = parse_elevator_arguments(self.sub_command_line_args)
+        goal = gopher_navi_msgs.TeleportGoal()
+        goal.elevator = args.elevator
+        goal.world = args.world
+        goal.location = args.location
+
+
+def pretty_print(title, d):
+    print(console.bold + title + console.reset)
+    for key in sorted(d):
+        value = d[key]
+        print(console.cyan + "  %s" % key + console.reset + ": " + console.yellow + (value if value is not None else '-') + console.reset)
+        print("\n")
+
+##############################################################################
+# Main
+##############################################################################
+
+if __name__ == '__main__':
+    rospy.init_node("gopher_teleport", log_level=rospy.INFO)
+    command_line_args = rospy.myargv(argv=sys.argv)[1:]
+    gopher = gopher_configuration.Configuration()
+    whip_me = WhipMe(gopher.actions.teleport, command_line_args)
+    action_client = actionlib.SimpleActionClient(whip_me.namespace, gopher_navi_msgs.TeleportAction)
+
+    # Introspection
+    if whip_me.introspection:
+        semantics = gopher_semantics.Semantics(gopher.namespaces.semantics)
+        if whip_me.get_maps:
+            pretty_print("\nMaps", marco_polo.utilities.get_installed_maps())
+        if whip_me.get_worlds:
+            pretty_print("\nWorlds", marco_polo.utilities.get_installed_worlds())
+        if whip_me.get_locations:
+            print(console.bold + "\nLocations" + console.reset)
+            for location in sorted(semantics.locations):
+                print(console.cyan + "    %s" % location + console.reset + ": " + console.yellow + semantics.locations[location].description + console.reset)
+            print("\n")
+        if whip_me.get_elevators:
+            print(console.bold + "\nElevators" + console.reset)
+            for elevator in sorted(semantics.elevators):
+                print(console.cyan + "    %s" % elevator + console.reset + ": " + console.yellow + str([level.world for level in semantics.elevators[elevator].levels]) + console.reset)
+            print("\n")
+        sys.exit(0)
+
+    # send the goal
+    if not action_client.wait_for_server(rospy.Duration(1.5)):
+        rospy.logerr("Teleport : could not connect to the teleport action server.")
+        sys.exit(1)
+    print("DJS Goal: %s" % whip_me.goal)
+    action_client.send_goal(whip_me.goal)
+
+    rate = rospy.Rate(10)
+    result = None
+    while not rospy.is_shutdown():
+        result = action_client.get_result()
+        if result:
+            if result.value:
+                rospy.loginfo("Teleport : finished successfully")
+            else:
+                rospy.logerr("Teleport : failed [%s]" % result.message)
+            break
+        rate.sleep()

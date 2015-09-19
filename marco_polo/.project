@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<projectDescription>
+	<name>marco_polo</name>
+	<comment></comment>
+	<projects>
+		<project>gopher_configuration</project>
+		<project>gopher_navi_msgs</project>
+		<project>gopher_semantics</project>
+		<project>rocon_python_comms</project>
+	</projects>
+	<buildSpec>
+		<buildCommand>
+			<name>org.python.pydev.PyDevBuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
+	</buildSpec>
+	<natures>
+		<nature>org.python.pydev.pythonNature</nature>
+	</natures>
+</projectDescription>
