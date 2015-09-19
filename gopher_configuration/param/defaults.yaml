@@ -26,7 +26,7 @@ frames:
 
 
 ##############################################################################
-# Aliases
+# Interactions
 ##############################################################################
 
 # Button aliases standardised for gopher deliveries,
@@ -39,3 +39,34 @@ buttons:
 sounds:
   honk: /gopher/commands/sounds/groot
 
+##############################################################################
+# Patterns
+##############################################################################
+#
+# LED Patterns are one set of configurations that can't yet be configured
+# from yaml. These however are done in the interface:
+#
+#    python: gopher_configuration.configurations.Configuration
+#    c++   : N/A
+#
+# For reference, *concepts* are:
+#
+#  - human interaction required : flashing
+#  - notifications              : around
+#  - states                     : solid
+#
+# and *core definitions*: 
+#
+# human interactions
+#
+#  - humans_give_me_input = gopher_std_msgs.Notification.FLASH_BLUE
+#  - humans_be_careful = gopher_std_msgs.Notification.FLASH_YELLOW
+#  - humans_i_need_help = gopher_std_msgs.Notification.FLASH_PURPLE
+#
+# notifications
+#
+#  - holding = gopher_std_msgs.Notification.AROUND_RIGHT_BLUE
+#
+# states
+#
+#  - error = gopher_std_msgs.Notification.SOLID_RED

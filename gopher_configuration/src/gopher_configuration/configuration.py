@@ -53,6 +53,9 @@ class ConfigurationGroup(object):
 class LEDPatterns(ConfigurationGroup):
     """
     Self-defined group that associates certain colours with various actions.
+
+    Unfortunately can't put these in the yaml yet. To do that, need to have string mappings to these
+    message values. Maybe they themselves can be strings?
     """
     def __init__(self):
         # human interactions
