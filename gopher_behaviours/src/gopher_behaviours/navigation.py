@@ -28,7 +28,7 @@ import rospy
 import std_msgs.msg as std_msgs
 import std_srvs.srv as std_srvs
 import tf
-from .parameters import Parameters
+from gopher_configuration.parameters import Parameters
 
 ##############################################################################
 # Behaviours

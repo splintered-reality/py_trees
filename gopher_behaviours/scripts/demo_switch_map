@@ -17,6 +17,7 @@ gopher_behaviours/demo_switch_map.launch
 ##############################################################################
 
 import gopher_behaviours
+import gopher_configuration
 import gopher_semantics
 import os
 import py_trees
@@ -30,17 +31,17 @@ import rospy
 class SwitchMap(object):
     def __init__(self, map_name):
         self.root = py_trees.Sequence("SwitchMap")
-        self.parameters = gopher_behaviours.Parameters()
-        self.semantics = gopher_semantics.Semantics(self.parameters.namespaces.semantics)
+        self.gopher = gopher_configuration.Configuration()
+        self.semantics = gopher_semantics.Semantics(self.gopher.namespaces.semantics)
         self.logger = py_trees.logging.get_logger("SwitchMap")
         map_filename = os.path.join(gopher_behaviours.utilities.get_gopher_home(), "maps", map_name + ".dslam")
-        switch_map = gopher_behaviours.navigation.SwitchMap("SwitchMap", map_filename, self.parameters.topics.switch_map)
+        switch_map = gopher_behaviours.navigation.SwitchMap("SwitchMap", map_filename, self.gopher.topics.switch_map)
         try:
             destination = self.semantics.elevators.find_level_on_elevator('highway_to_hell', map_name)
-            init_pose = gopher_behaviours.navigation.InitPose("InitPose", destination.exit, self.parameters.topics.initial_pose)
+            init_pose = gopher_behaviours.navigation.InitPose("InitPose", destination.exit, self.gopher.topics.initial_pose)
             clear_costmaps = gopher_behaviours.navigation.ClearCostmaps("ClearCostmaps")
         except AttributeError:
-            rospy.logerr("Switch Map: no elevators found, wrong semantics loaded [%s]?\n%s" % (self.parameters.namespaces.semantics, str(self.semantics)))
+            rospy.logerr("Switch Map: no elevators found, wrong semantics loaded [%s]?\n%s" % (self.gopher.namespaces.semantics, str(self.semantics)))
             return
 
         self.root.add_child(switch_map)

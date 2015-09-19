@@ -18,7 +18,7 @@
   <arg name="destination" default="hell" doc="one of [heaven, hell, earth]." />
  
   <node name="elevators" type="demo_elevators" pkg="gopher_behaviours">
-    <rosparam command="load" file="$(find gopher_behaviours)/param/defaults.yaml"/>
+    <rosparam command="load" file="$(find gopher_configuration)/param/defaults.yaml"/>
     <rosparam param="origin" subst_value="True">$(arg origin)</rosparam>
     <rosparam param="destination" subst_value="True">$(arg destination)</rosparam>
   </node>

@@ -16,8 +16,6 @@ Imports for the gopher_behaviours_ package.
 # Imports
 ##############################################################################
 
-from .parameters import Parameters
-
 # behaviours
 from . import battery
 from . import delivery

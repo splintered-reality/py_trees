@@ -26,7 +26,7 @@ import py_trees
 import rospy
 import std_msgs.msg as std_msgs
 
-from .parameters import Parameters
+from gopher_configuration.parameters import Parameters
 
 ##############################################################################
 # Interactions

@@ -28,7 +28,6 @@ catkin_install_python(
 )
 
 install(DIRECTORY launch DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
-install(DIRECTORY param DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
  
 ##############################################################################
 # Unit Tests

@@ -30,7 +30,7 @@ from . import moveit
 from . import navigation
 
 from .time import Pause
-from .parameters import Parameters
+from gopher_configuration.parameters import Parameters
 
 ##############################################################################
 # Behaviours

@@ -16,6 +16,7 @@ gopher_behaviours/demo_switch_map.launch
 # Imports
 ##############################################################################
 
+import gopher_configuration
 import gopher_behaviours
 import gopher_semantics
 import os
@@ -30,8 +31,8 @@ import rospy
 class DemoElevators(object):
     def __init__(self, destination):
         self.root = gopher_behaviours.elevators.HumanAssistedElevators("HighwayToHell")
-        self.parameters = gopher_behaviours.Parameters()
-        self.semantics = gopher_semantics.Semantics(self.parameters.namespaces.semantics)
+        self.gopher = gopher_configuration.Configuration()
+        self.semantics = gopher_semantics.Semantics(self.gopher.namespaces.semantics)
         try:
             origin = self.semantics.locations
             destination_level = self.semantics.elevators.find_level_on_elevator('highway_to_hell', map_name)
