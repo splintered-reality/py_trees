@@ -1,0 +1,92 @@
+semantic_locations: {
+  homebase: {
+    name: 'Homebase',
+    description: 'Keeping Yoon company',
+    pose: {
+      x: 1.000000,
+      y: 0.000000,
+      theta: 0.000000
+    },
+    keyframe_id: 0
+  },
+  inno: {
+    name: 'Innovation Room',
+    description: 'A nice empty spot, hopefully...',
+    pose: {
+      x: 3.000000,
+      y: -1.000000,
+      theta: 0.000000
+    },
+    keyframe_id: 1
+  },
+  sam: {
+    name: 'Sam',
+    description: 'Keeping tabs on Sam',
+    pose: {
+      x: 6.910000,
+      y: -21.060000,
+      theta: 0.000000
+    },
+    keyframe_id: 2
+  },
+  elevators: {
+    name: 'Elevators',
+    description: 'Up and down',
+    pose: {
+      x: 19.8300000,
+      y: 8.150000,
+      theta: 0.00
+    },
+    keyframe_id: 3
+  },
+  leaving_inno: {
+    name: 'Leaving Inno',
+    description: 'Leaving the innovation room (towards the elevators)',
+    pose: {
+      x: 14.780000,
+      y: 2.090000,
+      theta: 1.57
+    },
+    keyframe_id: 4
+  },
+  big_elevators: {
+    name: 'Big Elevators',
+    description: 'Behold, serious elevators for serious gocarts!',
+    pose: {
+      x: 19.660000,
+      y: 23.560000,
+      theta: 1.57
+    },
+    keyframe_id: 5
+  },
+  hwajangsil: {
+    name: 'Hwajangsil',
+    description: 'I didnt map in there...',
+    pose: {
+      x: 20.380000,
+      y: -11.050000,
+      theta: -1.57
+    },
+    keyframe_id: 6
+  },
+}
+
+# For testing purposes only
+docking_stations:
+  '0':
+    primary_id: 0
+    left_id: 4
+    right_id: 5
+    pose:
+      x : 1.0
+      y : -2.0
+      theta : -1.570
+  '1':
+    primary_id: 1
+    left_id: 5
+    right_id: 6
+    pose:
+      x : 1.0
+      y : 2.0
+      theta : 1.570
+

@@ -1,0 +1,9 @@
+<launch>
+  <arg name="semantics" default="$(find gopher_semantics)/param/desirable_destinations.yaml" doc="yaml containing all of the semantics"/>
+                                  
+  <rosparam ns="/semantics" command="load" file="$(arg semantics)" />
+
+  <node name="semantics" type="semantics" pkg="gopher_semantics">
+    <rosparam param="semantics_parameter_namespace">/semantics</rosparam>
+  </node>
+</launch>
