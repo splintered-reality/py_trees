@@ -139,6 +139,6 @@ class Node(object):
         self.publishers.maps.publish(std_msgs.String(s))
         s = console.bold + "\nWorlds\n" + console.reset
         for key in sorted(self.goal_handler.worlds):
-            value = self.goal_handler.maps[key]
+            value = self.goal_handler.worlds[key]
             s += console.cyan + "  %s" % key + console.reset + ": " + console.yellow + (value if value is not None else '-') + console.reset + "\n"
         self.publishers.worlds.publish(std_msgs.String(s))
