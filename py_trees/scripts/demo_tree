@@ -68,6 +68,7 @@ def show_usage(root):
     print("************************************************************************************")
     print("")
 
+
 def render(root):
     print("Rendering the behaviour tree")
     py_trees.display.render_dot_tree(root)

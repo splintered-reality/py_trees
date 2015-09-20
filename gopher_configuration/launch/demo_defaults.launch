@@ -1,0 +1,13 @@
+<!--
+  Load defaults and user specified overrides onto the rosparam server. Then
+  runs the `gopher_configuration` script to display them.
+ -->
+<launch>
+  <arg name="overrides" default="$(find gopher_configuration)/param/overrides.yaml" doc="a yaml configuration that can be used to override defaults." />
+ 
+  <group ns="/gopher/configuration">
+    <rosparam command="load" file="$(find gopher_configuration)/param/defaults.yaml"/>
+    <rosparam command="load" file="$(arg overrides)"/>
+  </group>
+  <node name="gopher_configuration" type="gopher_configuration" pkg="gopher_configuration"/>
+</launch>

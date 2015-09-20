@@ -43,6 +43,10 @@ from . import moveit
 
 def desirable_destinations():
     """
+    .. deprecated:: 0.1
+
+       Moving to the new semantics yaml modules and gopher_semantic_msgs.
+
     :return: list of gopher_std_msgs.Location objects
     """
     rospack = rospkg.RosPack()
@@ -84,6 +88,7 @@ class State(IntEnum):
 ##############################################################################
 # Delivery Specific Behaviours
 ##############################################################################
+
 
 class Waiting(py_trees.Behaviour):
     """
@@ -127,7 +132,6 @@ class Waiting(py_trees.Behaviour):
         self.go_requested = False  # needs to be reset, just in case it's already true
         if self._honk_publisher:
             self._honk_publisher.publish(std_msgs.Empty())
-        
 
     def update(self):
         """
@@ -142,6 +146,7 @@ class Waiting(py_trees.Behaviour):
 
     def _go_button_callback(self, unused_msg):
         self.go_requested = True if self.status == py_trees.Status.RUNNING else False
+
 
 class GopherDeliveries(object):
     """
@@ -222,7 +227,7 @@ class GopherDeliveries(object):
             # semantic locations provided were wrong.
             children = self.planner.create_tree(self.incoming_goal, undock=False if self.root else True)
             if not children:
-                #TODO is this enough?
+                # TODO is this enough?
                 rospy.logwarn("Gopher Deliveries : Received a goal, but none of the locations were valid.")
             else:
                 self.old_goal_id = self.root.id if self.root is not None else None
@@ -231,7 +236,7 @@ class GopherDeliveries(object):
                 self.blackboard.remaining_locations = self.incoming_goal
                 self.locations = self.incoming_goal
                 self.has_a_new_goal = True
-                
+
             self.incoming_goal = None
         elif self.root is not None and self.root.status == py_trees.Status.SUCCESS:
             # if we succeeded, then we should be at the previously traversed
@@ -272,6 +277,3 @@ class GopherDeliveries(object):
         else:
             self.state = State.IDLE
             self.feedback_message = "idling"
-
-
-

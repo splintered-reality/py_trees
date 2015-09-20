@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+
 class Blackboard:
     """ Data store for the gopher delivery behaviours"""
     __shared_state = {

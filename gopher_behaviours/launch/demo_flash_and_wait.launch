@@ -1,0 +1,10 @@
+<!--
+  An experiment with some simple gopher components - flash, pause, wait for button, honk
+
+  Run this on top of minimal.launch.
+ -->
+<launch>
+  <node name="flash_and_wait" type="demo_flash_and_wait" pkg="gopher_behaviours">
+    <rosparam command="load" file="$(find gopher_configuration)/param/defaults.yaml"/>
+  </node>
+</launch>

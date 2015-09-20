@@ -14,22 +14,24 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <run_depend>actionlib</run_depend>
+  <run_depend>ar_track_alvar_msgs</run_depend>
+  <run_depend>dslam_msgs</run_depend>
+  <run_depend>geometry</run_depend>
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>gopher_configuration</run_depend>
+  <run_depend>gopher_semantics</run_depend>
   <run_depend>gopher_std_msgs</run_depend>
+  <run_depend>nav_msgs</run_depend>
   <run_depend>py_trees</run_depend>
   <run_depend>python-enum34</run_depend>
+  <run_depend>python-rospkg</run_depend>
   <run_depend>rocon_console</run_depend>
   <run_depend>rocon_python_comms</run_depend>
   <run_depend>rospy</run_depend>
   <run_depend>somanet_msgs</run_depend>
-  <run_depend>gopher_semantics</run_depend>
-  <run_depend>tf</run_depend>
   <run_depend>std_msgs</run_depend>
-  <run_depend>geometry_msgs</run_depend>
-  <run_depend>nav_msgs</run_depend>
-  <run_depend>dslam_msgs</run_depend>
-  <run_depend>geometry</run_depend>
-  <run_depend>ar_track_alvar_msgs</run_depend>
-  
+  <run_depend>tf</run_depend>
+
   <test_depend>rosunit</test_depend>
 
 </package>

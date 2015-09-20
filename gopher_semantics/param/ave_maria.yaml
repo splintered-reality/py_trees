@@ -1,0 +1,270 @@
+##############################################################################
+# Worlds
+##############################################################################
+# Worlds in which semantics reside. A world we typically associate with a
+# map, but this is not always a probably 1-1 connection.
+
+worlds:
+  ave_maria_basement:
+    display_name: "Ave Maria basement"
+    description: "Ave Maria's basement - where the work gets done."
+    default: true
+  ave_maria_1st_floor:
+    display_name: "Ave Maria 1st floor"
+    description: "Ave Maria's houses 1 to 4 on floor 1."
+  ave_maria_2nd_floor:
+    display_name: "Ave Maria 2nd floor"
+    description: "Ave Maria's houses 5 to 6 on floor 2."
+
+##############################################################################
+# Connections
+##############################################################################
+#
+# Each connection represents an elevator connection between worlds. There are
+# two types of connections
+#
+#  - elevators : connnecting n worlds (maps) together via an elevator
+#  - teleports : for direct world to world (map to map) connections
+#
+######################################
+# Elevator Connections
+######################################
+#
+# - worlds : each world is a self-contained grouping of semantics, typically
+#            practically constrained by the idea of a map (a map is the world)
+# - floor  : the floor number for the elevator controller (should we use a string id?).
+# - entry  : pose to initialise with upon entering a world (map)
+# - exit   : pose to reach before exiting a world (map)
+#
+elevators:
+  elevator:
+    name: 'The one and only elevator'
+    levels:
+      - world: ave_maria_basement
+        floor: 0
+        entry: { x: 0.00, y: -2.00, theta: 0.00 }
+        exit:  { x: 0.00, y: -2.00, theta: 3.14 }
+      - world: ave_maria_1st_floor
+        floor: 1
+        entry: { x: 5.00, y: 1.00, theta: 1.57 }
+        exit:  { x: 5.00, y: 1.00, theta: -1.57 }
+      - world: ave_maria_2nd_floor
+        floor: 2
+        entry: { x: 3.00, y: -1.00, theta: 0.00 }
+        exit:  { x: 3.00, y: -1.00, theta: 3.14 }
+
+######################################
+# Intermap Connections
+######################################
+
+# teleports:
+
+##############################################################################
+# Locations
+##############################################################################
+
+semantic_locations: {
+  l0_elevator: {
+    name: 'Basement Elevator',
+    description: 'Elevator on the basement - Level0',
+    world: ave_maria_basement,
+    pose: {
+      x: -9.64,
+      y: -3.85,
+      theta: -0.98 
+    },
+    keyframe_id: 0
+  },
+  l1_elevator: {
+    name: 'Lobby Elevator',
+    description: 'Elevator on the Lobby - Level1',
+    world: ave_maria_1st_floor,
+    pose: {
+      x: 0.0,
+      y: 0.0,
+      theta: 0.0
+    },
+    keyframe_id: 0
+  },
+  l2_elevator: {
+    name: '1st Floor Elevator',
+    description: 'Elevator on the 1st Floot - Level2',
+    world: ave_maria_2nd_floor,
+    pose: {
+      x: 0.0,
+      y: 0.0,
+      theta: 0.0
+    },
+    keyframe_id: 0
+  },
+  kitchen: {
+    name: 'Kitchen',
+    description: 'Kitchen on the basement - Level0',
+    world: ave_maria_basement,
+    pose: {
+      x: -14.23,
+      y: -13.00,
+      theta: -2.00
+    },
+    keyframe_id: 0
+  },
+  laundry: {
+    name: 'Laundry',
+    description: 'Laundry on the basement - Level0',
+    world: ave_maria_basement,
+    pose: {
+      x: -20.25,
+      y: -26.20,
+      theta: -2.00
+    },
+    keyframe_id: 0
+  },
+  mens_locker_room: {
+    name: "Men's Locker Room",
+    description: "Men's Locker Room on the basement - Level0",
+    world: ave_maria_basement,
+    pose: {
+      x: 19.79,
+      y: 0.64,
+      theta: 0.0
+    },
+    keyframe_id: 0
+  },
+  womens_locker_room: {
+    name: "Women's Locker Room",
+    description: "Women's Locker Room on the basement - Level0",
+    world: ave_maria_basement,
+    pose: {
+      x: 15.31,
+      y: 0.41,
+      theta: 0.0
+    },
+    keyframe_id: 0
+  },
+  house1: {
+    name: 'House 1',
+    description: 'House 1 on the Lobby - Level1',
+    world: ave_maria_1st_floor,
+    pose: {
+      x: 14.0,
+      y: -4.34,
+      theta: -0.5
+    },
+    keyframe_id: 0
+  },
+  house2: {
+    name: 'House 2',
+    description: 'House 2 on the Lobby - Level1',
+    world: ave_maria_1st_floor,
+    pose: {
+      x: 26.44,
+      y: -10.30,
+      theta: -0.5
+    },
+    keyframe_id: 0
+  },
+  house3: {
+    name: 'House 3',
+    description: 'House 3 on the Lobby - Level1',
+    world: ave_maria_1st_floor,
+    pose: {
+      x: 0.0,
+      y: 0.0,
+      theta: 0.0
+    },
+    keyframe_id: 0
+  },
+  house4: {
+    name: 'House 4',
+    description: 'House 4 on the Lobby - Level1',
+    world: ave_maria_1st_floor,
+    pose: {
+      x: 0.0,
+      y: 0.0,
+      theta: 0.0
+    },
+    keyframe_id: 0
+  },
+  house5: {
+    name: 'House 5',
+    description: 'House 5 on the 2nd floor - Level2',
+    world: ave_maria_2nd_floor,
+    pose: {
+      x: 0.0,
+      y: 0.0,
+      theta: 0.0
+    },
+    keyframe_id: 0
+  },
+  house6: {
+    name: 'House 6',
+    description: 'House 6 on the 2nd floor - Level2',
+    world: ave_maria_2nd_floor,
+    pose: {
+      x: 0.0,
+      y: 0.0,
+      theta: 0.0
+    },
+    keyframe_id: 0
+  },
+  homebase: {
+    name: "Homebase",
+    description: 'homebase in front of the engineers & co hideout',
+    world: ave_maria_basement,
+    pose: {
+      x: 0.45,
+      y: -0.20,
+      theta: 0.0
+    },
+    keyframe_id: 0
+  },
+  homebase_l0_new: {
+    name: "New Homebase",
+    description: 'Home sweet home',
+    world: ave_maria_basement,
+    pose: {
+      x: -7.20,
+      y: -2.36,
+      theta: 2.195
+    },
+    keyframe_id: 0
+  },
+  homebase_l1: {
+    name: "Homebase L1",
+    description: 'Home sweet home',
+    world: ave_maria_1st_floor,
+    pose: {
+      x: 0.0,
+      y: 0.0,
+      theta: 0.0
+    },
+    keyframe_id: 0
+  },
+  homebase_l2: {
+    name: "New Homebase L2",
+    description: 'Home sweet home',
+    world: ave_maria_2nd_floor,
+    pose: {
+      x: 0.0,
+      y: 0.0,
+      theta: 0.0
+    },
+    keyframe_id: 0
+  }
+}
+
+##############################################################################
+# Docking Stations
+##############################################################################
+
+docking_stations:
+  '0':
+    primary_id: 0
+    left_id: 1
+    right_id: 2
+    pose: { x : 1.0, y : -2.0, theta : -1.570 }
+  '1':
+    primary_id: 3
+    left_id: 4
+    right_id: 5
+    pose: { x : 1.0, y : 2.0, theta : 1.570 }

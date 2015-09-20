@@ -14,7 +14,6 @@ Simple demo program for py trees
 ##############################################################################
 
 import gopher_behaviours
-import rocon_python_comms
 from gopher_behaviours.planner import Planner
 import gopher_std_msgs.msg as gopher_std_msgs
 import gopher_std_msgs.srv as gopher_std_srvs
@@ -40,21 +39,6 @@ def show_usage(root):
     print("")
     print("************************************************************************************")
     print("")
-
-
-class Visitor:
-    def __init__(self):
-        self.logger = py_trees.logging.get_logger("Visitor")
-
-    def initialise(self):
-        pass
-
-    def run(self, behaviour):
-        if behaviour.feedback_message:
-            self.logger.debug("  %s [visited][%s][%s]" % (behaviour.name, behaviour.status, behaviour.feedback_message))
-        else:
-            self.logger.debug("  %s [visited][%s]" % (behaviour.name, behaviour.status))
-
 
 ##############################################################################
 # Core Controller
@@ -92,7 +76,7 @@ class GopherHiveMind(object):
     ##############################################################################
 
     def tick_tock(self):
-        self.tree.visitors.append(Visitor())
+        self.tree.visitors.append(gopher_behaviours.utilities.DebugVisitor())
         self.tree.tick_tock(sleep_ms=500, number_of_iterations=py_trees.CONTINUOUS_TICK_TOCK, pre_tick_handler=self.pre_tick_handler, post_tick_handler=self.post_tick_handler)
 
     def pre_tick_handler(self, behaviour_tree):
@@ -136,7 +120,6 @@ class GopherHiveMind(object):
             self._delivery_feedback_publisher.publish(msg)
         if self.quirky_deliveries.succeeded_on_last_tick():
             self.success = True
-
 
     ##############################################################################
     # Ros Methods
@@ -184,7 +167,7 @@ class GopherHiveMind(object):
         if self.quirky_deliveries.root:
             # prune the subtree containing the current delivery goal
             self.tree.prune_subtree(self.quirky_deliveries.root.id)
-        self.cancelled = True # set cancelled flag to use in result service
+        self.cancelled = True  # set cancelled flag to use in result service
 
         print("")
         print("************************************************************************************")
@@ -194,7 +177,6 @@ class GopherHiveMind(object):
         print("************************************************************************************")
         print("")
 
-        
         msg = gopher_std_msgs.DeliveryFeedback()
         msg.header.stamp = rospy.Time.now()
         msg.state = gopher_std_msgs.DeliveryFeedback.CANCELLED
@@ -202,7 +184,7 @@ class GopherHiveMind(object):
         msg.remaining_locations = self.quirky_deliveries.blackboard.remaining_locations
         msg.status_message = "Cancellation message was received."
         self._delivery_feedback_publisher.publish(msg)
-        
+
     def _result_service_callback(self, request):
         '''
         Returns the result if success

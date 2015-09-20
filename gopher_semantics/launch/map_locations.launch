@@ -1,0 +1,11 @@
+
+<!-- to be deprecated -->
+<launch>
+
+    <arg name="semantics"   default="$(find gopher_semantics)/param/desirable_destinations.yaml" doc="yaml containing list of locations"/>
+
+    <node name="map_locations" type="map_locations" pkg="gopher_semantics">
+      <rosparam command="load" file="$(arg semantics)" />
+    </node>
+
+</launch>

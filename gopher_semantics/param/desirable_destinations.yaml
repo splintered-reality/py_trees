@@ -1,0 +1,125 @@
+##############################################################################
+# Worlds
+##############################################################################
+# Worlds in which semantics reside. A world we typically associate with a
+# map, but this is not always a probably 1-1 connection.
+
+worlds:
+  heaven:
+    display_name: 'Heaven'
+    description: 'No pink in sight.'
+    default: true
+  earth:
+    display_name: 'Earth'
+    description: 'Except for Korea, they have too much pink.'
+  hell:
+    display_name: 'Hell'
+    description: 'Its pink here.'
+
+##############################################################################
+# Locations
+##############################################################################
+
+semantic_locations:
+  ashokas_hell:
+    name: 'Ashokas Hell'
+    description: 'Pleasure palace, torture chamber?'
+    world: hell
+    pose: { x: 1.00, y: 0.00, theta: 0.000000 }
+    keyframe_id: 0
+  anywhere_not_near_the_wife:
+    name: 'Anywhere Not Near the Wife'
+    description: 'I am king of the house...when shes not around'
+    world: heaven
+    pose: { x: 0.50, y: 0.00, theta: 0.00 }
+    keyframe_id: 0
+  beer_fridge:
+    name: 'Beer Fridge'
+    description: 'No beer? Please rectify immediately.'
+    world: heaven
+    pose: { x: 1.50, y: 0.00, theta: 0.00 }
+    keyframe_id: 1
+  pizza_shop:
+    name: 'Pizza Shop'
+    description: 'Alvolo of course'
+    world: heaven
+    pose: { x: 2.50, y: 1.00, theta: 0.78 }
+    keyframe_id: 2
+  sofa_in_front_of_tv:
+    name: 'Sofa in Front of the Tv'
+    description: 'With the beer and pizza...'
+    world: heaven
+    pose: { x: 2.50, y: 1.50, theta: 1.57 }
+    keyframe_id: 3
+  penthouse:
+    name: 'Penthouse'
+    description: 'Up and down in an elevator all day, or climbing the stairs, why oh why?'
+    world: earth
+    pose: { x: 2.00, y: 0.50, theta: 0.78 }
+    keyframe_id: 0
+  homebase:
+    name: 'Homebase'
+    description: 'Where I have to hang my hat.'
+    world: earth
+    pose: { x: 2.50, y: 2.00, theta: 1.57 }
+    keyframe_id: 1
+
+##############################################################################
+# Connections
+##############################################################################
+#
+# Each connection represents an elevator connection between worlds. There are
+# two types of connections
+#
+#  - elevators : connnecting n worlds (maps) together via an elevator
+#  - teleports : for direct world to world (map to map) connections
+#
+######################################
+# Elevator Connections
+######################################
+#
+# - worlds : each world is a self-contained grouping of semantics, typically
+#            practically constrained by the idea of a map (a map is the world)
+# - floor  : the floor number for the elevator controller (should we use a string id?).
+# - entry  : pose to initialise with upon entering a world (map)
+# - exit   : pose to reach before exiting a world (map)
+#
+elevators:
+  highway_to_hell:
+    name: 'Highway to Hell'
+    levels:
+      - world: heaven
+        floor: 999
+        entry: { x: 0.00, y: -2.00, theta: 0.00 }
+        exit:  { x: 0.00, y: -2.00, theta: 3.14 }
+      - world: hell
+        floor: 666
+        entry: { x: 5.00, y: 1.00, theta: 1.57 }
+        exit:  { x: 5.00, y: 1.00, theta: -1.57 }
+      - world: earth
+        floor: 1
+        entry: { x: 3.00, y: -1.00, theta: 0.00 }
+        exit:  { x: 3.00, y: -1.00, theta: 3.14 }
+
+######################################
+# Intermap Connections
+######################################
+
+# teleports:
+
+##############################################################################
+# Docking Stations
+##############################################################################
+
+docking_stations:
+  '0':
+    primary_id: 0
+    left_id: 4
+    right_id: 5
+    pose: { x : 1.0, y : -2.0, theta : -1.570 }
+  '1':
+    primary_id: 1
+    left_id: 5
+    right_id: 6
+    pose: { x : 1.0, y : 2.0, theta : 1.570 }
+
