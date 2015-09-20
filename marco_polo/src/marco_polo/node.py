@@ -94,17 +94,17 @@ class Node(object):
         self.goal_handler.clear()
         if not self.goal_handler.load(goal):
             self.result = self.goal_handler.result
-            self.action_server.set_aborted(self.result, "invalid goal")
+            self.action_server.set_aborted(self.result, self.result.message)
             return
         self.result.value = gopher_navi_msgs.TeleportResult.SUCCESS
         self.result.message = "success"
-        while True:
+        while not rospy.is_shutdown():
             # preempted
-            if rospy.is_shutdown() or self.action_server.is_preempt_requested():
-                rospy.loginfo("MarcoPolo : goal preempted")
+            if self.action_server.is_preempt_requested():
+                rospy.loginfo("MarcoPolo : preempt requested")
                 self.result.value = gopher_navi_msgs.TeleportResult.ERROR_PREEMPTED
-                self.result.message("preempted by another teleport goal request.")
-                self.action_server.set_preempted(self.result, "goal was preempted")
+                self.result.message = "preempted by another teleport goal request."
+                self.action_server.set_preempted(self.result, self.result.message)
                 break
             if self.goal_handler.execute():
                 rospy.loginfo("MarcoPolo : teleport success")

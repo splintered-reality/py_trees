@@ -101,9 +101,9 @@ def parse_elevator_arguments(command_line_args):
     parser.add_argument('world', help='world to shift to.')
     parser.add_argument('location', help='world to shift to.')
     args = parser.parse_args(command_line_args)
-    if args.location not in ['entry', 'exit']:
+    if args.location not in [gopher_navi_msgs.ElevatorLocation.ENTRY, gopher_navi_msgs.ElevatorLocation.EXIT]:
         # default to exit.
-        args.location = 'exit'
+        args.location = gopher_navi_msgs.ElevatorLocation.EXIT
     return args
 
 
@@ -169,9 +169,11 @@ class WhipMe(object):
     def elevator(self):
         args = parse_elevator_arguments(self.sub_command_line_args)
         goal = gopher_navi_msgs.TeleportGoal()
-        goal.elevator = args.elevator
-        goal.world = args.world
-        goal.location = args.location
+        goal.elevator_location = gopher_navi_msgs.ElevatorLocation()
+        goal.elevator_location.elevator = args.elevator
+        goal.elevator_location.world = args.world
+        goal.elevator_location.location = args.location
+        return goal
 
 
 def pretty_print(title, d):
@@ -222,10 +224,11 @@ if __name__ == '__main__':
     result = None
     while not rospy.is_shutdown():
         result = action_client.get_result()
-        if result:
-            if result.value:
-                rospy.loginfo("Teleport : finished successfully")
+        if result is not None:
+            if result.value == gopher_navi_msgs.TeleportResult.SUCCESS:
+                rospy.loginfo("Teleport : zap!")
+                break
             else:
                 rospy.logerr("Teleport : failed [%s]" % result.message)
-            break
+                break
         rate.sleep()

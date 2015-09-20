@@ -65,38 +65,58 @@ class GoalHandler(object):
         self.command = GoalHandler.Commands()
         self.gopher = gopher_configuration.Configuration()
         self.semantics = gopher_semantics.Semantics(self.gopher.namespaces.semantics)
-        self.result = gopher_navi_msgs.TeleportGoal()
+        self.result = gopher_navi_msgs.TeleportResult()
         self.service_proxies = service_proxies
         self.publishers = publishers
         self.execution_state = ExecutionState.IDLE
+        self.timer = None
 
         # note : maps and worlds might be different (might have installed more maps than worlds)
         self.maps = utilities.get_installed_maps()
         self.worlds = utilities.get_installed_worlds(self.maps)
 
     def clear(self):
-        self.commands = GoalHandler.Commands()
-        self.result = gopher_navi_msgs.TeleportGoal()
+        self.command = GoalHandler.Commands()
+        self.result = gopher_navi_msgs.TeleportResult()
+        self.result.value = gopher_navi_msgs.TeleportResult.SUCCESS
+        self.result.message = "success"
 
     def execute(self):
         """
-        Return true if done, false otherwise.
+        Note: this function doesn't return success or otherwise. Simply returns whether the
+        execution is done and dusted or not.
+
+        :return: Whether we're done with it or not.
+        :rtype: bool
         """
         if self.execution_state == ExecutionState.IDLE:
+            rospy.loginfo("DJS : we're idle, should indicate we got a new goal")
+            rospy.loginfo("DJS : execute::map_filename: %s" % self.command.map_filename)
             # we've just loaded a goal (we trust the node to make sure that this is so!
-            if self.commands.map_filename is not None:
+            if self.command.map_filename is not None:
                 # we need to switch maps.
-                self.publishers.switch_maps.publish(std_msgs.String(self.commands.map_filename))
-                return True
+                rospy.loginfo("DJS : publishing a switch map [%s]" % self.command.map_filename)
+                self.publishers.switch_map.publish(std_msgs.String(self.command.map_filename))
+                if self.command.pose is None:
+                    return True  # we're done
             if self.command.pose is not None:
-                self.publishers.init_pose.publish(self.commands.pose)
+                self.publishers.init_pose.publish(self.command.pose)
                 self.execution_state = ExecutionState.PAUSED
-                self.timer = rospy.Timer(rospy.Duration(5), self.unpause)
+                # need to give it enough time for the init pose to succeed otherwise
+                # we'll clear locally, then sense/save on the costmap and then init pose
+                # somewhere else...the original location's saved marks on the costmap will
+                # still be there.
+                self.timer = rospy.Timer(rospy.Duration(1), self._unpause, oneshot=True)
                 return False
+            self.result.value = gopher_navi_msgs.TeleportResult.ERROR_INVALID_ARGUMENTS
+            self.result.message = "execution has both map and pose command 'None' (shouldn't get here)"
+            rospy.logerr("Marco Polo : %s" % self.result.message)
+            return True
         elif self.execution_state == ExecutionState.UNPAUSED:
+            rospy.loginfo("DJS : we're unpaused, get on with clearing the costmap")
             # Clear the costmaps, but just carry on anyway if it fails as it is not a critical error.
             try:
-                self.service_proxies.clear_costmap()
+                self.service_proxies.clear_costmaps()
             except rospy.ServiceException:
                 rospy.logwarn("Marco Polo : failed to clear costmaps, wrong service name name? [%s]" % self.gopher.services.clear_costmap)
             except rospy.ROSInterruptException:
@@ -106,7 +126,7 @@ class GoalHandler(object):
         else:
             return False
 
-    def _unpause(self):
+    def _unpause(self, unused_timer_event):
         self.execution_state = ExecutionState.UNPAUSED
 
     def load(self, goal):
@@ -124,15 +144,16 @@ class GoalHandler(object):
         ######################################################################
         # Switch maps
         ######################################################################
-        if goal.world and goal.world in self.maps.keys():
-            rospy.loginfo("Teleport : switching worlds (maps) to '%s'" % goal.world)
-            self.command.map_filename = self.maps[goal.world]
-            self.command.pose = None
-            return True
-        else:
-            self.result.value = gopher_navi_msgs.TeleportResult.ERROR_MAP_FILE_DOES_NOT_EXIST
-            self.result.message = "requested map file not installed [%s]" % goal.world
-            return False
+        if goal.world:
+            if goal.world in self.maps.keys():
+                rospy.loginfo("Marco Polo : switching worlds (maps) to '%s'" % goal.world)
+                self.command.map_filename = self.maps[goal.world]
+                self.command.pose = None
+                return True
+            else:
+                self.result.value = gopher_navi_msgs.TeleportResult.ERROR_MAP_FILE_DOES_NOT_EXIST
+                self.result.message = "requested map file not installed [%s]" % goal.world
+                return False
 
         ######################################################################
         # Teleport to a semantic location
@@ -151,45 +172,51 @@ class GoalHandler(object):
                 self.result.value = gopher_navi_msgs.TeleportResult.ERROR_MAP_FILE_DOES_NOT_EXIST
                 self.result.message = "requested semantic world map file does not exist [%s]" % location.world
                 return False
-            self.commands.map_filename = self.worlds[location.world]
-            self.commands.pose = utilities.msg_pose2d_to_pose_with_covariance_stamped(location.pose, self.gopher.frames.map)
+            self.command.map_filename = self.worlds[location.world]
+            self.command.pose = utilities.msg_pose2d_to_pose_with_covariance_stamped(location.pose, self.gopher.frames.map)
+            rospy.loginfo("Marco Polo : teleporting to semantic location [%s][%s][(%s,%s)]" % (goal.location, location.world, self.command.pose.pose.pose.position.x, self.command.pose.pose.pose.position.y))
             return True
 
         ######################################################################
         # Teleport to an elevator location
         ######################################################################
         if goal.elevator_location.elevator:
+            rospy.loginfo("DJS : loading an elevator goal %s" % goal.elevator_location)
             elevator_name = goal.elevator_location.elevator
             if elevator_name not in self.semantics.elevators:
                 self.result.value = gopher_navi_msgs.TeleportResult.ERROR_SEMANTIC_LOCATION_DOES_NOT_EXIST
                 self.result.message = "requested elevator does not exist [%s]" % elevator_name
                 return False
             elevator_level = self.semantics.elevators.find_level_on_elevator(elevator_name, goal.elevator_location.world)
+            rospy.loginfo("DJS :   elevator_level %s" % elevator_level)
             if elevator_level is None:
                 self.result.value = gopher_navi_msgs.TeleportResult.ERROR_SEMANTIC_LOCATION_DOES_NOT_EXIST
                 self.result.message = "requested elevator does not connect with that world [%s][%s]" % (elevator_name, goal.elevator_location.world)
                 return False
-            if elevator_level.world in self.maps:
-                self.commands.map_filename = self.maps[elevator_level.world]
+            rospy.loginfo("DJS :   maps %s" % self.maps)
+            if elevator_level.world in self.maps.keys():
+                self.command.map_filename = self.maps[elevator_level.world]
             else:
                 self.result.value = gopher_navi_msgs.TeleportResult.ERROR_MAP_FILE_DOES_NOT_EXIST
                 self.result.message = "requested semantic world map file does not exist [%s]" % elevator_level.world
                 return False
-            pose_2d = elevator_level.entry if goal.elevator_location.world.location == gopher_navi_msgs.ElevatorLocation.ENTRY else elevator_level.exit
-            self.commands.pose = utilities.msg_pose2d_to_pose_with_covariance_stamped(pose_2d, self.gopher.frames.map)
+            pose_2d = elevator_level.entry if goal.elevator_location.location == gopher_navi_msgs.ElevatorLocation.ENTRY else elevator_level.exit
+            self.command.pose = utilities.msg_pose2d_to_pose_with_covariance_stamped(pose_2d, self.gopher.frames.map)
+            rospy.loginfo("Marco Polo : teleporting to elevator location [%s][%s][(%s,%s)]" % (goal.elevator_location.elevator, self.command.map_filename, self.command.pose.pose.pose.position.x, self.command.pose.pose.pose.position.y))
+            return True
+
         ######################################################################
         # Teleport to a world pose pair
         ######################################################################
         # This one is ambiguous so it is last
         if goal.world_pose.world:
             if goal.world_pose.world in self.maps:
-                self.commands.map_filename = self.maps[goal.world_pose.world]
+                self.command.map_filename = self.maps[goal.world_pose.world]
             else:
                 self.result.value = gopher_navi_msgs.TeleportResult.ERROR_MAP_FILE_DOES_NOT_EXIST
                 self.result.message = "requested semantic world map file does not exist [%s]" % goal.world_pose.world
                 return False
         else:
-            self.commands.map_filename = None
-        self.commands.pose = goal.world_pose.pose
+            self.command.map_filename = None
+        self.command.pose = goal.world_pose.pose
         return True
-
