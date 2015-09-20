@@ -58,7 +58,7 @@ class Worlds(dict):
             try:
                 world = gopher_semantic_msgs.World()
                 world.unique_name = unique_name
-                world.name = fields['name']
+                world.display_name = fields['display_name']
                 world.description = fields['description']
                 self.__setitem__(unique_name, world)
             except KeyError:

@@ -6,14 +6,14 @@
 
 worlds:
   heaven:
-    name: 'Heaven'
+    display_name: 'Heaven'
     description: 'No pink in sight.'
     default: true
   earth:
-    name: 'Earth'
+    display_name: 'Earth'
     description: 'Except for Korea, they have too much pink.'
   hell:
-    name: 'Hell'
+    display_name: 'Hell'
     description: 'Its pink here.'
 
 ##############################################################################
