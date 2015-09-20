@@ -96,7 +96,7 @@ def parse_arguments(command_line_args):
 
 class DoElevatorRun(object):
     def __init__(self, origin, elevator, destination):
-        self.root = gopher_behaviours.elevators.HumanAssistedElevators("Elevator Run", origin, elevator, destination)
+        self.root = gopher_behaviours.elevators.HumanAssistedElevators("ElevatorRun", origin, elevator, destination)
         self.logger = py_trees.logging.get_logger("Elevators")
         self.tree = py_trees.ROSBehaviourTree(self.root)
         rospy.on_shutdown(self.shutdown)
