@@ -237,7 +237,6 @@ def pretty_print(title, d):
     for key in sorted(d):
         value = d[key]
         print(console.cyan + "  %s" % key + console.reset + ": " + console.yellow + (value if value is not None else '-') + console.reset)
-        print("\n")
 
 ##############################################################################
 # Main
@@ -248,7 +247,6 @@ if __name__ == '__main__':
     command_line_args = rospy.myargv(argv=sys.argv)[1:]
     gopher = gopher_configuration.Configuration()
     whip_me = WhipMe(gopher.actions.teleport, gopher.frames.map, command_line_args)
-    action_client = actionlib.SimpleActionClient(whip_me.namespace, gopher_navi_msgs.TeleportAction)
 
     # Introspection
     if whip_me.introspection:
@@ -270,6 +268,7 @@ if __name__ == '__main__':
         sys.exit(0)
 
     # find the server
+    action_client = actionlib.SimpleActionClient(whip_me.namespace, gopher_navi_msgs.TeleportAction)
     start_time = rospy.Time.now()
     finish_time = start_time + rospy.Duration(15.0)
     while True:
