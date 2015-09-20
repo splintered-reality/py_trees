@@ -84,6 +84,14 @@ class Node(object):
         self.goal_handler = goals.GoalHandler(self.publishers, self.service_proxies)
         self._publish_introspection_data()
 
+        # initial execution on startup - might be better to have a 'default' small world for testing that
+        # is the default thing we load - then we can use gopher_teleport and 'always' load something.
+        goal = gopher_navi_msgs.TeleportGoal()
+        goal.world = rospy.get_param("~world", None)
+        if goal.world is not None:
+            if self.goal_handler.load(goal):
+                self.goal_handler.execute()
+
     def execute(self, goal):
         # goal.target_pose = don't care
         frequency = 1
