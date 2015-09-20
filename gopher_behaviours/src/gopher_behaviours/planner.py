@@ -6,6 +6,7 @@
 
 import rospy
 from gopher_semantics.map_locations import SemanticLocations
+import gopher_semantics
 import delivery
 import moveit
 
@@ -13,13 +14,18 @@ import moveit
 # Implementation
 ##############################################################################
 
+def find_topological_path(locations, semantics):
+    last_location = None
+    next_location = None
+
+
 class Planner():
 
     def __init__(self, auto_go):
         self.current_location = None
         self.auto_go = auto_go
         self.semantic_locations = SemanticLocations()
-        
+
     def create_tree(self, locations, undock=True):
         """
         Find the semantic locations corresponding to the incoming string location identifier and
@@ -31,7 +37,7 @@ class Planner():
 
            Clean up the key error handling
         """
-        # if we are constructing a "complete" 
+        # if we are constructing a "complete"
         children = []
         for ind, location in enumerate(locations):
             try:
@@ -44,7 +50,7 @@ class Planner():
                                          location=semantic_location.unique_name,
                                          dont_wait_for_hoomans_flag=self.auto_go)
                     )
-            except KeyError, ke:  # a location passed was unknown : ignore it
+            except KeyError, unused_ke:  # a location passed was unknown : ignore it
                 rospy.logwarn("{0} is not in semantic_locations".format(location))
                 continue
 
@@ -59,6 +65,6 @@ class Planner():
         # each task, but only if the last location is homebase
         if locations[-1] == 'homebase':
             children.append(moveit.Finishing("Finishing"))
-        
+
         return children
 
