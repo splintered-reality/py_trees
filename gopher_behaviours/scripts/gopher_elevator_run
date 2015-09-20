@@ -1,15 +1,14 @@
 #!/usr/bin/env python
 #
-# License: BSD
-#   https://raw.github.com/yujinrobot/gopher_crazy_hospital/license/LICENSE
+# License: Yujin
 #
 ##############################################################################
 # Documentation
 ##############################################################################
 """
-USE THE ROS LAUNCHER INSTEAD!!!
 
-gopher_behaviours/demo_switch_map.launch
+Program that enables an elevator run. Useful for testing without the whole
+delivery pipeline.
 
 """
 ##############################################################################
