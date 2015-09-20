@@ -68,6 +68,7 @@ class GopherHiveMind(object):
         self._delivery_goal_service = rospy.Service('delivery/goal', gopher_std_srvs.DeliveryGoal, self._goal_service_callback)
         self._delivery_feedback_publisher = rospy.Publisher('delivery/feedback', gopher_std_msgs.DeliveryFeedback, queue_size=1, latch=True)
         self._delivery_goal_cancel_sub = rospy.Subscriber('delivery/cancel', std_msgs.Empty, self._goal_cancel_callback)
+        self._stop_sub = rospy.Subscriber('/gopher/buttons/stop', std_msgs.Empty, self._stop_callback)
         self._delivery_result_service = rospy.Service('delivery/result', gopher_std_srvs.DeliveryResult, self._result_service_callback)
 
     ##############################################################################
@@ -140,6 +141,7 @@ class GopherHiveMind(object):
            * check the first preempted goal location isn't the same as the current location and handle it
         '''
         rospy.loginfo("Delivery : received a goal request: {0}".format(request))
+        self.cancelled = False
         # first, check if we're already doing something in the battery monitor
         # part of the tree. If we are, we do not accept any new goals.
         if self.battery_subtree.status != Status.FAILURE:
@@ -156,6 +158,9 @@ class GopherHiveMind(object):
                 message = "refused goal request [%s]" % message
                 rospy.logwarn("Delivery : [%s]" % message)
         return gopher_std_srvs.DeliveryGoalResponse(result, message)
+
+    def _stop_callback(self, stop):
+        self._goal_cancel_callback(stop)
 
     def _goal_cancel_callback(self, cancel):
         # if the delivery root has been initialised
