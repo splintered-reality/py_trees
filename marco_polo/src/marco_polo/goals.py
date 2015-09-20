@@ -110,11 +110,12 @@ class GoalHandler(object):
             # we've just loaded a goal (we trust the node to make sure that this is so!
             if self.command.map_filename is not None:
                 shifted_worlds = self.switch_map(self.command.map_filename)
-                if self.command.pose is None and shifted_worlds:
-                    # send us back to the origin
-                    self.command.pose = utilities.msg_origin_pose(self.gopher.frames.map)
-                else:
-                    return True  # we're done
+                if self.command.pose is None:
+                    if shifted_worlds:
+                        # send us back to the origin
+                        self.command.pose = utilities.msg_origin_pose(self.gopher.frames.map)
+                    else:
+                        return True  # we're done
             if self.command.pose is not None:
                 self.publishers.init_pose.publish(self.command.pose)
                 if not shifted_worlds:
