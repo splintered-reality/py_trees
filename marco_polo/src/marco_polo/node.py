@@ -87,10 +87,13 @@ class Node(object):
         self._publish_introspection_data()
         self.publishers.world.publish(std_msgs.String())  # initialise the world publisher
 
-        # initial execution on startup - might be better to have a 'default' small world for testing that
-        # is the default thing we load - then we can use gopher_teleport and 'always' load something.
+        # look for an initial world from rosparam server
         goal = gopher_navi_msgs.TeleportGoal()
         goal.world = rospy.get_param("~world", None)
+        # if nothing there, fallback to the one in the semantics
+        if goal.world is None:
+            goal.world = self.semantics.worlds.default
+        # load it
         if goal.world is not None:
             if self.goal_handler.load(goal):
                 # only shifting worlds, it's a one shot call
