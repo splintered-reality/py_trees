@@ -36,6 +36,7 @@ catkin_install_python(
     PROGRAMS
         scripts/map_locations
         scripts/semantics
+        scripts/gopher_semantics
     DESTINATION
         ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

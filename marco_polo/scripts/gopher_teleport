@@ -38,7 +38,7 @@ def show_usage():
     s += console.cyan + "            gopher_teleport" + console.yellow + " <command>" + console.blue + console.bold + " [<args>]" + console.reset + "\n"
     s += "\n"
     s += "       where command is one of:\n"
-    s += console.cyan + "            pose         " + console.yellow + "teleport to another pose no the current world (map), rviz style." + console.reset + "\n"
+    s += console.cyan + "            pose         " + console.yellow + "teleport to another pose on the current world (map), rviz style" + console.reset + "\n"
     s += console.cyan + "            world_pose   " + console.yellow + "teleport to a pose on another world" + console.reset + "\n"
     s += console.cyan + "            world        " + console.yellow + "teleport to another world, but don't change pose" + console.reset + "\n"
     s += console.cyan + "            location     " + console.yellow + "teleport to a semantically defined location" + console.reset + "\n"
