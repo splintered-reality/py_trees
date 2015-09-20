@@ -45,12 +45,15 @@ class Worlds(dict):
     Parameters:
 
     - ~semantics_parameter_namespace : where it can find semantics information on the ros parameter server.
+
+    .. warning:: *default* is a reserved keyword, do not use it for a world's unique name.
     '''
     def __init__(self, semantics_parameter_namespace=None):
         super(Worlds, self).__init__()
         if semantics_parameter_namespace is None:
             semantics_parameter_namespace = rospy.get_param('~semantics_parameter_namespace', rospy.resolve_name('~'))
         parameters = rospy.get_param(semantics_parameter_namespace + "/worlds", {})
+        self.default = None
         for unique_name, fields in parameters.iteritems():
             try:
                 world = gopher_semantic_msgs.World()
@@ -60,6 +63,11 @@ class Worlds(dict):
                 self.__setitem__(unique_name, world)
             except KeyError:
                 rospy.logwarn("Worlds : one of the expected fields for elevator '%s' was missing!" % unique_name)
+            if 'default' in fields.keys():
+                if fields['default']:
+                    if self.default is not None:
+                        rospy.logwarn("Semantics: you have multiple worlds flagged as the default, overriding [%s->%s]" % (self.default, unique_name))
+                    self.default = unique_name
 
     def __str__(self):
         s = console.bold + "\nWorlds:\n" + console.reset

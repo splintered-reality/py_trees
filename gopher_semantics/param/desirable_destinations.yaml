@@ -8,6 +8,7 @@ worlds:
   heaven:
     name: 'Heaven'
     description: 'No pink in sight.'
+    default: true
   earth:
     name: 'Earth'
     description: 'Except for Korea, they have too much pink.'
