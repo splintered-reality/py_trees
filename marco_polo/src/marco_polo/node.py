@@ -31,7 +31,6 @@ import rocon_python_comms
 import rospy
 import std_msgs.msg as std_msgs
 import std_srvs.srv as std_srvs
-import transitions
 
 from . import actions
 from . import goals
@@ -89,7 +88,7 @@ class Node(object):
 
         # look for an initial world from rosparam server
         goal = gopher_navi_msgs.TeleportGoal()
-        goal.world = rospy.get_param("~world", None)
+        goal.world = rospy.get_param("~initial_world", None)
         # if nothing there, fallback to the one in the semantics
         if goal.world is None:
             goal.world = self.semantics.worlds.default
