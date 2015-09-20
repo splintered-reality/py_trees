@@ -96,8 +96,8 @@ class Node(object):
         # load it
         if goal.world is not None:
             if self.goal_handler.load(goal):
-                # only shifting worlds, it's a one shot call
-                self.goal_handler.execute()
+                # only shifting worlds without an init pose - it's a one shot call
+                self.goal_handler.switch_map(self.goal_handler.command.map_filename)
 
     def execute(self, goal):
         # goal.target_pose = don't care

@@ -110,7 +110,10 @@ class GoalHandler(object):
             # we've just loaded a goal (we trust the node to make sure that this is so!
             if self.command.map_filename is not None:
                 shifted_worlds = self.switch_map(self.command.map_filename)
-                if self.command.pose is None:
+                if self.command.pose is None and shifted_worlds:
+                    # send us back to the origin
+                    self.command.pose = utilities.msg_origin_pose(self.gopher.frames.map)
+                else:
                     return True  # we're done
             if self.command.pose is not None:
                 self.publishers.init_pose.publish(self.command.pose)
@@ -122,7 +125,7 @@ class GoalHandler(object):
                     # somewhere else...the original location's saved marks on the costmap will
                     # still be there.
                     self.execution_state = ExecutionState.PAUSED
-                    self.timer = rospy.Timer(rospy.Duration(1), self._unpause, oneshot=True)
+                    self.timer = rospy.Timer(rospy.Duration(3), self._unpause, oneshot=True)
                     return False
             self.result.value = gopher_navi_msgs.TeleportResult.ERROR_INVALID_ARGUMENTS
             self.result.message = "execution has both map and pose command 'None' (shouldn't get here)"
@@ -161,7 +164,7 @@ class GoalHandler(object):
         ######################################################################
         if goal.world:
             if goal.world in self.maps.keys():
-                rospy.loginfo("Marco Polo : switching worlds (maps) to '%s'" % goal.world)
+                rospy.loginfo("MarcoPolo : switching worlds (maps) to '%s'" % goal.world)
                 self.command.map_filename = self.maps[goal.world]
                 self.command.pose = None
                 return True

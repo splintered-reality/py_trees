@@ -97,6 +97,22 @@ def get_installed_worlds(maps=None):
     return worlds
 
 
+def msg_origin_pose(frame_id):
+    msg = geometry_msgs.PoseWithCovarianceStamped()
+    msg.header.stamp = rospy.Time.now()
+    msg.header.frame_id = frame_id
+    msg_pose = geometry_msgs.Pose()
+    msg_pose.position.x = 0.0
+    msg_pose.position.y = 0.0
+    msg_pose.position.z = 0.0
+    msg_pose.orientation.x = 0
+    msg_pose.orientation.y = 0
+    msg_pose.orientation.z = 0
+    msg_pose.orientation.w = 1
+    msg.pose.pose = msg_pose
+    return msg
+
+
 def msg_pose2d_to_pose_with_covariance_stamped(pose_2d, frame_id):
     msg = geometry_msgs.PoseWithCovarianceStamped()
     msg.header.stamp = rospy.Time.now()
