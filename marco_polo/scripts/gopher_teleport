@@ -269,10 +269,20 @@ if __name__ == '__main__':
             print("\n")
         sys.exit(0)
 
+    # find the server
+    start_time = rospy.Time.now()
+    finish_time = start_time + rospy.Duration(15.0)
+    while True:
+        if rospy.is_shutdown():
+            sys.exit(0)
+        if rospy.Time.now() > finish_time:
+            sys.exit(1)
+        if not action_client.wait_for_server(rospy.Duration(1.0)):
+            rospy.logerr("Teleport : could not connect to the teleport action server.")
+        else:
+            break
+
     # send the goal
-    if not action_client.wait_for_server(rospy.Duration(1.5)):
-        rospy.logerr("Teleport : could not connect to the teleport action server.")
-        sys.exit(1)
     # print("Goal:\n%s" % whip_me.goal)
     action_client.send_goal(whip_me.goal)
 
