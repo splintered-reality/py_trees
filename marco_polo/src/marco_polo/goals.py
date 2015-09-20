@@ -90,12 +90,9 @@ class GoalHandler(object):
         :rtype: bool
         """
         if self.execution_state == ExecutionState.IDLE:
-            rospy.loginfo("DJS : we're idle, should indicate we got a new goal")
-            rospy.loginfo("DJS : execute::map_filename: %s" % self.command.map_filename)
             # we've just loaded a goal (we trust the node to make sure that this is so!
             if self.command.map_filename is not None:
                 # we need to switch maps.
-                rospy.loginfo("DJS : publishing a switch map [%s]" % self.command.map_filename)
                 self.publishers.switch_map.publish(std_msgs.String(self.command.map_filename))
                 if self.command.pose is None:
                     return True  # we're done
@@ -113,7 +110,6 @@ class GoalHandler(object):
             rospy.logerr("Marco Polo : %s" % self.result.message)
             return True
         elif self.execution_state == ExecutionState.UNPAUSED:
-            rospy.loginfo("DJS : we're unpaused, get on with clearing the costmap")
             # Clear the costmaps, but just carry on anyway if it fails as it is not a critical error.
             try:
                 self.service_proxies.clear_costmaps()
@@ -181,19 +177,16 @@ class GoalHandler(object):
         # Teleport to an elevator location
         ######################################################################
         if goal.elevator_location.elevator:
-            rospy.loginfo("DJS : loading an elevator goal %s" % goal.elevator_location)
             elevator_name = goal.elevator_location.elevator
             if elevator_name not in self.semantics.elevators:
                 self.result.value = gopher_navi_msgs.TeleportResult.ERROR_SEMANTIC_LOCATION_DOES_NOT_EXIST
                 self.result.message = "requested elevator does not exist [%s]" % elevator_name
                 return False
             elevator_level = self.semantics.elevators.find_level_on_elevator(elevator_name, goal.elevator_location.world)
-            rospy.loginfo("DJS :   elevator_level %s" % elevator_level)
             if elevator_level is None:
                 self.result.value = gopher_navi_msgs.TeleportResult.ERROR_SEMANTIC_LOCATION_DOES_NOT_EXIST
                 self.result.message = "requested elevator does not connect with that world [%s][%s]" % (elevator_name, goal.elevator_location.world)
                 return False
-            rospy.loginfo("DJS :   maps %s" % self.maps)
             if elevator_level.world in self.maps.keys():
                 self.command.map_filename = self.maps[elevator_level.world]
             else:
@@ -202,7 +195,7 @@ class GoalHandler(object):
                 return False
             pose_2d = elevator_level.entry if goal.elevator_location.location == gopher_navi_msgs.ElevatorLocation.ENTRY else elevator_level.exit
             self.command.pose = utilities.msg_pose2d_to_pose_with_covariance_stamped(pose_2d, self.gopher.frames.map)
-            rospy.loginfo("Marco Polo : teleporting to elevator location [%s][%s][(%s,%s)]" % (goal.elevator_location.elevator, self.command.map_filename, self.command.pose.pose.pose.position.x, self.command.pose.pose.pose.position.y))
+            rospy.loginfo("Marco Polo : teleporting to elevator location [%s][%s][(%s,%s)]" % (goal.elevator_location.elevator, goal.elevator_location.world, self.command.pose.pose.pose.position.x, self.command.pose.pose.pose.position.y))
             return True
 
         ######################################################################

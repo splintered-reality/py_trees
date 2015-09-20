@@ -14,10 +14,12 @@ Node that manages map switching and teleports.
 
 import actionlib
 import argparse
+import geometry_msgs.msg as geometry_msgs
 import gopher_configuration
 import gopher_navi_msgs.msg as gopher_navi_msgs
 import gopher_semantics
 import marco_polo
+import math
 import rocon_console.console as console
 import rospy
 import sys
@@ -107,8 +109,51 @@ def parse_elevator_arguments(command_line_args):
     return args
 
 
+def show_pose_usage():
+    s = "\n"
+    s += console.cyan + "        gopher_teleport pose" + console.yellow + " <x> <y> <theta>" + console.reset + "\n"
+    s += "\n"
+    return s
+
+
+def parse_pose_arguments(command_line_args):
+    parser = argparse.ArgumentParser(description=console.green + 'Teleport to another position in the current world (map).' + console.reset,
+                                     usage=show_pose_usage(),
+                                     epilog="And his noodly appendage reached forth to tickle the blessed...",
+                                     formatter_class=argparse.RawTextHelpFormatter
+                                     )
+    parser.add_argument('x', type=float, help='x-coordinate of the robot relative to the map frame.')
+    parser.add_argument('y', type=float, help='y-coordinate of the robot relative to the map frame')
+    parser.add_argument('theta', type=float, help='heading of the robot relative to the map frame (degrees)')
+    args = parser.parse_args(command_line_args)
+    args.theta = args.theta * math.pi / 180.0
+    return args
+
+
+def show_world_pose_usage():
+    s = "\n"
+    s += console.cyan + "        gopher_teleport world_pose" + console.yellow + " <world> <x> <y> <theta>" + console.reset + "\n"
+    s += "\n"
+    return s
+
+
+def parse_world_pose_arguments(command_line_args):
+    parser = argparse.ArgumentParser(description=console.green + 'Teleport to another position, possibly on another world.' + console.reset,
+                                     usage=show_world_pose_usage(),
+                                     epilog="And his noodly appendage reached forth to tickle the blessed...",
+                                     formatter_class=argparse.RawTextHelpFormatter
+                                     )
+    parser.add_argument('world', help='world (map) to teleport to.')
+    parser.add_argument('x', type=float, help='x-coordinate of the robot relative to the map frame.')
+    parser.add_argument('y', type=float, help='y-coordinate of the robot relative to the map frame')
+    parser.add_argument('theta', type=float, help='heading of the robot relative to the map frame (degrees)')
+    args = parser.parse_args(command_line_args)
+    args.theta = args.theta * math.pi / 180.0
+    return args
+
+
 class WhipMe(object):
-    def __init__(self, default_namespace, command_line_args):
+    def __init__(self, default_namespace, map_frame, command_line_args):
         self.command_line_args = command_line_args
         # switch to the rosbag style heirarchical format
         parser = argparse.ArgumentParser(description=console.green + 'Teleport around the world with marco polo!' + console.reset,
@@ -121,11 +166,13 @@ class WhipMe(object):
         parser.add_argument('-e', '--elevators', action='store_true', help='list available elevators')
         parser.add_argument('-l', '--locations', action='store_true', help='list available locations')
         parser.add_argument('-n', '--namespace', action='store', default=default_namespace, help='namespace for the teleport action.')
-        parser.add_argument('command', nargs='*', default=None, help='subcommand to run')
+        parser.add_argument('command', nargs=argparse.REMAINDER, default=None, help='subcommand to run')
+
         args = parser.parse_args(self.command_line_args)
 
         self.args = args
         self.namespace = args.namespace
+        self.map_frame_id = map_frame
         self.introspection = True if args.maps or args.worlds or args.elevators or args.locations else False
         self.get_maps = args.maps
         self.get_worlds = args.worlds
@@ -145,14 +192,23 @@ class WhipMe(object):
             self.goal = getattr(self, args.command[0])()
 
     def pose(self):
-        print("Not yet implemented")
-        return None
+        args = parse_pose_arguments(self.sub_command_line_args)
+        goal = gopher_navi_msgs.TeleportGoal()
+        goal.world_pose = gopher_navi_msgs.WorldPoseLocation()
+        goal.world_pose.world = ""
+        pose_2d = geometry_msgs.Pose2D(args.x, args.y, args.theta)
+        goal.world_pose.pose = marco_polo.utilities.msg_pose2d_to_pose_with_covariance_stamped(pose_2d, self.map_frame_id)
+        return goal
         # args = parse_pose_arguments(self.sub_command_line_args)
 
     def world_pose(self):
-        # args = parse_world_pose_arguments(self.sub_command_line_args)
-        print("Not yet implemented")
-        return None
+        args = parse_world_pose_arguments(self.sub_command_line_args)
+        goal = gopher_navi_msgs.TeleportGoal()
+        goal.world_pose = gopher_navi_msgs.WorldPoseLocation()
+        goal.world_pose.world = args.world
+        pose_2d = geometry_msgs.Pose2D(args.x, args.y, args.theta)
+        goal.world_pose.pose = marco_polo.utilities.msg_pose2d_to_pose_with_covariance_stamped(pose_2d, self.map_frame_id)
+        return goal
 
     def world(self):
         args = parse_world_arguments(self.sub_command_line_args)
@@ -191,7 +247,7 @@ if __name__ == '__main__':
     rospy.init_node("gopher_teleport", log_level=rospy.INFO)
     command_line_args = rospy.myargv(argv=sys.argv)[1:]
     gopher = gopher_configuration.Configuration()
-    whip_me = WhipMe(gopher.actions.teleport, command_line_args)
+    whip_me = WhipMe(gopher.actions.teleport, gopher.frames.map, command_line_args)
     action_client = actionlib.SimpleActionClient(whip_me.namespace, gopher_navi_msgs.TeleportAction)
 
     # Introspection
@@ -217,7 +273,7 @@ if __name__ == '__main__':
     if not action_client.wait_for_server(rospy.Duration(1.5)):
         rospy.logerr("Teleport : could not connect to the teleport action server.")
         sys.exit(1)
-    print("DJS Goal: %s" % whip_me.goal)
+    # print("Goal:\n%s" % whip_me.goal)
     action_client.send_goal(whip_me.goal)
 
     rate = rospy.Rate(10)
