@@ -4,6 +4,7 @@
 	<comment></comment>
 	<projects>
 		<project>gopher_configuration</project>
+		<project>gopher_semantics</project>
 		<project>gopher_std_msgs</project>
 		<project>py_trees</project>
 	</projects>

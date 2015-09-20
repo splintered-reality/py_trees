@@ -12,17 +12,16 @@ Runtime global script that prints the current runtime semantics
 # Imports
 ##############################################################################
 
+import argparse
+import gopher_configuration
+import rocon_console.console as console
+import rospy
 import sys
 
 # Move the current directory to the end so it won't clash with python modules
 # of the same name.
 sys.path.append(sys.path.pop(0))
-
-import argparse
-import gopher_configuration
 import gopher_semantics
-import rocon_console.console as console
-import rospy
 
 ##############################################################################
 # Command Handler
@@ -41,7 +40,6 @@ class WhipMe(object):
 
         self.gopher = gopher_configuration.Configuration()
 
-        # switch to the rosbag style heirarchical format
         parser = argparse.ArgumentParser(description=console.green + 'Teleport around the world with marco polo!' + console.reset,
                                          usage=show_usage(),
                                          epilog="And his noodly appendage reached forth to tickle the blessed...",

@@ -20,6 +20,7 @@ services:
 
 actions:
   teleport: /navi/teleport
+  move_base: /navi/move_base
 
 namespaces:
   semantics: /rocon/semantics

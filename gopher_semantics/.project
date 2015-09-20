@@ -3,6 +3,7 @@
 	<name>gopher_semantics</name>
 	<comment></comment>
 	<projects>
+		<project>gopher_configuration</project>
 		<project>gopher_semantic_msgs</project>
 	</projects>
 	<buildSpec>

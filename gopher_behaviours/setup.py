@@ -7,7 +7,7 @@ d = generate_distutils_setup(
     packages=['gopher_behaviours'],
     package_dir={'': 'src'},
     #package_data = {'rocon_uri': ['rules/rules.yaml']},
-    scripts=['scripts/dslam_maps'],
+    scripts=['scripts/gopher_elevator_run'],
 )
 
 setup(**d)
