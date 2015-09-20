@@ -50,6 +50,14 @@ def get_gopher_home():
     return os.path.join(rospkg.get_ros_home(), 'gopher')
 
 
+def get_world_name(filename):
+    """
+    Extract the world name from a .dslam filename.
+    """
+    world_name, unused_extension = os.path.splitext(os.path.basename(filename))
+    return world_name
+
+
 def is_map_file(filename):
     unused_f, ext = os.path.splitext(filename)
     return ext == '.dslam'

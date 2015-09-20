@@ -69,6 +69,7 @@ class GoalHandler(object):
         self.service_proxies = service_proxies
         self.publishers = publishers
         self.execution_state = ExecutionState.IDLE
+        self.world = None           # keeps track of the the current world
         self.timer = None
 
         # note : maps and worlds might be different (might have installed more maps than worlds)
@@ -81,6 +82,19 @@ class GoalHandler(object):
         self.result.value = gopher_navi_msgs.TeleportResult.SUCCESS
         self.result.message = "success"
 
+    def switch_map(self, filename):
+        """
+        Switches maps, but only if we're not already on that map.
+        Also publishes if a switch occured.
+        """
+        world_name = utilities.get_world_name(filename)
+        if world_name == self.world:
+            rospy.logwarn("Marco Polo : ignoring request to switch worlds since we are already on that world.")
+            return
+        self.publishers.switch_map.publish(std_msgs.String(filename))
+        self.world = world_name
+        self.publishers.world.publish(std_msgs.String(self.world))
+
     def execute(self):
         """
         Note: this function doesn't return success or otherwise. Simply returns whether the
@@ -92,8 +106,7 @@ class GoalHandler(object):
         if self.execution_state == ExecutionState.IDLE:
             # we've just loaded a goal (we trust the node to make sure that this is so!
             if self.command.map_filename is not None:
-                # we need to switch maps.
-                self.publishers.switch_map.publish(std_msgs.String(self.command.map_filename))
+                self.switch_map(self.command.map_filename)
                 if self.command.pose is None:
                     return True  # we're done
             if self.command.pose is not None:

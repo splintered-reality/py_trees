@@ -53,6 +53,7 @@ class Node(object):
     def __init__(self):
         self.gopher = gopher_configuration.Configuration()
         self.semantics = gopher_semantics.Semantics(self.gopher.namespaces.semantics)
+        self.current_world = None
         self.result = gopher_navi_msgs.TeleportResult()
         self.action_server = actionlib.SimpleActionServer('teleport',
                                                           gopher_navi_msgs.TeleportAction,
@@ -70,6 +71,7 @@ class Node(object):
         queue_size_five = 5
         self.publishers = rocon_python_comms.utils.Publishers(
             [
+                ('~world', std_msgs.String, latched, queue_size_five),
                 ('~introspection/maps', std_msgs.String, latched, queue_size_five),
                 ('~introspection/worlds', std_msgs.String, latched, queue_size_five),
                 ('init_pose', self.gopher.topics.initial_pose, geometry_msgs.PoseWithCovarianceStamped, latched, queue_size_five),
@@ -83,6 +85,7 @@ class Node(object):
         )
         self.goal_handler = goals.GoalHandler(self.publishers, self.service_proxies)
         self._publish_introspection_data()
+        self.publishers.world.publish(std_msgs.String())  # initialise the world publisher
 
         # initial execution on startup - might be better to have a 'default' small world for testing that
         # is the default thing we load - then we can use gopher_teleport and 'always' load something.
@@ -90,6 +93,7 @@ class Node(object):
         goal.world = rospy.get_param("~world", None)
         if goal.world is not None:
             if self.goal_handler.load(goal):
+                # only shifting worlds, it's a one shot call
                 self.goal_handler.execute()
 
     def execute(self, goal):
