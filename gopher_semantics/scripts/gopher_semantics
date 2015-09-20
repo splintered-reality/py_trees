@@ -16,9 +16,10 @@ import sys
 
 # Move the current directory to the end so it won't clash with python modules
 # of the same name.
-sys.path.append(sys.path.pop(0)) 
+sys.path.append(sys.path.pop(0))
 
 import argparse
+import gopher_configuration
 import gopher_semantics
 import rocon_console.console as console
 import rospy
@@ -37,6 +38,9 @@ def show_usage():
 
 class WhipMe(object):
     def __init__(self, command_line_args):
+
+        self.gopher = gopher_configuration.Configuration()
+
         # switch to the rosbag style heirarchical format
         parser = argparse.ArgumentParser(description=console.green + 'Teleport around the world with marco polo!' + console.reset,
                                          usage=show_usage(),
@@ -47,15 +51,12 @@ class WhipMe(object):
         parser.add_argument('-e', '--elevators', action='store_true', help='list available elevators')
         parser.add_argument('-l', '--locations', action='store_true', help='list available locations')
         parser.add_argument('-d', '--docking_stations', action='store_true', help='list available docking stations')
-        parser.add_argument('-n', '--namespace', action='store', default=None, help='namespace for the semantics parameters.')
+        parser.add_argument('-n', '--namespace', action='store', default=self.gopher.namespaces.semantics, help='namespace for the semantics parameters.')
 
         args = parser.parse_args(command_line_args)
 
         self.args = args
-        if args.namespace is None:
-            self.semantics = gopher_semantics.Semantics()
-        else:
-            self.semantics = gopher_semantics.Semantics(semantics_parameter_namespace=args.namespace)
+        self.semantics = gopher_semantics.Semantics(semantics_parameter_namespace=args.namespace)
 
         if args.worlds:
             print("%s" % self.semantics.worlds)

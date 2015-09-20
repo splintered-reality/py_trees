@@ -97,12 +97,16 @@ class Semantics(object):
             # TODO check if there are any locations assigned to worlds, not in worlds
 
             # publish
-            semantics_string = std_msgs.String()
             for name, module in sorted(self.semantic_modules.iteritems()):
                 self.publishers.__dict__[name].publish(module.to_msg())
-                semantics_string.data += "%s" % module
             self.publishers.parameters.publish(std_msgs.String("%s" % self.parameters))
-            self.publishers.semantics.publish(semantics_string)
+            self.publishers.semantics.publish("%s" % self)
+
+    def __str__(self):
+        s = ""
+        for unused_name, module in sorted(self.semantic_modules.iteritems()):
+            s += "%s" % module
+        return s
 
     def spin(self):
         rospy.spin()
