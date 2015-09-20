@@ -252,9 +252,10 @@ class Park(py_trees.Behaviour):
         rospy.logdebug("Park : waiting for transform from map to base_link")
         # get the current position of the robot as a transform from map to base link
         try:
+            self.tf_listener.waitForTransform("map", "base_link", rospy.Time(), rospy.Duration(1))
             self.start_transform = self.tf_listener.lookupTransform("map", "base_link", rospy.Time(0))
         except tf.Exception:
-            rospy.logdebug("Park : failed to get transform from map to base_link")
+            rospy.logerr("Park : failed to get transform from map to base_link")
             return
 
         # get the relative rotation and translation between the homebase and the current position
@@ -318,28 +319,33 @@ class Park(py_trees.Behaviour):
 
     def update(self):
         if self.start_transform is None:
+            self.feedback_message = "could not get current transform from map to base_link"
             return py_trees.Status.FAILURE
         if self.not_unparked:
             self.feedback_message = "transform to parking is undefined - probably no unpark action was performed"
             return py_trees.Status.FAILURE
         # if the motion isn't complete, we're running
         if not self.motion.complete():
+            self.feedback_message = "waiting for motion to complete"
             return py_trees.Status.RUNNING
         else:
             # Otherwise, the motion is finished. If either of the motions fail,
             # the behaviour fails.
             if not self.motion.success():
                 self.blackboard.unpark_success = False
+                self.feedback_message = "motion failed"
                 return py_trees.Status.FAILURE
             else:
                 # The motion successfully completed. Check if there is another
                 # motion to do, and execute it if there is, otherwise return
                 # success
                 if len(self.motions_to_execute) == 0:
+                    self.feedback_message = "successfully completed all motions"
                     return py_trees.Status.SUCCESS
                 else:
                     motion = self.motions_to_execute.pop(0)
                     self.motion.execute(motion[0], motion[1])
+                    self.feedback_message = "waiting for motion to complete"
                     return py_trees.Status.RUNNING
 
     def abort(self, new_status):
@@ -401,7 +407,7 @@ class Unpark(py_trees.Behaviour):
         try:
             self.end_transform = self.tf_listener.lookupTransform("odom", "base_link", rospy.Time(0))
         except tf.Exception:
-            rospy.logdebug("Unpark : failed to lookup transform from odom to base link on button press")
+            rospy.logerr("Unpark : failed to lookup transform from odom to base link on button press")
 
     def dslam_callback(self, msg):
         self.last_dslam = msg
@@ -412,9 +418,11 @@ class Unpark(py_trees.Behaviour):
                 # waited longer than the timeout, so assume dslam is uninitialised and continue
                 if rospy.Time.now() > self.timeout:
                     rospy.logdebug("Unpark : didn't get a message from dslam - assuming uninitialised")
+                    self.feedback_message = "no message from dslam - assuming uninitialised"
                     self.dslam_initialised = False
                 else:
                     rospy.logdebug("Unpark : waiting for dslam state update")
+                    self.feedback_message = "waiting for dslam state update"
                     return py_trees.Status.RUNNING
             else:
                 rospy.logdebug("Unpark : got dslam message")
@@ -443,7 +451,8 @@ class Unpark(py_trees.Behaviour):
                     return py_trees.Status.RUNNING
 
             if self.lookup_attempts >= 4:
-                rospy.logdebug("Unpark : failed to get transform for current location")
+                rospy.logerr("Unpark : failed to get transform for current location")
+                self.feedback_message = "failed to get transform for current location"
                 return py_trees.Status.FAILURE
         
         # need to be unplugged before we can move or be moved
