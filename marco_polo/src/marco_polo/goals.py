@@ -86,14 +86,16 @@ class GoalHandler(object):
         """
         Switches maps, but only if we're not already on that map.
         Also publishes if a switch occured.
+        :return: true if we shifted maps, false otherwise (logic used to decide on clearing costmaps or not)
         """
         world_name = utilities.get_world_name(filename)
         if world_name == self.world:
             rospy.logwarn("Marco Polo : ignoring request to switch worlds since we are already on that world.")
-            return
+            return False
         self.publishers.switch_map.publish(std_msgs.String(filename))
         self.world = world_name
         self.publishers.world.publish(std_msgs.String(self.world))
+        return True
 
     def execute(self):
         """
@@ -104,20 +106,24 @@ class GoalHandler(object):
         :rtype: bool
         """
         if self.execution_state == ExecutionState.IDLE:
+            shifted_worlds = False
             # we've just loaded a goal (we trust the node to make sure that this is so!
             if self.command.map_filename is not None:
-                self.switch_map(self.command.map_filename)
+                shifted_worlds = self.switch_map(self.command.map_filename)
                 if self.command.pose is None:
                     return True  # we're done
             if self.command.pose is not None:
                 self.publishers.init_pose.publish(self.command.pose)
-                self.execution_state = ExecutionState.PAUSED
-                # need to give it enough time for the init pose to succeed otherwise
-                # we'll clear locally, then sense/save on the costmap and then init pose
-                # somewhere else...the original location's saved marks on the costmap will
-                # still be there.
-                self.timer = rospy.Timer(rospy.Duration(1), self._unpause, oneshot=True)
-                return False
+                if not shifted_worlds:
+                    return True
+                else:
+                    # need to give it enough time for the init pose to succeed otherwise
+                    # we'll clear locally, then sense/save on the costmap and then init pose
+                    # somewhere else...the original location's saved marks on the costmap will
+                    # still be there.
+                    self.execution_state = ExecutionState.PAUSED
+                    self.timer = rospy.Timer(rospy.Duration(1), self._unpause, oneshot=True)
+                    return False
             self.result.value = gopher_navi_msgs.TeleportResult.ERROR_INVALID_ARGUMENTS
             self.result.message = "execution has both map and pose command 'None' (shouldn't get here)"
             rospy.logerr("Marco Polo : %s" % self.result.message)
