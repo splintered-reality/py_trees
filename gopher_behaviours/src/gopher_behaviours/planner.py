@@ -6,7 +6,6 @@
 
 import rospy
 from gopher_semantics.map_locations import SemanticLocations
-import gopher_semantics
 import delivery
 import moveit
 
@@ -14,9 +13,39 @@ import moveit
 # Implementation
 ##############################################################################
 
+
 def find_topological_path(locations, semantics):
-    last_location = None
-    next_location = None
+    """
+    This is a very dumb pathfinder. It assumes all locations on
+    a single world are connectable (i.e. doesn't find routes) and
+    chooses the first possible connection between worlds (elevators)
+    that it finds.
+
+    No graph theory here yet!
+
+    If no path can be found, it just returns the empty list.
+
+    .. todo:: a more informative return, with a message saying which connection couldn't be made.
+
+    :param [str] locations: list of semantic location unique names
+    :param gopher_semantics.Semantics semantics: a semantics database
+    :return: a topological path of locations and elevators
+    :rtype: list of gopher_semantic_msgs.Location and gopher_semantic_msgs.Elevator objects
+    """
+    last = None
+    topological_path = []
+    for location in locations:
+        current = semantics.locations[location]
+        if last is not None and current.world != last.world:
+            connecting_elevators = semantics.elevators.find_connecting_elevators(last.world, current.world)
+            if not connecting_elevators:
+                return []
+            # just choose the first.
+            connecting_elevator = connecting_elevators[0]
+            topological_path.append(connecting_elevator)
+        topological_path.append(current)
+        last = current
+    return topological_path
 
 
 class Planner():

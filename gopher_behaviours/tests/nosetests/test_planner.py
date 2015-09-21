@@ -14,40 +14,34 @@ from __future__ import absolute_import, print_function
 
 from nose.tools import assert_raises
 import gopher_semantics
+import gopher_semantic_msgs.msg as gopher_semantic_msgs
+import os
 import rocon_console.console as console
 
 ##############################################################################
 # Globals
 ##############################################################################
 
-class SharedData:
-    __semantics = None
+semantics = gopher_semantics.load_desirable_destinations()
 
-    def __init__(self):
-        if SharedData.__semantics is None:
-            self.semantics = gopher_semantics.Semantics()
-    
 ##############################################################################
 # Tests
 ##############################################################################
 
 
-def test_semantics():
+def test_topological_paths():
     print(console.bold + "\n****************************************************************************************" + console.reset)
-    print(console.bold + "* Selector" + console.reset)
+    print(console.bold + "* Topological Paths" + console.reset)
     print(console.bold + "****************************************************************************************" + console.reset)
-    assert(True)
-
- 
-
-
-# def test_foo():
-#     print('--------- Nosetest Logs ---------')
-#     print_logging()
-#     py_trees.foo1()
-#     py_trees.foo2()
-#     print('--------- Behaviour Logs ---------')
-#     d = py_trees.behaviours.Count(name="D")
-#     d.initialise()
-#     print("Done")
-#     assert(True)
+    locations = ["sofa_in_front_of_tv", "pizza_shop", "ashokas_hell"]
+    topological_path = gopher_behaviours.planner.find_topological_path(locations, semantics)
+    print(console.green + "\nTopological Path:" + console.reset)
+    for node in topological_path:
+        if isinstance(node, gopher_semantic_msgs.Elevator):
+            print(console.cyan + "  Elevator" + console.reset + ": " + console.yellow + node.unique_name + console.reset)
+        elif isinstance(node, gopher_semantic_msgs.Location):
+            print(console.cyan + "  Location" + console.reset + ": " + console.yellow + node.unique_name + console.reset)
+    assert(isinstance(topological_path[0], gopher_semantic_msgs.Location))
+    assert(isinstance(topological_path[1], gopher_semantic_msgs.Location))
+    assert(isinstance(topological_path[2], gopher_semantic_msgs.Elevator))
+    assert(isinstance(topological_path[3], gopher_semantic_msgs.Location))
