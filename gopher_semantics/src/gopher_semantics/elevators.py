@@ -59,12 +59,18 @@ class Elevators(dict):
 
     - ~semantics_parameter_namespace : where it can find semantics information on the ros parameter server.
     '''
-    def __init__(self, semantics_parameter_namespace=None):
+    def __init__(self, semantics_parameter_namespace=None, from_yaml_object=None):
+        """
+        Load from the rosparam server or from yaml object.
+        """
         super(Elevators, self).__init__()
-        if semantics_parameter_namespace is None:
-            semantics_parameter_namespace = rospy.get_param('~semantics_parameter_namespace', rospy.resolve_name('~'))
-        parameters = rospy.get_param(semantics_parameter_namespace + "/elevators", {})
-        for unique_name, fields in parameters.iteritems():
+        data = from_yaml_object
+        if data is None:
+            # look to the rosparam server
+            if semantics_parameter_namespace is None:
+                semantics_parameter_namespace = rospy.get_param('~semantics_parameter_namespace', rospy.resolve_name('~'))
+            data = rospy.get_param(semantics_parameter_namespace + "/elevators", {})
+        for unique_name, fields in data.iteritems():
             try:
                 elevator = gopher_semantic_msgs.Elevator()
                 elevator.unique_name = unique_name

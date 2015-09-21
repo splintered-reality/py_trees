@@ -54,12 +54,18 @@ class DockingStations(dict):
 
     - ~semantics_parameter_namespace : where it can find semantics information on the ros parameter server.
     '''
-    def __init__(self, semantics_parameter_namespace=None):
+    def __init__(self, semantics_parameter_namespace=None, from_yaml_object=None):
+        """
+        Load from the rosparam server or from yaml object.
+        """
         super(DockingStations, self).__init__()
-        if semantics_parameter_namespace is None:
-            semantics_parameter_namespace = rospy.get_param('~semantics_parameter_namespace', rospy.resolve_name('~'))
-        parameters = rospy.get_param(semantics_parameter_namespace + "/docking_stations", {})
-        for docking_station_name, docking_station_parameters in parameters.iteritems():
+        data = from_yaml_object
+        if data is None:
+            # look to the rosparam server
+            if semantics_parameter_namespace is None:
+                semantics_parameter_namespace = rospy.get_param('~semantics_parameter_namespace', rospy.resolve_name('~'))
+            data = rospy.get_param(semantics_parameter_namespace + "/docking_stations", {})
+        for docking_station_name, docking_station_parameters in data.iteritems():
             try:
                 docking_station = gopher_semantic_msgs.DockingStation()
                 docking_station.primary_id = docking_station_parameters['primary_id']
