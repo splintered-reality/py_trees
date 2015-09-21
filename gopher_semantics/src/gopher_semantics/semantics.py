@@ -21,7 +21,9 @@ individual modules as needed depending on their presence in the yaml).
 ##############################################################################
 
 import gopher_semantic_msgs.msg as gopher_semantic_msgs
+import os
 import rocon_python_comms.utils
+import rospkg
 import rospy
 import std_msgs.msg as std_msgs
 import yaml
@@ -127,3 +129,18 @@ class Semantics(object):
 
     def spin(self):
         rospy.spin()
+
+
+##############################################################################
+# Desirables
+##############################################################################
+
+def load_desirable_destinations():
+    """
+    Convenience function for loading our desirables from yaml directly. This
+    is useful for alot of testing.
+    """
+    rospack = rospkg.RosPack()
+    gopher_semantics_path = rospack.get_path('gopher_semantics')
+    filename = os.path.join(gopher_semantics_path, 'param', 'desirable_destinations.yaml')
+    return Semantics(from_yaml=filename)
