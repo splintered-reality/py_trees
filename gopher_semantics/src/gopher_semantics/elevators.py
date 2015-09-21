@@ -123,6 +123,20 @@ class Elevators(dict):
                 return level
         return None
 
+    def find_connecting_elevators(self, origin, destination):
+        """
+        :param str origin: origin world unique name.
+        :param str destination: origin world unique name.
+        :return: list of elevators that connect origin to destination
+        :rtype: gopher_semantic_msgs.Elevator
+        """
+        connecting_elevators = []
+        for elevator in dict.values(self):
+            connecting_worlds = [level.world for level in elevator.levels]
+            if origin in connecting_worlds and destination in connecting_worlds:
+                connecting_elevators.append(elevator)
+        return connecting_elevators
+
     def to_msg(self):
         msg = gopher_semantic_msgs.Elevators()
         msg.elevators = self.values()
@@ -130,3 +144,21 @@ class Elevators(dict):
 
     def spin(self):
         rospy.spin()
+
+
+def find_connecting_levels(elevator, origin, destination):
+    """
+    :param gopher_semantic_msgs.Elevator elevator: elevator to investigate
+    :param str origin: unique world name of the origin
+    :param str destination:  unique world name of the destination
+    :return: the two levels that connect origin to world as a pair (origin_level, world_level)
+    :rtype: (gopher_semantic_msgs.ElevatorLevel, gopher_semantic_msgs.ElevatorLevel) or None types when levels aren't found.
+    """
+    origin_level = None
+    destination_level = None
+    for level in elevator.levels:
+        if origin == level.world:
+            origin_level = level
+        elif destination == level.world:
+            destination_level = level
+    return (origin_level, destination_level)
