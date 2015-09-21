@@ -238,7 +238,11 @@ class Configuration(object):
            gopher = gopher_configuration.Configuration()
 
         """
-        Configuration.__shared_state = rospy.get_param(namespace)
+        try:
+            Configuration.__shared_state = rospy.get_param(namespace)
+        except KeyError:
+            rospy.logerr("Gopher Configuration : could not find configuration on the rosparam server")
+            rospy.logerr("Gopher Configuration : is it looking in the right place? [%s]" % namespace)
 
     def __init__(self, error_logger=_error_logger):
         if not Configuration.__shared_state:
