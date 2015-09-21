@@ -16,7 +16,7 @@ import sys
 
 # Move the current directory to the end so it won't clash with python modules
 # of the same name.
-sys.path.append(sys.path.pop(0)) 
+sys.path.append(sys.path.pop(0))
 
 import argparse
 import gopher_configuration
