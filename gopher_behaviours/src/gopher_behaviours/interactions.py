@@ -80,7 +80,8 @@ class WaitForButton(py_trees.Behaviour):
             return py_trees.Status.RUNNING
 
     def abort(self, new_status):
-        self.subscriber.unregister()
+        if self.subscriber is not None:
+            self.subscriber.unregister()
 
 
 class FlashLEDs(py_trees.Sequence):

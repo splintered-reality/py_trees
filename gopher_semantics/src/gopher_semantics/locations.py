@@ -37,15 +37,23 @@ class Locations(dict):
 
     - ~semantics_parameter_namespace : where it can find semantics information on the ros parameter server.
     '''
-    def __init__(self, semantics_parameter_namespace=None):
+    def __init__(self, semantics_parameter_namespace=None, from_yaml_object=None):
+        """
+        Load from the rosparam server or from yaml object.
+        """
         super(Locations, self).__init__()
-        if semantics_parameter_namespace is None:
-            semantics_parameter_namespace = rospy.get_param('~semantics_parameter_namespace', rospy.resolve_name('~'))
-        parameters = rospy.get_param(semantics_parameter_namespace + "/locations", {})
-        # legacy support
-        if not parameters:
-            parameters = rospy.get_param(semantics_parameter_namespace + "/semantic_locations", {})
-        for unique_name, details in parameters.iteritems():
+
+        data = from_yaml_object
+        if data is None:
+            # look to the rosparam server
+            if semantics_parameter_namespace is None:
+                semantics_parameter_namespace = rospy.get_param('~semantics_parameter_namespace', rospy.resolve_name('~'))
+            data = rospy.get_param(semantics_parameter_namespace + "/locations", {})
+            # legacy support
+            if not data:
+                data = rospy.get_param(semantics_parameter_namespace + "/semantic_locations", {})
+        # TODO check that data is not None
+        for unique_name, details in data.iteritems():
             location = gopher_semantic_msgs.Location()
             location.unique_name = unique_name
             try:

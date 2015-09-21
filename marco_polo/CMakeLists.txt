@@ -36,6 +36,7 @@ catkin_install_python(
     PROGRAMS
         scripts/marco_polo
         scripts/gopher_teleport
+        scripts/gopher_maps
     DESTINATION
         ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

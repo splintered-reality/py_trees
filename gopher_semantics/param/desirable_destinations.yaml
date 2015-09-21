@@ -90,8 +90,8 @@ elevators:
     levels:
       - world: heaven
         floor: 999
-        entry: { x: 0.00, y: -2.00, theta: 0.00 }
-        exit:  { x: 0.00, y: -2.00, theta: 3.14 }
+        entry: { x: 1.00, y: 0.00, theta: 0.00 }
+        exit:  { x: 1.00, y: 0.00, theta: 3.14 }
       - world: hell
         floor: 666
         entry: { x: 5.00, y: 1.00, theta: 1.57 }

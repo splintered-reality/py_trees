@@ -1,0 +1,94 @@
+#!/usr/bin/env python
+#
+# License: Yujin
+#
+##############################################################################
+# Documentation
+##############################################################################
+"""
+List and download maps.
+"""
+##############################################################################
+# Imports
+##############################################################################
+
+import argparse
+import bs4
+import marco_polo
+import os
+import requests
+import re
+import rocon_console.console as console
+import rospy
+import sys
+import urllib
+
+##############################################################################
+# Command Handler
+##############################################################################
+
+
+def show_usage():
+    s = "\n"
+    s += console.cyan + "        gopher_maps" + console.yellow + " [<args>]" + console.reset + "\n"
+    s += "\n"
+    return s
+
+
+def parse_arguments(command_line_args):
+    parser = argparse.ArgumentParser(description=console.green + 'Teleport around the world with marco polo!' + console.reset,
+                                     usage=show_usage(),
+                                     epilog="And his noodly appendage reached forth to tickle the blessed...",
+                                     formatter_class=argparse.RawTextHelpFormatter
+                                     )
+    parser.add_argument('-l', '--list', action='store_true', help='list installed and available maps.')
+    parser.add_argument('-d', '--download', action='store', default=None, help='download a map from the fileserver.')
+    args = parser.parse_args(command_line_args)
+    return (parser, args)
+
+
+def get_all_maps(maps_url):
+    soup = bs4.BeautifulSoup(requests.get(maps_url).text)
+    maps = {}
+    for a in soup.find_all('a', text=re.compile("dslam")):
+        name, unused_ext = os.path.splitext(a['href'])
+        maps[name] = maps_url + "/" + a['href']
+    return maps
+
+##############################################################################
+# Main
+##############################################################################
+
+if __name__ == '__main__':
+
+    maps_url = 'http://files.yujinrobot.com/gopher/maps'
+
+    command_line_args = rospy.myargv(argv=sys.argv)[1:]
+    (parser, args) = parse_arguments(command_line_args)
+
+    if args.list:
+        installed = marco_polo.utilities.get_installed_maps()
+        available = get_all_maps(maps_url)
+        print(console.bold + "\nInstalled Maps" + console.reset)
+        for name in installed.keys():
+            print("  --" + console.cyan + name + console.reset)
+        print(console.bold + "\nAvailable Maps" + console.reset)
+        for name in available.keys():
+            if name not in installed.keys():
+                print("  --" + console.cyan + name + console.reset)
+        print("")
+    elif args.download is not None:
+        installed = marco_polo.utilities.get_installed_maps()
+        available = get_all_maps(maps_url)
+        if args.download in installed.keys():
+            print(console.red + "\nERROR: map '%s' already installed, aborting.\n" % args.download + console.reset)
+            sys.exit(1)
+        if args.download not in available.keys():
+            print(console.red + "\nERROR: map '%s' not available, aborting.\n" % args.download + console.reset)
+            sys.exit(1)
+        local_filename = os.path.join(marco_polo.utilities.get_gopher_home(), "maps", args.download + ".dslam")
+        print(console.green + "\nDownloading " + console.reset + local_filename + "...")
+        # see http://stackoverflow.com/questions/22676/how-do-i-download-a-file-over-http-using-python
+        # for a download with no. of bytes and progress status
+        urllib.urlretrieve(maps_url + "/" + args.download + ".dslam", local_filename)
+        print(console.yellow + "Done.\n" + console.reset)

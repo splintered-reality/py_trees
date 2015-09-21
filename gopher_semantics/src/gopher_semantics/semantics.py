@@ -21,9 +21,12 @@ individual modules as needed depending on their presence in the yaml).
 ##############################################################################
 
 import gopher_semantic_msgs.msg as gopher_semantic_msgs
+import os
 import rocon_python_comms.utils
+import rospkg
 import rospy
 import std_msgs.msg as std_msgs
+import yaml
 
 from .docking_stations import DockingStations
 from .elevators import Elevators
@@ -52,33 +55,48 @@ class Semantics(object):
     - ~locations [gopher_semantic_msgs.Locations]
     - ~worlds [gopher_semantic_msgs.World]
     '''
-    def __init__(self, semantics_parameter_namespace=None, create_publishers=False):
+    def __init__(self, semantics_parameter_namespace=None, create_publishers=False, from_yaml=None):
         """
         :param str semantics_parameter_naemspace: this is where you can find the parameters on the rosparam serer
         :param bool create_publishers: only the node is interested in doing this.
-        """
-        # right now, overkill for one bloody variable...
-        self.parameters = Parameters(semantics_parameter_namespace)
-        semantics = rospy.get_param(self.parameters.semantics_parameter_namespace, {})
+        :param str from_yaml: load from yaml instead of the rosparam server.
 
-        # assemble variables
-        publisher_details = []
-        latched = True
-        queue_size_five = 5
+        .. todo::
+
+           Might be worth splitting this into a yaml parent vs ros child class with all the extra bells & whistles
+        """
+        if from_yaml is not None:
+            self.parameters = None
+            semantics = yaml.load(open(from_yaml))
+        else:
+            self.parameters = Parameters(semantics_parameter_namespace)
+            semantics = rospy.get_param(self.parameters.semantics_parameter_namespace, {})
+
+        #######################################
+        # Modules
+        #######################################
         self.semantic_modules = {}
+        if 'locations' in semantics:
+            self.semantic_modules['locations'] = Locations(from_yaml_object=semantics["locations"]) if from_yaml else Locations(self.parameters.semantics_parameter_namespace)
         # special case - supporting legacy
-        if 'semantic_locations' in semantics or 'locations' in semantics:
-            self.semantic_modules['locations'] = Locations(self.parameters.semantics_parameter_namespace)
+        if 'semantic_locations' in semantics:
+            self.semantic_modules['locations'] = Locations(from_yaml_object=semantics["semantic_locations"]) if from_yaml else Locations(self.parameters.semantics_parameter_namespace)
         if 'worlds' in semantics:
-            self.semantic_modules['worlds'] = Worlds(self.parameters.semantics_parameter_namespace)
+            self.semantic_modules['worlds'] = Worlds(from_yaml_object=semantics["worlds"]) if from_yaml else Worlds(self.parameters.semantics_parameter_namespace)
         if 'docking_stations' in semantics:
-            self.semantic_modules['docking_stations'] = DockingStations(self.parameters.semantics_parameter_namespace)
+            self.semantic_modules['docking_stations'] = DockingStations(from_yaml_object=semantics["docking_stations"]) if from_yaml else DockingStations(self.parameters.semantics_parameter_namespace)
         if 'elevators' in semantics:
-            self.semantic_modules['elevators'] = Elevators(self.parameters.semantics_parameter_namespace)
+            self.semantic_modules['elevators'] = Elevators(from_yaml_object=semantics["elevators"]) if from_yaml else Elevators(self.parameters.semantics_parameter_namespace)
         for module_name, module in self.semantic_modules.iteritems():
             setattr(self, module_name, module)
 
+        #######################################
+        # Publishers
+        #######################################
         if create_publishers:
+            publisher_details = []
+            latched = True
+            queue_size_five = 5
             # special case - supporting legacy
             if 'semantic_locations' in semantics or 'locations' in semantics:
                 publisher_details.append(('~locations', gopher_semantic_msgs.Locations, latched, queue_size_five))
@@ -99,7 +117,8 @@ class Semantics(object):
             # publish
             for name, module in sorted(self.semantic_modules.iteritems()):
                 self.publishers.__dict__[name].publish(module.to_msg())
-            self.publishers.parameters.publish(std_msgs.String("%s" % self.parameters))
+            if self.parameters is not None:
+                self.publishers.parameters.publish(std_msgs.String("%s" % self.parameters))
             self.publishers.semantics.publish("%s" % self)
 
     def __str__(self):
@@ -110,3 +129,18 @@ class Semantics(object):
 
     def spin(self):
         rospy.spin()
+
+
+##############################################################################
+# Desirables
+##############################################################################
+
+def load_desirable_destinations():
+    """
+    Convenience function for loading our desirables from yaml directly. This
+    is useful for alot of testing.
+    """
+    rospack = rospkg.RosPack()
+    gopher_semantics_path = rospack.get_path('gopher_semantics')
+    filename = os.path.join(gopher_semantics_path, 'param', 'desirable_destinations.yaml')
+    return Semantics(from_yaml=filename)

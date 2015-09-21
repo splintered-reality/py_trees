@@ -48,13 +48,19 @@ class Worlds(dict):
 
     .. warning:: *default* is a reserved keyword, do not use it for a world's unique name.
     '''
-    def __init__(self, semantics_parameter_namespace=None):
+    def __init__(self, semantics_parameter_namespace=None, from_yaml_object=None):
+        """
+        Load from the rosparam server or from yaml object.
+        """
         super(Worlds, self).__init__()
-        if semantics_parameter_namespace is None:
-            semantics_parameter_namespace = rospy.get_param('~semantics_parameter_namespace', rospy.resolve_name('~'))
-        parameters = rospy.get_param(semantics_parameter_namespace + "/worlds", {})
+        data = from_yaml_object
+        if data is None:
+            # look to the rosparam server
+            if semantics_parameter_namespace is None:
+                semantics_parameter_namespace = rospy.get_param('~semantics_parameter_namespace', rospy.resolve_name('~'))
+            data = rospy.get_param(semantics_parameter_namespace + "/worlds", {})
         self.default = None
-        for unique_name, fields in parameters.iteritems():
+        for unique_name, fields in data.iteritems():
             try:
                 world = gopher_semantic_msgs.World()
                 world.unique_name = unique_name
