@@ -15,6 +15,7 @@ Simple demo program for py trees
 
 import gopher_behaviours
 from gopher_behaviours.planner import Planner
+import gopher_configuration
 import gopher_std_msgs.msg as gopher_std_msgs
 import gopher_std_msgs.srv as gopher_std_srvs
 import std_msgs.msg as std_msgs
@@ -51,6 +52,7 @@ class GopherHiveMind(object):
         autoload_test_delivery = rospy.get_param("~autoload_test_delivery", False)
         preloaded_semantic_locations = gopher_behaviours.delivery.desirable_destinations() if autoload_test_delivery else None  # list of gopher_std_msgs.Location objects
 
+        self.gopher = gopher_configuration.Configuration()
         self.planner = Planner(auto_go=rospy.get_param("~dont_wait_for_hoomans", False))
         self.current_world_subscriber = rospy.Subscriber(self.gopher.topics.world, std_msgs.String, self.current_world_callback)
         self.current_world = None

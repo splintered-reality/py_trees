@@ -87,6 +87,7 @@ class Planner():
         children = []
         last_location = None
         for current_node, next_node in rocon_python_utils.iterables.lookahead(topological_path):
+            previous_world = current_world if last_location is None else last_location.world
             if isinstance(current_node, gopher_semantic_msgs.Location):
                 children.append(moveit.MoveToGoal(name=current_node.name, pose=current_node.pose))
                 if next_node is not None:
@@ -99,7 +100,7 @@ class Planner():
                 last_location = current_node
             elif isinstance(current_node, gopher_semantic_msgs.Elevator):
                 # topological path guarantees there is a next...
-                elevator_subtree = elevators.HumanAssistedElevators("ElevatorRun", last_location.world, current_node, next_node.world)
+                elevator_subtree = elevators.HumanAssistedElevators("ElevatorRun", previous_world, current_node, next_node.world)
                 children.append(elevator_subtree)
 
         # this can happen if none of the locations provided are in the semantic locations
