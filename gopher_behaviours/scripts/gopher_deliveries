@@ -52,6 +52,9 @@ class GopherHiveMind(object):
         preloaded_semantic_locations = gopher_behaviours.delivery.desirable_destinations() if autoload_test_delivery else None  # list of gopher_std_msgs.Location objects
 
         self.planner = Planner(auto_go=rospy.get_param("~dont_wait_for_hoomans", False))
+        self.current_world_subscriber = rospy.Subscriber(self.gopher.topics.world, std_msgs.String, self.current_world_callback)
+        self.current_world = None
+
         self.quirky_deliveries = gopher_behaviours.delivery.GopherDeliveries(name="Quirky Deliveries", planner=self.planner, semantic_locations=preloaded_semantic_locations)
         self.idle = py_trees.behaviours.Success("Idle")
         self.root = py_trees.Selector(name="HiveMind", children=[self.battery_subtree, self.idle])
@@ -71,6 +74,13 @@ class GopherHiveMind(object):
         self._stop_sub = rospy.Subscriber('/gopher/buttons/stop', std_msgs.Empty, self._stop_callback)
         self._delivery_result_service = rospy.Service('delivery/result', gopher_std_srvs.DeliveryResult, self._result_service_callback)
 
+    def current_world_callback(self, msg):
+        """
+        Catches what world we are currently on from marco_polo. This is the unique name that
+        should be found in the semantics worlds list.
+        """
+        self.current_world = msg.data
+
     ##############################################################################
     # Tick Tock
     ##############################################################################
@@ -83,7 +93,7 @@ class GopherHiveMind(object):
         self.logger.debug("")
         self.logger.debug("{:-^30}".format(" Run %s " % behaviour_tree.count))
         self.logger.debug("")
-        self.quirky_deliveries.pre_tick_update()
+        self.quirky_deliveries.pre_tick_update(self.current_world)
         if self.quirky_deliveries.has_a_new_goal:
             if self.quirky_deliveries.old_goal_id is not None:
                 self.tree.prune_subtree(self.quirky_deliveries.old_goal_id)

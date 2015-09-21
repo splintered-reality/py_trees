@@ -4,6 +4,7 @@
 # Imports
 ##############################################################################
 
+import gopher_configuration
 import gopher_semantics
 import gopher_semantic_msgs.msg as gopher_semantic_msgs
 import delivery
@@ -17,7 +18,7 @@ from . import elevators
 ##############################################################################
 
 
-def find_topological_path(locations, semantics):
+def find_topological_path(world, locations, semantics):
     """
     This is a very dumb pathfinder. It assumes all locations on
     a single world are connectable (i.e. doesn't find routes) and
@@ -32,6 +33,7 @@ def find_topological_path(locations, semantics):
 
     :param [str] locations: list of semantic location unique names
     :param gopher_semantics.Semantics semantics: a semantics database
+    :param str world: the unique name of the world we are starting from
     :return: a topological path of locations and elevators
     :rtype: list of gopher_semantic_msgs.Location and gopher_semantic_msgs.Elevator objects
     """
@@ -39,8 +41,9 @@ def find_topological_path(locations, semantics):
     topological_path = []
     for location in locations:
         current = semantics.locations[location]
-        if last is not None and current.world != last.world:
-            connecting_elevators = semantics.elevators.find_connecting_elevators(last.world, current.world)
+        previous_world = world if last is None else last.world
+        if current.world != previous_world:
+            connecting_elevators = semantics.elevators.find_connecting_elevators(previous_world, current.world)
             if not connecting_elevators:
                 return []
             # just choose the first.
@@ -56,14 +59,16 @@ class Planner():
     def __init__(self, auto_go):
         self.current_location = None
         self.auto_go = auto_go
-        self.semantics = gopher_semantics.Semantics()
+        self.gopher = gopher_configuration.Configuration()
+        self.semantics = gopher_semantics.Semantics(self.gopher.namespaces.semantics)
 
-    def create_tree(self, locations, undock=True):
+    def create_tree(self, current_world, locations, undock=True):
         """
         Find the semantic locations corresponding to the incoming string location identifier and
         create the appropriate behaviours.
 
-        :param: string list of location unique names given to us by the delivery goal.
+        :param str current_world: unique_world name used to decide if we need to go straight to an elevator or not
+        :param: str list of location unique names given to us by the delivery goal.
 
         .. todo::
 
@@ -73,7 +78,7 @@ class Planner():
         # Topological Path
         ########################################
         # TODO check all locations are in semantics, provide meaningful error message otherwise
-        topological_path = find_topological_path(locations, self.semantics)
+        topological_path = find_topological_path(current_world, locations, self.semantics)
         # TODO check its not empty, error message if so
 
         ########################################

@@ -203,7 +203,6 @@ class GopherDeliveries(object):
         :return: tuple of (gopher_std_msgs.DeliveryErrorCodes, string)
         """
         # don't need a lock: http://effbot.org/pyfaq/what-kinds-of-global-value-mutation-are-thread-safe.htm
-        print("New goal: %s" % locations)
         if locations is None or not locations:
             return (gopher_std_msgs.DeliveryErrorCodes.GOAL_EMPTY_NOTHING_TO_DO, "goal empty, nothing to do.")
         if self.state == State.IDLE:
@@ -215,17 +214,19 @@ class GopherDeliveries(object):
         else:  # we're travelling between locations
             return (gopher_std_msgs.DeliveryErrorCodes.ALREADY_ASSIGNED_A_GOAL, "sorry, busy (already assigned a goal)")
 
-    def pre_tick_update(self):
+    def pre_tick_update(self, current_world):
         """
         Check if we have a new goal, then assemble the sub-behaviours required to
         complete that goal. Finally kick out the current root and set the notification
         flag (self.has_a_new_goal) that this subtree has changed.
+
+        :param str current_world: update our knowledge of what the current world is.
         """
         if self.incoming_goal is not None and self.incoming_goal:
             # use the planner to initialise the behaviours that we are to follow
             # to get to the delivery location. If this is empty/None, then the
             # semantic locations provided were wrong.
-            children = self.planner.create_tree(self.incoming_goal, undock=False if self.root else True)
+            children = self.planner.create_tree(current_world, self.incoming_goal, undock=False if self.root else True)
             if not children:
                 # TODO is this enough?
                 rospy.logwarn("Gopher Deliveries : Received a goal, but none of the locations were valid.")

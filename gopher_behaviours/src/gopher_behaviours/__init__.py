@@ -22,6 +22,7 @@ from . import delivery
 from . import elevators
 from . import interactions
 from . import navigation
+from . import planner
 from . import time
 from . import utilities
 
