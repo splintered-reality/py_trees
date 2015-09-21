@@ -19,10 +19,14 @@ Imports for the gopher_behaviours_ package.
 # behaviours
 from . import battery
 from . import delivery
+from . import elevators
 from . import interactions
 from . import navigation
 from . import time
 from . import utilities
-from . import elevators
 
+# modules
+from . import scripts
+
+# special cases
 from .delivery import GopherDeliveries

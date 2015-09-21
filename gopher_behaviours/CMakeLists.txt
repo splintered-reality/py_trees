@@ -24,6 +24,7 @@ catkin_install_python(
     PROGRAMS
         scripts/gopher_deliveries
         scripts/gopher_elevator_run
+        scripts/gopher_delivery_run
     DESTINATION
         ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
