@@ -112,6 +112,7 @@ class Waiting(py_trees.Behaviour):
         # ros communications
         # could potentially have this in the waiting behaviour
         self._go_button_subscriber = rospy.Subscriber("delivery/go", std_msgs.Empty, self._go_button_callback)
+        self._notify_publisher = rospy.Publisher("~display_notification", gopher_std_msgs.Notification, queue_size=1)
 
         # for sending honk
         self._honk_publisher = None
@@ -141,11 +142,14 @@ class Waiting(py_trees.Behaviour):
         status = py_trees.Status.SUCCESS if self.dont_wait_for_hoomans else py_trees.Status.RUNNING
         if status == py_trees.Status.RUNNING and self.go_requested:
             status = py_trees.Status.SUCCESS
+        else:
+            self._notify_publisher.publish(gopher_std_msgs.Notification(buttons=gopher_std_msgs.Notification.BUTTON_GO))
         self.feedback_message = "remaining: %s" % self.blackboard.remaining_locations
         return status
 
     def _go_button_callback(self, unused_msg):
         self.go_requested = True if self.status == py_trees.Status.RUNNING else False
+        self._notify_publisher.publish(gopher_std_msgs.Notification(buttons=gopher_std_msgs.Notification.BUTTONS_OFF))
 
 
 class GopherDeliveries(object):

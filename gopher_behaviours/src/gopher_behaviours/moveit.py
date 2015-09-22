@@ -271,11 +271,6 @@ class Park(py_trees.Behaviour):
         # get the relative rotation between the homebase and the parking location
         T_hb_to_parking = self.blackboard.T_hb_to_parking
 
-        rospy.logdebug("Park : transform from homebase to current location")
-        rospy.logdebug(human_transform(T_hb_to_current))
-        rospy.logdebug("Park : transform from homebase to parking location")
-        rospy.logdebug(human_transform(T_hb_to_parking))
-
         # create transformstamped objects for the transformations from homebase to the two locations
         t = tf.Transformer(True, rospy.Duration(10))
         cur = transform_to_transform_stamped(T_hb_to_current)
@@ -295,12 +290,8 @@ class Park(py_trees.Behaviour):
         # moving in its direction.
         T_current_to_parking = t.lookupTransform("current", "parking", rospy.Time(0))
 
-        rospy.logdebug("Park : transform from current location to parking")
-        rospy.logdebug(human_transform(T_current_to_parking))
-
         # straight line distance between current location and parking
         self.distance = numpy.linalg.norm(T_current_to_parking[0][:2])
-        rospy.logdebug("Park : straight line distance is {0}".format(self.distance))
 
         # rotation to perform at the current position to align us with the
         # parking location position so we can drive towards it
@@ -327,13 +318,16 @@ class Park(py_trees.Behaviour):
 
     def update(self):
         if self.start_transform is None:
+            rospy.logdebug("Park : could not get current transform from map to base_link")
             self.feedback_message = "could not get current transform from map to base_link"
             return py_trees.Status.FAILURE
         if self.not_unparked:
+            rospy.logdebug("Park : transform to parking is undefined - probably no unpark action was performed")
             self.feedback_message = "transform to parking is undefined - probably no unpark action was performed"
             return py_trees.Status.FAILURE
         # if the motion isn't complete, we're running
         if not self.motion.complete():
+            rospy.logdebug("Park : waiting for motion to complete")
             self.feedback_message = "waiting for motion to complete"
             return py_trees.Status.RUNNING
         else:
@@ -341,6 +335,7 @@ class Park(py_trees.Behaviour):
             # the behaviour fails.
             if not self.motion.success():
                 self.blackboard.unpark_success = False
+                rospy.logdebug("Park : motion failed")
                 self.feedback_message = "motion failed"
                 return py_trees.Status.FAILURE
             else:
@@ -348,11 +343,13 @@ class Park(py_trees.Behaviour):
                 # motion to do, and execute it if there is, otherwise return
                 # success
                 if len(self.motions_to_execute) == 0:
+                    rospy.logdebug("Park : successfully completed all motions")
                     self.feedback_message = "successfully completed all motions"
                     return py_trees.Status.SUCCESS
                 else:
                     motion = self.motions_to_execute.pop(0)
                     self.motion.execute(motion[0], motion[1])
+                    rospy.logdebug("Park : waiting for motion to complete")
                     self.feedback_message = "waiting for motion to complete"
                     return py_trees.Status.RUNNING
 
@@ -410,6 +407,7 @@ class Unpark(py_trees.Behaviour):
 
     def button_callback(self, msg):
         self.button_pressed = True
+        self._notify_publisher.publish(gopher_std_msgs.Notification(buttons=gopher_std_msgs.Notification.BUTTONS_OFF))
         # when the button is pressed, save the latest odom value so we can get
         # the transform between the start and end poses
         try:
@@ -446,6 +444,7 @@ class Unpark(py_trees.Behaviour):
                     self.transform_setup = True
                 except tf.Exception:
                     self.lookup_attempts += 1
+                    self.feedback_message = "waiting for transform from map to base_link"
                     return py_trees.Status.RUNNING
             else:
                 # save the latest odom message received so that we can use it to compute
@@ -456,6 +455,7 @@ class Unpark(py_trees.Behaviour):
                     self.transform_setup = True
                 except tf.Exception:
                     self.lookup_attempts += 1
+                    self.feedback_message = "waiting for transform from odom to base_link"
                     return py_trees.Status.RUNNING
 
             if self.lookup_attempts >= 4:
@@ -465,9 +465,10 @@ class Unpark(py_trees.Behaviour):
 
         # need to be unplugged before we can move or be moved
         if self.still_charging:
-            rospy.logdebug("Unpark : robot is still charging")
+            rospy.logdebug("Unpark : robot is still charging - waiting to be unplugged")
             self._notify_publisher.publish(gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.FLASH_YELLOW))
             # reset the button just in case it was accidentally pressed
+            self.feedback_message = "robot is still charging - waiting to be unplugged"
             self.button_pressed = False
         else:  # was unplugged, should start moving
             if self.dslam_initialised and self.blackboard.unpark_success:
@@ -478,10 +479,9 @@ class Unpark(py_trees.Behaviour):
 
                 # transform homebase to parking spot
                 self.blackboard.T_hb_to_parking = inverse_times((self.hb_translation, self.hb_rotation), self.start_transform)
-                rospy.logdebug("Unpark : transform from homebase to parking location")
-                print(human_transform(self.blackboard.T_hb_to_parking))
-
                 self.blackboard.unpark_success = True
+                rospy.logdebug("Unpark : successfully unparked")
+                self.feedback_message = "successfully unparked"
                 return py_trees.Status.SUCCESS
             else:
                 rospy.logdebug("Unpark : waiting for go button to be pressed to indicate homebase")
@@ -490,11 +490,11 @@ class Unpark(py_trees.Behaviour):
                 # has been reached.
                 if self.button_pressed:
                     if self.end_transform is None:
+                        rospy.logerr("Unpark : did not get an end transform")
+                        self.feedback_message = "did not get an end transform"
                         return py_trees.Status.FAILURE
 
                     self.blackboard.T_hb_to_parking = inverse_times(self.end_transform, self.start_transform)
-                    rospy.logdebug("Unpark : transform from homebase to parking location")
-                    print(human_transform(self.blackboard.T_hb_to_parking))
 
                     pose = geometry_msgs.PoseWithCovarianceStamped()
                     pose.header.stamp = rospy.Time.now()
@@ -502,9 +502,12 @@ class Unpark(py_trees.Behaviour):
                     pose.pose.pose = transform_to_pose((self.hb_translation, self.hb_rotation))
                     self._location_publisher.publish(pose)
                     self.blackboard.unpark_success = True
+                    rospy.logdebug("Unpark : Successfully unparked")
+                    self.feedback_message = "successfully unparked"
                     return py_trees.Status.SUCCESS
-                self._notify_publisher.publish(gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.FLASH_PURPLE))
-
+                else:
+                    # publish notification request to flash and turn on the go button led
+                    self._notify_publisher.publish(gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.FLASH_PURPLE, buttons=gopher_std_msgs.Notification.BUTTON_GO))
         return py_trees.Status.RUNNING
 
 
@@ -569,6 +572,7 @@ class Dock(py_trees.Behaviour):
     def update(self):
         self.logger.debug("  %s [Dock::update()]" % self.name)
         if self.not_undocked:
+            rospy.logdebug("Dock : Transform to dock was unset - no undock action was performed")
             self.feedback_message = "Transform to dock was unset - no undock action was performed"
             return py_trees.Status.FAILURE
 
@@ -579,12 +583,13 @@ class Dock(py_trees.Behaviour):
             except tf.Exception:
                 return py_trees.Status.RUNNING
 
+            rospy.logdebug("Dock : got transform")
             T_hb_to_current = inverse_times(start_transform, (hb_translation, hb_rotation))
             T_hb_to_dock = self.blackboard.T_homebase_to_dock
 
-            rospy.logdebug("Park : transform from homebase to current location")
+            rospy.logdebug("Dock : transform from homebase to current location")
             rospy.logdebug(human_transform(T_hb_to_current))
-            rospy.logdebug("Park : transform from homebase to docking location")
+            rospy.logdebug("Dock : transform from homebase to docking location")
             rospy.logdebug(human_transform(T_hb_to_dock))
 
             # create transformstamped objects for the transformations from homebase to the two locations
@@ -605,26 +610,35 @@ class Dock(py_trees.Behaviour):
             rospy.logdebug(human_transform(T_current_to_parking))
 
             self.motion.execute("rotate", transform_bearing(T_current_to_parking))
+            rospy.logdebug("Dock : rotating to face docking station")
+            self.feedback_message = "rotating to face docking station"
             return py_trees.Status.RUNNING
         else:
+            rospy.logdebug("Dock : could not get transform from map to base link")
             self.feedback_message = "Could not get transform from map to base link"
             return py_trees.Status.FAILURE
 
         if self.interrupted:
+            rospy.logdebug("Dock : interrupted")
+            self.feedback_message = "docking was interrupted"
             return py_trees.Status.FAILURE
 
         # running if the rotation motion is still executing
         if not self.motion.complete():
+            rospy.logdebug("Dock : rotating to face docking station")
+            self.feedback_message = "Rotating to face docking station"
             return py_trees.Status.RUNNING
 
         # if the rotation motion fails, the behaviour fails
         if not self.motion.success():
+            rospy.logerr("Dock : failed to rotate to docking station")
+            self.feedback_message = "Failed to rotate to docking station"
             return py_trees.Status.FAILURE
         else:
             if not self.goal_sent:
                 self.connected = self.docking_client.wait_for_server(rospy.Duration(0.5))
                 if not self.connected:
-                    rospy.logwarn("Dock : could not connect to autonomous docking server.")
+                    rospy.logerr("Dock : could not connect to autonomous docking server.")
                     self.feedback_message = "Action client failed to connect"
                     return py_trees.Status.INVALID
 
@@ -639,15 +653,19 @@ class Dock(py_trees.Behaviour):
         result = self.docking_client.get_result()
         if result:
             if result.value == gopher_std_msgs.AutonomousDockingResult.SUCCESS:
+                rospy.logdebug("Dock : " + result.message)
                 self.feedback_message = result.message
                 return py_trees.Status.SUCCESS
             elif result.value == gopher_std_msgs.AutonomousDockingResult.ABORTED_OBSTACLES:
+                rospy.logdebug("Dock : " + result.message)
                 self.feedback_message = result.message
                 return py_trees.Status.FAILURE
             else:
+                rospy.logdebug("Dock : got unknown result value from docking controller")
                 self.feedback_message = "Got unknown result value from docking controller"
                 return py_trees.Status.FAILURE
         else:
+            rospy.logdebug("Dock : docking in progress")
             self.feedback_message = "Docking in progress"
             return py_trees.Status.RUNNING
 
@@ -689,15 +707,12 @@ class Undock(py_trees.Behaviour):
         self.blackboard.parked = False
         self.got_ar_markers = False
         self.sent_goal = False
+        self.ar_markers_short = None
         self._ar_long_subscriber = rospy.Subscriber("ar_pose_marker_long_range", ar_track_alvar_msgs.AlvarMarkers, self.ar_cb_long)
         self._ar_short_subscriber = rospy.Subscriber("ar_pose_marker_short_range", ar_track_alvar_msgs.AlvarMarkers, self.ar_cb_short)
 
         # wait a while for ar messages to come in
         self.timeout = rospy.Time.now() + rospy.Duration(3)
-
-    def ar_cb_long(self, msg):
-        # there should only be one longrange marker
-        self.ar_marker_long = msg.markers[0].id
 
     def ar_cb_short(self, msg):
         # can have multiple short range markers
@@ -711,17 +726,30 @@ class Undock(py_trees.Behaviour):
 
         if not self.got_ar_markers:
             if self.timeout > rospy.Time.now():
-                rospy.logdebug("Undock : could not find AR marker information")
+                rospy.logerr("Undock : could not find AR marker information")
+                self.feedback_message = "did not get any AR marker information"
                 return py_trees.Status.FAILURE
             else:
                 rospy.logdebug("Undock : waiting for AR marker information")
+                self.feedback_message = "waiting for AR marker information"
                 return py_trees.Status.RUNNING
         else:
-            self.blackboard.dock_ar_marker_large = self.ar_marker_long
             self.blackboard.dock_ar_markers_small = self.ar_markers_short
 
             # retrieve information about this docking station
-            ds = self.docking_stations.find_docking_stations_with_ar_marker_id(self.ar_marker_long)[0]
+            stations = self.docking_stations.find_docking_stations_with_ar_marker_id(self.ar_markers_short[0])
+            ds = None
+            for station in stations:
+                if (station.left_id == self.ar_markers_short[0] or station.left_id == self.ar_markers_short[1])\
+                   and (station.right_id == self.ar_markers_short[0] or station.right_id == self.ar_markers_short[1]):
+                    ds = station
+                    break
+
+            if ds is None:
+                rospy.logerr("Undock : could not find docking station in sematnic locations with visible markers")
+                self.feedback_message = "could not find docking station in semantic locations with the visible markers"
+                return py_trees.Status.FAILURE
+
             # initialise a transform with the pose of the station
             ds_translation = (ds.pose.x, ds.pose.y, 0)
             # quaternion specified by rotating theta radians around the yaw axis
@@ -738,10 +766,12 @@ class Undock(py_trees.Behaviour):
             pose.header.frame_id = "map"
             pose.pose.pose = transform_to_pose((ds_translation, ds_rotation))
             self._location_publisher.publish(pose)
-
+            rospy.logdebug("Undock : sent initial pose to initialise navigation")
             self.connected = self.action_client.wait_for_server(rospy.Duration(0.5))
             if not self.connected:
-                rospy.logwarn("Undock : could not connect to autonomous docking server.")
+                rospy.logerr("Undock : could not connect to autonomous docking server.")
+                self.feedback_message = "Action client failed to connect"
+                return py_trees.Status.INVALID
             else:
                 goal = gopher_std_msgs.AutonomousDockingGoal
                 goal.command = gopher_std_msgs.AutonomousDockingGoal.UNDOCK
@@ -751,23 +781,23 @@ class Undock(py_trees.Behaviour):
             if self._honk_publisher:
                 self._honk_publisher.publish(std_msgs.Empty())
 
-        if not self.connected:
-            self.feedback_message = "Action client failed to connect"
-            return py_trees.Status.INVALID
-
         result = self.action_client.get_result()
         if result:
             if result.value == gopher_std_msgs.AutonomousDockingResult.SUCCESS:
+                rospy.logdebug("Undock : " + result.message)
                 self.feedback_message = result.message
                 return py_trees.Status.SUCCESS
             elif result.value == gopher_std_msgs.AutonomousDockingResult.ABORTED_OBSTACLES:
+                rospy.logdebug("Undock : " + result.message)
                 self.feedback_message = result.message
                 return py_trees.Status.FAILURE
             else:
+                rospy.logdebug("Undock : got unknown result value from undocking controller")
                 self.feedback_message = "Got unknown result value from undocking controller"
-                return py_trees.Status.INVALID
+                return py_trees.Status.FAILURE
         else:
-            self.feedback_message = "Unocking in progress"
+            rospy.logdebug("Undock : undocking in progress")
+            self.feedback_message = "Undocking in progress"
             return py_trees.Status.RUNNING
 
     def abort(self, new_status):

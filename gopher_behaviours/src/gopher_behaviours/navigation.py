@@ -109,7 +109,8 @@ class Teleport(py_trees.Behaviour):
     def initialise(self):
         self.logger.debug("  %s [Teleport::initialise()]" % self.name)
         self.action_client = actionlib.SimpleActionClient(self.gopher.actions.teleport, gopher_navi_msgs.TeleportAction)
-
+        self._honk_publisher = rospy.Publisher("/gopher/commands/sounds/teleport", std_msgs.Empty, queue_size=1)
+        
         # should not have to wait as this will occur way after the teleport server is up
         connected = self.action_client.wait_for_server(rospy.Duration(0.5))
         if not connected:
@@ -117,6 +118,7 @@ class Teleport(py_trees.Behaviour):
             self.action_client = None
             # we catch the failure in the first update() call
         else:
+            self._honk_publisher.publish(std_msgs.Empty())
             self.action_client.send_goal(self.goal)
 
     def update(self):
