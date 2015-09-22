@@ -126,7 +126,7 @@ class GoalHandler(object):
                     # somewhere else...the original location's saved marks on the costmap will
                     # still be there.
                     self.execution_state = ExecutionState.PAUSED
-                    self.timer = rospy.Timer(rospy.Duration(3), self._unpause, oneshot=True)
+                    self.timer = rospy.Timer(rospy.Duration(6), self._unpause, oneshot=True)
                     return False
             self.result.value = gopher_navi_msgs.TeleportResult.ERROR_INVALID_ARGUMENTS
             self.result.message = "execution has both map and pose command 'None' (shouldn't get here)"
