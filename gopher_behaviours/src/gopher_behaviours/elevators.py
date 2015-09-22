@@ -91,7 +91,7 @@ def _generate_elevator_sequence(gopher_configuration, elevator_name, elevator_le
     # DJS : might need a delivery free MoveToGoal here
     move_to_elevator = navigation.MoveIt("To Elevator", elevator_level_origin.entry)
     honk = interactions.Articulate("Honk", gopher_configuration.sounds.honk)
-
+    telesound = interactions.Articulate("Transporter sound", gopher_configuration.sounds.teleport)
     flash_leds_travelling = interactions.FlashLEDs("Travelling", led_pattern=gopher_configuration.led_patterns.humans_give_me_input)
     flash_leds_travelling.add_child(interactions.WaitForButton("Wait for Button", gopher_configuration.buttons.go))
 
@@ -103,6 +103,7 @@ def _generate_elevator_sequence(gopher_configuration, elevator_name, elevator_le
     goal.elevator_location.world = elevator_level_destination.world
     goal.elevator_location.location = gopher_navi_msgs.ElevatorLocation.EXIT
     elevator_teleport = navigation.Teleport("Elevator Teleport", goal)
+    flash_leds_teleporting.add_child(telesound)
     flash_leds_teleporting.add_child(elevator_teleport)
 
     elevator_sequence.add_child(move_to_elevator)

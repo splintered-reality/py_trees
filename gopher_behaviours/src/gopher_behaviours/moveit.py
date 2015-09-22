@@ -374,6 +374,9 @@ class Unpark(py_trees.Behaviour):
         # unparked before, this is unlikely to be the case.
         if not hasattr(self.blackboard, 'unpark_success'):
             self.blackboard.unpark_success = False
+
+        if not hasattr(self.blackboard, 'unpark_first_run'):
+            self.blackboard.unpark_first_run = True
         self.semantic_locations = Semantics()
 
     def initialise(self):
@@ -386,6 +389,7 @@ class Unpark(py_trees.Behaviour):
         self.start_transform = None
         self.lookup_attempts = 0
         self.blackboard.parked = True  # set this to true to indicate that the robot was parked, for the wasdocked behaviour
+
         # only initialise subscribers when the behaviour starts running
         self.homebase = self.semantic_locations.semantic_modules['locations']['homebase']
         self._battery_subscriber = self._battery_subscriber = rospy.Subscriber("~battery", somanet_msgs.SmartBatteryStatus, self.battery_callback)
@@ -422,10 +426,11 @@ class Unpark(py_trees.Behaviour):
         if not self.transform_setup:
             if not self.last_dslam:  # no message from dslam yet
                 # waited longer than the timeout, so assume dslam is uninitialised and continue
-                if rospy.Time.now() > self.timeout:
+                if rospy.Time.now() > self.timeout or self.blackboard.unpark_first_run:
                     rospy.logdebug("Unpark : didn't get a message from dslam - assuming uninitialised")
                     self.feedback_message = "no message from dslam - assuming uninitialised"
                     self.dslam_initialised = False
+                    self.blackboard.unpark_first_run = False
                 else:
                     rospy.logdebug("Unpark : waiting for dslam state update")
                     self.feedback_message = "waiting for dslam state update"
@@ -444,7 +449,7 @@ class Unpark(py_trees.Behaviour):
                     self.transform_setup = True
                 except tf.Exception:
                     self.lookup_attempts += 1
-                    self.feedback_message = "waiting for transform from map to base_link"
+                    self.feedback_message = "waiting for parking location transform from dslam"
                     return py_trees.Status.RUNNING
             else:
                 # save the latest odom message received so that we can use it to compute
@@ -455,7 +460,7 @@ class Unpark(py_trees.Behaviour):
                     self.transform_setup = True
                 except tf.Exception:
                     self.lookup_attempts += 1
-                    self.feedback_message = "waiting for transform from odom to base_link"
+                    self.feedback_message = "waiting for parking location odometry transform"
                     return py_trees.Status.RUNNING
 
             if self.lookup_attempts >= 4:
@@ -490,8 +495,8 @@ class Unpark(py_trees.Behaviour):
                 # has been reached.
                 if self.button_pressed:
                     if self.end_transform is None:
-                        rospy.logerr("Unpark : did not get an end transform")
-                        self.feedback_message = "did not get an end transform"
+                        rospy.logerr("Unpark : did not get a homebase transform")
+                        self.feedback_message = "did not get a homebase transform"
                         return py_trees.Status.FAILURE
 
                     self.blackboard.T_hb_to_parking = inverse_times(self.end_transform, self.start_transform)
