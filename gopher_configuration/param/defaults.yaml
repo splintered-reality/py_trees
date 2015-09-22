@@ -43,6 +43,7 @@ buttons:
 # system wide aliases should be specified above. 
 sounds:
   honk: /gopher/commands/sounds/groot
+  teleport: /gopher/commands/sounds/teleport
 
 ##############################################################################
 # Patterns
