@@ -22,6 +22,35 @@ import argparse
 import gopher_configuration
 import rocon_console.console as console
 import rospy
+import socket
+
+##############################################################################
+# Helpers
+##############################################################################
+
+
+def show_description():
+    s = ""
+    s += console.green
+    s += "Utility to display gopher configuration on the command line. "
+    s += "If online, it will show the runtime configuration on the rosparam server, "
+    s += "otherwise it will fallback to showing gopher configuration defaults from yaml."
+    s += console.reset
+    return s
+
+
+def show_usage():
+    s = "\n"
+    s += console.bold + "    Online from RosParam" + console.reset + "\n"
+    s += console.cyan + "            gopher_configuration" + console.reset + "\n"
+    s += "\n"
+    s += console.bold + "    Offline from Yaml Defaults" + console.reset + "\n"
+    s += console.cyan + "            gopher_configuration" + console.reset + "\n"
+    s += "\n"
+    s += console.bold + "    Force Default Configuration Display" + console.reset + "\n"
+    s += console.cyan + "            gopher_configuration --defaults" + console.reset + "\n"
+    s += "\n"
+    return s
 
 ##############################################################################
 # Main
@@ -29,22 +58,24 @@ import rospy
 
 if __name__ == '__main__':
     # just use argparse to show about and usage
-    parser = argparse.ArgumentParser(description=console.green + 'Utility to display a running gopher configuration on the command line.' + console.reset,
-                                     usage="\n    " + console.cyan + "gopher_configuration" + console.reset,
+    parser = argparse.ArgumentParser(description=show_description(),
+                                     usage=show_usage(),
                                      epilog="And his noodly appendage reached forth to tickle the blessed...",
                                      formatter_class=argparse.RawTextHelpFormatter
                                      )
+    parser.add_argument('-d', '--defaults', action='store_true', help='show gopher configuration defaults (does not need ros)')
     # don't know why I have to strip the first arg out (the executable)
     args = parser.parse_args(rospy.myargv(argv=sys.argv)[1:])
 
-    gopher = gopher_configuration.Configuration()
-    print("%s" % gopher)
+    if args.defaults:
+        gopher_configuration.Configuration.load_defaults()
+        gopher = gopher_configuration.Configuration()
+        sys.exit(0)
 
-    # you could also launch gopher_configuration/gopher_configuration.launch
-    # and then:
-    #
-    # gopher = gopher_configuration.Configuration()
-    #
-    # would automatically retrieve the configuration from the
-    # /gopher/configuration namespace on the rosparam server (no manual
-    # loading in code necessary)
+    try:
+        gopher = gopher_configuration.Configuration()
+    except socket.error:
+        print(console.yellow + console.bold + "\nNot connected to ros - showing gopher configuration defaults only." + console.reset)
+        gopher_configuration.Configuration.load_defaults()
+        gopher = gopher_configuration.Configuration()
+    print("%s" % gopher)
