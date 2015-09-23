@@ -80,6 +80,22 @@ class LEDPatterns(ConfigurationGroup):
         return s
 
 
+class Battery(ConfigurationGroup):
+    def __init__(self, battery_dict):
+        """
+        :raises KeyError: if the provided dictionary doesn't contain the required keys.
+        """
+        # The set of battery variables is fixed, no __dict__ magic necessary.
+        self.low = battery_dict['low']
+        self.high = battery_dict['high']
+
+    def validate(self):
+        for key in ['low', 'high']:
+            if key not in self.__dict__.keys():
+                return (False, "no definition for battery field '%s'" % key)
+        return (True, None)
+
+
 class Buttons(ConfigurationGroup):
     def __init__(self, buttons_dict):
         self.__dict__ = buttons_dict
@@ -247,10 +263,11 @@ class Configuration(object):
     def __init__(self, error_logger=_error_logger):
         if not Configuration.__shared_state:
             Configuration.load_from_rosparam_server()
-        core = ['actions', 'buttons', 'namespaces', 'frames', 'topics', 'services', 'sounds', 'led_patterns']
+        core = ['actions', 'battery', 'buttons', 'namespaces', 'frames', 'topics', 'services', 'sounds', 'led_patterns']
         try:
             # catch our special groups
             self.actions      = Actions(Configuration.__shared_state['actions'])        # @IgnorePep8
+            self.battery      = Battery(Configuration.__shared_state['battery'])        # @IgnorePep8
             self.buttons      = Buttons(Configuration.__shared_state['buttons'])        # @IgnorePep8
             self.namespaces   = Namespaces(Configuration.__shared_state['namespaces'])  # @IgnorePep8
             self.frames       = Frames(Configuration.__shared_state['frames'])          # @IgnorePep8
