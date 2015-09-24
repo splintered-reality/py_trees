@@ -21,8 +21,8 @@ sys.path.append(sys.path.pop(0))
 import argparse
 import gopher_configuration
 import rocon_console.console as console
+import rocon_python_comms
 import rospy
-import socket
 
 ##############################################################################
 # Helpers
@@ -74,8 +74,11 @@ if __name__ == '__main__':
 
     try:
         gopher = gopher_configuration.Configuration()
-    except socket.error:
+        print("%s" % gopher)
+    except rocon_python_comms.exceptions.ROSNotFoundException:
         print(console.yellow + console.bold + "\nNot connected to ros - showing gopher configuration defaults only." + console.reset)
         gopher_configuration.Configuration.load_defaults()
         gopher = gopher_configuration.Configuration()
-    print("%s" % gopher)
+        print("%s" % gopher)
+    except rocon_python_comms.exceptions.NotFoundException as e:
+        print(console.red + "\nCould not find anything on the rosparam server, looking in the right place? [%s]\n" % str(e) + console.reset)

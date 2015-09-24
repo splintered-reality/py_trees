@@ -28,16 +28,15 @@ customisation of a particular gopher.
 Demo
 ----
 
-This loads the defaults onto the rosparam server where they are loaded and viewed.
+Simply run the ``gopher_configuration`` script with no ros running. This will load the defaults into an instance
+of the :class:`.Configuration` class and display them when it fails to find a rosparam server.
 
 .. code-block:: bash
    
-   $ roslaunch gopher_configuration demo_defaults.launch
+   $ gopher_configuration
 
-Usage
------
-
-**Create a yaml configuration**
+Create a Configuration
+----------------------
 
 The defaults for a gopher are a good starting point.
 
@@ -60,20 +59,23 @@ Include your extensions/overrides of the defaults in a custom yaml configuration
        <rosparam ns="/gopher/configuration" command="load" file="$(find foo_configuration)/param/customisation.yaml"/>
    <launch>
 
-**Convenient Access - Python**
-
-Python access to this configuration is provided via the :class:`.Configuration` class. See that class itself
-for more information and usage instructions.
-
-**Convenient Access - C++**
-
-TODO
-
-**Viewing - Command Line**
+View a Configuration
+--------------------
 
 To view the current runtime configuration simply run the command line program:
 
 .. code-block:: bash
    
    $ gopher_configuration
+
+Use a Configuration - Python
+----------------------------
+
+Python access to this configuration is provided via the :class:`.Configuration` class. See that class itself
+for more information and usage instructions.
+
+Use a Configuration - C++
+-------------------------
+
+TODO
 

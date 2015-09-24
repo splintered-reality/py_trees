@@ -8,7 +8,7 @@
 """
 .. module:: configuration
    :platform: Unix
-   :synopsis: Gopher deliveries configuration in a usable structure.
+   :synopsis: Gopher configuration in a usable structure.
 
 Oh my spaghettified magnificence,
 Bless my noggin with a tickle from your noodly appendages!
@@ -24,17 +24,11 @@ Bless my noggin with a tickle from your noodly appendages!
 import gopher_std_msgs.msg as gopher_std_msgs
 import os
 import rocon_console.console as console
+import rocon_python_comms
 import rospkg
 import rospy
+import socket
 import yaml
-
-##############################################################################
-# Configuration
-##############################################################################
-
-
-def _error_logger(msg):
-    print(console.red + "Configuration : %s" % msg + console.reset)
 
 ##############################################################################
 # Configuration
@@ -176,12 +170,11 @@ class Namespaces(ConfigurationGroup):
 class Configuration(object):
     """
     Shared parameter storage/instantiation for gopher behaviours.
-
     This uses the `Borg Pattern`_, so feel free to instantiate as many times
     inside a process as you wish.
 
 
-    *Usage*:
+    **Launching a Configuration on the RosParam Server**:
 
     The simplest use case is to load your configuration and its customisation on the
     rosparam server in the ``/gopher/configuration`` namespace. This namespace is
@@ -197,16 +190,25 @@ class Configuration(object):
                <rosparam ns="/gopher/configuration" command="load" file="$(find foo_configuration)/param/customisation.yaml"/>
            <launch>
 
-    And then instantiate this class as an interface to that configuration.
+
+    Instantiate this class as an interface to the rosparam configuration. This class will fallback to
+    loading defaults if you use the ``fallback_to_defaults=True``, useful for simulations.
 
     .. code-block:: python
        :linenos:
 
-       gopher = gopher_configuration.Configuration()
-       print("%s" % gopher)
-       print("%s" % gopher.topics)
-       print("Honk topic name: %s" % gopher.sounds.honk)
-       print("Global frame id: %s" % gopher.frames.global)
+       try:
+           gopher = gopher_configuration.Configuration()
+           print("%s" % gopher)
+           print("%s" % gopher.topics)
+           print("Honk topic name: %s" % gopher.sounds.honk)
+           print("Global frame id: %s" % gopher.frames.global)
+        except ValueError as e:
+           print("Configuration parameters found, but %s" % str(e))
+        except rocon_python_comms.exceptions.ROSNotFound:
+           print("No ros, if you want to fallback to showing defaults, pass in fallback_to_defaults=True or use Configuration.load_from_yaml")
+        except rocon_python_comms.exceptions.NotFoundException as e:
+           print("No configuration found on the rosparam server" % str(e))
 
     .. _Borg Pattern: http://code.activestate.com/recipes/66531-singleton-we-dont-need-no-stinkin-singleton-the-bo/
 
@@ -253,16 +255,33 @@ class Configuration(object):
            gopher_configuration.Configuration.load_from_rosparam_server(namespace='/foo/configuration')
            gopher = gopher_configuration.Configuration()
 
+           :raises rocon_python_comms.ROSNotFoundException: if ros is not around
+           :raises rocon_python_comms.NotFoundException: configuration parameters completely not found on the rosparam server.
+           :raises ValueError: if missing or improperly set at least one of the required 'core' parameters.
         """
         try:
             Configuration.__shared_state = rospy.get_param(namespace)
         except KeyError:
-            rospy.logerr("Gopher Configuration : could not find configuration on the rosparam server")
-            rospy.logerr("Gopher Configuration : is it looking in the right place? [%s]" % namespace)
+            raise KeyError(namespace)
 
-    def __init__(self, error_logger=_error_logger):
+    def __init__(self, fallback_to_defaults=False):
+        """
+        :param fallback_to_defaults: if not parameterised already and rosparam lookup fails, load gopher defaults from yaml.
+        """
         if not Configuration.__shared_state:
-            Configuration.load_from_rosparam_server()
+            try:
+                Configuration.load_from_rosparam_server()
+            except KeyError as e:
+                if fallback_to_defaults:
+                    Configuration.load_defaults()
+                else:
+                    # ros is around, but nothing on the parameter server
+                    raise(rocon_python_comms.exceptions.NotFoundException(str(e)))
+            except socket.error:
+                if fallback_to_defaults:
+                    Configuration.load_defaults()
+                else:
+                    raise rocon_python_comms.exceptions.ROSNotFoundException("no ros found")
         core = ['actions', 'battery', 'buttons', 'namespaces', 'frames', 'topics', 'services', 'sounds', 'led_patterns']
         try:
             # catch our special groups
@@ -276,19 +295,20 @@ class Configuration(object):
             self.topics       = Topics(Configuration.__shared_state['topics'])          # @IgnorePep8
             self.led_patterns = LEDPatterns()
         except KeyError:
-            error_logger("at least one of the core parameter groups missing %s" % core)
-            return
+            raise ValueError("at least one of the core parameter groups missing %s" % core)
         for name in core:
             parameter_group = getattr(self, name)
             (result, error_message) = parameter_group.validate()
             if not result:
-                error_logger("%s" % error_message)
+                raise ValueError("%s" % error_message)
         # catch everything else
         for key, value in Configuration.__shared_state.iteritems():
             if key not in core:
                 setattr(self, key, value)
 
     def __str__(self):
+        if not self.__dict__:
+            return ""
         s = console.bold + "\nGopher Configuration:\n\n" + console.reset
         for key, value in self.__dict__.iteritems():
             if isinstance(value, ConfigurationGroup):
