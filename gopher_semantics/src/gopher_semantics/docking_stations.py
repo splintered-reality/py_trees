@@ -100,14 +100,34 @@ class DockingStations(dict):
             msg.docking_stations.append(docking_station)
         return msg
 
-    def find_docking_stations_with_ar_marker_id(self, ar_marker_id):
+    def find_docking_stations_with_ar_marker_id(self, primary=None, left=None, right=None, id_list=[]):
+        '''Get the dict of docking stations which have the given ids in the given
+        locations. Keys are the docking station name. The id list can be used to
+        provide additional ids which can match in any position. For example, if
+        we pass primary=1, id_list=[2,3] we will find all stations which have 1
+        as the primary id and ids 2 and 3 as the left or right marker ids.
+
+        Note: Does not currently deal with the possibility of having multiple
+        instances of the same marker id on one station
+
         '''
-        Get the list of docking stations with the specified id. For now, this should be a single value.
-        However in future, we'll need to multiply use ar markers, so it will be important to have
-        another element making sure it is identifiably unique (id + homebase)?
-        '''
-        matching_docking_stations = [docking_station for docking_station in dict.values(self) if docking_station.primary_id == ar_marker_id]
-        return matching_docking_stations
+        matches = {}
+        for name,station in self.iteritems():
+            if primary and station.primary_id != primary:
+                continue
+            if left and station.left_id != left:
+                continue
+            if right and station.right_id != right:
+                continue
+            if id_list:
+                station_ids = [station.primary_id, station.left_id, station.right_id]
+                valid = [req_id in station_ids for req_id in id_list]
+                if not all(valid):
+                    continue
+
+            matches[name] = station
+
+        return matches
 
     def spin(self):
         rospy.spin()

@@ -55,17 +55,23 @@ semantic_locations:
     world: namsung_sixth_floor
     pose: { x: 20.38, y: -11.05, theta: -1.57 }
     keyframe_id: 6
+  tv_dock:
+    name: 'TV docking station approach'
+    description: 'Maybe blade runner is on?'
+    world: namsung_sixth_floor
+    pose: { x: 9.0, y: 0.00, theta: 0.00 }
+    keyframe_id: 7
 
 # For testing purposes only
 docking_stations:
-  '0':
-    primary_id: 0
-    left_id: 4
-    right_id: 5
+  'tv':
+    primary_id: 9
+    left_id: 10
+    right_id: 11
     pose:
-      x : 1.0
-      y : -2.0
-      theta : -1.570
+      x : 9.0
+      y : -1.0
+      theta : -1.57
   '1':
     primary_id: 1
     left_id: 5
