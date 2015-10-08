@@ -4,7 +4,7 @@ from distutils.core import setup
 from catkin_pkg.python_setup import generate_distutils_setup
 
 d = generate_distutils_setup(
-    packages=['gopher_behaviours'],
+    packages=['gopher_behaviours', 'gopher_behaviours.scripts'],
     package_dir={'': 'src'},
     #package_data = {'rocon_uri': ['rules/rules.yaml']},
     scripts=['scripts/gopher_elevator_run',
