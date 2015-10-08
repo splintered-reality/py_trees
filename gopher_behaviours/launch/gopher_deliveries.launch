@@ -38,6 +38,8 @@
     <remap from="delivery/cancel"                       to="/rocon/delivery/cancel"/>
     <remap from="delivery/result"                       to="/rocon/delivery/result"/>
     <remap from="delivery/go"                           to="/gopher/buttons/go"/>
+
+    <remap from="ar_pose_marker_short_range"            to="/gopher/ar_pose_marker_short_range"/>
     
     <!-- Battery level information parameters for activating the low battery
          tree-->
