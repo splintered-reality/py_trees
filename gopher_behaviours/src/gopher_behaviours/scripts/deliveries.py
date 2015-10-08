@@ -29,9 +29,10 @@ class ExpressDelivery(object):
     def __init__(self):
         self.feedback_subscriber = rospy.Subscriber("/rocon/delivery/feedback", gopher_std_msgs.DeliveryFeedback, ExpressDelivery.feedback)
 
-    def send(self, goal_locations):
+    def send(self, goal_locations, include_parking_behaviours):
         delivery_goal_request = gopher_std_srvs.DeliveryGoalRequest()
         delivery_goal_request.semantic_locations = goal_locations
+        delivery_goal_request.always_assume_initialised = not include_parking_behaviours
         print(console.cyan + "New Goal : " + console.yellow + "%s" % delivery_goal_request.semantic_locations + console.reset)
         delivery_goal_service = rospy.ServiceProxy("/rocon/delivery/goal", gopher_std_srvs.DeliveryGoal)
         try:
@@ -54,7 +55,8 @@ class ExpressDelivery(object):
                     break
                 rate.sleep()
             except rospy.ServiceException, e:
-                print "Service call failed: %s" % e
+                print(console.red + "Service call failed: %s" % e + console.reset)
+                sys.exit(1)
             except rospy.exceptions.ROSInterruptException:
                 sys.exit()  # ros shutting down
 

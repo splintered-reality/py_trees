@@ -194,16 +194,18 @@ class GopherDeliveries(object):
         self.feedback_message = ""
         self.old_goal_id = None
         self.planner = planner
+        self.always_assume_initialised = False
 
         if semantic_locations is not None:
             self.incoming_goal = [location.unique_name for location in semantic_locations]
         else:
             self.incoming_goal = None
 
-    def set_goal(self, locations):
+    def set_goal(self, locations, always_assume_initialised):
         """
         Callback for receipt of a new goal
-        :param: list of semantic location strings (try to match these against the system served Map Locations list via the unique_name)
+        :param [str] locations: semantic locations (try to match these against the system served Map Locations list via the unique_name)
+        :param bool always_assume_initialised: temporary flag for assuming the robot is initialised (right now we always assume uninitialised on the first run)
         :return: tuple of (gopher_std_msgs.DeliveryErrorCodes, string)
         """
         # don't need a lock: http://effbot.org/pyfaq/what-kinds-of-global-value-mutation-are-thread-safe.htm
@@ -211,9 +213,11 @@ class GopherDeliveries(object):
             return (gopher_std_msgs.DeliveryErrorCodes.GOAL_EMPTY_NOTHING_TO_DO, "goal empty, nothing to do.")
         if self.state == State.IDLE:
             self.incoming_goal = locations
+            self.always_assume_initialised = always_assume_initialised
             return (gopher_std_msgs.DeliveryErrorCodes.SUCCESS, "assigned new goal")
         elif self.state == State.WAITING:
             self.incoming_goal = locations
+            self.always_assume_initialised = always_assume_initialised
             return (gopher_std_msgs.DeliveryErrorCodes.SUCCESS, "pre-empting current goal")
         else:  # we're travelling between locations
             return (gopher_std_msgs.DeliveryErrorCodes.ALREADY_ASSIGNED_A_GOAL, "sorry, busy (already assigned a goal)")
@@ -230,7 +234,9 @@ class GopherDeliveries(object):
             # use the planner to initialise the behaviours that we are to follow
             # to get to the delivery location. If this is empty/None, then the
             # semantic locations provided were wrong.
-            children = self.planner.create_tree(current_world, self.incoming_goal, undock=False if self.root else True)
+            undock = False if self.always_assume_initialised or self.root else True
+            print("*********************************** Always assume initialised: %s" % self.always_assume_initialised)
+            children = self.planner.create_tree(current_world, self.incoming_goal, undock=undock)
             if not children:
                 # TODO is this enough?
                 rospy.logwarn("Gopher Deliveries : Received a goal, but none of the locations were valid.")
