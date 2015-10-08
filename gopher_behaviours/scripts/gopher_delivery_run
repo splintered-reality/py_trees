@@ -31,9 +31,9 @@ import gopher_behaviours
 def show_usage():
     s = "\n"
     s += console.white
-    s += console.bold + "    Introspection" + console.reset + "\n"
-    s += console.cyan + "        gopher_delivery" + console.yellow + " [option]" + console.reset + "\n"
-    s += "\n"
+    # s += console.bold + "    Introspection" + console.reset + "\n"
+    # s += console.cyan + "        gopher_delivery" + console.yellow + " [option]" + console.reset + "\n"
+    # s += "\n"
     s += console.bold + "    Command" + console.reset + "\n"
     s += console.cyan + "        gopher_delivery" + console.yellow + " [<delivery_location>]" + console.reset + "\n"
     s += "\n"
