@@ -38,7 +38,7 @@ def show_usage():
 
 
 def parse_arguments(command_line_args):
-    parser = argparse.ArgumentParser(description=console.green + 'Teleport around the world with marco polo!' + console.reset,
+    parser = argparse.ArgumentParser(description=console.green + 'Introspect the current gopher semantics configuration!' + console.reset,
                                      usage=show_usage(),
                                      epilog="And his noodly appendage reached forth to tickle the blessed...",
                                      formatter_class=argparse.RawTextHelpFormatter
