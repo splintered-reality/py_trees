@@ -411,7 +411,8 @@ class Unpark(py_trees.Behaviour):
     def button_callback(self, msg):
         self.button_pressed = True
         self._notify_publisher.publish(gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.CANCEL_CURRENT,
-                                                                    buttons=gopher_std_msgs.Notification.BUTTONS_OFF))
+                                                                    buttons=gopher_std_msgs.Notification.BUTTONS_OFF,
+                                                                    message="button was pressed"))
         # when the button is pressed, save the latest odom value so we can get
         # the transform between the start and end poses
         try:
@@ -471,7 +472,8 @@ class Unpark(py_trees.Behaviour):
         # need to be unplugged before we can move or be moved
         if self.still_charging:
             rospy.logdebug("Unpark : robot is still charging - waiting to be unplugged")
-            self._notify_publisher.publish(gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.FLASH_YELLOW))
+            self._notify_publisher.publish(gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.FLASH_YELLOW,
+                                                                        message="waiting to be unplugged"))
             # reset the button just in case it was accidentally pressed
             self.feedback_message = "robot is still charging - waiting to be unplugged"
             self.button_pressed = False
@@ -512,7 +514,9 @@ class Unpark(py_trees.Behaviour):
                     return py_trees.Status.SUCCESS
                 else:
                     # publish notification request to flash and turn on the go button led
-                    self._notify_publisher.publish(gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.FLASH_PURPLE, buttons=gopher_std_msgs.Notification.BUTTON_GO))
+                    self._notify_publisher.publish(gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.FLASH_PURPLE,
+                                                                                buttons=gopher_std_msgs.Notification.BUTTON_GO,
+                                                                                message="Unpark : waiting for go button press to continue"))
         return py_trees.Status.RUNNING
 
 
@@ -826,7 +830,8 @@ class NotifyComplete(py_trees.Behaviour):
 
     def update(self):
         # always returns success
-        self._notify_publisher.publish(gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.FLASH_GREEN))
+        self._notify_publisher.publish(gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.FLASH_GREEN,
+                                                                    message="successfully completed action"))
         return py_trees.Status.SUCCESS
 
 
@@ -849,7 +854,8 @@ class WaitForCharge(py_trees.Behaviour):
         self.notify_timer = rospy.Timer(rospy.Duration(5), self.send_notification)
 
     def send_notification(self, timer):
-        self._notify_publisher.publish(gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.SOLID_RED))
+        self._notify_publisher.publish(gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.SOLID_RED,
+                                                                    message="waiting for charge"))
 
     def battery_callback(self, msg):
         self.charge_state = msg.charge_state
@@ -859,7 +865,8 @@ class WaitForCharge(py_trees.Behaviour):
 
     def update(self):
         if self.charge_state == somanet_msgs.SmartBatteryStatus.CHARGING or self.button_pressed:
-            self._notify_publisher.publish(gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.CANCEL_CURRENT))
+            self._notify_publisher.publish(gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.CANCEL_CURRENT,
+                                                                        message="entered charging state or got user input"))
             return py_trees.Status.SUCCESS
         else:
             return py_trees.Status.RUNNING
