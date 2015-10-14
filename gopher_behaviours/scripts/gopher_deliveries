@@ -50,10 +50,12 @@ class GopherHiveMind(object):
     def __init__(self):
         self.battery_subtree = gopher_behaviours.battery.create_battery_tree(name="Eating Disorder")
         autoload_test_delivery = rospy.get_param("~autoload_test_delivery", False)
+        disable_begin_end = rospy.get_param("~disable_begin_end_behaviours", False)
+        print("----------==========" + str(rospy.get_param("~")))
         preloaded_semantic_locations = gopher_behaviours.delivery.desirable_destinations() if autoload_test_delivery else None  # list of gopher_std_msgs.Location objects
 
         self.gopher = gopher_configuration.Configuration()
-        self.planner = Planner(auto_go=rospy.get_param("~dont_wait_for_hoomans", False))
+        self.planner = Planner(auto_go=rospy.get_param("~dont_wait_for_hoomans", False), disable_begin_end_behaviours=disable_begin_end)
         self.current_world_subscriber = rospy.Subscriber(self.gopher.topics.world, std_msgs.String, self.current_world_callback)
         self.current_world = None
 
