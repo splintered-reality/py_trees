@@ -822,6 +822,49 @@ class Undock(py_trees.Behaviour):
             if action_state == GoalStatus.PENDING or action_state == GoalStatus.ACTIVE:
                 self.action_client.cancel_goal()
 
+class OpenDoor(py_trees.Behaviour):
+    def __init__(self, name):
+        super(OpenDoor, self).__init__(name)
+        self.door_pub = rospy.Publisher("door_control", std_msgs.Bool, queue_size=1)
+
+
+    def initialise(self):
+        self.door_status_sub = rospy.Subscriber("door_status", std_msgs.String, self.status_cb)
+        self.open_msg_sent = False
+        self.door_opened = False
+
+    def status_cb(self, msg):
+        if "Idling" in msg.data: # this is not ideal
+            self.door_opened = True
+
+    def update(self):
+        # send open door message
+        # wait for success
+        if not self.open_msg_sent:
+            self.door_pub.publish(True)
+            self.open_msg_sent = True
+            self.feedback_message = "Sent open request to door"
+            return py_trees.Status.RUNNING
+
+        if not self.door_opened:
+            self.feedback_message = "Waiting for door to open"
+            return py_trees.Status.RUNNING
+        else:
+            self.feedback_message = "Door is now open"
+            return py_trees.Status.SUCCESS
+
+class CloseDoor(py_trees.Behaviour):
+    def __init__(self, name):
+        super(CloseDoor, self).__init__(name)
+        self.door_pub = rospy.Publisher("door_ctrl", std_msgs.Bool, queue_size=1)
+
+    def initialise(self):
+        self.door_pub.publish(True)
+
+    def update(self):
+        # Don't wait for the door to finish closing
+        self.feedback_message = "Sent close request to door"
+        return py_trees.Status.SUCCESS
 
 class NotifyComplete(py_trees.Behaviour):
     def __init__(self, name):
