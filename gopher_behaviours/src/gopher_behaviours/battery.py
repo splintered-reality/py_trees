@@ -57,7 +57,7 @@ class CheckBatteryLevel(py_trees.Behaviour):
         self.battery_percentage = msg.percentage
 
 
-def create_battery_tree(name):
+def create_battery_tree(name, disable_begin_end=False):
     check_battery_level = CheckBatteryLevel("Check Battery Level")
     go_home = moveit.GoHome("Go Home To Sleep")
     root = py_trees.Sequence(children=[check_battery_level, go_home, moveit.Finishing("Finishing")], name=name)
