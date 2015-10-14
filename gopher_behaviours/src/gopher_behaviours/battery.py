@@ -60,6 +60,11 @@ class CheckBatteryLevel(py_trees.Behaviour):
 def create_battery_tree(name, disable_begin_end=False):
     check_battery_level = CheckBatteryLevel("Check Battery Level")
     go_home = moveit.GoHome("Go Home To Sleep")
-    root = py_trees.Sequence(children=[check_battery_level, go_home, moveit.Finishing("Finishing")], name=name)
+    children = []
+    if disable_begin_end:
+        children=[check_battery_level, go_home]
+    else:
+        children=[check_battery_level, go_home, moveit.Finishing("Finishing")]
+    root = py_trees.Sequence(children=children, name=name)
     
     return root
