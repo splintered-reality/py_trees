@@ -214,9 +214,12 @@ class GopherDeliveries(object):
         if locations is None or not locations:
             return (gopher_std_msgs.DeliveryErrorCodes.GOAL_EMPTY_NOTHING_TO_DO, "goal empty, nothing to do.")
         if self.state == State.IDLE:
-            self.incoming_goal = locations
-            self.always_assume_initialised = always_assume_initialised
-            return (gopher_std_msgs.DeliveryErrorCodes.SUCCESS, "assigned new goal")
+            if self.planner.check_locations(locations): # make sure locations are valid before returning success
+                self.incoming_goal = locations
+                self.always_assume_initialised = always_assume_initialised
+                return (gopher_std_msgs.DeliveryErrorCodes.SUCCESS, "assigned new goal")
+            else:
+                return (gopher_std_msgs.DeliveryErrorCodes.FUBAR, "Received invalid locations")
         elif self.state == State.WAITING:
             self.incoming_goal = locations
             self.always_assume_initialised = always_assume_initialised

@@ -63,6 +63,12 @@ class Planner():
         self.gopher = gopher_configuration.Configuration()
         self.semantics = gopher_semantics.Semantics(self.gopher.namespaces.semantics)
 
+    def check_locations(self, locations):
+        for location in locations:
+            if not location in self.semantics.locations:
+                return False
+        return True
+        
     def create_tree(self, current_world, locations, undock=True):
         """
         Find the semantic locations corresponding to the incoming string location identifier and

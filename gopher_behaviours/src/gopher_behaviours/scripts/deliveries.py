@@ -37,6 +37,9 @@ class ExpressDelivery(object):
         delivery_goal_service = rospy.ServiceProxy("/rocon/delivery/goal", gopher_std_srvs.DeliveryGoal)
         try:
             unused_delivery_goal_response = delivery_goal_service(delivery_goal_request)
+            if not unused_delivery_goal_response.result == 0:
+                print(console.red + "Delivery goal serivce call failed: %s" % unused_delivery_goal_response.error_message + console.reset)
+                sys.exit()
         except rospy.ServiceException, e:
             print(console.red + "Delivery goal service call failed: %s" % e + console.reset)
             sys.exit()
