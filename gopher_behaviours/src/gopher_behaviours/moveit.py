@@ -71,7 +71,9 @@ def inverse_times(tf1, tf2):
 
 
 # convert a transform to a human readable string
-def human_transform(t):
+def human_transform(t, oneline=False):
+    if oneline:
+        return "(x: {0}, y: {1}, yaw: {2})".format(str(t[0][0]), str(t[0][1]), str(numpy.degrees(tf.transformations.euler_from_quaternion(t[1])[2])))
     return "x translation: " + str(t[0][0]) + "\ny translation: " + str(t[0][1]) + "\n yaw: " + str(numpy.degrees(tf.transformations.euler_from_quaternion(t[1])[2]))
 
 
@@ -265,6 +267,7 @@ class Park(py_trees.Behaviour):
             rospy.logerr("Park : failed to get transform from map to base_link")
             return
 
+        self.hb = (hb_translation, hb_rotation) # store so we can use it later
         # get the relative rotation and translation between the homebase and the current position
         T_hb_to_current = inverse_times((hb_translation, hb_rotation), self.start_transform)
         # get the relative rotation between the homebase and the parking location
@@ -344,6 +347,27 @@ class Park(py_trees.Behaviour):
                 if len(self.motions_to_execute) == 0:
                     rospy.logdebug("Park : successfully completed all motions")
                     self.feedback_message = "successfully completed all motions"
+                                        self.tf_listener.waitForTransform("map", "base_link", rospy.Time(), rospy.Duration(1))
+                    self.start_transform = self.tf_listener.lookupTransform("map", "base_link", rospy.Time(0))
+                    t = tf.Transformer(True, rospy.Duration(10))
+                    cur = transform_to_transform_stamped(self.start_transform)
+                    cur.header.frame_id = "map"
+                    cur.child_frame_id = "current"
+                    t.setTransform(cur)
+
+                    hb = transform_to_transform_stamped(self.hb)
+                    hb.header.frame_id = "map"
+                    hb.child_frame_id = "homebase"
+                    t.setTransform(hb)
+
+                    park = transform_to_transform_stamped(self.blackboard.T_hb_to_parking)
+                    park.header.frame_id = "homebase"
+                    park.child_frame_id = "parking"
+                    t.setTransform(park)
+
+                    T_current_to_parking = t.lookupTransform("current", "parking", rospy.Time(0))
+                    rospy.loginfo("Disparity between parking and current location: " + human_transform(T_current_to_parking, True))
+
                     return py_trees.Status.SUCCESS
                 else:
                     motion = self.motions_to_execute.pop(0)
