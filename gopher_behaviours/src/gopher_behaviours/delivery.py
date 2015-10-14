@@ -143,14 +143,14 @@ class Waiting(py_trees.Behaviour):
         if status == py_trees.Status.RUNNING and self.go_requested:
             status = py_trees.Status.SUCCESS
         else:
-            self._notify_publisher.publish(gopher_std_msgs.Notification(buttons=gopher_std_msgs.Notification.BUTTON_GO,
+            self._notify_publisher.publish(gopher_std_msgs.Notification(button_confirm=True,
                                                                         message="at location, waiting for button press"))
         self.feedback_message = "remaining: %s" % self.blackboard.remaining_locations
         return status
 
     def _go_button_callback(self, unused_msg):
         self.go_requested = True if self.status == py_trees.Status.RUNNING else False
-        self._notify_publisher.publish(gopher_std_msgs.Notification(buttons=gopher_std_msgs.Notification.BUTTONS_OFF,
+        self._notify_publisher.publish(gopher_std_msgs.Notification(button_confirm=False,
                                                                     message="go button was pressed"))
 
 
