@@ -64,7 +64,6 @@ class Planner():
         self.semantics = gopher_semantics.Semantics(self.gopher.namespaces.semantics)
 
     def check_locations(self, locations):
-        print(self.semantics.locations)
         for location in locations:
             if not location in self.semantics.locations:
                 return False
