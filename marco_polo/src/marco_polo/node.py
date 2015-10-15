@@ -84,7 +84,7 @@ class Node(object):
         )
         self.goal_handler = goals.GoalHandler(self.publishers, self.service_proxies)
         self._publish_introspection_data()
-        self.publishers.world.publish(std_msgs.String())  # initialise the world publisher
+        self.publishers.world.publish(self.semantics.worlds.default)  # initialise the world publisher
 
         # look for an initial world from rosparam server
         goal = gopher_navi_msgs.TeleportGoal()

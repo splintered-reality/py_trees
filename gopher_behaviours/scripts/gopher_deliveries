@@ -48,12 +48,13 @@ def show_usage(root):
 
 class GopherHiveMind(object):
     def __init__(self):
-        self.battery_subtree = gopher_behaviours.battery.create_battery_tree(name="Eating Disorder")
-        autoload_test_delivery = rospy.get_param("~autoload_test_delivery", False)
-        preloaded_semantic_locations = gopher_behaviours.delivery.desirable_destinations() if autoload_test_delivery else None  # list of gopher_std_msgs.Location objects
 
+        autoload_test_delivery = rospy.get_param("~autoload_test_delivery", False)
+        disable_begin_end = rospy.get_param("~disable_begin_end_behaviours", False)
+        preloaded_semantic_locations = gopher_behaviours.delivery.desirable_destinations() if autoload_test_delivery else None  # list of gopher_std_msgs.Location objects
+        self.battery_subtree = gopher_behaviours.battery.create_battery_tree(name="Eating Disorder", disable_begin_end=disable_begin_end)
         self.gopher = gopher_configuration.Configuration()
-        self.planner = Planner(auto_go=rospy.get_param("~dont_wait_for_hoomans", False))
+        self.planner = Planner(auto_go=rospy.get_param("~dont_wait_for_hoomans", False), disable_begin_end_behaviours=disable_begin_end)
         self.current_world_subscriber = rospy.Subscriber(self.gopher.topics.world, std_msgs.String, self.current_world_callback)
         self.current_world = None
 
@@ -65,6 +66,7 @@ class GopherHiveMind(object):
         self.render = False
         self.success = None  # non goal
         self.cancelled = False
+        self.current_eta = gopher_std_msgs.ETA() # empty ETA
 
         ##################################
         # Ros Components
@@ -73,8 +75,12 @@ class GopherHiveMind(object):
         self._delivery_goal_service = rospy.Service('delivery/goal', gopher_std_srvs.DeliveryGoal, self._goal_service_callback)
         self._delivery_feedback_publisher = rospy.Publisher('delivery/feedback', gopher_std_msgs.DeliveryFeedback, queue_size=1, latch=True)
         self._delivery_goal_cancel_sub = rospy.Subscriber('delivery/cancel', std_msgs.Empty, self._goal_cancel_callback)
+        self._eta_sub = rospy.Subscriber('/navi/eta', gopher_std_msgs.ETA, self._eta_callback)
         self._stop_sub = rospy.Subscriber('/gopher/buttons/stop', std_msgs.Empty, self._stop_callback)
         self._delivery_result_service = rospy.Service('delivery/result', gopher_std_srvs.DeliveryResult, self._result_service_callback)
+
+    def _eta_callback(self, msg):
+        self.current_eta = msg
 
     def current_world_callback(self, msg):
         """
@@ -129,6 +135,7 @@ class GopherHiveMind(object):
             msg.traversed_locations = self.quirky_deliveries.blackboard.traversed_locations
             msg.remaining_locations = self.quirky_deliveries.blackboard.remaining_locations
             msg.status_message = self.quirky_deliveries.feedback_message
+            msg.eta = self.current_eta
             self._delivery_feedback_publisher.publish(msg)
         if self.quirky_deliveries.succeeded_on_last_tick():
             self.success = True
