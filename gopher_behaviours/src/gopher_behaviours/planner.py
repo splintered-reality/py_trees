@@ -56,12 +56,19 @@ def find_topological_path(world, locations, semantics):
 
 class Planner():
 
-    def __init__(self, auto_go):
+    def __init__(self, auto_go, disable_begin_end_behaviours=False):
         self.current_location = None
+        self.disable_be_beh = disable_begin_end_behaviours
         self.auto_go = auto_go
         self.gopher = gopher_configuration.Configuration()
         self.semantics = gopher_semantics.Semantics(self.gopher.namespaces.semantics)
 
+    def check_locations(self, locations):
+        for location in locations:
+            if not location in self.semantics.locations:
+                return False
+        return True
+        
     def create_tree(self, current_world, locations, undock=True):
         """
         Find the semantic locations corresponding to the incoming string location identifier and
@@ -110,12 +117,12 @@ class Planner():
         #################################################
         # Parking/Unparking or Docking/Undocking
         #################################################
-        if undock:
+        if undock and not self.disable_be_beh:
             children.insert(0, moveit.Starting("Starting"))
 
         # assume that we will go back to somewhere with a dock at the end of
         # each task, but only if the last location is homebase
-        if locations[-1] == 'homebase':
+        if locations[-1] == 'homebase' and not self.disable_be_beh:
             children.append(moveit.Finishing("Finishing"))
 
         return children
