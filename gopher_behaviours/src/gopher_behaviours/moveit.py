@@ -825,7 +825,7 @@ class Undock(py_trees.Behaviour):
 class OpenDoor(py_trees.Behaviour):
     def __init__(self, name):
         super(OpenDoor, self).__init__(name)
-        self.door_pub = rospy.Publisher("door_control", std_msgs.Bool, queue_size=1)
+        self.door_pub = rospy.Publisher("door_ctrl", std_msgs.Bool, queue_size=1)
 
 
     def initialise(self):
