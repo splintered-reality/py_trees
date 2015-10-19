@@ -13,20 +13,20 @@
   <arg name="disable_begin_end_behaviours"     default="false" doc="prevent the planner from adding the starting and ending groups to the behaviour tree"/> 
 
   <node name="gopher_deliveries" type="gopher_deliveries" pkg="gopher_behaviours">
-    <remap from="gopher_deliveries/battery"               to="/gopher/status/battery_slow"/>
-    <remap from="gopher_deliveries/move_base/cancel"      to="/navi/move_base/cancel"/>
-    <remap from="gopher_deliveries/move_base/feedback"    to="/navi/move_base/feedback"/>
-    <remap from="gopher_deliveries/move_base/goal"        to="/navi/move_base/goal"/>
-    <remap from="gopher_deliveries/move_base/result"      to="/navi/move_base/result"/>
-    <remap from="gopher_deliveries/move_base/status"      to="/navi/move_base/status"/>
-    <remap from="gopher_deliveries/semantic_locations"    to="/navi/semantic_locations"/>
-    <remap from="gopher_deliveries/display_notification"  to="/gopher/status_notifier/display_notification"/>
+    <remap from="gopher_deliveries/battery"                            to="/gopher/status/battery_slow"/>
+    <remap from="gopher_deliveries/move_base/cancel"                   to="/navi/move_base/cancel"/>
+    <remap from="gopher_deliveries/move_base/feedback"                 to="/navi/move_base/feedback"/>
+    <remap from="gopher_deliveries/move_base/goal"                     to="/navi/move_base/goal"/>
+    <remap from="gopher_deliveries/move_base/result"                   to="/navi/move_base/result"/>
+    <remap from="gopher_deliveries/move_base/status"                   to="/navi/move_base/status"/>
+    <remap from="gopher_deliveries/semantic_locations"                 to="/navi/semantic_locations"/>
+    <remap from="gopher_deliveries/display_notification"               to="/gopher/status_notifier/display_notification"/>
     
-    <remap from="gopher_deliveries/autonomous_docking/cancel"    to="/gopher/autonomous_docking/cancel"/>
-    <remap from="gopher_deliveries/autonomous_docking/feedback"  to="/gopher/autonomous_docking/feedback"/>
-    <remap from="gopher_deliveries/autonomous_docking/goal"      to="/gopher/autonomous_docking/goal"/>
-    <remap from="gopher_deliveries/autonomous_docking/result"    to="/gopher/autonomous_docking/result"/>
-    <remap from="gopher_deliveries/autonomous_docking/status"    to="/gopher/autonomous_docking/status"/>
+    <remap from="gopher_deliveries/autonomous_docking/cancel"          to="/gopher/autonomous_docking/cancel"/>
+    <remap from="gopher_deliveries/autonomous_docking/feedback"        to="/gopher/autonomous_docking/feedback"/>
+    <remap from="gopher_deliveries/autonomous_docking/goal"            to="/gopher/autonomous_docking/goal"/>
+    <remap from="gopher_deliveries/autonomous_docking/result"          to="/gopher/autonomous_docking/result"/>
+    <remap from="gopher_deliveries/autonomous_docking/status"          to="/gopher/autonomous_docking/status"/>
 
     <remap from="gopher_deliveries/simple_motion_controller/cancel"    to="/gopher/simple_motion_controller/cancel"/>
     <remap from="gopher_deliveries/simple_motion_controller/feedback"  to="/gopher/simple_motion_controller/feedback"/>
@@ -34,18 +34,20 @@
     <remap from="gopher_deliveries/simple_motion_controller/result"    to="/gopher/simple_motion_controller/result"/>
     <remap from="gopher_deliveries/simple_motion_controller/status"    to="/gopher/simple_motion_controller/status"/>
     
-    <remap from="gopher_deliveries/dot_tree"        to="/gopher/behaviours/dot_tree"/>
-    <remap from="gopher_deliveries/tick/dot_tree"   to="/gopher/behaviours/tick/dot_tree"/>
-    <remap from="gopher_deliveries/ascii_tree"      to="/gopher/behaviours/ascii_tree"/>
-    <remap from="gopher_deliveries/tick/ascii_tree" to="/gopher/behaviours/tick/ascii_tree"/>
-    
-    <remap from="delivery/goal"                         to="/rocon/delivery/goal"/>
-    <remap from="delivery/feedback"                     to="/rocon/delivery/feedback"/>
-    <remap from="delivery/cancel"                       to="/rocon/delivery/cancel"/>
-    <remap from="delivery/result"                       to="/rocon/delivery/result"/>
-    <remap from="delivery/go"                           to="/gopher/buttons/go"/>
+    <remap from="gopher_deliveries/dot_tree"                           to="/gopher/behaviours/dot_tree"/>
+    <remap from="gopher_deliveries/tick/dot_tree"                      to="/gopher/behaviours/tick/dot_tree"/>
+    <remap from="gopher_deliveries/ascii_tree"                         to="/gopher/behaviours/ascii_tree"/>
+    <remap from="gopher_deliveries/tick/ascii_tree"                    to="/gopher/behaviours/tick/ascii_tree"/>
 
-    <remap from="ar_pose_marker_short_range"            to="/gopher/ar_pose_marker_short_range"/>
+    <remap from="gopher_deliveries/door_operator"                      to="/concert/door_operator"/>
+
+    <remap from="delivery/goal"                                        to="/rocon/delivery/goal"/>
+    <remap from="delivery/feedback"                                    to="/rocon/delivery/feedback"/>
+    <remap from="delivery/cancel"                                      to="/rocon/delivery/cancel"/>
+    <remap from="delivery/result"                                      to="/rocon/delivery/result"/>
+    <remap from="delivery/go"                                          to="/gopher/buttons/go"/>
+
+    <remap from="ar_pose_marker_short_range"                           to="/gopher/ar_pose_marker_short_range"/>
     
     <!-- Battery level information parameters for activating the low battery
          tree-->

@@ -35,6 +35,8 @@ import py_trees
 import tf
 import rospy
 import numpy
+from door_interactions_msgs.msg import DoorControlPair, DoorControlRequest, DoorControlResponse
+from rocon_python_comms import ServicePairClient
 from .time import Pause
 from gopher_semantics.semantics import Semantics
 from gopher_semantics.docking_stations import DockingStations
@@ -825,43 +827,69 @@ class Undock(py_trees.Behaviour):
 class OpenDoor(py_trees.Behaviour):
     def __init__(self, name):
         super(OpenDoor, self).__init__(name)
-        self.door_pub = rospy.Publisher("door_ctrl", std_msgs.Bool, queue_size=1)
-
+        self.service_client = ServicePairClient('~door_operator', DoorControlPair)
+        rospy.sleep(0.2) # make sure the service client is initialised
 
     def initialise(self):
-        self.door_status_sub = rospy.Subscriber("door_status", std_msgs.String, self.status_cb)
         self.open_msg_sent = False
         self.door_opened = False
-
-    def status_cb(self, msg):
-        if "Idling" in msg.data: # this is not ideal
-            self.door_opened = True
 
     def update(self):
         # send open door message
         # wait for success
         if not self.open_msg_sent:
-            self.door_pub.publish(True)
+            req = DoorControlRequest()
+            req.stamp = rospy.Time.now()
+            req.cmd = DoorControlRequest.OPEN_DOOR
+            resp = self.service_client(req, rospy.Duration(2))
+            if resp and resp.cmd_resp == DoorControlResponse.IGN:
+                # door is already open
+                print("door already open")
+                self.feedback_message = "Door was already open"
+                return py_trees.Status.SUCCESS
+            print("sending door open")
             self.open_msg_sent = True
             self.feedback_message = "Sent open request to door"
             return py_trees.Status.RUNNING
 
         if not self.door_opened:
-            self.feedback_message = "Waiting for door to open"
-            return py_trees.Status.RUNNING
-        else:
-            self.feedback_message = "Door is now open"
-            return py_trees.Status.SUCCESS
+            req = DoorControlRequest()
+            req.stamp = rospy.Time.now()
+            req.cmd = DoorControlRequest.GET_STATUS
+            try:
+                resp = self.service_client(req,
+                                           timeout=rospy.Duration(0.3))
+                print(resp)
+            except rospy.ROSException as exc:
+                rospy.logwarn(self._visitor_name + " : Timed out while waiting for service server's response ("
+                              + str(exc))
+                return py_trees.Status.FAILURE
+            except rospy.ROSInterruptException as exc:
+                rospy.logerr(self._visitor_name + " : ROS has been shut down while waiting for service server's reponse. ("
+                             + str(exc) + ").")
+                return py_trees.Status.FAILURE
+
+            if resp.status == DoorControlResponse.DOOR_OPENING:
+                print("waiting for door")
+                self.feedback_message = "Waiting for door to open"
+                return py_trees.Status.RUNNING
+            else:
+                print("door is open")
+                self.feedback_message = "Door is now open"
+                return py_trees.Status.SUCCESS
 
 class CloseDoor(py_trees.Behaviour):
     def __init__(self, name):
         super(CloseDoor, self).__init__(name)
-        self.door_pub = rospy.Publisher("door_ctrl", std_msgs.Bool, queue_size=1)
-
-    def initialise(self):
-        self.door_pub.publish(True)
+        self.service_client = ServicePairClient('~door_operator', DoorControlPair)
+        rospy.sleep(0.2) # make sure the service client is initialised
 
     def update(self):
+        req = DoorControlRequest()
+        req.stamp = rospy.Time.now()
+        req.cmd = DoorControlRequest.CLOSE_DOOR
+        resp = self.service_client(req, rospy.Duration(0.3))
+
         # Don't wait for the door to finish closing
         self.feedback_message = "Sent close request to door"
         return py_trees.Status.SUCCESS
