@@ -411,7 +411,7 @@ class Unpark(py_trees.Behaviour):
     def button_callback(self, msg):
         self.button_pressed = True
         self._notify_publisher.publish(gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.CANCEL_CURRENT,
-                                                                    button_confirm=False,
+                                                                    button_confirm=gopher_std_msgs.Notification.BUTTON_OFF,
                                                                     message="button was pressed"))
         # when the button is pressed, save the latest odom value so we can get
         # the transform between the start and end poses
@@ -515,7 +515,7 @@ class Unpark(py_trees.Behaviour):
                 else:
                     # publish notification request to flash and turn on the go button led
                     self._notify_publisher.publish(gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.FLASH_PURPLE,
-                                                                                button_confirm=True,
+                                                                                button_confirm=gopher_std_msgs.Notification.BUTTON_ON,
                                                                                 message="Unpark : waiting for go button press to continue"))
         return py_trees.Status.RUNNING
 
