@@ -412,6 +412,7 @@ class Unpark(py_trees.Behaviour):
         self.button_pressed = True
         self._notify_publisher.publish(gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.CANCEL_CURRENT,
                                                                     button_confirm=gopher_std_msgs.Notification.BUTTON_OFF,
+                                                                    button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
                                                                     message="button was pressed"))
         # when the button is pressed, save the latest odom value so we can get
         # the transform between the start and end poses
@@ -473,6 +474,8 @@ class Unpark(py_trees.Behaviour):
         if self.still_charging:
             rospy.logdebug("Unpark : robot is still charging - waiting to be unplugged")
             self._notify_publisher.publish(gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.FLASH_YELLOW,
+                                                                        button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
+                                                                        button_confirm=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
                                                                         message="waiting to be unplugged"))
             # reset the button just in case it was accidentally pressed
             self.feedback_message = "robot is still charging - waiting to be unplugged"
@@ -516,6 +519,7 @@ class Unpark(py_trees.Behaviour):
                     # publish notification request to flash and turn on the go button led
                     self._notify_publisher.publish(gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.FLASH_PURPLE,
                                                                                 button_confirm=gopher_std_msgs.Notification.BUTTON_ON,
+                                                                                button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
                                                                                 message="Unpark : waiting for go button press to continue"))
         return py_trees.Status.RUNNING
 
@@ -831,6 +835,8 @@ class NotifyComplete(py_trees.Behaviour):
     def update(self):
         # always returns success
         self._notify_publisher.publish(gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.FLASH_GREEN,
+                                                                    button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
+                                                                    button_confirm=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
                                                                     message="successfully completed action"))
         return py_trees.Status.SUCCESS
 
@@ -855,6 +861,8 @@ class WaitForCharge(py_trees.Behaviour):
 
     def send_notification(self, timer):
         self._notify_publisher.publish(gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.SOLID_RED,
+                                                                    button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
+                                                                    button_confirm=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
                                                                     message="waiting for charge"))
 
     def battery_callback(self, msg):
@@ -866,6 +874,8 @@ class WaitForCharge(py_trees.Behaviour):
     def update(self):
         if self.charge_state == somanet_msgs.SmartBatteryStatus.CHARGING or self.button_pressed:
             self._notify_publisher.publish(gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.CANCEL_CURRENT,
+                                                                        button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
+                                                                        button_confirm=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
                                                                         message="entered charging state or got user input"))
             return py_trees.Status.SUCCESS
         else:
