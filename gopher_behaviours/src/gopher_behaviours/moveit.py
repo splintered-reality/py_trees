@@ -170,7 +170,7 @@ class SimpleMotion():
 
         self.has_goal = True
         goal.motion_amount = value
-        goal.unsafe = False
+        goal.unsafe = True
         self.action_client.send_goal(goal)
 
     def complete(self):
@@ -232,12 +232,15 @@ class WasDocked(py_trees.Behaviour):
 
 
 class Park(py_trees.Behaviour):
+    time = None
     def __init__(self, name):
         super(Park, self).__init__(name)
         self.tf_listener = tf.TransformListener()
         self.semantic_locations = Semantics()
         self.motion = SimpleMotion()
         self.blackboard = Blackboard()
+        if Park.time == None:
+            Park.time = rospy.Time.now()
 
     def initialise(self):
         self.not_unparked = False
@@ -262,14 +265,14 @@ class Park(py_trees.Behaviour):
         # get the current position of the robot as a transform from map to base link
         try:
             self.tf_listener.waitForTransform("map", "base_link", rospy.Time(), rospy.Duration(1))
-            self.start_transform = self.tf_listener.lookupTransform("map", "base_link", rospy.Time(0))
+            self.current_transform = self.tf_listener.lookupTransform("map", "base_link", rospy.Time(0))
         except tf.Exception:
             rospy.logerr("Park : failed to get transform from map to base_link")
             return
 
         self.hb = (hb_translation, hb_rotation) # store so we can use it later
         # get the relative rotation and translation between the homebase and the current position
-        T_hb_to_current = inverse_times((hb_translation, hb_rotation), self.start_transform)
+        T_hb_to_current = inverse_times((hb_translation, hb_rotation), self.current_transform)
         # get the relative rotation between the homebase and the parking location
         T_hb_to_parking = self.blackboard.T_hb_to_parking
 
@@ -319,7 +322,7 @@ class Park(py_trees.Behaviour):
         self.motion.execute(motion[0], motion[1])
 
     def update(self):
-        if self.start_transform is None:
+        if self.current_transform is None:
             rospy.logdebug("Park : could not get current transform from map to base_link")
             self.feedback_message = "could not get current transform from map to base_link"
             return py_trees.Status.FAILURE
@@ -339,6 +342,33 @@ class Park(py_trees.Behaviour):
                 self.blackboard.unpark_success = False
                 rospy.logdebug("Park : motion failed")
                 self.feedback_message = "motion failed"
+                self.tf_listener.waitForTransform("map", "base_link", rospy.Time(), rospy.Duration(1))
+                self.current_transform = self.tf_listener.lookupTransform("map", "base_link", rospy.Time(0))
+                t = tf.Transformer(True, rospy.Duration(10))
+                cur = transform_to_transform_stamped(self.current_transform)
+                cur.header.frame_id = "map"
+                cur.child_frame_id = "current"
+                t.setTransform(cur)
+
+                hb = transform_to_transform_stamped(self.hb)
+                hb.header.frame_id = "map"
+                hb.child_frame_id = "homebase"
+                t.setTransform(hb)
+
+                park = transform_to_transform_stamped(self.blackboard.T_hb_to_parking)
+                park.header.frame_id = "homebase"
+                park.child_frame_id = "parking"
+                t.setTransform(park)
+
+                T_current_to_parking = t.lookupTransform("current", "parking", rospy.Time(0))
+                T_map_to_parking = t.lookupTransform("map", "parking", rospy.Time(0))
+                with open("/opt/groot/parkinglog-" + str(Park.time) + ".txt", "a") as f:
+                    f.write("--------------------FAILURE--------------------\n")
+                    f.write("homebase" + human_transform(self.hb, oneline=True) + "\n")
+                    f.write("parking" + human_transform(T_map_to_parking, oneline=True) + "\n")
+                    f.write("finishing" + human_transform(self.current_transform, oneline=True) + "\n")
+                    f.write("disparity" + human_transform(T_current_to_parking, oneline=True) + "\n")
+                    
                 return py_trees.Status.FAILURE
             else:
                 # The motion successfully completed. Check if there is another
@@ -347,10 +377,10 @@ class Park(py_trees.Behaviour):
                 if len(self.motions_to_execute) == 0:
                     rospy.logdebug("Park : successfully completed all motions")
                     self.feedback_message = "successfully completed all motions"
-                                        self.tf_listener.waitForTransform("map", "base_link", rospy.Time(), rospy.Duration(1))
-                    self.start_transform = self.tf_listener.lookupTransform("map", "base_link", rospy.Time(0))
+                    self.tf_listener.waitForTransform("map", "base_link", rospy.Time(), rospy.Duration(1))
+                    self.current_transform = self.tf_listener.lookupTransform("map", "base_link", rospy.Time(0))
                     t = tf.Transformer(True, rospy.Duration(10))
-                    cur = transform_to_transform_stamped(self.start_transform)
+                    cur = transform_to_transform_stamped(self.current_transform)
                     cur.header.frame_id = "map"
                     cur.child_frame_id = "current"
                     t.setTransform(cur)
@@ -366,7 +396,13 @@ class Park(py_trees.Behaviour):
                     t.setTransform(park)
 
                     T_current_to_parking = t.lookupTransform("current", "parking", rospy.Time(0))
-                    rospy.loginfo("Disparity between parking and current location: " + human_transform(T_current_to_parking, True))
+                    T_map_to_parking = t.lookupTransform("map", "parking", rospy.Time(0))
+                    with open("/opt/groot/parkinglog-" + str(Park.time) + ".txt", "a") as f:
+                        f.write("--------------------SUCCESS--------------------\n")
+                        f.write("homebase" + human_transform(self.hb, oneline=True) + "\n")
+                        f.write("parking" + human_transform(T_map_to_parking, oneline=True) + "\n")
+                        f.write("finishing" + human_transform(self.current_transform, oneline=True) + "\n")
+                        f.write("disparity" + human_transform(T_current_to_parking, oneline=True) + "\n")
 
                     return py_trees.Status.SUCCESS
                 else:
@@ -410,6 +446,7 @@ class Unpark(py_trees.Behaviour):
         self.homebase = None  # set this in the initialise() step
         self.end_transform = None
         self.start_transform = None
+        self.dslam_initialised = None
         self.lookup_attempts = 0
         self.blackboard.parked = True  # set this to true to indicate that the robot was parked, for the wasdocked behaviour
 
@@ -519,6 +556,7 @@ class Unpark(py_trees.Behaviour):
                 return py_trees.Status.SUCCESS
             else:
                 rospy.logdebug("Unpark : waiting for go button to be pressed to indicate homebase")
+                self.feedback_message = "waiting for go button to be pressed to indicate homebase"
                 # otherwise, the robot needs to be guided to the homebase by
                 # someone - pressing the go button indicates that the homebase
                 # has been reached.
