@@ -51,6 +51,7 @@ def parse_arguments(command_line_args):
 
     parser.add_argument('-l', '--locations', action='store_true', help='list available delivery locations')
     parser.add_argument('-p', '--parking', action='store_true', help='include parking/unparking behaviours in the delivery run')
+    parser.add_argument('-d', '--cycle_door', action='store_true', help='open the door before leaving, and close it after completing')
 
     parser.add_argument('delivery_locations', nargs='*', default=None, help='locations to delivery to.')
 
@@ -89,5 +90,5 @@ if __name__ == '__main__':
     args = parse_arguments(command_line_args)
 
     express_delivery = gopher_behaviours.scripts.deliveries.ExpressDelivery()
-    express_delivery.send(args.delivery_locations, args.parking)
+    express_delivery.send(args.delivery_locations, args.parking, args.cycle_door)
     express_delivery.spin()

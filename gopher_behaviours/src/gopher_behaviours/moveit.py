@@ -848,10 +848,8 @@ class OpenDoor(py_trees.Behaviour):
             resp = self.service_client(req, rospy.Duration(2))
             if resp and resp.cmd_resp == DoorControlResponse.IGN:
                 # door is already open
-                print("door already open")
                 self.feedback_message = "Door was already open"
                 return py_trees.Status.SUCCESS
-            print("sending door open")
             self.open_msg_sent = True
             self.feedback_message = "Sent open request to door"
             return py_trees.Status.RUNNING
@@ -863,7 +861,6 @@ class OpenDoor(py_trees.Behaviour):
             try:
                 resp = self.service_client(req,
                                            timeout=rospy.Duration(0.3))
-                print(resp)
             except rospy.ROSException as exc:
                 rospy.logwarn(self._visitor_name + " : Timed out while waiting for service server's response ("
                               + str(exc))
@@ -873,12 +870,10 @@ class OpenDoor(py_trees.Behaviour):
                              + str(exc) + ").")
                 return py_trees.Status.FAILURE
 
-            if resp.status == DoorControlResponse.DOOR_OPENING:
-                print("waiting for door")
+            if resp and resp.status == DoorControlResponse.DOOR_OPENING:
                 self.feedback_message = "Waiting for door to open"
                 return py_trees.Status.RUNNING
             else:
-                print("door is open")
                 self.feedback_message = "Door is now open"
                 return py_trees.Status.SUCCESS
 

@@ -168,7 +168,7 @@ class GopherHiveMind(object):
             message = "refused goal request : [Not enough battery power to accept a goal right now.]"
             rospy.logwarn("Delivery : [%s]" % message)
         else:
-            (result, message) = self.quirky_deliveries.set_goal(request.semantic_locations, request.always_assume_initialised)
+            (result, message) = self.quirky_deliveries.set_goal(request.semantic_locations, request.always_assume_initialised, request.cycle_door)
             if result == gopher_std_msgs.DeliveryErrorCodes.SUCCESS:
                 message = "received goal request [%s]" % message
                 rospy.loginfo("Delivery : [%s]" % message)

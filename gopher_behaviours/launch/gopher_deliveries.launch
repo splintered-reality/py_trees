@@ -21,7 +21,7 @@
     <remap from="gopher_deliveries/move_base/status"                   to="/navi/move_base/status"/>
     <remap from="gopher_deliveries/semantic_locations"                 to="/navi/semantic_locations"/>
     <remap from="gopher_deliveries/display_notification"               to="/gopher/status_notifier/display_notification"/>
-    
+
     <remap from="gopher_deliveries/autonomous_docking/cancel"          to="/gopher/autonomous_docking/cancel"/>
     <remap from="gopher_deliveries/autonomous_docking/feedback"        to="/gopher/autonomous_docking/feedback"/>
     <remap from="gopher_deliveries/autonomous_docking/goal"            to="/gopher/autonomous_docking/goal"/>
@@ -33,13 +33,14 @@
     <remap from="gopher_deliveries/simple_motion_controller/goal"      to="/gopher/simple_motion_controller/goal"/>
     <remap from="gopher_deliveries/simple_motion_controller/result"    to="/gopher/simple_motion_controller/result"/>
     <remap from="gopher_deliveries/simple_motion_controller/status"    to="/gopher/simple_motion_controller/status"/>
-    
+
     <remap from="gopher_deliveries/dot_tree"                           to="/gopher/behaviours/dot_tree"/>
     <remap from="gopher_deliveries/tick/dot_tree"                      to="/gopher/behaviours/tick/dot_tree"/>
     <remap from="gopher_deliveries/ascii_tree"                         to="/gopher/behaviours/ascii_tree"/>
     <remap from="gopher_deliveries/tick/ascii_tree"                    to="/gopher/behaviours/tick/ascii_tree"/>
 
-    <remap from="gopher_deliveries/door_operator"                      to="/concert/door_operator"/>
+    <remap from="gopher_deliveries/door_operator/request"              to="/concert/door_operator/request"/>
+    <remap from="gopher_deliveries/door_operator/response"             to="/concert/door_operator/response"/>
 
     <remap from="delivery/goal"                                        to="/rocon/delivery/goal"/>
     <remap from="delivery/feedback"                                    to="/rocon/delivery/feedback"/>
@@ -48,7 +49,7 @@
     <remap from="delivery/go"                                          to="/gopher/buttons/go"/>
 
     <remap from="ar_pose_marker_short_range"                           to="/gopher/ar_pose_marker_short_range"/>
-    
+
     <!-- Battery level information parameters for activating the low battery
          tree-->
     <rosparam command="load" file="$(arg battery_levels_yaml)"/>
