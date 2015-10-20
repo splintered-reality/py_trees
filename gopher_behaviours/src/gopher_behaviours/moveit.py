@@ -225,7 +225,9 @@ class WasDocked(py_trees.Behaviour):
         self.blackboard = Blackboard()
 
     def update(self):
-        if self.blackboard.parked:
+        if not hasattr(self.blackboard, 'parked'):
+            return py_trees.Status.FAILURE
+        elif self.blackboard.parked:
             return py_trees.Status.FAILURE
         else:
             return py_trees.Status.SUCCESS
