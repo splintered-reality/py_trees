@@ -189,7 +189,7 @@ class GoalHandler(object):
                 return False
             if location.world not in self.semantics.worlds:
                 self.result.value = gopher_navi_msgs.TeleportResult.ERROR_MAP_FILE_DOES_NOT_EXIST
-                self.result.message = "requested semantic world map file does not exist [%s]" % location.world
+                self.result.message = "requested semantic world map file does not exist [%s]. Use gopher_maps -d %s to download it." % (location.world, location.world)
                 return False
             self.command.map_filename = self.worlds[location.world]
             self.command.pose = utilities.msg_pose2d_to_pose_with_covariance_stamped(location.pose, self.gopher.frames.map)
