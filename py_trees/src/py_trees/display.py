@@ -61,13 +61,18 @@ def generate_ascii_tree(tree, indent=0, snapshot_information=None):
         else:
             yield "%s" % tree.name
     for child in tree.children:
+        bullet = "--> "
+        if isinstance(child, Sequence):
+            bullet = "[-] "
+        elif isinstance(child, Selector):
+            bullet = "(-) "
         if child.id in nodes:
             message = "" if not child.feedback_message else " -- " + child.feedback_message
-            yield "    " * indent + "--> " + child.name + " [%s]" % _behaviour_status_to_ascii[nodes[child.id]] + message
+            yield "    " * indent + bullet + child.name + " [%s]" % _behaviour_status_to_ascii[nodes[child.id]] + message
         elif child.id in previously_running_nodes and child.id not in running_nodes:
-            yield "    " * indent + "--> " + child.name + " [" + console.red + "x" + console.reset + "]"
+            yield "    " * indent + bullet + child.name + " [" + console.red + "x" + console.reset + "]"
         else:
-            yield "    " * indent + "--> " + child.name
+            yield "    " * indent + bullet + child.name
         if child.children != []:
             for line in generate_ascii_tree(child, indent + 1, snapshot_information):
                 yield line
