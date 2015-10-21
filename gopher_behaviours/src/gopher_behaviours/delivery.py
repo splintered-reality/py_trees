@@ -143,14 +143,18 @@ class Waiting(py_trees.Behaviour):
         if status == py_trees.Status.RUNNING and self.go_requested:
             status = py_trees.Status.SUCCESS
         else:
-            self._notify_publisher.publish(gopher_std_msgs.Notification(buttons=gopher_std_msgs.Notification.BUTTON_GO,
+            self._notify_publisher.publish(gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
+                                                                        button_confirm=gopher_std_msgs.Notification.BUTTON_ON,
+                                                                        button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
                                                                         message="at location, waiting for button press"))
         self.feedback_message = "remaining: %s" % self.blackboard.remaining_locations
         return status
 
     def _go_button_callback(self, unused_msg):
         self.go_requested = True if self.status == py_trees.Status.RUNNING else False
-        self._notify_publisher.publish(gopher_std_msgs.Notification(buttons=gopher_std_msgs.Notification.BUTTONS_OFF,
+        self._notify_publisher.publish(gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
+                                                                    button_confirm=gopher_std_msgs.Notification.BUTTON_OFF,
+                                                                    button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
                                                                     message="go button was pressed"))
 
 
@@ -214,9 +218,12 @@ class GopherDeliveries(object):
         if locations is None or not locations:
             return (gopher_std_msgs.DeliveryErrorCodes.GOAL_EMPTY_NOTHING_TO_DO, "goal empty, nothing to do.")
         if self.state == State.IDLE:
-            self.incoming_goal = locations
-            self.always_assume_initialised = always_assume_initialised
-            return (gopher_std_msgs.DeliveryErrorCodes.SUCCESS, "assigned new goal")
+            if self.planner.check_locations(locations): # make sure locations are valid before returning success
+                self.incoming_goal = locations
+                self.always_assume_initialised = always_assume_initialised
+                return (gopher_std_msgs.DeliveryErrorCodes.SUCCESS, "assigned new goal")
+            else:
+                return (gopher_std_msgs.DeliveryErrorCodes.FUBAR, "Received invalid locations")
         elif self.state == State.WAITING:
             self.incoming_goal = locations
             self.always_assume_initialised = always_assume_initialised
