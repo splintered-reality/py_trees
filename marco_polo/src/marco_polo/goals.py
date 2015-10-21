@@ -137,7 +137,7 @@ class GoalHandler(object):
             try:
                 self.service_proxies.clear_costmaps()
             except rospy.ServiceException:
-                rospy.logwarn("Marco Polo : failed to clear costmaps, wrong service name name? [%s]" % self.gopher.services.clear_costmap)
+                rospy.logwarn("Marco Polo : failed to clear costmaps, wrong/nonexistent service name? [%s]" % self.gopher.services.clear_costmaps)
             except rospy.ROSInterruptException:
                 rospy.logwarn("Marco Polo : interrupted while trying to clear costmaps, probably ros shutting down")
             self.execution_state = ExecutionState.IDLE
