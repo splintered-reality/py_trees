@@ -86,7 +86,13 @@ if __name__ == '__main__':
         if args.download not in available.keys():
             print(console.red + "\nERROR: map '%s' not available, aborting.\n" % args.download + console.reset)
             sys.exit(1)
-        local_filename = os.path.join(marco_polo.utilities.get_gopher_home(), "maps", args.download + ".dslam")
+        local_directory = os.path.join(marco_polo.utilities.get_gopher_home(), "maps")
+        try:
+            os.makedirs(local_directory)
+        except OSError:
+            # already exists, do nothing
+            pass
+        local_filename = os.path.join(local_directory, args.download + ".dslam")
         print(console.green + "\nDownloading " + console.reset + local_filename + "...")
         # see http://stackoverflow.com/questions/22676/how-do-i-download-a-file-over-http-using-python
         # for a download with no. of bytes and progress status
