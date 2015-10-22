@@ -18,10 +18,14 @@ topics:
 
 services:
   clear_costmaps: /navi/move_base/clear_costmaps
+  delivery: /rocon/delivery
+  door_operator: /concert/door_operator
 
 actions:
   teleport: /navi/teleport
   move_base: /navi/move_base
+  autonomous_docking: /gopher/autonomous_docking
+  simple_motion_controller: /gopher/simple_motion_controller
 
 namespaces:
   semantics: /rocon/semantics

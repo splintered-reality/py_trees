@@ -35,6 +35,7 @@ import py_trees
 import tf
 import rospy
 import numpy
+import gopher_configuration
 from door_interactions_msgs.msg import DoorControlPair, DoorControlRequest, DoorControlResponse
 from rocon_python_comms import ServicePairClient
 from .time import Pause
@@ -149,7 +150,9 @@ class Finishing(py_trees.Selector):
 
 class SimpleMotion():
     def __init__(self):
-        self.action_client = actionlib.SimpleActionClient('~simple_motion_controller', gopher_std_msgs.SimpleMotionAction)
+        self.config = gopher_configuration.Configuration()
+        self.action_client = actionlib.SimpleActionClient(self.config.actions.simple_motion_controller,
+                                                          gopher_std_msgs.SimpleMotionAction)
         self.has_goal = False
 
     # Motion is either rotation or translation, value is corresponding rotation in radians, or distance in metres
@@ -367,8 +370,9 @@ class Park(py_trees.Behaviour):
 class Unpark(py_trees.Behaviour):
     def __init__(self, name):
         super(Unpark, self).__init__(name)
-        self._notify_publisher = rospy.Publisher("~display_notification", gopher_std_msgs.Notification, queue_size=1)
-        self._location_publisher = rospy.Publisher("/navi/initial_pose", geometry_msgs.PoseWithCovarianceStamped, queue_size=1)
+        self.config = gopher_configuration.Configuration()
+        self._notify_publisher = rospy.Publisher(self.config.topics.display_notification, gopher_std_msgs.Notification, queue_size=1)
+        self._location_publisher = rospy.Publisher(self.config.topics.initial_pose, geometry_msgs.PoseWithCovarianceStamped, queue_size=1)
 
         self.tf_listener = tf.TransformListener()
         self.blackboard = Blackboard()
@@ -396,7 +400,7 @@ class Unpark(py_trees.Behaviour):
         # only initialise subscribers when the behaviour starts running
         self.homebase = self.semantic_locations.semantic_modules['locations']['homebase']
         self._battery_subscriber = self._battery_subscriber = rospy.Subscriber("~battery", somanet_msgs.SmartBatteryStatus, self.battery_callback)
-        self._button_subscriber = rospy.Subscriber("/gopher/buttons/go", std_msgs.Empty, self.button_callback)
+        self._button_subscriber = rospy.Subscriber(self.config.buttons.go, std_msgs.Empty, self.button_callback)
         self._dslam_subscriber = rospy.Subscriber("/dslam/diagnostics", dslam_msgs.Diagnostics, self.dslam_callback)
 
         # assume map frame is 0,0,0 with no rotation; translation of homebase is
@@ -534,17 +538,19 @@ class Dock(py_trees.Behaviour):
     """
     def __init__(self, name):
         super(Dock, self).__init__(name)
+        self.config = gopher_configuration.Configuration()
         self.blackboard = Blackboard()
         self.semantic_locations = Semantics()
         self.tf_listener = tf.TransformListener()
         self.motion = SimpleMotion()
         self.goal_sent = False
-        self.docking_client = actionlib.SimpleActionClient('~autonomous_docking', gopher_std_msgs.AutonomousDockingAction)
+        self.docking_client = actionlib.SimpleActionClient(self.config.actions.autonomous_docking,
+                                                           gopher_std_msgs.AutonomousDockingAction)
 
         self._interrupt_sub = None
         try:
             if rospy.get_param("~enable_dock_interrupt"):
-                self._interrupt_sub = rospy.Subscriber("/gopher/buttons/stop", std_msgs.Empty, self.interrupt_cb)
+                self._interrupt_sub = rospy.Subscriber(self.config.buttons.stop, std_msgs.Empty, self.interrupt_cb)
         except KeyError:
             pass
 
@@ -707,8 +713,11 @@ class Undock(py_trees.Behaviour):
     """
     def __init__(self, name):
         super(Undock, self).__init__(name)
-        self.action_client = actionlib.SimpleActionClient("~autonomous_docking", gopher_std_msgs.AutonomousDockingAction)
-        self._location_publisher = rospy.Publisher("/navi/initial_pose", geometry_msgs.PoseWithCovarianceStamped, queue_size=1)
+        self.config = gopher_configuration.Configuration()
+        self.action_client = actionlib.SimpleActionClient(self.config.actions.autonomous_docking,
+                                                          gopher_std_msgs.AutonomousDockingAction)
+        self._location_publisher = rospy.Publisher(self.config.topics.initial_pose,
+                                                   geometry_msgs.PoseWithCovarianceStamped, queue_size=1)
         self._honk_publisher = None
         self.blackboard = Blackboard()
         self.docking_stations = DockingStations()
@@ -833,7 +842,8 @@ class Undock(py_trees.Behaviour):
 class OpenDoor(py_trees.Behaviour):
     def __init__(self, name):
         super(OpenDoor, self).__init__(name)
-        self.service_client = ServicePairClient('~door_operator', DoorControlPair)
+        self.config = gopher_configuration.Configuration()
+        self.service_client = ServicePairClient(self.config.services.door_operator, DoorControlPair)
         rospy.sleep(0.2) # make sure the service client is initialised
 
     def initialise(self):
@@ -882,7 +892,8 @@ class OpenDoor(py_trees.Behaviour):
 class CloseDoor(py_trees.Behaviour):
     def __init__(self, name):
         super(CloseDoor, self).__init__(name)
-        self.service_client = ServicePairClient('~door_operator', DoorControlPair)
+        self.config = gopher_configuration.Configuration()
+        self.service_client = ServicePairClient(self.config.services.door_operator, DoorControlPair)
         rospy.sleep(0.2) # make sure the service client is initialised
 
     def update(self):
@@ -898,7 +909,8 @@ class CloseDoor(py_trees.Behaviour):
 class NotifyComplete(py_trees.Behaviour):
     def __init__(self, name):
         super(NotifyComplete, self).__init__(name)
-        self._notify_publisher = rospy.Publisher("~display_notification", gopher_std_msgs.Notification, queue_size=1)
+        self.config = gopher_configuration.Configuration()
+        self._notify_publisher = rospy.Publisher(self.config.topics.display_notification, gopher_std_msgs.Notification, queue_size=1)
 
     def update(self):
         # always returns success
@@ -913,9 +925,10 @@ class WaitForCharge(py_trees.Behaviour):
 
     def __init__(self, name):
         super(WaitForCharge, self).__init__(name)
-        self._notify_publisher = rospy.Publisher("~display_notification", gopher_std_msgs.Notification, queue_size=1)
+        self.config = gopher_configuration.Configuration()
+        self._notify_publisher = rospy.Publisher(self.config.topics.display_notification, gopher_std_msgs.Notification, queue_size=1)
         self._battery_subscriber = rospy.Subscriber("~battery", somanet_msgs.SmartBatteryStatus, self.battery_callback)
-        self._button_subscriber = rospy.Subscriber("/gopher/buttons/stop", std_msgs.Empty, self.button_callback)
+        self._button_subscriber = rospy.Subscriber(self.config.buttons.stop, std_msgs.Empty, self.button_callback)
         self.notify_timer = None
         self.button_pressed = False
         self.charge_state = None
@@ -959,6 +972,7 @@ class MoveToGoal(py_trees.Behaviour):
         super(MoveToGoal, self).__init__(name)
         self.pose = pose
         self.action_client = None
+        self.config = gopher_configuration.Configuration()
         self.blackboard = Blackboard()
 
         self._honk_publisher = None
@@ -972,7 +986,7 @@ class MoveToGoal(py_trees.Behaviour):
 
     def initialise(self):
         self.logger.debug("  %s [MoveToGoal::initialise()]" % self.name)
-        self.action_client = actionlib.SimpleActionClient('~move_base', move_base_msgs.MoveBaseAction)
+        self.action_client = actionlib.SimpleActionClient(self.config.actions.move_base, move_base_msgs.MoveBaseAction)
 
         connected = self.action_client.wait_for_server(rospy.Duration(0.5))
         if not connected:

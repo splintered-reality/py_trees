@@ -33,6 +33,7 @@ from geometry_msgs.msg import Pose2D
 import gopher_std_msgs.msg as gopher_std_msgs
 import yaml
 import std_msgs.msg as std_msgs
+import gopher_configuration
 from .blackboard import Blackboard
 from . import moveit
 
@@ -103,6 +104,7 @@ class Waiting(py_trees.Behaviour):
         :param str location: unique name of the location
         """
         super(Waiting, self).__init__(name)
+        self.config = gopher_configuration.Configuration()
         self.location = location
         self.blackboard = Blackboard()
         self.dont_wait_for_hoomans = dont_wait_for_hoomans_flag
@@ -111,8 +113,8 @@ class Waiting(py_trees.Behaviour):
 
         # ros communications
         # could potentially have this in the waiting behaviour
-        self._go_button_subscriber = rospy.Subscriber("delivery/go", std_msgs.Empty, self._go_button_callback)
-        self._notify_publisher = rospy.Publisher("~display_notification", gopher_std_msgs.Notification, queue_size=1)
+        self._go_button_subscriber = rospy.Subscriber(self.config.buttons.go, std_msgs.Empty, self._go_button_callback)
+        self._notify_publisher = rospy.Publisher(self.config.topics.display_notification, gopher_std_msgs.Notification, queue_size=1)
 
         # for sending honk
         self._honk_publisher = None
