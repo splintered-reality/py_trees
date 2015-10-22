@@ -70,16 +70,22 @@ sounds:
 #
 # and *core definitions*: 
 #
-# human interactions
+# human interactions - where we require the human to *do something*. An obvious
+# interactions are when the user has to press a button on the robot, whereas
+# a more passive interaction would require the human to simply give the robot space
+# (e.g. be careful around it because it is making a reversing maneuvre)
 #
 #  - humans_give_me_input = gopher_std_msgs.Notification.FLASH_BLUE
 #  - humans_be_careful = gopher_std_msgs.Notification.FLASH_YELLOW
 #  - humans_i_need_help = gopher_std_msgs.Notification.FLASH_PURPLE
 #
-# notifications
+# notifications - just to show what's going on, in case someone cares
 #
 #  - holding = gopher_std_msgs.Notification.AROUND_RIGHT_BLUE
 #
 # states
 #
+#  - battery full = gopher_std_msgs.Notification.SOLID_BLUE
+#  - battery mid  = gopher_std_msgs.Notification.SOLID_GREEN
+#  - battery low  = gopher_std_msgs.Notification.SOLID_YELLOW
 #  - error = gopher_std_msgs.Notification.SOLID_RED
