@@ -171,7 +171,7 @@ class GoalHandler(object):
                 return True
             else:
                 self.result.value = gopher_navi_msgs.TeleportResult.ERROR_MAP_FILE_DOES_NOT_EXIST
-                self.result.message = "requested map file not installed [%s]" % goal.world
+                self.result.message = "requested map file for this world does not exist [%s]" % goal.world
                 return False
 
         ######################################################################

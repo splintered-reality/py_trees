@@ -926,15 +926,16 @@ class CloseDoor(py_trees.Behaviour):
             return py_trees.Status.RUNNING
 
         rospy.loginfo("CloseDoor : Got response from concert.")
-        
+
         req = DoorControlRequest()
         req.stamp = rospy.Time.now()
         req.cmd = DoorControlRequest.CLOSE_DOOR
-        resp = self.service_client(req, rospy.Duration(0.3))
+        unused_response = self.service_client(req, rospy.Duration(0.3))
 
         # Don't wait for the door to finish closing
         self.feedback_message = "Sent close request to door"
         return py_trees.Status.SUCCESS
+
 
 class NotifyComplete(py_trees.Behaviour):
     def __init__(self, name):

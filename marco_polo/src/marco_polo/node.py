@@ -86,6 +86,9 @@ class Node(object):
         self._publish_introspection_data()
         self.publishers.world.publish(self.semantics.worlds.default)  # initialise the world publisher
 
+        # TODO : Diagnostics - publish an ok diagnostic here to initialise it
+        self.publish_diagnostics(0, "OK")
+
         # look for an initial world from rosparam server
         goal = gopher_navi_msgs.TeleportGoal()
         goal.world = rospy.get_param("~initial_world", None)
@@ -96,7 +99,15 @@ class Node(object):
         if goal.world is not None:
             if self.goal_handler.load(goal):
                 # only shifting worlds without an init pose - it's a one shot call
-                self.goal_handler.switch_map(self.goal_handler.command.map_filename)
+                # if fails, it already provides a ROS_WARN inside switch_map()
+                unused_switched_maps = self.goal_handler.switch_map(self.goal_handler.command.map_filename)
+            else:
+                rospy.logerr("MarcoPolo : %s" % (self.goal_handler.result.message))
+                self.publish_diagnostics(self.goal_handler.result.value, self.goal_handler.result.message)
+
+    def publish_diagnostics(self, value, message):
+        # TODO : publish some diagnostics here.
+        pass
 
     def execute(self, goal):
         # goal.target_pose = don't care
@@ -109,6 +120,9 @@ class Node(object):
         if not self.goal_handler.load(goal):
             self.result = self.goal_handler.result
             self.action_server.set_aborted(self.result, self.result.message)
+            rospy.logwarn("MarcoPolo : rejected teleport goal [%s][%s]" % self.result.value, self.result.message)
+            # TODO publish diagnostics, but probably don't want failure here, just a warning since the user made the problem.
+            self.publish_diagnostics(self.goal_handler.result.value, self.goal_handler.result.message)
             return
         self.result.value = gopher_navi_msgs.TeleportResult.SUCCESS
         self.result.message = "success"
