@@ -207,7 +207,7 @@ class GopherDeliveries(object):
         else:
             self.incoming_goal = None
 
-    def set_goal(self, locations, always_assume_initialised):
+    def set_goal(self, locations, always_assume_initialised, doors):
         """
         Callback for receipt of a new goal
         :param [str] locations: semantic locations (try to match these against the system served Map Locations list via the unique_name)
@@ -221,12 +221,14 @@ class GopherDeliveries(object):
             if self.planner.check_locations(locations): # make sure locations are valid before returning success
                 self.incoming_goal = locations
                 self.always_assume_initialised = always_assume_initialised
+                self.doors = doors
                 return (gopher_std_msgs.DeliveryErrorCodes.SUCCESS, "assigned new goal")
             else:
                 return (gopher_std_msgs.DeliveryErrorCodes.FUBAR, "Received invalid locations")
         elif self.state == State.WAITING:
             self.incoming_goal = locations
             self.always_assume_initialised = always_assume_initialised
+            self.doors = doors
             return (gopher_std_msgs.DeliveryErrorCodes.SUCCESS, "pre-empting current goal")
         else:  # we're travelling between locations
             return (gopher_std_msgs.DeliveryErrorCodes.ALREADY_ASSIGNED_A_GOAL, "sorry, busy (already assigned a goal)")
@@ -245,7 +247,7 @@ class GopherDeliveries(object):
             # semantic locations provided were wrong.
             undock = False if self.always_assume_initialised or self.root else True
             print("*********************************** Always assume initialised: %s" % self.always_assume_initialised)
-            children = self.planner.create_tree(current_world, self.incoming_goal, undock=undock)
+            children = self.planner.create_tree(current_world, self.incoming_goal, undock=undock, doors=self.doors)
             if not children:
                 # TODO is this enough?
                 rospy.logwarn("Gopher Deliveries : Received a goal, but none of the locations were valid.")
