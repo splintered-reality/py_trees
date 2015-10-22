@@ -368,7 +368,7 @@ class Park(py_trees.Behaviour):
                     f.write("parking" + human_transform(T_map_to_parking, oneline=True) + "\n")
                     f.write("finishing" + human_transform(self.current_transform, oneline=True) + "\n")
                     f.write("disparity" + human_transform(T_current_to_parking, oneline=True) + "\n")
-                    
+
                 return py_trees.Status.FAILURE
             else:
                 # The motion successfully completed. Check if there is another
@@ -421,6 +421,9 @@ class Park(py_trees.Behaviour):
 
 
 class Unpark(py_trees.Behaviour):
+
+    last_parking = None
+    
     def __init__(self, name):
         super(Unpark, self).__init__(name)
         self._notify_publisher = rospy.Publisher("~display_notification", gopher_std_msgs.Notification, queue_size=1)
@@ -485,6 +488,31 @@ class Unpark(py_trees.Behaviour):
     def dslam_callback(self, msg):
         self.last_dslam = msg
 
+    def check_parking_update(self, check_location):
+        if Unpark.last_parking != None:
+            rospy.loginfo("last parking was nonempty - comparing the new transform to see if the parking location moved")
+            rospy.loginfo("last parking: " + human_transform(Unpark.last_parking, oneline=True))
+            new_parking = inverse_times(self.end_transform, self.start_transform)
+            rospy.loginfo("new parking: " + human_transform(new_parking, oneline=True))
+            parking_diff = inverse_times(Unpark.last_parking, self.start_transform)
+            rospy.loginfo("parking diff: " + human_transform(parking_diff, oneline=True))
+
+            euc_diff = numpy.linalg.norm(parking_diff[0][:2])
+            rospy.loginfo("diff distance: " + str(euc_diff))
+            # extract yaw difference
+            yaw_diff = numpy.degrees(tf.transformations.euler_from_quaternion(parking_diff[1])[2])
+            rospy.loginfo("diff yaw: " + str(yaw_diff))
+
+            # if below threshold, keep the last parking location
+            if euc_diff < 1 and numpy.absolute(yaw_diff) < 90:
+                rospy.loginfo("differences below threshold. keeping last parking location")
+                new_parking = Unpark.last_parking
+            else:
+                rospy.loginfo("differences were above threshold. modifying parking location")
+        else:
+            new_parking = inverse_times(self.end_transform, self.start_transform)
+            rospy.loginfo("no previous parking location. Initialising to " + human_transform(new_parking, oneline=True))
+        
     def update(self):
         if not self.transform_setup:
             if not self.last_dslam:  # no message from dslam yet
@@ -546,10 +574,13 @@ class Unpark(py_trees.Behaviour):
                 # if dslam is initialised, we have the map-relative position of
                 # the parking spot. Need to compute the relative position of the
                 # parking spot to the homebase - this is the difference
-                # transform between the parking spot and the homebase
-
-                # transform homebase to parking spot
-                self.blackboard.T_hb_to_parking = inverse_times((self.hb_translation, self.hb_rotation), self.start_transform)
+                # transform between the parking spot and the homebase. We also
+                # check how much the parking spots differ. If the difference is
+                # small, we retain the parking spot that was used before to
+                # prevent drift in the parking locations.
+                new_parking = check_parking_update((self.hb_translation, self.hb_rotation))
+                Unpark.last_parking = new_parking
+                self.blackboard.T_hb_to_parking = new_parking
                 self.blackboard.unpark_success = True
                 rospy.logdebug("Unpark : successfully unparked")
                 self.feedback_message = "successfully unparked"
@@ -566,7 +597,9 @@ class Unpark(py_trees.Behaviour):
                         self.feedback_message = "did not get a homebase transform"
                         return py_trees.Status.FAILURE
 
-                    self.blackboard.T_hb_to_parking = inverse_times(self.end_transform, self.start_transform)
+                    new_parking = check_parking_update((self.hb_translation, self.hb_rotation))
+                    Unpark.last_parking = new_parking
+                    self.blackboard.T_hb_to_parking = new_parking
 
                     pose = geometry_msgs.PoseWithCovarianceStamped()
                     pose.header.stamp = rospy.Time.now()
