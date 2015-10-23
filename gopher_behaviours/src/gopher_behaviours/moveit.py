@@ -35,6 +35,9 @@ import py_trees
 import tf
 import rospy
 import numpy
+import gopher_configuration
+from door_interactions_msgs.msg import DoorControlPair, DoorControlRequest, DoorControlResponse
+from rocon_python_comms import ServicePairClient
 from .time import Pause
 from gopher_semantics.semantics import Semantics
 from gopher_semantics.docking_stations import DockingStations
@@ -149,7 +152,9 @@ class Finishing(py_trees.Selector):
 
 class SimpleMotion():
     def __init__(self):
-        self.action_client = actionlib.SimpleActionClient('~simple_motion_controller', gopher_std_msgs.SimpleMotionAction)
+        self.config = gopher_configuration.Configuration()
+        self.action_client = actionlib.SimpleActionClient(self.config.actions.simple_motion_controller,
+                                                          gopher_std_msgs.SimpleMotionAction)
         self.has_goal = False
 
     # Motion is either rotation or translation, value is corresponding rotation in radians, or distance in metres
@@ -170,6 +175,7 @@ class SimpleMotion():
 
         self.has_goal = True
         goal.motion_amount = value
+        # TODO : when marco has fixed the psd's, this needs to become False
         goal.unsafe = True
         self.action_client.send_goal(goal)
 
@@ -225,7 +231,9 @@ class WasDocked(py_trees.Behaviour):
         self.blackboard = Blackboard()
 
     def update(self):
-        if self.blackboard.parked:
+        if not hasattr(self.blackboard, 'parked'):
+            return py_trees.Status.FAILURE
+        elif self.blackboard.parked:
             return py_trees.Status.FAILURE
         else:
             return py_trees.Status.SUCCESS
@@ -264,8 +272,14 @@ class Park(py_trees.Behaviour):
         rospy.logdebug("Park : waiting for transform from map to base_link")
         # get the current position of the robot as a transform from map to base link
         try:
-            self.tf_listener.waitForTransform("map", "base_link", rospy.Time(), rospy.Duration(1))
-            self.current_transform = self.tf_listener.lookupTransform("map", "base_link", rospy.Time(0))
+            # need to wait as far out as dslam publishes this into the future, otherwise it will
+            # throw exceptions saying it can't extrapolate back into the past
+            self.tf_listener.waitForTransform("map", "base_link", rospy.Time(), rospy.Duration(10))
+        except tf.Exception:
+            rospy.logerr("Park : timed out waiting for map to base_link transform")
+            return
+        try:
+            self.start_transform = self.tf_listener.lookupTransform("map", "base_link", rospy.Time(0))
         except tf.Exception:
             rospy.logerr("Park : failed to get transform from map to base_link")
             return
@@ -426,8 +440,9 @@ class Unpark(py_trees.Behaviour):
     
     def __init__(self, name):
         super(Unpark, self).__init__(name)
-        self._notify_publisher = rospy.Publisher("~display_notification", gopher_std_msgs.Notification, queue_size=1)
-        self._location_publisher = rospy.Publisher("/navi/initial_pose", geometry_msgs.PoseWithCovarianceStamped, queue_size=1)
+        self.config = gopher_configuration.Configuration()
+        self._notify_publisher = rospy.Publisher(self.config.topics.display_notification, gopher_std_msgs.Notification, queue_size=1)
+        self._location_publisher = rospy.Publisher(self.config.topics.initial_pose, geometry_msgs.PoseWithCovarianceStamped, queue_size=1)
 
         self.tf_listener = tf.TransformListener()
         self.blackboard = Blackboard()
@@ -456,7 +471,7 @@ class Unpark(py_trees.Behaviour):
         # only initialise subscribers when the behaviour starts running
         self.homebase = self.semantic_locations.semantic_modules['locations']['homebase']
         self._battery_subscriber = self._battery_subscriber = rospy.Subscriber("~battery", somanet_msgs.SmartBatteryStatus, self.battery_callback)
-        self._button_subscriber = rospy.Subscriber("/gopher/buttons/go", std_msgs.Empty, self.button_callback)
+        self._button_subscriber = rospy.Subscriber(self.config.buttons.go, std_msgs.Empty, self.button_callback)
         self._dslam_subscriber = rospy.Subscriber("/dslam/diagnostics", dslam_msgs.Diagnostics, self.dslam_callback)
 
         # assume map frame is 0,0,0 with no rotation; translation of homebase is
@@ -625,17 +640,19 @@ class Dock(py_trees.Behaviour):
     """
     def __init__(self, name):
         super(Dock, self).__init__(name)
+        self.config = gopher_configuration.Configuration()
         self.blackboard = Blackboard()
         self.semantic_locations = Semantics()
         self.tf_listener = tf.TransformListener()
         self.motion = SimpleMotion()
         self.goal_sent = False
-        self.docking_client = actionlib.SimpleActionClient('~autonomous_docking', gopher_std_msgs.AutonomousDockingAction)
+        self.docking_client = actionlib.SimpleActionClient(self.config.actions.autonomous_docking,
+                                                           gopher_std_msgs.AutonomousDockingAction)
 
         self._interrupt_sub = None
         try:
             if rospy.get_param("~enable_dock_interrupt"):
-                self._interrupt_sub = rospy.Subscriber("/gopher/buttons/stop", std_msgs.Empty, self.interrupt_cb)
+                self._interrupt_sub = rospy.Subscriber(self.config.buttons.stop, std_msgs.Empty, self.interrupt_cb)
         except KeyError:
             pass
 
@@ -798,8 +815,11 @@ class Undock(py_trees.Behaviour):
     """
     def __init__(self, name):
         super(Undock, self).__init__(name)
-        self.action_client = actionlib.SimpleActionClient("~autonomous_docking", gopher_std_msgs.AutonomousDockingAction)
-        self._location_publisher = rospy.Publisher("/navi/initial_pose", geometry_msgs.PoseWithCovarianceStamped, queue_size=1)
+        self.config = gopher_configuration.Configuration()
+        self.action_client = actionlib.SimpleActionClient(self.config.actions.autonomous_docking,
+                                                          gopher_std_msgs.AutonomousDockingAction)
+        self._location_publisher = rospy.Publisher(self.config.topics.initial_pose,
+                                                   geometry_msgs.PoseWithCovarianceStamped, queue_size=1)
         self._honk_publisher = None
         self.blackboard = Blackboard()
         self.docking_stations = DockingStations()
@@ -864,7 +884,6 @@ class Undock(py_trees.Behaviour):
                 self.feedback_message = "could not find docking station in semantic locations with the visible markers"
                 return py_trees.Status.FAILURE
 
-
             # initialise a transform with the pose of the station
             ds_translation = (ds.pose.x, ds.pose.y, 0)
             # quaternion specified by rotating theta radians around the yaw axis
@@ -880,7 +899,7 @@ class Undock(py_trees.Behaviour):
             pose.header.frame_id = "map"
             pose.pose.pose = transform_to_pose((ds_translation, ds_rotation))
             self._location_publisher.publish(pose)
-            rospy.sleep(1) # let things initialise once the pose is sent
+            rospy.sleep(1)  # let things initialise once the pose is sent
             rospy.logdebug("Undock : sent initial pose to initialise navigation")
             self.connected = self.action_client.wait_for_server(rospy.Duration(0.5))
             if not self.connected:
@@ -922,10 +941,121 @@ class Undock(py_trees.Behaviour):
                 self.action_client.cancel_goal()
 
 
+class OpenDoor(py_trees.Behaviour):
+    def __init__(self, name):
+        super(OpenDoor, self).__init__(name)
+        self.config = gopher_configuration.Configuration()
+        self.service_client = ServicePairClient(self.config.services.door_operator, DoorControlPair)
+        rospy.sleep(0.2)  # make sure the service client is initialised
+
+    def initialise(self):
+        self.response = None
+        self.open_msg_sent = False
+        self.sent_status_check = False
+        self.got_initial_response = False
+        self.got_status_response = False
+
+    def err_cb(self, msg_id, result):
+        self.response = result
+
+    def cb(self, msg_id, msg_response):
+        self.response = msg_response
+
+    def update(self):
+        if self.response is None and not self.open_msg_sent:
+            req = DoorControlRequest()
+            req.stamp = rospy.Time.now()
+            req.cmd = DoorControlRequest.GET_STATUS
+            self.response = self.service_client(req, timeout=rospy.Duration(0.3))
+            self.feedback_message = "Waiting for concert to flip topics."
+            return py_trees.Status.RUNNING
+
+        rospy.loginfo("OpenDoor : Got response from concert.")
+
+        if not self.open_msg_sent:
+            req = DoorControlRequest()
+            req.stamp = rospy.Time.now()
+            req.cmd = DoorControlRequest.OPEN_DOOR
+            self.response = None
+            self.service_client(req, callback=self.cb, timeout=rospy.Duration(20), error_callback=self.err_cb)
+            self.open_msg_sent = True
+
+        if not self.got_initial_response:
+            if self.response is None:
+                self.feedback_message = "Sent open request to door. Waiting for response."
+                return py_trees.Status.RUNNING
+            elif self.response == "timeout":
+                # request timed out
+                self.feedback_message = "Door request timed out"
+                return py_trees.Status.FAILURE
+            elif self.response and self.response.cmd_resp == DoorControlResponse.IGN:
+                # door is already open
+                self.feedback_message = "Door was already open"
+                return py_trees.Status.SUCCESS
+            else:
+                self.got_initial_response = True
+
+        if not self.sent_status_check:
+            req = DoorControlRequest()
+            req.stamp = rospy.Time.now()
+            req.cmd = DoorControlRequest.GET_STATUS
+            self.response = None
+            self.service_client(req, callback=self.cb, timeout=rospy.Duration(20), error_callback=self.err_cb)
+            self.sent_status_check = True
+
+        if not self.got_status_response:
+            if self.response is None:
+                self.feedback_message = "Sent status request to door. Waiting for response."
+                return py_trees.Status.RUNNING
+            elif self.response == "timeout":
+                # request timed out
+                self.feedback_message = "Door request timed out"
+                return py_trees.Status.FAILURE
+            elif self.response and self.response.status == DoorControlResponse.DOOR_OPENING:
+                self.feedback_message = "Waiting for door to open"
+                # reset the status check and response to get the next one
+                self.sent_status_check = False
+                self.response = None
+                return py_trees.Status.RUNNING
+            else:
+                self.feedback_message = "Door is now open"
+                return py_trees.Status.SUCCESS
+
+
+class CloseDoor(py_trees.Behaviour):
+    def __init__(self, name):
+        super(CloseDoor, self).__init__(name)
+        self.config = gopher_configuration.Configuration()
+        self.service_client = ServicePairClient(self.config.services.door_operator, DoorControlPair)
+        self.response = None
+        rospy.sleep(0.2)  # make sure the service client is initialised
+
+    def update(self):
+        if self.response is None:
+            req = DoorControlRequest()
+            req.stamp = rospy.Time.now()
+            req.cmd = DoorControlRequest.GET_STATUS
+            self.response = self.service_client(req, timeout=rospy.Duration(0.3))
+            self.feedback_message = "Waiting for concert to flip topics."
+            return py_trees.Status.RUNNING
+
+        rospy.loginfo("CloseDoor : Got response from concert.")
+
+        req = DoorControlRequest()
+        req.stamp = rospy.Time.now()
+        req.cmd = DoorControlRequest.CLOSE_DOOR
+        unused_response = self.service_client(req, rospy.Duration(0.3))
+
+        # Don't wait for the door to finish closing
+        self.feedback_message = "Sent close request to door"
+        return py_trees.Status.SUCCESS
+
+
 class NotifyComplete(py_trees.Behaviour):
     def __init__(self, name):
         super(NotifyComplete, self).__init__(name)
-        self._notify_publisher = rospy.Publisher("~display_notification", gopher_std_msgs.Notification, queue_size=1)
+        self.config = gopher_configuration.Configuration()
+        self._notify_publisher = rospy.Publisher(self.config.topics.display_notification, gopher_std_msgs.Notification, queue_size=1)
 
     def update(self):
         # always returns success
@@ -940,9 +1070,10 @@ class WaitForCharge(py_trees.Behaviour):
 
     def __init__(self, name):
         super(WaitForCharge, self).__init__(name)
-        self._notify_publisher = rospy.Publisher("~display_notification", gopher_std_msgs.Notification, queue_size=1)
+        self.config = gopher_configuration.Configuration()
+        self._notify_publisher = rospy.Publisher(self.config.topics.display_notification, gopher_std_msgs.Notification, queue_size=1)
         self._battery_subscriber = rospy.Subscriber("~battery", somanet_msgs.SmartBatteryStatus, self.battery_callback)
-        self._button_subscriber = rospy.Subscriber("/gopher/buttons/stop", std_msgs.Empty, self.button_callback)
+        self._button_subscriber = rospy.Subscriber(self.config.buttons.stop, std_msgs.Empty, self.button_callback)
         self.notify_timer = None
         self.button_pressed = False
         self.charge_state = None
@@ -986,6 +1117,7 @@ class MoveToGoal(py_trees.Behaviour):
         super(MoveToGoal, self).__init__(name)
         self.pose = pose
         self.action_client = None
+        self.config = gopher_configuration.Configuration()
         self.blackboard = Blackboard()
 
         self._honk_publisher = None
@@ -999,7 +1131,7 @@ class MoveToGoal(py_trees.Behaviour):
 
     def initialise(self):
         self.logger.debug("  %s [MoveToGoal::initialise()]" % self.name)
-        self.action_client = actionlib.SimpleActionClient('~move_base', move_base_msgs.MoveBaseAction)
+        self.action_client = actionlib.SimpleActionClient(self.config.actions.move_base, move_base_msgs.MoveBaseAction)
 
         connected = self.action_client.wait_for_server(rospy.Duration(0.5))
         if not connected:

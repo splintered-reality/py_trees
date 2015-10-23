@@ -70,7 +70,7 @@ class MoveIt(py_trees.Behaviour):
         self.logger.debug("  %s [MoveIt::update()]" % self.name)
         if self.action_client is None:
             self.feedback_message = "action client couldn't connect"
-            return py_trees.Status.Failure
+            return py_trees.Status.FAILURE
         result = self.action_client.get_result()
         # self.action_client.wait_for_result(rospy.Duration(0.1))  # < 0.1 is moot here - the internal loop is 0.1
         if result:

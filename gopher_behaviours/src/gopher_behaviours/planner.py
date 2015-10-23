@@ -69,7 +69,7 @@ class Planner():
                 return False
         return True
         
-    def create_tree(self, current_world, locations, undock=True):
+    def create_tree(self, current_world, locations, undock=True, doors=False):
         """
         Find the semantic locations corresponding to the incoming string location identifier and
         create the appropriate behaviours.
@@ -124,5 +124,9 @@ class Planner():
         # each task, but only if the last location is homebase
         if locations[-1] == 'homebase' and not self.disable_be_beh:
             children.append(moveit.Finishing("Finishing"))
+
+        if doors:
+            children.insert(0, moveit.OpenDoor("Open door"))
+            children.append(moveit.CloseDoor("Close door"))
 
         return children

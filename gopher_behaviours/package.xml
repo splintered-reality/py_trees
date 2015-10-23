@@ -34,6 +34,7 @@
   <run_depend>somanet_msgs</run_depend>
   <run_depend>std_msgs</run_depend>
   <run_depend>tf</run_depend>
+  <run_depend>door_interactions_msgs</run_depend>
 
   <test_depend>rosunit</test_depend>
 

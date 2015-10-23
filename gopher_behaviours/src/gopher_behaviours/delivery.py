@@ -33,6 +33,7 @@ from geometry_msgs.msg import Pose2D
 import gopher_std_msgs.msg as gopher_std_msgs
 import yaml
 import std_msgs.msg as std_msgs
+import gopher_configuration
 from .blackboard import Blackboard
 from . import moveit
 
@@ -103,6 +104,7 @@ class Waiting(py_trees.Behaviour):
         :param str location: unique name of the location
         """
         super(Waiting, self).__init__(name)
+        self.config = gopher_configuration.Configuration()
         self.location = location
         self.blackboard = Blackboard()
         self.dont_wait_for_hoomans = dont_wait_for_hoomans_flag
@@ -111,8 +113,8 @@ class Waiting(py_trees.Behaviour):
 
         # ros communications
         # could potentially have this in the waiting behaviour
-        self._go_button_subscriber = rospy.Subscriber("delivery/go", std_msgs.Empty, self._go_button_callback)
-        self._notify_publisher = rospy.Publisher("~display_notification", gopher_std_msgs.Notification, queue_size=1)
+        self._go_button_subscriber = rospy.Subscriber(self.config.buttons.go, std_msgs.Empty, self._go_button_callback)
+        self._notify_publisher = rospy.Publisher(self.config.topics.display_notification, gopher_std_msgs.Notification, queue_size=1)
 
         # for sending honk
         self._honk_publisher = None
@@ -207,7 +209,7 @@ class GopherDeliveries(object):
         else:
             self.incoming_goal = None
 
-    def set_goal(self, locations, always_assume_initialised):
+    def set_goal(self, locations, always_assume_initialised, doors):
         """
         Callback for receipt of a new goal
         :param [str] locations: semantic locations (try to match these against the system served Map Locations list via the unique_name)
@@ -221,12 +223,14 @@ class GopherDeliveries(object):
             if self.planner.check_locations(locations): # make sure locations are valid before returning success
                 self.incoming_goal = locations
                 self.always_assume_initialised = always_assume_initialised
+                self.doors = doors
                 return (gopher_std_msgs.DeliveryErrorCodes.SUCCESS, "assigned new goal")
             else:
                 return (gopher_std_msgs.DeliveryErrorCodes.FUBAR, "Received invalid locations")
         elif self.state == State.WAITING:
             self.incoming_goal = locations
             self.always_assume_initialised = always_assume_initialised
+            self.doors = doors
             return (gopher_std_msgs.DeliveryErrorCodes.SUCCESS, "pre-empting current goal")
         else:  # we're travelling between locations
             return (gopher_std_msgs.DeliveryErrorCodes.ALREADY_ASSIGNED_A_GOAL, "sorry, busy (already assigned a goal)")
@@ -245,7 +249,7 @@ class GopherDeliveries(object):
             # semantic locations provided were wrong.
             undock = False if self.always_assume_initialised or self.root else True
             print("*********************************** Always assume initialised: %s" % self.always_assume_initialised)
-            children = self.planner.create_tree(current_world, self.incoming_goal, undock=undock)
+            children = self.planner.create_tree(current_world, self.incoming_goal, undock=undock, doors=self.doors)
             if not children:
                 # TODO is this enough?
                 rospy.logwarn("Gopher Deliveries : Received a goal, but none of the locations were valid.")
