@@ -102,13 +102,13 @@ class Node(object):
                 # TODO : change that to a result, message like loading does.
                 successfully_switched_maps = self.goal_handler.switch_map(self.goal_handler.command.map_filename)
                 if successfully_switched_maps:
-                    self.publish_diagnostics(diagnostic_msgs.DiagnosticStatus.OK, goal.world, "Map successfully loaded.", "success")
+                    self.publish_diagnostics(diagnostic_msgs.DiagnosticStatus.OK, goal.world, "Loaded '%s'." % goal.world, "success")
                 else:
                     # Don't do a warning here as it will stay a warning for a long time when the system is actually ok
-                    self.publish_diagnostics(diagnostic_msgs.DiagnosticStatus.OK, goal.world, "Map successfully loaded.", "found map, but did not switch as we are already there.")
+                    self.publish_diagnostics(diagnostic_msgs.DiagnosticStatus.OK, goal.world, "Loaded '%s'." % goal.world, "found map, but did not switch as we are already there.")
             else:
                 rospy.logerr("MarcoPolo : %s" % (self.goal_handler.result.message))
-                self.publish_diagnostics(diagnostic_msgs.DiagnosticStatus.ERROR, goal.world, "Failed to initialise with a map.", self.goal_handler.result.message)
+                self.publish_diagnostics(diagnostic_msgs.DiagnosticStatus.ERROR, goal.world, "Failed to initialise with a map [%s]." % goal.world, self.goal_handler.result.message)
         else:
             self.publish_diagnostics(diagnostic_msgs.DiagnosticStatus.ERROR, "none", "Did not load a map.", "no map was specified, either via param or semantics.")
 
@@ -119,7 +119,7 @@ class Node(object):
         :param str message: detailed message about the map loading operation.
         '''
         msg = diagnostic_msgs.DiagnosticStatus()
-        msg.name = 'marco polo Map Loading'
+        msg.name = 'marco_polo::Map Loading'
         msg.level = level
         map_name_diagnostic = diagnostic_msgs.KeyValue()
         map_name_diagnostic.key = 'name'
@@ -130,7 +130,6 @@ class Node(object):
         loading_result_diagnostic.value = loading_message
         msg.values.append(loading_result_diagnostic)
         msg.message = message
-        rospy.logwarn("MarcoPolo: diagnostics \n%s" % msg)
         diagnostic_array_msg = diagnostic_msgs.DiagnosticArray()
         diagnostic_array_msg.header.stamp = rospy.Time.now()
         diagnostic_array_msg.status.append(msg)
