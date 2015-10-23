@@ -68,7 +68,6 @@ class Node(object):
                              }
                             )()
         latched = True
-        not_latched = False
         queue_size_five = 5
         self.publishers = rocon_python_comms.utils.Publishers(
             [
@@ -77,7 +76,7 @@ class Node(object):
                 ('~introspection/worlds', std_msgs.String, latched, queue_size_five),
                 ('init_pose', self.gopher.topics.initial_pose, geometry_msgs.PoseWithCovarianceStamped, latched, queue_size_five),
                 ('switch_map', self.gopher.topics.switch_map, std_msgs.String, latched, queue_size_five),
-                ('diagnostics', self.gopher.topics.diagnostics, diagnostic_msgs.DiagnosticArray, not_latched, queue_size_five)
+                ('diagnostics', self.gopher.topics.diagnostics, diagnostic_msgs.DiagnosticArray, latched, queue_size_five)
             ]
         )
         self.service_proxies = rocon_python_comms.utils.ServiceProxies(
@@ -105,7 +104,7 @@ class Node(object):
                 if successfully_switched_maps:
                     self.publish_diagnostics(diagnostic_msgs.DiagnosticStatus.OK, goal.world, "Map successfully loaded.", "success")
                 else:
-                    # Don't do a warning here as it will stay a warnign for a long time when the system is actually ok
+                    # Don't do a warning here as it will stay a warning for a long time when the system is actually ok
                     self.publish_diagnostics(diagnostic_msgs.DiagnosticStatus.OK, goal.world, "Map successfully loaded.", "found map, but did not switch as we are already there.")
             else:
                 rospy.logerr("MarcoPolo : %s" % (self.goal_handler.result.message))
