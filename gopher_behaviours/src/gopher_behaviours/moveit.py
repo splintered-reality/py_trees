@@ -173,7 +173,8 @@ class SimpleMotion():
 
         self.has_goal = True
         goal.motion_amount = value
-        goal.unsafe = False
+        # TODO : when marco has fixed the psd's, this needs to become False
+        goal.unsafe = True
         self.action_client.send_goal(goal)
 
     def complete(self):
@@ -266,7 +267,13 @@ class Park(py_trees.Behaviour):
         rospy.logdebug("Park : waiting for transform from map to base_link")
         # get the current position of the robot as a transform from map to base link
         try:
-            self.tf_listener.waitForTransform("map", "base_link", rospy.Time(), rospy.Duration(1))
+            # need to wait as far out as dslam publishes this into the future, otherwise it will
+            # throw exceptions saying it can't extrapolate back into the past
+            self.tf_listener.waitForTransform("map", "base_link", rospy.Time(), rospy.Duration(10))
+        except tf.Exception:
+            rospy.logerr("Park : timed out waiting for map to base_link transform")
+            return
+        try:
             self.start_transform = self.tf_listener.lookupTransform("map", "base_link", rospy.Time(0))
         except tf.Exception:
             rospy.logerr("Park : failed to get transform from map to base_link")
@@ -782,7 +789,6 @@ class Undock(py_trees.Behaviour):
                 self.feedback_message = "could not find docking station in semantic locations with the visible markers"
                 return py_trees.Status.FAILURE
 
-
             # initialise a transform with the pose of the station
             ds_translation = (ds.pose.x, ds.pose.y, 0)
             # quaternion specified by rotating theta radians around the yaw axis
@@ -798,7 +804,7 @@ class Undock(py_trees.Behaviour):
             pose.header.frame_id = "map"
             pose.pose.pose = transform_to_pose((ds_translation, ds_rotation))
             self._location_publisher.publish(pose)
-            rospy.sleep(1) # let things initialise once the pose is sent
+            rospy.sleep(1)  # let things initialise once the pose is sent
             rospy.logdebug("Undock : sent initial pose to initialise navigation")
             self.connected = self.action_client.wait_for_server(rospy.Duration(0.5))
             if not self.connected:
@@ -839,72 +845,116 @@ class Undock(py_trees.Behaviour):
             if action_state == GoalStatus.PENDING or action_state == GoalStatus.ACTIVE:
                 self.action_client.cancel_goal()
 
+
 class OpenDoor(py_trees.Behaviour):
     def __init__(self, name):
         super(OpenDoor, self).__init__(name)
         self.config = gopher_configuration.Configuration()
         self.service_client = ServicePairClient(self.config.services.door_operator, DoorControlPair)
-        rospy.sleep(0.2) # make sure the service client is initialised
+        rospy.sleep(0.2)  # make sure the service client is initialised
 
     def initialise(self):
+        self.response = None
         self.open_msg_sent = False
-        self.door_opened = False
+        self.sent_status_check = False
+        self.got_initial_response = False
+        self.got_status_response = False
+
+    def err_cb(self, msg_id, result):
+        self.response = result
+
+    def cb(self, msg_id, msg_response):
+        self.response = msg_response
 
     def update(self):
-        # send open door message
-        # wait for success
+        if self.response is None and not self.open_msg_sent:
+            req = DoorControlRequest()
+            req.stamp = rospy.Time.now()
+            req.cmd = DoorControlRequest.GET_STATUS
+            self.response = self.service_client(req, timeout=rospy.Duration(0.3))
+            self.feedback_message = "Waiting for concert to flip topics."
+            return py_trees.Status.RUNNING
+
+        rospy.loginfo("OpenDoor : Got response from concert.")
+
         if not self.open_msg_sent:
             req = DoorControlRequest()
             req.stamp = rospy.Time.now()
             req.cmd = DoorControlRequest.OPEN_DOOR
-            resp = self.service_client(req, rospy.Duration(2))
-            if resp and resp.cmd_resp == DoorControlResponse.IGN:
+            self.response = None
+            self.service_client(req, callback=self.cb, timeout=rospy.Duration(20), error_callback=self.err_cb)
+            self.open_msg_sent = True
+
+        if not self.got_initial_response:
+            if self.response is None:
+                self.feedback_message = "Sent open request to door. Waiting for response."
+                return py_trees.Status.RUNNING
+            elif self.response == "timeout":
+                # request timed out
+                self.feedback_message = "Door request timed out"
+                return py_trees.Status.FAILURE
+            elif self.response and self.response.cmd_resp == DoorControlResponse.IGN:
                 # door is already open
                 self.feedback_message = "Door was already open"
                 return py_trees.Status.SUCCESS
-            self.open_msg_sent = True
-            self.feedback_message = "Sent open request to door"
-            return py_trees.Status.RUNNING
+            else:
+                self.got_initial_response = True
 
-        if not self.door_opened:
+        if not self.sent_status_check:
             req = DoorControlRequest()
             req.stamp = rospy.Time.now()
             req.cmd = DoorControlRequest.GET_STATUS
-            try:
-                resp = self.service_client(req,
-                                           timeout=rospy.Duration(0.3))
-            except rospy.ROSException as exc:
-                rospy.logwarn(self._visitor_name + " : Timed out while waiting for service server's response ("
-                              + str(exc))
-                return py_trees.Status.FAILURE
-            except rospy.ROSInterruptException as exc:
-                rospy.logerr(self._visitor_name + " : ROS has been shut down while waiting for service server's reponse. ("
-                             + str(exc) + ").")
-                return py_trees.Status.FAILURE
+            self.response = None
+            self.service_client(req, callback=self.cb, timeout=rospy.Duration(20), error_callback=self.err_cb)
+            self.sent_status_check = True
 
-            if resp and resp.status == DoorControlResponse.DOOR_OPENING:
+        if not self.got_status_response:
+            if self.response is None:
+                self.feedback_message = "Sent status request to door. Waiting for response."
+                return py_trees.Status.RUNNING
+            elif self.response == "timeout":
+                # request timed out
+                self.feedback_message = "Door request timed out"
+                return py_trees.Status.FAILURE
+            elif self.response and self.response.status == DoorControlResponse.DOOR_OPENING:
                 self.feedback_message = "Waiting for door to open"
+                # reset the status check and response to get the next one
+                self.sent_status_check = False
+                self.response = None
                 return py_trees.Status.RUNNING
             else:
                 self.feedback_message = "Door is now open"
                 return py_trees.Status.SUCCESS
+
 
 class CloseDoor(py_trees.Behaviour):
     def __init__(self, name):
         super(CloseDoor, self).__init__(name)
         self.config = gopher_configuration.Configuration()
         self.service_client = ServicePairClient(self.config.services.door_operator, DoorControlPair)
-        rospy.sleep(0.2) # make sure the service client is initialised
+        self.response = None
+        rospy.sleep(0.2)  # make sure the service client is initialised
 
     def update(self):
+        if self.response is None:
+            req = DoorControlRequest()
+            req.stamp = rospy.Time.now()
+            req.cmd = DoorControlRequest.GET_STATUS
+            self.response = self.service_client(req, timeout=rospy.Duration(0.3))
+            self.feedback_message = "Waiting for concert to flip topics."
+            return py_trees.Status.RUNNING
+
+        rospy.loginfo("CloseDoor : Got response from concert.")
+
         req = DoorControlRequest()
         req.stamp = rospy.Time.now()
         req.cmd = DoorControlRequest.CLOSE_DOOR
-        resp = self.service_client(req, rospy.Duration(0.3))
+        unused_response = self.service_client(req, rospy.Duration(0.3))
 
         # Don't wait for the door to finish closing
         self.feedback_message = "Sent close request to door"
         return py_trees.Status.SUCCESS
+
 
 class NotifyComplete(py_trees.Behaviour):
     def __init__(self, name):
