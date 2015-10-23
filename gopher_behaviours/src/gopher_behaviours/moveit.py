@@ -170,7 +170,8 @@ class SimpleMotion():
 
         self.has_goal = True
         goal.motion_amount = value
-        goal.unsafe = False
+        # TODO : when marco has fixed the psd's, this needs to become False
+        goal.unsafe = True
         self.action_client.send_goal(goal)
 
     def complete(self):
@@ -263,7 +264,13 @@ class Park(py_trees.Behaviour):
         rospy.logdebug("Park : waiting for transform from map to base_link")
         # get the current position of the robot as a transform from map to base link
         try:
-            self.tf_listener.waitForTransform("map", "base_link", rospy.Time(), rospy.Duration(1))
+            # need to wait as far out as dslam publishes this into the future, otherwise it will
+            # throw exceptions saying it can't extrapolate back into the past
+            self.tf_listener.waitForTransform("map", "base_link", rospy.Time(), rospy.Duration(10))
+        except tf.Exception:
+            rospy.logerr("Park : timed out waiting for map to base_link transform")
+            return
+        try:
             self.start_transform = self.tf_listener.lookupTransform("map", "base_link", rospy.Time(0))
         except tf.Exception:
             rospy.logerr("Park : failed to get transform from map to base_link")
@@ -910,14 +917,16 @@ class OpenDoor(py_trees.Behaviour):
                 self.feedback_message = "Door is now open"
                 return py_trees.Status.SUCCESS
 
+
 class CloseDoor(py_trees.Behaviour):
     def __init__(self, name):
         super(CloseDoor, self).__init__(name)
         self.service_client = ServicePairClient('~door_operator', DoorControlPair)
-        rospy.sleep(0.2) # make sure the service client is initialised
+        self.response = None
+        rospy.sleep(0.2)  # make sure the service client is initialised
 
     def update(self):
-        if self.response == None and not self.open_msg_sent:
+        if self.response is None:
             req = DoorControlRequest()
             req.stamp = rospy.Time.now()
             req.cmd = DoorControlRequest.GET_STATUS
