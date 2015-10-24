@@ -32,6 +32,7 @@ import rocon_python_comms
 import rospy
 import std_msgs.msg as std_msgs
 import std_srvs.srv as std_srvs
+import threading
 
 from . import actions
 from . import goals
@@ -55,6 +56,8 @@ class Node(object):
         self.semantics = gopher_semantics.Semantics(self.gopher.namespaces.semantics)
         self.current_world = None
         self.result = gopher_navi_msgs.TeleportResult()
+        self.diagnostics = None
+        self.diagnostics_guard = threading.Lock()
         self.action_server = actionlib.SimpleActionServer('teleport',
                                                           gopher_navi_msgs.TeleportAction,
                                                           execute_cb=self.execute,
@@ -102,17 +105,24 @@ class Node(object):
                 # TODO : change that to a result, message like loading does.
                 successfully_switched_maps = self.goal_handler.switch_map(self.goal_handler.command.map_filename)
                 if successfully_switched_maps:
-                    self.publish_diagnostics(diagnostic_msgs.DiagnosticStatus.OK, goal.world, "Loaded '%s'." % goal.world, "success")
+                    self.generate_diagnostics(diagnostic_msgs.DiagnosticStatus.OK, goal.world, "Loaded '%s'." % goal.world, "success")
                 else:
                     # Don't do a warning here as it will stay a warning for a long time when the system is actually ok
-                    self.publish_diagnostics(diagnostic_msgs.DiagnosticStatus.OK, goal.world, "Loaded '%s'." % goal.world, "found map, but did not switch as we are already there.")
+                    self.generate_diagnostics(diagnostic_msgs.DiagnosticStatus.OK, goal.world, "Loaded '%s'." % goal.world, "found map, but did not switch as we are already there.")
             else:
                 rospy.logerr("MarcoPolo : %s" % (self.goal_handler.result.message))
-                self.publish_diagnostics(diagnostic_msgs.DiagnosticStatus.ERROR, goal.world, "Failed to initialise with a map [%s]." % goal.world, self.goal_handler.result.message)
+                self.generate_diagnostics(diagnostic_msgs.DiagnosticStatus.ERROR, goal.world, "Failed to initialise with a map [%s]." % goal.world, self.goal_handler.result.message)
         else:
-            self.publish_diagnostics(diagnostic_msgs.DiagnosticStatus.ERROR, "none", "Did not load a map.", "no map was specified, either via param or semantics.")
+            self.generate_diagnostics(diagnostic_msgs.DiagnosticStatus.ERROR, "none", "Did not load a map.", "no map was specified, either via param or semantics.")
 
-    def publish_diagnostics(self, level, map_name, message, loading_message):
+        self.timer = rospy.Timer(rospy.Duration(3), self.publish_diagnostics)
+
+    def publish_diagnostics(self, unused_event):
+        self.diagnostics_guard.acquire()
+        self.publishers.diagnostics.publish(self.diagnostics)
+        self.diagnostics_guard.release()
+
+    def generate_diagnostics(self, level, map_name, message, loading_message):
         '''
         :param byte level: one of the diagnostic_msgs.DiagnosticStatus levels (OK, WARN, ERROR, STALE)
         :param str map_name: name of the map file to load
@@ -133,7 +143,9 @@ class Node(object):
         diagnostic_array_msg = diagnostic_msgs.DiagnosticArray()
         diagnostic_array_msg.header.stamp = rospy.Time.now()
         diagnostic_array_msg.status.append(msg)
-        self.publishers.diagnostics.publish(diagnostic_array_msg)
+        self.diagnostics_guard.acquire()
+        self.diagnostics = diagnostic_array_msg
+        self.diagnostics_guard.release()
 
     def execute(self, goal):
         # goal.target_pose = don't care
@@ -148,9 +160,9 @@ class Node(object):
             self.action_server.set_aborted(self.result, self.result.message)
             rospy.logwarn("MarcoPolo : rejected teleport goal [%s][%s]" % self.result.value, self.result.message)
             # only one possible cause of failure here - map file could not be found
-            self.publish_diagnostics(diagnostic_msgs.DiagnosticStatus.WARN, goal.world, "Requested map loading failed.", self.goal_handler.result.message)
+            self.generate_diagnostics(diagnostic_msgs.DiagnosticStatus.WARN, goal.world, "Requested map loading failed.", self.goal_handler.result.message)
             return
-        self.publish_diagnostics(diagnostic_msgs.DiagnosticStatus.OK, goal.world, "Map successfully loaded.", "success")
+        self.generate_diagnostics(diagnostic_msgs.DiagnosticStatus.OK, goal.world, "Map successfully loaded.", "success")
         self.result.value = gopher_navi_msgs.TeleportResult.SUCCESS
         self.result.message = "success"
         while not rospy.is_shutdown():
