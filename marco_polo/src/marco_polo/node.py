@@ -119,7 +119,11 @@ class Node(object):
 
     def publish_diagnostics(self, unused_event):
         self.diagnostics_guard.acquire()
-        self.publishers.diagnostics.publish(self.diagnostics)
+        try:
+            self.publishers.diagnostics.publish(self.diagnostics)
+        except rospy.ROSException:
+            # not init'd or shutting down, either way, not needed to be handled here.
+            pass
         self.diagnostics_guard.release()
 
     def generate_diagnostics(self, level, map_name, message, loading_message):
