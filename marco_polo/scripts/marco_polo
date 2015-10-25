@@ -22,17 +22,12 @@ import rospy
 if __name__ == '__main__':
 
     rospy.init_node('marco_polo', log_level=rospy.INFO)
+
     node = marco_polo.Node()
+
     try:
         rospy.spin()
     except rospy.ROSInterruptException:
         pass
 
-    # you could also launch gopher_configuration/gopher_configuration.launch
-    # and then:
-    #
-    # gopher = gopher_configuration.Configuration()
-    #
-    # would automatically retrieve the configuration from the
-    # /gopher/configuration namespace on the rosparam server (no manual
-    # loading in code necessary)
+    node.shutdown()
