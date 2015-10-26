@@ -117,9 +117,6 @@ class Node(object):
 
         self.timer = rospy.Timer(rospy.Duration(3), self.publish_diagnostics)
 
-    def shutdown(self):
-        self.timer.shutdown()
-
     def publish_diagnostics(self, unused_event):
         self.diagnostics_guard.acquire()
         try:

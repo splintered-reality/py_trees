@@ -24,10 +24,4 @@ if __name__ == '__main__':
     rospy.init_node('marco_polo', log_level=rospy.INFO)
 
     node = marco_polo.Node()
-
-    try:
-        rospy.spin()
-    except rospy.ROSInterruptException:
-        pass
-
-    node.shutdown()
+    rospy.spin()
