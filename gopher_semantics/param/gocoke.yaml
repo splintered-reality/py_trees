@@ -15,19 +15,19 @@ worlds:
 ##############################################################################
 
 semantic_locations:
-  gocoke://locations/stock:
+  stock:
     name: 'Stock'
     description: 'Lots of Coke !!!'
     world: coke
     pose: { x: 1.00, y: 0.00, theta: 0.000000 }
     keyframe_id: 0
-  gocoke://locations/conference1:
+  conference1:
     name: 'Conference Room 1'
     description: 'Meeting Room 1'
     world: coke
     pose: { x: 0.50, y: 0.00, theta: 0.00 }
     keyframe_id: 0
-  gocoke://locations/conference2:
+  conference2:
     name: 'Conference Room 2'
     description: 'Meeting Room 2'
     world: coke
@@ -39,49 +39,6 @@ semantic_locations:
     world: coke
     pose: { x: 2.50, y: 2.00, theta: 1.57 }
     keyframe_id: 1
-
-##############################################################################
-# Connections
-##############################################################################
-#
-# Each connection represents an elevator connection between worlds. There are
-# two types of connections
-#
-#  - elevators : connnecting n worlds (maps) together via an elevator
-#  - teleports : for direct world to world (map to map) connections
-#
-######################################
-# Elevator Connections
-######################################
-#
-# - worlds : each world is a self-contained grouping of semantics, typically
-#            practically constrained by the idea of a map (a map is the world)
-# - floor  : the floor number for the elevator controller (should we use a string id?).
-# - entry  : pose to initialise with upon entering a world (map)
-# - exit   : pose to reach before exiting a world (map)
-#
-# elevators:
-#   highway_to_hell:
-#     name: 'Highway to Hell'
-#     levels:
-#       - world: heaven
-#         floor: 999
-#         entry: { x: 1.00, y: 0.00, theta: 0.00 }
-#         exit:  { x: 1.00, y: 0.00, theta: 3.14 }
-#       - world: hell
-#         floor: 666
-#         entry: { x: 5.00, y: 1.00, theta: 1.57 }
-#         exit:  { x: 5.00, y: 1.00, theta: -1.57 }
-#       - world: earth
-#         floor: 1
-#         entry: { x: 3.00, y: -1.00, theta: 0.00 }
-#         exit:  { x: 3.00, y: -1.00, theta: 3.14 }
-
-######################################
-# Intermap Connections
-######################################
-
-# teleports:
 
 ##############################################################################
 # Docking Stations
