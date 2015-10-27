@@ -23,6 +23,7 @@ from . import elevators
 from . import interactions
 from . import navigation
 from . import planner
+from . import recovery
 from . import time
 from . import utilities
 

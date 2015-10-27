@@ -86,6 +86,7 @@ class MoveIt(py_trees.Behaviour):
         if self.action_client is not None and self.action_client.get_state() != actionlib_msgs.GoalStatus.SUCCEEDED:
             self.action_client.cancel_goal()
 
+
 class Teleport(py_trees.Behaviour):
     """
     This is a gopher teleport behaviour that lets you re-initialise the
