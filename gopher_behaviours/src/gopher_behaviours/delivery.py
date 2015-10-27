@@ -36,6 +36,7 @@ import std_msgs.msg as std_msgs
 import gopher_configuration
 from .blackboard import Blackboard
 from . import moveit
+from . import recovery
 
 ##############################################################################
 # Dummy Delivery Locations List (for testing)
@@ -256,7 +257,9 @@ class GopherDeliveries(object):
             else:
                 self.old_goal_id = self.root.id if self.root is not None else None
                 self.blackboard.traversed_locations = [] if not self.root else self.blackboard.traversed_locations
-                self.root = py_trees.Sequence(name="Balli Balli Deliveries", children=children)
+                self.root = py_trees.Selector(name='Deliver Unto Me',
+                                              children=[py_trees.Sequence(name="Balli Balli Deliveries", children=children),
+                                                        recovery.HomebaseRecovery("Undelivered")])
                 self.blackboard.remaining_locations = self.incoming_goal
                 self.locations = self.incoming_goal
                 self.has_a_new_goal = True
