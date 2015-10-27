@@ -252,7 +252,7 @@ class Park(py_trees.Behaviour):
         # if the homebase to dock transform is unset, we didn't do an unparking
         # action - this could mean that the run was started without doing any
         # undock or unpark action
-        if self.blackboard.T_hb_to_parking is None:
+        if not hasattr(self.blackboard, 'T_hb_to_parking') or self.blackboard.T_hb_to_parking is None:
             self.not_unparked = True
             return
 
@@ -584,7 +584,7 @@ class Dock(py_trees.Behaviour):
         # if the homebase to dock transform is unset, we didn't do a docking
         # action - this could mean that the run was started without doing any
         # undock or unpark action
-        if self.blackboard.T_homebase_to_dock is None:
+        if not hasattr(self.blackboard, 'T_homebase_to_dock') or self.blackboard.T_homebase_to_dock is None:
             self.not_undocked = True
             return
 
