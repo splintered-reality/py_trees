@@ -22,6 +22,8 @@ catkin_python_setup()
 
 catkin_install_python(
     PROGRAMS
+        scripts/demo_flash_and_wait
+        scripts/demo_homebase_recovery
         scripts/gopher_deliveries
         scripts/gopher_elevator_run
         scripts/gopher_delivery_run
