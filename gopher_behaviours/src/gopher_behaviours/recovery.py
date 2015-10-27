@@ -32,6 +32,7 @@ from . import navigation
 # Behaviours
 ##############################################################################
 
+
 class HomebaseRecovery(py_trees.Sequence):
     def __init__(self, name):
         """
@@ -41,7 +42,7 @@ class HomebaseRecovery(py_trees.Sequence):
 
         :param str name: behaviour name
         """
-        super(ElevatorFailure, self).__init__(name)
+        super(HomebaseRecovery, self).__init__(name)
         self.gopher = gopher_configuration.Configuration()
         flash_leds = interactions.FlashLEDs("Warning", led_pattern=self.gopher.led_patterns.humans_i_need_help)
         wait_for_button = interactions.WaitForButton("Teleop me home and press confirm!", self.gopher.buttons.go)

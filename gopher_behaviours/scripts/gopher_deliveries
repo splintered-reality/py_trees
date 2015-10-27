@@ -66,7 +66,7 @@ class GopherHiveMind(object):
         self.render = False
         self.success = None  # non goal
         self.cancelled = False
-        self.current_eta = gopher_std_msgs.ETA() # empty ETA
+        self.current_eta = gopher_std_msgs.ETA()  # empty ETA
 
         ##################################
         # Ros Components
@@ -108,7 +108,7 @@ class GopherHiveMind(object):
             if self.quirky_deliveries.root:
                 self.tree.insert_subtree(self.quirky_deliveries.root, self.root.id, 1)
             self.quirky_deliveries.has_a_new_goal = False
-            self.cancelled = False # reset cancelled flag upon receiving a new goal
+            self.cancelled = False  # reset cancelled flag upon receiving a new goal
             print("")
             print("************************************************************************************")
             print("                   Gopher Compelled (Behaviour Tree Update)")
