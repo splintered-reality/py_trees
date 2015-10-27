@@ -24,6 +24,7 @@ Kick the gophers around with these behaviours.
 
 import actionlib
 from actionlib_msgs.msg import GoalStatus
+import actionlib_msgs.msg as actionlib_msgs
 import move_base_msgs.msg as move_base_msgs
 import gopher_std_msgs.msg as gopher_std_msgs
 import std_msgs.msg as std_msgs
@@ -991,7 +992,7 @@ class WaitForCharge(py_trees.Behaviour):
         self.notify_timer = rospy.Timer(rospy.Duration(5), self.send_notification)
 
     def send_notification(self, timer):
-        self._notify_publisher.publish(gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.FLASH_RED,
+        self._notify_publisher.publish(gopher_std_msgs.Notification(led_pattern=self.config.led_patterns.humans_i_need_help,
                                                                     button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
                                                                     button_confirm=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
                                                                     message="waiting for charge"))
@@ -1062,6 +1063,9 @@ class MoveToGoal(py_trees.Behaviour):
         if self.action_client is None:
             self.feedback_message = "action client couldn't connect"
             return py_trees.Status.INVALID
+        if self.action_client.get_state() == actionlib_msgs.GoalStatus.ABORTED:
+            self.feedback_message = "move base aborted"
+            return py_trees.Status.FAILURE
         result = self.action_client.get_result()
         # self.action_client.wait_for_result(rospy.Duration(0.1))  # < 0.1 is moot here - the internal loop is 0.1
         if result:
