@@ -991,7 +991,7 @@ class WaitForCharge(py_trees.Behaviour):
         self.notify_timer = rospy.Timer(rospy.Duration(5), self.send_notification)
 
     def send_notification(self, timer):
-        self._notify_publisher.publish(gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.SOLID_RED,
+        self._notify_publisher.publish(gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.FLASH_RED,
                                                                     button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
                                                                     button_confirm=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
                                                                     message="waiting for charge"))
