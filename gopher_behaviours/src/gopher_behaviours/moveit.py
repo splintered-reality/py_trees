@@ -316,7 +316,7 @@ class Park(py_trees.Behaviour):
             try:
                 self.current_transform = self.tf_listener.lookupTransform("map", "base_link", rospy.Time(0))
             except tf.Exception:
-                rospy.loginfo("lookup failed with remaining time " + str(rospy.time.now() - self.timeout))
+                rospy.logwarn("Park : map->base_link transform lookup failed with remaining time " + str(rospy.Time.now() - self.timeout))
                 self.feedback_message = "waiting for transform from map to base_link"
                 return py_trees.Status.RUNNING
 
@@ -481,13 +481,21 @@ class Unpark(py_trees.Behaviour):
     def dslam_callback(self, msg):
         self.last_dslam = msg
 
-    def check_parking_update(self, check_location):
+    # Get the new parking location. The transform received is expected to be the
+    # homebase location in the same frame as the start transform. When no
+    # parking behaviour has been done before, both transforms are computed from
+    # odometry. When dslam is initialised (usually after a single delivery run),
+    # both use information from dslam instead. If the new parking location is
+    # different enough from the previous one, the location will be changed. This
+    # should help prevent the parking location drifting due to slight errors in
+    # localisation.
+    def update_parking_location(self, homebase_transform):
         if Unpark.last_parking != None:
             rospy.loginfo("last parking was nonempty - comparing the new transform to see if the parking location moved")
             rospy.loginfo("last parking: " + human_transform(Unpark.last_parking, oneline=True))
-            new_parking = inverse_times(self.end_transform, self.start_transform)
+            new_parking = inverse_times(homebase_transform, self.start_transform)
             rospy.loginfo("new parking: " + human_transform(new_parking, oneline=True))
-            parking_diff = inverse_times(Unpark.last_parking, self.start_transform)
+            parking_diff = inverse_times(Unpark.last_parking, new_parking)
             rospy.loginfo("parking diff: " + human_transform(parking_diff, oneline=True))
 
             euc_diff = numpy.linalg.norm(parking_diff[0][:2])
@@ -503,7 +511,7 @@ class Unpark(py_trees.Behaviour):
             else:
                 rospy.loginfo("differences were above threshold. modifying parking location")
         else:
-            new_parking = inverse_times(self.end_transform, self.start_transform)
+            new_parking = inverse_times(homebase_transform, self.start_transform)
             rospy.loginfo("no previous parking location. Initialising to " + human_transform(new_parking, oneline=True))
 
         rospy.loginfo("new parking is " + str(new_parking))
@@ -574,7 +582,7 @@ class Unpark(py_trees.Behaviour):
                 # check how much the parking spots differ. If the difference is
                 # small, we retain the parking spot that was used before to
                 # prevent drift in the parking locations.
-                new_parking = self.check_parking_update((self.hb_translation, self.hb_rotation))
+                new_parking = self.update_parking_location((self.hb_translation, self.hb_rotation))
                 Unpark.last_parking = new_parking
                 self.blackboard.T_hb_to_parking = new_parking
                 rospy.loginfo(self.blackboard.T_hb_to_parking)
@@ -594,7 +602,9 @@ class Unpark(py_trees.Behaviour):
                         self.feedback_message = "did not get a homebase transform"
                         return py_trees.Status.FAILURE
 
-                    new_parking = self.check_parking_update((self.hb_translation, self.hb_rotation))
+                    # the homebase is defined by the end transform, so we use
+                    # that to get the new parking location.
+                    new_parking = self.update_parking_location(self.end_transform)
                     Unpark.last_parking = new_parking
                     self.blackboard.T_hb_to_parking = new_parking
                     rospy.loginfo(self.blackboard.T_hb_to_parking)
