@@ -203,7 +203,10 @@ class Sequence(Composite):
         self.current_index = 0
 
     def tick(self):
-        if self.status != Status.RUNNING:
+        # TODO : Not sure whether this is exactly the right decision...
+        # We possibly want the seqeunece reinitialising if it is
+        # In success or failure state.
+        if self.status == Status.INVALID:
             self.initialise()
         self.logger.debug("  %s [tick()]" % self.name)
         for child in itertools.islice(self.children, self.current_index, None):
