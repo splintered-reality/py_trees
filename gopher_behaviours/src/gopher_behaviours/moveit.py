@@ -141,7 +141,7 @@ class Finishing(py_trees.Selector):
         dopark = py_trees.Sequence("Park/notify", [Park("Park"), NotifyComplete("Notify")])
         parkseq = py_trees.Sequence("Maybe park", [py_trees.meta.inverter(WasDocked("Was I parked?")), dopark])
 
-        children = [parkseq, dockseq, WaitForCharge("Wait for help")]
+        children = [parkseq, dockseq, WaitForCharge("Wait for Jack/Dock")]
         super(Finishing, self).__init__(name, children)
 
 ##############################################################################
@@ -1081,12 +1081,3 @@ class MoveToGoal(py_trees.Behaviour):
         # succeeded, send a message to cancel the goal for this action client.
         if self.action_client is not None and self.action_client.get_state() != GoalStatus.SUCCEEDED:
             self.action_client.cancel_goal()
-
-
-class GoHome(py_trees.Behaviour):
-    def __init__(self, name):
-        super(GoHome, self).__init__(name)
-
-    def update(self):
-        self.logger.debug("  %s [GoHome::update()]" % self.name)
-        return py_trees.Status.SUCCESS
