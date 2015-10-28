@@ -41,4 +41,6 @@
     <param name="semantics_parameter_namespace" value="/rocon/semantics"/>
     <param name="disable_begin_end_behaviours" value="$(arg disable_begin_end_behaviours)"/> 
   </node>
+
+  <include file="$(find gopher_behaviours)/launch/delivery_joy.launch"/>
 </launch>

@@ -1,0 +1,11 @@
+<launch>
+  <arg name="locations" value="$(env DELIVERY_JOY_LOCATIONS)"/>
+  <arg name="cycle_door" value="$(env DELIVERY_JOY_CYCLE_DOOR)"/>
+  <arg name="disable_begin_end_behaviours"     default="false" doc="prevent the planner from adding the starting and ending groups to the behaviour tree"/>
+  
+  <node name="delivery_joy" type="delivery_joy" pkg="gopher_behaviours">
+    <rosparam param="locations" subst_value="True">$(arg locations)</rosparam>
+    <param name="cycle_door" value="$(arg cycle_door)"/>
+    <param name="disable_begin_end" value="$(arg disable_begin_end_behaviours)"/>
+  </node>
+</launch>
