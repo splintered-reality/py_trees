@@ -61,6 +61,8 @@ class Semantics(object):
         :param bool create_publishers: only the node is interested in doing this.
         :param str from_yaml: load from yaml instead of the rosparam server.
 
+        :raise KeyError: when the incoming semantics is invalid.
+
         .. todo::
 
            Might be worth splitting this into a yaml parent vs ros child class with all the extra bells & whistles
@@ -85,8 +87,21 @@ class Semantics(object):
             self.semantic_modules['worlds'] = Worlds(from_yaml_object=semantics["worlds"]) if from_yaml else Worlds(self.parameters.semantics_parameter_namespace)
         if 'docking_stations' in semantics:
             self.semantic_modules['docking_stations'] = DockingStations(from_yaml_object=semantics["docking_stations"]) if from_yaml else DockingStations(self.parameters.semantics_parameter_namespace)
+        else:
+            self.semantic_modules['docking_stations'] = DockingStations()
         if 'elevators' in semantics:
             self.semantic_modules['elevators'] = Elevators(from_yaml_object=semantics["elevators"]) if from_yaml else Elevators(self.parameters.semantics_parameter_namespace)
+        else:
+            self.semantic_modules['elevators'] = Elevators()
+
+        #######################################
+        # Validation
+        #######################################
+        for key in ['locations', 'worlds']:
+            if key not in self.semantic_modules:
+                rospy.logerr("Semantics : invalid semantics, no %s defined." % key)
+                raise KeyError("Semantics : invalid semantics, no %s defined." % key)
+
         for module_name, module in self.semantic_modules.iteritems():
             setattr(self, module_name, module)
 
@@ -98,15 +113,10 @@ class Semantics(object):
             latched = True
             queue_size_five = 5
             # special case - supporting legacy
-            if 'semantic_locations' in semantics or 'locations' in semantics:
-                publisher_details.append(('~locations', gopher_semantic_msgs.Locations, latched, queue_size_five))
-            if 'worlds' in semantics:
-                publisher_details.append(('~worlds', gopher_semantic_msgs.Worlds, latched, queue_size_five))
-            if 'docking_stations' in semantics:
-                publisher_details.append(('~docking_stations', gopher_semantic_msgs.DockingStations, latched, queue_size_five))
-            if 'elevators' in semantics:
-                publisher_details.append(('~elevators', gopher_semantic_msgs.Elevators, latched, queue_size_five))
-
+            publisher_details.append(('~locations', gopher_semantic_msgs.Locations, latched, queue_size_five))
+            publisher_details.append(('~worlds', gopher_semantic_msgs.Worlds, latched, queue_size_five))
+            publisher_details.append(('~docking_stations', gopher_semantic_msgs.DockingStations, latched, queue_size_five))
+            publisher_details.append(('~elevators', gopher_semantic_msgs.Elevators, latched, queue_size_five))
             publisher_details.append(('~introspection/parameters', std_msgs.String, latched, queue_size_five)),
             publisher_details.append(('~introspection/semantics', std_msgs.String, latched, queue_size_five)),
             self.publishers = rocon_python_comms.utils.Publishers(publisher_details)
