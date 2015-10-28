@@ -203,7 +203,17 @@ class Sequence(Composite):
         self.current_index = 0
 
     def tick(self):
-        if self.status != Status.RUNNING:
+        # This is not the right thing to do - it should be
+        #
+        # 1) Easy: parameterised OR
+        # 2) Harder: decorated by an encapsulating OneShot behaviour
+        #
+        # Possibly that latter item could be generic - i.e. work
+        # for individual behaviours too.
+        if self.status == Status.FAILURE or self.status == Status.SUCCESS:
+            yield self
+            return
+        if self.status == Status.INVALID:
             self.initialise()
         self.logger.debug("  %s [tick()]" % self.name)
         for child in itertools.islice(self.children, self.current_index, None):

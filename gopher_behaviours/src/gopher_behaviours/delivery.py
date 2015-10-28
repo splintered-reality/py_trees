@@ -36,6 +36,7 @@ import std_msgs.msg as std_msgs
 import gopher_configuration
 from .blackboard import Blackboard
 from . import moveit
+from . import recovery
 
 ##############################################################################
 # Dummy Delivery Locations List (for testing)
@@ -203,6 +204,7 @@ class GopherDeliveries(object):
         self.old_goal_id = None
         self.planner = planner
         self.always_assume_initialised = False
+        self.delivery_sequence = None
 
         if semantic_locations is not None:
             self.incoming_goal = [location.unique_name for location in semantic_locations]
@@ -220,7 +222,7 @@ class GopherDeliveries(object):
         if locations is None or not locations:
             return (gopher_std_msgs.DeliveryErrorCodes.GOAL_EMPTY_NOTHING_TO_DO, "goal empty, nothing to do.")
         if self.state == State.IDLE:
-            if self.planner.check_locations(locations): # make sure locations are valid before returning success
+            if self.planner.check_locations(locations):  # make sure locations are valid before returning success
                 self.incoming_goal = locations
                 self.always_assume_initialised = always_assume_initialised
                 self.doors = doors
@@ -256,7 +258,10 @@ class GopherDeliveries(object):
             else:
                 self.old_goal_id = self.root.id if self.root is not None else None
                 self.blackboard.traversed_locations = [] if not self.root else self.blackboard.traversed_locations
-                self.root = py_trees.Sequence(name="Balli Balli Deliveries", children=children)
+                self.delivery_sequence = py_trees.Sequence(name="Balli Balli Deliveries", children=children)
+                self.root = py_trees.Selector(name='Deliver Unto Me',
+                                              children=[self.delivery_sequence,
+                                                        recovery.HomebaseRecovery("Undelivered")])
                 self.blackboard.remaining_locations = self.incoming_goal
                 self.locations = self.incoming_goal
                 self.has_a_new_goal = True
@@ -288,16 +293,23 @@ class GopherDeliveries(object):
         return False
 
     def post_tock_update(self):
+        """
+        Be careful here, the logic gets tricky.
+        """
         if self.root is not None and self.root.status == py_trees.Status.RUNNING:
-            if isinstance(self.root.current_child(), moveit.MoveToGoal):
-                self.state = State.TRAVELLING
-                if self.blackboard.traversed_locations:
-                    self.feedback_message = "moving from '%s' to '%s'" % (self.blackboard.traversed_locations[-1], self.blackboard.remaining_locations[0])
-                else:
-                    self.feedback_message = "moving to '%s'" % self.blackboard.remaining_locations[0]
-            elif isinstance(self.root.current_child(), Waiting):
-                self.state = State.WAITING
-                self.feedback_message = self.root.current_child().feedback_message
+            if self.delivery_sequence.status == py_trees.Status.RUNNING:
+                if isinstance(self.delivery_sequence.current_child(), moveit.MoveToGoal):
+                    self.state = State.TRAVELLING
+                    if self.blackboard.traversed_locations:
+                        self.feedback_message = "moving from '%s' to '%s'" % (self.blackboard.traversed_locations[-1], self.blackboard.remaining_locations[0])
+                    else:
+                        self.feedback_message = "moving to '%s'" % self.blackboard.remaining_locations[0]
+                elif isinstance(self.delivery_sequence.current_child(), Waiting):
+                    self.state = State.WAITING
+                    self.feedback_message = self.delivery_sequence.current_child().feedback_message
+            else:  # we're in the homebase recovery behaviour
+                self.state = State.WAITING  # don't allow it to be interrupted
+                self.feedback_message = "delivery failed, waiting for human to teleop us back home before cancelling"
         else:
             self.state = State.IDLE
             self.feedback_message = "idling"

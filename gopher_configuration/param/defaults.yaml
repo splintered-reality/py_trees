@@ -83,6 +83,7 @@ sounds:
 #  - humans_give_me_input = gopher_std_msgs.Notification.FLASH_BLUE
 #  - humans_be_careful = gopher_std_msgs.Notification.FLASH_YELLOW
 #  - humans_i_need_help = gopher_std_msgs.Notification.FLASH_PURPLE
+#  - humans_fix_me_i_am_broken = gopher_std_msgs.Notification.FLASH_RED
 #
 # notifications - just to show what's going on, in case someone cares
 #
@@ -93,4 +94,4 @@ sounds:
 #  - battery full = gopher_std_msgs.Notification.SOLID_BLUE
 #  - battery mid  = gopher_std_msgs.Notification.SOLID_GREEN
 #  - battery low  = gopher_std_msgs.Notification.SOLID_YELLOW
-#  - error = gopher_std_msgs.Notification.SOLID_RED
+#  - error        = gopher_std_msgs.Notification.SOLID_RED

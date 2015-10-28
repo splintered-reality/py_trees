@@ -27,30 +27,11 @@ import py_trees
 
 from . import interactions
 from . import navigation
+from . import recovery
 
 ##############################################################################
 # Behaviours
 ##############################################################################
-
-
-class ElevatorFailure(py_trees.Sequence):
-    def __init__(self, name):
-        """
-        WARNING: this is not a very complete recovery behaviour. It expects the
-        user to go all the way back to homebase and press the button. But doesn't
-        inform him exactly that he should do this.
-
-        :param str name: behaviour name
-        """
-        super(ElevatorFailure, self).__init__(name)
-        self.gopher = gopher_configuration.Configuration()
-        flash_leds = interactions.FlashLEDs("Warning", led_pattern=self.gopher.led_patterns.humans_i_need_help)
-        wait_for_button = interactions.WaitForButton("Teleop me home and press confirm!", self.gopher.buttons.go)
-        teleport = navigation.Teleport("Teleport Home", gopher_navi_msgs.TeleportGoal(location="homebase"))
-        flash_leds.add_child(wait_for_button)
-        self.add_child(flash_leds)
-        self.add_child(teleport)
-
 
 class HumanAssistedElevators(py_trees.Selector):
 
@@ -74,7 +55,7 @@ class HumanAssistedElevators(py_trees.Selector):
         ###########################################
         # Assume all things here...as both semantics and planner should already validate everything.
         elevator_sequence = _generate_elevator_sequence(self.gopher, self.elevator.unique_name, self.elevator_level_origin, self.elevator_level_destination)
-        failure_sequence = ElevatorFailure("Failure")
+        failure_sequence = recovery.HomebaseRecovery("Failure")
         self.add_child(elevator_sequence)
         self.add_child(failure_sequence)
 
