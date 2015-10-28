@@ -42,16 +42,16 @@ elevators:
     levels:
       - world: ave_maria_basement
         floor: 0
-        entry: { x: 0.00, y: -2.00, theta: 0.00 }
-        exit:  { x: 0.00, y: -2.00, theta: 3.14 }
+        entry: { x: -9.64, y: -3.85, theta: -0.98 }
+        exit:  { x: -9.64, y: -3.85, theta: -0.98 }
       - world: ave_maria_1st_floor
         floor: 1
-        entry: { x: 5.00, y: 1.00, theta: 1.57 }
-        exit:  { x: 5.00, y: 1.00, theta: -1.57 }
+        entry: { x: -2.05, y: -0.16, theta: -1.46 }
+        exit:  { x: -2.05, y: -0.16, theta: -1.46 }
       - world: ave_maria_2nd_floor
         floor: 2
-        entry: { x: 3.00, y: -1.00, theta: 0.00 }
-        exit:  { x: 3.00, y: -1.00, theta: 3.14 }
+        entry: { x: 0.00, y: 0.00, theta: 0.0 }
+        exit:  { x: 0.00, y: 0.00, theta: 0.0 }
 
 ######################################
 # Intermap Connections
@@ -80,9 +80,9 @@ semantic_locations: {
     description: 'Elevator on the Lobby - Level1',
     world: ave_maria_1st_floor,
     pose: {
-      x: 0.0,
-      y: 0.0,
-      theta: 0.0
+      x: -2.05,
+      y: -0.16,
+      theta: -1.46
     },
     keyframe_id: 0
   },
