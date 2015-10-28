@@ -89,14 +89,18 @@ class Node(object):
         )
         self.goal_handler = goals.GoalHandler(self.publishers, self.service_proxies)
         self._publish_introspection_data()
-        self.publishers.world.publish(self.semantics.worlds.default)  # initialise the world publisher
+
+        # look for an initial world from rosparam server
+        initial_world = rospy.get_param("~initial_world", None)
+        # fallback to the one in the semantics
+        if initial_world is None:
+            initial_world = self.semantics.worlds.default
+
+        self.publishers.world.publish(initial_world)  # initialise the world publisher
 
         # look for an initial world from rosparam server
         goal = gopher_navi_msgs.TeleportGoal()
-        goal.world = rospy.get_param("~initial_world", None)
-        # if nothing there, fallback to the one in the semantics
-        if goal.world is None:
-            goal.world = self.semantics.worlds.default
+        goal.world = initial_world
         # load it
         if goal.world is not None:
             if self.goal_handler.load(goal):

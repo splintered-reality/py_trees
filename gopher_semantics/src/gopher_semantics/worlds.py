@@ -68,12 +68,19 @@ class Worlds(dict):
                 world.description = fields['description']
                 self.__setitem__(unique_name, world)
             except KeyError:
-                rospy.logwarn("Worlds : one of the expected fields for elevator '%s' was missing!" % unique_name)
+                rospy.logwarn("Worlds : one of the expected fields for a world '%s' was missing!" % unique_name)
             if 'default' in fields.keys():
                 if fields['default']:
                     if self.default is not None:
                         rospy.logwarn("Semantics: you have multiple worlds flagged as the default, overriding [%s->%s]" % (self.default, unique_name))
                     self.default = unique_name
+        if len(self.values()) < 1:  # rememeber self.default is one
+            rospy.logerr("Worlds : invalid semantics, there are no worlds defined.")
+
+        # make sure we have a default
+        if self.default is None:
+            rospy.logwarn("Worlds : no default specified, taking the first one listed.")
+            self.default = self.keys()[0]
 
     def __str__(self):
         s = console.bold + "\nWorlds:\n" + console.reset
