@@ -249,9 +249,12 @@ class GopherDeliveries(object):
             # use the planner to initialise the behaviours that we are to follow
             # to get to the delivery location. If this is empty/None, then the
             # semantic locations provided were wrong.
-            undock = False if self.always_assume_initialised or self.root else True
-            print("*********************************** Always assume initialised: %s" % self.always_assume_initialised)
-            children = self.planner.create_tree(current_world, self.incoming_goal, undock=undock, doors=self.doors)
+            include_parking_behaviours = False if self.always_assume_initialised or self.root else True
+            children = self.planner.create_tree(current_world,
+                                                self.incoming_goal,
+                                                include_parking_behaviours=include_parking_behaviours,
+                                                doors=self.doors
+                                                )
             if not children:
                 # TODO is this enough?
                 rospy.logwarn("Gopher Deliveries : Received a goal, but none of the locations were valid.")
@@ -261,7 +264,7 @@ class GopherDeliveries(object):
                 self.delivery_sequence = py_trees.Sequence(name="Balli Balli Deliveries", children=children)
                 self.root = py_trees.Selector(name='Deliver Unto Me',
                                               children=[self.delivery_sequence,
-                                                        recovery.HomebaseRecovery("Undelivered")])
+                                                        recovery.HomebaseRecovery("Delivery Failed")])
                 self.blackboard.remaining_locations = self.incoming_goal
                 self.locations = self.incoming_goal
                 self.has_a_new_goal = True

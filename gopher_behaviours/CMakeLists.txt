@@ -14,6 +14,8 @@ catkin_package()
 
 catkin_python_setup()
 
+catkin_add_env_hooks(42.gopher_deliveries SHELLS sh DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/env-hooks)
+
 ##############################################################################
 # Installs
 ##############################################################################
@@ -27,6 +29,7 @@ catkin_install_python(
         scripts/gopher_deliveries
         scripts/gopher_elevator_run
         scripts/gopher_delivery_run
+        scripts/custom_delivery_overseer.py
     DESTINATION
         ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

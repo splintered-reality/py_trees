@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 #
-# License: BSD
+# License: Yujin
 #   https://raw.github.com/yujinrobot/gopher_crazy_hospital/license/LICENSE
 #
 ##############################################################################
 # Documentation
 ##############################################################################
+
 """
-Simple demo program for py trees
+Node that acts as caretaker of the behaviour tree for gopher deliveries.
 """
 ##############################################################################
 # Imports
@@ -18,6 +19,7 @@ from gopher_behaviours.planner import Planner
 import gopher_configuration
 import gopher_std_msgs.msg as gopher_std_msgs
 import gopher_std_msgs.srv as gopher_std_srvs
+import gopher_delivery_msgs.msg as gopher_delivery_msgs
 import std_msgs.msg as std_msgs
 import py_trees
 from py_trees.common import Status
@@ -31,10 +33,10 @@ import rospy
 def show_usage(root):
     print("")
     print("************************************************************************************")
-    print("                                 Gopher Compulsion")
+    print("                                 Gopher HiveMind")
     print("************************************************************************************")
     print("")
-    print("Warm, fuzzy, furry, behavioural experiments")
+    print("Node that acts as caretaker of the behaviour tree for gopher deliveries.")
     print("")
     py_trees.display.print_ascii_tree(root)
     print("")
@@ -50,11 +52,10 @@ class GopherHiveMind(object):
     def __init__(self):
 
         autoload_test_delivery = rospy.get_param("~autoload_test_delivery", False)
-        disable_begin_end = rospy.get_param("~disable_begin_end_behaviours", False)
         preloaded_semantic_locations = gopher_behaviours.delivery.desirable_destinations() if autoload_test_delivery else None  # list of gopher_std_msgs.Location objects
-        self.battery_subtree = gopher_behaviours.battery.create_battery_tree(name="Eating Disorder", disable_begin_end=disable_begin_end)
+        self.battery_subtree = gopher_behaviours.battery.create_battery_tree(name="Eating Disorder")
         self.gopher = gopher_configuration.Configuration()
-        self.planner = Planner(auto_go=rospy.get_param("~dont_wait_for_hoomans", False), disable_begin_end_behaviours=disable_begin_end)
+        self.planner = Planner(auto_go=rospy.get_param("~dont_wait_for_hoomans", False))
         self.current_world_subscriber = rospy.Subscriber(self.gopher.topics.world, std_msgs.String, self.current_world_callback)
         self.current_world = None
 
@@ -74,10 +75,14 @@ class GopherHiveMind(object):
         rospy.on_shutdown(self.shutdown)
         self._delivery_goal_service = rospy.Service('delivery/goal', gopher_std_srvs.DeliveryGoal, self._goal_service_callback)
         self._delivery_feedback_publisher = rospy.Publisher('delivery/feedback', gopher_std_msgs.DeliveryFeedback, queue_size=1, latch=True)
+        self._status_pub = rospy.Publisher('~status', gopher_delivery_msgs.DeliveryManagerStatus, queue_size=1, latch=True)
         self._delivery_goal_cancel_sub = rospy.Subscriber('delivery/cancel', std_msgs.Empty, self._goal_cancel_callback)
+
         self._eta_sub = rospy.Subscriber('/navi/eta', gopher_std_msgs.ETA, self._eta_callback)
         self._stop_sub = rospy.Subscriber('/gopher/buttons/stop', std_msgs.Empty, self._stop_callback)
         self._delivery_result_service = rospy.Service('delivery/result', gopher_std_srvs.DeliveryResult, self._result_service_callback)
+
+        self._status_pub.publish(gopher_delivery_msgs.DeliveryManagerStatus(status=gopher_delivery_msgs.DeliveryManagerStatus.IDLING))
 
     def _eta_callback(self, msg):
         self.current_eta = msg
@@ -111,7 +116,7 @@ class GopherHiveMind(object):
             self.cancelled = False  # reset cancelled flag upon receiving a new goal
             print("")
             print("************************************************************************************")
-            print("                   Gopher Compelled (Behaviour Tree Update)")
+            print("                   Gopher Hivemind (Behaviour Tree Update)")
             print("************************************************************************************")
             py_trees.display.print_ascii_tree(self.tree.root)
             print("************************************************************************************")
@@ -139,6 +144,7 @@ class GopherHiveMind(object):
             self._delivery_feedback_publisher.publish(msg)
         if self.quirky_deliveries.succeeded_on_last_tick():
             self.success = True
+            self._status_pub.publish(gopher_delivery_msgs.DeliveryManagerStatus(status=gopher_delivery_msgs.DeliveryManagerStatus.IDLING))
 
     ##############################################################################
     # Ros Methods
@@ -172,6 +178,7 @@ class GopherHiveMind(object):
             if result == gopher_std_msgs.DeliveryErrorCodes.SUCCESS:
                 message = "received goal request [%s]" % message
                 rospy.loginfo("Delivery : [%s]" % message)
+                self._status_pub.publish(gopher_delivery_msgs.DeliveryManagerStatus(status=gopher_delivery_msgs.DeliveryManagerStatus.DELIVERING))
                 self.success = False
             else:
                 message = "refused goal request [%s]" % message
@@ -203,6 +210,7 @@ class GopherHiveMind(object):
         msg.remaining_locations = self.quirky_deliveries.blackboard.remaining_locations
         msg.status_message = "Cancellation message was received."
         self._delivery_feedback_publisher.publish(msg)
+        self._status_pub.publish(gopher_delivery_msgs.DeliveryManagerStatus(status=gopher_delivery_msgs.DeliveryManagerStatus.IDLING))
 
     def _result_service_callback(self, request):
         '''

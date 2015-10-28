@@ -26,7 +26,7 @@ import py_trees
 import rospy
 import somanet_msgs.msg as somanet_msgs
 
-from . import moveit
+from . import recovery
 
 ##############################################################################
 # Battery
@@ -57,14 +57,12 @@ class CheckBatteryLevel(py_trees.Behaviour):
         self.battery_percentage = msg.percentage
 
 
-def create_battery_tree(name, disable_begin_end=False):
+def create_battery_tree(name):
     check_battery_level = CheckBatteryLevel("Check Battery Level")
-    go_home = moveit.GoHome("Go Home To Sleep")
-    children = []
-    if disable_begin_end:
-        children=[check_battery_level, go_home]
-    else:
-        children=[check_battery_level, go_home, moveit.Finishing("Finishing")]
+    homebase_recovery = recovery.HomebaseRecovery("Homebase Recovery")
+    children = [check_battery_level, homebase_recovery]
+    # this needs more thought...
+    # also need a wait for charge once you're back...
+    # children=[check_battery_level, go_home, moveit.Finishing("Finishing")]
     root = py_trees.Sequence(children=children, name=name)
-    
     return root
