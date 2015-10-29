@@ -166,7 +166,7 @@ class Node(object):
         if not self.goal_handler.load(goal):
             self.result = self.goal_handler.result
             self.action_server.set_aborted(self.result, self.result.message)
-            rospy.logwarn("MarcoPolo : rejected teleport goal [%s][%s]" % self.result.value, self.result.message)
+            rospy.logwarn("MarcoPolo : rejected teleport goal [%s][%s]" % (self.result.value, self.result.message))
             # only one possible cause of failure here - map file could not be found
             self.generate_diagnostics(diagnostic_msgs.DiagnosticStatus.WARN, goal.world, "Requested map loading failed.", self.goal_handler.result.message)
             return
