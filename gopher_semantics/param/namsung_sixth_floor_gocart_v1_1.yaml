@@ -1,0 +1,83 @@
+##############################################################################
+# Worlds
+##############################################################################
+
+worlds:
+  namsung_sixth_floor_gocart_v1_1:
+    display_name: 'Namsung Sixth Floor for GoCart v1.1'
+    description: 'Namsung sixth floor, with all destination, based on the d-SLAM map for GoCart v1.1.'
+    default: true
+
+##############################################################################
+# Locations
+##############################################################################
+
+semantic_locations:
+  homebase:
+    name: 'Homebase'
+    description: 'Keeping Yoon company'
+    world: namsung_sixth_floor
+    pose: { x: 1.0, y: 0.00, theta: 0.00 }
+    keyframe_id: 0
+  inno:
+    name: 'Innovation Room'
+    description: 'A nice empty spot, hopefully...'
+    world: namsung_sixth_floor
+    pose: { x: 3.00, y: -1.00, theta: 0.00 }
+    keyframe_id: 1
+  sam:
+    name: 'Sam'
+    description: 'Keeping tabs on Sam'
+    world: namsung_sixth_floor
+    pose: { x: 6.91, y: -21.060000, theta: 0.000000 }
+    keyframe_id: 2
+  elevators:
+    name: 'Elevators'
+    description: 'Up and down'
+    world: namsung_sixth_floor
+    pose: { x: 19.83, y: 8.15, theta: 0.00 }
+    keyframe_id: 3
+  leaving_inno:
+    name: 'Leaving Inno'
+    description: 'Leaving the innovation room (towards the elevators)'
+    world: namsung_sixth_floor
+    pose: { x: 14.780000, y: 2.090000, theta: 1.57 }
+    keyframe_id: 4
+  big_elevators:
+    name: 'Big Elevators'
+    description: 'Behold, serious elevators for serious gocarts!'
+    world: namsung_sixth_floor
+    pose: { x: 19.66, y: 23.56, theta: 1.57 }
+    keyframe_id: 5
+  hwajangsil:
+    name: 'Hwajangsil'
+    description: 'I didnt map in there...'
+    world: namsung_sixth_floor
+    pose: { x: 20.38, y: -11.05, theta: -1.57 }
+    keyframe_id: 6
+  tv_dock:
+    name: 'TV docking station approach'
+    description: 'Maybe blade runner is on?'
+    world: namsung_sixth_floor
+    pose: { x: 9.0, y: 0.00, theta: 0.00 }
+    keyframe_id: 7
+
+# For testing purposes only
+docking_stations:
+  'tv':
+    primary_id: 9
+    left_id: 10
+    right_id: 11
+    pose:
+      x : 9.0
+      y : -1.0
+      theta : -1.57
+  '1':
+    primary_id: 1
+    left_id: 5
+    right_id: 6
+    pose:
+      x : 1.0
+      y : 2.0
+      theta : 1.570
+
