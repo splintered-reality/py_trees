@@ -5,7 +5,7 @@
 worlds:
   namsung_sixth_floor_gocart_v1_1:
     display_name: 'Namsung Sixth Floor for GoCart v1.1'
-    description: 'Namsung sixth floor, with all destination, based on the d-SLAM map for GoCart v1.1.'
+    description: 'Namsung sixth floor, based on the d-SLAM map for GoCart v1.1.'
     default: true
 
 ##############################################################################
