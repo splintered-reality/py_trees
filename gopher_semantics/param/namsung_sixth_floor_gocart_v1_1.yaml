@@ -25,12 +25,6 @@ semantic_locations:
     world: namsung_sixth_floor_gocart_v1_1
     pose: { x: 3.00, y: -1.00, theta: 0.00 }
     keyframe_id: 1
-  sam:
-    name: 'Sam'
-    description: 'Keeping tabs on Sam'
-    world: namsung_sixth_floor_gocart_v1_1
-    pose: { x: 6.91, y: -21.060000, theta: 0.000000 }
-    keyframe_id: 2
   elevators:
     name: 'Elevators'
     description: 'Up and down'
