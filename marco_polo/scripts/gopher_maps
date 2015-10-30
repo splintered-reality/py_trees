@@ -44,7 +44,7 @@ def parse_arguments(command_line_args):
     parser.add_argument('-l', '--list', action='store_true', help='list installed and available maps.')
     interactions_group = parser.add_mutually_exclusive_group()
     interactions_group.add_argument('-d', '--download', action='store', default=None, help='download a map from the fileserver.')
-    interactions_group.add_argument('-u', '--upload', action='store', default=None, help='upload a map to the fileserver.')
+    interactions_group.add_argument('-u', '--upload', action='store', default=None, help='upload a .dslam map to the fileserver.')
     args = parser.parse_args(command_line_args)
     return (parser, args)
 
