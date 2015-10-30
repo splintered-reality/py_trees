@@ -37,6 +37,7 @@ import gopher_configuration
 from .blackboard import Blackboard
 from . import moveit
 from . import recovery
+from . import interactions
 
 ##############################################################################
 # Dummy Delivery Locations List (for testing)
@@ -196,6 +197,7 @@ class GopherDeliveries(object):
     def __init__(self, name, planner, semantic_locations=None):
         self.blackboard = Blackboard()
         self.blackboard.is_waiting = False
+        self.config = gopher_configuration.Configuration()
         self.root = None
         self.state = State.IDLE
         self.locations = []
@@ -261,10 +263,20 @@ class GopherDeliveries(object):
             else:
                 self.old_goal_id = self.root.id if self.root is not None else None
                 self.blackboard.traversed_locations = [] if not self.root else self.blackboard.traversed_locations
-                self.delivery_sequence = py_trees.Sequence(name="Balli Balli Deliveries", children=children)
-                self.root = py_trees.Selector(name='Deliver Unto Me',
-                                              children=[self.delivery_sequence,
-                                                        recovery.HomebaseRecovery("Delivery Failed")])
+
+                self.cancel_sequence = py_trees.Sequence(name="Cancellation",
+                                                         children=[interactions.CheckButtonPressed("Cancel Pressed?",
+                                                                                                   self.config.buttons.go,
+                                                                                                   latched=True),
+                                                                   recovery.HomebaseRecovery("Delivery Cancelled")])
+                # delivery sequence is oneshot - will only run once, retaining its succeeded or failed state
+                self.delivery_sequence = py_trees.meta.oneshot(py_trees.Sequence(name="Balli Balli Deliveries",
+                                                                                 children=children))
+                self.delivery_selector = py_trees.Selector(name="Deliver or recover",
+                                                           children=[self.delivery_sequence,
+                                                                     recovery.HomebaseRecovery("Delivery Failed")])
+                self.root = py_trees.Selector(name="Deliver Unto Me",
+                                              children=[self.cancel_sequence, self.delivery_selector])
                 self.blackboard.remaining_locations = self.incoming_goal
                 self.locations = self.incoming_goal
                 self.has_a_new_goal = True

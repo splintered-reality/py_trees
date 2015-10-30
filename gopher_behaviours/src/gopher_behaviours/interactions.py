@@ -51,7 +51,37 @@ class Articulate(py_trees.Behaviour):
         self.publisher.publish(std_msgs.Empty())
         return py_trees.Status.SUCCESS
 
+class CheckButtonPressed(py_trees.Behaviour):
+    """Checks whether a button has been pressed.
 
+    :param bool latched: If latched is false, the behaviour will return success
+    if the button was pressed at some point after the last update, and failure
+    otherwise. If latched is true, it will return success if the button was
+    pressed at any point since the behaviour initialised.
+
+    """
+    def __init__(self, name, topic_name, latched=False):
+        super(CheckButtonPressed, self).__init__(name)
+        self.topic_name = topic_name
+        self.subscriber = None
+        self.latched = latched
+        self.button_pressed = False
+
+    def initialise(self):
+        self.subscriber = rospy.Subscriber(self.topic_name, std_msgs.Empty, self.button_callback)
+
+    def button_callback(self, msg):
+        self.button_pressed = True
+
+    def update(self):
+        if self.button_pressed:
+            return py_trees.Status.SUCCESS
+        else:
+            return py_trees.Status.FAILURE
+
+        if not latched:
+            self.button_pressed = False
+            
 class WaitForButton(py_trees.Behaviour):
     def __init__(self, name, topic_name):
         """
