@@ -194,6 +194,7 @@ class WhipMe(object):
     def pose(self):
         args = parse_pose_arguments(self.sub_command_line_args)
         goal = gopher_navi_msgs.TeleportGoal()
+        goal.special_effects = True
         goal.world_pose = gopher_navi_msgs.WorldPoseLocation()
         goal.world_pose.world = ""
         pose_2d = geometry_msgs.Pose2D(args.x, args.y, args.theta)
@@ -204,6 +205,7 @@ class WhipMe(object):
     def world_pose(self):
         args = parse_world_pose_arguments(self.sub_command_line_args)
         goal = gopher_navi_msgs.TeleportGoal()
+        goal.special_effects = True
         goal.world_pose = gopher_navi_msgs.WorldPoseLocation()
         goal.world_pose.world = args.world
         pose_2d = geometry_msgs.Pose2D(args.x, args.y, args.theta)
@@ -213,18 +215,21 @@ class WhipMe(object):
     def world(self):
         args = parse_world_arguments(self.sub_command_line_args)
         goal = gopher_navi_msgs.TeleportGoal()
+        goal.special_effects = True
         goal.world = args.world
         return goal
 
     def location(self):
         args = parse_location_arguments(self.sub_command_line_args)
         goal = gopher_navi_msgs.TeleportGoal()
+        goal.special_effects = True
         goal.location = args.location
         return goal
 
     def elevator(self):
         args = parse_elevator_arguments(self.sub_command_line_args)
         goal = gopher_navi_msgs.TeleportGoal()
+        goal.special_effects = True
         goal.elevator_location = gopher_navi_msgs.ElevatorLocation()
         goal.elevator_location.elevator = args.elevator
         goal.elevator_location.world = args.world

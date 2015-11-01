@@ -81,7 +81,7 @@ class Node(object):
                 ('~introspection/worlds', std_msgs.String, latched, queue_size_five),
                 ('init_pose', self.gopher.topics.initial_pose, geometry_msgs.PoseWithCovarianceStamped, latched, queue_size_five),
                 ('switch_map', self.gopher.topics.switch_map, std_msgs.String, latched, queue_size_five),
-                ('diagnostics', self.gopher.topics.diagnostics, diagnostic_msgs.DiagnosticArray, latched, queue_size_five)
+                ('diagnostics', self.gopher.topics.diagnostics, diagnostic_msgs.DiagnosticArray, latched, queue_size_five),
                 ('teleport_sound', self.gopher.sounds.teleport, std_msgs.Empty, not_latched, 1),
                 ('teleport_pattern', self.gopher.topics.display_notification, gopher_std_msgs.Notification, not_latched, 1),
             ]
@@ -180,9 +180,9 @@ class Node(object):
         self.generate_diagnostics(diagnostic_msgs.DiagnosticStatus.OK, goal.world, "Map successfully loaded.", "success")
         self.result.value = gopher_navi_msgs.TeleportResult.SUCCESS
         self.result.message = "success"
-#         if goal.special_effects:
-#             self.publishers.teleport_sound.publish(std_msgs.Empty())
-#             self.publishers.teleport_pattern.publish(gopher_std_msgs.Notification(led_pattern=self.gopher.led_patterns.holding))
+        if goal.special_effects:
+            self.publishers.teleport_sound.publish(std_msgs.Empty())
+            self.publishers.teleport_pattern.publish(gopher_std_msgs.Notification(led_pattern=self.gopher.led_patterns.holding))
         while not rospy.is_shutdown():
             # preempted
             if self.action_server.is_preempt_requested():

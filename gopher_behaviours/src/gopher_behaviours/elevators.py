@@ -84,6 +84,7 @@ def _generate_elevator_sequence(gopher_configuration, elevator_name, elevator_le
     goal.elevator_location.elevator = elevator_name
     goal.elevator_location.world = elevator_level_destination.world
     goal.elevator_location.location = gopher_navi_msgs.ElevatorLocation.EXIT
+    goal.special_effects = False  # we do our own special effects
     elevator_teleport = navigation.Teleport("Elevator Teleport", goal)
     flash_leds_teleporting.add_child(telesound)
     flash_leds_teleporting.add_child(elevator_teleport)
