@@ -20,6 +20,7 @@ import gopher_behaviours
 import gopher_configuration
 import gopher_delivery_msgs.msg as gopher_delivery_msgs
 import gopher_navi_msgs.msg as gopher_navi_msgs
+import gopher_std_msgs.msg as gopher_std_msgs
 import rocon_python_comms
 import rospy
 import std_msgs.msg as std_msgs
@@ -51,10 +52,12 @@ class CustomDeliveryOverseer():
                 ('init_homebase', self.gopher.buttons.stop, std_msgs.Empty, self.stop_cb)
             ]
         )
-        latched = False
+        not_latched = False
         self.publishers = rocon_python_comms.utils.Publishers(
             [
-                ('teleport_homebase', self.gopher.actions.teleport + "/goal", gopher_navi_msgs.TeleportActionGoal, latched, 5),
+                ('teleport_homebase', self.gopher.actions.teleport + "/goal", gopher_navi_msgs.TeleportActionGoal, not_latched, 5),
+                ('teleport_sound', self.gopher.sounds.teleport, std_msgs.Empty, not_latched, 1),
+                ('teleport_pattern', self.gopher.topics.display_notification, gopher_std_msgs.Notification, not_latched, 1),
             ]
         )
 
@@ -82,6 +85,8 @@ class CustomDeliveryOverseer():
             goal.location = "homebase"
             action_goal.goal = goal
             self.publishers.teleport_homebase.publish(action_goal)
+            self.publishers.teleport_sound.publish(std_msgs.Empty())
+            self.publishers.teleport_pattern.publish(gopher_std_msgs.Notification(led_pattern=self.gopher.led_patterns.holding))
 
     def spin(self):
         rate = rospy.Rate(10)
