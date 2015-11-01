@@ -62,7 +62,8 @@ class CustomDeliveryOverseer():
             # make certain he is using one...or the other.
             self.custom_delivering = True
         else:
-            rospy.logwarn("Custom Delivery : rejecting request as the delivery manager is already busy.")
+            if not self.custom_delivering:
+                rospy.logwarn("Custom Delivery : rejecting request as the delivery manager is already busy.")
 
     def spin(self):
         rate = rospy.Rate(10)
