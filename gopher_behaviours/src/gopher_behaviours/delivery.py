@@ -270,8 +270,8 @@ class GopherDeliveries(object):
                                                                                                    latched=True),
                                                                    recovery.HomebaseRecovery("Delivery Cancelled")])
                 # delivery sequence is oneshot - will only run once, retaining its succeeded or failed state
-                self.delivery_sequence = py_trees.meta.oneshot(py_trees.Sequence(name="Balli Balli Deliveries",
-                                                                                 children=children))
+                self.delivery_sequence = py_trees.OneshotSequence(name="Balli Balli Deliveries",
+                                                                  children=children)
                 self.delivery_selector = py_trees.Selector(name="Deliver or recover",
                                                            children=[self.delivery_sequence,
                                                                      recovery.HomebaseRecovery("Delivery Failed")])
