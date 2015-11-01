@@ -85,6 +85,7 @@ def inverter(cls):
 # Oneshot
 ##############################################################################
 
+
 def _oneshot_tick(func):
     """
     Replace the default tick with one which runs the original function only if
@@ -103,15 +104,14 @@ def _oneshot_tick(func):
 
     return wrapped
 
+
 def oneshot(cls):
     """
     Makes the given behaviour run only until it returns success or failure,
     retaining that state for all subsequent updates.
 
     """
-    setattr(cls, "_oneshot_done", False) # try to avoid name collisions
     setattr(cls, "tick", _oneshot_tick(cls.tick))
-
     return cls
 
 #############################
