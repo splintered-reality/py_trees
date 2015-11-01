@@ -107,7 +107,7 @@ class Planner():
                     )
                 else:
                     # One last honk when arrived at final location
-                    children.append(interactions.Articulate("Honk", self.gopher.sounds.honk))
+                    children.append(interactions.Articulate("Honk", self.gopher.sounds.done))
 
                 last_location = current_node
             elif isinstance(current_node, gopher_semantic_msgs.Elevator):
