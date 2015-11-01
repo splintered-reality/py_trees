@@ -1,0 +1,13 @@
+<!--
+  An experiment with the homebase recovery. No robot needed, just
+  interact on the sound/led pattern/button topics.
+ -->
+<launch>
+  <group ns="gopher">
+    <group ns="configuration">
+      <rosparam command="load" file="$(find gopher_configuration)/param/defaults.yaml"/>
+    </group>
+  </group>
+  <node name="homebase_recovery" type="demo_homebase_recovery" pkg="gopher_behaviours">
+  </node>
+</launch>
