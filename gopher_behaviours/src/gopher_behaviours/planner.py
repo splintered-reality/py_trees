@@ -12,6 +12,8 @@ import moveit
 import rocon_python_utils
 
 from . import elevators
+from . import interactions
+from . import time
 
 ##############################################################################
 # Implementation
@@ -97,12 +99,19 @@ class Planner():
             if isinstance(current_node, gopher_semantic_msgs.Location):
                 children.append(moveit.MoveToGoal(name=current_node.name, pose=current_node.pose))
                 if next_node is not None:
-                    children.append(
+                    children.extend(
                         # spaces fubar the dot renderings....
-                        delivery.Waiting(name="Waiting at " + current_node.name,
-                                         location=current_node.unique_name,
-                                         dont_wait_for_hoomans_flag=self.auto_go)
+                        [interactions.Articulate("Honk", self.gopher.sounds.honk),
+                         delivery.Waiting(name="Waiting at " + current_node.name,
+                                          location=current_node.unique_name,
+                                          dont_wait_for_hoomans_flag=self.auto_go)]
                     )
+                else:
+                    # One last honk when arrived at final location
+                    children.append(interactions.Articulate("Honk", self.gopher.sounds.done))
+                    # pause to make sure the honk plays
+                    children.append(time.Pause("Pause", 0.2))
+
                 last_location = current_node
             elif isinstance(current_node, gopher_semantic_msgs.Elevator):
                 # topological path guarantees there is a next...
