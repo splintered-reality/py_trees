@@ -43,7 +43,7 @@ class CustomDeliveryOverseer():
         self.custom_delivering = False  # are we doing something ourselves?
         self.locations = rospy.get_param('~locations')  # assumed to be a list of strings
         rospy.loginfo("Custom Delivery : setup for [" + "->".join(self.locations) + "] deliveries.")
-        self.express_delivery = gopher_behaviours.scripts.deliveries.ExpressDelivery()
+        self.express_delivery = gopher_behaviours.scripts.deliveries.ExpressDelivery(verbose_feedback=False)
         self.subscribers = rocon_python_comms.utils.Subscribers(
             [
                 ('delivery_manager_status', '~delivery_manager_status', gopher_delivery_msgs.DeliveryManagerStatus, self.delivery_manager_status_cb),

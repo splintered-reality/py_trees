@@ -26,8 +26,9 @@ class ExpressDelivery(object):
                      gopher_std_msgs.DeliveryFeedback.CANCELLED: "cancelled"
                      }
 
-    def __init__(self):
-        self.feedback_subscriber = rospy.Subscriber("/rocon/delivery/feedback", gopher_std_msgs.DeliveryFeedback, ExpressDelivery.feedback)
+    def __init__(self, verbose_feedback=True):
+        if verbose_feedback:
+            self.feedback_subscriber = rospy.Subscriber("/rocon/delivery/feedback", gopher_std_msgs.DeliveryFeedback, ExpressDelivery.feedback)
 
     def send(self, goal_locations, include_parking_behaviours, cycle_door=False):
         delivery_goal_request = gopher_std_srvs.DeliveryGoalRequest()
