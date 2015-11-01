@@ -56,7 +56,7 @@ buttons:
 sounds:
   honk: /gopher/commands/sounds/groot
   teleport: /gopher/commands/sounds/teleport
-  done: /gopher/commands/sound/yawn
+  done: /gopher/commands/sounds/yawn
 
 ##############################################################################
 # Patterns
