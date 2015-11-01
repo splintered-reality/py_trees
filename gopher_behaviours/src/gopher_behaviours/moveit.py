@@ -43,6 +43,7 @@ from .time import Pause
 from gopher_semantics.semantics import Semantics
 from gopher_semantics.docking_stations import DockingStations
 from .blackboard import Blackboard
+from . import interactions
 
 ##############################################################################
 # Functions
@@ -137,10 +138,19 @@ class Starting(py_trees.Selector):
 
 class Finishing(py_trees.Selector):
     def __init__(self, name):
-        dodock = py_trees.Sequence("Dock/notify", [Dock("Dock"), NotifyComplete("Notify")])
+        self.gopher = gopher_configuration.Configuration()
+        dodock = py_trees.Sequence("Dock/notify", [Dock("Dock"),
+                                                   NotifyComplete("Notify"),
+                                                   interactions.Articulate("Yawn", self.gopher.sounds.done)
+                                                   ]
+                                   )
         dockseq = py_trees.Sequence("Maybe dock", [WasDocked("Was I docked?"), dodock])
 
-        dopark = py_trees.Sequence("Park/notify", [Park("Park"), NotifyComplete("Notify")])
+        dopark = py_trees.Sequence("Park/notify", [Park("Park"),
+                                                   NotifyComplete("Notify"),
+                                                   interactions.Articulate("Yawn", self.gopher.sounds.done)
+                                                   ]
+                                   )
         parkseq = py_trees.Sequence("Maybe park", [py_trees.meta.inverter(WasDocked("Was I parked?")), dopark])
 
         children = [parkseq, dockseq, WaitForCharge("Wait for Jack/Dock")]
@@ -491,33 +501,33 @@ class Unpark(py_trees.Behaviour):
     # should help prevent the parking location drifting due to slight errors in
     # localisation.
     def update_parking_location(self, homebase_transform):
-        if Unpark.last_parking != None:
-            rospy.loginfo("last parking was nonempty - comparing the new transform to see if the parking location moved")
-            rospy.loginfo("last parking: " + human_transform(Unpark.last_parking, oneline=True))
+        if Unpark.last_parking is not None:
+            rospy.logdebug("last parking was nonempty - comparing the new transform to see if the parking location moved")
+            rospy.logdebug("last parking: " + human_transform(Unpark.last_parking, oneline=True))
             new_parking = inverse_times(homebase_transform, self.start_transform)
-            rospy.loginfo("new parking: " + human_transform(new_parking, oneline=True))
+            rospy.logdebug("new parking: " + human_transform(new_parking, oneline=True))
             parking_diff = inverse_times(Unpark.last_parking, new_parking)
-            rospy.loginfo("parking diff: " + human_transform(parking_diff, oneline=True))
+            rospy.logdebug("parking diff: " + human_transform(parking_diff, oneline=True))
 
             euc_diff = numpy.linalg.norm(parking_diff[0][:2])
-            rospy.loginfo("diff distance: " + str(euc_diff))
+            rospy.logdebug("diff distance: " + str(euc_diff))
             # extract yaw difference
             yaw_diff = numpy.degrees(tf.transformations.euler_from_quaternion(parking_diff[1])[2])
-            rospy.loginfo("diff yaw: " + str(yaw_diff))
+            rospy.logdebug("diff yaw: " + str(yaw_diff))
 
             # if below threshold, keep the last parking location
             if euc_diff < 1 and numpy.absolute(yaw_diff) < 90:
-                rospy.loginfo("differences below threshold. keeping last parking location")
+                rospy.logdebug("differences below threshold. keeping last parking location")
                 new_parking = Unpark.last_parking
             else:
-                rospy.loginfo("differences were above threshold. modifying parking location")
+                rospy.loginfo("UnPark : Difference from last parking location was above threshold. Parking location modified.")
         else:
             new_parking = inverse_times(homebase_transform, self.start_transform)
-            rospy.loginfo("no previous parking location. Initialising to " + human_transform(new_parking, oneline=True))
+            rospy.logdebug("no previous parking location. Initialising to " + human_transform(new_parking, oneline=True))
 
-        rospy.loginfo("new parking is " + str(new_parking))
+        rospy.logdebug("new parking is " + str(new_parking))
         return new_parking
-        
+
     def update(self):
         if not self.transform_setup:
             if not self.last_dslam:  # no message from dslam yet
@@ -533,7 +543,7 @@ class Unpark(py_trees.Behaviour):
                     return py_trees.Status.RUNNING
             else:
                 rospy.logdebug("Unpark : got dslam message")
-                self.dslam_initialised = self.last_dslam.state == dslam_msgs.Diagnostics.WORKING
+                self.dslam_initialised = True
 
             if self.dslam_initialised and self.blackboard.unpark_success:
                 # if dslam is initialised, the map->base_link transform gives us the
@@ -586,13 +596,11 @@ class Unpark(py_trees.Behaviour):
                 new_parking = self.update_parking_location((self.hb_translation, self.hb_rotation))
                 Unpark.last_parking = new_parking
                 self.blackboard.T_hb_to_parking = new_parking
-                rospy.loginfo(self.blackboard.T_hb_to_parking)
                 self.blackboard.unpark_success = True
-                rospy.logdebug("Unpark : successfully unparked")
                 self.feedback_message = "successfully unparked"
                 return py_trees.Status.SUCCESS
             else:
-                rospy.logdebug("Unpark : waiting for go button to be pressed to indicate homebase")
+                rospy.loginfo("Unpark : waiting for go button to be pressed to indicate homebase")
                 self.feedback_message = "waiting for go button to be pressed to indicate homebase"
                 # otherwise, the robot needs to be guided to the homebase by
                 # someone - pressing the go button indicates that the homebase
@@ -615,7 +623,6 @@ class Unpark(py_trees.Behaviour):
                     pose.pose.pose = transform_to_pose((self.hb_translation, self.hb_rotation))
                     self._location_publisher.publish(pose)
                     self.blackboard.unpark_success = True
-                    rospy.logdebug("Unpark : Successfully unparked")
                     self.feedback_message = "successfully unparked"
                     return py_trees.Status.SUCCESS
                 else:

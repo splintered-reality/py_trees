@@ -106,12 +106,6 @@ class Planner():
                                           location=current_node.unique_name,
                                           dont_wait_for_hoomans_flag=self.auto_go)]
                     )
-                else:
-                    # One last honk when arrived at final location
-                    children.append(interactions.Articulate("Honk", self.gopher.sounds.done))
-                    # pause to make sure the honk plays
-                    children.append(time.Pause("Pause", 0.2))
-
                 last_location = current_node
             elif isinstance(current_node, gopher_semantic_msgs.Elevator):
                 # topological path guarantees there is a next...
@@ -132,6 +126,8 @@ class Planner():
         # each task, but only if the last location is homebase
         if include_parking_behaviours and locations[-1] == 'homebase':
             children.append(moveit.Finishing("Finishing"))
+        if not include_parking_behaviours:
+            children.append(interactions.Articulate("Done", self.gopher.sounds.done))
 
         if doors:
             children.insert(0, moveit.OpenDoor("Open door"))

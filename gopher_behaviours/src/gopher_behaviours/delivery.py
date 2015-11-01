@@ -245,7 +245,7 @@ class GopherDeliveries(object):
 
                 self.cancel_sequence = py_trees.Sequence(name="Cancellation",
                                                          children=[interactions.CheckButtonPressed("Cancel Pressed?",
-                                                                                                   self.config.buttons.go,
+                                                                                                   self.config.buttons.stop,
                                                                                                    latched=True),
                                                                    recovery.HomebaseRecovery("Delivery Cancelled")])
                 # delivery sequence is oneshot - will only run once, retaining its succeeded or failed state
