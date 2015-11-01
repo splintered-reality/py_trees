@@ -29,13 +29,12 @@ import itertools
 
 from . import logging
 from .behaviours import Behaviour
-from .meta import oneshot
 from .common import Status
+from . import meta
 
 ##############################################################################
 # Composites
 ##############################################################################
-
 
 
 class Composite(Behaviour):
@@ -131,6 +130,7 @@ class Composite(Behaviour):
 ##############################################################################
 # Selector
 ##############################################################################
+
 
 class Selector(Composite):
     """
@@ -228,4 +228,7 @@ class Sequence(Composite):
         self.status = new_status
         Composite.abort(self, new_status)
 
-OneshotSequence = oneshot(Sequence)
+
+@meta.oneshot
+class OneshotSequence(Sequence):
+    pass
