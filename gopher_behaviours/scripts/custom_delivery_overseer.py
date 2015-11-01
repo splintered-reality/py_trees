@@ -51,7 +51,7 @@ class CustomDeliveryOverseer():
         )
 
     def delivery_manager_status_cb(self, msg):
-        self.delivering = (msg.status == gopher_delivery_msgs.DeliveryManagerStatus.DELIVERING)
+        self.delivering = (msg.status != gopher_delivery_msgs.DeliveryManagerStatus.IDLING)
 
     def go_cb(self, go):
         if not self.delivering:

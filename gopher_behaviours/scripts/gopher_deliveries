@@ -146,6 +146,15 @@ class GopherHiveMind(object):
             self.success = True
             self._status_pub.publish(gopher_delivery_msgs.DeliveryManagerStatus(status=gopher_delivery_msgs.DeliveryManagerStatus.IDLING))
 
+        # If the battery subtree is running, we want to update the status, and
+        # go back to idling once it succeeds. If it fails, then we are in limbo
+        # and something is really broken anyway.
+        if self.battery_subtree.status == py_trees.Status.RUNNING:
+            self._status_pub.publish(gopher_delivery_msgs.DeliveryManagerStatus(status=gopher_delivery_msgs.DeliveryManagerStatus.BATTERY_LOW))
+        elif self.battery_subtree.status == py_trees.Status.SUCCESS:
+            self._status_pub.publish(gopher_delivery_msgs.DeliveryManagerStatus(status=gopher_delivery_msgs.DeliveryManagerStatus.IDLING))
+            
+
     ##############################################################################
     # Ros Methods
     ##############################################################################
