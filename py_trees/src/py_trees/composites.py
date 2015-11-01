@@ -29,11 +29,13 @@ import itertools
 
 from . import logging
 from .behaviours import Behaviour
+from .meta import oneshot
 from .common import Status
 
 ##############################################################################
 # Composites
 ##############################################################################
+
 
 
 class Composite(Behaviour):
@@ -130,7 +132,6 @@ class Composite(Behaviour):
 # Selector
 ##############################################################################
 
-
 class Selector(Composite):
     """
     Runs all of its child behaviours in sequence until one succeeds.
@@ -203,17 +204,7 @@ class Sequence(Composite):
         self.current_index = 0
 
     def tick(self):
-        # This is not the right thing to do - it should be
-        #
-        # 1) Easy: parameterised OR
-        # 2) Harder: decorated by an encapsulating OneShot behaviour
-        #
-        # Possibly that latter item could be generic - i.e. work
-        # for individual behaviours too.
-        if self.status == Status.FAILURE or self.status == Status.SUCCESS:
-            yield self
-            return
-        if self.status == Status.INVALID:
+        if self.status != Status.RUNNING:
             self.initialise()
         self.logger.debug("  %s [tick()]" % self.name)
         for child in itertools.islice(self.children, self.current_index, None):
@@ -236,3 +227,5 @@ class Sequence(Composite):
         self.current_index = 0
         self.status = new_status
         Composite.abort(self, new_status)
+
+OneshotSequence = oneshot(Sequence)
