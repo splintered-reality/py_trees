@@ -117,26 +117,6 @@ class Waiting(py_trees.Behaviour):
         self._go_button_subscriber = rospy.Subscriber(self.config.buttons.go, std_msgs.Empty, self._go_button_callback)
         self._notify_publisher = rospy.Publisher(self.config.topics.display_notification, gopher_std_msgs.Notification, queue_size=1)
 
-        # for sending honk
-        self._honk_publisher = None
-        try:
-            if rospy.get_param("~enable_honks"):
-                honk_topic = rospy.get_param("~waiting_honk")
-                self._honk_publisher = rospy.Publisher("/gopher/commands/sounds/" + honk_topic, std_msgs.Empty, queue_size=1)
-        except KeyError:
-            rospy.logwarn("Gopher Deliveries : Could not find param to initialise honks.")
-            pass
-
-    def initialise(self):
-        """
-        Called the first time the behaviour is triggered (i.e. when it transitions to the RUNNING state).
-
-        .. seealso:: :py:meth:`Behaviour.initialise() <py_trees.behaviours.Behaviour.initialise>`
-        """
-        self.go_requested = False  # needs to be reset, just in case it's already true
-        if self._honk_publisher:
-            self._honk_publisher.publish(std_msgs.Empty())
-
     def update(self):
         """
         Called by the behaviour :py:meth:`tick() <py_trees.behaviours.Behaviour.tick>` function.
@@ -159,7 +139,6 @@ class Waiting(py_trees.Behaviour):
                                                                     button_confirm=gopher_std_msgs.Notification.BUTTON_OFF,
                                                                     button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
                                                                     message="go button was pressed"))
-
 
 class GopherDeliveries(object):
     """
