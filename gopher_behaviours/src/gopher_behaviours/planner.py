@@ -13,6 +13,7 @@ import rocon_python_utils
 
 from . import elevators
 from . import interactions
+from . import time
 
 ##############################################################################
 # Implementation
@@ -108,6 +109,8 @@ class Planner():
                 else:
                     # One last honk when arrived at final location
                     children.append(interactions.Articulate("Honk", self.gopher.sounds.done))
+                    # pause to make sure the honk plays
+                    children.append(time.Pause("Pause", 0.2))
 
                 last_location = current_node
             elif isinstance(current_node, gopher_semantic_msgs.Elevator):
