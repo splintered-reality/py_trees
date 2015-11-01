@@ -70,6 +70,7 @@ class LEDPatterns(ConfigurationGroup):
         s += console.cyan + "    " + '{0: <20}'.format("humans_give_me_input") + console.reset + ": " + console.yellow + "flashing blue\n"
         s += console.cyan + "    " + '{0: <20}'.format("humans_be_careful") + console.reset + ": " + console.yellow + "flashing yellow\n"
         s += console.cyan + "    " + '{0: <20}'.format("humans_i_need_help") + console.reset + ": " + console.yellow + "flashing purple\n"
+        s += console.cyan + "    " + '{0: <20}'.format("humans_fix_me_i_am_broken") + console.reset + ": " + console.yellow + "flashing red\n"
         s += console.cyan + "    " + '{0: <20}'.format("holding") + console.reset + ": " + console.yellow + "around blue\n"
         s += console.cyan + "    " + '{0: <20}'.format("error") + console.reset + ": " + console.yellow + "solid red\n"
         return s
