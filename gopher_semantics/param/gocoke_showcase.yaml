@@ -1,0 +1,58 @@
+##############################################################################
+# Worlds
+##############################################################################
+# Worlds in which semantics reside. A world we typically associate with a
+# map, but this is not always a probably 1-1 connection.
+
+worlds:
+  coke:
+    display_name: 'Coca-Cola'
+    description: 'Bubble paradise'
+    default: true
+
+##############################################################################
+# Locations
+##############################################################################
+
+semantic_locations:
+  stock:
+    name: 'Stock'
+    description: 'Lots of Coke !!!'
+    world: coke
+    pose: { x: 1.00, y: 0.00, theta: 0.000000 }
+    keyframe_id: 0
+  conference1:
+    name: 'Conference Room 1'
+    description: 'Meeting Room 1'
+    world: coke
+    pose: { x: 0.50, y: 0.00, theta: 0.00 }
+    keyframe_id: 0
+  conference2:
+    name: 'Conference Room 2'
+    description: 'Meeting Room 2'
+    world: coke
+    pose: { x: 1.50, y: 0.00, theta: 0.00 }
+    keyframe_id: 1
+  homebase:
+    name: 'Homebase'
+    description: 'Where I have to hang my hat.'
+    world: coke
+    pose: { x: 2.50, y: 2.00, theta: 1.57 }
+    keyframe_id: 1
+
+##############################################################################
+# Docking Stations
+##############################################################################
+
+docking_stations:
+  '0':
+    primary_id: 0
+    left_id: 4
+    right_id: 5
+    pose: { x : 1.0, y : -2.0, theta : -1.570 }
+  '1':
+    primary_id: 1
+    left_id: 5
+    right_id: 6
+    pose: { x : 1.0, y : 2.0, theta : 1.570 }
+
