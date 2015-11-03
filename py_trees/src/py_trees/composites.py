@@ -30,6 +30,7 @@ import itertools
 from . import logging
 from .behaviours import Behaviour
 from .common import Status
+from . import meta
 
 ##############################################################################
 # Composites
@@ -153,6 +154,14 @@ class Selector(Composite):
         return Status.FAILURE
 
     def tick(self):
+        # Required behaviour for *all* behaviours and composites is
+        # for tick() to check if it isn't running and initialise
+        #
+        # Selector doesn't actually have anything to do though, but just
+        # in case someone inherits the class and overrides initialise()
+        # but not tick()
+        if self.status != Status.RUNNING:
+            self.initialise()
         self.logger.debug("  %s [tick()]" % self.name)
         previous = self.current_child
         for child in self.children:
@@ -214,7 +223,7 @@ class Sequence(Composite):
                     yield self
                     return
             self.current_index += 1
-        # At this point, all children are happy with their SUCCESS, so we should be happy with SUCCESS too
+        # At this point, all children are happy with their SUCCESS, so we should be happy too
         self.abort(Status.SUCCESS)
         yield self
 
@@ -226,3 +235,8 @@ class Sequence(Composite):
         self.current_index = 0
         self.status = new_status
         Composite.abort(self, new_status)
+
+
+@meta.oneshot
+class OneshotSequence(Sequence):
+    pass

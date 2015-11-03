@@ -52,6 +52,45 @@ class Articulate(py_trees.Behaviour):
         return py_trees.Status.SUCCESS
 
 
+class CheckButtonPressed(py_trees.Behaviour):
+    """Checks whether a button has been pressed.
+
+    This behaviour always returns success or failure. This design is
+    intended to be utilised a guard for a selector.
+
+    Latched is a special characteristic. If latched, it will return true
+    and continue returning true if the button is pressed anytime after
+    it is 'ticked' for the first time.
+
+    If not latched, it will return the result of a button press
+    inbetween ticks.
+
+    :param bool latched: configures the behaviour as described above.
+    """
+    def __init__(self, name, topic_name, latched=False):
+        super(CheckButtonPressed, self).__init__(name)
+        self.topic_name = topic_name
+        self.subscriber = None
+        self.latched = latched
+        self.button_pressed = False
+
+    def initialise(self):
+        if self.subscriber is None:
+            self.subscriber = rospy.Subscriber(self.topic_name, std_msgs.Empty, self.button_callback)
+
+    def button_callback(self, msg):
+        self.button_pressed = True
+
+    def update(self):
+        if self.button_pressed:
+            result = py_trees.Status.SUCCESS
+        else:
+            result = py_trees.Status.FAILURE
+        if not self.latched:
+            self.button_pressed = False
+        return result
+
+
 class WaitForButton(py_trees.Behaviour):
     def __init__(self, name, topic_name):
         """
@@ -127,3 +166,4 @@ class FlashLEDs(py_trees.Sequence):
         super(FlashLEDs, self).abort(new_status)
         if self.timer:
             self.timer.shutdown()
+            self.publisher.publish(gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.CANCEL_CURRENT))

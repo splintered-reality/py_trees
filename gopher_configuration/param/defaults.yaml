@@ -11,6 +11,7 @@
 # Names
 ##############################################################################
 topics:
+  diagnostics: /diagnostics
   display_notification: /gopher/status_notifier/display_notification
   initial_pose: /navi/initial_pose
   switch_map: /dslam/map/switch
@@ -18,10 +19,14 @@ topics:
 
 services:
   clear_costmaps: /navi/move_base/clear_costmaps
+  delivery: /rocon/delivery
+  door_operator: /concert/door_operator
 
 actions:
   teleport: /navi/teleport
   move_base: /navi/move_base
+  autonomous_docking: /gopher/autonomous_docking
+  simple_motion_controller: /gopher/simple_motion_controller
 
 namespaces:
   semantics: /rocon/semantics
@@ -51,6 +56,7 @@ buttons:
 sounds:
   honk: /gopher/commands/sounds/groot
   teleport: /gopher/commands/sounds/teleport
+  done: /gopher/commands/sounds/yawn
 
 ##############################################################################
 # Patterns
@@ -70,16 +76,23 @@ sounds:
 #
 # and *core definitions*: 
 #
-# human interactions
+# human interactions - where we require the human to *do something*. An obvious
+# interactions are when the user has to press a button on the robot, whereas
+# a more passive interaction would require the human to simply give the robot space
+# (e.g. be careful around it because it is making a reversing maneuvre)
 #
 #  - humans_give_me_input = gopher_std_msgs.Notification.FLASH_BLUE
 #  - humans_be_careful = gopher_std_msgs.Notification.FLASH_YELLOW
 #  - humans_i_need_help = gopher_std_msgs.Notification.FLASH_PURPLE
+#  - humans_fix_me_i_am_broken = gopher_std_msgs.Notification.FLASH_RED
 #
-# notifications
+# notifications - just to show what's going on, in case someone cares
 #
 #  - holding = gopher_std_msgs.Notification.AROUND_RIGHT_BLUE
 #
 # states
 #
-#  - error = gopher_std_msgs.Notification.SOLID_RED
+#  - battery full = gopher_std_msgs.Notification.SOLID_BLUE
+#  - battery mid  = gopher_std_msgs.Notification.SOLID_GREEN
+#  - battery low  = gopher_std_msgs.Notification.SOLID_YELLOW
+#  - error        = gopher_std_msgs.Notification.SOLID_RED

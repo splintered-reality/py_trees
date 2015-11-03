@@ -137,7 +137,7 @@ class GoalHandler(object):
             try:
                 self.service_proxies.clear_costmaps()
             except rospy.ServiceException:
-                rospy.logwarn("Marco Polo : failed to clear costmaps, wrong service name name? [%s]" % self.gopher.services.clear_costmap)
+                rospy.logwarn("Marco Polo : failed to clear costmaps, wrong/nonexistent service name? [%s]" % self.gopher.services.clear_costmaps)
             except rospy.ROSInterruptException:
                 rospy.logwarn("Marco Polo : interrupted while trying to clear costmaps, probably ros shutting down")
             self.execution_state = ExecutionState.IDLE
@@ -171,7 +171,7 @@ class GoalHandler(object):
                 return True
             else:
                 self.result.value = gopher_navi_msgs.TeleportResult.ERROR_MAP_FILE_DOES_NOT_EXIST
-                self.result.message = "requested map file not installed [%s]" % goal.world
+                self.result.message = "requested map file for this world does not exist [%s]" % goal.world
                 return False
 
         ######################################################################
@@ -189,7 +189,7 @@ class GoalHandler(object):
                 return False
             if location.world not in self.semantics.worlds:
                 self.result.value = gopher_navi_msgs.TeleportResult.ERROR_MAP_FILE_DOES_NOT_EXIST
-                self.result.message = "requested semantic world map file does not exist [%s]" % location.world
+                self.result.message = "requested semantic world map file does not exist [%s]. Use gopher_maps -d %s to download it." % (location.world, location.world)
                 return False
             self.command.map_filename = self.worlds[location.world]
             self.command.pose = utilities.msg_pose2d_to_pose_with_covariance_stamped(location.pose, self.gopher.frames.map)

@@ -128,7 +128,7 @@ class Elevators(dict):
         :param str origin: origin world unique name.
         :param str destination: origin world unique name.
         :return: list of elevators that connect origin to destination
-        :rtype: gopher_semantic_msgs.Elevator
+        :rtype: [gopher_semantic_msgs.Elevator]
         """
         connecting_elevators = []
         for elevator in dict.values(self):

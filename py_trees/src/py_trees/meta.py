@@ -23,6 +23,7 @@ Usually in the form of factory-like functions or decorators.
 ##############################################################################
 
 from . import common
+import functools
 from .behaviour import Behaviour
 
 ##############################################################################
@@ -80,6 +81,38 @@ def inverter(cls):
     setattr(cls, "update", _invert(update))
     return cls
 
+##############################################################################
+# Oneshot
+##############################################################################
+
+
+def _oneshot_tick(func):
+    """
+    Replace the default tick with one which runs the original function only if
+    the oneshot variable is unset, yielding the unmodified object otherwise.
+
+    """
+    @functools.wraps(func)
+    def wrapped(self, *args, **kwargs):
+        if self.status == common.Status.FAILURE or self.status == common.Status.SUCCESS:
+            # if returned success/fail at any point, don't update or re-init
+            yield self
+        else:
+            # otherwise, run the tick as normal yield from in python 3.3
+            for child in func(self, *args, **kwargs):
+                yield child
+
+    return wrapped
+
+
+def oneshot(cls):
+    """
+    Makes the given behaviour run only until it returns success or failure,
+    retaining that state for all subsequent updates.
+
+    """
+    setattr(cls, "tick", _oneshot_tick(cls.tick))
+    return cls
 
 #############################
 # FailureIsSuccess

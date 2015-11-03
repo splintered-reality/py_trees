@@ -33,8 +33,11 @@ from geometry_msgs.msg import Pose2D
 import gopher_std_msgs.msg as gopher_std_msgs
 import yaml
 import std_msgs.msg as std_msgs
+import gopher_configuration
 from .blackboard import Blackboard
 from . import moveit
+from . import recovery
+from . import interactions
 
 ##############################################################################
 # Dummy Delivery Locations List (for testing)
@@ -103,6 +106,7 @@ class Waiting(py_trees.Behaviour):
         :param str location: unique name of the location
         """
         super(Waiting, self).__init__(name)
+        self.config = gopher_configuration.Configuration()
         self.location = location
         self.blackboard = Blackboard()
         self.dont_wait_for_hoomans = dont_wait_for_hoomans_flag
@@ -111,28 +115,8 @@ class Waiting(py_trees.Behaviour):
 
         # ros communications
         # could potentially have this in the waiting behaviour
-        self._go_button_subscriber = rospy.Subscriber("delivery/go", std_msgs.Empty, self._go_button_callback)
-        self._notify_publisher = rospy.Publisher("~display_notification", gopher_std_msgs.Notification, queue_size=1)
-
-        # for sending honk
-        self._honk_publisher = None
-        try:
-            if rospy.get_param("~enable_honks"):
-                honk_topic = rospy.get_param("~waiting_honk")
-                self._honk_publisher = rospy.Publisher("/gopher/commands/sounds/" + honk_topic, std_msgs.Empty, queue_size=1)
-        except KeyError:
-            rospy.logwarn("Gopher Deliveries : Could not find param to initialise honks.")
-            pass
-
-    def initialise(self):
-        """
-        Called the first time the behaviour is triggered (i.e. when it transitions to the RUNNING state).
-
-        .. seealso:: :py:meth:`Behaviour.initialise() <py_trees.behaviours.Behaviour.initialise>`
-        """
-        self.go_requested = False  # needs to be reset, just in case it's already true
-        if self._honk_publisher:
-            self._honk_publisher.publish(std_msgs.Empty())
+        self._go_button_subscriber = rospy.Subscriber(self.config.buttons.go, std_msgs.Empty, self._go_button_callback)
+        self._notify_publisher = rospy.Publisher(self.config.topics.display_notification, gopher_std_msgs.Notification, queue_size=1)
 
     def update(self):
         """
@@ -143,16 +127,19 @@ class Waiting(py_trees.Behaviour):
         if status == py_trees.Status.RUNNING and self.go_requested:
             status = py_trees.Status.SUCCESS
         else:
-            self._notify_publisher.publish(gopher_std_msgs.Notification(button_confirm=True,
+            self._notify_publisher.publish(gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
+                                                                        button_confirm=gopher_std_msgs.Notification.BUTTON_ON,
+                                                                        button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
                                                                         message="at location, waiting for button press"))
         self.feedback_message = "remaining: %s" % self.blackboard.remaining_locations
         return status
 
     def _go_button_callback(self, unused_msg):
         self.go_requested = True if self.status == py_trees.Status.RUNNING else False
-        self._notify_publisher.publish(gopher_std_msgs.Notification(button_confirm=False,
+        self._notify_publisher.publish(gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
+                                                                    button_confirm=gopher_std_msgs.Notification.BUTTON_OFF,
+                                                                    button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
                                                                     message="go button was pressed"))
-
 
 class GopherDeliveries(object):
     """
@@ -189,6 +176,7 @@ class GopherDeliveries(object):
     def __init__(self, name, planner, semantic_locations=None):
         self.blackboard = Blackboard()
         self.blackboard.is_waiting = False
+        self.config = gopher_configuration.Configuration()
         self.root = None
         self.state = State.IDLE
         self.locations = []
@@ -197,13 +185,14 @@ class GopherDeliveries(object):
         self.old_goal_id = None
         self.planner = planner
         self.always_assume_initialised = False
+        self.delivery_sequence = None
 
         if semantic_locations is not None:
             self.incoming_goal = [location.unique_name for location in semantic_locations]
         else:
             self.incoming_goal = None
 
-    def set_goal(self, locations, always_assume_initialised):
+    def set_goal(self, locations, always_assume_initialised, doors):
         """
         Callback for receipt of a new goal
         :param [str] locations: semantic locations (try to match these against the system served Map Locations list via the unique_name)
@@ -214,15 +203,17 @@ class GopherDeliveries(object):
         if locations is None or not locations:
             return (gopher_std_msgs.DeliveryErrorCodes.GOAL_EMPTY_NOTHING_TO_DO, "goal empty, nothing to do.")
         if self.state == State.IDLE:
-            if self.planner.check_locations(locations): # make sure locations are valid before returning success
+            if self.planner.check_locations(locations):  # make sure locations are valid before returning success
                 self.incoming_goal = locations
                 self.always_assume_initialised = always_assume_initialised
+                self.doors = doors
                 return (gopher_std_msgs.DeliveryErrorCodes.SUCCESS, "assigned new goal")
             else:
                 return (gopher_std_msgs.DeliveryErrorCodes.FUBAR, "Received invalid locations")
         elif self.state == State.WAITING:
             self.incoming_goal = locations
             self.always_assume_initialised = always_assume_initialised
+            self.doors = doors
             return (gopher_std_msgs.DeliveryErrorCodes.SUCCESS, "pre-empting current goal")
         else:  # we're travelling between locations
             return (gopher_std_msgs.DeliveryErrorCodes.ALREADY_ASSIGNED_A_GOAL, "sorry, busy (already assigned a goal)")
@@ -239,16 +230,32 @@ class GopherDeliveries(object):
             # use the planner to initialise the behaviours that we are to follow
             # to get to the delivery location. If this is empty/None, then the
             # semantic locations provided were wrong.
-            undock = False if self.always_assume_initialised or self.root else True
-            print("*********************************** Always assume initialised: %s" % self.always_assume_initialised)
-            children = self.planner.create_tree(current_world, self.incoming_goal, undock=undock)
+            include_parking_behaviours = False if self.always_assume_initialised or self.root else True
+            children = self.planner.create_tree(current_world,
+                                                self.incoming_goal,
+                                                include_parking_behaviours=include_parking_behaviours,
+                                                doors=self.doors
+                                                )
             if not children:
                 # TODO is this enough?
                 rospy.logwarn("Gopher Deliveries : Received a goal, but none of the locations were valid.")
             else:
                 self.old_goal_id = self.root.id if self.root is not None else None
                 self.blackboard.traversed_locations = [] if not self.root else self.blackboard.traversed_locations
-                self.root = py_trees.Sequence(name="Balli Balli Deliveries", children=children)
+
+                self.cancel_sequence = py_trees.Sequence(name="Cancellation",
+                                                         children=[interactions.CheckButtonPressed("Cancel Pressed?",
+                                                                                                   self.config.buttons.stop,
+                                                                                                   latched=True),
+                                                                   recovery.HomebaseRecovery("Delivery Cancelled")])
+                # delivery sequence is oneshot - will only run once, retaining its succeeded or failed state
+                self.delivery_sequence = py_trees.OneshotSequence(name="Balli Balli Deliveries",
+                                                                  children=children)
+                self.delivery_selector = py_trees.Selector(name="Deliver or recover",
+                                                           children=[self.delivery_sequence,
+                                                                     recovery.HomebaseRecovery("Delivery Failed")])
+                self.root = py_trees.Selector(name="Deliver Unto Me",
+                                              children=[self.cancel_sequence, self.delivery_selector])
                 self.blackboard.remaining_locations = self.incoming_goal
                 self.locations = self.incoming_goal
                 self.has_a_new_goal = True
@@ -280,16 +287,23 @@ class GopherDeliveries(object):
         return False
 
     def post_tock_update(self):
+        """
+        Be careful here, the logic gets tricky.
+        """
         if self.root is not None and self.root.status == py_trees.Status.RUNNING:
-            if isinstance(self.root.current_child(), moveit.MoveToGoal):
-                self.state = State.TRAVELLING
-                if self.blackboard.traversed_locations:
-                    self.feedback_message = "moving from '%s' to '%s'" % (self.blackboard.traversed_locations[-1], self.blackboard.remaining_locations[0])
-                else:
-                    self.feedback_message = "moving to '%s'" % self.blackboard.remaining_locations[0]
-            elif isinstance(self.root.current_child(), Waiting):
-                self.state = State.WAITING
-                self.feedback_message = self.root.current_child().feedback_message
+            if self.delivery_sequence.status == py_trees.Status.RUNNING:
+                if isinstance(self.delivery_sequence.current_child(), moveit.MoveToGoal):
+                    self.state = State.TRAVELLING
+                    if self.blackboard.traversed_locations:
+                        self.feedback_message = "moving from '%s' to '%s'" % (self.blackboard.traversed_locations[-1], self.blackboard.remaining_locations[0])
+                    else:
+                        self.feedback_message = "moving to '%s'" % self.blackboard.remaining_locations[0]
+                elif isinstance(self.delivery_sequence.current_child(), Waiting):
+                    self.state = State.WAITING
+                    self.feedback_message = self.delivery_sequence.current_child().feedback_message
+            else:  # we're in the homebase recovery behaviour
+                self.state = State.WAITING  # don't allow it to be interrupted
+                self.feedback_message = "delivery failed, waiting for human to teleop us back home before cancelling"
         else:
             self.state = State.IDLE
             self.feedback_message = "idling"
