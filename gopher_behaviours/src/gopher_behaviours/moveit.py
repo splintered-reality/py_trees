@@ -27,6 +27,7 @@ from actionlib_msgs.msg import GoalStatus
 import actionlib_msgs.msg as actionlib_msgs
 import move_base_msgs.msg as move_base_msgs
 import gopher_std_msgs.msg as gopher_std_msgs
+import gopher_delivery_msgs.msg as gopher_delivery_msgs
 import std_msgs.msg as std_msgs
 import dslam_msgs.msg as dslam_msgs
 import somanet_msgs.msg as somanet_msgs
