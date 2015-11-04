@@ -25,6 +25,7 @@ Behaviours related to checking and reacting to battery notifications.
 import py_trees
 import rospy
 import somanet_msgs.msg as somanet_msgs
+import gopher_configuration
 
 from . import recovery
 
@@ -37,7 +38,7 @@ class CheckBatteryLevel(py_trees.Behaviour):
     def __init__(self, name):
         # setup
         super(CheckBatteryLevel, self).__init__(name)
-        self.battery_low_threshold = rospy.get_param("battery/low_threshold", 30)
+        self.gopher = gopher_configuration.Configuration()
         self.successes = 0
         self.battery_percentage = 100
         rospy.Subscriber("~battery", somanet_msgs.SmartBatteryStatus, self.battery_callback)
@@ -45,7 +46,7 @@ class CheckBatteryLevel(py_trees.Behaviour):
     def update(self):
         self.feedback_message = "battery %s%%" % self.battery_percentage
         self.logger.debug("  %s [update()]" % self.name)
-        if self.battery_percentage < self.battery_low_threshold:
+        if self.battery_percentage < self.gopher.battery.low:
             if self.successes % 10 == 0:
                 rospy.logwarn("Battery is low! I'm outta here!")
             self.successes += 1
