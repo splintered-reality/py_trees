@@ -5,8 +5,8 @@
 # map, but this is not always a probably 1-1 connection.
 
 worlds:
-  coke_test:
-    display_name: 'Coca-Cola'
+  gocoke_meeting_room:
+    display_name: 'Coca-Cola Hideout'
     description: 'Bubble paradise'
     default: true
 
@@ -18,20 +18,19 @@ semantic_locations:
   work:
     name: 'At Work'
     description: 'Besides Marcus Desk'
-    world: coke_test
-    pose: { x: 1.00, y: 0.00, theta: 0.000000 }
-    keyframe_id: 0
+    world: gocoke_meeting_room
+    pose: { x: -2.09, y: -2.10, theta: 1.57 }
+    keyframe_id: 2
   door:
     name: 'Behind the Door'
     description: 'Just behind the door in the corner'
-    world: coke_test
-    pose: { x: 0.50, y: 0.00, theta: 0.00 }
-    keyframe_id: 0
+    world: gocoke_meeting_room
+    pose: { x: -2.02, y: -0.11, theta: 1.57 }
+    keyframe_id: 1
   homebase:
     name: 'Hideout'
     description: 'Close to the fridge !'
-    world: coke_test
-    pose: { x: 2.50, y: 2.00, theta: 1.57 }
-    keyframe_id: 1
-
+    world: gocoke_meeting_room
+    pose: { x: 0.00, y: 0.00, theta: 1.57 }
+    keyframe_id: 0
 
