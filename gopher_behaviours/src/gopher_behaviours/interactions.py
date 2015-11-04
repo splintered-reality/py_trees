@@ -135,7 +135,7 @@ class FlashLEDs(py_trees.Sequence):
     If not hooked up to the display notications, it will log an error, but quietly 'work' without
     displaying LEDs.
     """
-    def __init__(self, name, led_pattern):
+    def __init__(self, name, led_pattern, message=""):
         """
         He is a mere noodly appendage - don't expect him to check if the topic exists.
 
@@ -143,6 +143,7 @@ class FlashLEDs(py_trees.Sequence):
 
         :param str name: behaviour name
         :param str led_pattern: any one of the string constants from gopher_std_msgs.Notification
+        :param str message: a message for the status notifier to display.
         """
         super(FlashLEDs, self).__init__(name)
         self.gopher = gopher_configuration.Configuration()
@@ -150,6 +151,7 @@ class FlashLEDs(py_trees.Sequence):
         self.publisher = rospy.Publisher(self.topic_name, gopher_std_msgs.Notification, queue_size=1)
         self.timer = None
         self.led_pattern = led_pattern
+        self.message = message
 
     def initialise(self):
         self.send_notification(None)
@@ -160,7 +162,7 @@ class FlashLEDs(py_trees.Sequence):
         super(FlashLEDs, self).initialise()
 
     def send_notification(self, unused_timer):
-        self.publisher.publish(gopher_std_msgs.Notification(led_pattern=self.led_pattern))
+        self.publisher.publish(gopher_std_msgs.Notification(led_pattern=self.led_pattern, message=self.message))
 
     def abort(self, new_status):
         super(FlashLEDs, self).abort(new_status)
