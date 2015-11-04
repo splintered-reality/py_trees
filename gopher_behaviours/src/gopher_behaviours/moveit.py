@@ -1113,12 +1113,31 @@ class WaitForCharge(py_trees.Behaviour):
 
 
 class MoveToGoal(py_trees.Behaviour):
-    def __init__(self, name, pose):
+    def __init__(self, name, pose, dont_ever_give_up=False):
+        '''
+        :param bool dont_ever_give_up: even if move base aborts, keep trying...send another goal!
+        '''
         super(MoveToGoal, self).__init__(name)
         self.pose = pose
         self.action_client = None
         self.config = gopher_configuration.Configuration()
         self.blackboard = Blackboard()
+        self.goal = self.create_move_base_goal(self.pose)
+        self.dont_ever_give_up = dont_ever_give_up
+        self.gopher = gopher_configuration.Configuration()
+        self.publisher = rospy.Publisher(self.gopher.topics.display_notification, gopher_std_msgs.Notification, queue_size=1)
+
+    def create_move_base_goal(self, pose):
+        goal = move_base_msgs.MoveBaseGoal()
+        goal.target_pose.header.frame_id = "map"
+        goal.target_pose.pose.position.x = pose.x
+        goal.target_pose.pose.position.y = pose.y
+        quaternion = tf.transformations.quaternion_from_euler(0, 0, pose.theta)
+        goal.target_pose.pose.orientation.x = quaternion[0]
+        goal.target_pose.pose.orientation.y = quaternion[1]
+        goal.target_pose.pose.orientation.z = quaternion[2]
+        goal.target_pose.pose.orientation.w = quaternion[3]
+        return goal
 
     def initialise(self):
         self.logger.debug("  %s [MoveToGoal::initialise()]" % self.name)
@@ -1129,16 +1148,7 @@ class MoveToGoal(py_trees.Behaviour):
             rospy.logwarn("MoveToGoal : could not connect with move base.")
             self.action_client = None
         else:
-            goal = move_base_msgs.MoveBaseGoal()  # don't yet care about the target
-            goal.target_pose.header.frame_id = "map"
-            goal.target_pose.pose.position.x = self.pose.x
-            goal.target_pose.pose.position.y = self.pose.y
-            quaternion = tf.transformations.quaternion_from_euler(0, 0, self.pose.theta)
-            goal.target_pose.pose.orientation.x = quaternion[0]
-            goal.target_pose.pose.orientation.y = quaternion[1]
-            goal.target_pose.pose.orientation.z = quaternion[2]
-            goal.target_pose.pose.orientation.w = quaternion[3]
-            self.action_client.send_goal(goal)
+            self.action_client.send_goal(self.goal)
 
     def update(self):
         self.logger.debug("  %s [MoveToGoal::update()]" % self.name)
@@ -1146,8 +1156,20 @@ class MoveToGoal(py_trees.Behaviour):
             self.feedback_message = "action client couldn't connect"
             return py_trees.Status.INVALID
         if self.action_client.get_state() == actionlib_msgs.GoalStatus.ABORTED:
-            self.feedback_message = "move base aborted"
-            return py_trees.Status.FAILURE
+            if self.dont_ever_give_up:
+                self.feedback_message = "move base aborted, but we dont ever give up...tallyho!"
+                # this will light up for the default period of the notifier (typically 10s)
+                self.publisher.publish(
+                    gopher_std_msgs.Notification(
+                        led_pattern=self.gopher.led_patterns.dab_dab_hae,
+                        message=self.feedback_message
+                    )
+                )
+                self.action_client.send_goal(self.goal)
+                return py_trees.Status.RUNNING
+            else:
+                self.feedback_message = "move base aborted"
+                return py_trees.Status.FAILURE
         result = self.action_client.get_result()
         # self.action_client.wait_for_result(rospy.Duration(0.1))  # < 0.1 is moot here - the internal loop is 0.1
         if result:

@@ -13,7 +13,6 @@ import rocon_python_utils
 
 from . import elevators
 from . import interactions
-from . import time
 
 ##############################################################################
 # Implementation
@@ -97,7 +96,13 @@ class Planner():
         for current_node, next_node in rocon_python_utils.iterables.lookahead(topological_path):
             previous_world = current_world if last_location is None else last_location.world
             if isinstance(current_node, gopher_semantic_msgs.Location):
-                children.append(moveit.MoveToGoal(name=current_node.name, pose=current_node.pose))
+                children.append(
+                    moveit.MoveToGoal(
+                        name=current_node.name,
+                        pose=current_node.pose,
+                        dont_ever_give_up=True
+                    )
+                )
                 if next_node is not None:
                     children.extend(
                         # spaces fubar the dot renderings....
