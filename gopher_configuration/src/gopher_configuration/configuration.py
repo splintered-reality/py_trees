@@ -58,7 +58,9 @@ class LEDPatterns(ConfigurationGroup):
         self.humans_i_need_help = gopher_std_msgs.Notification.FLASH_PURPLE
         self.humans_fix_me_i_am_broken = gopher_std_msgs.Notification.FLASH_RED
         # notifications
-        self.holding = gopher_std_msgs.Notification.AROUND_RIGHT_BLUE
+        self.im_doing_something_cool = gopher_std_msgs.Notification.AROUND_RIGHT_BLUE
+        self.holding = gopher_std_msgs.Notification.AROUND_RIGHT_GREEN
+        self.dab_dab_hae = gopher_std_msgs.Notification.AROUND_RIGHT_YELLOW
         # states
         self.error = gopher_std_msgs.Notification.SOLID_RED
 
