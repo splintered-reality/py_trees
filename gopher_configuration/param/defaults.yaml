@@ -40,7 +40,7 @@ frames:
 
 # name describes the state in which the battery is when below the given value.
 battery:
-  low: 20
+  low: 10
   mid: 80
 
 ##############################################################################
