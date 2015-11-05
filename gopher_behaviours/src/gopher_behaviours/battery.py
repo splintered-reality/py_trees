@@ -44,7 +44,7 @@ class CheckBatteryLevel(py_trees.Behaviour):
         rospy.Subscriber("~battery", somanet_msgs.SmartBatteryStatus, self.battery_callback)
 
     def update(self):
-        self.feedback_message = "battery %s%%" % self.battery_percentage
+        self.feedback_message = "battery %s%% [low: %s%%]" % (self.battery_percentage, self.gopher.battery.low)
         self.logger.debug("  %s [update()]" % self.name)
         if self.battery_percentage < self.gopher.battery.low:
             if self.successes % 10 == 0:
