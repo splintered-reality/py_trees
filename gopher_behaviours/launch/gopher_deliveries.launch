@@ -7,8 +7,6 @@
   <arg name="dont_wait_for_hoomans"      default="false" doc="automate hooman interaction via the 'go' button." />
   <arg name="autoload_test_delivery"     default="false" doc="automatically load a test semantic locations list and drop a delivery goal to run on startup"/>
   <arg name="enable_honks"               default="false" doc="honk when certain behaviours are executed"/>
-  <!-- <arg name="battery_levels_config_file" default="" doc="configuration for the battery levels"/> -->
-  <arg name="battery_levels_yaml"        default="$(find gopher_rocon_bootstrap)/param/battery_levels.yaml" doc="location of battery level yaml"/>
   <arg name="enable_dock_interrupt"      default="true"  doc="allow the docking behaviour to be interrupted when a message is received on the cancel button topic "/>
 
   <!--  TODO : put this in the gopher namespace -->
@@ -29,9 +27,6 @@
 
     <remap from="ar_pose_marker_short_range"                           to="/gopher/ar_pose_marker_short_range"/>
 
-    <!-- Battery level information parameters for activating the low battery
-         tree-->
-    <rosparam command="load" file="$(arg battery_levels_yaml)"/>
     <rosparam param="dont_wait_for_hoomans" subst_value="True">$(arg dont_wait_for_hoomans)</rosparam>
     <rosparam param="autoload_test_delivery" subst_value="True">$(arg autoload_test_delivery)</rosparam>
     <param name="enable_honks" value="$(arg enable_honks)"/>

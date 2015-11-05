@@ -85,10 +85,10 @@ class Battery(ConfigurationGroup):
         """
         # The set of battery variables is fixed, no __dict__ magic necessary.
         self.low = battery_dict['low']
-        self.high = battery_dict['high']
+        self.mid = battery_dict['mid']
 
     def validate(self):
-        for key in ['low', 'high']:
+        for key in ['low', 'mid']:
             if key not in self.__dict__.keys():
                 return (False, "no definition for battery field '%s'" % key)
         return (True, None)

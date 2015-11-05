@@ -38,9 +38,10 @@ frames:
 # Devices
 ##############################################################################
 
+# name describes the state in which the battery is when below the given value.
 battery:
-  low: 20
-  high: 80
+  low: 10
+  mid: 80
 
 ##############################################################################
 # Interactions
