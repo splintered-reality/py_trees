@@ -41,7 +41,10 @@ class Composite(Behaviour):
     """ A node in a behavior tree that composites behaviours """
     def __init__(self, name="", children=None, *args, **kwargs):
         super(Composite, self).__init__(name, *args, **kwargs)
-        self.children = children if children is not None else []
+        if children is not None:
+            map(self.add_child, children)
+        else:
+            children = []
         self.logger = logging.get_logger("Composite")
 
     ############################################
