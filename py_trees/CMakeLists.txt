@@ -9,10 +9,28 @@ project(py_trees)
 # Catkin
 ##############################################################################
 
-find_package(catkin REQUIRED)
-catkin_package()
+find_package(catkin REQUIRED COMPONENTS
+  message_generation
+  std_msgs
+  uuid_msgs
+)
 
 catkin_python_setup()
+
+add_message_files(
+  DIRECTORY msg
+  FILES
+  Behaviour.msg
+  BehaviourTree.msg
+)
+
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+  uuid_msgs
+)
+
+catkin_package()
 
 ##############################################################################
 # Installs

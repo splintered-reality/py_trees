@@ -15,11 +15,16 @@
 
   <!-- for documentation -->
   <build_depend>python-catkin-pkg</build_depend>
+  <build_depend>message_generation</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>uuid_msgs</build_depend>
   
   <run_depend>python-enum34</run_depend>
   <run_depend>rocon_console</run_depend>
   <run_depend>rospy</run_depend>
   <run_depend>std_msgs</run_depend>
+  <run_depend>uuid_msgs</run_depend>
+  <build_depend>unique_identifier</build_depend>
 
   <run_depend>python-pydot</run_depend>
   
