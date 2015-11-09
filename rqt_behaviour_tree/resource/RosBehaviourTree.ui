@@ -16,11 +16,14 @@
   <property name="windowTitle">
    <string>TF Tree</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0">
+  <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0,0">
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0,0,0,0,0,0,0,0">
      <item>
-      <widget class="QPushButton" name="refresh_graph_push_button">
+      <widget class="QToolButton" name="refresh_graph_push_button">
+       <property name="toolTip">
+        <string>Refresh tree</string>
+       </property>
        <property name="text">
         <string>Refresh</string>
        </property>
@@ -121,6 +124,66 @@
       <enum>QGraphicsView::AnchorViewCenter</enum>
      </property>
     </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <item>
+      <widget class="QToolButton" name="first_tool_button">
+       <property name="toolTip">
+        <string>Go to the first tree</string>
+       </property>
+       <property name="text">
+        <string>First</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QToolButton" name="previous_tool_button">
+       <property name="toolTip">
+        <string>View the previous tree in the sequence</string>
+       </property>
+       <property name="text">
+        <string>Previous</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer_2">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QToolButton" name="next_tool_button">
+       <property name="toolTip">
+        <string>View the next tree in the sequence</string>
+       </property>
+       <property name="layoutDirection">
+        <enum>Qt::LeftToRight</enum>
+       </property>
+       <property name="text">
+        <string>Next</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QToolButton" name="last_tool_button">
+       <property name="toolTip">
+        <string>Go to the latest tree</string>
+       </property>
+       <property name="text">
+        <string>Last</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </item>
   </layout>
  </widget>

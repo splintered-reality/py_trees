@@ -127,17 +127,34 @@ class RosBehaviourTreeDotcodeGenerator(object):
             self.dotcode_factory.add_node_to_graph(graph, 'No behaviour data received')
             return graph
 
-        root = uuid_msgs.UniqueID() # the root has an empty UUID
+        root = uuid_msgs.UniqueID() # the root has an empty UUID first, add
+        # nodes to the graph, and create a dict containing IDs and the current
+        # state of each behaviour. We use this on the second pass to colour edges
+        states = {}
         for behaviour in data:
             self.dotcode_factory.add_node_to_graph(graph,
                                                    str(behaviour.own_id),
                                                    nodelabel=behaviour.name,
                                                    shape=self.type_to_shape(behaviour.type),
                                                    color=self.status_to_colour(behaviour.status) or self.type_to_colour(behaviour.type))
+            states[str(behaviour.own_id)] = behaviour.status
+
+        for behaviour in data:
             for child_id in behaviour.child_ids:
+                # edge colour is set differently for some reason
+                edge_color = (224,224,224)
+                state = states[str(child_id)]
+                if state == py_trees_msgs.Behaviour.RUNNING:
+                    edge_color = (0,0,0)
+                elif state == py_trees_msgs.Behaviour.SUCCESS:
+                    edge_color = (0,255,0)
+                elif state == py_trees_msgs.Behaviour.FAILURE:
+                    edge_color = (255,0,0)
+                    
                 self.dotcode_factory.add_edge_to_graph(graph, 
                                                        str(behaviour.own_id),
-                                                       str(child_id))
+                                                       str(child_id),
+                                                       color=edge_color)
 
         #     if not tf_frame_values['parent'] in data:
         #         root = tf_frame_values['parent']

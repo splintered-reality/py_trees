@@ -36,6 +36,7 @@ import os
 
 import rospy
 import rospkg
+import rosbag
 import py_trees.msg as py_trees_msgs
 
 from python_qt_binding import loadUi
@@ -56,12 +57,16 @@ class RosBehaviourTree(QObject):
 
     def __init__(self, context):
         super(RosBehaviourTree, self).__init__(context)
-        self.initialized = False
-
         self.setObjectName('RosBehaviourTree')
 
-        self._current_dotcode = None
-        self._viewing_bag = False
+        self.initialized = False
+        self._current_dotcode = None # dotcode for the tree that is currently displayed
+        self._viewing_bag = False # true if a bag file is loaded
+        # True if next or previous buttons are pressed. Reset if the tree being
+        # viewed is the last one in the list.
+        self._browsing_timeline = False
+        self.message_list = [py_trees_msgs.BehaviourTree()] # list of all the messages received so far.
+        self.current_message = 0 # index of the currently viewed message in the list. 
 
         self._widget = QWidget()
 
@@ -90,7 +95,6 @@ class RosBehaviourTree(QObject):
         self._widget.auto_fit_graph_check_box.toggled.connect(self._redraw_graph_view)
         self._widget.fit_in_view_push_button.setIcon(QIcon.fromTheme('zoom-original'))
         self._widget.fit_in_view_push_button.pressed.connect(self._fit_in_view)
-        
         self._widget.refresh_graph_push_button.setIcon(QIcon.fromTheme('view-refresh'))
         self._widget.refresh_graph_push_button.pressed.connect(self._clear_graph)
 
@@ -104,6 +108,19 @@ class RosBehaviourTree(QObject):
         self._widget.save_as_svg_push_button.pressed.connect(self._save_svg)
         self._widget.save_as_image_push_button.setIcon(QIcon.fromTheme('image'))
         self._widget.save_as_image_push_button.pressed.connect(self._save_image)
+        self._widget.previous_tool_button.pressed.connect(self._previous)
+        self._widget.previous_tool_button.setIcon(QIcon.fromTheme('go-previous'))
+        self._widget.next_tool_button.pressed.connect(self._next)
+        self._widget.next_tool_button.setIcon(QIcon.fromTheme('go-next'))
+        self._widget.first_tool_button.pressed.connect(self._first)
+        self._widget.first_tool_button.setIcon(QIcon.fromTheme('go-first'))
+        self._widget.last_tool_button.pressed.connect(self._last)
+        self._widget.last_tool_button.setIcon(QIcon.fromTheme('go-last'))
+
+        self._widget.first_tool_button.setEnabled(False)
+        self._widget.previous_tool_button.setEnabled(False)
+        self._widget.next_tool_button.setEnabled(False)
+        self._widget.last_tool_button.setEnabled(False)
 
         self._deferred_fit_in_view.connect(self._fit_in_view,
                                            Qt.QueuedConnection)
@@ -114,16 +131,69 @@ class RosBehaviourTree(QObject):
         context.add_widget(self._widget)
 
         self._force_refresh = False
-        self.latest_message = py_trees_msgs.BehaviourTree()
 
     def tree_cb(self, tree):
-        self.latest_message = tree
         if not self._viewing_bag:
+            self.message_list.append(tree)
+
+        if not self._viewing_bag and not self._browsing_timeline:
+            self.current_message = len(self.message_list) - 1
             self._refresh_view.emit()
 
     def _clear_graph(self):
         self._scene.clear()
         self._current_dotcode = None
+        self._refresh_view.emit()
+
+    def _set_timeline_buttons(self, first=None, previous=None, next=None, last=None):
+        if first is not None:
+            self._widget.first_tool_button.setEnabled(first)
+        if previous is not None:
+            self._widget.previous_tool_button.setEnabled(previous)
+        if next is not None:
+            self._widget.next_tool_button.setEnabled(next)
+        if last is not None:
+            self._widget.last_tool_button.setEnabled(last)
+
+    def _first(self):
+        self.current_message = 0
+        self._set_timeline_buttons(first=False, previous=False, next=True, last=True)
+        self._refresh_view.emit()
+
+    def _previous(self):
+        rospy.loginfo("previous! - len is {0}, cur is {1}".format(len(self.message_list), self.current_message))
+
+        self.current_message -= 1 # point to the next message in the list
+        if not self._widget.next_tool_button.isEnabled():
+            self._set_timeline_buttons(next=True, last=True)
+
+        # If already at the end of the list, or just reached it with this bump,
+        # disable the button and reset the index to the end
+        if self.current_message <= 0:
+            self.current_message = 0
+            self._set_timeline_buttons(first=False, previous=False)
+
+        self._refresh_view.emit()
+
+    def _last(self):
+        self.current_message = len(self.message_list) - 1
+        self._set_timeline_buttons(first=True, previous=True, next=False, last=False)
+        self._refresh_view.emit()
+
+    def _next(self):
+        rospy.loginfo("next! - len is {0}, cur is {1}".format(len(self.message_list), self.current_message))
+
+        self.current_message += 1 # point to the next message in the list
+        if not self._widget.previous_tool_button.isEnabled():
+            self._set_timeline_buttons(first=True, previous=True)
+
+        # If already at the end of the list, or just reached it with this bump,
+        # disable the button and reset the index to the end
+        if self.current_message >= len(self.message_list) - 1:
+            self.current_message = len(self.message_list) - 1
+            self._set_timeline_buttons(next=False, last=False)
+
+        self._refresh_view.emit()
 
     def save_settings(self, plugin_settings, instance_settings):
         instance_settings.set_value('auto_fit_graph_check_box_state',
@@ -148,7 +218,7 @@ class RosBehaviourTree(QObject):
         force_refresh = self._force_refresh
         self._force_refresh = False
         return self.dotcode_generator.generate_dotcode(dotcode_factory=self.dotcode_factory,
-                                                       tree=self.latest_message,
+                                                       tree=self.message_list[self.current_message],
                                                        force_refresh=force_refresh)
 
     def _update_graph_view(self, dotcode):
@@ -191,8 +261,32 @@ class RosBehaviourTree(QObject):
         if file_name is None or file_name == "":
             return
 
-        self._viewing_bag = True
+        bag = rosbag.Bag(file_name, 'r')
+        # ugh...
+        topics = bag.get_type_and_topic_info()[1].keys()
+        types = []
+        for i in range(0,len(bag.get_type_and_topic_info()[1].values())):
+            types.append(bag.get_type_and_topic_info()[1].values()[i][0])
 
+        tree_topics = [] # only look at the first matching topic
+        for ind, tp in enumerate(types):
+            if tp == 'py_trees/BehaviourTree':
+                tree_topics.append(topics[ind])
+
+        if len(tree_topics) == 0:
+            rospy.logerr('Requested bag did not contain any valid topics.')
+            return
+                
+        self.message_list = []
+        self._viewing_bag = True
+        rospy.loginfo('Reading behaviour trees from topic {0}'.format(tree_topics[0]))
+        for topic, msg, t in bag.read_messages(topics=[tree_topics[0]]):
+            self.message_list.append(msg)
+            
+        self.current_message = len(self.message_list) - 1
+        self._refresh_view.emit()
+        self._set_timeline_buttons(first=True, previous=True, next=False, last=False)
+        
     def _load_dot(self, file_name=None):
         if file_name is None:
             file_name, _ = QFileDialog.getOpenFileName(
