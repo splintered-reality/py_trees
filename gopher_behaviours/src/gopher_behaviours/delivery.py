@@ -100,7 +100,7 @@ class Waiting(py_trees.Behaviour):
      - traversed_locations [list of strings]
      - remaining locations [list of strings]
     """
-    def __init__(self, name, location, dont_wait_for_hoomans_flag):
+    def __init__(self, name, location):
         """
         :param str name: used for display
         :param str location: unique name of the location
@@ -109,7 +109,6 @@ class Waiting(py_trees.Behaviour):
         self.config = gopher_configuration.Configuration()
         self.location = location
         self.blackboard = Blackboard()
-        self.dont_wait_for_hoomans = dont_wait_for_hoomans_flag
         self.go_requested = False
         self.feedback_message = "hanging around at '%s' waiting for lazy bastards" % (location)
 
@@ -123,8 +122,8 @@ class Waiting(py_trees.Behaviour):
         Called by the behaviour :py:meth:`tick() <py_trees.behaviours.Behaviour.tick>` function.
         Does the real work...
         """
-        status = py_trees.Status.SUCCESS if self.dont_wait_for_hoomans else py_trees.Status.RUNNING
-        if status == py_trees.Status.RUNNING and self.go_requested:
+        status = py_trees.Status.RUNNING
+        if self.go_requested:
             status = py_trees.Status.SUCCESS
         else:
             self._notify_publisher.publish(gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
@@ -140,6 +139,7 @@ class Waiting(py_trees.Behaviour):
                                                                     button_confirm=gopher_std_msgs.Notification.BUTTON_OFF,
                                                                     button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
                                                                     message="go button was pressed"))
+
 
 class GopherDeliveries(object):
     """
@@ -157,10 +157,8 @@ class GopherDeliveries(object):
     :ivar incoming_goal:
     :ivar locations:
     :ivar has_a_new_goal
-    :ivar dont_wait_for_hoomans:
     :ivar feedback_message:
     :ivar old_goal_id:
-    :ivar semantic_locations: pre-load the system with some semantic locations (list of gopher_std_msgs.Location)
 
     .. todo::
 
@@ -173,7 +171,7 @@ class GopherDeliveries(object):
 
        also need to mutex the self.incoming_goal variable
     """
-    def __init__(self, name, planner, semantic_locations=None):
+    def __init__(self, name, planner):
         self.blackboard = Blackboard()
         self.blackboard.is_waiting = False
         self.config = gopher_configuration.Configuration()
@@ -186,11 +184,7 @@ class GopherDeliveries(object):
         self.planner = planner
         self.always_assume_initialised = False
         self.delivery_sequence = None
-
-        if semantic_locations is not None:
-            self.incoming_goal = [location.unique_name for location in semantic_locations]
-        else:
-            self.incoming_goal = None
+        self.incoming_goal = None
 
     def set_goal(self, locations, always_assume_initialised, doors):
         """

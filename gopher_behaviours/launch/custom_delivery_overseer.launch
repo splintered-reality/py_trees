@@ -5,6 +5,6 @@
 <launch>
   <node name="custom_delivery_overseer" type="custom_delivery_overseer.py" pkg="gopher_behaviours">
     <rosparam param="locations" subst_value="True">$(env GOPHER_CUSTOM_DELIVERY_LOCATIONS)</rosparam>
-    <remap from="custom_delivery_overseer/delivery_manager_status" to="/gopher_deliveries/status"/>
+    <remap from="custom_delivery_overseer/delivery_manager_status" to="/gopher/deliveries/status"/>
   </node>
 </launch>
