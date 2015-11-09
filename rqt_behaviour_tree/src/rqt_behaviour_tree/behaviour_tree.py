@@ -52,6 +52,7 @@ from .dotcode_behaviour import RosBehaviourTreeDotcodeGenerator
 class RosBehaviourTree(QObject):
 
     _deferred_fit_in_view = Signal()
+    _refresh_view = Signal()
 
     def __init__(self, context):
         super(RosBehaviourTree, self).__init__(context)
@@ -60,6 +61,7 @@ class RosBehaviourTree(QObject):
         self.setObjectName('RosBehaviourTree')
 
         self._current_dotcode = None
+        self._viewing_bag = False
 
         self._widget = QWidget()
 
@@ -91,7 +93,9 @@ class RosBehaviourTree(QObject):
         
         self._widget.refresh_graph_push_button.setIcon(QIcon.fromTheme('view-refresh'))
         self._widget.refresh_graph_push_button.pressed.connect(self._clear_graph)
-        
+
+        self._widget.load_bag_push_button.setIcon(QIcon.fromTheme('document-open'))
+        self._widget.load_bag_push_button.pressed.connect(self._load_bag)
         self._widget.load_dot_push_button.setIcon(QIcon.fromTheme('document-open'))
         self._widget.load_dot_push_button.pressed.connect(self._load_dot)
         self._widget.save_dot_push_button.setIcon(QIcon.fromTheme('document-save-as'))
@@ -105,6 +109,8 @@ class RosBehaviourTree(QObject):
                                            Qt.QueuedConnection)
         self._deferred_fit_in_view.emit()
 
+        self._refresh_view.connect(self._refresh_tf_graph)
+
         context.add_widget(self._widget)
 
         self._force_refresh = False
@@ -112,7 +118,8 @@ class RosBehaviourTree(QObject):
 
     def tree_cb(self, tree):
         self.latest_message = tree
-        self._refresh_tf_graph()
+        if not self._viewing_bag:
+            self._refresh_view.emit()
 
     def _clear_graph(self):
         self._scene.clear()
@@ -174,11 +181,23 @@ class RosBehaviourTree(QObject):
         if self._widget.auto_fit_graph_check_box.isChecked():
             self._fit_in_view()
 
+    def _load_bag(self, file_name=None):
+        if file_name is None:
+            file_name, _ = QFileDialog.getOpenFileName(
+                self._widget,
+                self.tr('Open trees from bag file'),
+                None,
+                self.tr('ROS bag (*.bag)'))
+        if file_name is None or file_name == "":
+            return
+
+        self._viewing_bag = True
+
     def _load_dot(self, file_name=None):
         if file_name is None:
             file_name, _ = QFileDialog.getOpenFileName(
                 self._widget,
-                self.tr('Open graph from file'),
+                self.tr('Open tree from DOT file'),
                 None,
                 self.tr('DOT graph (*.dot)'))
             if file_name is None or file_name == '':

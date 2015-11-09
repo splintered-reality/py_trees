@@ -18,11 +18,11 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0">
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0,0,0,0,0,0,0">
+    <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0,0,0,0,0,0,0,0">
      <item>
       <widget class="QPushButton" name="refresh_graph_push_button">
        <property name="text">
-        <string>PushButton</string>
+        <string>Refresh</string>
        </property>
       </widget>
      </item>
@@ -71,6 +71,16 @@
         </size>
        </property>
       </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="load_bag_push_button">
+       <property name="toolTip">
+        <string>Load and view trees from a .bag file</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
      </item>
      <item>
       <widget class="QPushButton" name="load_dot_push_button">
