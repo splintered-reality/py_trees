@@ -85,9 +85,9 @@ class GopherHiveMind(object):
 
         self._status_pub.publish(gopher_delivery_msgs.DeliveryManagerStatus(status=gopher_delivery_msgs.DeliveryManagerStatus.IDLING))
 
+        self.monitor_lock = threading.Lock()
         self.monitor_thread = threading.Thread(target=self.monitor, args=())
         self.monitor_thread.daemon = True
-        self.monitor_lock = threading.Lock()
         self.monitor_thread.start()
 
     def monitor(self):
