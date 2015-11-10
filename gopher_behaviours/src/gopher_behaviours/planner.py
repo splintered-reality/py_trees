@@ -8,11 +8,13 @@ import gopher_configuration
 import gopher_semantics
 import gopher_semantic_msgs.msg as gopher_semantic_msgs
 import delivery
-import moveit
 import rocon_python_utils
 
 from . import elevators
 from . import interactions
+from . import groups
+from . import blackboard_handlers
+from . import navigation
 
 ##############################################################################
 # Implementation
@@ -68,7 +70,7 @@ class Planner():
                 return False
         return True
 
-    def create_tree(self, current_world, locations, include_parking_behaviours=True, doors=False):
+    def create_tree(self, current_world, locations, include_parking_behaviours=True):
         """
         Find the semantic locations corresponding to the incoming string location identifier and
         create the appropriate behaviours.
@@ -95,12 +97,13 @@ class Planner():
         for current_node, next_node in rocon_python_utils.iterables.lookahead(topological_path):
             previous_world = current_world if last_location is None else last_location.world
             if isinstance(current_node, gopher_semantic_msgs.Location):
-                children.append(
-                    moveit.MoveToGoal(
+                children.extend([
+                    navigation.MoveIt(
                         name=current_node.name,
                         pose=current_node.pose,
                         dont_ever_give_up=True
-                    )
+                    ),
+                    blackboard_handlers.LocationTraversalHandler("Update location lists")]
                 )
                 if next_node is not None:
                     children.extend(
@@ -123,17 +126,13 @@ class Planner():
         # Parking/Unparking or Docking/Undocking
         #################################################
         if include_parking_behaviours:
-            children.insert(0, moveit.Starting("Starting"))
+            children.insert(0, groups.Starting("Starting"))
 
         # assume that we will go back to somewhere with a dock at the end of
         # each task, but only if the last location is homebase
         if include_parking_behaviours and locations[-1] == 'homebase':
-            children.append(moveit.Finishing("Finishing"))
+            children.append(groups.Finishing("Finishing"))
         if not include_parking_behaviours:
             children.append(interactions.Articulate("Done", self.gopher.sounds.done))
-
-        if doors:
-            children.insert(0, moveit.OpenDoor("Open door"))
-            children.append(moveit.CloseDoor("Close door"))
 
         return children
