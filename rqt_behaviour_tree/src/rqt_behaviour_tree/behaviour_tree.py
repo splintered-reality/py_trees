@@ -41,7 +41,7 @@ import py_trees.msg as py_trees_msgs
 
 from python_qt_binding import loadUi
 from python_qt_binding.QtCore import QFile, QIODevice, QObject, Qt, Signal
-from python_qt_binding.QtGui import QFileDialog, QGraphicsScene, QIcon, QImage, QPainter, QWidget
+from python_qt_binding.QtGui import QFileDialog, QGraphicsScene, QIcon, QImage, QPainter, QWidget, QShortcut, QKeySequence
 from python_qt_binding.QtSvg import QSvgGenerator
 from qt_dotgraph.pydotfactory import PydotFactory
 from qt_dotgraph.dot_to_qt import DotToQtGenerator
@@ -117,10 +117,27 @@ class RosBehaviourTree(QObject):
         self._widget.last_tool_button.pressed.connect(self._last)
         self._widget.last_tool_button.setIcon(QIcon.fromTheme('go-last'))
 
-        self._widget.first_tool_button.setEnabled(False)
-        self._widget.previous_tool_button.setEnabled(False)
-        self._widget.next_tool_button.setEnabled(False)
-        self._widget.last_tool_button.setEnabled(False)
+        # set up shortcuts for navigation (vim)
+        next_shortcut_vi = QShortcut(QKeySequence("l"), self._widget)
+        next_shortcut_vi.activated.connect(self._widget.next_tool_button.pressed)
+        previous_shortcut_vi = QShortcut(QKeySequence("h"), self._widget)
+        previous_shortcut_vi.activated.connect(self._widget.previous_tool_button.pressed)
+        first_shortcut_vi = QShortcut(QKeySequence("^"), self._widget)
+        first_shortcut_vi.activated.connect(self._widget.first_tool_button.pressed)
+        last_shortcut_vi = QShortcut(QKeySequence("$"), self._widget)
+        last_shortcut_vi.activated.connect(self._widget.last_tool_button.pressed)
+
+        # shortcuts for emacs
+        next_shortcut_emacs = QShortcut(QKeySequence("Ctrl+f"), self._widget)
+        next_shortcut_emacs.activated.connect(self._widget.next_tool_button.pressed)
+        preemacsous_shortcut_emacs = QShortcut(QKeySequence("Ctrl+b"), self._widget)
+        preemacsous_shortcut_emacs.activated.connect(self._widget.previous_tool_button.pressed)
+        first_shortcut_emacs = QShortcut(QKeySequence("Ctrl+a"), self._widget)
+        first_shortcut_emacs.activated.connect(self._widget.first_tool_button.pressed)
+        last_shortcut_emacs = QShortcut(QKeySequence("Ctrl+e"), self._widget)
+        last_shortcut_emacs.activated.connect(self._widget.last_tool_button.pressed)
+
+        self._set_timeline_buttons(first=False, previous=False, next=False, last=False)
 
         self._deferred_fit_in_view.connect(self._fit_in_view,
                                            Qt.QueuedConnection)
