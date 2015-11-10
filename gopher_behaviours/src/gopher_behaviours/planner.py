@@ -57,9 +57,8 @@ def find_topological_path(world, locations, semantics):
 
 class Planner():
 
-    def __init__(self, auto_go):
+    def __init__(self):
         self.current_location = None
-        self.auto_go = auto_go
         self.gopher = gopher_configuration.Configuration()
         self.semantics = gopher_semantics.Semantics(self.gopher.namespaces.semantics)
 
@@ -108,8 +107,7 @@ class Planner():
                         # spaces fubar the dot renderings....
                         [interactions.Articulate("Honk", self.gopher.sounds.honk),
                          delivery.Waiting(name="Waiting at " + current_node.name,
-                                          location=current_node.unique_name,
-                                          dont_wait_for_hoomans_flag=self.auto_go)]
+                                          location=current_node.unique_name)]
                     )
                 last_location = current_node
             elif isinstance(current_node, gopher_semantic_msgs.Elevator):

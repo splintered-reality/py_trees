@@ -27,6 +27,7 @@ from actionlib_msgs.msg import GoalStatus
 import actionlib_msgs.msg as actionlib_msgs
 import move_base_msgs.msg as move_base_msgs
 import gopher_std_msgs.msg as gopher_std_msgs
+import gopher_delivery_msgs.msg as gopher_delivery_msgs
 import std_msgs.msg as std_msgs
 import dslam_msgs.msg as dslam_msgs
 import somanet_msgs.msg as somanet_msgs
@@ -649,21 +650,9 @@ class Dock(py_trees.Behaviour):
         self.docking_client = actionlib.SimpleActionClient(self.config.actions.autonomous_docking,
                                                            gopher_std_msgs.AutonomousDockingAction)
 
-        self._interrupt_sub = None
-        try:
-            if rospy.get_param("~enable_dock_interrupt"):
-                self._interrupt_sub = rospy.Subscriber(self.config.buttons.stop, std_msgs.Empty, self.interrupt_cb)
-        except KeyError:
-            pass
-
-        self._honk_publisher = None
-        try:
-            if rospy.get_param("~enable_honks") and rospy.get_param("~docking_honk"):
-                honk_topic = rospy.get_param("~docking_honk")
-                self._honk_publisher = rospy.Publisher("/gopher/commands/sounds/" + honk_topic, std_msgs.Empty, queue_size=1)
-        except KeyError:
-            rospy.logwarn("Gopher Deliveries : Could not find param to initialise honks.")
-            pass
+        # if we want to provide an interaction for docking cancellation
+        # self._interrupt_sub = rospy.Subscriber(self.config.buttons.stop, std_msgs.Empty, self.interrupt_cb)
+        self._honk_publisher = rospy.Publisher(self.config.sounds.honk, std_msgs.Empty, queue_size=1)
 
     def initialise(self):
 
@@ -690,8 +679,8 @@ class Dock(py_trees.Behaviour):
         if self._honk_publisher:
             self._honk_publisher.publish(std_msgs.Empty())
 
-    def interrupt_cb(self, msg):
-        rospy.logdebug("Dock behaviour got interrupt from button")
+    def cancel_docking(self, msg):
+        rospy.logdebug("Cancelling any current docking action")
         self.interrupted = True
         self.docking_client.cancel_goal()
         self.motion.abort()
