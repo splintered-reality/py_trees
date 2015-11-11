@@ -212,6 +212,7 @@ class Unpark(py_trees.Behaviour):
         self.semantic_locations = Semantics(self.config.namespaces.semantics)
 
     def initialise(self):
+        rospy.logdebug("Unpark : initialisation")
         self.last_dslam = None
         self.button_pressed = False
         # indicate whether transforms have been setup from map or odom to base link
@@ -296,7 +297,9 @@ class Unpark(py_trees.Behaviour):
 
     def update(self):
         if not self.transform_setup:
+            rospy.logdebug("Unpark : parking location transform not set up yet")
             if not self.last_dslam:  # no message from dslam yet
+                rospy.logdebug("Unpark : no message from dslam yet")
                 # waited longer than the timeout, so assume dslam is uninitialised and continue
                 if rospy.Time.now() > self.timeout or self.blackboard.unpark_first_run:
                     rospy.logdebug("Unpark : didn't get a message from dslam - assuming uninitialised")
@@ -319,7 +322,9 @@ class Unpark(py_trees.Behaviour):
                 try:
                     self.start_transform = self.tf_listener.lookupTransform("map", "base_link", rospy.Time(0))
                     self.transform_setup = True
+                    rospy.logdebug("Unpark : got map transform")
                 except tf.Exception:
+                    rospy.logdebug("Unpark : didn't get map transform")
                     self.lookup_attempts += 1
                     self.feedback_message = "waiting for parking location transform from dslam"
                     return py_trees.Status.RUNNING
@@ -330,7 +335,9 @@ class Unpark(py_trees.Behaviour):
                 try:
                     self.start_transform = self.tf_listener.lookupTransform("odom", "base_link", rospy.Time(0))
                     self.transform_setup = True
+                    rospy.logdebug("Unpark : got odom transform")
                 except tf.Exception:
+                    rospy.logdebug("Unpark : didn't get odom transform")
                     self.lookup_attempts += 1
                     self.feedback_message = "waiting for parking location odometry transform"
                     return py_trees.Status.RUNNING
@@ -351,7 +358,9 @@ class Unpark(py_trees.Behaviour):
             self.feedback_message = "robot is still charging - waiting to be unplugged"
             self.button_pressed = False
         else:  # was unplugged, should start moving
+            rospy.logdebug("Unpark : wasn't plugged in")
             if self.dslam_initialised and self.blackboard.unpark_success:
+                rospy.logdebug("Unpark : dslam is initialised, and successfully unparked before")
                 # if dslam is initialised, we have the map-relative position of
                 # the parking spot. Need to compute the relative position of the
                 # parking spot to the homebase - this is the difference
@@ -366,12 +375,13 @@ class Unpark(py_trees.Behaviour):
                 self.feedback_message = "successfully unparked"
                 return py_trees.Status.SUCCESS
             else:
-                rospy.loginfo("Unpark : waiting for go button to be pressed to indicate homebase")
+                rospy.logdebug("Unpark : waiting for go button to be pressed to indicate homebase")
                 self.feedback_message = "waiting for go button to be pressed to indicate homebase"
                 # otherwise, the robot needs to be guided to the homebase by
                 # someone - pressing the go button indicates that the homebase
                 # has been reached.
                 if self.button_pressed:
+                    rospy.logdebug("Unpark : button was pressed")
                     if self.end_transform is None:
                         rospy.logerr("Unpark : did not get a homebase transform")
                         self.feedback_message = "did not get a homebase transform"
@@ -382,7 +392,7 @@ class Unpark(py_trees.Behaviour):
                     new_parking = self.update_parking_location(self.end_transform)
                     Unpark.last_parking = new_parking
                     self.blackboard.T_hb_to_parking = new_parking
-                    rospy.loginfo(self.blackboard.T_hb_to_parking)
+                    rospy.logdebug(self.blackboard.T_hb_to_parking)
                     pose = geometry_msgs.PoseWithCovarianceStamped()
                     pose.header.stamp = rospy.Time.now()
                     pose.header.frame_id = "map"
@@ -392,9 +402,12 @@ class Unpark(py_trees.Behaviour):
                     self.feedback_message = "successfully unparked"
                     return py_trees.Status.SUCCESS
                 else:
+                    rospy.logdebug("Unpark : still waiting on button")
                     # publish notification request to flash and turn on the go button led
                     self._notify_publisher.publish(gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.FLASH_PURPLE,
                                                                                 button_confirm=gopher_std_msgs.Notification.BUTTON_ON,
                                                                                 button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
                                                                                 message="Unpark : waiting for go button press to continue"))
+                    return py_trees.Status.RUNNING
+
         return py_trees.Status.RUNNING

@@ -44,9 +44,6 @@ class CheckChargeState(py_trees.Behaviour):
         self.expected_state = expected_state
         self.charge_state = None
 
-    def initialise(self):
-        self.charge_state = None
-
     def battery_callback(self, msg):
         self.charge_state = msg.charge_state
 
@@ -55,8 +52,10 @@ class CheckChargeState(py_trees.Behaviour):
             self.feedback_message = "waiting for battery update"
             return py_trees.Status.RUNNING
         elif self.charge_state == self.expected_state:
+            self.feedback_message = "got expected charge state"
             return py_trees.Status.SUCCESS
         else:
+            self.feedback_message = "charge state differed from expected"
             return py_trees.Status.FAILURE
 
 class CheckChargeSource(py_trees.Behaviour):
@@ -71,9 +70,6 @@ class CheckChargeSource(py_trees.Behaviour):
         self.expected_source = expected_source
         self.charge_source = None
 
-    def initialise(self):
-        self.charge_source = None
-
     def battery_callback(self, msg):
         self.charge_source = msg.charging_source
 
@@ -82,8 +78,10 @@ class CheckChargeSource(py_trees.Behaviour):
             self.feedback_message = "waiting for battery update"
             return py_trees.Status.RUNNING
         elif self.charge_source == self.expected_source:
+            self.feedback_message = "got expected charge source"
             return py_trees.Status.SUCCESS
         else:
+            self.feedback_message = "charge source differed from expected"
             return py_trees.Status.FAILURE
 
 class CheckBatteryLevel(py_trees.Behaviour):
