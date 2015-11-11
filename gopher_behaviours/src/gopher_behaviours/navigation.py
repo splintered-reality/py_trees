@@ -26,6 +26,7 @@ import actionlib_msgs.msg as actionlib_msgs
 import gopher_configuration
 import gopher_navi_msgs.msg as gopher_navi_msgs
 import move_base_msgs.msg as move_base_msgs
+import gopher_std_msgs.msg as gopher_std_msgs
 import py_trees
 import rospy
 import tf

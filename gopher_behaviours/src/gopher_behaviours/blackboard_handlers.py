@@ -21,6 +21,7 @@ class LocationTraversalHandler(BlackboardHandlerBase):
 class CheckBlackboardVariable(BlackboardHandlerBase):
 
     def __init__(self, name, var_name, expected_value=None):
+        super(CheckBlackboardVariable, self).__init__(name)
         self.var_name = var_name
         self.expected_value = expected_value
         

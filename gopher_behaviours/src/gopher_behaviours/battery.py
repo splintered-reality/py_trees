@@ -67,6 +67,7 @@ class CheckChargeSource(py_trees.Behaviour):
         """
         super(CheckChargeSource, self).__init__(name)
         self._battery_subscriber = rospy.Subscriber("~battery", somanet_msgs.SmartBatteryStatus, self.battery_callback)
+        rospy.loginfo(self._battery_subscriber.name)
         self.expected_source = expected_source
         self.charge_source = None
 

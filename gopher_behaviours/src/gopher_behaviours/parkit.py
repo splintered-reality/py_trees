@@ -1,18 +1,19 @@
 #!/usr/bin/env python
 
-import rospy
-import py_trees
-import tf
-import tf_utilities
-import dslam_msgs.msg as dslam_msgs
-import geometry_msgs.msg as geometry_msgs
-from gopher_semantics.semantics import Semantics
-import gopher_std_msgs.msg as gopher_std_msgs
-import somanet_msgs.msg as somanet_msgs
-import gopher_configuration
 from .blackboard import Blackboard
 from .navigation import SimpleMotion
+from gopher_semantics.semantics import Semantics
+import dslam_msgs.msg as dslam_msgs
+import geometry_msgs.msg as geometry_msgs
+import gopher_configuration
+import gopher_std_msgs.msg as gopher_std_msgs
 import numpy
+import py_trees
+import rospy
+import somanet_msgs.msg as somanet_msgs
+import std_msgs.msg as std_msgs
+import tf
+import tf_utilities
 
 class Park(py_trees.Behaviour):
     time = None
@@ -208,7 +209,7 @@ class Unpark(py_trees.Behaviour):
 
         if not hasattr(self.blackboard, 'unpark_first_run'):
             self.blackboard.unpark_first_run = True
-        self.semantic_locations = Semantics(self.gopher.namespaces.semantics)
+        self.semantic_locations = Semantics(self.config.namespaces.semantics)
 
     def initialise(self):
         self.last_dslam = None
