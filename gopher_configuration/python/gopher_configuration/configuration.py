@@ -73,7 +73,9 @@ class LEDPatterns(ConfigurationGroup):
         s += console.cyan + "    " + '{0: <20}'.format("humans_be_careful") + console.reset + ": " + console.yellow + "flashing yellow\n"
         s += console.cyan + "    " + '{0: <20}'.format("humans_i_need_help") + console.reset + ": " + console.yellow + "flashing purple\n"
         s += console.cyan + "    " + '{0: <20}'.format("humans_fix_me_i_am_broken") + console.reset + ": " + console.yellow + "flashing red\n"
-        s += console.cyan + "    " + '{0: <20}'.format("holding") + console.reset + ": " + console.yellow + "around blue\n"
+        s += console.cyan + "    " + '{0: <20}'.format("holding") + console.reset + ": " + console.yellow + "around green\n"
+        s += console.cyan + "    " + '{0: <20}'.format("im_doing_something_cool") + console.reset + ": " + console.yellow + "around blue\n"
+        s += console.cyan + "    " + '{0: <20}'.format("dab_dab_hae") + console.reset + ": " + console.yellow + "around yellow\n"
         s += console.cyan + "    " + '{0: <20}'.format("error") + console.reset + ": " + console.yellow + "solid red\n"
         return s
 
