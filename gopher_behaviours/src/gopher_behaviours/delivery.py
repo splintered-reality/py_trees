@@ -35,9 +35,10 @@ import yaml
 import std_msgs.msg as std_msgs
 import gopher_configuration
 from .blackboard import Blackboard
-from . import moveit
+from . import elevators
 from . import recovery
 from . import interactions
+from . import navigation
 
 ##############################################################################
 # Dummy Delivery Locations List (for testing)
@@ -186,7 +187,7 @@ class GopherDeliveries(object):
         self.delivery_sequence = None
         self.incoming_goal = None
 
-    def set_goal(self, locations, always_assume_initialised, doors):
+    def set_goal(self, locations, always_assume_initialised):
         """
         Callback for receipt of a new goal
         :param [str] locations: semantic locations (try to match these against the system served Map Locations list via the unique_name)
@@ -200,14 +201,12 @@ class GopherDeliveries(object):
             if self.planner.check_locations(locations):  # make sure locations are valid before returning success
                 self.incoming_goal = locations
                 self.always_assume_initialised = always_assume_initialised
-                self.doors = doors
                 return (gopher_std_msgs.DeliveryErrorCodes.SUCCESS, "assigned new goal")
             else:
                 return (gopher_std_msgs.DeliveryErrorCodes.FUBAR, "Received invalid locations")
         elif self.state == State.WAITING:
             self.incoming_goal = locations
             self.always_assume_initialised = always_assume_initialised
-            self.doors = doors
             return (gopher_std_msgs.DeliveryErrorCodes.SUCCESS, "pre-empting current goal")
         else:  # we're travelling between locations
             return (gopher_std_msgs.DeliveryErrorCodes.ALREADY_ASSIGNED_A_GOAL, "sorry, busy (already assigned a goal)")
@@ -227,8 +226,7 @@ class GopherDeliveries(object):
             include_parking_behaviours = False if self.always_assume_initialised or self.root else True
             children = self.planner.create_tree(current_world,
                                                 self.incoming_goal,
-                                                include_parking_behaviours=include_parking_behaviours,
-                                                doors=self.doors
+                                                include_parking_behaviours=include_parking_behaviours
                                                 )
             if not children:
                 # TODO is this enough?
@@ -286,7 +284,10 @@ class GopherDeliveries(object):
         """
         if self.root is not None and self.root.status == py_trees.Status.RUNNING:
             if self.delivery_sequence.status == py_trees.Status.RUNNING:
-                if isinstance(self.delivery_sequence.current_child(), moveit.MoveToGoal):
+                if (
+                    isinstance(self.delivery_sequence.current_child(), navigation.MoveIt) or
+                    isinstance(self.delivery_sequence.current_child(), elevators.Elevators)
+                ):
                     self.state = State.TRAVELLING
                     if self.blackboard.traversed_locations:
                         self.feedback_message = "moving from '%s' to '%s'" % (self.blackboard.traversed_locations[-1], self.blackboard.remaining_locations[0])

@@ -99,7 +99,7 @@ class Behaviour(object):
             self.logger.error("A behaviour returned an invalid status, setting to INVALID [%s][%s]" % (new_status, self.name))
             new_status = Status.INVALID
         if new_status != Status.RUNNING:
-            self.abort(new_status)
+            self.stop(new_status)
         self.status = new_status
         yield self
 
@@ -112,7 +112,7 @@ class Behaviour(object):
                 yield node
         yield self
 
-    def abort(self, new_status=Status.INVALID):
+    def stop(self, new_status=Status.INVALID):
         """
         :param Status new_status: set the status to this once done.
 
@@ -121,15 +121,15 @@ class Behaviour(object):
         current status field for decision making within the terminate function
         itself.
 
-        Do not think of this as an abort only for shutdown and invalid state setting
-        (though this is the default argument). Abort is also the proper call when
-        the behaviour returns success at which point the behaviour must abort
+        Do not think of this as an stop only for shutdown and invalid state setting
+        (though this is the default argument). Stop is also the proper call when
+        the behaviour returns success at which point the behaviour must stop
         any processing and do any required cleanup so it doesn't sit around
         consuming resources awaiting the next time it must be called (initialisation
         should not be done here - it could be a long time before the behaviour gets
         called again, and you shouldn't consume those resources in the meantime).
         """
-        self.logger.debug("  %s [abort()]" % self.name)
+        self.logger.debug("  %s [stop()]" % self.name)
         self.terminate(new_status)
         self.status = new_status
         self.iterator = self.tick()

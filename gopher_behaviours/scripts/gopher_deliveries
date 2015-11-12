@@ -93,7 +93,7 @@ class GopherHiveMind(object):
     def monitor(self):
         action_client = actionlib.SimpleActionClient(self.gopher.actions.move_base, move_base_msgs.MoveBaseAction)
         while not rospy.is_shutdown():
-            if not action_client.wait_for_server(rospy.Duration(2)):
+            if not action_client.wait_for_server(rospy.Duration(10)):
                 rospy.logwarn("Gopher Deliveries (monitor) : could not connect to move base.")
                 with self.monitor_lock:
                     self.monitor_ok = False
@@ -208,7 +208,7 @@ class GopherHiveMind(object):
             message = "refused goal request : [Not enough battery power to accept a goal right now.]"
             rospy.logwarn("Delivery : [%s]" % message)
         else:
-            (result, message) = self.quirky_deliveries.set_goal(request.semantic_locations, request.always_assume_initialised, request.cycle_door)
+            (result, message) = self.quirky_deliveries.set_goal(request.semantic_locations, request.always_assume_initialised)
             if result == gopher_delivery_msgs.DeliveryErrorCodes.SUCCESS:
                 message = "received goal request [%s]" % message
                 rospy.loginfo("Delivery : [%s]" % message)
