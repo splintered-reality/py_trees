@@ -20,10 +20,13 @@ import gopher_configuration
 import gopher_std_msgs.msg as gopher_std_msgs
 import gopher_delivery_msgs.srv as gopher_delivery_srvs
 import gopher_delivery_msgs.msg as gopher_delivery_msgs
+import move_base_msgs.msg as move_base_msgs
 import std_msgs.msg as std_msgs
 import py_trees
+import actionlib
 from py_trees.common import Status
 import rospy
+import threading
 
 ##############################################################################
 # Support Classes
@@ -66,6 +69,7 @@ class GopherHiveMind(object):
         self.success = None  # non goal
         self.cancelled = False
         self.current_eta = gopher_std_msgs.ETA()  # empty ETA
+        self.monitor_ok = True
 
         ##################################
         # Ros Components
@@ -80,6 +84,22 @@ class GopherHiveMind(object):
         self._delivery_result_service = rospy.Service('delivery/result', gopher_delivery_srvs.DeliveryResult, self._result_service_callback)
 
         self._status_pub.publish(gopher_delivery_msgs.DeliveryManagerStatus(status=gopher_delivery_msgs.DeliveryManagerStatus.IDLING))
+
+        self.monitor_lock = threading.Lock()
+        self.monitor_thread = threading.Thread(target=self.monitor, args=())
+        self.monitor_thread.daemon = True
+        self.monitor_thread.start()
+
+    def monitor(self):
+        action_client = actionlib.SimpleActionClient(self.gopher.actions.move_base, move_base_msgs.MoveBaseAction)
+        while not rospy.is_shutdown():
+            if not action_client.wait_for_server(rospy.Duration(2)):
+                rospy.logwarn("Gopher Deliveries (monitor) : could not connect to move base.")
+                with self.monitor_lock:
+                    self.monitor_ok = False
+            else:
+                with self.monitor_lock:
+                    self.monitor_ok = True
 
     def _eta_callback(self, msg):
         self.current_eta = msg
@@ -150,7 +170,6 @@ class GopherHiveMind(object):
             self._status_pub.publish(gopher_delivery_msgs.DeliveryManagerStatus(status=gopher_delivery_msgs.DeliveryManagerStatus.BATTERY_LOW))
         elif self.battery_subtree.status == py_trees.Status.SUCCESS:
             self._status_pub.publish(gopher_delivery_msgs.DeliveryManagerStatus(status=gopher_delivery_msgs.DeliveryManagerStatus.IDLING))
-            
 
     ##############################################################################
     # Ros Methods
@@ -173,10 +192,19 @@ class GopherHiveMind(object):
         '''
         rospy.loginfo("Delivery : received a goal request: {0}".format(request))
         self.cancelled = False
-        # first, check if we're already doing something in the battery monitor
-        # part of the tree. If we are, we do not accept any new goals.
-        if self.battery_subtree.status != Status.FAILURE:
-            result = gopher_delivery_msgs.DeliveryErrorCodes.NOT_ENOUGH_JUICE
+
+        with self.monitor_lock:
+            monitor_ok = self.monitor_ok
+
+        # if the initialised variable is false, some monitored component is
+        # unavailable - don't run a delivery
+        if not monitor_ok:
+            result = gopher_std_msgs.DeliveryErrorCodes.UNKNOWN
+            message = "refused goal request: [Some components required for delivery aren't available yet.]"
+            rospy.logwarn("Delivery : [%s]" % message)
+        elif self.battery_subtree.status != Status.FAILURE:
+            # don't accept anything if the battery subtree is doing something
+            result = gopher_std_msgs.DeliveryErrorCodes.NOT_ENOUGH_JUICE
             message = "refused goal request : [Not enough battery power to accept a goal right now.]"
             rospy.logwarn("Delivery : [%s]" % message)
         else:

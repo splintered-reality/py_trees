@@ -1,0 +1,8 @@
+<launch>
+  <group ns="gopher">
+    <group ns="configuration">
+      <rosparam command="load" file="$(find gopher_configuration)/param/defaults.yaml"/>
+    </group>
+  </group>
+  <node pkg="gopher_configuration" type="demo_node" name="gopher_configuration"/>
+</launch>

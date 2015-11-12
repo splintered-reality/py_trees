@@ -77,5 +77,16 @@ for more information and usage instructions.
 Use a Configuration - C++
 -------------------------
 
-TODO
+There is a simply library class which loads itself from the ros parameter server.
+
+.. code-block:: cpp
+   
+   #include <gopher_configuration/configuration.hpp>
+
+   gopher_configuration::Configuration configuration;
+   std::cout << configuration << std::endl;
+   int low_battery_level = configuration.batteries.low;
+
+   
+
 
