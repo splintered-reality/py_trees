@@ -35,7 +35,7 @@ import yaml
 import std_msgs.msg as std_msgs
 import gopher_configuration
 from .blackboard import Blackboard
-from . import moveit
+from . import elevators
 from . import recovery
 from . import interactions
 from . import navigation
@@ -284,7 +284,10 @@ class GopherDeliveries(object):
         """
         if self.root is not None and self.root.status == py_trees.Status.RUNNING:
             if self.delivery_sequence.status == py_trees.Status.RUNNING:
-                if isinstance(self.delivery_sequence.current_child(), navigation.MoveIt):
+                if (
+                    isinstance(self.delivery_sequence.current_child(), navigation.MoveIt) or
+                    isinstance(self.delivery_sequence.current_child(), elevators.Elevators)
+                ):
                     self.state = State.TRAVELLING
                     if self.blackboard.traversed_locations:
                         self.feedback_message = "moving from '%s' to '%s'" % (self.blackboard.traversed_locations[-1], self.blackboard.remaining_locations[0])

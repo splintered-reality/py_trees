@@ -34,7 +34,11 @@ from . import recovery
 ##############################################################################
 
 
-class HumanAssistedElevators(py_trees.Selector):
+class Elevators(py_trees.Selector):
+    pass
+
+
+class HumanAssistedElevators(Elevators):
 
     def __init__(self, name, origin, elevator, destination):
         """
