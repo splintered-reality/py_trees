@@ -93,7 +93,7 @@ class GopherHiveMind(object):
     def monitor(self):
         action_client = actionlib.SimpleActionClient(self.gopher.actions.move_base, move_base_msgs.MoveBaseAction)
         while not rospy.is_shutdown():
-            if not action_client.wait_for_server(rospy.Duration(2)):
+            if not action_client.wait_for_server(rospy.Duration(10)):
                 rospy.logwarn("Gopher Deliveries (monitor) : could not connect to move base.")
                 with self.monitor_lock:
                     self.monitor_ok = False
