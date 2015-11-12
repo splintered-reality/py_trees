@@ -100,8 +100,7 @@ class Planner():
                 children.extend([
                     navigation.MoveIt(
                         name=current_node.name,
-                        pose=current_node.pose,
-                        dont_ever_give_up=True
+                        pose=current_node.pose
                     ),
                     blackboard_handlers.LocationTraversalHandler("Update location lists")]
                 )

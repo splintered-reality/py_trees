@@ -103,13 +103,19 @@ class MoveIt(py_trees.Behaviour):
     and runs that, nothing else.
 
     :param bool dont_ever_give_up: temporary variable. Retry if move base action fails.
+
+    Dont ever give up is our default action for moving around until we decide otherwise.
+    Set it true here, and later we can disable it here and set it for the few specific
+    instances that require it. That will save us from having to do an exhaustive search
+    and destroy later.
     """
-    def __init__(self, name, pose, dont_ever_give_up=False):
+    def __init__(self, name, pose, dont_ever_give_up=True):
         super(MoveIt, self).__init__(name)
         self.pose = pose
         self.action_client = None
         self.gopher = gopher_configuration.Configuration()
         self.dont_ever_give_up = dont_ever_give_up
+        self.publisher = rospy.Publisher(self.gopher.topics.display_notification, gopher_std_msgs.Notification, queue_size=1)
 
     def initialise(self):
         self.logger.debug("  %s [MoveIt::initialise()]" % self.name)
