@@ -34,7 +34,7 @@ from . import recovery
 ##############################################################################
 
 
-class Elevators(py_trees.Selector):
+class Elevators(py_trees.Sequence):
     pass
 
 
@@ -59,22 +59,16 @@ class HumanAssistedElevators(Elevators):
         # Tree
         ###########################################
         # Assume all things here...as both semantics and planner should already validate everything.
-        elevator_sequence = _generate_elevator_sequence(self.gopher, self.elevator.unique_name, self.elevator_level_origin, self.elevator_level_destination)
-        failure_sequence = recovery.HomebaseRecovery("Failure")
-        self.add_child(elevator_sequence)
-        self.add_child(failure_sequence)
+        self.children = _generate_elevator_children(self.gopher, self.elevator.unique_name, self.elevator_level_origin, self.elevator_level_destination)
 
 
-def _generate_elevator_sequence(gopher_configuration, elevator_name, elevator_level_origin, elevator_level_destination):
+def _generate_elevator_children(gopher_configuration, elevator_name, elevator_level_origin, elevator_level_destination):
     """
     :param gopher_configuration.Configuration gopher_configuration:
     :param str elevator_name: unique name of the elevator
     :param gopher_semantic_msgs.ElevatorLevel elevator_level_origin:
     :param gopher_semantic_msgs.ElevatorLevel elevator_level_destination:
     """
-    elevator_sequence = py_trees.Sequence("Sequence")
-
-    # DJS : might need a delivery free MoveToGoal here
     move_to_elevator = navigation.MoveIt("To Elevator", elevator_level_origin.entry)
     honk = interactions.Articulate("Honk", gopher_configuration.sounds.honk)
     telesound = interactions.Articulate("Transporter sound", gopher_configuration.sounds.teleport)
@@ -93,11 +87,12 @@ def _generate_elevator_sequence(gopher_configuration, elevator_name, elevator_le
     flash_leds_teleporting.add_child(telesound)
     flash_leds_teleporting.add_child(elevator_teleport)
 
-    elevator_sequence.add_child(move_to_elevator)
-    elevator_sequence.add_child(honk)
-    elevator_sequence.add_child(flash_leds_travelling)
-    elevator_sequence.add_child(flash_leds_teleporting)
-    return elevator_sequence
+    children = []
+    children.append(move_to_elevator)
+    children.append(honk)
+    children.append(flash_leds_travelling)
+    children.append(flash_leds_teleporting)
+    return children
 
 
 def _get_elevator_level(elevator, world):
