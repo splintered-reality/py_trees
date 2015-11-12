@@ -85,8 +85,8 @@ elevators:
         exit:  { x: 15.00, y: 2.00, theta: 3.14 }
       - world: namsung_twelfth_floor
         floor: 12
-        entry: { x: -0.50, y: 13.00, theta: 0.00 }
-        exit:  { x: -0.50, y: 13.00, theta: 3.14 }
+        entry: { x: -0.50, y: 13.00, theta: -1.57 }
+        exit:  { x: -0.50, y: 13.00, theta:  1.57 }
 
 
 ##############################################################################
