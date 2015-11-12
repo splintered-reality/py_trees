@@ -30,11 +30,18 @@ class FlashAndWait(object):
         self.root = py_trees.Sequence("FlashAndWait")
         self.gopher = gopher_configuration.Configuration()
         self.logger = py_trees.logging.get_logger("FlashAndWait")
-
-        flash_leds_need_input = gopher_behaviours.interactions.FlashLEDs("Waiting for Input", led_pattern=self.gopher.led_patterns.humans_give_me_input)
+        flash_leds_need_input = gopher_behaviours.interactions.SendNotification(
+            "Waiting for Input",
+            led_pattern=self.gopher.led_patterns.humans_give_me_input,
+            message="waiting for the user to hit the button"
+        )
         flash_leds_need_input.add_child(gopher_behaviours.interactions.WaitForButton("Wait for Button", self.gopher.buttons.go))
         honk = gopher_behaviours.interactions.Articulate("Honk", self.gopher.sounds.honk)
-        flash_leds_pause = gopher_behaviours.interactions.FlashLEDs("Waiting", led_pattern=self.gopher.led_patterns.holding)
+        flash_leds_pause = gopher_behaviours.interactions.SendNotification(
+            "Waiting",
+            led_pattern=self.gopher.led_patterns.holding,
+            message="flashing while pausing...for a bit"
+        )
         flash_leds_pause.add_child(gopher_behaviours.time.Pause("Pause 5s", 5.0))
 
         self.root.add_child(flash_leds_need_input)
