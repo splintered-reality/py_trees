@@ -30,11 +30,11 @@ class ExpressDelivery(object):
         if verbose_feedback:
             self.feedback_subscriber = rospy.Subscriber("/rocon/delivery/feedback", gopher_std_msgs.DeliveryFeedback, ExpressDelivery.feedback)
 
-    def send(self, goal_locations, include_parking_behaviours, cycle_door=False):
+    def send(self, goal_locations, include_parking_behaviours):
         delivery_goal_request = gopher_std_srvs.DeliveryGoalRequest()
         delivery_goal_request.semantic_locations = goal_locations
         delivery_goal_request.always_assume_initialised = not include_parking_behaviours
-        delivery_goal_request.cycle_door = cycle_door
+        delivery_goal_request.cycle_door = False
         print(console.cyan + "New Goal : " + console.yellow + "%s" % delivery_goal_request.semantic_locations + console.reset)
         delivery_goal_service = rospy.ServiceProxy("/rocon/delivery/goal", gopher_std_srvs.DeliveryGoal)
         try:
