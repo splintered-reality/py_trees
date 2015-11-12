@@ -22,7 +22,7 @@ Bless my noggin with a tickle from your noodly appendages!
 ##############################################################################
 
 import gopher_configuration
-import gopher_std_msgs.msg as gopher_std_msgs
+from gopher_std_msgs.msg import Notification
 import py_trees
 import rospy
 import std_msgs.msg as std_msgs
@@ -118,12 +118,11 @@ class WaitForButton(py_trees.Behaviour):
         else:
             return py_trees.Status.RUNNING
 
-    def abort(self, new_status):
+    def stop(self, new_status):
         if self.subscriber is not None:
             self.subscriber.unregister()
 
-
-class FlashLEDs(py_trees.Sequence):
+class SendNotification(py_trees.Sequence):
     """
     This class runs as a sequence. Since led's turn off, you need a behaviour that is continuously
     ticking while behaviours underneath are checking for some state to make the whole thing valid.
@@ -135,23 +134,34 @@ class FlashLEDs(py_trees.Sequence):
     If not hooked up to the display notications, it will log an error, but quietly 'work' without
     displaying LEDs.
     """
-    def __init__(self, name, led_pattern, message=""):
+    def __init__(self, name, message, sound="", led_pattern=None, button_cancel=None, button_confirm=None, cancel_on_stop=True):
         """
         He is a mere noodly appendage - don't expect him to check if the topic exists.
 
         A pastafarian at a higher level should take care of that before construction.
 
         :param str name: behaviour name
-        :param str led_pattern: any one of the string constants from gopher_std_msgs.Notification
+        :param str led_pattern: any one of the string constants from Notification
         :param str message: a message for the status notifier to display.
+        :param bool stop_on_finish: if true, stop the notification when the behaviour finishes, otherwise display until the notification timeout
         """
-        super(FlashLEDs, self).__init__(name)
+        super(SendNotification, self).__init__(name)
         self.gopher = gopher_configuration.Configuration()
         self.topic_name = self.gopher.topics.display_notification
-        self.publisher = rospy.Publisher(self.topic_name, gopher_std_msgs.Notification, queue_size=1)
+        self.publisher = rospy.Publisher(self.topic_name, Notification, queue_size=1)
         self.timer = None
-        self.led_pattern = led_pattern
+        self.sound = sound
+        self.led_pattern = led_pattern if led_pattern is not None else Notification.RETAIN_PREVIOUS
+        self.button_cancel = button_cancel if button_cancel is not None else Notification.RETAIN_PREVIOUS
+        self.button_confirm = button_confirm if button_confirm is not None else Notification.RETAIN_PREVIOUS
+
+        # cancel LED status on success, but only if they were set by the requested notification
+        self.led_stop = Notification.CANCEL_CURRENT if led_pattern is not None else Notification.RETAIN_PREVIOUS
+        self.cancel_stop = Notification.CANCEL_CURRENT if button_cancel is not None else Notification.RETAIN_PREVIOUS
+        self.confirm_stop = Notification.CANCEL_CURRENT if button_confirm is not None else Notification.RETAIN_PREVIOUS
+
         self.message = message
+        self.cancel_on_stop = cancel_on_stop
 
     def initialise(self):
         self.send_notification(None)
@@ -159,13 +169,18 @@ class FlashLEDs(py_trees.Sequence):
         # displaying the battery status. Need to send message repeatedly until
         # the behaviour completes.
         self.timer = rospy.Timer(rospy.Duration(5), self.send_notification)
-        super(FlashLEDs, self).initialise()
+        super(SendNotification, self).initialise()
 
     def send_notification(self, unused_timer):
-        self.publisher.publish(gopher_std_msgs.Notification(led_pattern=self.led_pattern, message=self.message))
+        self.publisher.publish(Notification(sound_name=self.sound, led_pattern=self.led_pattern,
+                                            button_confirm=self.button_confirm,
+                                            button_cancel=self.button_cancel, message=self.message))
 
-    def abort(self, new_status):
-        super(FlashLEDs, self).abort(new_status)
+    def stop(self, new_status):
+        super(SendNotification, self).stop(new_status)
         if self.timer:
             self.timer.shutdown()
-            self.publisher.publish(gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.CANCEL_CURRENT))
+            if self.cancel_on_stop:
+                self.publisher.publish(Notification(led_pattern=self.led_stop,
+                                                    button_cancel=self.cancel_stop,
+                                                    button_confirm=self.confirm_stop))

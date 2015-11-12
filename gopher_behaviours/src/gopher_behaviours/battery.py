@@ -33,6 +33,56 @@ from . import recovery
 # Battery
 ##############################################################################
 
+class CheckChargeState(py_trees.Behaviour):
+
+    def __init__(self, name, expected_state):
+        """
+        :param int expected_state: return success if the battery enters this charging state
+        """
+        super(CheckChargeState, self).__init__(name)
+        self._battery_subscriber = rospy.Subscriber("~battery", somanet_msgs.SmartBatteryStatus, self.battery_callback)
+        self.expected_state = expected_state
+        self.charge_state = None
+
+    def battery_callback(self, msg):
+        self.charge_state = msg.charge_state
+
+    def update(self):
+        if self.charge_source == None:
+            self.feedback_message = "waiting for battery update"
+            return py_trees.Status.RUNNING
+        elif self.charge_state == self.expected_state:
+            self.feedback_message = "got expected charge state"
+            return py_trees.Status.SUCCESS
+        else:
+            self.feedback_message = "charge state differed from expected"
+            return py_trees.Status.FAILURE
+
+class CheckChargeSource(py_trees.Behaviour):
+
+    def __init__(self, name, expected_source):
+        """
+        :param int expected_source: return success if the battery is being charged from this source
+        """
+        super(CheckChargeSource, self).__init__(name)
+        self._battery_subscriber = rospy.Subscriber("~battery", somanet_msgs.SmartBatteryStatus, self.battery_callback)
+        rospy.loginfo(self._battery_subscriber.name)
+        self.expected_source = expected_source
+        self.charge_source = None
+
+    def battery_callback(self, msg):
+        self.charge_source = msg.charging_source
+
+    def update(self):
+        if self.charge_source == None:
+            self.feedback_message = "waiting for battery update"
+            return py_trees.Status.RUNNING
+        elif self.charge_source == self.expected_source:
+            self.feedback_message = "got expected charge source"
+            return py_trees.Status.SUCCESS
+        else:
+            self.feedback_message = "charge source differed from expected"
+            return py_trees.Status.FAILURE
 
 class CheckBatteryLevel(py_trees.Behaviour):
     def __init__(self, name):
