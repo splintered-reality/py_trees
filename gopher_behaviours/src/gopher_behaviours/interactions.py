@@ -182,6 +182,9 @@ class SendNotification(py_trees.Sequence):
         if self.timer:
             self.timer.shutdown()
             if self.cancel_on_stop:
-                self.publisher.publish(Notification(led_pattern=self.led_stop,
-                                                    button_cancel=self.cancel_stop,
-                                                    button_confirm=self.confirm_stop))
+                notification = Notification(led_pattern=self.led_stop,
+                                            button_cancel=self.cancel_stop,
+                                            button_confirm=self.confirm_stop,
+                                            message="cancelling '%s'" % self.message
+                                            )
+                self.publisher.publish(notification)
