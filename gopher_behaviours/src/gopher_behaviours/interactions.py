@@ -122,6 +122,7 @@ class WaitForButton(py_trees.Behaviour):
         if self.subscriber is not None:
             self.subscriber.unregister()
 
+
 class SendNotification(py_trees.Sequence):
     """
     This class runs as a sequence. Since led's turn off, you need a behaviour that is continuously

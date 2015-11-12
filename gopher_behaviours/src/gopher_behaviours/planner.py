@@ -105,11 +105,18 @@ class Planner():
                     blackboard_handlers.LocationTraversalHandler("Update location lists")]
                 )
                 if next_node is not None:
+                    flash_leds_while_waiting = interactions.SendNotification(
+                        "Flash - Waiting",
+                        led_pattern=self.gopher.led_patterns.humans_give_me_input,
+                        message="waiting for the user to tell me to proceed"
+                    )
+                    waiting = delivery.Waiting(name="Waiting at " + current_node.name, location=current_node.unique_name)
+                    flash_leds_while_waiting.add_child(waiting)
                     children.extend(
                         # spaces fubar the dot renderings....
                         [interactions.Articulate("Honk", self.gopher.sounds.honk),
-                         delivery.Waiting(name="Waiting at " + current_node.name,
-                                          location=current_node.unique_name)]
+                         flash_leds_while_waiting
+                         ]
                     )
                 last_location = current_node
             elif isinstance(current_node, gopher_semantic_msgs.Elevator):
