@@ -35,6 +35,7 @@ import tf
 # Classes
 ##############################################################################
 
+
 class SimpleMotion():
     def __init__(self):
         self.config = gopher_configuration.Configuration()
@@ -88,12 +89,13 @@ class SimpleMotion():
     def stop(self):
         if self.has_goal:
             motion_state = self.action_client.get_state()
-            if (motion_state == GoalStatus.PENDING or motion_state == GoalStatus.ACTIVE):
+            if (motion_state == actionlib_msgs.GoalStatus.PENDING or motion_state == actionlib_msgs.GoalStatus.ACTIVE):
                 self.action_client.cancel_goal()
 
 ##############################################################################
 # Behaviours
 ##############################################################################
+
 
 class MoveIt(py_trees.Behaviour):
     """
