@@ -116,6 +116,7 @@ class MoveIt(py_trees.Behaviour):
         self.gopher = gopher_configuration.Configuration()
         self.dont_ever_give_up = dont_ever_give_up
         self.publisher = rospy.Publisher(self.gopher.topics.display_notification, gopher_std_msgs.Notification, queue_size=1)
+        self.goal = None
 
     def initialise(self):
         self.logger.debug("  %s [MoveIt::initialise()]" % self.name)
@@ -126,16 +127,16 @@ class MoveIt(py_trees.Behaviour):
             rospy.logwarn("MoveIt : could not connect to move base at {0}.".format(self.gopher.actions.move_base))
             self.action_client = None
         else:
-            goal = move_base_msgs.MoveBaseGoal()  # don't yet care about the target
-            goal.target_pose.header.frame_id = "map"
-            goal.target_pose.pose.position.x = self.pose.x
-            goal.target_pose.pose.position.y = self.pose.y
+            self.goal = move_base_msgs.MoveBaseGoal()  # don't yet care about the target
+            self.goal.target_pose.header.frame_id = "map"
+            self.goal.target_pose.pose.position.x = self.pose.x
+            self.goal.target_pose.pose.position.y = self.pose.y
             quaternion = tf.transformations.quaternion_from_euler(0, 0, self.pose.theta)
-            goal.target_pose.pose.orientation.x = quaternion[0]
-            goal.target_pose.pose.orientation.y = quaternion[1]
-            goal.target_pose.pose.orientation.z = quaternion[2]
-            goal.target_pose.pose.orientation.w = quaternion[3]
-            self.action_client.send_goal(goal)
+            self.goal.target_pose.pose.orientation.x = quaternion[0]
+            self.goal.target_pose.pose.orientation.y = quaternion[1]
+            self.goal.target_pose.pose.orientation.z = quaternion[2]
+            self.goal.target_pose.pose.orientation.w = quaternion[3]
+            self.action_client.send_goal(self.goal)
 
     def update(self):
         self.logger.debug("  %s [MoveIt::update()]" % self.name)
