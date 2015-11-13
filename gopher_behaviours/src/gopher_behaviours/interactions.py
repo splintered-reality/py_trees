@@ -36,7 +36,7 @@ class Articulate(py_trees.Behaviour):
     """
     Articulate a sound.
     """
-    def __init__(self, name, topic_name):
+    def __init__(self, name, topic_name, volume=100):
         """
         He is a mere noodly appendage - don't expect him to check if the topic exists.
 
@@ -45,7 +45,7 @@ class Articulate(py_trees.Behaviour):
         :param str name: behaviour name
         """
         super(Articulate, self).__init__(name)
-        self.publisher = rospy.Publisher(topic_name, std_msgs.Empty, queue_size=1)
+        self.publisher = rospy.Publisher(topic_name, std_msgs.UInt8(data=volume), queue_size=1)
 
     def update(self):
         self.publisher.publish(std_msgs.Empty())
