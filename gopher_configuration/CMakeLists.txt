@@ -15,6 +15,7 @@ find_package(catkin
         ecl_build
         ecl_console
         ecl_exceptions
+        gopher_std_msgs
         roscpp
         roslint
 )
@@ -30,6 +31,7 @@ catkin_package(
         ecl_build
         ecl_console
         ecl_exceptions
+        gopher_std_msgs
         roscpp
 )
 

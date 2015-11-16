@@ -17,6 +17,7 @@
   <build_depend>ecl_build</build_depend>
   <build_depend>ecl_console</build_depend>
   <build_depend>ecl_exceptions</build_depend>
+  <build_depend>gopher_std_msgs</build_depend>
   <build_depend>roscpp</build_depend>
   <build_depend>roslint</build_depend>
 
