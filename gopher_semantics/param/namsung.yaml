@@ -87,7 +87,17 @@ elevators:
         floor: 12
         entry: { x: -0.50, y: 13.00, theta: -1.57 }
         exit:  { x: -0.50, y: 13.00, theta:  1.57 }
-
+#  factory_elevator:
+#    name: 'Factor Service Elevator'
+#    levels:
+#      - world: namsung_sixth_floor
+#        floor: 6
+#        entry: { x: 17.50, y: 25.00, theta:  1.57 }
+#        exit:  { x: 17.50, y: 25.00, theta: -1.57 }
+#      - world: namsung_twelfth_floor
+#        floor: 12
+#        entry: { x: 3.00, y: 36.00, theta:  1.57 }
+#        exit:  { x: 3.00, y: 36.00, theta: -1.57 }
 
 ##############################################################################
 # Docking Stations
