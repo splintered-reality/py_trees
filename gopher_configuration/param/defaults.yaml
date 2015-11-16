@@ -16,6 +16,7 @@ topics:
   initial_pose: /navi/initial_pose
   switch_map: /dslam/map/switch
   world: /navi/world
+  pose: /navi/pose
 
 services:
   clear_costmaps: /navi/move_base/clear_costmaps
