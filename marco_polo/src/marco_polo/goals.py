@@ -28,6 +28,7 @@ import gopher_semantics
 import rospy
 import std_msgs.msg as std_msgs
 
+from . import parameters
 from . import utilities
 
 ##############################################################################
@@ -71,6 +72,7 @@ class GoalHandler(object):
         self.execution_state = ExecutionState.IDLE
         self.world = None           # keeps track of the the current world
         self.timer = None
+        self.parameters = parameters.Parameters()
 
         # note : maps and worlds might be different (might have installed more maps than worlds)
         self.maps = utilities.get_installed_maps()
@@ -126,7 +128,10 @@ class GoalHandler(object):
                     # somewhere else...the original location's saved marks on the costmap will
                     # still be there.
                     self.execution_state = ExecutionState.PAUSED
-                    self.timer = rospy.Timer(rospy.Duration(6), self._unpause, oneshot=True)
+                    self.timer = rospy.Timer(rospy.Duration(self.parameters.map_switching_grace),
+                                             self._unpause,
+                                             oneshot=True
+                                            )
                     return False
             self.result.value = gopher_navi_msgs.TeleportResult.ERROR_INVALID_ARGUMENTS
             self.result.message = "execution has both map and pose command 'None' (shouldn't get here)"

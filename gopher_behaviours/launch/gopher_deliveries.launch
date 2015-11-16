@@ -4,37 +4,25 @@
   Eventually as part of the rapp
  -->
 <launch>
-  <arg name="dont_wait_for_hoomans"      default="false" doc="automate hooman interaction via the 'go' button." />
-  <arg name="autoload_test_delivery"     default="false" doc="automatically load a test semantic locations list and drop a delivery goal to run on startup"/>
-  <arg name="enable_honks"               default="false" doc="honk when certain behaviours are executed"/>
-  <arg name="enable_dock_interrupt"      default="true"  doc="allow the docking behaviour to be interrupted when a message is received on the cancel button topic "/>
-
-  <!--  TODO : put this in the gopher namespace -->
-  <node name="gopher_deliveries" type="gopher_deliveries" pkg="gopher_behaviours">
-    <remap from="gopher_deliveries/battery"                            to="/gopher/status/battery_slow"/>
-    <remap from="gopher_deliveries/semantic_locations"                 to="/navi/semantic_locations"/>
-
-    <remap from="gopher_deliveries/dot_tree"                           to="/gopher/behaviours/dot_tree"/>
-    <remap from="gopher_deliveries/tick/dot_tree"                      to="/gopher/behaviours/tick/dot_tree"/>
-    <remap from="gopher_deliveries/ascii_tree"                         to="/gopher/behaviours/ascii_tree"/>
-    <remap from="gopher_deliveries/tick/ascii_tree"                    to="/gopher/behaviours/tick/ascii_tree"/>
-
-    <remap from="delivery/goal"                                        to="/rocon/delivery/goal"/>
-    <remap from="delivery/feedback"                                    to="/rocon/delivery/feedback"/>
-    <remap from="delivery/cancel"                                      to="/rocon/delivery/cancel"/>
-    <remap from="delivery/result"                                      to="/rocon/delivery/result"/>
-    <remap from="delivery/go"                                          to="/gopher/buttons/go"/>
-
-    <remap from="ar_pose_marker_short_range"                           to="/gopher/ar_pose_marker_short_range"/>
-
-    <rosparam param="dont_wait_for_hoomans" subst_value="True">$(arg dont_wait_for_hoomans)</rosparam>
-    <rosparam param="autoload_test_delivery" subst_value="True">$(arg autoload_test_delivery)</rosparam>
-    <param name="enable_honks" value="$(arg enable_honks)"/>
-    <param name="enable_dock_interrupt" value="$(arg enable_dock_interrupt)"/>
-    <param name="semantics_parameter_namespace" value="/rocon/semantics"/>
-  </node>
-
   <group ns="gopher">
+    <node name="deliveries" type="gopher_deliveries" pkg="gopher_behaviours">
+      <remap from="deliveries/battery"                            to="/gopher/status/battery_slow"/>
+      <remap from="deliveries/semantic_locations"                 to="/navi/semantic_locations"/>
+
+      <remap from="deliveries/dot_tree"                           to="/gopher/behaviours/dot_tree"/>
+      <remap from="deliveries/tick/dot_tree"                      to="/gopher/behaviours/tick/dot_tree"/>
+      <remap from="deliveries/ascii_tree"                         to="/gopher/behaviours/ascii_tree"/>
+      <remap from="deliveries/tick/ascii_tree"                    to="/gopher/behaviours/tick/ascii_tree"/>
+
+      <remap from="delivery/goal"                                 to="/rocon/delivery/goal"/>
+      <remap from="delivery/feedback"                             to="/rocon/delivery/feedback"/>
+      <remap from="delivery/cancel"                               to="/rocon/delivery/cancel"/>
+      <remap from="delivery/result"                               to="/rocon/delivery/result"/>
+      <remap from="delivery/go"                                   to="/gopher/buttons/go"/>
+
+      <remap from="ar_pose_marker_short_range"                           to="/gopher/ar_pose_marker_short_range"/>
+    </node>
+    
     <include file="$(find gopher_behaviours)/launch/custom_delivery_overseer.launch"/>
   </group>
 </launch>

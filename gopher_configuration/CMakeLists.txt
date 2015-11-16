@@ -9,12 +9,35 @@ project(gopher_configuration)
 # Find Packages
 ##############################################################################
 
-find_package(catkin REQUIRED COMPONENTS roslint)
+find_package(catkin
+    REQUIRED
+    COMPONENTS
+        ecl_build
+        ecl_console
+        ecl_exceptions
+        roscpp
+        roslint
+)
+
+##############################################################################
+# Exports
+##############################################################################
+
+catkin_package(
+    INCLUDE_DIRS include
+    LIBRARIES ${PROJECT_NAME} 
+    CATKIN_DEPENDS
+        ecl_build
+        ecl_console
+        ecl_exceptions
+        roscpp
+)
 
 ##############################################################################
 # Project Configuration
 ##############################################################################
 
+ecl_enable_cxx11_compiler()
 catkin_python_setup()
 
 # Lint Python modules
@@ -22,11 +45,9 @@ file(GLOB_RECURSE ${PROJECT_NAME}_PY_SRCS
      RELATIVE ${PROJECT_SOURCE_DIR} src/*.py)
 roslint_python(${${PROJECT_NAME}_PY_SRCS})
 
-##############################################################################
-# Catkin
-##############################################################################
-
-catkin_package()
+# c++ implementation
+include_directories(include ${catkin_INCLUDE_DIRS})
+add_subdirectory(src)
 
 ##############################################################################
 # Installs

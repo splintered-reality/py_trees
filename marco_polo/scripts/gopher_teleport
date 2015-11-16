@@ -274,6 +274,7 @@ if __name__ == '__main__':
 
     # find the server
     action_client = actionlib.SimpleActionClient(whip_me.namespace, gopher_navi_msgs.TeleportAction)
+    rospy.sleep(0.1)  # rospy time sometimes doesn't get initialised fast enough without this
     start_time = rospy.Time.now()
     finish_time = start_time + rospy.Duration(15.0)
     while True:
@@ -281,13 +282,12 @@ if __name__ == '__main__':
             sys.exit(0)
         if rospy.Time.now() > finish_time:
             sys.exit(1)
-        if not action_client.wait_for_server(rospy.Duration(1.0)):
+        if not action_client.wait_for_server(rospy.Duration(2.0)):
             rospy.logerr("Teleport : could not connect to the teleport action server.")
         else:
             break
-
     # send the goal
-    # print("Goal:\n%s" % whip_me.goal)
+    print("Goal:\n%s" % whip_me.goal)
     action_client.send_goal(whip_me.goal)
 
     rate = rospy.Rate(10)
