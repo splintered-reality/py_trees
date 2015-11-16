@@ -1,6 +1,10 @@
 Changelog
 =========
 
+0.1.2 (2015-11-16)
+------------------
+* semantics for namsung building
+
 0.1.1 (2015-10-10)
 ------------------
 * semantics for docking stations
