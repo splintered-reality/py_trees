@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>marco_polo</name>
-  <version>0.1.1</version>
+  <version>0.1.2</version>
   <description>
     Multimap map switching and teleporting for gophers.
   </description>

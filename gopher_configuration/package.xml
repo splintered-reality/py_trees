@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>gopher_configuration</name>
-  <version>0.1.1</version>
+  <version>0.1.2</version>
   <description>
     Centralised configuration for a gopher.
   </description>
@@ -17,6 +17,7 @@
   <build_depend>ecl_build</build_depend>
   <build_depend>ecl_console</build_depend>
   <build_depend>ecl_exceptions</build_depend>
+  <build_depend>gopher_std_msgs</build_depend>
   <build_depend>roscpp</build_depend>
   <build_depend>roslint</build_depend>
 
