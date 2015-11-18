@@ -31,6 +31,7 @@ import rospkg
 import rospy
 from geometry_msgs.msg import Pose2D
 import gopher_std_msgs.msg as gopher_std_msgs
+import gopher_delivery_msgs.msg as gopher_delivery_msgs
 import yaml
 import std_msgs.msg as std_msgs
 import gopher_configuration
@@ -76,7 +77,7 @@ def desirable_destinations():
 ##############################################################################
 
 
-# this exactly matches the codes in gopher_std_msgs/DeliveryFeedback
+# this exactly matches the codes in gopher_delivery_msgs/DeliveryFeedback
 class State(IntEnum):
     """ An enumerator representing the status of a delivery behaviour """
 
@@ -192,24 +193,24 @@ class GopherDeliveries(object):
         Callback for receipt of a new goal
         :param [str] locations: semantic locations (try to match these against the system served Map Locations list via the unique_name)
         :param bool always_assume_initialised: temporary flag for assuming the robot is initialised (right now we always assume uninitialised on the first run)
-        :return: tuple of (gopher_std_msgs.DeliveryErrorCodes, string)
+        :return: tuple of (gopher_delivery_msgs.DeliveryErrorCodes, string)
         """
         # don't need a lock: http://effbot.org/pyfaq/what-kinds-of-global-value-mutation-are-thread-safe.htm
         if locations is None or not locations:
-            return (gopher_std_msgs.DeliveryErrorCodes.GOAL_EMPTY_NOTHING_TO_DO, "goal empty, nothing to do.")
+            return (gopher_delivery_msgs.DeliveryErrorCodes.GOAL_EMPTY_NOTHING_TO_DO, "goal empty, nothing to do.")
         if self.state == State.IDLE:
             if self.planner.check_locations(locations):  # make sure locations are valid before returning success
                 self.incoming_goal = locations
                 self.always_assume_initialised = always_assume_initialised
-                return (gopher_std_msgs.DeliveryErrorCodes.SUCCESS, "assigned new goal")
+                return (gopher_delivery_msgs.DeliveryErrorCodes.SUCCESS, "assigned new goal")
             else:
-                return (gopher_std_msgs.DeliveryErrorCodes.FUBAR, "Received invalid locations")
+                return (gopher_delivery_msgs.DeliveryErrorCodes.FUBAR, "Received invalid locations")
         elif self.state == State.WAITING:
             self.incoming_goal = locations
             self.always_assume_initialised = always_assume_initialised
-            return (gopher_std_msgs.DeliveryErrorCodes.SUCCESS, "pre-empting current goal")
+            return (gopher_delivery_msgs.DeliveryErrorCodes.SUCCESS, "pre-empting current goal")
         else:  # we're travelling between locations
-            return (gopher_std_msgs.DeliveryErrorCodes.ALREADY_ASSIGNED_A_GOAL, "sorry, busy (already assigned a goal)")
+            return (gopher_delivery_msgs.DeliveryErrorCodes.ALREADY_ASSIGNED_A_GOAL, "sorry, busy (already assigned a goal)")
 
     def pre_tick_update(self, current_world):
         """

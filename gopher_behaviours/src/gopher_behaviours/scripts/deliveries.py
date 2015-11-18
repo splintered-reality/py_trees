@@ -7,8 +7,8 @@
 ##############################################################################
 
 import datetime
-import gopher_std_msgs.msg as gopher_std_msgs
-import gopher_std_msgs.srv as gopher_std_srvs
+import gopher_delivery_msgs.msg as gopher_delivery_msgs
+import gopher_delivery_msgs.srv as gopher_delivery_srvs
 import rocon_console.console as console
 import rospy
 import sys
@@ -19,24 +19,24 @@ import sys
 
 
 class ExpressDelivery(object):
-    state_strings = {gopher_std_msgs.DeliveryFeedback.IDLE: "idle",
-                     gopher_std_msgs.DeliveryFeedback.TRAVELLING: "travelling",
-                     gopher_std_msgs.DeliveryFeedback.WAITING: "waiting",
-                     gopher_std_msgs.DeliveryFeedback.INVALID: "invalid",
-                     gopher_std_msgs.DeliveryFeedback.CANCELLED: "cancelled"
+    state_strings = {gopher_delivery_msgs.DeliveryFeedback.IDLE: "idle",
+                     gopher_delivery_msgs.DeliveryFeedback.TRAVELLING: "travelling",
+                     gopher_delivery_msgs.DeliveryFeedback.WAITING: "waiting",
+                     gopher_delivery_msgs.DeliveryFeedback.INVALID: "invalid",
+                     gopher_delivery_msgs.DeliveryFeedback.CANCELLED: "cancelled"
                      }
 
     def __init__(self, verbose_feedback=True):
         if verbose_feedback:
-            self.feedback_subscriber = rospy.Subscriber("/rocon/delivery/feedback", gopher_std_msgs.DeliveryFeedback, ExpressDelivery.feedback)
+            self.feedback_subscriber = rospy.Subscriber("/rocon/delivery/feedback", gopher_delivery_msgs.DeliveryFeedback, ExpressDelivery.feedback)
 
     def send(self, goal_locations, include_parking_behaviours):
-        delivery_goal_request = gopher_std_srvs.DeliveryGoalRequest()
+        delivery_goal_request = gopher_delivery_srvs.DeliveryGoalRequest()
         delivery_goal_request.semantic_locations = goal_locations
         delivery_goal_request.always_assume_initialised = not include_parking_behaviours
         delivery_goal_request.cycle_door = False
         print(console.cyan + "New Goal : " + console.yellow + "%s" % delivery_goal_request.semantic_locations + console.reset)
-        delivery_goal_service = rospy.ServiceProxy("/rocon/delivery/goal", gopher_std_srvs.DeliveryGoal)
+        delivery_goal_service = rospy.ServiceProxy("/rocon/delivery/goal", gopher_delivery_srvs.DeliveryGoal)
         try:
             unused_delivery_goal_response = delivery_goal_service(delivery_goal_request)
             if not unused_delivery_goal_response.result == 0:
@@ -53,9 +53,9 @@ class ExpressDelivery(object):
         rate = rospy.Rate(2)
         while not rospy.is_shutdown():
             try:
-                fetch_result = rospy.ServiceProxy('/rocon/delivery/result', gopher_std_srvs.DeliveryResult)
+                fetch_result = rospy.ServiceProxy('/rocon/delivery/result', gopher_delivery_srvs.DeliveryResult)
                 response = fetch_result()
-                if response.result != gopher_std_msgs.DeliveryErrorCodes.UNKNOWN:
+                if response.result != gopher_delivery_msgs.DeliveryErrorCodes.UNKNOWN:
                     ExpressDelivery.result(response)
                     break
                 rate.sleep()
