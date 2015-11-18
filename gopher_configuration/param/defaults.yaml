@@ -19,6 +19,7 @@ topics:
   pose: /navi/pose
 
 services:
+  master_volume: /gopher/sound_player/master_volume
   clear_costmaps: /navi/move_base/clear_costmaps
   delivery: /rocon/delivery
   door_operator: /concert/door_operator

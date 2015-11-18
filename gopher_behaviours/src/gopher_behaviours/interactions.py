@@ -36,7 +36,7 @@ class Articulate(py_trees.Behaviour):
     """
     Articulate a sound.
     """
-    def __init__(self, name, topic_name):
+    def __init__(self, name, topic_name, volume=100):
         """
         He is a mere noodly appendage - don't expect him to check if the topic exists.
 
