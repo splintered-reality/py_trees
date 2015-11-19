@@ -108,6 +108,8 @@ class RosBehaviourTree(QObject):
         self._widget.save_as_svg_push_button.pressed.connect(self._save_svg)
         self._widget.save_as_image_push_button.setIcon(QIcon.fromTheme('image'))
         self._widget.save_as_image_push_button.pressed.connect(self._save_image)
+
+        # Set up navigation buttons
         self._widget.previous_tool_button.pressed.connect(self._previous)
         self._widget.previous_tool_button.setIcon(QIcon.fromTheme('go-previous'))
         self._widget.next_tool_button.pressed.connect(self._next)
@@ -116,6 +118,18 @@ class RosBehaviourTree(QObject):
         self._widget.first_tool_button.setIcon(QIcon.fromTheme('go-first'))
         self._widget.last_tool_button.pressed.connect(self._last)
         self._widget.last_tool_button.setIcon(QIcon.fromTheme('go-last'))
+
+        # play, pause and stop buttons
+        self._widget.play_tool_button.pressed.connect(self._play)
+        self._widget.play_tool_button.setIcon(QIcon.fromTheme('media-playback-start'))
+        self._widget.stop_tool_button.pressed.connect(self._stop)
+        self._widget.stop_tool_button.setIcon(QIcon.fromTheme('media-playback-stop'))
+        # also connect the navigation buttons so that they stop the timer when
+        # pressed while the tree is playing.
+        self._widget.first_tool_button.pressed.connect(self._stop)
+        self._widget.previous_tool_button.pressed.connect(self._stop)
+        self._widget.last_tool_button.pressed.connect(self._stop)
+        self._widget.next_tool_button.pressed.connect(self._stop)
 
         # set up shortcuts for navigation (vim)
         next_shortcut_vi = QShortcut(QKeySequence("l"), self._widget)
@@ -144,6 +158,7 @@ class RosBehaviourTree(QObject):
         self._deferred_fit_in_view.emit()
 
         self._refresh_view.connect(self._refresh_tf_graph)
+        self._play_timer = None
 
         context.add_widget(self._widget)
 
@@ -171,6 +186,16 @@ class RosBehaviourTree(QObject):
             self._widget.next_tool_button.setEnabled(next)
         if last is not None:
             self._widget.last_tool_button.setEnabled(last)
+
+    def _play(self):
+        self._play_timer = rospy.Timer(rospy.Duration(1), self._timer_next)
+
+    def _timer_next(self, timer):
+        self._next()
+
+    def _stop(self):
+        if self._play_timer:
+            self._play_timer.shutdown()
 
     def _first(self):
         self.current_message = 0
@@ -209,6 +234,10 @@ class RosBehaviourTree(QObject):
         if self.current_message >= len(self.message_list) - 1:
             self.current_message = len(self.message_list) - 1
             self._set_timeline_buttons(next=False, last=False)
+            # the play timer will call this function each time it ticks, so once
+            # we reach the end of the bag, stop it.
+            if self._play_timer:
+                self._play_timer.shutdown()
 
         self._refresh_view.emit()
 

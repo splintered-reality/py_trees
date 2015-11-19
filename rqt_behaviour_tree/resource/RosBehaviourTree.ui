@@ -18,7 +18,7 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0,0">
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0,0,0,0,0,0,0,0">
+    <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0,0,0,0,0,0,0,0,0,0">
      <item>
       <widget class="QToolButton" name="refresh_graph_push_button">
        <property name="toolTip">
@@ -59,6 +59,20 @@
       <widget class="QPushButton" name="fit_in_view_push_button">
        <property name="toolTip">
         <string>Fit graph in view</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QToolButton" name="play_tool_button">
+       <property name="text">
+        <string>Play</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QToolButton" name="stop_tool_button">
+       <property name="text">
+        <string>Stop</string>
        </property>
       </widget>
      </item>
