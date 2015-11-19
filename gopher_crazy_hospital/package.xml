@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>gopher_crazy_hospital</name>
-  <version>0.1.1</version>
+  <version>0.1.2</version>
   <description>
     The gophers must behave! This is where behavioural execution and higher level
     goal oriented multi-map planning for gophers can be found.

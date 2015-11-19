@@ -5,8 +5,8 @@
 NAME=$(notdir $(CURDIR))
 LOCAL_DIR = $(shell pwd)/doc/html/
 VERSION   = $(shell catkin_package_version .)
-REMOTE_DIR:=files@files.yujin.com:shared/documentation/${NAME}/${VERSION}
-REMOTE_SSH:=files@files.yujin.com
+REMOTE_DIR:=files@docs.yujin.com:shared/documentation/${NAME}/${VERSION}
+REMOTE_SSH:=files@docs.yujin.com
 
 docs:
 	rosdoc_lite .

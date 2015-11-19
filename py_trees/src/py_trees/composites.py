@@ -51,17 +51,17 @@ class Composite(Behaviour):
     # Worker Overrides
     ############################################
 
-    def abort(self, new_status=Status.INVALID):
+    def stop(self, new_status=Status.INVALID):
         """
         This updates all the children. We generally have two use cases here - whenever the composite has
         gone to a recognised state (i.e. FAILURE or SUCCESS), or when a higher level parent calls on
-        it to truly abort (INVALID). We only really want to update everything below if we are in
+        it to truly stop (INVALID). We only really want to update everything below if we are in
         the second use case. The first use case will subehaviours will have already handled themselves.
         """
-        self.logger.debug("  %s [Composite.abort()][%s->%s]" % (self.name, self.status, new_status))
+        self.logger.debug("  %s [Composite.stop()][%s->%s]" % (self.name, self.status, new_status))
         if new_status == Status.INVALID:
             for child in self.children:
-                child.abort(new_status)
+                child.stop(new_status)
         self.status = new_status
         self.iterator = self.tick()
 
@@ -91,7 +91,7 @@ class Composite(Behaviour):
         .. todo:: error handling for when child is not in this list (what error is thrown?)
         """
         if child.status == Status.RUNNING:
-            child.abort(Status.INVALID)
+            child.stop(Status.INVALID)
         index = self.children.index(child)
         self.children.remove(child)
         return index
@@ -106,7 +106,7 @@ class Composite(Behaviour):
         :type replacement: instance or descendant of :class:`Behaviour <py_trees.behaviours.Behaviour>`
         """
         if child.status == Status.RUNNING:
-            child.abort(Status.INVALID)
+            child.stop(Status.INVALID)
         index = self.children.index(child)
         self.logger.debug("  %s [replace_child()][%s->%s]" % (self.name, child.name, replacement.name))
         self.children[index] = replacement
@@ -115,7 +115,7 @@ class Composite(Behaviour):
         child = next((c for c in self.children if c.id == child_id), None)
         if child is not None:
             if child.status == Status.RUNNING:
-                child.abort(Status.INVALID)
+                child.stop(Status.INVALID)
             self.children.remove(child)
         else:
             raise IndexError('child was not found with the specified id [%s]' % child_id)
@@ -139,7 +139,7 @@ class Selector(Composite):
     """
     Runs all of its child behaviours in sequence until one succeeds.
     If a node after than the one selected was previously running, then call
-    abort() on it.
+    stop() on it.
     """
 
     def __init__(self, name="Selector", children=None, *args, **kwargs):
@@ -175,15 +175,15 @@ class Selector(Composite):
                         self.current_child = child
                         self.status = node.status
                         if (previous is not None) and (previous != self.current_child) and (previous.status == Status.RUNNING):
-                            previous.abort(Status.INVALID)
+                            previous.stop(Status.INVALID)
                         yield self
                         return
         self.status = Status.FAILURE
         yield self
 
-    def abort(self, new_status=Status.INVALID):
+    def stop(self, new_status=Status.INVALID):
         self.current_child = None
-        Composite.abort(self, new_status)
+        Composite.stop(self, new_status)
 
     def __repr__(self):
         s = "Name       : %s\n" % self.name
@@ -227,17 +227,17 @@ class Sequence(Composite):
                     return
             self.current_index += 1
         # At this point, all children are happy with their SUCCESS, so we should be happy too
-        self.abort(Status.SUCCESS)
+        self.stop(Status.SUCCESS)
         yield self
 
     def current_child(self):
         return self.children[self.current_index] if self.children else None
 
-    def abort(self, new_status=Status.INVALID):
-        self.logger.debug("  %s [abort()][%s->%s]" % (self.name, self.status, new_status))
+    def stop(self, new_status=Status.INVALID):
+        self.logger.debug("  %s [stop()][%s->%s]" % (self.name, self.status, new_status))
         self.current_index = 0
         self.status = new_status
-        Composite.abort(self, new_status)
+        Composite.stop(self, new_status)
 
 
 @meta.oneshot

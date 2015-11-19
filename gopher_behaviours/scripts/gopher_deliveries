@@ -18,12 +18,15 @@ import gopher_behaviours
 from gopher_behaviours.planner import Planner
 import gopher_configuration
 import gopher_std_msgs.msg as gopher_std_msgs
-import gopher_std_msgs.srv as gopher_std_srvs
+import gopher_delivery_msgs.srv as gopher_delivery_srvs
 import gopher_delivery_msgs.msg as gopher_delivery_msgs
+import move_base_msgs.msg as move_base_msgs
 import std_msgs.msg as std_msgs
 import py_trees
+import actionlib
 from py_trees.common import Status
 import rospy
+import threading
 
 ##############################################################################
 # Support Classes
@@ -51,15 +54,13 @@ def show_usage(root):
 class GopherHiveMind(object):
     def __init__(self):
 
-        autoload_test_delivery = rospy.get_param("~autoload_test_delivery", False)
-        preloaded_semantic_locations = gopher_behaviours.delivery.desirable_destinations() if autoload_test_delivery else None  # list of gopher_std_msgs.Location objects
         self.battery_subtree = gopher_behaviours.battery.create_battery_tree(name="Eating Disorder")
         self.gopher = gopher_configuration.Configuration()
-        self.planner = Planner(auto_go=rospy.get_param("~dont_wait_for_hoomans", False))
+        self.planner = Planner()
         self.current_world_subscriber = rospy.Subscriber(self.gopher.topics.world, std_msgs.String, self.current_world_callback)
         self.current_world = None
 
-        self.quirky_deliveries = gopher_behaviours.delivery.GopherDeliveries(name="Quirky Deliveries", planner=self.planner, semantic_locations=preloaded_semantic_locations)
+        self.quirky_deliveries = gopher_behaviours.delivery.GopherDeliveries(name="Quirky Deliveries", planner=self.planner)
         self.idle = py_trees.behaviours.Success("Idle")
         self.root = py_trees.Selector(name="HiveMind", children=[self.battery_subtree, self.idle])
         self.tree = py_trees.ROSBehaviourTree(self.root)
@@ -68,20 +69,37 @@ class GopherHiveMind(object):
         self.success = None  # non goal
         self.cancelled = False
         self.current_eta = gopher_std_msgs.ETA()  # empty ETA
+        self.monitor_ok = True
 
         ##################################
         # Ros Components
         ##################################
         rospy.on_shutdown(self.shutdown)
-        self._delivery_goal_service = rospy.Service('delivery/goal', gopher_std_srvs.DeliveryGoal, self._goal_service_callback)
-        self._delivery_feedback_publisher = rospy.Publisher('delivery/feedback', gopher_std_msgs.DeliveryFeedback, queue_size=1, latch=True)
+        self._delivery_goal_service = rospy.Service('delivery/goal', gopher_delivery_srvs.DeliveryGoal, self._goal_service_callback)
+        self._delivery_feedback_publisher = rospy.Publisher('delivery/feedback', gopher_delivery_msgs.DeliveryFeedback, queue_size=1, latch=True)
         self._status_pub = rospy.Publisher('~status', gopher_delivery_msgs.DeliveryManagerStatus, queue_size=1, latch=True)
         self._delivery_goal_cancel_sub = rospy.Subscriber('delivery/cancel', std_msgs.Empty, self._goal_cancel_callback)
 
         self._eta_sub = rospy.Subscriber('/navi/eta', gopher_std_msgs.ETA, self._eta_callback)
-        self._delivery_result_service = rospy.Service('delivery/result', gopher_std_srvs.DeliveryResult, self._result_service_callback)
+        self._delivery_result_service = rospy.Service('delivery/result', gopher_delivery_srvs.DeliveryResult, self._result_service_callback)
 
         self._status_pub.publish(gopher_delivery_msgs.DeliveryManagerStatus(status=gopher_delivery_msgs.DeliveryManagerStatus.IDLING))
+
+        self.monitor_lock = threading.Lock()
+        self.monitor_thread = threading.Thread(target=self.monitor, args=())
+        self.monitor_thread.daemon = True
+        self.monitor_thread.start()
+
+    def monitor(self):
+        action_client = actionlib.SimpleActionClient(self.gopher.actions.move_base, move_base_msgs.MoveBaseAction)
+        while not rospy.is_shutdown():
+            if not action_client.wait_for_server(rospy.Duration(10)):
+                rospy.logwarn("Gopher Deliveries (monitor) : could not connect to move base.")
+                with self.monitor_lock:
+                    self.monitor_ok = False
+            else:
+                with self.monitor_lock:
+                    self.monitor_ok = True
 
     def _eta_callback(self, msg):
         self.current_eta = msg
@@ -133,7 +151,7 @@ class GopherHiveMind(object):
         self.quirky_deliveries.post_tock_update()
         # make sure to publish one last message to the feedback publisher once the task has succeded
         if self.quirky_deliveries.is_executing() or (self.quirky_deliveries.succeeded_on_last_tick() and not self.success):
-            msg = gopher_std_msgs.DeliveryFeedback()
+            msg = gopher_delivery_msgs.DeliveryFeedback()
             msg.header.stamp = rospy.Time.now()
             msg.state = self.quirky_deliveries.state
             msg.traversed_locations = self.quirky_deliveries.blackboard.traversed_locations
@@ -152,7 +170,6 @@ class GopherHiveMind(object):
             self._status_pub.publish(gopher_delivery_msgs.DeliveryManagerStatus(status=gopher_delivery_msgs.DeliveryManagerStatus.BATTERY_LOW))
         elif self.battery_subtree.status == py_trees.Status.SUCCESS:
             self._status_pub.publish(gopher_delivery_msgs.DeliveryManagerStatus(status=gopher_delivery_msgs.DeliveryManagerStatus.IDLING))
-            
 
     ##############################################################################
     # Ros Methods
@@ -175,15 +192,24 @@ class GopherHiveMind(object):
         '''
         rospy.loginfo("Delivery : received a goal request: {0}".format(request))
         self.cancelled = False
-        # first, check if we're already doing something in the battery monitor
-        # part of the tree. If we are, we do not accept any new goals.
-        if self.battery_subtree.status != Status.FAILURE:
-            result = gopher_std_msgs.DeliveryErrorCodes.NOT_ENOUGH_JUICE
+
+        with self.monitor_lock:
+            monitor_ok = self.monitor_ok
+
+        # if the initialised variable is false, some monitored component is
+        # unavailable - don't run a delivery
+        if not monitor_ok:
+            result = gopher_delivery_msgs.DeliveryErrorCodes.UNKNOWN
+            message = "refused goal request: [Some components required for delivery aren't available yet.]"
+            rospy.logwarn("Delivery : [%s]" % message)
+        elif self.battery_subtree.status != Status.FAILURE:
+            # don't accept anything if the battery subtree is doing something
+            result = gopher_delivery_msgs.DeliveryErrorCodes.NOT_ENOUGH_JUICE
             message = "refused goal request : [Not enough battery power to accept a goal right now.]"
             rospy.logwarn("Delivery : [%s]" % message)
         else:
-            (result, message) = self.quirky_deliveries.set_goal(request.semantic_locations, request.always_assume_initialised, request.cycle_door)
-            if result == gopher_std_msgs.DeliveryErrorCodes.SUCCESS:
+            (result, message) = self.quirky_deliveries.set_goal(request.semantic_locations, request.always_assume_initialised)
+            if result == gopher_delivery_msgs.DeliveryErrorCodes.SUCCESS:
                 message = "received goal request [%s]" % message
                 rospy.loginfo("Delivery : [%s]" % message)
                 self._status_pub.publish(gopher_delivery_msgs.DeliveryManagerStatus(status=gopher_delivery_msgs.DeliveryManagerStatus.DELIVERING))
@@ -191,7 +217,7 @@ class GopherHiveMind(object):
             else:
                 message = "refused goal request [%s]" % message
                 rospy.logwarn("Delivery : [%s]" % message)
-        return gopher_std_srvs.DeliveryGoalResponse(result, message)
+        return gopher_delivery_srvs.DeliveryGoalResponse(result, message)
 
     def _goal_cancel_callback(self, cancel):
         # if the delivery root has been initialised
@@ -208,9 +234,9 @@ class GopherHiveMind(object):
         print("************************************************************************************")
         print("")
 
-        msg = gopher_std_msgs.DeliveryFeedback()
+        msg = gopher_delivery_msgs.DeliveryFeedback()
         msg.header.stamp = rospy.Time.now()
-        msg.state = gopher_std_msgs.DeliveryFeedback.CANCELLED
+        msg.state = gopher_delivery_msgs.DeliveryFeedback.CANCELLED
         msg.traversed_locations = self.quirky_deliveries.blackboard.traversed_locations
         msg.remaining_locations = self.quirky_deliveries.blackboard.remaining_locations
         msg.status_message = "Cancellation message was received."
@@ -222,20 +248,20 @@ class GopherHiveMind(object):
         Returns the result if success
         '''
 
-        msg = gopher_std_srvs.DeliveryResultResponse()
+        msg = gopher_delivery_srvs.DeliveryResultResponse()
         msg.header.stamp = rospy.Time.now()
         msg.traversed_locations = self.quirky_deliveries.blackboard.traversed_locations
         msg.remaining_locations = self.quirky_deliveries.blackboard.remaining_locations
 
         if self.success:
-            msg.result = gopher_std_msgs.DeliveryErrorCodes.SUCCESS
+            msg.result = gopher_delivery_msgs.DeliveryErrorCodes.SUCCESS
             msg.error_message = "Success !"
         else:
             if self.cancelled:
-                msg.result = gopher_std_msgs.DeliveryErrorCodes.CANCELLED
+                msg.result = gopher_delivery_msgs.DeliveryErrorCodes.CANCELLED
                 msg.error_message = "Delivery was cancelled."
             else:
-                msg.result = gopher_std_msgs.DeliveryErrorCodes.UNKNOWN
+                msg.result = gopher_delivery_msgs.DeliveryErrorCodes.UNKNOWN
                 msg.error_message = "Not finished yet..."
 
         return msg

@@ -235,9 +235,9 @@ class BehaviourTree(object):
 
     def destroy(self):
         """
-        Destroy the tree by aborting the root node
+        Destroy the tree by stopping the root node
         """
-        self.root.abort()
+        self.root.stop()
 
 
 class ROSBehaviourTree(BehaviourTree):

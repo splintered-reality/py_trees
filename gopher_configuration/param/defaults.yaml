@@ -16,8 +16,10 @@ topics:
   initial_pose: /navi/initial_pose
   switch_map: /dslam/map/switch
   world: /navi/world
+  pose: /navi/pose
 
 services:
+  master_volume: /gopher/sound_player/master_volume
   clear_costmaps: /navi/move_base/clear_costmaps
   delivery: /rocon/delivery
   door_operator: /concert/door_operator
@@ -89,7 +91,9 @@ sounds:
 #
 # notifications - just to show what's going on, in case someone cares
 #
-#  - holding = gopher_std_msgs.Notification.AROUND_RIGHT_BLUE
+#  - i_am_doing_something_cool = gopher_std_msgs.Notification.AROUND_RIGHT_BLUE
+#  - holding = gopher_std_msgs.Notification.AROUND_RIGHT_GREEN
+#  - dab_dab_hae = gopher_std_msgs.Notification.AROUND_RIGHT_YELLOW
 #
 # states
 #

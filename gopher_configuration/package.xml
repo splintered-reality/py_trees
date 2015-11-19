@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>gopher_configuration</name>
-  <version>0.1.1</version>
+  <version>0.1.2</version>
   <description>
     Centralised configuration for a gopher.
   </description>
@@ -14,10 +14,19 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
+  <build_depend>ecl_build</build_depend>
+  <build_depend>ecl_console</build_depend>
+  <build_depend>ecl_exceptions</build_depend>
+  <build_depend>gopher_std_msgs</build_depend>
+  <build_depend>roscpp</build_depend>
   <build_depend>roslint</build_depend>
 
+  <run_depend>ecl_build</run_depend>
+  <run_depend>ecl_console</run_depend>
+  <run_depend>ecl_exceptions</run_depend>
   <run_depend>gopher_std_msgs</run_depend>
   <run_depend>python-rospkg</run_depend>
   <run_depend>rocon_console</run_depend>
+  <run_depend>roscpp</run_depend>
   <run_depend>rospy</run_depend>
 </package>
