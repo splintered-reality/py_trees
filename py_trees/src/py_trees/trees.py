@@ -48,9 +48,17 @@ CONTINUOUS_TICK_TOCK = -1
 ##############################################################################
 
 class VisitorBase(object):
+    """Base object for visitors.
+    """
+    def __init__(self, full=False):
+        """Initialises the base object for the visitor.
 
-    def __init__(self):
-        self.full = False
+        :param bool full: if true, this visitor will visit all nodes in the tree
+            every tick. If false, it only visits nodes that are parents of nodes
+            that are running, as well as those running nodes.
+
+        """
+        self.full = full
 
 class BehaviourTree(object):
     """

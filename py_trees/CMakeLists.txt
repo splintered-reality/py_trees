@@ -30,7 +30,9 @@ generate_messages(
   uuid_msgs
 )
 
-catkin_package()
+catkin_package(
+  CATKIN_DEPENDS message_runtime
+)
 
 ##############################################################################
 # Installs
