@@ -65,6 +65,8 @@ class RosBehaviourTree(QObject):
         # True if next or previous buttons are pressed. Reset if the tree being
         # viewed is the last one in the list.
         self._browsing_timeline = False
+        # number of messages arrived on the topic since the user started browing the timeline
+        self._new_messages = 0
         self.message_list = [py_trees_msgs.BehaviourTree()] # list of all the messages received so far.
         self.current_message = 0 # index of the currently viewed message in the list. 
 
@@ -165,12 +167,39 @@ class RosBehaviourTree(QObject):
         self._force_refresh = False
 
     def tree_cb(self, tree):
+        """Called whenever a message is received on the topic being subscribed to.
+
+        :param :class:`BehaviourTree` tree: representation of a behaviour tree
+        """
+        # If not viewing a bag, append messages to the list. Otherwise, they are
+        # ignored. TODO: store messages somehow?
         if not self._viewing_bag:
+            # If this is the first message received, update buttons to allow navigation
+            if len(self.message_list) == 1:
+                self._set_timeline_buttons(first=True, previous=True)
             self.message_list.append(tree)
 
+            # If the user is browsing the timeline, update the number of new
+            # messages since they stopped looking at the latest tree.
+            if self._browsing_timeline:
+                self._new_messages += 1
+                self._update_label_new_messages()
+
+        # Only refresh the view if the user is looking at the latest tree
         if not self._viewing_bag and not self._browsing_timeline:
             self.current_message = len(self.message_list) - 1
             self._refresh_view.emit()
+
+    def _update_label_new_messages(self):
+        """Update the label with information about the number of new messages. Blank if
+        zero new.
+
+        """
+        if self._new_messages == 0:
+            self._widget.message_label.setText("")
+        else:
+            formatstr = "{0} new message" + ("" if self._new_messages == 1 else "s")
+            self._widget.message_label.setText(formatstr.format(self._new_messages))
 
     def _clear_graph(self):
         self._scene.clear()
@@ -201,6 +230,7 @@ class RosBehaviourTree(QObject):
         self.current_message = 0
         self._set_timeline_buttons(first=False, previous=False, next=True, last=True)
         self._refresh_view.emit()
+        self._browsing_timeline = True
 
     def _previous(self):
         rospy.loginfo("previous! - len is {0}, cur is {1}".format(len(self.message_list), self.current_message))
@@ -215,20 +245,32 @@ class RosBehaviourTree(QObject):
             self.current_message = 0
             self._set_timeline_buttons(first=False, previous=False)
 
+        self._browsing_timeline = True
         self._refresh_view.emit()
 
     def _last(self):
         self.current_message = len(self.message_list) - 1
         self._set_timeline_buttons(first=True, previous=True, next=False, last=False)
         self._refresh_view.emit()
+        self._browsing_timeline = False
+        self._new_messages = 0
+        self._update_label_new_messages()
 
     def _next(self):
         rospy.loginfo("next! - len is {0}, cur is {1}".format(len(self.message_list), self.current_message))
 
         self.current_message += 1 # point to the next message in the list
+        # Enable buttons to navigate to the previous tree
         if not self._widget.previous_tool_button.isEnabled():
             self._set_timeline_buttons(first=True, previous=True)
 
+        # update the number of new messages when the user looks at one which
+        # arrived after they started browsing. The current message is one of the
+        # new messages if it is at most self._new_messages away from the tail of
+        # the list.
+        if self._browsing_timeline and self.current_message == len(self.message_list) - self._new_messages:
+            self._new_messages -= 1
+        
         # If already at the end of the list, or just reached it with this bump,
         # disable the button and reset the index to the end
         if self.current_message >= len(self.message_list) - 1:
@@ -236,9 +278,12 @@ class RosBehaviourTree(QObject):
             self._set_timeline_buttons(next=False, last=False)
             # the play timer will call this function each time it ticks, so once
             # we reach the end of the bag, stop it.
+            self._browsing_timeline = False
             if self._play_timer:
                 self._play_timer.shutdown()
+            self._new_messages = 0
 
+        self._update_label_new_messages()
         self._refresh_view.emit()
 
     def save_settings(self, plugin_settings, instance_settings):
@@ -307,6 +352,7 @@ class RosBehaviourTree(QObject):
         if file_name is None or file_name == "":
             return
 
+        rospy.loginfo("Reading bag from {0}".format(file_name))
         bag = rosbag.Bag(file_name, 'r')
         # ugh...
         topics = bag.get_type_and_topic_info()[1].keys()
@@ -322,17 +368,17 @@ class RosBehaviourTree(QObject):
         if len(tree_topics) == 0:
             rospy.logerr('Requested bag did not contain any valid topics.')
             return
-                
+
         self.message_list = []
         self._viewing_bag = True
         rospy.loginfo('Reading behaviour trees from topic {0}'.format(tree_topics[0]))
         for topic, msg, t in bag.read_messages(topics=[tree_topics[0]]):
             self.message_list.append(msg)
-            
+
         self.current_message = len(self.message_list) - 1
         self._refresh_view.emit()
         self._set_timeline_buttons(first=True, previous=True, next=False, last=False)
-        
+
     def _load_dot(self, file_name=None):
         if file_name is None:
             file_name, _ = QFileDialog.getOpenFileName(
