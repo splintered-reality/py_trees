@@ -206,33 +206,12 @@ class BehaviourTree(object):
         """
         tick_tocks = 0
         while not self.interrupt_tick_tocking and (tick_tocks < number_of_iterations or number_of_iterations == CONTINUOUS_TICK_TOCK):
-            # pre
-            for visitor in self.pre_tick_handlers:
-                visitor.run(self)
-            if pre_tick_handler is not None:
-                pre_tick_handler(self)
-            for visitor in self.visitors:
-                visitor.initialise()
-            # tick
-            for node in self.root.tick():
-                for visitor in [visitor for visitor in self.visitors if not visitor.full]:
-                    node.visit(visitor)
-
-            for node in self.root.iterate():
-                for visitor in [visitor for visitor in self.visitors if visitor.full]:
-                    node.visit(visitor)
-
-            # post
-            for handler in self.post_tick_handlers:
-                handler(self)
-            if post_tick_handler is not None:
-                post_tick_handler(self)
+            self.tick(pre_tick_handler, post_tick_handler)
             try:
                 time.sleep(sleep_ms / 1000.0)
             except KeyboardInterrupt:
                 break
             tick_tocks += 1
-            self.count += 1
         self.interrupt_tick_tocking = False
 
     def interrupt(self):
