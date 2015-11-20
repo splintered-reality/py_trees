@@ -301,7 +301,7 @@ class ROSBehaviourTree(BehaviourTree):
         def run(self, behaviour):
             new_behaviour = py_trees_msgs.Behaviour()
             new_behaviour.name = behaviour.name
-            new_behaviour.class_name = str(behaviour.__module__) + '.' + str(behaviour.__class__)
+            new_behaviour.class_name = str(behaviour.__module__) + '.' + str(type(behaviour).__name__)
             new_behaviour.own_id = unique_id.toMsg(behaviour.id)
             new_behaviour.parent_id = unique_id.toMsg(behaviour.parent.id) if behaviour.parent else uuid_msgs.UniqueID()
             new_behaviour.child_ids = [unique_id.toMsg(child.id) for child in behaviour.iterate(direct_descendants=True) if not child.id == behaviour.id]

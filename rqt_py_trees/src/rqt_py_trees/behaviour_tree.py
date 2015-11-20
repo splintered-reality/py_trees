@@ -37,7 +37,7 @@ import os
 import rospy
 import rospkg
 import rosbag
-import py_trees.msg as py_trees_msgs
+import py_trees_msgs.msg as py_trees_msgs
 
 from python_qt_binding import loadUi
 from python_qt_binding.QtCore import QFile, QIODevice, QObject, Qt, Signal
@@ -363,7 +363,7 @@ class RosBehaviourTree(QObject):
 
         tree_topics = [] # only look at the first matching topic
         for ind, tp in enumerate(types):
-            if tp == 'py_trees/BehaviourTree':
+            if tp == 'py_trees_msgs/BehaviourTree':
                 tree_topics.append(topics[ind])
 
         if len(tree_topics) == 0:

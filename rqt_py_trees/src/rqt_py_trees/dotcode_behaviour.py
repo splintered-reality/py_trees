@@ -117,7 +117,49 @@ class RosBehaviourTreeDotcodeGenerator(object):
             return '#00ff00'
         else:
             return None
-        
+
+    def type_to_string(self, behaviour_type):
+        if behaviour_type == py_trees_msgs.Behaviour.BEHAVIOUR:
+            return 'Behaviour'
+        elif behaviour_type == py_trees_msgs.Behaviour.SEQUENCE:
+            return 'Sequence'
+        elif behaviour_type == py_trees_msgs.Behaviour.SELECTOR:
+            return 'Selector'
+        else:
+            return None
+
+    def status_to_string(self, behaviour_status):
+        if behaviour_status == py_trees_msgs.Behaviour.INVALID:
+            return 'Invalid'
+        elif behaviour_status == py_trees_msgs.Behaviour.RUNNING:
+            return 'Running'
+        elif behaviour_status == py_trees_msgs.Behaviour.FAILURE:
+            return 'Failure'
+        elif behaviour_status == py_trees_msgs.Behaviour.SUCCESS:
+            return 'Success'
+        else:
+            return None
+
+
+
+    def behaviour_to_tooltip_string(self, behaviour):
+        to_display = ['class_name', 'type', 'status', 'message'] # should be static
+        string = ''
+
+        for attr in to_display:
+            if attr == 'type':
+                value = self.type_to_string(getattr(behaviour, attr))
+            elif attr == 'status':
+                value = self.status_to_string(getattr(behaviour, attr))
+            else:
+                value = str(getattr(behaviour, attr))
+
+            value = "<i>empty</i>" if not value else value
+
+            string += '<b>' + attr.replace('_', ' ').title() + ':</b> ' + value + "<br>"
+
+        return "\"" + string + "\""
+
     def generate(self, data, timestamp):
         graph = self.dotcode_factory.get_graph(rank=self.rank,
                                                rankdir=self.rankdir,
@@ -136,7 +178,8 @@ class RosBehaviourTreeDotcodeGenerator(object):
                                                    str(behaviour.own_id),
                                                    nodelabel=behaviour.name,
                                                    shape=self.type_to_shape(behaviour.type),
-                                                   color=self.status_to_colour(behaviour.status) or self.type_to_colour(behaviour.type))
+                                                   color=self.status_to_colour(behaviour.status) or self.type_to_colour(behaviour.type),
+                                                   tooltip=self.behaviour_to_tooltip_string(behaviour))
             states[str(behaviour.own_id)] = behaviour.status
 
         for behaviour in data:
