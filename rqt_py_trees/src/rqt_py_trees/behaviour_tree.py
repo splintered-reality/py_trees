@@ -83,7 +83,7 @@ class RosBehaviourTree(QObject):
         self.dot_to_qt = DotToQtGenerator()
 
         rp = rospkg.RosPack()
-        ui_file = os.path.join(rp.get_path('rqt_behaviour_tree'), 'resource', 'RosBehaviourTree.ui')
+        ui_file = os.path.join(rp.get_path('rqt_py_trees'), 'resource', 'RosBehaviourTree.ui')
         loadUi(ui_file, self._widget, {'InteractiveGraphicsView': InteractiveGraphicsView})
         self._widget.setObjectName('RosBehaviourTreeUi')
         if context.serial_number() > 1:
@@ -217,7 +217,8 @@ class RosBehaviourTree(QObject):
             self._widget.last_tool_button.setEnabled(last)
 
     def _play(self):
-        self._play_timer = rospy.Timer(rospy.Duration(1), self._timer_next)
+        if self.current_message != len(self.message_list) - 1:
+            self._play_timer = rospy.Timer(rospy.Duration(1), self._timer_next)
 
     def _timer_next(self, timer):
         self._next()
