@@ -23,6 +23,8 @@ services:
   clear_costmaps: /navi/move_base/clear_costmaps
   delivery: /rocon/delivery
   door_operator: /concert/door_operator
+  delivery_goal: /rocon/delivery/goal
+  delivery_result: /rocon/delivery/result
 
 actions:
   teleport: /navi/teleport
