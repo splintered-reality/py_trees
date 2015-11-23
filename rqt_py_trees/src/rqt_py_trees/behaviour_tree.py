@@ -41,11 +41,13 @@ import py_trees_msgs.msg as py_trees_msgs
 
 from python_qt_binding import loadUi
 from python_qt_binding.QtCore import QFile, QIODevice, QObject, Qt, Signal, QEvent
-from python_qt_binding.QtGui import QFileDialog, QGraphicsScene, QIcon, QImage, QPainter, QWidget, QShortcut, QKeySequence
+from python_qt_binding.QtGui import QFileDialog, QGraphicsView, QGraphicsScene, QIcon, QImage, QPainter, QWidget, QShortcut, QKeySequence
 from python_qt_binding.QtSvg import QSvgGenerator
 from qt_dotgraph.pydotfactory import PydotFactory
 from qt_dotgraph.dot_to_qt import DotToQtGenerator
 from rqt_graph.interactive_graphics_view import InteractiveGraphicsView
+from rqt_bag.bag_timeline import BagTimeline
+from rqt_bag.bag_widget import BagGraphicsView
 
 from .dotcode_behaviour import RosBehaviourTreeDotcodeGenerator
 
@@ -128,6 +130,10 @@ class RosBehaviourTree(QObject):
         self._widget.save_as_svg_push_button.pressed.connect(self._save_svg)
         self._widget.save_as_image_push_button.setIcon(QIcon.fromTheme('image'))
         self._widget.save_as_image_push_button.pressed.connect(self._save_image)
+
+        # set up the function that is called whenever the box is resized -
+        # ensures that the timeline is correctly drawn.
+        self._widget.timeline_graphics_view.resizeEvent = self._resize_event
 
         # Set up combo box for topic selection
         # when the refresh_combo signal happens, update the combo topics available
@@ -410,6 +416,31 @@ class RosBehaviourTree(QObject):
         if self._widget.auto_fit_graph_check_box.isChecked():
             self._fit_in_view()
 
+    def _resize_event(self):
+        if self._timeline:
+            self._timeline.setSceneRect(0, 0, self._widget.timeline_graphics_view.width() - 2, max(self._widget.timeline_graphics_view.height() - 2, self._timeline._timeline_frame._history_bottom))
+
+    def _add_bag_timeline(self, bag):
+        self._timeline = BagTimeline(context=self._widget.timeline_graphics_view, publish_clock=False)
+        # connect timeline events
+        self._widget.timeline_graphics_view.mousePressEvent = self._timeline.on_mouse_down
+        self._widget.timeline_graphics_view.mouseReleaseEvent = self._timeline.on_mouse_up
+        self._widget.timeline_graphics_view.mouseMoveEvent = self._timeline.on_mouse_move
+        self._widget.timeline_graphics_view.wheelEvent = self._timeline.on_mousewheel
+        self._widget.timeline_graphics_view.setScene(self._timeline)
+        self._widget.timeline_graphics_view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self._widget.timeline_graphics_view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self._resize_event()
+
+        # set up the scenerect for the timeline so that it's visible
+        self._timeline.setSceneRect(0, 0, self._widget.timeline_graphics_view.width() - 2, max(self._widget.timeline_graphics_view.height() - 2, self._timeline._timeline_frame._history_bottom))
+        self._timeline.add_bag(bag)
+        # timeline_bounds = self._timeline.itemsBoundingRect()
+        # self._widget.timeline_graphics_view.centerOn(timeline_bounds.center().x(),
+        #                                              timeline_bounds.center().y())
+
+        # rospy.loginfo(str(self._timeline.itemsBoundingRect()))
+
     def _load_bag(self, file_name=None):
         if file_name is None:
             file_name, _ = QFileDialog.getOpenFileName(
@@ -446,6 +477,7 @@ class RosBehaviourTree(QObject):
         self.current_message = len(self.message_list) - 1
         self._refresh_view.emit()
         self._set_timeline_buttons(first=True, previous=True, next=False, last=False)
+        self._add_bag_timeline(bag)
 
     def _load_dot(self, file_name=None):
         if file_name is None:
