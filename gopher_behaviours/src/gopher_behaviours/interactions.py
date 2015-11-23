@@ -158,8 +158,8 @@ class SendNotification(py_trees.Sequence):
 
         # cancel LED status on success, but only if they were set by the requested notification
         self.led_stop = Notification.CANCEL_CURRENT if led_pattern is not None else Notification.RETAIN_PREVIOUS
-        self.cancel_stop = Notification.CANCEL_CURRENT if button_cancel is not None else Notification.RETAIN_PREVIOUS
-        self.confirm_stop = Notification.CANCEL_CURRENT if button_confirm is not None else Notification.RETAIN_PREVIOUS
+        self.cancel_stop = Notification.BUTTON_OFF if button_cancel is not None else Notification.RETAIN_PREVIOUS
+        self.confirm_stop = Notification.BUTTON_OFF if button_confirm is not None else Notification.RETAIN_PREVIOUS
 
         self.message = message
         self.cancel_on_stop = cancel_on_stop

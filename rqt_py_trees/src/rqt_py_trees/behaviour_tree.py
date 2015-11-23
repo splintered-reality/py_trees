@@ -40,7 +40,7 @@ import rosbag
 import py_trees_msgs.msg as py_trees_msgs
 
 from python_qt_binding import loadUi
-from python_qt_binding.QtCore import QFile, QIODevice, QObject, Qt, Signal
+from python_qt_binding.QtCore import QFile, QIODevice, QObject, Qt, Signal, QEvent
 from python_qt_binding.QtGui import QFileDialog, QGraphicsScene, QIcon, QImage, QPainter, QWidget, QShortcut, QKeySequence
 from python_qt_binding.QtSvg import QSvgGenerator
 from qt_dotgraph.pydotfactory import PydotFactory
@@ -54,6 +54,25 @@ class RosBehaviourTree(QObject):
 
     _deferred_fit_in_view = Signal()
     _refresh_view = Signal()
+    _refresh_combo = Signal()
+    _expected_type = py_trees_msgs.BehaviourTree()._type
+    _empty_topic = "No valid topics available"
+    _unselected_topic = "Not subscribing"
+
+    class ComboBoxEventFilter(QObject):
+        def __init__(self, signal):
+            """
+
+            :param Signal signal: signal that is emitted when a left mouse button press happens
+            """
+            super(RosBehaviourTree.ComboBoxEventFilter, self).__init__()
+            self.signal = signal
+
+        def eventFilter(self, obj, event):
+            if event.type() == QEvent.MouseButtonPress and event.button() == Qt.LeftButton:
+                self.signal.emit()
+                rospy.loginfo(str(event))
+            return False
 
     def __init__(self, context):
         super(RosBehaviourTree, self).__init__(context)
@@ -77,7 +96,8 @@ class RosBehaviourTree(QObject):
         # self.dotcode_factory = PygraphvizFactory()
         # generator builds rosgraph
         self.dotcode_generator = RosBehaviourTreeDotcodeGenerator()
-        self.behaviour_sub = rospy.Subscriber('/gopher_deliveries/log/tree', py_trees_msgs.BehaviourTree, self.tree_cb)
+        self.current_topic = None
+        self.behaviour_sub = None
 
         # dot_to_qt transforms into Qt elements using dot layout
         self.dot_to_qt = DotToQtGenerator()
@@ -97,8 +117,6 @@ class RosBehaviourTree(QObject):
         self._widget.auto_fit_graph_check_box.toggled.connect(self._redraw_graph_view)
         self._widget.fit_in_view_push_button.setIcon(QIcon.fromTheme('zoom-original'))
         self._widget.fit_in_view_push_button.pressed.connect(self._fit_in_view)
-        self._widget.refresh_graph_push_button.setIcon(QIcon.fromTheme('view-refresh'))
-        self._widget.refresh_graph_push_button.pressed.connect(self._clear_graph)
 
         self._widget.load_bag_push_button.setIcon(QIcon.fromTheme('document-open'))
         self._widget.load_bag_push_button.pressed.connect(self._load_bag)
@@ -110,6 +128,15 @@ class RosBehaviourTree(QObject):
         self._widget.save_as_svg_push_button.pressed.connect(self._save_svg)
         self._widget.save_as_image_push_button.setIcon(QIcon.fromTheme('image'))
         self._widget.save_as_image_push_button.pressed.connect(self._save_image)
+
+        # Set up combo box for topic selection
+        # when the refresh_combo signal happens, update the combo topics available
+        self._refresh_combo.connect(self._update_combo_topics)
+        # filter events to catch the event which opens the combo box
+        self._combo_event_filter = RosBehaviourTree.ComboBoxEventFilter(self._refresh_combo)
+        self._widget.topic_combo_box.installEventFilter(self._combo_event_filter)
+        self._widget.topic_combo_box.activated.connect(self._choose_topic)
+        self._update_combo_topics()
 
         # Set up navigation buttons
         self._widget.previous_tool_button.pressed.connect(self._previous)
@@ -146,8 +173,8 @@ class RosBehaviourTree(QObject):
         # shortcuts for emacs
         next_shortcut_emacs = QShortcut(QKeySequence("Ctrl+f"), self._widget)
         next_shortcut_emacs.activated.connect(self._widget.next_tool_button.pressed)
-        preemacsous_shortcut_emacs = QShortcut(QKeySequence("Ctrl+b"), self._widget)
-        preemacsous_shortcut_emacs.activated.connect(self._widget.previous_tool_button.pressed)
+        previous_shortcut_emacs = QShortcut(QKeySequence("Ctrl+b"), self._widget)
+        previous_shortcut_emacs.activated.connect(self._widget.previous_tool_button.pressed)
         first_shortcut_emacs = QShortcut(QKeySequence("Ctrl+a"), self._widget)
         first_shortcut_emacs.activated.connect(self._widget.first_tool_button.pressed)
         last_shortcut_emacs = QShortcut(QKeySequence("Ctrl+e"), self._widget)
@@ -159,8 +186,10 @@ class RosBehaviourTree(QObject):
                                            Qt.QueuedConnection)
         self._deferred_fit_in_view.emit()
 
-        self._refresh_view.connect(self._refresh_tf_graph)
         self._play_timer = None
+
+        # updates the view
+        self._refresh_view.connect(self._refresh_tf_graph)
 
         context.add_widget(self._widget)
 
@@ -189,6 +218,44 @@ class RosBehaviourTree(QObject):
         if not self._viewing_bag and not self._browsing_timeline:
             self.current_message = len(self.message_list) - 1
             self._refresh_view.emit()
+
+
+    def _choose_topic(self, index):
+        rospy.loginfo("chose topics")
+        selected_topic = self._widget.topic_combo_box.currentText()
+        if selected_topic != self._empty_topic and self.current_topic != selected_topic:
+            # stop subscribing to the old topic
+            if self.behaviour_sub:
+                self.behaviour_sub.unregister()
+            # subscribe to the new topic if it's not the topic which indicates that we don't want to subscribe to anything
+            if selected_topic != self._unselected_topic:
+                self.behaviour_sub = rospy.Subscriber(selected_topic, py_trees_msgs.BehaviourTree, self.tree_cb)
+            self.current_topic = selected_topic
+
+    def _update_combo_topics(self):
+        """Update the topics displayed in the combo box that the user can use to select
+        which topic they want to listen on for trees, filtered so that only
+        topics with the correct message type are shown.
+
+        """
+        rospy.loginfo("updated combo topics")
+        self._widget.topic_combo_box.clear()
+        topic_list = rospy.get_published_topics()
+
+        valid_topics = []
+        for topic_path, topic_type in topic_list:
+            if topic_type == RosBehaviourTree._expected_type:
+                valid_topics.append(topic_path)
+                rospy.loginfo(str((topic_path, topic_type)))
+
+        if not valid_topics:
+            self._widget.topic_combo_box.addItem(RosBehaviourTree._empty_topic)
+            return
+
+        # always add an item which does nothing so that it is possible to listen to nothing.
+        self._widget.topic_combo_box.addItem(RosBehaviourTree._unselected_topic)
+        for topic in valid_topics:
+            self._widget.topic_combo_box.addItem(topic)
 
     def _update_label_new_messages(self):
         """Update the label with information about the number of new messages. Blank if
