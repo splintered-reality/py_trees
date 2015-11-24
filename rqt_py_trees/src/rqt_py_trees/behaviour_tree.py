@@ -50,6 +50,7 @@ from rqt_bag.bag_timeline import BagTimeline
 from rqt_bag.bag_widget import BagGraphicsView
 
 from .dotcode_behaviour import RosBehaviourTreeDotcodeGenerator
+from .timeline_listener import TimelineListener
 
 
 class RosBehaviourTree(QObject):
@@ -57,11 +58,17 @@ class RosBehaviourTree(QObject):
     _deferred_fit_in_view = Signal()
     _refresh_view = Signal()
     _refresh_combo = Signal()
+    _message_changed = Signal()
+    _message_cleared = Signal()
     _expected_type = py_trees_msgs.BehaviourTree()._type
     _empty_topic = "No valid topics available"
     _unselected_topic = "Not subscribing"
 
     class ComboBoxEventFilter(QObject):
+        """Event filter for the combo box. Will filter left mouse button presses,
+        calling a signal when they happen
+
+        """
         def __init__(self, signal):
             """
 
@@ -73,7 +80,6 @@ class RosBehaviourTree(QObject):
         def eventFilter(self, obj, event):
             if event.type() == QEvent.MouseButtonPress and event.button() == Qt.LeftButton:
                 self.signal.emit()
-                rospy.loginfo(str(event))
             return False
 
     def __init__(self, context):
@@ -133,7 +139,15 @@ class RosBehaviourTree(QObject):
 
         # set up the function that is called whenever the box is resized -
         # ensures that the timeline is correctly drawn.
-        self._widget.timeline_graphics_view.resizeEvent = self._resize_event
+        self._widget.resizeEvent = self._resize_event
+
+        self._timeline = None
+
+        # Connect the message changed function of this object to a corresponding
+        # signal. This signal will be activated whenever the message being
+        # viewed changes.
+        self._message_changed.connect(self.message_changed)
+        self._message_cleared.connect(self.message_cleared)
 
         # Set up combo box for topic selection
         # when the refresh_combo signal happens, update the combo topics available
@@ -186,12 +200,15 @@ class RosBehaviourTree(QObject):
         last_shortcut_emacs = QShortcut(QKeySequence("Ctrl+e"), self._widget)
         last_shortcut_emacs.activated.connect(self._widget.last_tool_button.pressed)
 
+        # Update the timeline buttons to correspond with a completely
+        # uninitialised state.
         self._set_timeline_buttons(first=False, previous=False, next=False, last=False)
 
         self._deferred_fit_in_view.connect(self._fit_in_view,
                                            Qt.QueuedConnection)
         self._deferred_fit_in_view.emit()
 
+        # This is used to store a timer which controls how fast updates happen when the play button is pressed.
         self._play_timer = None
 
         # updates the view
@@ -224,10 +241,29 @@ class RosBehaviourTree(QObject):
         if not self._viewing_bag and not self._browsing_timeline:
             self.current_message = len(self.message_list) - 1
             self._refresh_view.emit()
+            
+    def get_current_message(self):
+        """Get the message in the list or bag that is being viewed that should be
+        displayed.
 
+        """
+        if self._viewing_bag:
+            try:
+                return self._timeline_listener.msg
+            except KeyError:
+                pass
+
+        return py_trees_msgs.BehaviourTree()
 
     def _choose_topic(self, index):
-        rospy.loginfo("chose topics")
+        """Updates the topic that is subscribed to based on changes to the combo box
+        text. If the topic is unchanged, nothing will happnen. Otherwise, the
+        old subscriber will be unregistered, and a new one initialised for the
+        updated topic. If the selected topic corresponds to the unselected
+        topic, the subscriber will be unregistered and a new one will not be
+        created.
+
+        """
         selected_topic = self._widget.topic_combo_box.currentText()
         if selected_topic != self._empty_topic and self.current_topic != selected_topic:
             # stop subscribing to the old topic
@@ -244,7 +280,6 @@ class RosBehaviourTree(QObject):
         topics with the correct message type are shown.
 
         """
-        rospy.loginfo("updated combo topics")
         self._widget.topic_combo_box.clear()
         topic_list = rospy.get_published_topics()
 
@@ -252,7 +287,6 @@ class RosBehaviourTree(QObject):
         for topic_path, topic_type in topic_list:
             if topic_type == RosBehaviourTree._expected_type:
                 valid_topics.append(topic_path)
-                rospy.loginfo(str((topic_path, topic_type)))
 
         if not valid_topics:
             self._widget.topic_combo_box.addItem(RosBehaviourTree._empty_topic)
@@ -275,11 +309,15 @@ class RosBehaviourTree(QObject):
             self._widget.message_label.setText(formatstr.format(self._new_messages))
 
     def _clear_graph(self):
+        """Clears the scene and refreshes the view
+        """
         self._scene.clear()
         self._current_dotcode = None
         self._refresh_view.emit()
 
     def _set_timeline_buttons(self, first=None, previous=None, next=None, last=None):
+        """Allows timeline buttons to be enabled and disabled.
+        """
         if first is not None:
             self._widget.first_tool_button.setEnabled(first)
         if previous is not None:
@@ -290,40 +328,90 @@ class RosBehaviourTree(QObject):
             self._widget.last_tool_button.setEnabled(last)
 
     def _play(self):
+        """Start a timer which will automatically call the next function every time its
+        duration is up. Only works if the current message is not the final one.
+
+        """
         if self.current_message != len(self.message_list) - 1:
             self._play_timer = rospy.Timer(rospy.Duration(1), self._timer_next)
 
     def _timer_next(self, timer):
+        """Helper functions for the timer so that it can call the next function without
+        breaking.
+
+        """
         self._next()
 
     def _stop(self):
+        """Stop the play timer, if it exists.
+        """
         if self._play_timer:
             self._play_timer.shutdown()
 
     def _first(self):
-        self.current_message = 0
+        """Navigate to the first message. Activates the next and last buttons, disables
+        first and previous, and refreshes the view. Also changes the state to be
+        browsing the timeline.
+
+        """
+        if self._viewing_bag:
+            self._timeline.navigate_start()
+
+        #self.current_message = 0
         self._set_timeline_buttons(first=False, previous=False, next=True, last=True)
         self._refresh_view.emit()
         self._browsing_timeline = True
 
     def _previous(self):
-        rospy.loginfo("previous! - len is {0}, cur is {1}".format(len(self.message_list), self.current_message))
+        """Navigate to the previous message. Activates the next and last buttons, and
+        refreshes the view. If the current message is the second message, then
+        the first and previous buttons are disabled. Changes the state to be
+        browsing the timeline.
 
-        self.current_message -= 1 # point to the next message in the list
-        if not self._widget.next_tool_button.isEnabled():
-            self._set_timeline_buttons(next=True, last=True)
+        """
+        if self._viewing_bag:
+            # if already at the beginning, do nothing
+            if self._timeline._timeline_frame.playhead == self._timeline._get_start_stamp():
+                return
 
-        # If already at the end of the list, or just reached it with this bump,
-        # disable the button and reset the index to the end
-        if self.current_message <= 0:
-            self.current_message = 0
-            self._set_timeline_buttons(first=False, previous=False)
 
-        self._browsing_timeline = True
+            # otherwise, go to the previous message
+            self._timeline.navigate_previous()
+            # now browsing the timeline
+            self._browsing_timeline = True
+            self._set_timeline_buttons(last=True, next=True)
+            # if now at the beginning, disable timeline buttons.
+            if self._timeline._timeline_frame.playhead == self._timeline._get_end_stamp():
+                self._set_timeline_buttons(next=False, last=False)
+
+
         self._refresh_view.emit()
+        # return
+        # rospy.loginfo("previous! - len is {0}, cur is {1}".format(len(self.message_list), self.current_message))
+
+        # self.current_message -= 1 # point to the next message in the list
+        # if not self._widget.next_tool_button.isEnabled():
+        #     self._set_timeline_buttons(next=True, last=True)
+
+        # # If already at the end of the list, or just reached it with this bump,
+        # # disable the button and reset the index to the end
+        # if self.current_message <= 0:
+        #     self.current_message = 0
+        #     self._set_timeline_buttons(first=False, previous=False)
+
+        # self._browsing_timeline = True
+        # self._refresh_view.emit()
 
     def _last(self):
-        self.current_message = len(self.message_list) - 1
+        """Navigate to the last message. Activates the first and previous buttons,
+        disables next and last, and refreshes the view. The user is no longer
+        browsing the timeline after this is called.
+
+        """
+        if self._viewing_bag:
+            self._timeline.navigate_end()
+
+        # self.current_message = len(self.message_list) - 1
         self._set_timeline_buttons(first=True, previous=True, next=False, last=False)
         self._refresh_view.emit()
         self._browsing_timeline = False
@@ -331,34 +419,55 @@ class RosBehaviourTree(QObject):
         self._update_label_new_messages()
 
     def _next(self):
-        rospy.loginfo("next! - len is {0}, cur is {1}".format(len(self.message_list), self.current_message))
+        """Navigate to the next message. Activates the first and previous buttons. If
+        the current message is the second from last, disables the next and last
+        buttons, and stops browsing the timeline.
 
-        self.current_message += 1 # point to the next message in the list
-        # Enable buttons to navigate to the previous tree
-        if not self._widget.previous_tool_button.isEnabled():
+        """
+        if self._viewing_bag:
+            # if already at the end, do nothing
+            if self._timeline._timeline_frame.playhead == self._timeline._get_end_stamp():
+                return
+            
+            # otherwise, go to the next message
+            self._timeline.navigate_next()
             self._set_timeline_buttons(first=True, previous=True)
+            # if now at the end, disable timeline buttons and shutdown the play timer if active
+            if self._timeline._timeline_frame.playhead == self._timeline._get_end_stamp():
+                self._set_timeline_buttons(next=False, last=False)
+                self._browsing_timeline = False
+                if self._play_timer:
+                    self._play_timer.shutdown()
 
-        # update the number of new messages when the user looks at one which
-        # arrived after they started browsing. The current message is one of the
-        # new messages if it is at most self._new_messages away from the tail of
-        # the list.
-        if self._browsing_timeline and self.current_message == len(self.message_list) - self._new_messages:
-            self._new_messages -= 1
+            self._refresh_view.emit()
+        # rospy.loginfo("next! - len is {0}, cur is {1}".format(len(self.message_list), self.current_message))
+
+        # self.current_message += 1 # point to the next message in the list
+        # # Enable buttons to navigate to the previous tree
+        # if not self._widget.previous_tool_button.isEnabled():
+        #     self._set_timeline_buttons(first=True, previous=True)
+
+        # # update the number of new messages when the user looks at one which
+        # # arrived after they started browsing. The current message is one of the
+        # # new messages if it is at most self._new_messages away from the tail of
+        # # the list.
+        # if self._browsing_timeline and self.current_message == len(self.message_list) - self._new_messages:
+        #     self._new_messages -= 1
         
-        # If already at the end of the list, or just reached it with this bump,
-        # disable the button and reset the index to the end
-        if self.current_message >= len(self.message_list) - 1:
-            self.current_message = len(self.message_list) - 1
-            self._set_timeline_buttons(next=False, last=False)
-            # the play timer will call this function each time it ticks, so once
-            # we reach the end of the bag, stop it.
-            self._browsing_timeline = False
-            if self._play_timer:
-                self._play_timer.shutdown()
-            self._new_messages = 0
+        # # If already at the end of the list, or just reached it with this bump,
+        # # disable the button and reset the index to the end
+        # if self.current_message >= len(self.message_list) - 1:
+        #     self.current_message = len(self.message_list) - 1
+        #     self._set_timeline_buttons(next=False, last=False)
+        #     # the play timer will call this function each time it ticks, so once
+        #     # we reach the end of the bag, stop it.
+        #     self._browsing_timeline = False
+        #     if self._play_timer:
+        #         self._play_timer.shutdown()
+        #     self._new_messages = 0
 
-        self._update_label_new_messages()
-        self._refresh_view.emit()
+        # self._update_label_new_messages()
+        # self._refresh_view.emit()
 
     def save_settings(self, plugin_settings, instance_settings):
         instance_settings.set_value('auto_fit_graph_check_box_state',
@@ -375,15 +484,20 @@ class RosBehaviourTree(QObject):
         self._refresh_tf_graph()
 
     def _refresh_tf_graph(self):
+        """Refresh the graph view by regenerating the dotcode from the current message.
+
+        """
         if not self.initialized:
             return
         self._update_graph_view(self._generate_dotcode())
 
     def _generate_dotcode(self):
+        """Generate dotcode from the current message
+        """
         force_refresh = self._force_refresh
         self._force_refresh = False
         return self.dotcode_generator.generate_dotcode(dotcode_factory=self.dotcode_factory,
-                                                       tree=self.message_list[self.current_message],
+                                                       tree=self.get_current_message(),
                                                        force_refresh=force_refresh)
 
     def _update_graph_view(self, dotcode):
@@ -391,9 +505,6 @@ class RosBehaviourTree(QObject):
             return
         self._current_dotcode = dotcode
         self._redraw_graph_view()
-
-    def _generate_tool_tip(self, url):
-        return url
 
     def _redraw_graph_view(self):
         self._scene.clear()
@@ -416,32 +527,79 @@ class RosBehaviourTree(QObject):
         if self._widget.auto_fit_graph_check_box.isChecked():
             self._fit_in_view()
 
-    def _resize_event(self):
+    def _resize_event(self, event):
+        """Activated when the window is resized. Will re-fit the behaviour tree in the
+        window, and update the size of the timeline scene rectangle so that it
+        is correctly drawn.
+
+        """
+        self._fit_in_view()
         if self._timeline:
             self._timeline.setSceneRect(0, 0, self._widget.timeline_graphics_view.width() - 2, max(self._widget.timeline_graphics_view.height() - 2, self._timeline._timeline_frame._history_bottom))
 
-    def _add_bag_timeline(self, bag):
+    def message_changed(self):
+        """This function should be called when the message being viewed changes. Will
+        change the current message and update the view.
+
+        """
+        if self._timeline._timeline_frame.playhead == self._timeline._get_end_stamp():
+            self._set_timeline_buttons(last=False, next=False)
+        else:
+            self._set_timeline_buttons(last=True, next=True)
+
+        if self._timeline._timeline_frame.playhead == self._timeline._get_start_stamp():
+            self._set_timeline_buttons(first=False, previous=False)
+        else:
+            self._set_timeline_buttons(first=True, previous=True)
+
+        self._refresh_view.emit()
+
+    def message_cleared(self):
+        """This function should be called when the message being viewed was cleared.
+        Currently no situation where this happens?
+
+        """
+        pass
+
+
+    def _set_bag_timeline(self, bag):
+        """Set the timeline of this object to a bag timeline, hooking the graphics view
+        into mouse and wheel functions of the timeline.
+
+        """
         self._timeline = BagTimeline(context=self._widget.timeline_graphics_view, publish_clock=False)
-        # connect timeline events
+        # connect timeline events so that the timeline will update when events happen
         self._widget.timeline_graphics_view.mousePressEvent = self._timeline.on_mouse_down
         self._widget.timeline_graphics_view.mouseReleaseEvent = self._timeline.on_mouse_up
         self._widget.timeline_graphics_view.mouseMoveEvent = self._timeline.on_mouse_move
         self._widget.timeline_graphics_view.wheelEvent = self._timeline.on_mousewheel
         self._widget.timeline_graphics_view.setScene(self._timeline)
+
+        # Don't show scrollbars - the timeline adjusts to the size of the view
         self._widget.timeline_graphics_view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self._widget.timeline_graphics_view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self._resize_event()
+        # Send a resize event so that the timeline knows the size of the view it's in
+        self._resize_event(None)
 
-        # set up the scenerect for the timeline so that it's visible
-        self._timeline.setSceneRect(0, 0, self._widget.timeline_graphics_view.width() - 2, max(self._widget.timeline_graphics_view.height() - 2, self._timeline._timeline_frame._history_bottom))
         self._timeline.add_bag(bag)
-        # timeline_bounds = self._timeline.itemsBoundingRect()
-        # self._widget.timeline_graphics_view.centerOn(timeline_bounds.center().x(),
-        #                                              timeline_bounds.center().y())
-
-        # rospy.loginfo(str(self._timeline.itemsBoundingRect()))
+        # Create a listener for the timeline which will call the emit function
+        # on the given signals when the message being viewed changes or is
+        # cleared. The message being viewed changing generally happens when the
+        # user moves the slider around.
+        self._timeline_listener = TimelineListener(self._timeline, self.current_topic, self._message_changed, self._message_cleared)
+        # Need to add a listener to make sure that we can get information about
+        # messages that are on the topic that we're interested in.
+        self._timeline.add_listener(self.current_topic, self._timeline_listener)
+        # Go to the first message in the timeline of the bag.
+        self._timeline.navigate_start()
 
     def _load_bag(self, file_name=None):
+        """Load a bag from file. If no file name is given, a dialogue will pop up and
+        the user will be asked to select a file. If the bag file selected
+        doesn't have any valid topic, nothing will happen. If there are valid
+        topics, we load the bag and add a timeline for managing it.
+
+        """
         if file_name is None:
             file_name, _ = QFileDialog.getOpenFileName(
                 self._widget,
@@ -474,10 +632,11 @@ class RosBehaviourTree(QObject):
         for topic, msg, t in bag.read_messages(topics=[tree_topics[0]]):
             self.message_list.append(msg)
 
-        self.current_message = len(self.message_list) - 1
-        self._refresh_view.emit()
+        self.current_topic = tree_topics[0]
+        #self.current_message = len(self.message_list) - 1
         self._set_timeline_buttons(first=True, previous=True, next=False, last=False)
-        self._add_bag_timeline(bag)
+        self._set_bag_timeline(bag)
+        self._refresh_view.emit()
 
     def _load_dot(self, file_name=None):
         if file_name is None:
