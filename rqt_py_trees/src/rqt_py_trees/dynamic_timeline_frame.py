@@ -40,8 +40,8 @@ import rospy
 import bisect
 import threading
 
-from .index_cache_thread import IndexCacheThread
-from .plugins.raw_view import RawView
+from rqt_bag.index_cache_thread import IndexCacheThread
+from rqt_bag.plugins.raw_view import RawView
 
 
 class _SelectionMode(object):
@@ -62,16 +62,16 @@ class _SelectionMode(object):
     MOVE_RIGHT = 'move right'
 
 
-class TimelineFrame(QGraphicsItem):
+class DynamicTimelineFrame(QGraphicsItem):
     """
     TimelineFrame Draws the framing elements for the bag messages
     (time delimiters, labels, topic names and backgrounds).
     Also handles mouse callbacks since they interact closely with the drawn elements
     """
 
-    def __init__(self, bag_timeline):
-        super(TimelineFrame, self).__init__()
-        self._bag_timeline = bag_timeline
+    def __init__(self, dynamic_timeline):
+        super(DynamicTimelineFrame, self).__init__()
+        self._dynamic_timeline = dynamic_timeline
         self._clicked_pos = None
         self._dragged_pos = None
 
@@ -199,7 +199,8 @@ class TimelineFrame(QGraphicsItem):
         :param playhead: Time to set the playhead to, ''rospy.Time()''
         """
         with self.scene()._playhead_lock:
-            if playhead == self._playhead:
+            # do nothing if the playhead hasn't moved, or no messages were received yet
+            if playhead == self._playhead or self._stamp_right == None or self._stamp_left == None:
                 return
 
             self._playhead = playhead
@@ -221,11 +222,11 @@ class TimelineFrame(QGraphicsItem):
 
             # Update the playhead positions
             for topic in self.topics:
-                bag, entry = self.scene().get_entry(self._playhead, topic)
+                entry = self.scene().get_entry(self._playhead, topic)
                 if entry:
-                    if topic in self.scene()._playhead_positions and self.scene()._playhead_positions[topic] == (bag, entry.position):
+                    if topic in self.scene()._playhead_positions and self.scene()._playhead_positions[topic] == entry.stamp:
                         continue
-                    new_playhead_position = (bag, entry.position)
+                    new_playhead_position = entry.stamp
                 else:
                     new_playhead_position = (None, None)
                 with self.scene()._playhead_positions_cvs[topic]:
@@ -788,8 +789,8 @@ class TimelineFrame(QGraphicsItem):
 
         topic_cache_len = len(topic_cache)
 
-        for entry in self.scene().get_entries(topic, start_time, end_time):
-            topic_cache.append(entry.time.to_sec())
+        for entry in self.scene().get_entries([topic], start_time, end_time):
+            topic_cache.append(entry.stamp.to_sec())
 
         if topic in self.invalidated_caches:
             self.invalidated_caches.remove(topic)
@@ -1024,7 +1025,7 @@ class TimelineFrame(QGraphicsItem):
 
     def resume(self):
         self._paused = False
-        self._bag_timeline.resume()
+        self._dynamic_timeline.resume()
 
     # Mouse event handlers
     def on_middle_down(self, event):

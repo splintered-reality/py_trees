@@ -45,7 +45,7 @@ class MessageLoaderThread(threading.Thread):
         self.timeline = timeline
         self.topic = topic
 
-        self.bag_playhead_position = None
+        self.topic_playhead_position = None
 
         self._message_cache_capacity = 50
         self._message_cache = {}
@@ -64,13 +64,13 @@ class MessageLoaderThread(threading.Thread):
             # Wait for a new entry
             cv = self.timeline._playhead_positions_cvs[self.topic]
             with cv:
-                while (self.topic not in self.timeline._playhead_positions) or (self.bag_playhead_position == self.timeline._playhead_positions[self.topic]):
+                while (self.topic not in self.timeline._playhead_positions) or (self.topic_playhead_position == self.timeline._playhead_positions[self.topic]):
                     cv.wait()
                     if self._stop_flag:
                         return
-                bag, playhead_position = self.timeline._playhead_positions[self.topic]
+                playhead_position = self.timeline._playhead_positions[self.topic]
 
-            self.bag_playhead_position = (bag, playhead_position)
+            self.topic_playhead_position = playhead_position
 
             # Don't bother loading the message if there are no listeners
             if not self.timeline.has_listeners(self.topic):
@@ -80,20 +80,20 @@ class MessageLoaderThread(threading.Thread):
             if playhead_position is None:
                 msg_data = None
             else:
-                msg_data = self._get_message(bag, playhead_position)
+                msg_data = self._get_message(playhead_position)
 
             # Inform the views
             messages_cv = self.timeline._messages_cvs[self.topic]
             with messages_cv:
-                self.timeline._messages[self.topic] = (bag, msg_data)
+                self.timeline._messages[self.topic] = msg_data
                 messages_cv.notify_all()      # notify all views that a message is loaded
 
-    def _get_message(self, bag, position):
-        key = '%s%s' % (bag.filename, str(position))
+    def _get_message(self, position):
+        key = str(position)
         if key in self._message_cache:
             return self._message_cache[key]
 
-        msg_data = self.timeline.read_message(bag, position)
+        msg_data = self.timeline.read_message(self.topic, position)
 
         self._message_cache[key] = msg_data
         self._message_cache_keys.append(key)

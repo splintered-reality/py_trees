@@ -52,76 +52,34 @@ def stamp_to_str(t):
     else:
         return time.strftime('%b %d %Y %H:%M:%S', time.localtime(t_sec)) + '.%03d' % (t.nsecs / 1000000)
 
-
-def get_topics(bag):
+def get_start_stamp(topic):
     """
-    Get an alphabetical list of all the unique topics in the bag.
+    Get the earliest timestamp in the topic.
 
-    @return: sorted list of topics
-    @rtype:  list of str
-    """
-    return sorted(set([c.topic for c in bag._get_connections()]))
-
-
-def get_start_stamp(bag):
-    """
-    Get the earliest timestamp in the bag.
-
-    @param bag: bag file
-    @type  bag: rosbag.Bag
-    @return: earliest timestamp
-    @rtype:  rospy.Time
+    :param topic: topic tuple
+    :type topic: ``DynamicTimeline.Topic`` named tuple
+    :return: earliest timestamp, ``rospy.Time``
     """
     start_stamp = None
-    for connection_start_stamp in [index[0].time for index in bag._connection_indexes.values()]:
-        if not start_stamp or connection_start_stamp < start_stamp:
-            start_stamp = connection_start_stamp
+    try:
+        start_stamp = topic.queue[0].stamp
+    except IndexError:
+        pass
+    
     return start_stamp
 
-
-def get_end_stamp(bag):
+def get_end_stamp(topic):
     """
-    Get the latest timestamp in the bag.
+    Get the latest timestamp in the topic.
 
-    @param bag: bag file
-    @type  bag: rosbag.Bag
-    @return: latest timestamp
-    @rtype:  rospy.Time
+    :param topic: topic tuple
+    :type topic: ``DynamicTimeline.Topic`` named tuple
+    :return: latest timestamp, ``rospy.Time``
     """
     end_stamp = None
-    for connection_end_stamp in [index[-1].time for index in bag._connection_indexes.values()]:
-        if not end_stamp or connection_end_stamp > end_stamp:
-            end_stamp = connection_end_stamp
-
+    try:
+        end_stamp = topic.queue[-1].stamp
+    except IndexError:
+        pass
+    
     return end_stamp
-
-
-def get_topics_by_datatype(bag):
-    """
-    Get all the message types in the bag and their associated topics.
-
-    @param bag: bag file
-    @type  bag: rosbag.Bag
-    @return: mapping from message typename to list of topics
-    @rtype:  dict of str to list of str
-    """
-    topics_by_datatype = {}
-    for c in bag._get_connections():
-        topics_by_datatype.setdefault(c.datatype, []).append(c.topic)
-
-    return topics_by_datatype
-
-
-def get_datatype(bag, topic):
-    """
-    Get the datatype of the given topic.
-
-    @param bag: bag file
-    @type  bag: rosbag.Bag
-    @return: message typename
-    @rtype:  str
-    """
-    for c in bag._get_connections(topic):
-        return c.datatype
-
-    return None

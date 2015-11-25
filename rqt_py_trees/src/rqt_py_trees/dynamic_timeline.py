@@ -31,39 +31,47 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import rospy
-import rosbag
 import time
 import threading
-
+import collections
+import functools
+import itertools
+import bisect
 
 from python_qt_binding.QtCore import Qt, QTimer, qWarning, Signal
 from python_qt_binding.QtGui import QGraphicsScene, QMessageBox
 
-import bag_helper
+import topic_helper
 
-from .timeline_frame import TimelineFrame
-from .message_listener_thread import MessageListenerThread
+from .dynamic_timeline_frame import DynamicTimelineFrame
+from rqt_bag.message_listener_thread import MessageListenerThread
 from .message_loader_thread import MessageLoaderThread
-from .player import Player
-from .recorder import Recorder
-from .timeline_menu import TimelinePopupMenu
+from rqt_bag.player import Player
+from rqt_bag.recorder import Recorder
+from rqt_bag.timeline_menu import TimelinePopupMenu
 
 
-class BagTimeline(QGraphicsScene):
+class DynamicTimeline(QGraphicsScene):
     """
     BagTimeline contains bag files, all information required to display the bag data visualization on the screen
     Also handles events
     """
     status_bar_changed_signal = Signal()
     selected_region_changed = Signal(rospy.Time, rospy.Time)
+    Topic = collections.namedtuple('Topic', ['subscriber', 'queue'])
+    Message = collections.namedtuple('Message', ['stamp', 'message'])
 
     def __init__(self, context, publish_clock):
         """
         :param context: plugin context hook to enable adding rqt_bag plugin widgets as ROS_GUI snapin panes, ''PluginContext''
         """
-        super(BagTimeline, self).__init__()
-        self._bags = []
-        self._bag_lock = threading.RLock()
+        super(DynamicTimeline, self).__init__()
+        # key is topic name, value is a named tuple of type Topic. The deque
+        # contains named tuples of type Message
+        self._topics = {}
+        # key is the data type, value is a list of topics with that type
+        self._datatypes = {}
+        self._topic_lock = threading.RLock()
 
         self.background_task = None  # Display string
         self.background_task_cancel = False
@@ -78,7 +86,7 @@ class BagTimeline(QGraphicsScene):
         self._playhead_positions = {}  # topic -> (bag, position)
         self._message_loaders = {}
         self._messages_cvs = {}
-        self._messages = {}  # topic -> (bag, msg_data)
+        self._messages = {}  # topic -> msg_data
         self._message_listener_threads = {}  # listener -> MessageListenerThread
         self._player = False
         self._publish_clock = publish_clock
@@ -102,12 +110,15 @@ class BagTimeline(QGraphicsScene):
         # the timeline renderer fixes use of black pens and fills, so ensure we fix white here for contrast.
         # otherwise a dark qt theme will default it to black and the frame render pen will be unreadable
         self.setBackgroundBrush(Qt.white)
-        self._timeline_frame = TimelineFrame(self)
+        self._timeline_frame = DynamicTimelineFrame(self)
         self._timeline_frame.setPos(0, 0)
         self.addItem(self._timeline_frame)
 
         self.background_progress = 0
         self.__closed = False
+
+        # timer to periodically redraw the timeline every so often
+        self._redraw_timer = rospy.Timer(rospy.Duration(2), self._redraw_timeline)
 
     def get_context(self):
         """
@@ -117,7 +128,7 @@ class BagTimeline(QGraphicsScene):
 
     def handle_close(self):
         """
-        Cleans up the timeline, bag and any threads
+        Cleans up the timeline, subscribers and any threads
         """
         if self.__closed:
             return
@@ -134,133 +145,181 @@ class BagTimeline(QGraphicsScene):
         if self.background_task is not None:
             self.background_task_cancel = True
         self._timeline_frame.handle_close()
-        for bag in self._bags:
-            bag.close()
+        for topic in self._topics:
+            self._topics[topic][0].unregister() # unregister the subscriber
         for frame in self._views:
             if frame.parent():
                 self._context.remove_widget(frame)
 
-    # Bag Management and access
-    def add_bag(self, bag):
+    def _redraw_timeline(self, timer):
+        self._timeline_frame._start_stamp = self._get_start_stamp()
+        self._timeline_frame._end_stamp = self._get_end_stamp()
+        self._timeline_frame.reset_timeline()
+        self._timeline_frame._set_playhead(rospy.Time.now())
+
+    def topic_callback(self, msg, topic):
+        """Called whenever a message is received on any of the subscribed topics
+
+        :param topic: the topic on which the message was received
+        :param msg: the message received
+
         """
-        creates an indexing thread for each new topic in the bag
-        fixes the boarders and notifies the indexing thread to index the new items bags
-        :param bag: ros bag file, ''rosbag.bag''
+        message = self.Message(stamp=rospy.Time.now(), message=msg)
+        with self._topic_lock:
+            self._topics[topic].queue.append(message)
+
+        # Invalidate entire cache for this topic
+        with self._timeline_frame.index_cache_cv:
+            self._timeline_frame.invalidated_caches.add(topic)
+            if topic in self._timeline_frame.index_cache:
+                del self._timeline_frame.index_cache[topic]
+
+            self._timeline_frame.index_cache_cv.notify()
+        
+    def add_topic(self, topic, type, num_msgs=500):
+        """creates an indexing thread for the new topic. Fixes the borders and notifies
+        the indexing thread to index the new items bags
+
+        :param topic: a topic to listen to
+        :param type: type of the topic to listen to
+        :param num_msgs: number of messages to retain on this topic. If this
+            value is exceeded, the oldest messages will be dropped
+
+        :return: false if topic already in the timeline, true otherwise
+
         """
-        self._bags.append(bag)
-
-        bag_topics = bag_helper.get_topics(bag)
-
-        new_topics = set(bag_topics) - set(self._timeline_frame.topics)
-
-        for topic in new_topics:
-            self._playhead_positions_cvs[topic] = threading.Condition()
-            self._messages_cvs[topic] = threading.Condition()
-            self._message_loaders[topic] = MessageLoaderThread(self, topic)
+        # first item in each sub-list is the name, second is type
+        if topic not in self._topics:
+            self._topics[topic] = self.Topic(subscriber=rospy.Subscriber(topic, type, queue_size=1, callback=self.topic_callback, callback_args=topic),
+                                             queue=collections.deque(maxlen=num_msgs))
+            self._datatypes.setdefault(type, []).append(topic)
+        else:
+            return False
+            
+        self._playhead_positions_cvs[topic] = threading.Condition()
+        self._messages_cvs[topic] = threading.Condition()
+        self._message_loaders[topic] = MessageLoaderThread(self, topic)
 
         self._timeline_frame._start_stamp = self._get_start_stamp()
         self._timeline_frame._end_stamp = self._get_end_stamp()
         self._timeline_frame.topics = self._get_topics()
         self._timeline_frame._topics_by_datatype = self._get_topics_by_datatype()
         # If this is the first bag, reset the timeline
-        if self._timeline_frame._stamp_left is None:
-            self._timeline_frame.reset_timeline()
+        self._timeline_frame.reset_timeline()
 
-        # Invalidate entire index cache for all topics in this bag
+        # Invalidate entire cache for this topic
         with self._timeline_frame.index_cache_cv:
-            for topic in bag_topics:
-                self._timeline_frame.invalidated_caches.add(topic)
-                if topic in self._timeline_frame.index_cache:
-                    del self._timeline_frame.index_cache[topic]
+            self._timeline_frame.invalidated_caches.add(topic)
+            if topic in self._timeline_frame.index_cache:
+                del self._timeline_frame.index_cache[topic]
 
             self._timeline_frame.index_cache_cv.notify()
+
+        return True
 
     #TODO Rethink API and if these need to be visible
     def _get_start_stamp(self):
         """
-        :return: first stamp in the bags, ''rospy.Time''
+
+        :return: stamp of the first message received on any of the topics, or none if no messages have been received, ''rospy.Time''
         """
-        with self._bag_lock:
+        with self._topic_lock:
             start_stamp = None
-            for bag in self._bags:
-                bag_start_stamp = bag_helper.get_start_stamp(bag)
-                if bag_start_stamp is not None and (start_stamp is None or bag_start_stamp < start_stamp):
-                    start_stamp = bag_start_stamp
+            for topic_name, topic_tuple in self._topics.iteritems():
+                topic_start_stamp = topic_helper.get_start_stamp(topic_tuple)
+                if topic_start_stamp is not None and (start_stamp is None or topic_start_stamp < start_stamp):
+                    start_stamp = topic_start_stamp
             return start_stamp
+
 
     def _get_end_stamp(self):
         """
-        :return: last stamp in the bags, ''rospy.Time''
+
+        :return: stamp of the last message received on any of the topics, or none if no messages have been received, ''rospy.Time''
         """
-        with self._bag_lock:
+        with self._topic_lock:
             end_stamp = None
-            for bag in self._bags:
-                bag_end_stamp = bag_helper.get_end_stamp(bag)
-                if bag_end_stamp is not None and (end_stamp is None or bag_end_stamp > end_stamp):
-                    end_stamp = bag_end_stamp
+            for topic_name, topic_tuple in self._topics.iteritems():
+                topic_end_stamp = topic_helper.get_end_stamp(topic_tuple)
+                if topic_end_stamp is not None and (end_stamp is None or topic_end_stamp > end_stamp):
+                    end_stamp = topic_end_stamp
             return end_stamp
 
     def _get_topics(self):
         """
         :return: sorted list of topic names, ''list(str)''
         """
-        with self._bag_lock:
-            topics = set()
-            for bag in self._bags:
-                for topic in bag_helper.get_topics(bag):
-                    topics.add(topic)
+        with self._topic_lock:
+            topics = []
+            for topic in self._topics:
+                topics.append(topic)
             return sorted(topics)
 
     def _get_topics_by_datatype(self):
         """
         :return: dict of list of topics for each datatype, ''dict(datatype:list(topic))''
         """
-        with self._bag_lock:
-            topics_by_datatype = {}
-            for bag in self._bags:
-                for datatype, topics in bag_helper.get_topics_by_datatype(bag).items():
-                    topics_by_datatype.setdefault(datatype, []).extend(topics)
-            return topics_by_datatype
+        with self._topic_lock:
+            return self._datatypes
 
     def get_datatype(self, topic):
         """
         :return: datatype associated with a topic, ''str''
         :raises: if there are multiple datatypes assigned to a single topic, ''Exception''
         """
-        with self._bag_lock:
-            datatype = None
-            for bag in self._bags:
-                bag_datatype = bag_helper.get_datatype(bag, topic)
-                if datatype and bag_datatype and (bag_datatype != datatype):
-                    raise Exception('topic %s has multiple datatypes: %s and %s' % (topic, datatype, bag_datatype))
-                if bag_datatype:
-                    datatype = bag_datatype
-            return datatype
+        with self._topic_lock:
+            topic_types = []
+            for datatype in self._datatypes:
+                if topic in self._datatypes[datatype]:
+                    if len(topic_types) == 1:
+                        raise Exception("Topic {0} had multiple datatypes ({1}) associated with it".format(topic, str(topic_types)))
+                    topic_types.append(datatype._type)
+
+            if not topic_types:
+                return None
+            else:
+                return topic_types[0]
 
     def get_entries(self, topics, start_stamp, end_stamp):
         """
-        generator function for bag entries
+        generator function for topic entries
         :param topics: list of topics to query, ''list(str)''
         :param start_stamp: stamp to start at, ''rospy.Time''
         :param end_stamp: stamp to end at, ''rospy,Time''
-        :returns: entries the bag file, ''msg''
+        :returns: messages on the given topics in chronological order, ''msg''
         """
-        with self._bag_lock:
-            from rosbag import bag  # for _mergesort
-            bag_entries = []
-            for b in self._bags:
-                bag_start_time = bag_helper.get_start_stamp(b)
-                if bag_start_time is not None and bag_start_time > end_stamp:
+        with self._topic_lock:
+            topic_entries = []
+            # make sure that we can handle a single topic as well
+            for topic in topics:
+                if not topic in self._topics:
+                    rospy.logwarn("Dynamic Timeline : Topic {0} was not in the topic list. Skipping.".format(topic))
                     continue
 
-                bag_end_time = bag_helper.get_end_stamp(b)
-                if bag_end_time is not None and bag_end_time < start_stamp:
+                # don't bother with topics if they don't overlap the requested time range
+                topic_start_time = topic_helper.get_start_stamp(self._topics[topic])
+                if topic_start_time is not None and topic_start_time > end_stamp:
                     continue
 
-                connections = list(b._get_connections(topics))
-                bag_entries.append(b._get_entries(connections, start_stamp, end_stamp))
+                topic_end_time = topic_helper.get_end_stamp(self._topics[topic])
+                if topic_end_time is not None and topic_end_time < start_stamp:
+                    continue
 
-            for entry, _ in bag._mergesort(bag_entries, key=lambda entry: entry.time):
+                topic_queue = self._topics[topic].queue
+                start_ind, first_entry = self._entry_at(start_stamp, topic_queue)
+                # entry returned might be the latest one before the start stamp
+                # if there isn't one exactly on the stamp - if so, start from
+                # the next entry
+                if first_entry.stamp < start_stamp:
+                    start_ind += 1
+
+                # entry at always returns entry at or before the given stamp, so
+                # no manipulation needed.
+                end_ind, last_entry = self._entry_at(end_stamp, topic_queue)
+
+                topic_entries.extend(list(itertools.islice(topic_queue, start_ind, end_ind + 1)))
+
+            for entry in sorted(topic_entries, key=lambda x: x.stamp):
                 yield entry
 
     def get_entries_with_bags(self, topic, start_stamp, end_stamp):
@@ -293,51 +352,86 @@ class BagTimeline(QGraphicsScene):
             for entry, it in bag._mergesort(bag_entries, key=lambda entry: entry.time):
                 yield bag_by_iter[it], entry
 
-    def get_entry(self, t, topic):
-        """
-        Access a bag entry
-        :param t: time, ''rospy.Time''
-        :param topic: the topic to be accessed, ''str''
-        :return: tuple of (bag, entry) corisponding to time t and topic, ''(rosbag.bag, msg)''
-        """
-        with self._bag_lock:
-            entry_bag, entry = None, None
-            for bag in self._bags:
-                bag_entry = bag._get_entry(t, bag._get_connections(topic))
-                if bag_entry and (not entry or bag_entry.time > entry.time):
-                    entry_bag, entry = bag, bag_entry
+    def _entry_at(self, t, queue):
+        """Get the entry and index in the queue at the given time.
 
-            return entry_bag, entry
+        :param ``rospy.Time`` t: time to check
+        :param ``collections.deque`` queue: deque to look at
+
+        :return: (index, Message) tuple. If there is no message in the queue at
+            the exact time, the previous index is returned. If the time is
+            before or after the first and last message times, the first or last
+            index and message are returned
+
+        """
+        # Gives the index to insert into to retain a sorted queue. The topic queues
+        # should always be sorted due to time passing.
+        ind = bisect.bisect(queue, self.Message(stamp=t, message=''))
+
+        # first or last indices
+        if ind == len(queue):
+            return (ind - 1, queue[-1])
+        elif ind == 0:
+            return (0, queue[0])
+
+        # non-end indices
+        cur = queue[ind]
+        if cur.stamp == t:
+            return (ind, cur)
+        else:
+            return (ind - 1, queue[ind - 1])
+
+    def get_entry(self, t, topic):
+        """Get a message in the queues for a specific topic
+        :param ``rospy.Time`` t: time of the message to retrieve
+        :param str topic: the topic to be accessed
+        :return: message corresponding to time t and topic. If there is no
+            corresponding entry at exactly the given time, the latest entry
+            before the given time is returned. If the topic does not exist, or
+            there is no entry, None.
+
+        """
+        with self._topic_lock:
+            entry = None
+            if topic in self._topics:
+                _, entry = self._entry_at(t, self._topics[topic].queue)
+                
+            return entry
 
     def get_entry_before(self, t):
         """
-        Access a bag entry
-        :param t: time, ''rospy.Time''
-        :return: tuple of (bag, entry) corresponding to time t, ''(rosbag.bag, msg)''
+        Get the latest message before the given time on any of the topics
+        :param t: time, ``rospy.Time``
+        :return: tuple of (topic, entry) corresponding to time t, ``(str, msg)``
         """
-        with self._bag_lock:
-            entry_bag, entry = None, None
-            for bag in self._bags:
-                bag_entry = bag._get_entry(t-rospy.Duration(0,1), bag._get_connections())
-                if bag_entry and (not entry or bag_entry.time < entry.time):
-                    entry_bag, entry = bag, bag_entry
+        with self._topic_lock:
+            entry_topic, entry = None, None
+            for topic in self._topics:
+                _, topic_entry = self._entry_at(t - rospy.Duration(0,1), self._topics[topic].queue)
+                if topic_entry and (not entry or topic_entry.stamp > entry.stamp):
+                    entry_topic, entry = topic, topic_entry
 
-            return entry_bag, entry
+            return entry_topic, entry
 
     def get_entry_after(self, t):
         """
-        Access a bag entry
+        Get the earliest message on any topic after the given time
         :param t: time, ''rospy.Time''
-        :return: tuple of (bag, entry) corisponding to time t, ''(rosbag.bag, msg)''
+        :return: tuple of (bag, entry) corresponding to time t, ''(rosbag.bag, msg)''
         """
-        with self._bag_lock:
-            entry_bag, entry = None, None
-            for bag in self._bags:
-                bag_entry = bag._get_entry_after(t, bag._get_connections())
-                if bag_entry and (not entry or bag_entry.time < entry.time):
-                    entry_bag, entry = bag, bag_entry
+        with self._topic_lock:
+            entry_topic, entry = None, None
+            for topic in self._topics:
+                ind, _ = self._entry_at(t, self._topics[topic].queue)
+                # ind is the index of the entry at (if it exists) or before time
+                # t - we want the one after this. Make sure that the given index
+                # isn't out of bounds
+                ind = ind + 1 if ind + 1 < len(self._topics[topic].queue) else ind
+                topic_entry = self._topics[topic].queue[ind]
+                if topic_entry and (not entry or topic_entry.stamp < entry.stamp):
+                    entry_topic, entry = topic, topic_entry
 
-            return entry_bag, entry
+            return entry_topic, entry
 
     def get_next_message_time(self):
         """
@@ -346,7 +440,7 @@ class BagTimeline(QGraphicsScene):
         if self._timeline_frame.playhead is None:
             return None
 
-        _, entry = self.get_entry_after(self._timeline_frame.playhead)
+        entry = self.get_entry_after(self._timeline_frame.playhead)
         if entry is None:
             return self._timeline_frame._start_stamp
 
@@ -359,7 +453,7 @@ class BagTimeline(QGraphicsScene):
         if self._timeline_frame.playhead is None:
             return None
 
-        _, entry = self.get_entry_before(self._timeline_frame.playhead)
+        entry = self.get_entry_before(self._timeline_frame.playhead)
         if entry is None:
             return self._timeline_frame._end_stamp
 
@@ -472,9 +566,9 @@ class BagTimeline(QGraphicsScene):
             QMessageBox(QMessageBox.Warning, 'rqt_bag', 'Error closing bag file [%s]: %s' % (export_bag.filename, str(ex)), QMessageBox.Ok).exec_()
         self.stop_background_task()
 
-    def read_message(self, bag, position):
-        with self._bag_lock:
-            return bag._read_message(position)
+    def read_message(self, topic, position):
+        with self._topic_lock:
+            return self.get_entry(position, topic).message
 
     ### Mouse events
     def on_mouse_down(self, event):

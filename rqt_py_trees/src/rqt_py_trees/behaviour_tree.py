@@ -48,6 +48,7 @@ from qt_dotgraph.dot_to_qt import DotToQtGenerator
 from rqt_graph.interactive_graphics_view import InteractiveGraphicsView
 from rqt_bag.bag_timeline import BagTimeline
 from rqt_bag.bag_widget import BagGraphicsView
+from .dynamic_timeline import DynamicTimeline
 
 from .dotcode_behaviour import RosBehaviourTreeDotcodeGenerator
 from .timeline_listener import TimelineListener
@@ -255,6 +256,35 @@ class RosBehaviourTree(QObject):
 
         return py_trees_msgs.BehaviourTree()
 
+    def _set_dynamic_timeline(self):
+        self._timeline = DynamicTimeline(context=self._widget.timeline_graphics_view, publish_clock=False)
+        # connect timeline events so that the timeline will update when events happen
+        self._widget.timeline_graphics_view.mousePressEvent = self._timeline.on_mouse_down
+        self._widget.timeline_graphics_view.mouseReleaseEvent = self._timeline.on_mouse_up
+        self._widget.timeline_graphics_view.mouseMoveEvent = self._timeline.on_mouse_move
+        self._widget.timeline_graphics_view.wheelEvent = self._timeline.on_mousewheel
+        self._widget.timeline_graphics_view.setScene(self._timeline)
+
+        # Don't show scrollbars - the timeline adjusts to the size of the view
+        self._widget.timeline_graphics_view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self._widget.timeline_graphics_view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        # Send a resize event so that the timeline knows the size of the view it's in
+        self._resize_event(None)
+
+        self._timeline.add_topic(self.current_topic, py_trees_msgs.BehaviourTree)
+
+        # Create a listener for the timeline which will call the emit function
+        # on the given signals when the message being viewed changes or is
+        # cleared. The message being viewed changing generally happens when the
+        # user moves the slider around.
+        self._timeline_listener = TimelineListener(self._timeline, self.current_topic, self._message_changed, self._message_cleared)
+        # Need to add a listener to make sure that we can get information about
+        # messages that are on the topic that we're interested in.
+        self._timeline.add_listener(self.current_topic, self._timeline_listener)
+        # Go to the first message in the timeline
+        self._timeline.navigate_start()                
+        self._timeline._redraw_timeline(None)
+
     def _choose_topic(self, index):
         """Updates the topic that is subscribed to based on changes to the combo box
         text. If the topic is unchanged, nothing will happnen. Otherwise, the
@@ -266,13 +296,15 @@ class RosBehaviourTree(QObject):
         """
         selected_topic = self._widget.topic_combo_box.currentText()
         if selected_topic != self._empty_topic and self.current_topic != selected_topic:
-            # stop subscribing to the old topic
-            if self.behaviour_sub:
-                self.behaviour_sub.unregister()
-            # subscribe to the new topic if it's not the topic which indicates that we don't want to subscribe to anything
-            if selected_topic != self._unselected_topic:
-                self.behaviour_sub = rospy.Subscriber(selected_topic, py_trees_msgs.BehaviourTree, self.tree_cb)
             self.current_topic = selected_topic
+            # destroy the old timeline and clear the scene
+            if self._timeline:
+                self._timeline.handle_close()
+                self._widget.timeline_graphics_view.setScene(None)
+
+            if selected_topic != self._unselected_topic:
+                # set up a timeline to track the messages coming from the subscriber
+                self._set_dynamic_timeline()
 
     def _update_combo_topics(self):
         """Update the topics displayed in the combo box that the user can use to select
@@ -539,7 +571,9 @@ class RosBehaviourTree(QObject):
 
     def message_changed(self):
         """This function should be called when the message being viewed changes. Will
-        change the current message and update the view.
+        change the current message and update the view. Also ensures that the
+        timeline buttons are correctly set for the current position of the
+        playhead on the timeline.
 
         """
         if self._timeline._timeline_frame.playhead == self._timeline._get_end_stamp():
