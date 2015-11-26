@@ -41,7 +41,7 @@ import bisect
 import threading
 
 from rqt_bag.index_cache_thread import IndexCacheThread
-from rqt_bag.plugins.raw_view import RawView
+from .plugins.raw_view import RawView
 
 
 class _SelectionMode(object):

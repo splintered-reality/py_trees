@@ -46,19 +46,13 @@ class MessageView(QObject):
         self.timeline = timeline
         self.topic = topic
 
-    def message_viewed(self, bag, msg_details):
-        """
-        View the message.
+    def message_viewed(self, msg_details):
+        """View the message.
 
-        @param bag: the bag file the message is contained in
-        @type  bag: rosbag.Bag
-        @param msg_details: the details of the message to be viewed
-        @type msg_details: tuple (topic, msg, time)
-            @param topic: the message topic
-            @type  topic: str
-            @param msg: the message
-            @param t: the message timestamp
-            @type  t: rospy.Time
+        :param msg_details: the details of the message to be viewed
+        :type msg_details: Message namedtuple (stamp, message). Stamp is the
+            timestamp, message is the message received
+
         """
         pass
 
@@ -87,9 +81,9 @@ class MessageView(QObject):
         This function will be called to process events posted by post_event
         it will call message_cleared or message_viewed with the relevant data
         """
-        bag, msg_data = event.data
+        msg_data = event.data
         if msg_data:
-            self.message_viewed(bag, msg_data)
+            self.message_viewed(msg_data)
         else:
             self.message_cleared()
         return True

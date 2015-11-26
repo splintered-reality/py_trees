@@ -176,7 +176,7 @@ class DynamicTimeline(QGraphicsScene):
 
             self._timeline_frame.index_cache_cv.notify()
         
-    def add_topic(self, topic, type, num_msgs=500):
+    def add_topic(self, topic, type, num_msgs=20):
         """creates an indexing thread for the new topic. Fixes the borders and notifies
         the indexing thread to index the new items bags
 
@@ -784,7 +784,6 @@ class DynamicTimeline(QGraphicsScene):
             self.update()
 
     def _message_recorded(self, topic, msg, t):
-        rospy.loginfo("message recorded")
         if self._timeline_frame._start_stamp is None:
             self._timeline_frame._start_stamp = t
             self._timeline_frame._end_stamp = t

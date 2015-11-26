@@ -52,6 +52,7 @@ from .dynamic_timeline import DynamicTimeline
 
 from .dotcode_behaviour import RosBehaviourTreeDotcodeGenerator
 from .timeline_listener import TimelineListener
+from .dynamic_timeline_listener import DynamicTimelineListener
 
 
 class RosBehaviourTree(QObject):
@@ -143,6 +144,7 @@ class RosBehaviourTree(QObject):
         self._widget.resizeEvent = self._resize_event
 
         self._timeline = None
+        self._timeline_listener = None
 
         # Connect the message changed function of this object to a corresponding
         # signal. This signal will be activated whenever the message being
@@ -248,8 +250,9 @@ class RosBehaviourTree(QObject):
         displayed.
 
         """
-        if self._viewing_bag:
+        if self._timeline_listener:
             try:
+
                 return self._timeline_listener.msg
             except KeyError:
                 pass
@@ -277,7 +280,7 @@ class RosBehaviourTree(QObject):
         # on the given signals when the message being viewed changes or is
         # cleared. The message being viewed changing generally happens when the
         # user moves the slider around.
-        self._timeline_listener = TimelineListener(self._timeline, self.current_topic, self._message_changed, self._message_cleared)
+        self._timeline_listener = DynamicTimelineListener(self._timeline, self.current_topic, self._message_changed, self._message_cleared)
         # Need to add a listener to make sure that we can get information about
         # messages that are on the topic that we're interested in.
         self._timeline.add_listener(self.current_topic, self._timeline_listener)
@@ -456,22 +459,21 @@ class RosBehaviourTree(QObject):
         buttons, and stops browsing the timeline.
 
         """
-        if self._viewing_bag:
-            # if already at the end, do nothing
-            if self._timeline._timeline_frame.playhead == self._timeline._get_end_stamp():
-                return
-            
-            # otherwise, go to the next message
-            self._timeline.navigate_next()
-            self._set_timeline_buttons(first=True, previous=True)
-            # if now at the end, disable timeline buttons and shutdown the play timer if active
-            if self._timeline._timeline_frame.playhead == self._timeline._get_end_stamp():
-                self._set_timeline_buttons(next=False, last=False)
-                self._browsing_timeline = False
-                if self._play_timer:
-                    self._play_timer.shutdown()
+        # if already at the end, do nothing
+        if self._timeline._timeline_frame.playhead == self._timeline._get_end_stamp():
+            return
 
-            self._refresh_view.emit()
+        # otherwise, go to the next message
+        self._timeline.navigate_next()
+        self._set_timeline_buttons(first=True, previous=True)
+        # if now at the end, disable timeline buttons and shutdown the play timer if active
+        if self._timeline._timeline_frame.playhead == self._timeline._get_end_stamp():
+            self._set_timeline_buttons(next=False, last=False)
+            self._browsing_timeline = False
+            if self._play_timer:
+                self._play_timer.shutdown()
+
+        self._refresh_view.emit()
         # rospy.loginfo("next! - len is {0}, cur is {1}".format(len(self.message_list), self.current_message))
 
         # self.current_message += 1 # point to the next message in the list
