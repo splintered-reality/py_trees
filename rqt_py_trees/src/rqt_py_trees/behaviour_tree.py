@@ -203,6 +203,13 @@ class RosBehaviourTree(QObject):
         last_shortcut_emacs = QShortcut(QKeySequence("Ctrl+e"), self._widget)
         last_shortcut_emacs.activated.connect(self._widget.last_tool_button.pressed)
 
+        # set up stuff for dotcode cache
+        self._dotcode_cache_capacity = 50
+        self._dotcode_cache = {}
+        # cache is ordered on timestamps from messages, but earliest timestamp
+        # isn't necessarily the message that was viewed the longest time ago, so
+        # need to store keys
+        self._dotcode_cache_keys = []
         # Update the timeline buttons to correspond with a completely
         # uninitialised state.
         self._set_timeline_buttons(first=False, previous=False, next=False, last=False)
@@ -472,14 +479,42 @@ class RosBehaviourTree(QObject):
             return
         self._update_graph_view(self._generate_dotcode())
 
+    def _get_dotcode(self, message):
+        """Get the dotcode for the given message, checking the cache for dotcode that
+        was previously generated, and adding to the cache if it wasn't there.
+        Cache replaces LRU.
+
+        Mostly stolen from rqt_bag.MessageLoaderThread
+
+        """
+        key = str(message.header.stamp) # stamps are unique
+        if key in self._dotcode_cache:
+            return self._dotcode_cache[key]
+
+        force_refresh = self._force_refresh
+        self._force_refresh = False
+
+        # cache miss
+        dotcode = self.dotcode_generator.generate_dotcode(dotcode_factory=self.dotcode_factory,
+                                                          tree=message,
+                                                          force_refresh=force_refresh)
+
+        self._dotcode_cache[key] = dotcode
+        self._dotcode_cache_keys.append(key)
+
+        if len(self._dotcode_cache) > self._dotcode_cache_capacity:
+            oldest = self._dotcode_cache_keys[0]
+            del self._dotcode_cache[oldest]
+            self._dotcode_cache_keys.remove(oldest)
+
+        return dotcode
+
     def _generate_dotcode(self):
         """Generate dotcode from the current message
         """
-        force_refresh = self._force_refresh
-        self._force_refresh = False
-        return self.dotcode_generator.generate_dotcode(dotcode_factory=self.dotcode_factory,
-                                                       tree=self.get_current_message(),
-                                                       force_refresh=force_refresh)
+        message = self.get_current_message()
+
+        return self._get_dotcode(self.get_current_message())
 
     def _update_graph_view(self, dotcode):
         if dotcode == self._current_dotcode:
