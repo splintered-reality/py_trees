@@ -62,6 +62,13 @@ class Composite(Behaviour):
         self.status = new_status
         self.iterator = self.tick()
 
+    def tip(self):
+        """Recursive function to extract the last running node of the tree. Returns the
+        tip function of the current child of this composite.
+
+        """
+        return self.current_child.tip()
+
     ############################################
     # Children
     ############################################
@@ -227,6 +234,7 @@ class Sequence(Composite):
         self.stop(Status.SUCCESS)
         yield self
 
+    @property
     def current_child(self):
         return self.children[self.current_index] if self.children else None
 

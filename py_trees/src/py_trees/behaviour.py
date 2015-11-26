@@ -74,6 +74,18 @@ class Behaviour(object):
     # Workers
     ############################################
 
+    def tip(self):
+        """Get the "tip" of this behaviour tree. This corresponds to the
+        bottom-rightmost node in the tree that was reached on the last tick, in
+        other words the deepest node that was running. This description kind of
+        makes sense?
+
+        In the case of a raw behaviour, it returns itself regardless of its
+        actual state.
+
+        """
+        return self
+
     def visit(self, visitor):
         """
         This is functionality permitting
