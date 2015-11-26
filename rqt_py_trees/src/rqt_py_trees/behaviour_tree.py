@@ -210,6 +210,12 @@ class RosBehaviourTree(QObject):
         # isn't necessarily the message that was viewed the longest time ago, so
         # need to store keys
         self._dotcode_cache_keys = []
+
+        # set up stuff for scene cache (dotcode cache doesn't seem to make much difference)
+        self._scene_cache_capacity = 50
+        self._scene_cache = {}
+        self._scene_cache_keys = []
+
         # Update the timeline buttons to correspond with a completely
         # uninitialised state.
         self._set_timeline_buttons(first=False, previous=False, next=False, last=False)
@@ -523,23 +529,43 @@ class RosBehaviourTree(QObject):
         self._redraw_graph_view()
 
     def _redraw_graph_view(self):
-        self._scene.clear()
+        key = str(self.get_current_message().header.stamp)
+        if key in self._scene_cache:
+            self._scene = self._scene_cache[key]
+        else: # cache miss
+            new_scene = QGraphicsScene()
+            new_scene.setBackgroundBrush(Qt.white)
 
-        if self._widget.highlight_connections_check_box.isChecked():
-            highlight_level = 3
-        else:
-            highlight_level = 1
+            if self._widget.highlight_connections_check_box.isChecked():
+                highlight_level = 3
+            else:
+                highlight_level = 1
 
-        (nodes, edges) = self.dot_to_qt.dotcode_to_qt_items(self._current_dotcode,
-                                                            highlight_level)
+            (nodes, edges) = self.dot_to_qt.dotcode_to_qt_items(self._current_dotcode,
+                                                                highlight_level)
 
-        for node_item in nodes.itervalues():
-            self._scene.addItem(node_item)
-        for edge_items in edges.itervalues():
-            for edge_item in edge_items:
-                edge_item.add_to_scene(self._scene)
+            for node_item in nodes.itervalues():
+                new_scene.addItem(node_item)
+            for edge_items in edges.itervalues():
+                for edge_item in edge_items:
+                    edge_item.add_to_scene(new_scene)
 
-        self._scene.setSceneRect(self._scene.itemsBoundingRect())
+            new_scene.setSceneRect(new_scene.itemsBoundingRect())
+
+            # put the scene in the cache
+            self._scene_cache[key] = new_scene
+            self._scene_cache_keys.append(key)
+
+            if len(self._scene_cache) > self._scene_cache_capacity:
+                oldest = self._scene_cache_keys[0]
+                del self._scene_cache[oldest]
+                self._scene_cache_keys.remove(oldest)
+
+            # after construction, set the scene and fit to the view
+            self._scene = new_scene
+
+        self._widget.graphics_view.setScene(self._scene)
+
         if self._widget.auto_fit_graph_check_box.isChecked():
             self._fit_in_view()
 
