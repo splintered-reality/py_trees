@@ -58,6 +58,7 @@ class DynamicTimeline(QGraphicsScene):
     """
     status_bar_changed_signal = Signal()
     selected_region_changed = Signal(rospy.Time, rospy.Time)
+    timeline_updated = Signal()
     Topic = collections.namedtuple('Topic', ['subscriber', 'queue'])
     Message = collections.namedtuple('Message', ['stamp', 'message'])
 
@@ -99,6 +100,7 @@ class DynamicTimeline(QGraphicsScene):
         self._play_timer = QTimer()
         self._play_timer.timeout.connect(self.on_idle)
         self._play_timer.setInterval(3)
+        self._redraw_timer = None # timer which can be used to periodically redraw the timeline
 
         # Plugin popup management
         self._context = context
@@ -118,13 +120,22 @@ class DynamicTimeline(QGraphicsScene):
         self.__closed = False
 
         # timer to periodically redraw the timeline every so often
-        self._redraw_timer = rospy.Timer(rospy.Duration(2), self._redraw_timeline)
+        self._start_redraw_timer()
 
     def get_context(self):
         """
         :returns: the ROS_GUI context, 'PluginContext'
         """
         return self._context
+
+    def _start_redraw_timer(self):
+        if not self._redraw_timer:
+            self._redraw_timer = rospy.Timer(rospy.Duration(0.5), self._redraw_timeline)
+
+    def _stop_redraw_timer(self):
+        if self._redraw_timer:
+            self._redraw_timer.shutdown()
+            self._redraw_timer = None
 
     def handle_close(self):
         """
@@ -152,10 +163,28 @@ class DynamicTimeline(QGraphicsScene):
                 self._context.remove_widget(frame)
 
     def _redraw_timeline(self, timer):
+        # save the playhead so that the redraw doesn't move it
+        playhead = self._timeline_frame._playhead
+        end = True if playhead >= self._timeline_frame.play_region[1] else False
+        start = True if playhead <= self._timeline_frame.play_region[0] else False
+
         self._timeline_frame._start_stamp = self._get_start_stamp()
         self._timeline_frame._end_stamp = self._get_end_stamp()
+
         self._timeline_frame.reset_timeline()
-        self._timeline_frame._set_playhead(rospy.Time.now())
+
+        if end:
+            # use play region instead of time.now to stop playhead going past
+            # the end of the region, which causes problems with
+            # navigate_previous
+            self._timeline_frame._set_playhead(self._timeline_frame.play_region[1])
+        elif start:
+            self._timeline_frame._set_playhead(self._timeline_frame.play_region[0])
+        else:
+            if playhead:
+                self._timeline_frame._set_playhead(playhead)
+
+        self.timeline_updated.emit()
 
     def topic_callback(self, msg, topic):
         """Called whenever a message is received on any of the subscribed topics
@@ -435,29 +464,29 @@ class DynamicTimeline(QGraphicsScene):
 
     def get_next_message_time(self):
         """
-        :return: time of the next message after the current playhead position,''rospy.Time''
+        :return: time of the message after the current playhead position,''rospy.Time''
         """
         if self._timeline_frame.playhead is None:
             return None
 
-        entry = self.get_entry_after(self._timeline_frame.playhead)
-        if entry is None:
-            return self._timeline_frame._start_stamp
-
-        return entry.time
-
-    def get_previous_message_time(self):
-        """
-        :return: time of the next message before the current playhead position,''rospy.Time''
-        """
-        if self._timeline_frame.playhead is None:
-            return None
-
-        entry = self.get_entry_before(self._timeline_frame.playhead)
+        _, entry = self.get_entry_after(self._timeline_frame.playhead)
         if entry is None:
             return self._timeline_frame._end_stamp
 
-        return entry.time
+        return entry.stamp
+
+    def get_previous_message_time(self):
+        """
+        :return: time of the message before the current playhead position,''rospy.Time''
+        """
+        if self._timeline_frame.playhead is None:
+            return None
+
+        _, entry = self.get_entry_before(self._timeline_frame.playhead)
+        if entry is None:
+            return self._timeline_frame._start_stamp
+
+        return entry.stamp
 
     def resume(self):
         if (self._player):

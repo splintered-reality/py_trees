@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import rospy
 from .plugins.message_view import MessageView
 
 class DynamicTimelineListener(MessageView):
@@ -25,6 +26,7 @@ class DynamicTimelineListener(MessageView):
 
         """
         self.msg = msg_details
+#        rospy.loginfo("got message {0} on topic {1}".format(msg_details.behaviours[0].name, self.topic))
         self.signal_viewed.emit()
     
     def message_cleared(self):

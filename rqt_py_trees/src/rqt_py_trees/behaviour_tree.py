@@ -244,7 +244,7 @@ class RosBehaviourTree(QObject):
         if not self._viewing_bag and not self._browsing_timeline:
             self.current_message = len(self.message_list) - 1
             self._refresh_view.emit()
-            
+
     def get_current_message(self):
         """Get the message in the list or bag that is being viewed that should be
         displayed.
@@ -284,9 +284,10 @@ class RosBehaviourTree(QObject):
         # Need to add a listener to make sure that we can get information about
         # messages that are on the topic that we're interested in.
         self._timeline.add_listener(self.current_topic, self._timeline_listener)
-        # Go to the first message in the timeline
-        self._timeline.navigate_start()                
+
+        self._timeline.navigate_end()
         self._timeline._redraw_timeline(None)
+        self._timeline.timeline_updated.connect(self.timeline_changed)
 
     def _choose_topic(self, index):
         """Updates the topic that is subscribed to based on changes to the combo box
@@ -343,13 +344,6 @@ class RosBehaviourTree(QObject):
             formatstr = "{0} new message" + ("" if self._new_messages == 1 else "s")
             self._widget.message_label.setText(formatstr.format(self._new_messages))
 
-    def _clear_graph(self):
-        """Clears the scene and refreshes the view
-        """
-        self._scene.clear()
-        self._current_dotcode = None
-        self._refresh_view.emit()
-
     def _set_timeline_buttons(self, first=None, previous=None, next=None, last=None):
         """Allows timeline buttons to be enabled and disabled.
         """
@@ -367,7 +361,7 @@ class RosBehaviourTree(QObject):
         duration is up. Only works if the current message is not the final one.
 
         """
-        if self.current_message != len(self.message_list) - 1:
+        if not self._play_timer:
             self._play_timer = rospy.Timer(rospy.Duration(1), self._timer_next)
 
     def _timer_next(self, timer):
@@ -382,6 +376,7 @@ class RosBehaviourTree(QObject):
         """
         if self._play_timer:
             self._play_timer.shutdown()
+            self._play_timer = None
 
     def _first(self):
         """Navigate to the first message. Activates the next and last buttons, disables
@@ -389,8 +384,7 @@ class RosBehaviourTree(QObject):
         browsing the timeline.
 
         """
-        if self._viewing_bag:
-            self._timeline.navigate_start()
+        self._timeline.navigate_start()
 
         #self.current_message = 0
         self._set_timeline_buttons(first=False, previous=False, next=True, last=True)
@@ -404,38 +398,20 @@ class RosBehaviourTree(QObject):
         browsing the timeline.
 
         """
-        if self._viewing_bag:
-            # if already at the beginning, do nothing
-            if self._timeline._timeline_frame.playhead == self._timeline._get_start_stamp():
-                return
+        # if already at the beginning, do nothing
+        if self._timeline._timeline_frame.playhead == self._timeline._get_start_stamp():
+            return
 
-
-            # otherwise, go to the previous message
-            self._timeline.navigate_previous()
-            # now browsing the timeline
-            self._browsing_timeline = True
-            self._set_timeline_buttons(last=True, next=True)
-            # if now at the beginning, disable timeline buttons.
-            if self._timeline._timeline_frame.playhead == self._timeline._get_end_stamp():
-                self._set_timeline_buttons(next=False, last=False)
-
+        # otherwise, go to the previous message
+        self._timeline.navigate_previous()
+        # now browsing the timeline
+        self._browsing_timeline = True
+        self._set_timeline_buttons(last=True, next=True)
+        # if now at the beginning, disable timeline buttons.
+        if self._timeline._timeline_frame.playhead == self._timeline._get_end_stamp():
+            self._set_timeline_buttons(next=False, last=False)
 
         self._refresh_view.emit()
-        # return
-        # rospy.loginfo("previous! - len is {0}, cur is {1}".format(len(self.message_list), self.current_message))
-
-        # self.current_message -= 1 # point to the next message in the list
-        # if not self._widget.next_tool_button.isEnabled():
-        #     self._set_timeline_buttons(next=True, last=True)
-
-        # # If already at the end of the list, or just reached it with this bump,
-        # # disable the button and reset the index to the end
-        # if self.current_message <= 0:
-        #     self.current_message = 0
-        #     self._set_timeline_buttons(first=False, previous=False)
-
-        # self._browsing_timeline = True
-        # self._refresh_view.emit()
 
     def _last(self):
         """Navigate to the last message. Activates the first and previous buttons,
@@ -443,8 +419,7 @@ class RosBehaviourTree(QObject):
         browsing the timeline after this is called.
 
         """
-        if self._viewing_bag:
-            self._timeline.navigate_end()
+        self._timeline.navigate_end()
 
         # self.current_message = len(self.message_list) - 1
         self._set_timeline_buttons(first=True, previous=True, next=False, last=False)
@@ -474,34 +449,6 @@ class RosBehaviourTree(QObject):
                 self._play_timer.shutdown()
 
         self._refresh_view.emit()
-        # rospy.loginfo("next! - len is {0}, cur is {1}".format(len(self.message_list), self.current_message))
-
-        # self.current_message += 1 # point to the next message in the list
-        # # Enable buttons to navigate to the previous tree
-        # if not self._widget.previous_tool_button.isEnabled():
-        #     self._set_timeline_buttons(first=True, previous=True)
-
-        # # update the number of new messages when the user looks at one which
-        # # arrived after they started browsing. The current message is one of the
-        # # new messages if it is at most self._new_messages away from the tail of
-        # # the list.
-        # if self._browsing_timeline and self.current_message == len(self.message_list) - self._new_messages:
-        #     self._new_messages -= 1
-        
-        # # If already at the end of the list, or just reached it with this bump,
-        # # disable the button and reset the index to the end
-        # if self.current_message >= len(self.message_list) - 1:
-        #     self.current_message = len(self.message_list) - 1
-        #     self._set_timeline_buttons(next=False, last=False)
-        #     # the play timer will call this function each time it ticks, so once
-        #     # we reach the end of the bag, stop it.
-        #     self._browsing_timeline = False
-        #     if self._play_timer:
-        #         self._play_timer.shutdown()
-        #     self._new_messages = 0
-
-        # self._update_label_new_messages()
-        # self._refresh_view.emit()
 
     def save_settings(self, plugin_settings, instance_settings):
         instance_settings.set_value('auto_fit_graph_check_box_state',
@@ -570,6 +517,18 @@ class RosBehaviourTree(QObject):
         self._fit_in_view()
         if self._timeline:
             self._timeline.setSceneRect(0, 0, self._widget.timeline_graphics_view.width() - 2, max(self._widget.timeline_graphics_view.height() - 2, self._timeline._timeline_frame._history_bottom))
+
+    def timeline_changed(self):
+        """Should be called whenever the timeline changes. At the moment this is only
+        used to ensure that the first and previous buttons are correctly
+        disabled when a new message coming in on the timeline pushes the
+        playhead to be at the first message
+
+        """
+        if self._timeline._timeline_frame.playhead == self._timeline._get_start_stamp():
+            self._set_timeline_buttons(first=False, previous=False)
+        else:
+            self._set_timeline_buttons(first=True, previous=True)
 
     def message_changed(self):
         """This function should be called when the message being viewed changes. Will
