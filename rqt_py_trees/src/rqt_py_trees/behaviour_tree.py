@@ -37,6 +37,7 @@ import os
 import rospy
 import rospkg
 import rosbag
+import functools
 import py_trees_msgs.msg as py_trees_msgs
 
 from python_qt_binding import loadUi
@@ -271,36 +272,6 @@ class RosBehaviourTree(QObject):
                 pass
 
         return py_trees_msgs.BehaviourTree()
-
-    def _set_dynamic_timeline(self):
-        self._timeline = DynamicTimeline(context=self._widget.timeline_graphics_view, publish_clock=False)
-        # connect timeline events so that the timeline will update when events happen
-        self._widget.timeline_graphics_view.mousePressEvent = self._timeline.on_mouse_down
-        self._widget.timeline_graphics_view.mouseReleaseEvent = self._timeline.on_mouse_up
-        self._widget.timeline_graphics_view.mouseMoveEvent = self._timeline.on_mouse_move
-        self._widget.timeline_graphics_view.wheelEvent = self._timeline.on_mousewheel
-        self._widget.timeline_graphics_view.setScene(self._timeline)
-
-        # Don't show scrollbars - the timeline adjusts to the size of the view
-        self._widget.timeline_graphics_view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self._widget.timeline_graphics_view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        # Send a resize event so that the timeline knows the size of the view it's in
-        self._resize_event(None)
-
-        self._timeline.add_topic(self.current_topic, py_trees_msgs.BehaviourTree)
-
-        # Create a listener for the timeline which will call the emit function
-        # on the given signals when the message being viewed changes or is
-        # cleared. The message being viewed changing generally happens when the
-        # user moves the slider around.
-        self._timeline_listener = DynamicTimelineListener(self._timeline, self.current_topic, self._message_changed, self._message_cleared)
-        # Need to add a listener to make sure that we can get information about
-        # messages that are on the topic that we're interested in.
-        self._timeline.add_listener(self.current_topic, self._timeline_listener)
-
-        self._timeline.navigate_end()
-        self._timeline._redraw_timeline(None)
-        self._timeline.timeline_updated.connect(self.timeline_changed)
 
     def _choose_topic(self, index):
         """Updates the topic that is subscribed to based on changes to the combo box
@@ -617,15 +588,59 @@ class RosBehaviourTree(QObject):
         """
         pass
 
+    def no_right_click_press_event(self, func):
+        """Decorator for ignoring right click events on mouse press
+        """
+        @functools.wraps(func)
+        def wrapper(event):
+            if event.type() == QEvent.MouseButtonPress and event.button() == Qt.RightButton:
+                event.ignore()
+            else:
+                func(event)
+        return wrapper
+
+    def _set_dynamic_timeline(self):
+        """Set the timeline to a dynamic timeline, listening to messages on the topic
+        selected in the combo box.
+
+        """
+        self._timeline = DynamicTimeline(self, publish_clock=False)
+        # connect timeline events so that the timeline will update when events happen
+        self._widget.timeline_graphics_view.mousePressEvent = self.no_right_click_press_event(self._timeline.on_mouse_down)
+        self._widget.timeline_graphics_view.mouseReleaseEvent = self._timeline.on_mouse_up
+        self._widget.timeline_graphics_view.mouseMoveEvent = self._timeline.on_mouse_move
+        self._widget.timeline_graphics_view.wheelEvent = self._timeline.on_mousewheel
+        self._widget.timeline_graphics_view.setScene(self._timeline)
+
+        # Don't show scrollbars - the timeline adjusts to the size of the view
+        self._widget.timeline_graphics_view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self._widget.timeline_graphics_view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        # Send a resize event so that the timeline knows the size of the view it's in
+        self._resize_event(None)
+
+        self._timeline.add_topic(self.current_topic, py_trees_msgs.BehaviourTree)
+
+        # Create a listener for the timeline which will call the emit function
+        # on the given signals when the message being viewed changes or is
+        # cleared. The message being viewed changing generally happens when the
+        # user moves the slider around.
+        self._timeline_listener = DynamicTimelineListener(self._timeline, self.current_topic, self._message_changed, self._message_cleared)
+        # Need to add a listener to make sure that we can get information about
+        # messages that are on the topic that we're interested in.
+        self._timeline.add_listener(self.current_topic, self._timeline_listener)
+
+        self._timeline.navigate_end()
+        self._timeline._redraw_timeline(None)
+        self._timeline.timeline_updated.connect(self.timeline_changed)
 
     def _set_bag_timeline(self, bag):
         """Set the timeline of this object to a bag timeline, hooking the graphics view
         into mouse and wheel functions of the timeline.
 
         """
-        self._timeline = BagTimeline(context=self._widget.timeline_graphics_view, publish_clock=False)
+        self._timeline = BagTimeline(self, publish_clock=False)
         # connect timeline events so that the timeline will update when events happen
-        self._widget.timeline_graphics_view.mousePressEvent = self._timeline.on_mouse_down
+        self._widget.timeline_graphics_view.mousePressEvent = self.no_right_click_press_event(self._timeline.on_mouse_down)
         self._widget.timeline_graphics_view.mouseReleaseEvent = self._timeline.on_mouse_up
         self._widget.timeline_graphics_view.mouseMoveEvent = self._timeline.on_mouse_move
         self._widget.timeline_graphics_view.wheelEvent = self._timeline.on_mousewheel
