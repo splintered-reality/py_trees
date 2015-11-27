@@ -31,10 +31,12 @@ import rospkg
 import rospy
 from geometry_msgs.msg import Pose2D
 import gopher_std_msgs.msg as gopher_std_msgs
+import gopher_std_msgs.srv as gopher_std_srvs
 import gopher_delivery_msgs.msg as gopher_delivery_msgs
 import yaml
 import std_msgs.msg as std_msgs
 import gopher_configuration
+import unique_id
 from .blackboard import Blackboard
 from . import elevators
 from . import recovery
@@ -113,11 +115,28 @@ class Waiting(py_trees.Behaviour):
         self.blackboard = Blackboard()
         self.go_requested = False
         self.feedback_message = "hanging around at '%s' waiting for lazy bastards" % (location)
+        self.notify_id = unique_id.toMsg(unique_id.fromRandom())
 
         # ros communications
         # could potentially have this in the waiting behaviour
         self._go_button_subscriber = rospy.Subscriber(self.config.buttons.go, std_msgs.Empty, self._go_button_callback)
-        self._notify_publisher = rospy.Publisher(self.config.topics.display_notification, gopher_std_msgs.Notification, queue_size=1)
+        rospy.wait_for_service(self.config.services.notification)
+        self._notify_srv = rospy.ServiceProxy(self.config.services.notification, gopher_std_srvs.Notify)
+
+    def initialise(self):
+        req = gopher_std_srvs.NotifyRequest()
+        req.id = self.notify_id
+        req.action = gopher_std_srvs.NotifyRequest.START
+        req.duration = gopher_std_srvs.NotifyRequest.INDEFINITE
+        req.notification = gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
+                                                        button_confirm=gopher_std_msgs.Notification.BUTTON_ON,
+                                                        button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
+                                                        message="at location, waiting for button press")
+
+        try:
+            resp = self._notify_srv(req)
+        except rospy.ServiceException as e:
+            rospy.logwarn("SendNotification : Service failed to process notification request: {0}".format(str(e)))
 
     def update(self):
         """
@@ -127,21 +146,21 @@ class Waiting(py_trees.Behaviour):
         status = py_trees.Status.RUNNING
         if self.go_requested:
             status = py_trees.Status.SUCCESS
-        else:
-            self._notify_publisher.publish(gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
-                                                                        button_confirm=gopher_std_msgs.Notification.BUTTON_ON,
-                                                                        button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
-                                                                        message="at location, waiting for button press"))
+
         self.feedback_message = "remaining: %s" % self.blackboard.remaining_locations
         return status
 
     def _go_button_callback(self, unused_msg):
         self.go_requested = True if self.status == py_trees.Status.RUNNING else False
-        self._notify_publisher.publish(gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
-                                                                    button_confirm=gopher_std_msgs.Notification.BUTTON_OFF,
-                                                                    button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
-                                                                    message="go button was pressed"))
+        req = gopher_std_srvs.NotifyRequest()
+        req.id = self.notify_id
+        req.action = gopher_std_srvs.NotifyRequest.STOP
+        req.notification = gopher_std_msgs.Notification(message="go button was pressed")
 
+        try:
+            resp = self._notify_srv(req)
+        except rospy.ServiceException as e:
+            rospy.logwarn("SendNotification : Service failed to process notification request: {0}".format(str(e)))
 
 class GopherDeliveries(object):
     """

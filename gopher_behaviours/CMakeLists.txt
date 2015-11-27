@@ -9,7 +9,7 @@ project(gopher_behaviours)
 # Catkin
 ##############################################################################
 
-find_package(catkin REQUIRED rospy)
+find_package(catkin REQUIRED rospy uuid_msgs unique_id)
 catkin_package()
 
 catkin_python_setup()
