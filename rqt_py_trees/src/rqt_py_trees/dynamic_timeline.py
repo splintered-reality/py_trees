@@ -84,7 +84,7 @@ class DynamicTimeline(QGraphicsScene):
         self._play_speed = 0.0
         self._play_all = False
         self._playhead_positions_cvs = {}
-        self._playhead_positions = {}  # topic -> (bag, position)
+        self._playhead_positions = {}  # topic -> position
         self._message_loaders = {}
         self._messages_cvs = {}
         self._messages = {}  # topic -> msg_data
@@ -171,7 +171,7 @@ class DynamicTimeline(QGraphicsScene):
         self._timeline_frame._start_stamp = self._get_start_stamp()
         self._timeline_frame._end_stamp = self._get_end_stamp()
 
-        self._timeline_frame.reset_timeline()
+        self._timeline_frame.reset_zoom()
 
         if end:
             # use play region instead of time.now to stop playhead going past
@@ -234,7 +234,7 @@ class DynamicTimeline(QGraphicsScene):
         self._timeline_frame.topics = self._get_topics()
         self._timeline_frame._topics_by_datatype = self._get_topics_by_datatype()
         # If this is the first bag, reset the timeline
-        self._timeline_frame.reset_timeline()
+        self._timeline_frame.reset_zoom()
 
         # Invalidate entire cache for this topic
         with self._timeline_frame.index_cache_cv:
