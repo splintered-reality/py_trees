@@ -80,11 +80,11 @@ class Behaviour(object):
         other words the deepest node that was running. This description kind of
         makes sense?
 
-        In the case of a raw behaviour, it returns itself regardless of its
-        actual state.
+        In the case of a raw behaviour, it returns itself if it is not invalid,
+        otherwise none.
 
         """
-        return self
+        return self if self.status != Status.INVALID else None
 
     def visit(self, visitor):
         """
