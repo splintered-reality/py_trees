@@ -36,7 +36,7 @@ import time
 import rospy
 import yaml
 import uuid_msgs.msg as uuid_msgs
-import py_trees.msg as py_trees_msgs
+import py_trees_msgs.msg as py_trees_msgs
 
 class RosBehaviourTreeDotcodeGenerator(object):
 
