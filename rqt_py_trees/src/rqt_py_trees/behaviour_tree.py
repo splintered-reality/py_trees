@@ -264,14 +264,14 @@ class RosBehaviourTree(QObject):
         displayed.
 
         """
+        msg = None
         if self._timeline_listener:
             try:
-
-                return self._timeline_listener.msg
+                msg = self._timeline_listener.msg 
             except KeyError:
                 pass
 
-        return py_trees_msgs.BehaviourTree()
+        return py_trees_msgs.BehaviourTree() if msg is None else msg
 
     def _choose_topic(self, index):
         """Updates the topic that is subscribed to based on changes to the combo box
@@ -456,6 +456,11 @@ class RosBehaviourTree(QObject):
             return
         self._update_graph_view(self._generate_dotcode())
 
+    def _generate_dotcode(self):
+        """Generate dotcode from the current message
+        """
+        return self._get_dotcode(self.get_current_message())
+
     def _get_dotcode(self, message):
         """Get the dotcode for the given message, checking the cache for dotcode that
         was previously generated, and adding to the cache if it wasn't there.
@@ -464,9 +469,10 @@ class RosBehaviourTree(QObject):
         Mostly stolen from rqt_bag.MessageLoaderThread
 
         """
-        key = str(message.header.stamp) # stamps are unique
-        if key in self._dotcode_cache:
-            return self._dotcode_cache[key]
+        if message is not None:
+            key = str(message.header.stamp) # stamps are unique
+            if key in self._dotcode_cache:
+                return self._dotcode_cache[key]
 
         force_refresh = self._force_refresh
         self._force_refresh = False
@@ -485,13 +491,6 @@ class RosBehaviourTree(QObject):
             self._dotcode_cache_keys.remove(oldest)
 
         return dotcode
-
-    def _generate_dotcode(self):
-        """Generate dotcode from the current message
-        """
-        message = self.get_current_message()
-
-        return self._get_dotcode(self.get_current_message())
 
     def _update_graph_view(self, dotcode):
         if dotcode == self._current_dotcode:
