@@ -183,9 +183,9 @@ class Node(object):
         self.result.message = "success"
         if goal.special_effects:
             self.publishers.teleport_sound.publish(std_msgs.Empty())
-            self.service_proxies.notification(action=gopher_std_srvs.NotifyRequest.START,
-                                              duration=5,
-                                              notification=gopher_std_msgs.Notification(led_pattern=self.gopher.led_patterns.im_doing_something_cool))
+            self.service_proxies.display_notification(action=gopher_std_srvs.NotifyRequest.START,
+                                                      duration=5,
+                                                      notification=gopher_std_msgs.Notification(led_pattern=self.gopher.led_patterns.im_doing_something_cool))
 
         while not rospy.is_shutdown():
             # preempted

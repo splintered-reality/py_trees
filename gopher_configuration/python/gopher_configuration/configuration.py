@@ -134,7 +134,7 @@ class Services(ConfigurationGroup):
         self.__dict__ = services_dict
 
     def validate(self):
-        for key in ['clear_costmaps']:
+        for key in ['clear_costmaps', 'notification']:
             if key not in self.__dict__.keys():
                 return (False, "no definition for service '%s'" % key)
         return (True, None)
