@@ -169,9 +169,9 @@ class RosBehaviourTreeDotcodeGenerator(object):
             self.dotcode_factory.add_node_to_graph(graph, 'No behaviour data received')
             return graph
 
-        root = uuid_msgs.UniqueID() # the root has an empty UUID first, add
-        # nodes to the graph, and create a dict containing IDs and the current
-        # state of each behaviour. We use this on the second pass to colour edges
+        # first, add nodes to the graph, and create a dict containing IDs and
+        # the current state of each behaviour. We use this on the second pass to
+        # colour edges
         states = {}
         for behaviour in data:
             self.dotcode_factory.add_node_to_graph(graph,
@@ -198,29 +198,5 @@ class RosBehaviourTreeDotcodeGenerator(object):
                                                        str(behaviour.own_id),
                                                        str(child_id),
                                                        color=edge_color)
-
-        #     if not tf_frame_values['parent'] in data:
-        #         root = tf_frame_values['parent']
-        #     self.dotcode_factory.add_node_to_graph(graph,
-        #                                            tf_frame_values['parent'],
-        #                                            shape='ellipse')
-
-        #     edge_label= '"Broadcaster: %s\\n' % str(tf_frame_values['broadcaster'])
-        #     edge_label += 'Average rate: %s\\n' % str(tf_frame_values['rate'])
-        #     edge_label += 'Buffer length: %s\\n' % str(tf_frame_values['buffer_length'])
-        #     edge_label += 'Most recent transform: %s\\n' % str(tf_frame_values['most_recent_transform'])
-        #     edge_label += 'Oldest transform: %s"' % str(tf_frame_values['oldest_transform'])
-        #     self.dotcode_factory.add_edge_to_graph(graph,
-        #                                            tf_frame_values['parent'],
-        #                                            frame_dict,
-        #                                            label=edge_label)
-
-        # # create legend before root node
-        # legend_label = '"Recorded at time: %s"' % str(timestamp)
-        # self.dotcode_factory.add_node_to_graph(graph, legend_label)
-        # self.dotcode_factory.add_edge_to_graph(graph,
-        #                                        legend_label,
-        #                                        root,
-        #                                        style='invis')
 
         return graph
