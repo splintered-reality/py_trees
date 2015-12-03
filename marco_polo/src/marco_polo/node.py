@@ -27,6 +27,7 @@ import geometry_msgs.msg as geometry_msgs
 import gopher_configuration
 import gopher_semantics
 import gopher_std_msgs.msg as gopher_std_msgs
+import gopher_std_msgs.srv as gopher_std_srvs
 import gopher_navi_msgs.msg as gopher_navi_msgs
 import rocon_console.console as console
 import rocon_python_comms
@@ -82,13 +83,13 @@ class Node(object):
                 ('init_pose', self.gopher.topics.initial_pose, geometry_msgs.PoseWithCovarianceStamped, latched, queue_size_five),
                 ('switch_map', self.gopher.topics.switch_map, std_msgs.String, latched, queue_size_five),
                 ('diagnostics', self.gopher.topics.diagnostics, diagnostic_msgs.DiagnosticArray, latched, queue_size_five),
-                ('teleport_sound', self.gopher.sounds.teleport, std_msgs.Empty, not_latched, 1),
-                ('teleport_pattern', self.gopher.topics.display_notification, gopher_std_msgs.Notification, not_latched, 1),
+                ('teleport_sound', self.gopher.sounds.teleport, std_msgs.Empty, not_latched, 1)
             ]
         )
         self.service_proxies = rocon_python_comms.utils.ServiceProxies(
             [
                 (self.gopher.services.clear_costmaps, std_srvs.Empty),
+                (self.gopher.services.notification, gopher_std_srvs.Notify)
             ]
         )
         self.goal_handler = goals.GoalHandler(self.publishers, self.service_proxies)
@@ -182,7 +183,10 @@ class Node(object):
         self.result.message = "success"
         if goal.special_effects:
             self.publishers.teleport_sound.publish(std_msgs.Empty())
-            self.publishers.teleport_pattern.publish(gopher_std_msgs.Notification(led_pattern=self.gopher.led_patterns.im_doing_something_cool))
+            self.service_proxies.display_notification(action=gopher_std_srvs.NotifyRequest.START,
+                                                      duration=5,
+                                                      notification=gopher_std_msgs.Notification(led_pattern=self.gopher.led_patterns.im_doing_something_cool))
+
         while not rospy.is_shutdown():
             # preempted
             if self.action_server.is_preempt_requested():
