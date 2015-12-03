@@ -44,8 +44,9 @@ class Composite(Behaviour):
         if children is not None:
             map(self.add_child, children)
         else:
-            children = []
+            self.children = []
         self.logger = logging.get_logger("Composite")
+
 
     ############################################
     # Worker Overrides

@@ -305,6 +305,13 @@ class ROSBehaviourTree(BehaviourTree):
             new_behaviour.own_id = unique_id.toMsg(behaviour.id)
             new_behaviour.parent_id = unique_id.toMsg(behaviour.parent.id) if behaviour.parent else uuid_msgs.UniqueID()
             new_behaviour.child_ids = [unique_id.toMsg(child.id) for child in behaviour.iterate(direct_descendants=True) if not child.id == behaviour.id]
+
+            tip = behaviour.tip()
+            # tip_id is empty if the behaviour is invalid or if it is a valid
+            # leaf
+            if tip is not None and tip != behaviour:
+                new_behaviour.tip_id = unique_id.toMsg(tip.id)
+
             new_behaviour.type = self.convert_type(behaviour)
             new_behaviour.status = self.convert_status(behaviour.status)
             new_behaviour.message = behaviour.feedback_message
