@@ -362,6 +362,118 @@ def test_success_failure_tree():
     print("failure2.status == py_trees.Status.FAILURE")
     assert(failure2.status == py_trees.Status.FAILURE)
 
+def test_tip_simple():
+    print(console.bold + "\n****************************************************************************************" + console.reset)
+    print(console.bold + "* Tip Simple" + console.reset)
+    print(console.bold + "****************************************************************************************\n" + console.reset)
+  
+    # behaviours will be running the first time they are seen, then success for subsequent ticks
+    seq = py_trees.composites.Sequence(name="Sequence")
+    a = py_trees.behaviours.Count(name="A", fail_until=0, running_until=1, success_until=100)
+    b = py_trees.behaviours.Count(name="B", fail_until=0, running_until=1, success_until=100)
+    seq.add_child(a)
+    seq.add_child(b)
+    
+    tree = py_trees.BehaviourTree(seq)
+    py_trees.display.print_ascii_tree(tree.root)
+  
+    tree.visitors.append(Visitor())
+
+    print("\n--------- Assertions (before initialisation) ---------\n")
+    # an uninitialised tree/behaviour always has a tip of None
+    assert(tree.root.tip() == None)
+    assert(seq.tip() == None)
+    assert(a.tip() == None)
+    assert(b.tip() == None)
+
+    tree.tick()
+    print("\n--------- Assertions ---------\n")
+    assert(a.status == py_trees.Status.RUNNING)
+    assert(b.status == py_trees.Status.INVALID)
+    # the root of sequence and tree should be the currently running node
+    assert(tree.root.tip() == a)
+    assert(seq.tip() == a)
+    # when a node is running/has run, its tip is itself
+    assert(a.tip() == a)
+    assert(b.tip() == None)
+
+    tree.tick()
+    print("\n--------- Assertions ---------\n")
+    assert(a.status == py_trees.Status.SUCCESS)
+    assert(b.status == py_trees.Status.RUNNING)
+    # the root of sequence and tree should be the currently running node
+    assert(tree.root.tip() == b)
+    assert(seq.tip() == b)
+    # when a node is running/has run, its tip is itself
+    assert(a.tip() == a)
+    assert(b.tip() == b)
+
+    tree.tick()
+    print("\n--------- Assertions ---------\n")
+    assert(a.status == py_trees.Status.SUCCESS)
+    assert(b.status == py_trees.Status.SUCCESS)
+    # the root of sequence and tree should be the currently running node
+    assert(tree.root.tip() == b)
+    assert(seq.tip() == b)
+    # when a node is running/has run, its tip is itself
+    assert(a.tip() == a)
+    assert(b.tip() == b)
+
+def test_tip_complex():
+    print(console.bold + "\n****************************************************************************************" + console.reset)
+    print(console.bold + "* Tip Complex" + console.reset)
+    print(console.bold + "****************************************************************************************\n" + console.reset)
+  
+    # behaviours will be running the first time they are seen, then success for subsequent ticks
+    sel = py_trees.composites.Selector(name="Selector")
+    seq1 = py_trees.composites.Sequence(name="Sequence1")
+    seq2 = py_trees.composites.Sequence(name="Sequence2")
+
+    # selector left branch fails the two times, so seq2 behaviours run. The
+    # third time it is running, stopping seq2
+    a = py_trees.behaviours.Count(name="A", fail_until=1, running_until=0, success_until=10)
+    b = py_trees.behaviours.Count(name="B", fail_until=0, running_until=1, success_until=10)
+    c = py_trees.behaviours.Count(name="C", fail_until=0, running_until=2, success_until=10)
+    d = py_trees.behaviours.Count(name="D", fail_until=0, running_until=1, success_until=10)
+    
+    seq1.add_child(a)
+    seq1.add_child(b)
+    seq2.add_child(c)
+    seq2.add_child(d)
+
+    sel.add_child(seq1)
+    sel.add_child(seq2)
+
+    tree = py_trees.BehaviourTree(sel)
+    py_trees.display.print_ascii_tree(tree.root)
+  
+    tree.visitors.append(Visitor())
+    tree.tick()
+
+    print("\n--------- Assertions ---------\n")
+    assert(a.status == py_trees.Status.FAILURE)
+    assert(b.status == py_trees.Status.INVALID)
+    assert(c.status == py_trees.Status.RUNNING)
+    assert(d.status == py_trees.Status.INVALID)
+
+    # the root of sequence and tree should be the currently running node
+    assert(seq1.tip() == a)
+    assert(seq2.tip() == c)
+    assert(tree.root.tip() == c)
+
+    tree.tick()
+    print("\n--------- Assertions ---------\n")
+    assert(a.status == py_trees.Status.SUCCESS)
+    assert(b.status == py_trees.Status.RUNNING)
+    assert(c.status == py_trees.Status.INVALID)
+    assert(d.status == py_trees.Status.INVALID)
+
+    
+    assert(seq1.tip() == b)
+    assert(seq2.tip() == None)
+    assert(tree.root.tip() == b)
+
+    tree.tick()
 
 # def test_foo():
 #     print('--------- Nosetest Logs ---------')

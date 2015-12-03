@@ -303,19 +303,19 @@ class GopherDeliveries(object):
         Be careful here, the logic gets tricky.
         """
         if self.root is not None and self.root.status == py_trees.Status.RUNNING:
+            tip = self.root.tip()
+            delivery_child = self.delivery_sequence.current_child
             if self.delivery_sequence.status == py_trees.Status.RUNNING:
-                if (
-                    isinstance(self.delivery_sequence.current_child(), navigation.MoveIt) or
-                    isinstance(self.delivery_sequence.current_child(), elevators.Elevators)
-                ):
+                if any(map(lambda x: isinstance(delivery_child, x), [navigation.MoveIt, elevators.Elevators])):
                     self.state = State.TRAVELLING
                     if self.blackboard.traversed_locations:
-                        self.feedback_message = "moving from '%s' to '%s'" % (self.blackboard.traversed_locations[-1], self.blackboard.remaining_locations[0])
+                        self.feedback_message = "moving from '{0}' to '{1}'".format(self.blackboard.traversed_locations[-1], self.blackboard.remaining_locations[0])
                     else:
-                        self.feedback_message = "moving to '%s'" % self.blackboard.remaining_locations[0]
-                elif isinstance(self.delivery_sequence.current_child(), Waiting):
+                        self.feedback_message = "moving to '{0}'".format(self.blackboard.remaining_locations[0])
+
+                elif isinstance(tip, Waiting):
                     self.state = State.WAITING
-                    self.feedback_message = self.delivery_sequence.current_child().feedback_message
+                    self.feedback_message = tip.feedback_message
             else:  # we're in the homebase recovery behaviour
                 self.state = State.WAITING  # don't allow it to be interrupted
                 self.feedback_message = "delivery failed, waiting for human to teleop us back home before cancelling"
