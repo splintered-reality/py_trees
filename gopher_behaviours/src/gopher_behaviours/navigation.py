@@ -27,6 +27,7 @@ import gopher_configuration
 import gopher_navi_msgs.msg as gopher_navi_msgs
 import move_base_msgs.msg as move_base_msgs
 import gopher_std_msgs.msg as gopher_std_msgs
+import gopher_std_msgs.srv as gopher_std_srvs
 import py_trees
 import rospy
 import tf
@@ -115,7 +116,8 @@ class MoveIt(py_trees.Behaviour):
         self.action_client = None
         self.gopher = gopher_configuration.Configuration()
         self.dont_ever_give_up = dont_ever_give_up
-        self.publisher = rospy.Publisher(self.gopher.topics.display_notification, gopher_std_msgs.Notification, queue_size=1)
+        rospy.wait_for_service(self.gopher.services.notification)
+        self.notify_srv = rospy.ServiceProxy(self.gopher.services.notification, gopher_std_srvs.Notify)
         self.goal = None
 
     def initialise(self):

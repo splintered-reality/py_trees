@@ -7,6 +7,7 @@ import dslam_msgs.msg as dslam_msgs
 import geometry_msgs.msg as geometry_msgs
 import gopher_configuration
 import gopher_std_msgs.msg as gopher_std_msgs
+import gopher_std_msgs.srv as gopher_std_srvs
 import numpy
 import py_trees
 import rospy
@@ -14,6 +15,7 @@ import somanet_msgs.msg as somanet_msgs
 import std_msgs.msg as std_msgs
 import tf
 import tf_utilities
+import unique_id
 
 class Park(py_trees.Behaviour):
     time = None
@@ -196,7 +198,10 @@ class Unpark(py_trees.Behaviour):
     def __init__(self, name):
         super(Unpark, self).__init__(name)
         self.config = gopher_configuration.Configuration()
-        self._notify_publisher = rospy.Publisher(self.config.topics.display_notification, gopher_std_msgs.Notification, queue_size=1)
+        notify_topic = self.config.services.notification
+        self.notify_id = unique_id.toMsg(unique_id.fromRandom())
+        rospy.wait_for_service(notify_topic, 5) # should never need to wait 
+        self._notify_srv = rospy.ServiceProxy(notify_topic, gopher_std_srvs.Notify)
         self._location_publisher = rospy.Publisher(self.config.topics.initial_pose, geometry_msgs.PoseWithCovarianceStamped, queue_size=1)
 
         self.tf_listener = tf.TransformListener()
@@ -223,6 +228,9 @@ class Unpark(py_trees.Behaviour):
         self.dslam_initialised = None
         self.lookup_attempts = 0
         self.blackboard.parked = True  # set this to true to indicate that the robot was parked, for the wasdocked behaviour
+        # whether a notification request has been sent to the status notifier
+        self.button_notified = False
+        self.battery_notified = False
 
         # only initialise subscribers when the behaviour starts running
         self.homebase = self.semantic_locations.semantic_modules['locations']['homebase']
@@ -243,12 +251,27 @@ class Unpark(py_trees.Behaviour):
     def battery_callback(self, msg):
         self.still_charging = msg.charge_state == somanet_msgs.SmartBatteryStatus.CHARGING
 
+        if not self.still_charging and self.battery_notified:
+            req = gopher_std_srvs.NotifyRequest()
+            req.id = self.notify_id
+            req.action = gopher_std_srvs.NotifyRequest.STOP
+            req.notification = gopher_std_msgs.Notification(message="battery no longer charging")
+            try:
+                resp = self._notify_srv(req)
+            except rospy.ServiceException as e:
+                rospy.logwarn("SendNotification : Service failed to process notification request: {0}".format(str(e)))
+
     def button_callback(self, msg):
         self.button_pressed = True
-        self._notify_publisher.publish(gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.CANCEL_CURRENT,
-                                                                    button_confirm=gopher_std_msgs.Notification.BUTTON_OFF,
-                                                                    button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
-                                                                    message="button was pressed"))
+        req = gopher_std_srvs.NotifyRequest()
+        req.id = self.notify_id
+        req.action = gopher_std_srvs.NotifyRequest.STOP
+        req.notification = gopher_std_msgs.Notification(message="button was pressed")
+        try:
+            resp = self._notify_srv(req)
+        except rospy.ServiceException as e:
+            rospy.logwarn("SendNotification : Service failed to process notification request: {0}".format(str(e)))
+
         # when the button is pressed, save the latest odom value so we can get
         # the transform between the start and end poses
         try:
@@ -350,10 +373,21 @@ class Unpark(py_trees.Behaviour):
         # need to be unplugged before we can move or be moved
         if self.still_charging:
             rospy.logdebug("Unpark : robot is still charging - waiting to be unplugged")
-            self._notify_publisher.publish(gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.FLASH_YELLOW,
-                                                                        button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
-                                                                        button_confirm=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
-                                                                        message="waiting to be unplugged"))
+            if not self.battery_notified:
+                self.battery_notified = True
+                req = gopher_std_srvs.NotifyRequest()
+                req.id = self.notify_id
+                req.action = gopher_std_srvs.NotifyRequest.START
+                req.duration = gopher_std_srvs.NotifyRequest.INDEFINITE
+                req.notification = gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.FLASH_YELLOW,
+                                                                button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
+                                                                button_confirm=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
+                                                                message="waiting to be unplugged")
+                try:
+                    resp = self._notify_srv(req)
+                except rospy.ServiceException as e:
+                    rospy.logwarn("SendNotification : Service failed to process notification request: {0}".format(str(e)))
+
             # reset the button just in case it was accidentally pressed
             self.feedback_message = "robot is still charging - waiting to be unplugged"
             self.button_pressed = False
@@ -404,10 +438,21 @@ class Unpark(py_trees.Behaviour):
                 else:
                     rospy.logdebug("Unpark : still waiting on button")
                     # publish notification request to flash and turn on the go button led
-                    self._notify_publisher.publish(gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.FLASH_PURPLE,
-                                                                                button_confirm=gopher_std_msgs.Notification.BUTTON_ON,
-                                                                                button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
-                                                                                message="Unpark : waiting for go button press to continue"))
+                    if not self.button_notified:
+                        self.button_notified = True
+                        req = gopher_std_srvs.NotifyRequest()
+                        req.id = self.notify_id
+                        req.action = gopher_std_srvs.NotifyRequest.START
+                        req.duration = gopher_std_srvs.NotifyRequest.INDEFINITE
+                        req.notification = gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.FLASH_PURPLE,
+                                                                        button_confirm=gopher_std_msgs.Notification.BUTTON_ON,
+                                                                        button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
+                                                                        message="Unpark : waiting for go button press to continue")
+                        try:
+                            resp = self._notify_srv(req)
+                        except rospy.ServiceException as e:
+                            rospy.logwarn("SendNotification : Service failed to process notification request: {0}".format(str(e)))
+
                     return py_trees.Status.RUNNING
 
         return py_trees.Status.RUNNING
