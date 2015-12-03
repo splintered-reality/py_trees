@@ -65,6 +65,14 @@ class Composite(Behaviour):
         self.status = new_status
         self.iterator = self.tick()
 
+    def tip(self):
+        """Recursive function to extract the last running node of the tree. Returns the
+        tip function of the current child of this composite.
+
+        """
+        if self.current_child is not None:
+            return self.current_child.tip()
+
     ############################################
     # Children
     ############################################
@@ -147,6 +155,9 @@ class Selector(Composite):
         self.current_child = None
         self.logger = logging.get_logger("Selector ")
 
+    def initialise(self):
+        self.current_child = None
+
     def update(self):
         self.logger.debug("  %s [update()]" % self.name)
         for child in self.children:
@@ -182,7 +193,10 @@ class Selector(Composite):
         yield self
 
     def stop(self, new_status=Status.INVALID):
-        self.current_child = None
+        # retain information about the last running child if the new status is
+        # SUCCESS or FAILURE
+        if new_status == Status.INVALID:
+            self.current_child = None
         Composite.stop(self, new_status)
 
     def __repr__(self):
@@ -203,7 +217,7 @@ class Sequence(Composite):
 
     def __init__(self, name="Sequence", children=None, *args, **kwargs):
         super(Sequence, self).__init__(name, children, *args, **kwargs)
-        self.current_index = 0
+        self.current_index = -1 # -1 indicates uninitialised
         self.logger = logging.get_logger("Sequence ")
 
     def initialise(self):
@@ -227,15 +241,22 @@ class Sequence(Composite):
                     return
             self.current_index += 1
         # At this point, all children are happy with their SUCCESS, so we should be happy too
+        self.current_index -= 1 # went off the end of the list if we got to here
         self.stop(Status.SUCCESS)
         yield self
 
+    @property
     def current_child(self):
+        if self.current_index == -1:
+            return None
         return self.children[self.current_index] if self.children else None
 
     def stop(self, new_status=Status.INVALID):
         self.logger.debug("  %s [stop()][%s->%s]" % (self.name, self.status, new_status))
-        self.current_index = 0
+        # retain information about the last running child if the new status is
+        # SUCCESS or FAILURE
+        if new_status == Status.INVALID:
+            self.current_index = -1
         self.status = new_status
         Composite.stop(self, new_status)
 
