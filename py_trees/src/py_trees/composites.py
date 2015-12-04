@@ -71,8 +71,7 @@ class Composite(Behaviour):
         tip function of the current child of this composite.
 
         """
-        if self.current_child is not None:
-            return self.current_child.tip()
+        return self.current_child.tip() if self.current_child is not None else None
 
     ############################################
     # Children

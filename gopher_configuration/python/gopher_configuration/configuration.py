@@ -134,7 +134,7 @@ class Services(ConfigurationGroup):
         self.__dict__ = services_dict
 
     def validate(self):
-        for key in ['clear_costmaps']:
+        for key in ['clear_costmaps', 'notification']:
             if key not in self.__dict__.keys():
                 return (False, "no definition for service '%s'" % key)
         return (True, None)
@@ -156,7 +156,7 @@ class Topics(ConfigurationGroup):
         self.__dict__ = topics_dict
 
     def validate(self):
-        for key in ['display_notification', 'initial_pose', 'switch_map']:
+        for key in ['initial_pose', 'switch_map']:
             if key not in self.__dict__.keys():
                 return (False, "no definition for topic '%s'" % key)
         return (True, None)

@@ -23,9 +23,11 @@ Bless my noggin with a tickle from your noodly appendages!
 
 import gopher_configuration
 from gopher_std_msgs.msg import Notification
+import gopher_std_msgs.srv as gopher_std_srvs
 import py_trees
 import rospy
 import std_msgs.msg as std_msgs
+import unique_id
 
 ##############################################################################
 # Interactions
@@ -148,43 +150,53 @@ class SendNotification(py_trees.Sequence):
         """
         super(SendNotification, self).__init__(name)
         self.gopher = gopher_configuration.Configuration()
-        self.topic_name = self.gopher.topics.display_notification
-        self.publisher = rospy.Publisher(self.topic_name, Notification, queue_size=1)
+        self.topic_name = self.gopher.services.notification
+        rospy.wait_for_service(self.topic_name, 5) # should never need to wait 
+        self.service = rospy.ServiceProxy(self.topic_name, gopher_std_srvs.Notify)
         self.timer = None
         self.sound = sound
+        self.service_failed = False
+        self.message = message
+
         self.led_pattern = led_pattern if led_pattern is not None else Notification.RETAIN_PREVIOUS
         self.button_cancel = button_cancel if button_cancel is not None else Notification.RETAIN_PREVIOUS
         self.button_confirm = button_confirm if button_confirm is not None else Notification.RETAIN_PREVIOUS
+
+        self.id = unique_id.toMsg(unique_id.fromRandom())
+        self.notification = Notification(sound_name=self.sound, led_pattern=self.led_pattern,
+                                         button_confirm=self.button_confirm,
+                                         button_cancel=self.button_cancel, message=self.message)
 
         # cancel LED status on success, but only if they were set by the requested notification
         self.led_stop = Notification.CANCEL_CURRENT if led_pattern is not None else Notification.RETAIN_PREVIOUS
         self.cancel_stop = Notification.BUTTON_OFF if button_cancel is not None else Notification.RETAIN_PREVIOUS
         self.confirm_stop = Notification.BUTTON_OFF if button_confirm is not None else Notification.RETAIN_PREVIOUS
 
-        self.message = message
+
         self.cancel_on_stop = cancel_on_stop
 
     def initialise(self):
-        self.send_notification(None)
-        # Notifications last for some amount of time before LEDs go back to
-        # displaying the battery status. Need to send message repeatedly until
-        # the behaviour completes.
-        self.timer = rospy.Timer(rospy.Duration(5), self.send_notification)
         super(SendNotification, self).initialise()
-
-    def send_notification(self, unused_timer):
-        self.publisher.publish(Notification(sound_name=self.sound, led_pattern=self.led_pattern,
-                                            button_confirm=self.button_confirm,
-                                            button_cancel=self.button_cancel, message=self.message))
+        request = gopher_std_srvs.NotifyRequest()
+        request.id = self.id
+        request.action = gopher_std_srvs.NotifyRequest.START
+        request.duration = gopher_std_srvs.NotifyRequest.INDEFINITE
+        request.notification = self.notification
+        try:
+            resp = self.service(request)
+        except rospy.ServiceException as e:
+            rospy.logwarn("SendNotification : Service failed to process notification request: {0}".format(str(e)))
+            self.service_failed = True
+            self.stop(py_trees.Status.FAILURE)
 
     def stop(self, new_status):
         super(SendNotification, self).stop(new_status)
-        if self.timer:
-            self.timer.shutdown()
-            if self.cancel_on_stop:
-                notification = Notification(led_pattern=self.led_stop,
-                                            button_cancel=self.cancel_stop,
-                                            button_confirm=self.confirm_stop,
-                                            message="cancelling '%s'" % self.message
-                                            )
-                self.publisher.publish(notification)
+        if self.cancel_on_stop and not self.service_failed:
+            rospy.loginfo("sending stop req")
+            request = gopher_std_srvs.NotifyRequest()
+            request.id = self.id
+            request.action = gopher_std_srvs.NotifyRequest.STOP
+            try:
+                resp = self.service(request)
+            except rospy.ServiceException as e:
+                rospy.logwarn("SendNotification : Service failed to process notification cancel request: {0}".format(str(e)))

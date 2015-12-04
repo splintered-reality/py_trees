@@ -12,7 +12,6 @@
 ##############################################################################
 topics:
   diagnostics: /diagnostics
-  display_notification: /gopher/status_notifier/display_notification
   initial_pose: /navi/initial_pose
   switch_map: /dslam/map/switch
   world: /navi/world
@@ -25,6 +24,7 @@ services:
   door_operator: /concert/door_operator
   delivery_goal: /rocon/delivery/goal
   delivery_result: /rocon/delivery/result
+  notification: /gopher/status_notifier/display_notification
 
 actions:
   teleport: /navi/teleport
