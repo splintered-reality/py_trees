@@ -162,7 +162,6 @@ class SendNotification(py_trees.Sequence):
         self.button_cancel = button_cancel if button_cancel is not None else Notification.RETAIN_PREVIOUS
         self.button_confirm = button_confirm if button_confirm is not None else Notification.RETAIN_PREVIOUS
 
-        self.id = unique_id.toMsg(unique_id.fromRandom())
         self.notification = Notification(sound_name=self.sound, led_pattern=self.led_pattern,
                                          button_confirm=self.button_confirm,
                                          button_cancel=self.button_cancel, message=self.message)
@@ -178,7 +177,7 @@ class SendNotification(py_trees.Sequence):
     def initialise(self):
         super(SendNotification, self).initialise()
         request = gopher_std_srvs.NotifyRequest()
-        request.id = self.id
+        request.id = unique_id.toMsg(self.id)
         request.action = gopher_std_srvs.NotifyRequest.START
         request.duration = gopher_std_srvs.NotifyRequest.INDEFINITE
         request.notification = self.notification
@@ -194,7 +193,7 @@ class SendNotification(py_trees.Sequence):
         if self.cancel_on_stop and not self.service_failed:
             rospy.loginfo("sending stop req")
             request = gopher_std_srvs.NotifyRequest()
-            request.id = self.id
+            request.id = unique_id.toMsg(self.id)
             request.action = gopher_std_srvs.NotifyRequest.STOP
             try:
                 resp = self.service(request)
