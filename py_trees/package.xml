@@ -15,7 +15,6 @@
 
   <!-- for documentation -->
   <build_depend>python-catkin-pkg</build_depend>
-  <build_depend>message_generation</build_depend>
   <build_depend>std_msgs</build_depend>
   <build_depend>uuid_msgs</build_depend>
   <build_depend>unique_identifier</build_depend>
