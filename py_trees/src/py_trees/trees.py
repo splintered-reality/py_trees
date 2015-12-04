@@ -27,6 +27,7 @@ import std_msgs.msg as std_msgs
 import time
 import datetime
 import rosbag
+import os
 
 from . import common
 from . import display
@@ -340,7 +341,15 @@ class ROSBehaviourTree(BehaviourTree):
         self.visitors.append(self.snapshot_visitor)
         self.visitors.append(self.logging_visitor)
         self.post_tick_handlers.append(self.publish_tree_snapshots)
-        self.bag = rosbag.Bag('log/' + rospy.get_param('/run_id') + '/behaviour_tree_' + datetime.datetime.utcnow().strftime("%Y-%m-%d-%H-%M-%S") + '.bag', 'w')
+
+        now = datetime.datetime.now()
+        topdir = 'behaviour_trees/' + now.strftime('%Y-%m-%d')
+        if not os.path.exists(os.curdir + topdir):
+            os.makedirs(topdir)
+
+        # opens in ros home directory for the user
+        self.bag = rosbag.Bag(topdir + '/behaviour_tree_' + now.strftime("%H-%M-%S") + '.bag', 'w')
+
         self.last_tree = py_trees_msgs.BehaviourTree()
 
     def publish_tree_modifications(self, root):
