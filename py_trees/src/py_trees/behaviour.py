@@ -20,7 +20,7 @@
 # Imports
 ##############################################################################
 
-import uuid
+import unique_id
 
 from . import logging
 from .common import Status
@@ -34,7 +34,7 @@ class Behaviour(object):
     """ A node in a behavior tree that uses coroutines in its tick function """
 
     def __init__(self, name="", *args, **kwargs):
-        self.id = uuid.uuid4()  # used to uniquely identify this node (helps with removing children from a tree)
+        self.id = unique_id.fromRandom()  # used to uniquely identify this node (helps with removing children from a tree)
         self.name = name
         self.status = Status.INVALID
         self.iterator = self.tick()
@@ -115,13 +115,16 @@ class Behaviour(object):
         self.status = new_status
         yield self
 
-    def iterate(self):
+    def iterate(self, direct_descendants=False):
         """
         Generator that provides iteration over this behaviour and all its children.
         """
         for child in self.children:
-            for node in child.iterate():
-                yield node
+            if not direct_descendants:
+                for node in child.iterate():
+                    yield node
+            else:
+                yield child
         yield self
 
     def stop(self, new_status=Status.INVALID):

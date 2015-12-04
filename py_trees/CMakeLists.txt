@@ -9,10 +9,11 @@ project(py_trees)
 # Catkin
 ##############################################################################
 
-find_package(catkin REQUIRED)
-catkin_package()
+find_package(catkin REQUIRED COMPONENTS py_trees_msgs)
 
 catkin_python_setup()
+
+catkin_package()
 
 ##############################################################################
 # Installs

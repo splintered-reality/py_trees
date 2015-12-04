@@ -1,0 +1,17 @@
+<library path="src">
+  <class name="RosBehaviourTree" type="rqt_py_trees.behaviour_tree.RosBehaviourTree" base_class_type="rqt_gui_py::Plugin">
+    <description>
+      A Python GUI plugin to visualize py_trees behaviour trees.
+    </description>
+    <qtgui>
+      <group>
+        <label>Visualization</label>
+        <icon type="theme">folder</icon>
+        <statustip>Plugins related to visualization.</statustip>
+      </group>
+      <label>Behaviour Tree</label>
+      <icon type="theme">preferences-system-network</icon>
+      <statustip>A Python GUI plugin for visualizing py_trees behaviour trees.</statustip>
+    </qtgui>
+  </class>
+</library>

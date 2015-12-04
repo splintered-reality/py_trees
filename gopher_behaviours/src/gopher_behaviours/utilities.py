@@ -30,8 +30,9 @@ import rospkg
 ##############################################################################
 
 
-class DebugVisitor:
+class DebugVisitor(py_trees.trees.VisitorBase):
     def __init__(self):
+        super(DebugVisitor, self).__init__()
         self.logger = py_trees.logging.get_logger("Visitor")
 
     def initialise(self):

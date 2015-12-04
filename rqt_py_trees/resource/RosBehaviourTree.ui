@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>RosBehaviourTreeWidget</class>
+ <widget class="QWidget" name="RosBehaviourTreeWidget">
+  <property name="enabled">
+   <bool>true</bool>
+  </property>
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1144</width>
+    <height>503</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>PyTrees Behaviour Tree </string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0,0">
+   <item>
+    <layout class="QHBoxLayout" name="top_bar_layout" stretch="0,0,0,0,0,0,0,0,0,0,0,0,0,0">
+     <item>
+      <widget class="QComboBox" name="topic_combo_box">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>170</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="baseSize">
+        <size>
+         <width>0</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="editable">
+        <bool>false</bool>
+       </property>
+       <property name="sizeAdjustPolicy">
+        <enum>QComboBox::AdjustToContentsOnFirstShow</enum>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="highlight_connections_check_box">
+       <property name="toolTip">
+        <string>Highlight incoming and outgoing connections on mouse over</string>
+       </property>
+       <property name="text">
+        <string>Highlight</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="auto_fit_graph_check_box">
+       <property name="toolTip">
+        <string>Automatically fit graph into view on update</string>
+       </property>
+       <property name="text">
+        <string>Fit</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="fit_in_view_push_button">
+       <property name="toolTip">
+        <string>Fit graph in view</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QToolButton" name="play_tool_button">
+       <property name="text">
+        <string>Play</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QToolButton" name="stop_tool_button">
+       <property name="text">
+        <string>Stop</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QLabel" name="message_label">
+       <property name="font">
+        <font>
+         <pointsize>15</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer_3">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="load_bag_push_button">
+       <property name="toolTip">
+        <string>Load and view trees from a .bag file</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="load_dot_push_button">
+       <property name="toolTip">
+        <string>Load DOT graph from file</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="save_dot_push_button">
+       <property name="toolTip">
+        <string>Save as DOT graph</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="save_as_svg_push_button">
+       <property name="toolTip">
+        <string>Save as SVG</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="save_as_image_push_button">
+       <property name="toolTip">
+        <string>Save as image</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="InteractiveGraphicsView" name="graphics_view">
+     <property name="renderHints">
+      <set>QPainter::Antialiasing|QPainter::HighQualityAntialiasing|QPainter::SmoothPixmapTransform|QPainter::TextAntialiasing</set>
+     </property>
+     <property name="resizeAnchor">
+      <enum>QGraphicsView::AnchorViewCenter</enum>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="bottom_bar_layout">
+     <item>
+      <widget class="QToolButton" name="first_tool_button">
+       <property name="toolTip">
+        <string>Go to the first tree</string>
+       </property>
+       <property name="text">
+        <string>First</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QToolButton" name="previous_tool_button">
+       <property name="toolTip">
+        <string>View the previous tree in the sequence</string>
+       </property>
+       <property name="text">
+        <string>Previous</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <layout class="QVBoxLayout" name="timeline_layout">
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <widget class="QGraphicsView" name="timeline_graphics_view">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>60</height>
+          </size>
+         </property>
+         <property name="mouseTracking">
+          <bool>false</bool>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <widget class="QToolButton" name="next_tool_button">
+       <property name="toolTip">
+        <string>View the next tree in the sequence</string>
+       </property>
+       <property name="layoutDirection">
+        <enum>Qt::LeftToRight</enum>
+       </property>
+       <property name="text">
+        <string>Next</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QToolButton" name="last_tool_button">
+       <property name="toolTip">
+        <string>Go to the latest tree</string>
+       </property>
+       <property name="text">
+        <string>Last</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>InteractiveGraphicsView</class>
+   <extends>QGraphicsView</extends>
+   <header>rqt_graph.interactive_graphics_view</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

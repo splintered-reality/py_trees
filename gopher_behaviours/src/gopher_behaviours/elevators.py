@@ -37,7 +37,6 @@ from . import recovery
 class Elevators(py_trees.Sequence):
     pass
 
-
 class HumanAssistedElevators(Elevators):
 
     def __init__(self, name, origin, elevator, destination):
@@ -59,7 +58,8 @@ class HumanAssistedElevators(Elevators):
         # Tree
         ###########################################
         # Assume all things here...as both semantics and planner should already validate everything.
-        self.children = _generate_elevator_children(self.gopher, self.elevator.unique_name, self.elevator_level_origin, self.elevator_level_destination)
+        # use the add_child function to make sure that the parents are correctly initialised
+        map(self.add_child, _generate_elevator_children(self.gopher, self.elevator.unique_name, self.elevator_level_origin, self.elevator_level_destination))
 
 
 def _generate_elevator_children(gopher_configuration, elevator_name, elevator_level_origin, elevator_level_destination):
