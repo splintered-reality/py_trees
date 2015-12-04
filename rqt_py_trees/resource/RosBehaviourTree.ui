@@ -14,7 +14,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>TF Tree</string>
+   <string>PyTrees Behaviour Tree </string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0,0">
    <item>
