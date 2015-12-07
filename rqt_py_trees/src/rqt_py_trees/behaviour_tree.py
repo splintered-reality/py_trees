@@ -107,6 +107,7 @@ class RosBehaviourTree(QObject):
         self.current_topic = None
         self.behaviour_sub = None
         self._tip_message = None # message of the tip of the tree
+        self._saved_settings_topic = None # topic subscribed to by previous instance
 
         # dot_to_qt transforms into Qt elements using dot layout
         self.dot_to_qt = DotToQtGenerator()
@@ -290,6 +291,12 @@ class RosBehaviourTree(QObject):
         self._widget.topic_combo_box.addItem(RosBehaviourTree._unselected_topic)
         for topic in valid_topics:
             self._widget.topic_combo_box.addItem(topic)
+            # if the topic corresponds to the one that was active the last time
+            # the viewer was run, automatically set that one as the one we look
+            # at
+            if topic == self._saved_settings_topic:
+                self._widget.topic_combo_box.setCurrentIndex(self._widget.topic_combo_box.count() - 1)
+                self._choose_topic(self._widget.topic_combo_box.currentIndex())
 
     def _set_timeline_buttons(self, first=None, previous=None, next=None, last=None):
         """Allows timeline buttons to be enabled and disabled.
@@ -399,13 +406,18 @@ class RosBehaviourTree(QObject):
                                     self._widget.auto_fit_graph_check_box.isChecked())
         instance_settings.set_value('highlight_connections_check_box_state',
                                     self._widget.highlight_connections_check_box.isChecked())
+        combo_text = self._widget.topic_combo_box.currentText()
+        if not combo_text in [self._empty_topic, self._unselected_topic]:
+            instance_settings.set_value('combo_box_subscribed_topic', combo_text)
 
     def restore_settings(self, plugin_settings, instance_settings):
         self._widget.auto_fit_graph_check_box.setChecked(
             instance_settings.value('auto_fit_graph_check_box_state', True) in [True, 'true'])
         self._widget.highlight_connections_check_box.setChecked(
             instance_settings.value('highlight_connections_check_box_state', True) in [True, 'true'])
+        self._saved_settings_topic = instance_settings.value('combo_box_subscribed_topic', None)
         self.initialized = True
+        self._update_combo_topics()
         self._refresh_tf_graph()
 
     def _refresh_tf_graph(self):
