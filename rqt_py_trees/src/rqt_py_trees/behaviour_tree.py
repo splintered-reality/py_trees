@@ -31,31 +31,35 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from __future__ import division
-import os
 
-
-import rospy
-import rospkg
-import rosbag
+import argparse
 import functools
+import os
+import re
+import sys
+import fnmatch
+
+import rosbag
+import rospkg
+import rospy
+
 import py_trees_msgs.msg as py_trees_msgs
 import uuid_msgs.msg as uuid_msgs
+
+from .dotcode_behaviour import RosBehaviourTreeDotcodeGenerator
+from .dynamic_timeline import DynamicTimeline
+from .dynamic_timeline_listener import DynamicTimelineListener
+from .timeline_listener import TimelineListener
+from qt_dotgraph.dot_to_qt import DotToQtGenerator
+from qt_dotgraph.pydotfactory import PydotFactory
+from rqt_bag.bag_timeline import BagTimeline
+from rqt_bag.bag_widget import BagGraphicsView
+from rqt_graph.interactive_graphics_view import InteractiveGraphicsView
 
 from python_qt_binding import loadUi
 from python_qt_binding.QtCore import QFile, QIODevice, QObject, Qt, Signal, QEvent
 from python_qt_binding.QtGui import QFileDialog, QGraphicsView, QGraphicsScene, QIcon, QImage, QPainter, QWidget, QShortcut, QKeySequence
 from python_qt_binding.QtSvg import QSvgGenerator
-from qt_dotgraph.pydotfactory import PydotFactory
-from qt_dotgraph.dot_to_qt import DotToQtGenerator
-from rqt_graph.interactive_graphics_view import InteractiveGraphicsView
-from rqt_bag.bag_timeline import BagTimeline
-from rqt_bag.bag_widget import BagGraphicsView
-from .dynamic_timeline import DynamicTimeline
-
-from .dotcode_behaviour import RosBehaviourTreeDotcodeGenerator
-from .timeline_listener import TimelineListener
-from .dynamic_timeline_listener import DynamicTimelineListener
-
 
 class RosBehaviourTree(QObject):
 
@@ -67,6 +71,7 @@ class RosBehaviourTree(QObject):
     _expected_type = py_trees_msgs.BehaviourTree()._type
     _empty_topic = "No valid topics available"
     _unselected_topic = "Not subscribing"
+    no_roscore_switch = "--no-roscore"
 
     class ComboBoxEventFilter(QObject):
         """Event filter for the combo box. Will filter left mouse button presses,
@@ -90,6 +95,21 @@ class RosBehaviourTree(QObject):
         super(RosBehaviourTree, self).__init__(context)
         self.setObjectName('RosBehaviourTree')
 
+        parser = argparse.ArgumentParser()
+        RosBehaviourTree.add_arguments(parser, False)
+        # if the context doesn't have an argv attribute then assume we're running with --no-roscore
+        if not hasattr(context, 'argv'):
+            args = sys.argv[1:]
+            # Can run the viewer with or without live updating. Running without is
+            # intended for viewing of bags only
+            self.live_update = False
+        else:
+            args = context.argv()
+            self.live_update = True
+
+        parsed_args = parser.parse_args(args)
+
+        self.context = context
         self.initialized = False
         self._current_dotcode = None # dotcode for the tree that is currently displayed
         self._viewing_bag = False # true if a bag file is loaded
@@ -116,7 +136,7 @@ class RosBehaviourTree(QObject):
         ui_file = os.path.join(rp.get_path('rqt_py_trees'), 'resource', 'RosBehaviourTree.ui')
         loadUi(ui_file, self._widget, {'InteractiveGraphicsView': InteractiveGraphicsView})
         self._widget.setObjectName('RosBehaviourTreeUi')
-        if context.serial_number() > 1:
+        if hasattr(context, 'serial_number') and context.serial_number() > 1:
             self._widget.setWindowTitle(self._widget.windowTitle() + (' (%d)' % context.serial_number()))
 
         self._scene = QGraphicsScene()
@@ -228,11 +248,84 @@ class RosBehaviourTree(QObject):
         self._play_timer = None
 
         # updates the view
-        self._refresh_view.connect(self._refresh_tf_graph)
-
-        context.add_widget(self._widget)
+        self._refresh_view.connect(self._refresh_tree_graph)
 
         self._force_refresh = False
+
+        if self.live_update:
+            context.add_widget(self._widget)
+        else:
+            self.initialized = True # this needs to be set for trees to be displayed
+            context.setCentralWidget(self._widget)
+
+        if parsed_args.bag:
+            self._load_bag(parsed_args.bag)
+        elif parsed_args.latest_bag:
+            # if the latest bag is requested, load it from the default directory, or
+            # the one specified in the args
+            bag_dir = parsed_args.bag_dir or os.getenv('ROS_HOME', os.path.expanduser('~/.ros')) + '/behaviour_trees'
+            self.open_latest_bag(bag_dir, parsed_args.by_time)
+
+    @staticmethod
+    def add_arguments(parser, group=True):
+        """Allows for the addition of arguments to the rqt_gui loading method
+
+        :param bool group: If set to false, this indicates that the function is
+            being called from the rqt_py_trees script as opposed to the inside
+            of rqt_gui.main. We use this to ensure that the same arguments can
+            be passed with and without the --no-roscore argument set. If it is
+            set, the rqt_gui code is bypassed. We need to make sure that all the
+            arguments are displayed with -h.
+
+        """
+        operate_object = parser
+        if group:
+            operate_object = parser.add_argument_group('Options for the rqt_py_trees viewer')
+
+        operate_object.add_argument('bag', action='store', help='Load this bag when the viewer starts')
+        operate_object.add_argument('-l', '--latest-bag', action='store_true', help='Load the latest bag available in the bag directory. Bag files are expected to be under the bag directory in the following structure: year-month-day/behaviour_tree_hour-minute-second.bag. If this structure is not followed, the bag file which was most recently modified is used.')
+        operate_object.add_argument('-d', '--bag-dir', action='store', help='Specify the directory in which to look for bag files. The default is $ROS_HOME/behaviour_trees, if $ROS_HOME is set, or ~/.ros/behaviour_trees otherwise.')
+        operate_object.add_argument('-m', '--by-time', action='store_true', help='The latest bag is defined by the time at which the file was last modified, rather than the date and time specified in the filename.')
+        operate_object.add_argument(RosBehaviourTree.no_roscore_switch, action='store_true', help='Run the viewer without roscore. It is only possible to view bag files if this is set.')
+
+    def open_latest_bag(self, bag_dir, by_time=False):
+        """Open the latest bag in the given directory
+
+        :param str bag_dir: the directory in which to look for bags
+        :param bool by_time: if true, the latest bag is the one with the latest
+            modification time, not the latest date-time specified by its filename
+
+        """
+        if not os.path.isdir(bag_dir):
+            rospy.logwarn("Requested bag directory {0} is invalid. Latest bag will not be loaded.".format(bag_dir))
+            return
+
+        files = []
+        for root, dirnames, filenames in os.walk(bag_dir, topdown=True):
+            files.extend(fnmatch.filter(map(lambda p: os.path.join(root, p), filenames), '*.bag'))
+
+        if not files:
+            rospy.logwarn("No files with extension .bag found in directory {0}".format(bag_dir))
+            return
+
+        if not by_time:
+            # parse the file list with a regex to get only those which have the
+            # format year-month-day/behaviour_tree_hour-minute-second.bag
+            re_str = '.*\/\d{4}-\d{2}-\d{2}\/behaviour_tree_\d{2}-\d{2}-\d{2}.bag'
+            expr = re.compile(re_str)
+            valid = filter(lambda f: expr.match(f), files)
+
+            # if no files match the regex, use modification time instead
+            if not valid:
+                by_time = True
+            else:
+                # dates are monotonically increasing, so the last one is the latest
+                latest_bag = sorted(valid)[-1]
+
+        if by_time:
+            latest_bag = sorted(files, cmp=lambda x,y: cmp(os.path.getctime(x), os.path.getctime(y)))[-1]
+
+        self._load_bag(latest_bag)
 
     def get_current_message(self):
         """Get the message in the list or bag that is being viewed that should be
@@ -275,6 +368,11 @@ class RosBehaviourTree(QObject):
         topics with the correct message type are shown.
 
         """
+        # Only update topics if we're running with live updating
+        if not self.live_update:
+            self._widget.topic_combo_box.setEnabled(False)
+            return
+
         self._widget.topic_combo_box.clear()
         topic_list = rospy.get_published_topics()
 
@@ -418,9 +516,9 @@ class RosBehaviourTree(QObject):
         self._saved_settings_topic = instance_settings.value('combo_box_subscribed_topic', None)
         self.initialized = True
         self._update_combo_topics()
-        self._refresh_tf_graph()
+        self._refresh_tree_graph()
 
-    def _refresh_tf_graph(self):
+    def _refresh_tree_graph(self):
         """Refresh the graph view by regenerating the dotcode from the current message.
 
         """
