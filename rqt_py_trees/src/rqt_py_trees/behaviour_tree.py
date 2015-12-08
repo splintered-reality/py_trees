@@ -282,7 +282,7 @@ class RosBehaviourTree(QObject):
         if group:
             operate_object = parser.add_argument_group('Options for the rqt_py_trees viewer')
 
-        operate_object.add_argument('bag', action='store', help='Load this bag when the viewer starts')
+        operate_object.add_argument('bag', action='store', nargs='?', help='Load this bag when the viewer starts')
         operate_object.add_argument('-l', '--latest-bag', action='store_true', help='Load the latest bag available in the bag directory. Bag files are expected to be under the bag directory in the following structure: year-month-day/behaviour_tree_hour-minute-second.bag. If this structure is not followed, the bag file which was most recently modified is used.')
         operate_object.add_argument('-d', '--bag-dir', action='store', help='Specify the directory in which to look for bag files. The default is $ROS_HOME/behaviour_trees, if $ROS_HOME is set, or ~/.ros/behaviour_trees otherwise.')
         operate_object.add_argument('-m', '--by-time', action='store_true', help='The latest bag is defined by the time at which the file was last modified, rather than the date and time specified in the filename.')
