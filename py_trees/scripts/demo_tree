@@ -28,8 +28,9 @@ py_trees.logging.level = py_trees.logging.Level.DEBUG
 ##############################################################################
 
 
-class Visitor:
+class Visitor(py_trees.VisitorBase):
     def __init__(self):
+        super(Visitor, self).__init__(full=False)
         self.logger = py_trees.logging.get_logger("Visitor")
 
     def initialise(self):

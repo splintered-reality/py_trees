@@ -49,6 +49,7 @@ CONTINUOUS_TICK_TOCK = -1
 # Classes
 ##############################################################################
 
+
 class VisitorBase(object):
     """Base object for visitors.
     """
@@ -61,6 +62,7 @@ class VisitorBase(object):
 
         """
         self.full = full
+
 
 class BehaviourTree(object):
     """
