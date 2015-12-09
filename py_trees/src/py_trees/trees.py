@@ -29,6 +29,7 @@ import datetime
 import rosbag
 import rospkg
 import os
+import threading
 
 from . import common
 from . import display
@@ -357,7 +358,7 @@ class ROSBehaviourTree(BehaviourTree):
         self.bag = rosbag.Bag(subdir + '/behaviour_tree_' + now.strftime("%H-%M-%S") + '.bag', 'w')
 
         self.last_tree = py_trees_msgs.BehaviourTree()
-
+        self.lock = threading.Lock()
         # cleanup must come last as it assumes the existence of the bag
         rospy.on_shutdown(self.cleanup)
 
@@ -386,8 +387,10 @@ class ROSBehaviourTree(BehaviourTree):
         # message when the tree changes.
         if self.logging_visitor.tree.behaviours != self.last_tree.behaviours:
             self.snapshot_logging_publisher.publish(self.logging_visitor.tree)
-            self.bag.write(self.snapshot_logging_publisher.name, self.logging_visitor.tree)
+            with self.lock:
+                self.bag.write(self.snapshot_logging_publisher.name, self.logging_visitor.tree)
             self.last_tree = self.logging_visitor.tree
 
     def cleanup(self):
-        self.bag.close()
+        with self.lock:
+            self.bag.close()
