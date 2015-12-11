@@ -22,7 +22,7 @@ Bless my noggin with a tickle from your noodly appendages!
 ##############################################################################
 
 import gopher_configuration
-from gopher_std_msgs.msg import Notification
+from gopher_std_msgs.msg import Notification, LEDStrip
 import gopher_std_msgs.srv as gopher_std_srvs
 import py_trees
 import rospy
@@ -159,18 +159,13 @@ class SendNotification(py_trees.Sequence):
         self.message = message
 
         self.led_pattern = led_pattern if led_pattern is not None else Notification.RETAIN_PREVIOUS
+        self.led_pattern = LEDStrip(led_strip_pattern=self.led_pattern)
         self.button_cancel = button_cancel if button_cancel is not None else Notification.RETAIN_PREVIOUS
         self.button_confirm = button_confirm if button_confirm is not None else Notification.RETAIN_PREVIOUS
 
         self.notification = Notification(sound_name=self.sound, led_pattern=self.led_pattern,
                                          button_confirm=self.button_confirm,
                                          button_cancel=self.button_cancel, message=self.message)
-
-        # cancel LED status on success, but only if they were set by the requested notification
-        self.led_stop = Notification.CANCEL_CURRENT if led_pattern is not None else Notification.RETAIN_PREVIOUS
-        self.cancel_stop = Notification.BUTTON_OFF if button_cancel is not None else Notification.RETAIN_PREVIOUS
-        self.confirm_stop = Notification.BUTTON_OFF if button_confirm is not None else Notification.RETAIN_PREVIOUS
-
 
         self.cancel_on_stop = cancel_on_stop
 

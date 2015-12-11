@@ -151,7 +151,7 @@ class MoveIt(py_trees.Behaviour):
                 # this will light up for the default period of the notifier (typically 10s)
                 self.publisher.publish(
                     gopher_std_msgs.Notification(
-                        led_pattern=self.gopher.led_patterns.dab_dab_hae,
+                        led_pattern=gopher_std_msgs.LEDStrip(led_strip_pattern=self.gopher.led_patterns.dab_dab_hae),
                         message=self.feedback_message
                     )
                 )
