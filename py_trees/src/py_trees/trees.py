@@ -274,7 +274,7 @@ class ROSBehaviourTree(BehaviourTree):
 
         def __init__(self):
             super(ROSBehaviourTree.LoggingVisitor, self).__init__()
-            self.full = True # examine all nodes
+            self.full = True  # examine all nodes
 
         def initialise(self):
             self.tree = py_trees_msgs.BehaviourTree()
@@ -289,7 +289,7 @@ class ROSBehaviourTree(BehaviourTree):
             elif isinstance(behaviour, Behaviour):
                 return py_trees_msgs.Behaviour.BEHAVIOUR
             else:
-                return 0 # unknown type
+                return 0  # unknown type
 
         def convert_status(self, status):
             if status == common.Status.INVALID:
@@ -301,7 +301,7 @@ class ROSBehaviourTree(BehaviourTree):
             elif status == common.Status.FAILURE:
                 return py_trees_msgs.Behaviour.FAILURE
             else:
-                return 0 # unknown status
+                return 0  # unknown status
 
         def run(self, behaviour):
             new_behaviour = py_trees_msgs.Behaviour()
@@ -344,6 +344,7 @@ class ROSBehaviourTree(BehaviourTree):
         self.visitors.append(self.snapshot_visitor)
         self.visitors.append(self.logging_visitor)
         self.post_tick_handlers.append(self.publish_tree_snapshots)
+        self._bag_closed = False
 
         now = datetime.datetime.now()
         topdir = rospkg.get_ros_home() + '/behaviour_trees'
@@ -388,9 +389,12 @@ class ROSBehaviourTree(BehaviourTree):
         if self.logging_visitor.tree.behaviours != self.last_tree.behaviours:
             self.snapshot_logging_publisher.publish(self.logging_visitor.tree)
             with self.lock:
-                self.bag.write(self.snapshot_logging_publisher.name, self.logging_visitor.tree)
+                if not self._bag_closed:
+                    self.bag.write(self.snapshot_logging_publisher.name, self.logging_visitor.tree)
             self.last_tree = self.logging_visitor.tree
 
     def cleanup(self):
         with self.lock:
             self.bag.close()
+            self.interrupt_tick_tocking = True
+            self._bag_closed = True
