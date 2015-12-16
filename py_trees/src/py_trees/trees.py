@@ -49,6 +49,7 @@ CONTINUOUS_TICK_TOCK = -1
 # Classes
 ##############################################################################
 
+
 class VisitorBase(object):
     """Base object for visitors.
     """
@@ -61,6 +62,7 @@ class VisitorBase(object):
 
         """
         self.full = full
+
 
 class BehaviourTree(object):
     """
@@ -271,7 +273,7 @@ class ROSBehaviourTree(BehaviourTree):
 
         def __init__(self):
             super(ROSBehaviourTree.LoggingVisitor, self).__init__()
-            self.full = True # examine all nodes
+            self.full = True  # examine all nodes
 
         def initialise(self):
             self.tree = py_trees_msgs.BehaviourTree()
@@ -286,7 +288,7 @@ class ROSBehaviourTree(BehaviourTree):
             elif isinstance(behaviour, Behaviour):
                 return py_trees_msgs.Behaviour.BEHAVIOUR
             else:
-                return 0 # unknown type
+                return 0  # unknown type
 
         def convert_status(self, status):
             if status == common.Status.INVALID:
@@ -298,7 +300,7 @@ class ROSBehaviourTree(BehaviourTree):
             elif status == common.Status.FAILURE:
                 return py_trees_msgs.Behaviour.FAILURE
             else:
-                return 0 # unknown status
+                return 0  # unknown status
 
         def run(self, behaviour):
             new_behaviour = py_trees_msgs.Behaviour()
