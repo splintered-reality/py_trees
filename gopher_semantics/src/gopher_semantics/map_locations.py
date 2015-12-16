@@ -10,8 +10,8 @@ import rospy
 import sys
 
 import geometry_msgs.msg as geometry_msgs
-from gopher_std_msgs.msg import Location
-from gopher_std_msgs.msg import Locations
+from gopher_semantic_msgs.msg import Location
+from gopher_semantic_msgs.msg import Locations
 
 ##############################################################################
 # Classes
