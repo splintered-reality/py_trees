@@ -20,7 +20,6 @@ import gopher_behaviours
 import gopher_configuration
 import gopher_delivery_msgs.msg as gopher_delivery_msgs
 import gopher_navi_msgs.msg as gopher_navi_msgs
-import gopher_std_msgs.msg as gopher_std_msgs
 import rocon_python_comms
 import rospy
 import std_msgs.msg as std_msgs
@@ -73,6 +72,8 @@ class CustomDeliveryOverseer():
         else:
             if not self.custom_delivering:
                 rospy.logwarn("Custom Delivery : rejecting request as the delivery manager is already busy.")
+            else:
+                rospy.logwarn("Custom Delivery : accepting a request to do custom delivery.")
 
     def stop_cb(self, unused_msg):
         if not self.delivering:
@@ -84,6 +85,9 @@ class CustomDeliveryOverseer():
             goal.special_effects = True
             action_goal.goal = goal
             self.publishers.teleport_homebase.publish(action_goal)
+            rospy.logwarn("Custom Delivery : accepting a request to teleport.")
+        else:
+            rospy.logwarn("Custom Delivery : rejecting a request for teleport because we are delivering.")
 
     def spin(self):
         rate = rospy.Rate(10)

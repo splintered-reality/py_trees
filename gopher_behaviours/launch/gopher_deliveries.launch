@@ -6,19 +6,15 @@
 <launch>
   <group ns="gopher">
     <node name="behaviours" type="gopher_deliveries" pkg="gopher_behaviours">
-      <remap from="deliveries/battery"                            to="/gopher/status/battery_slow"/>
-      <remap from="deliveries/semantic_locations"                 to="/navi/semantic_locations"/>
-
-      <remap from="deliveries/dot_tree"                           to="/gopher/behaviours/dot_tree"/>
-      <remap from="deliveries/tick/dot_tree"                      to="/gopher/behaviours/tick/dot_tree"/>
-      <remap from="deliveries/ascii_tree"                         to="/gopher/behaviours/ascii_tree"/>
-      <remap from="deliveries/tick/ascii_tree"                    to="/gopher/behaviours/tick/ascii_tree"/>
+      <remap from="behaviours/battery"                            to="/gopher/status/battery_slow"/>
+      <remap from="behaviours/semantic_locations"                 to="/navi/semantic_locations"/>
 
       <remap from="delivery/goal"                                 to="/rocon/delivery/goal"/>
       <remap from="delivery/feedback"                             to="/rocon/delivery/feedback"/>
       <remap from="delivery/cancel"                               to="/rocon/delivery/cancel"/>
       <remap from="delivery/result"                               to="/rocon/delivery/result"/>
-      <remap from="delivery/go"                                   to="/gopher/buttons/go"/>
+
+      <remap from="behaviours/go"                                   to="/gopher/buttons/go"/>
 
       <remap from="ar_pose_marker_short_range"                           to="/gopher/ar_pose_marker_short_range"/>
     </node>
