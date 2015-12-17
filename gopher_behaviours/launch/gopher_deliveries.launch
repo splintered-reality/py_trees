@@ -5,7 +5,7 @@
  -->
 <launch>
   <group ns="gopher">
-    <node name="deliveries" type="gopher_deliveries" pkg="gopher_behaviours">
+    <node name="behaviours" type="gopher_deliveries" pkg="gopher_behaviours">
       <remap from="deliveries/battery"                            to="/gopher/status/battery_slow"/>
       <remap from="deliveries/semantic_locations"                 to="/navi/semantic_locations"/>
 
@@ -22,7 +22,7 @@
 
       <remap from="ar_pose_marker_short_range"                           to="/gopher/ar_pose_marker_short_range"/>
     </node>
-    
+
     <include file="$(find gopher_behaviours)/launch/custom_delivery_overseer.launch"/>
   </group>
 </launch>
