@@ -24,5 +24,5 @@ import behaviours  # specific behaviours
 
 from .common import Status
 from .composites import Composite, Selector, Sequence, OneshotSequence
-from .trees import BehaviourTree, ROSBehaviourTree, CONTINUOUS_TICK_TOCK
+from .trees import BehaviourTree, ROSBehaviourTree, CONTINUOUS_TICK_TOCK, VisitorBase
 import display

@@ -29,6 +29,7 @@ import datetime
 import rosbag
 import rospkg
 import os
+import threading
 
 from . import common
 from . import display
@@ -331,7 +332,6 @@ class ROSBehaviourTree(BehaviourTree):
         :raises AssertionError: if incoming root variable is not the correct type.
         """
         super(ROSBehaviourTree, self).__init__(root)
-        rospy.on_shutdown(self.cleanup)
         self.ascii_tree_publisher = rospy.Publisher('~ascii_tree', std_msgs.String, queue_size=1, latch=True)
         self.snapshot_ascii_tree_publisher = rospy.Publisher('~tick/ascii_tree', std_msgs.String, queue_size=1, latch=True)
         self.dot_tree_publisher = rospy.Publisher('~dot_tree', std_msgs.String, queue_size=1, latch=True)
@@ -344,6 +344,7 @@ class ROSBehaviourTree(BehaviourTree):
         self.visitors.append(self.snapshot_visitor)
         self.visitors.append(self.logging_visitor)
         self.post_tick_handlers.append(self.publish_tree_snapshots)
+        self._bag_closed = False
 
         now = datetime.datetime.now()
         topdir = rospkg.get_ros_home() + '/behaviour_trees'
@@ -358,6 +359,9 @@ class ROSBehaviourTree(BehaviourTree):
         self.bag = rosbag.Bag(subdir + '/behaviour_tree_' + now.strftime("%H-%M-%S") + '.bag', 'w')
 
         self.last_tree = py_trees_msgs.BehaviourTree()
+        self.lock = threading.Lock()
+        # cleanup must come last as it assumes the existence of the bag
+        rospy.on_shutdown(self.cleanup)
 
     def publish_tree_modifications(self, root):
         """
@@ -384,8 +388,13 @@ class ROSBehaviourTree(BehaviourTree):
         # message when the tree changes.
         if self.logging_visitor.tree.behaviours != self.last_tree.behaviours:
             self.snapshot_logging_publisher.publish(self.logging_visitor.tree)
-            self.bag.write(self.snapshot_logging_publisher.name, self.logging_visitor.tree)
+            with self.lock:
+                if not self._bag_closed:
+                    self.bag.write(self.snapshot_logging_publisher.name, self.logging_visitor.tree)
             self.last_tree = self.logging_visitor.tree
 
     def cleanup(self):
-        self.bag.close()
+        with self.lock:
+            self.bag.close()
+            self.interrupt_tick_tocking = True
+            self._bag_closed = True

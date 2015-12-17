@@ -1,0 +1,4 @@
+<launch>
+  <node name="rqt_py_trees" type="rqt_py_trees" pkg="rqt_py_trees"/>
+  <include file="$(find py_trees)/launch/demo_tree.launch"/>
+</launch>

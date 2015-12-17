@@ -1,3 +1,0 @@
-<launch>
-  <node name="rqt_behaviour_tree" type="rqt_behaviour_tree" pkg="rqt_behaviour_tree" launch-prefix="valgrind"/>
-</launch>
