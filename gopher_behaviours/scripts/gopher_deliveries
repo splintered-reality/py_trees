@@ -17,7 +17,6 @@ Node that acts as caretaker of the behaviour tree for gopher deliveries.
 import gopher_behaviours
 from gopher_behaviours.planner import Planner
 import gopher_configuration
-import gopher_std_msgs.msg as gopher_std_msgs
 import gopher_delivery_msgs.srv as gopher_delivery_srvs
 import gopher_delivery_msgs.msg as gopher_delivery_msgs
 import move_base_msgs.msg as move_base_msgs
@@ -91,15 +90,20 @@ class GopherHiveMind(object):
         self.monitor_thread.start()
 
     def monitor(self):
+        '''
+        Loop around looking for move base and break out once its found it.
+        We assume that once found, it will always be there.
+        '''
         action_client = actionlib.SimpleActionClient(self.gopher.actions.move_base, move_base_msgs.MoveBaseAction)
         while not rospy.is_shutdown():
-            if not action_client.wait_for_server(rospy.Duration(10)):
-                rospy.logwarn("Gopher Deliveries (monitor) : could not connect to move base.")
+            if not action_client.wait_for_server(rospy.Duration(30)):
+                rospy.logwarn("Gopher Deliveries : could not find move base, retrying.")
                 with self.monitor_lock:
                     self.monitor_ok = False
             else:
                 with self.monitor_lock:
                     self.monitor_ok = True
+                    break
 
     def _eta_callback(self, msg):
         self.current_eta = msg
@@ -179,7 +183,7 @@ class GopherHiveMind(object):
         '''
         Accept (or not) a delivery goal. Right now we refuse any goals assigned to us after the first.
 
-        :param gopher_std_msgs.srv.DeliveryGoalRequest request: goal information
+        :param gopher_delivery_msgs.srv.DeliveryGoalRequest request: goal information
 
         .. todo::
 

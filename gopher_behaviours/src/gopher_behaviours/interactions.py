@@ -151,7 +151,7 @@ class SendNotification(py_trees.Sequence):
         super(SendNotification, self).__init__(name)
         self.gopher = gopher_configuration.Configuration()
         self.topic_name = self.gopher.services.notification
-        rospy.wait_for_service(self.topic_name, 5) # should never need to wait 
+        rospy.wait_for_service(self.topic_name, 5)  # should never need to wait
         self.service = rospy.ServiceProxy(self.topic_name, gopher_std_srvs.Notify)
         self.timer = None
         self.sound = sound
@@ -177,7 +177,7 @@ class SendNotification(py_trees.Sequence):
         request.duration = gopher_std_srvs.NotifyRequest.INDEFINITE
         request.notification = self.notification
         try:
-            resp = self.service(request)
+            unused_response = self.service(request)
         except rospy.ServiceException as e:
             rospy.logwarn("SendNotification : Service failed to process notification request: {0}".format(str(e)))
             self.service_failed = True
@@ -186,11 +186,10 @@ class SendNotification(py_trees.Sequence):
     def stop(self, new_status):
         super(SendNotification, self).stop(new_status)
         if self.cancel_on_stop and not self.service_failed:
-            rospy.loginfo("sending stop req")
             request = gopher_std_srvs.NotifyRequest()
             request.id = unique_id.toMsg(self.id)
             request.action = gopher_std_srvs.NotifyRequest.STOP
             try:
-                resp = self.service(request)
+                unused_response = self.service(request)
             except rospy.ServiceException as e:
                 rospy.logwarn("SendNotification : Service failed to process notification cancel request: {0}".format(str(e)))

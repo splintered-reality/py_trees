@@ -28,8 +28,9 @@ py_trees.logging.level = py_trees.logging.Level.DEBUG
 ##############################################################################
 
 
-class Visitor:
+class Visitor(py_trees.VisitorBase):
     def __init__(self):
+        super(Visitor, self).__init__(full=False)
         self.logger = py_trees.logging.get_logger("Visitor")
 
     def initialise(self):
@@ -102,11 +103,25 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Demo the behaviour trees', usage=show_usage(tree.root))
     parser.add_argument('-r', '--render', action='store_true', help='render dot tree to file.')
-    args = parser.parse_args()
+    parser.add_argument('--ros', action='store_true', help='execute the tree as a ros behaviour tree.')
+
+    try:
+        import rospy
+        myargs = rospy.myargv(argv=sys.argv)
+    except ImportError:
+        myargs = sys.argv
+
+    args = parser.parse_args(args=myargs[1:])
 
     if args.render:
         render(root)
         sys.exit()
+
+    if args.ros:
+        # we've already imported rospy above, assume that we've got it
+        rospy.init_node("demo_tree")
+        # rebuild the tree as a ros behaviour tree
+        tree = py_trees.ROSBehaviourTree(root)
 
     tree.visitors.append(Visitor())
     tree.tick_tock(sleep_ms=500, number_of_iterations=py_trees.CONTINUOUS_TICK_TOCK, pre_tick_handler=pre_tick_handler)
