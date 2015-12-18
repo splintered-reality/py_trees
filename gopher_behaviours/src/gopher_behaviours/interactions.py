@@ -168,6 +168,8 @@ class SendNotification(py_trees.Sequence):
                                          button_cancel=self.button_cancel, message=self.message)
 
         self.cancel_on_stop = cancel_on_stop
+        # flag used to remember that we have a notification that needs cleaning up or not
+        self.sent_notification = False
 
     def initialise(self):
         super(SendNotification, self).initialise()
@@ -178,18 +180,21 @@ class SendNotification(py_trees.Sequence):
         request.notification = self.notification
         try:
             unused_response = self.service(request)
+            self.sent_notification = True
         except rospy.ServiceException as e:
-            rospy.logwarn("SendNotification : Service failed to process notification request: {0}".format(str(e)))
+            rospy.logwarn("SendNotification : failed to process notification request [%s][%s]" % (self.message, str(e)))
             self.service_failed = True
             self.stop(py_trees.Status.FAILURE)
 
     def stop(self, new_status):
         super(SendNotification, self).stop(new_status)
-        if self.cancel_on_stop and not self.service_failed:
+        if self.cancel_on_stop and not self.service_failed and self.sent_notification:
             request = gopher_std_srvs.NotifyRequest()
             request.id = unique_id.toMsg(self.id)
             request.action = gopher_std_srvs.NotifyRequest.STOP
+            request.notification = Notification(message=self.message)
+            self.sent_notification = False
             try:
                 unused_response = self.service(request)
             except rospy.ServiceException as e:
-                rospy.logwarn("SendNotification : Service failed to process notification cancel request: {0}".format(str(e)))
+                rospy.logwarn("SendNotification : failed to process notification cancel request [%s][%s]" % (self.message, str(e)))
