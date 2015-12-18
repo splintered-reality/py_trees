@@ -379,7 +379,7 @@ class Unpark(py_trees.Behaviour):
                 req.id = self.notify_id
                 req.action = gopher_std_srvs.NotifyRequest.START
                 req.duration = gopher_std_srvs.NotifyRequest.INDEFINITE
-                req.notification = gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.FLASH_YELLOW,
+                req.notification = gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.LEDStrip(led_strip_pattern=gopher_std_msgs.Notification.FLASH_YELLOW),
                                                                 button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
                                                                 button_confirm=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
                                                                 message="waiting to be unplugged")
@@ -444,7 +444,7 @@ class Unpark(py_trees.Behaviour):
                         req.id = self.notify_id
                         req.action = gopher_std_srvs.NotifyRequest.START
                         req.duration = gopher_std_srvs.NotifyRequest.INDEFINITE
-                        req.notification = gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.FLASH_PURPLE,
+                        req.notification = gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.LEDStrip(led_strip_pattern=gopher_std_msgs.LEDStrip.FLASH_PURPLE),
                                                                         button_confirm=gopher_std_msgs.Notification.BUTTON_ON,
                                                                         button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
                                                                         message="Unpark : waiting for go button press to continue")

@@ -86,8 +86,6 @@ class CustomDeliveryOverseer():
             action_goal.goal = goal
             self.publishers.teleport_homebase.publish(action_goal)
             rospy.logwarn("Custom Delivery : accepting a request to teleport.")
-        else:
-            rospy.logwarn("Custom Delivery : rejecting a request for teleport because we are delivering.")
 
     def spin(self):
         rate = rospy.Rate(10)

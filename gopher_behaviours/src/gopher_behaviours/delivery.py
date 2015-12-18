@@ -128,7 +128,7 @@ class Waiting(py_trees.Behaviour):
         req.id = self.notify_id
         req.action = gopher_std_srvs.NotifyRequest.START
         req.duration = gopher_std_srvs.NotifyRequest.INDEFINITE
-        req.notification = gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
+        req.notification = gopher_std_msgs.Notification(led_pattern=gopher_std_msgs.LEDStrip(led_strip_pattern=gopher_std_msgs.Notification.RETAIN_PREVIOUS),
                                                         button_confirm=gopher_std_msgs.Notification.BUTTON_ON,
                                                         button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
                                                         message="at location, waiting for button press")
