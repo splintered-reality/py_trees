@@ -150,7 +150,7 @@ class MoveIt(py_trees.Behaviour):
                 self.feedback_message = "move base aborted, but we dont ever give up...tallyho!"
                 # this will light up for the default period of the notifier (typically 10s)
                 self.notify_srv(
-                    gopher_std_msgs.Notification(
+                    notification=gopher_std_msgs.Notification(
                         led_pattern=gopher_std_msgs.LEDStrip(led_strip_pattern=self.gopher.led_patterns.dab_dab_hae),
                         message=self.feedback_message
                     )
