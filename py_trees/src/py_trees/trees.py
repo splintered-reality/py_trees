@@ -95,6 +95,12 @@ class BehaviourTree(object):
         self.interrupt_tick_tocking = False
         self.tree_update_handler = None  # child classes can utilise this one
 
+    def add_pre_tick_handler(self, handler):
+        self.pre_tick_handlers.append(handler)
+
+    def add_post_tick_handler(self, handler):
+        self.post_tick_handlers.append(handler)
+
     def prune_subtree(self, unique_id):
         """
         :param uuid.UUID unique_id: unique id of the subtree root
