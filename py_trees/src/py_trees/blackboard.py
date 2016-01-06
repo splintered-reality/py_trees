@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import threading
 
 class Blackboard:
     """ Data store for the gopher delivery behaviours"""

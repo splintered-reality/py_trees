@@ -40,15 +40,15 @@ class CheckChargeState(py_trees.Behaviour):
         :param int expected_state: return success if the battery enters this charging state
         """
         super(CheckChargeState, self).__init__(name)
-        self._battery_subscriber = rospy.Subscriber("~battery", somanet_msgs.SmartBatteryStatus, self.battery_callback)
         self.expected_state = expected_state
         self.charge_state = None
+        self._battery_subscriber = rospy.Subscriber("~battery", somanet_msgs.SmartBatteryStatus, self.battery_callback)
 
     def battery_callback(self, msg):
         self.charge_state = msg.charge_state
 
     def update(self):
-        if self.charge_source == None:
+        if self.charge_state == None:
             self.feedback_message = "waiting for battery update"
             return py_trees.Status.RUNNING
         elif self.charge_state == self.expected_state:
@@ -65,10 +65,9 @@ class CheckChargeSource(py_trees.Behaviour):
         :param int expected_source: return success if the battery is being charged from this source
         """
         super(CheckChargeSource, self).__init__(name)
-        self._battery_subscriber = rospy.Subscriber("~battery", somanet_msgs.SmartBatteryStatus, self.battery_callback)
-        rospy.loginfo(self._battery_subscriber.name)
         self.expected_source = expected_source
         self.charge_source = None
+        self._battery_subscriber = rospy.Subscriber("~battery", somanet_msgs.SmartBatteryStatus, self.battery_callback)
 
     def battery_callback(self, msg):
         self.charge_source = msg.charging_source

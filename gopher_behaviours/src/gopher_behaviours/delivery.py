@@ -37,7 +37,7 @@ import yaml
 import std_msgs.msg as std_msgs
 import gopher_configuration
 import unique_id
-from .blackboard import Blackboard
+from py_trees.blackboard import Blackboard
 from . import elevators
 from . import recovery
 from . import interactions

@@ -120,11 +120,6 @@ class WaitForButton(py_trees.Behaviour):
         else:
             return py_trees.Status.RUNNING
 
-    def stop(self, new_status):
-        if self.subscriber is not None:
-            self.subscriber.unregister()
-
-
 class SendNotification(py_trees.Sequence):
     """
     This class runs as a sequence. Since led's turn off, you need a behaviour that is continuously
@@ -186,7 +181,7 @@ class SendNotification(py_trees.Sequence):
             self.service_failed = True
             self.stop(py_trees.Status.FAILURE)
 
-    def stop(self, new_status):
+    def stop(self, new_status=py_trees.Status.INVALID):
         super(SendNotification, self).stop(new_status)
         if self.cancel_on_stop and not self.service_failed and self.sent_notification:
             request = gopher_std_srvs.NotifyRequest()
