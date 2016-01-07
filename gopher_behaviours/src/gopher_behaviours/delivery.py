@@ -26,7 +26,7 @@ from enum import IntEnum
 import collections
 import os
 import py_trees
-import rocon_console.console as console
+# import rocon_console.console as console
 import rospkg
 import rospy
 from geometry_msgs.msg import Pose2D
@@ -37,7 +37,7 @@ import yaml
 import std_msgs.msg as std_msgs
 import gopher_configuration
 import unique_id
-from .blackboard import Blackboard
+from py_trees.blackboard import Blackboard
 from . import elevators
 from . import recovery
 from . import interactions
@@ -158,9 +158,10 @@ class Waiting(py_trees.Behaviour):
         req.notification = gopher_std_msgs.Notification(message="go button was pressed")
 
         try:
-            resp = self._notify_srv(req)
+            unused_response = self._notify_srv(req)
         except rospy.ServiceException as e:
             rospy.logwarn("SendNotification : Service failed to process notification request: {0}".format(str(e)))
+
 
 class GopherDeliveries(object):
     """
@@ -168,10 +169,6 @@ class GopherDeliveries(object):
 
     Can preload the delivery system with a set of semantic locations (in all their detail) or
     can reach out to a ros served set of semantic locations.
-
-    Requires blackboard variables:
-
-     - is_waiting [bool]
 
     :ivar root: root of the behaviour subtree for deliveries.
     :ivar blackboard:
@@ -181,20 +178,24 @@ class GopherDeliveries(object):
     :ivar feedback_message:
     :ivar old_goal_id:
 
+    Blackboard variables:
+
+     - traversed_locations : [str]
+     - remaining_locations : [str]
+
     .. todo::
 
-       going to be some broken logic here - if it's moving on its way home (i.e. running
+       1. broken logic here - if it's moving on its way home (i.e. running
        a different branch of the behaviour tree, then a new goal will still be accepted.
-       We need some way of determining when this branch is active and not.
-       Possibly have an idle state that replaces this root instead of just deleting it
-       when it has no current goal? We can then check its status to see if it's the active
-       branch or not...
+       This should be handled higher up, but should have a rejection here anyway just in
+       case something behaves badly.
 
-       also need to mutex the self.incoming_goal variable
+       2. also need to mutex the self.incoming_goal variable
     """
     def __init__(self, name, planner):
         self.blackboard = Blackboard()
-        self.blackboard.is_waiting = False
+        self.blackboard.traversed_locations = []
+        self.blackboard.remaining_locations = []
         self.config = gopher_configuration.Configuration()
         self.root = None
         self.state = State.IDLE

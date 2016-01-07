@@ -92,6 +92,10 @@ class CheckButtonPressed(py_trees.Behaviour):
             self.button_pressed = False
         return result
 
+    def stop(self, new_status=py_trees.Status.INVALID):
+        if self.subscriber is not None:
+            self.subscriber.unregister()
+
 
 class WaitForButton(py_trees.Behaviour):
     def __init__(self, name, topic_name):
@@ -120,7 +124,7 @@ class WaitForButton(py_trees.Behaviour):
         else:
             return py_trees.Status.RUNNING
 
-    def stop(self, new_status):
+    def stop(self, new_status=py_trees.Status.INVALID):
         if self.subscriber is not None:
             self.subscriber.unregister()
 
@@ -186,7 +190,7 @@ class SendNotification(py_trees.Sequence):
             self.service_failed = True
             self.stop(py_trees.Status.FAILURE)
 
-    def stop(self, new_status):
+    def stop(self, new_status=py_trees.Status.INVALID):
         super(SendNotification, self).stop(new_status)
         if self.cancel_on_stop and not self.service_failed and self.sent_notification:
             request = gopher_std_srvs.NotifyRequest()
