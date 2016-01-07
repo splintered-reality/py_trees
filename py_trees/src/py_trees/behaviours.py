@@ -38,11 +38,17 @@ def success(self):
 
 
 def failure(self):
-    self.logger.debug("  %s [Success::update()]" % self.name)
+    self.logger.debug("  %s [Failure::update()]" % self.name)
     return Status.FAILURE
+
+def running(self):
+    self.logger.debug("  %s [Running::update()]" % self.name)
+    return Status.RUNNING
+
 
 Success = meta.create_behaviour_from_function(success)
 Failure = meta.create_behaviour_from_function(failure)
+Running = meta.create_behaviour_from_function(running)
 
 # Another way of doing this via the inverter decorator
 # @meta.inverter
