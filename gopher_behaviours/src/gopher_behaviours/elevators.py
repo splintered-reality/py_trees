@@ -72,7 +72,7 @@ def _generate_elevator_children(gopher_configuration, elevator_name, elevator_le
     move_to_elevator = navigation.MoveIt("To Elevator", elevator_level_origin.entry)
     honk = interactions.Articulate("Honk", gopher_configuration.sounds.honk)
     telesound = interactions.Articulate("Transporter sound", gopher_configuration.sounds.teleport)
-    flash_leds_travelling = interactions.SendNotification("Travelling", led_pattern=gopher_configuration.led_patterns.humans_give_me_input, message="Waiting for confirm button press in front of elevator")
+    flash_leds_travelling = interactions.SendNotification("Travelling", led_pattern=gopher_configuration.led_patterns.humans_give_me_input, button_confirm=True, message="Waiting for confirm button press in front of elevator")
     flash_leds_travelling.add_child(interactions.WaitForButton("Wait for Button", gopher_configuration.buttons.go))
 
     flash_leds_teleporting = interactions.SendNotification("Teleporting", led_pattern=gopher_configuration.led_patterns.im_doing_something_cool, message="teleporting from {0} to {1}".format(elevator_level_origin, elevator_level_destination))
