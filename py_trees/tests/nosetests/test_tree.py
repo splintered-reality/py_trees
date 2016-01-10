@@ -27,8 +27,9 @@ logger = py_trees.logging.get_logger("Nosetest")
 # Classes
 ##############################################################################
 
-class Visitor:
+class Visitor(py_trees.VisitorBase):
     def __init__(self):
+        super(Visitor, self).__init__(full=False)
         self.logger = py_trees.logging.get_logger("Visitor")
 
     def initialise(self):

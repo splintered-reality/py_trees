@@ -36,8 +36,6 @@ from . import display
 from . import composites
 from . import conversions
 from .behaviours import Behaviour
-import unique_id
-import uuid_msgs.msg as uuid_msgs
 import py_trees_msgs.msg as py_trees_msgs
 
 
@@ -60,6 +58,7 @@ class VisitorBase(object):
 
         """
         self.full = full
+
 
 class BehaviourTree(object):
     """
