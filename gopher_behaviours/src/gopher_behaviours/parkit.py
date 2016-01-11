@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-from .blackboard import Blackboard
 from .navigation import SimpleMotion
 from gopher_semantics.semantics import Semantics
 import dslam_msgs.msg as dslam_msgs
@@ -17,16 +16,18 @@ import tf
 import tf_utilities
 import unique_id
 
+
 class Park(py_trees.Behaviour):
     time = None
+
     def __init__(self, name):
         super(Park, self).__init__(name)
         self.tf_listener = tf.TransformListener()
         self.gopher = gopher_configuration.Configuration()
         self.semantic_locations = Semantics(self.gopher.namespaces.semantics)
         self.motion = SimpleMotion()
-        self.blackboard = Blackboard()
-        if Park.time == None:
+        self.blackboard = py_trees.Blackboard()
+        if Park.time is None:
             Park.time = rospy.Time.now()
 
     def initialise(self):
@@ -48,7 +49,7 @@ class Park(py_trees.Behaviour):
         # quaternion specified by rotating theta radians around the yaw axis
         hb_rotation = tuple(tf.transformations.quaternion_about_axis(homebase.pose.theta, (0, 0, 1)))
 
-        self.hb = (hb_translation, hb_rotation) # store so we can use it later
+        self.hb = (hb_translation, hb_rotation)  # store so we can use it later
         self.timeout = rospy.Time.now() + rospy.Duration(10)
 
     def log_parking_location(self, success):
@@ -194,18 +195,18 @@ class Park(py_trees.Behaviour):
 class Unpark(py_trees.Behaviour):
 
     last_parking = None
-    
+
     def __init__(self, name):
         super(Unpark, self).__init__(name)
         self.config = gopher_configuration.Configuration()
         notify_topic = self.config.services.notification
         self.notify_id = unique_id.toMsg(unique_id.fromRandom())
-        rospy.wait_for_service(notify_topic, 5) # should never need to wait 
+        rospy.wait_for_service(notify_topic, 5)  # should never need to wait
         self._notify_srv = rospy.ServiceProxy(notify_topic, gopher_std_srvs.Notify)
         self._location_publisher = rospy.Publisher(self.config.topics.initial_pose, geometry_msgs.PoseWithCovarianceStamped, queue_size=1)
 
         self.tf_listener = tf.TransformListener()
-        self.blackboard = Blackboard()
+        self.blackboard = py_trees.Blackboard()
         # use unpark success variable to allow dslam-based unparking only when
         # dslam actually has an accurate location lock. If we never successfully
         # unparked before, this is unlikely to be the case.
@@ -257,7 +258,7 @@ class Unpark(py_trees.Behaviour):
             req.action = gopher_std_srvs.NotifyRequest.STOP
             req.notification = gopher_std_msgs.Notification(message="battery no longer charging")
             try:
-                resp = self._notify_srv(req)
+                unused_response = self._notify_srv(req)
             except rospy.ServiceException as e:
                 rospy.logwarn("SendNotification : Service failed to process notification request: {0}".format(str(e)))
 
@@ -268,7 +269,7 @@ class Unpark(py_trees.Behaviour):
         req.action = gopher_std_srvs.NotifyRequest.STOP
         req.notification = gopher_std_msgs.Notification(message="button was pressed")
         try:
-            resp = self._notify_srv(req)
+            unused_response = self._notify_srv(req)
         except rospy.ServiceException as e:
             rospy.logwarn("SendNotification : Service failed to process notification request: {0}".format(str(e)))
 
@@ -384,7 +385,7 @@ class Unpark(py_trees.Behaviour):
                                                                 button_confirm=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
                                                                 message="waiting to be unplugged")
                 try:
-                    resp = self._notify_srv(req)
+                    unused_response = self._notify_srv(req)
                 except rospy.ServiceException as e:
                     rospy.logwarn("SendNotification : Service failed to process notification request: {0}".format(str(e)))
 
