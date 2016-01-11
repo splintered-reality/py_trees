@@ -35,7 +35,7 @@ class ExpressDelivery(object):
         delivery_goal_request.semantic_locations = goal_locations
         delivery_goal_request.always_assume_initialised = not include_parking_behaviours
         delivery_goal_request.cycle_door = False
-        print(console.cyan + "New Goal : " + console.yellow + "%s" % delivery_goal_request.semantic_locations + console.reset)
+        rospy.loginfo("Express Deliveries : sending request %s" % delivery_goal_request.semantic_locations)
         delivery_goal_service = rospy.ServiceProxy("/rocon/delivery/goal", gopher_delivery_srvs.DeliveryGoal)
         try:
             unused_delivery_goal_response = delivery_goal_service(delivery_goal_request)
