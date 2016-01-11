@@ -11,6 +11,7 @@ from gopher_std_msgs.msg import LEDStrip
 from somanet_msgs.msg import SmartBatteryStatus
 import gopher_configuration
 
+
 class Starting(py_trees.Selector):
     def __init__(self, name):
         undockseq = py_trees.Sequence("Undock", [battery.CheckChargeSource("Check for dock",
@@ -29,7 +30,7 @@ class Finishing(py_trees.Selector):
                                                     message="Successfully docked.", cancel_on_stop=False)
         dock_notify.add_child(py_trees.behaviours.Success())
 
-        park_notify = interactions.SendNotification("Notify", led_pattern=LEDStrip.FLASH_GREEN, 
+        park_notify = interactions.SendNotification("Notify", led_pattern=LEDStrip.FLASH_GREEN,
                                                     message="Successfully parked.", cancel_on_stop=False)
         park_notify.add_child(py_trees.behaviours.Success())
 
@@ -47,7 +48,7 @@ class Finishing(py_trees.Selector):
         parkseq = py_trees.Sequence("Maybe park", [blackboard_handlers.CheckBlackboardVariable("Was I parked?", 'parked', True),
                                                    dopark])
 
-        wait_for_charge_confirm = interactions.SendNotification("Wait for Jack/Dock", 
+        wait_for_charge_confirm = interactions.SendNotification("Wait for Jack/Dock",
                                                                 led_pattern=self.gopher.led_patterns.humans_i_need_help,
                                                                 message="waiting for charge or confirm button press")
         charge_confirm_selector = py_trees.Selector("Charge/Confirm", [battery.CheckChargeState("Charging?",
@@ -56,7 +57,7 @@ class Finishing(py_trees.Selector):
                                                                                                        self.gopher.buttons.go)
                                                                        ]
                                                     )
-        
+
         wait_for_charge_confirm.add_child(charge_confirm_selector)
         children = [parkseq, dockseq, wait_for_charge_confirm]
         super(Finishing, self).__init__(name, children)

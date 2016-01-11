@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-from .blackboard import Blackboard
 from .navigation import SimpleMotion
 from actionlib_msgs.msg import GoalStatus
 from gopher_semantics.docking_stations import DockingStations
@@ -12,7 +11,6 @@ import gopher_configuration
 import gopher_std_msgs.msg as gopher_std_msgs
 import py_trees
 import rospy
-import somanet_msgs.msg as somanet_msgs
 import std_msgs.msg as std_msgs
 import tf
 import tf_utilities
@@ -21,6 +19,7 @@ import tf_utilities
 # Behaviours
 ##############################################################################
 
+
 class Dock(py_trees.Behaviour):
     """
     Engage the docking behaviour
@@ -28,7 +27,7 @@ class Dock(py_trees.Behaviour):
     def __init__(self, name):
         super(Dock, self).__init__(name)
         self.config = gopher_configuration.Configuration()
-        self.blackboard = Blackboard()
+        self.blackboard = py_trees.Blackboard()
         self.semantic_locations = Semantics(self.config.namespaces.semantics)
         self.tf_listener = tf.TransformListener()
         self.motion = SimpleMotion()
@@ -196,7 +195,7 @@ class Undock(py_trees.Behaviour):
         self._location_publisher = rospy.Publisher(self.config.topics.initial_pose,
                                                    geometry_msgs.PoseWithCovarianceStamped, queue_size=1)
         self._honk_publisher = None
-        self.blackboard = Blackboard()
+        self.blackboard = py_trees.Blackboard()
         self.docking_stations = DockingStations()
         self.semantic_locations = Semantics(self.config.namespaces.semantics)
         self.sent_goal = False
