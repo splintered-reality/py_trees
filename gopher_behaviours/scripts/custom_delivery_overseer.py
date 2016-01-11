@@ -73,7 +73,7 @@ class CustomDeliveryOverseer():
             if not self.custom_delivering:
                 rospy.logwarn("Custom Delivery : rejecting request as the delivery manager is already busy.")
             else:
-                rospy.logwarn("Custom Delivery : accepting a request to do custom delivery.")
+                rospy.loginfo("Custom Delivery : accepting a request to do custom delivery.")
 
     def stop_cb(self, unused_msg):
         if not self.delivering:
