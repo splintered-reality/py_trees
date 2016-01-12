@@ -25,6 +25,7 @@ import gopher_configuration
 from gopher_std_msgs.msg import Notification, LEDStrip
 import gopher_std_msgs.srv as gopher_std_srvs
 import py_trees
+import rocon_console.console as console
 import rospy
 import std_msgs.msg as std_msgs
 import unique_id
@@ -91,6 +92,7 @@ class CheckButtonPressed(py_trees.Behaviour):
         if not self.latched:
             self.button_pressed = False
         return result
+
 
 class WaitForButton(py_trees.Behaviour):
     def __init__(self, name, topic_name):

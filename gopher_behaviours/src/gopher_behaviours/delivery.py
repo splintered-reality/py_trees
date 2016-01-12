@@ -134,7 +134,7 @@ class Waiting(py_trees.Behaviour):
                                                         message="at location, waiting for button press")
 
         try:
-            resp = self._notify_srv(req)
+            unused_response = self._notify_srv(req)
         except rospy.ServiceException as e:
             rospy.logwarn("SendNotification : Service failed to process notification request: {0}".format(str(e)))
 
@@ -151,6 +151,8 @@ class Waiting(py_trees.Behaviour):
         return status
 
     def _go_button_callback(self, unused_msg):
+        if self.status != py_trees.Status.RUNNING:
+            return
         self.go_requested = True if self.status == py_trees.Status.RUNNING else False
         req = gopher_std_srvs.NotifyRequest()
         req.id = self.notify_id
