@@ -20,6 +20,7 @@ import gopher_behaviours
 import gopher_configuration
 import gopher_delivery_msgs.msg as gopher_delivery_msgs
 import gopher_navi_msgs.msg as gopher_navi_msgs
+import rocon_console.console as console
 import rocon_python_comms
 import rospy
 import std_msgs.msg as std_msgs
@@ -29,7 +30,7 @@ import std_msgs.msg as std_msgs
 ##############################################################################
 
 
-class CustomDeliveryOverseer():
+class CustomDeliveryOverseer(object):
     """
     **Subscribers**
 
@@ -70,10 +71,7 @@ class CustomDeliveryOverseer():
             # make certain he is using one...or the other.
             self.custom_delivering = True
         else:
-            if not self.custom_delivering:
-                rospy.logwarn("Custom Delivery : rejecting request as the delivery manager is already busy.")
-            else:
-                rospy.loginfo("Custom Delivery : accepting a request to do custom delivery.")
+            rospy.loginfo("Custom Delivery : rejecting request as the delivery manager is already busy.")
 
     def stop_cb(self, unused_msg):
         if not self.delivering:
