@@ -24,11 +24,12 @@ import std_msgs.msg as std_msgs
 import py_trees
 import actionlib
 from py_trees.common import Status
+import rocon_console.console as console
 import rospy
 import threading
 
 ##############################################################################
-# Support Classes
+# Support
 ##############################################################################
 
 
@@ -45,6 +46,26 @@ def show_usage(root):
     print("************************************************************************************")
     print("")
 
+
+class Parameters(object):
+    """
+    The variables of this class are default constructed from parameters on the
+    ros parameter server. Each parameter is nested in the private namespace of
+    the node which instantiates this class.
+
+    :ivar express: whether deliveries should stop and wait for a button press at each location (or not)
+    :vartype express: bool
+    """
+    def __init__(self):
+        self.express = rospy.get_param('~express', False)
+
+    def __str__(self):
+        s = console.bold + "\nParameters:\n" + console.reset
+        for key in sorted(self.__dict__):
+            s += console.cyan + "    %s: " % key + console.yellow + "%s\n" % (self.__dict__[key] if self.__dict__[key] is not None else '-')
+        s += console.reset
+        return s
+
 ##############################################################################
 # Core Controller
 ##############################################################################
@@ -55,7 +76,8 @@ class GopherHiveMind(object):
 
         self.battery_subtree = gopher_behaviours.battery.create_battery_tree(name="Eating Disorder")
         self.gopher = gopher_configuration.Configuration()
-        self.planner = Planner()
+        self.parameters = Parameters()
+        self.planner = Planner(self.parameters.express)
         self.current_world_subscriber = rospy.Subscriber(self.gopher.topics.world, std_msgs.String, self.current_world_callback)
         self.current_world = None
         self.quirky_deliveries = gopher_behaviours.delivery.GopherDeliveries(name="Quirky Deliveries", planner=self.planner)

@@ -4,8 +4,17 @@
   Eventually as part of the rapp
  -->
 <launch>
+  <!--
+    If we get too much customisation happening here, think about providing:
+     - a configuration service for the node (dynamic reconfigure?)
+     - call on the dynamic reconfigure software to retune the delivery manager at launch time
+     - call on rqt/create an interaction to retune the delivery manager at runtime
+   -->
+  <arg name="express" default="false" doc="dont wait at each location for the user to press the button."/>
+
   <group ns="gopher">
     <node name="behaviours" type="gopher_deliveries" pkg="gopher_behaviours">
+      <param name="express" value="$(arg express)"/>
       <remap from="behaviours/battery"                            to="/gopher/status/battery_slow"/>
       <remap from="behaviours/semantic_locations"                 to="/navi/semantic_locations"/>
 

@@ -57,10 +57,14 @@ def find_topological_path(world, locations, semantics):
     return topological_path
 
 
-class Planner():
-
-    def __init__(self):
+class Planner(object):
+    """
+    :ivar express: whether deliveries should stop and wait for a button press at each location (or not)
+    :vartype express: bool
+    """
+    def __init__(self, express_deliveries=False):
         self.current_location = None
+        self.express = express_deliveries
         self.gopher = gopher_configuration.Configuration()
         self.semantics = gopher_semantics.Semantics(self.gopher.namespaces.semantics)
 
@@ -105,19 +109,16 @@ class Planner():
                     blackboard_handlers.LocationTraversalHandler("Update location lists")]
                 )
                 if next_node is not None:
-                    flash_leds_while_waiting = interactions.SendNotification(
-                        "Flash - Waiting",
-                        led_pattern=self.gopher.led_patterns.humans_give_me_input,
-                        message="waiting for the user to tell me to proceed"
-                    )
-                    waiting = delivery.Waiting(name="Waiting at " + current_node.name, location=current_node.unique_name)
-                    flash_leds_while_waiting.add_child(waiting)
-                    children.extend(
-                        # spaces fubar the dot renderings....
-                        [interactions.Articulate("Honk", self.gopher.sounds.honk),
-                         flash_leds_while_waiting
-                         ]
-                    )
+                    children.extend([interactions.Articulate("Honk", self.gopher.sounds.honk)])
+                    if not self.express:
+                        flash_leds_while_waiting = interactions.SendNotification(
+                            "Flash - Waiting",
+                            led_pattern=self.gopher.led_patterns.humans_give_me_input,
+                            message="waiting for the user to tell me to proceed"
+                        )
+                        waiting = delivery.Waiting(name="Waiting at " + current_node.name, location=current_node.unique_name)
+                        flash_leds_while_waiting.add_child(waiting)
+                        children.extend([flash_leds_while_waiting])
                 last_location = current_node
             elif isinstance(current_node, gopher_semantic_msgs.Elevator):
                 # topological path guarantees there is a next...
