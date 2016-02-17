@@ -269,8 +269,6 @@ class GopherHiveMind(object):
         msg.remaining_locations = self.quirky_deliveries.blackboard.remaining_locations
         msg.status_message = "Cancellation message was received."
         self._delivery_feedback_publisher.publish(msg)
-        # should have a CANCELLING status here sometime
-        self._status_pub.publish(gopher_delivery_msgs.DeliveryManagerStatus(status=gopher_delivery_msgs.DeliveryManagerStatus.IDLING))
 
     def _result_service_callback(self, request):
         '''
