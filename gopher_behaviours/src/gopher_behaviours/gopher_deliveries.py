@@ -88,6 +88,7 @@ class GopherHiveMind(object):
         self.render = False
         self.success = None  # non goal
         self.cancelled = False
+        self.cancelling = False
         self.current_eta = gopher_delivery_msgs.DeliveryETA()  # empty ETA
         self.monitor_ok = True
 
@@ -155,7 +156,6 @@ class GopherHiveMind(object):
             if self.quirky_deliveries.root:
                 self.tree.insert_subtree(self.quirky_deliveries.root, self.root.id, 1)
             self.quirky_deliveries.has_a_new_goal = False
-            self.cancelled = False  # reset cancelled flag upon receiving a new goal
             print("")
             print("************************************************************************************")
             print("                   Gopher Hivemind (Behaviour Tree Update)")
@@ -184,8 +184,17 @@ class GopherHiveMind(object):
             msg.status_message = self.quirky_deliveries.feedback_message
             msg.eta = self.current_eta
             self._delivery_feedback_publisher.publish(msg)
-        if self.quirky_deliveries.succeeded_on_last_tick():
-            self.success = True
+        if self.quirky_deliveries.completed_on_last_tick():
+            if self.quirky_deliveries.succeeded_on_last_tick():
+                print("Gopher Deliveries Setting Success = True")
+                self.success = True
+            elif self.quirky_deliveries.recovered_on_last_tick():
+                print("Gopher Deliveries Setting Cancelled = True")
+                self.cancelling = False
+                self.cancelled = True
+            else:
+                # shouldn't get here
+                pass
             self._status_pub.publish(gopher_delivery_msgs.DeliveryManagerStatus(status=gopher_delivery_msgs.DeliveryManagerStatus.IDLING))
 
         # If the battery subtree is running, we want to update the status, and
@@ -216,7 +225,6 @@ class GopherHiveMind(object):
            * check the first preempted goal location isn't the same as the current location and handle it
         '''
         rospy.loginfo("Delivery : received a goal request: {0}".format(request))
-        self.cancelled = False
 
         with self.monitor_lock:
             monitor_ok = self.monitor_ok
@@ -238,7 +246,9 @@ class GopherHiveMind(object):
                 message = "received goal request [%s]" % message
                 rospy.loginfo("Delivery : [%s]" % message)
                 self._status_pub.publish(gopher_delivery_msgs.DeliveryManagerStatus(status=gopher_delivery_msgs.DeliveryManagerStatus.DELIVERING))
+                # reset flags upon confirming a new goal
                 self.success = False
+                self.cancelled = False
             else:
                 message = "refused goal request [%s]" % message
                 rospy.logwarn("Delivery : [%s]" % message)
@@ -247,17 +257,10 @@ class GopherHiveMind(object):
     def _goal_cancel_callback(self, cancel):
         # if the delivery root has been initialised
         if self.quirky_deliveries.root:
-            # prune the subtree containing the current delivery goal
-            self.tree.prune_subtree(self.quirky_deliveries.root.id)
-        self.cancelled = True  # set cancelled flag to use in result service
-
-        print("")
-        print("************************************************************************************")
-        print("                   Gopher Compelled (Behaviour Tree Update)")
-        print("************************************************************************************")
-        py_trees.display.print_ascii_tree(self.tree.root)
-        print("************************************************************************************")
-        print("")
+            # this doesn't do anything immediately, just flags a behaviour
+            # node on so that the priority subtree changes
+            self.quirky_deliveries.cancel_goal()
+            self.cancelling = True
 
         msg = gopher_delivery_msgs.DeliveryFeedback()
         msg.header.stamp = rospy.Time.now()
@@ -266,6 +269,7 @@ class GopherHiveMind(object):
         msg.remaining_locations = self.quirky_deliveries.blackboard.remaining_locations
         msg.status_message = "Cancellation message was received."
         self._delivery_feedback_publisher.publish(msg)
+        # should have a CANCELLING status here sometime
         self._status_pub.publish(gopher_delivery_msgs.DeliveryManagerStatus(status=gopher_delivery_msgs.DeliveryManagerStatus.IDLING))
 
     def _result_service_callback(self, request):
@@ -281,14 +285,15 @@ class GopherHiveMind(object):
         if self.success:
             msg.result = gopher_delivery_msgs.DeliveryErrorCodes.SUCCESS
             msg.error_message = "Success !"
+        elif self.cancelled:
+            msg.result = gopher_delivery_msgs.DeliveryErrorCodes.CANCELLED
+            msg.error_message = "Delivery was cancelled."
+        elif self.cancelling:
+            msg.result = gopher_delivery_msgs.DeliveryErrorCodes.UNKNOWN
+            msg.error_message = "Cancelling..."
         else:
-            if self.cancelled:
-                msg.result = gopher_delivery_msgs.DeliveryErrorCodes.CANCELLED
-                msg.error_message = "Delivery was cancelled."
-            else:
-                msg.result = gopher_delivery_msgs.DeliveryErrorCodes.UNKNOWN
-                msg.error_message = "Not finished yet..."
-
+            msg.result = gopher_delivery_msgs.DeliveryErrorCodes.UNKNOWN
+            msg.error_message = "Not finished yet..."
         return msg
 
     def shutdown(self):

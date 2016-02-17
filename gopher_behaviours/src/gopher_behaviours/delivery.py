@@ -38,6 +38,7 @@ import std_msgs.msg as std_msgs
 import gopher_configuration
 import unique_id
 from py_trees.blackboard import Blackboard
+from . import blackboard_handlers
 from . import elevators
 from . import recovery
 from . import interactions
@@ -196,19 +197,23 @@ class GopherDeliveries(object):
     """
     def __init__(self, name, planner):
         self.blackboard = Blackboard()
-        self.blackboard.traversed_locations = []
-        self.blackboard.remaining_locations = []
+        self.reset_blackboard_variables(traversed_locations=[], remaining_locations=[])
         self.config = gopher_configuration.Configuration()
         self.root = None
         self.state = State.IDLE
         self.locations = []
-        self.has_a_new_goal = False
+        self.has_a_new_goal = False  # DJS : this is badly named, it is more appropriately 'has_a_new_root'
         self.feedback_message = ""
         self.old_goal_id = None
         self.planner = planner
         self.always_assume_initialised = False
         self.delivery_sequence = None
         self.incoming_goal = None
+
+    def reset_blackboard_variables(self, traversed_locations=[], remaining_locations=[]):
+        self.blackboard.traversed_locations = traversed_locations
+        self.blackboard.remaining_locations = remaining_locations
+        self.blackboard.cancel_requested = False
 
     def set_goal(self, locations, always_assume_initialised):
         """
@@ -234,6 +239,13 @@ class GopherDeliveries(object):
         else:  # we're travelling between locations
             return (gopher_delivery_msgs.DeliveryErrorCodes.ALREADY_ASSIGNED_A_GOAL, "sorry, busy (already assigned a goal)")
 
+    def cancel_goal(self):
+        """
+        This will set a blackboard variable that will trigger a delivery to cleanup itself. Usually
+        this is triggered by a guard that implements a subtree recovery at a higher priority than the actual delivery.
+        """
+        self.blackboard.cancel_requested = True
+
     def pre_tick_update(self, current_world):
         """
         Check if we have a new goal, then assemble the sub-behaviours required to
@@ -256,13 +268,31 @@ class GopherDeliveries(object):
                 rospy.logwarn("Gopher Deliveries : Received a goal, but none of the locations were valid.")
             else:
                 self.old_goal_id = self.root.id if self.root is not None else None
-                self.blackboard.traversed_locations = [] if not self.root else self.blackboard.traversed_locations
-
+                # Blackboard
+                self.reset_blackboard_variables(traversed_locations=[] if not self.root else self.blackboard.traversed_locations,
+                                                remaining_locations=self.incoming_goal
+                                                )
+                # Assemble Behaviours
+                self.cancel_requested = blackboard_handlers.CheckBlackboardVariable(name="Cancel Requested?",
+                                                                                    var_name="cancel_requested",
+                                                                                    check_expected=True,
+                                                                                    expected_value=True,
+                                                                                    invert=False
+                                                                                    )
+                self.check_button_pressed = interactions.CheckButtonPressed("Cancel Pressed?",
+                                                                            self.config.buttons.stop,
+                                                                            latched=True
+                                                                            )
+                self.cancel_required = py_trees.Selector(name="Cancellation Required?",
+                                                         children=[self.check_button_pressed,
+                                                                   self.cancel_requested]
+                                                         )
+                self.homebase_recovery = recovery.HomebaseRecovery(name="Delivery Cancelled")
                 self.cancel_sequence = py_trees.Sequence(name="Cancellation",
-                                                         children=[interactions.CheckButtonPressed("Cancel Pressed?",
-                                                                                                   self.config.buttons.stop,
-                                                                                                   latched=True),
-                                                                   recovery.HomebaseRecovery("Delivery Cancelled")])
+                                                         children=[self.cancel_required,
+                                                                   self.homebase_recovery
+                                                                   ]
+                                                         )
                 # delivery sequence is oneshot - will only run once, retaining its succeeded or failed state
                 self.delivery_sequence = py_trees.OneshotSequence(name="Balli Balli Deliveries",
                                                                   children=children)
@@ -271,7 +301,8 @@ class GopherDeliveries(object):
                                                                      recovery.HomebaseRecovery("Delivery Failed")])
                 self.root = py_trees.Selector(name="Deliver Unto Me",
                                               children=[self.cancel_sequence, self.delivery_selector])
-                self.blackboard.remaining_locations = self.incoming_goal
+
+                # Finalise variables
                 self.locations = self.incoming_goal
                 self.has_a_new_goal = True
 
@@ -293,12 +324,29 @@ class GopherDeliveries(object):
         """
         return ((self.state == State.WAITING) or (self.state == State.TRAVELLING))
 
-    def succeeded_on_last_tick(self):
+    def completed_on_last_tick(self):
         """
-        Did the behaviour subtree succeed on the last tick?
+        Did the delivery tree finish on the last tick? This is a cover-all for
+        finishing states - either delivered or recovered.
         """
         if self.root is not None:
             return self.root.status == py_trees.Status.SUCCESS
+        return False
+
+    def succeeded_on_last_tick(self):
+        """
+        Did the delivery subtree succeed on the last tick?
+        """
+        if self.root is not None:
+            return self.delivery_selector.status == py_trees.Status.SUCCESS
+        return False
+
+    def recovered_on_last_tick(self):
+        """
+        Did the recovery subtree succeed on the last tick?
+        """
+        if self.root is not None:
+            return self.cancel_sequence.status == py_trees.Status.SUCCESS
         return False
 
     def post_tock_update(self):

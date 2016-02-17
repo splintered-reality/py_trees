@@ -4,11 +4,13 @@ import rospy
 import py_trees
 from py_trees.blackboard import Blackboard
 
+
 class BlackboardHandlerBase(py_trees.Behaviour):
 
     def __init__(self, name):
         super(BlackboardHandlerBase, self).__init__(name)
         self.blackboard = Blackboard()
+
 
 class LocationTraversalHandler(BlackboardHandlerBase):
 
@@ -30,6 +32,7 @@ class LocationTraversalHandler(BlackboardHandlerBase):
                 return py_trees.Status.FAILURE
             self.feedback_message = 'Traversal sucessful. New location is {0}'.format(self.blackboard.traversed_locations[-1])
             return py_trees.Status.SUCCESS
+
 
 class CheckBlackboardVariable(BlackboardHandlerBase):
     """Check the blackboard to see if it has a specific variable, and optionally
