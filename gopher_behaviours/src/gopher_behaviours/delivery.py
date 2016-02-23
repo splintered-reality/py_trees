@@ -12,7 +12,7 @@
    :platform: Unix
    :synopsis: Delivery behaviours
 
-Gopher delivery behaviours! Are they good for anothing else?
+Gopher delivery behaviours! Are they good for anything else?
 
 ----
 
@@ -177,7 +177,7 @@ class GopherDeliveries(object):
     :ivar blackboard:
     :ivar incoming_goal:
     :ivar locations:
-    :ivar has_a_new_goal
+    :ivar has_a_new_goal:
     :ivar feedback_message:
     :ivar old_goal_id:
 
@@ -187,13 +187,14 @@ class GopherDeliveries(object):
      - remaining_locations : [str]
 
     .. todo::
+       1. broken logic here
+           If it's moving on its way home (i.e. running a different branch of the behaviour tree,\
+           then a new goal will still be accepted. This should be handled higher up,\
+           but should have a rejection here anyway just in case something behaves badly.
 
-       1. broken logic here - if it's moving on its way home (i.e. running
-       a different branch of the behaviour tree, then a new goal will still be accepted.
-       This should be handled higher up, but should have a rejection here anyway just in
-       case something behaves badly.
+       2. Needs mutex
+           To mutex the self.incoming_goal variable
 
-       2. also need to mutex the self.incoming_goal variable
     """
     def __init__(self, name, planner):
         self.blackboard = Blackboard()
