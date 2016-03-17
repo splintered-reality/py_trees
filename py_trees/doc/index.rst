@@ -14,8 +14,10 @@ Contents:
    :maxdepth: 2
 
    background
+   building_blocks
    howtos
    rules_of_thumb
+   terminology
    modules
    changelog
 
