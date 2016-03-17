@@ -14,6 +14,8 @@ Contents:
    :maxdepth: 2
 
    background
+   howtos
+   rules_of_thumb
    modules
    changelog
 
