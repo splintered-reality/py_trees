@@ -38,14 +38,18 @@ class Finishing(py_trees.Selector):
                                                    interactions.Articulate("Yawn", self.gopher.sounds.done)
                                                    ]
                                    )
-        dockseq = py_trees.Sequence("Maybe dock", [blackboard_handlers.CheckBlackboardVariable("Was I docked?", 'parked', False),
+        dockseq = py_trees.Sequence("Maybe dock", [py_trees.CheckBlackboardVariable("Was I docked?",
+                                                                                    variable_name='parked'
+                                                                                    ),
                                                    dodock])
 
         dopark = py_trees.Sequence("Park/notify", [parkit.Park("Park"), park_notify,
                                                    interactions.Articulate("Yawn", self.gopher.sounds.done)
                                                    ]
                                    )
-        parkseq = py_trees.Sequence("Maybe park", [blackboard_handlers.CheckBlackboardVariable("Was I parked?", 'parked', True),
+        parkseq = py_trees.Sequence("Maybe park", [py_trees.CheckBlackboardVariable("Was I parked?",
+                                                                                    variable_name='parked'
+                                                                                    ),
                                                    dopark])
 
         wait_for_charge_confirm = interactions.SendNotification("Wait for Jack/Dock",
