@@ -92,6 +92,8 @@ class SimpleMotion():
             motion_state = self.action_client.get_state()
             if (motion_state == actionlib_msgs.GoalStatus.PENDING or motion_state == actionlib_msgs.GoalStatus.ACTIVE):
                 self.action_client.cancel_goal()
+            self.has_goal = False
+
 
 ##############################################################################
 # Behaviours
