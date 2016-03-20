@@ -21,6 +21,7 @@
   <run_depend>dslam_msgs</run_depend>
   <run_depend>geometry</run_depend>
   <run_depend>geometry_msgs</run_depend>
+  <run_depend>goal_finisher</run_depend>
   <run_depend>gopher_configuration</run_depend>
   <run_depend>gopher_semantics</run_depend>
   <run_depend>gopher_std_msgs</run_depend>
