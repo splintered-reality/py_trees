@@ -37,62 +37,83 @@ import tf
 ##############################################################################
 
 
-class SimpleMotion():
-    def __init__(self):
-        self.config = gopher_configuration.Configuration()
-        self.action_client = actionlib.SimpleActionClient(self.config.actions.simple_motion_controller,
-                                                          gopher_std_msgs.SimpleMotionAction)
+class SimpleMotion(py_trees.Behaviour):
+    """
+    Interface to the simple motions controller.
+
+    .. note:: This class assumes a higher level pastafarian has ensured the action client is available.
+    """
+    def __init__(self, name="simple_motions",
+                 motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
+                 motion_amount=0,
+                 unsafe=False
+                 ):
+        """
+        :param str name: behaviour name
+        :param str motion_type: rotation or translation (from gopher_std_msgs.SimpleMotionGoal, MOTION_ROTATE or MOTION_TRANSLATE)
+        :param double motion_amount: how far the rotation (radians) or translation (m) should be
+        :param bool unsafe: flag if you want the motion to be unsafe, i.e. not use the sensors
+        """
+        super(SimpleMotion, self).__init__(name)
+        self.gopher = None
+        self.action_client = None
         self.has_goal = False
+        self.goal = gopher_std_msgs.SimpleMotionGoal()
+        self.goal.motion_type = motion_type
+        self.goal.motion_amount = motion_amount
+        self.goal.unsafe = unsafe
 
-    # Motion is either rotation or translation, value is corresponding rotation in radians, or distance in metres
-    def execute(self, motion, value):
-        self.connected = self.action_client.wait_for_server(rospy.Duration(0.5))
-        if not self.connected:
-            rospy.logwarn("SimpleMotion : could not connect to simple motion controller server.")
-            return False
-
-        goal = gopher_std_msgs.SimpleMotionGoal()
-        if motion == "rotate":
-            goal.motion_type = gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE
-        elif motion == "translate":
-            goal.motion_type = gopher_std_msgs.SimpleMotionGoal.MOTION_TRANSLATE
-        else:
-            rospy.logerr("SimpleMotion : received unknown motion type {0}".format(motion))
-            return False
-
-        self.has_goal = True
-        goal.motion_amount = value
-        # TODO : when marco has fixed the psd's, this needs to become False
-        goal.unsafe = True
-        self.action_client.send_goal(goal)
-
-    def complete(self):
-        result = self.action_client.get_result()
-        if not result:
-            return False
-
-        self.has_goal = False
+    def wait_for_server(self, timeout):
+        """
+        Allow a higher level pastafarian to wait for the server to come up.
+        :param double timeout: time to wait (0.0 is blocking forver)
+        :returns: whether it timed out waiting for the server or not.
+        :rtype: boolean
+        """
+        if not self.action_client:
+            self.gopher = gopher_configuration.Configuration()
+            self.action_client = actionlib.SimpleActionClient(
+                self.gopher.actions.simple_motion_controller,
+                gopher_std_msgs.SimpleMotionAction
+            )
+            if not self.action_client.wait_for_server(rospy.Duration(timeout)):
+                rospy.logerr("Behaviour [%s" % self.name + "] could not connect to the simple motions action server [%s]" % self.__class__.__name__)
+                self.action_client = None
+                return False
         return True
 
-    def get_status(self):
-        return self.action_client.get_state()
+    def initialise(self):
+        self.logger.debug("  %s [SimpleMotion::initialise()]" % self.name)
+        if not self.action_client:
+            if not self.wait_for_server(timeout=0.01):
+                return
+        self.action_client.send_goal(self.goal)
 
-    def success(self):
+    def update(self):
+        self.logger.debug("  %s [SimpleMotion::update()]" % self.name)
+        if self.action_client is None:
+            self.feedback_message = "action client wasn't connected"
+            return py_trees.Status.FAILURE
+        if self.action_client.get_state() == actionlib_msgs.GoalStatus.ABORTED:
+            self.feedback_message = "simple motion aborted, but we keep on marching forward"
+            return py_trees.Status.SUCCESS
         result = self.action_client.get_result()
-        if not result:
-            return False
-        elif result.value == gopher_std_msgs.SimpleMotionResult.SUCCESS:
-            self.has_goal = False
-            return True
-        else:  # anything else is a failure state
-            return False
+        if result:
+            self.feedback_message = "goal reached"
+            return py_trees.Status.SUCCESS
+        else:
+            self.feedback_message = "moving"
+            return py_trees.Status.RUNNING
 
-    def stop(self):
-        if self.has_goal:
-            motion_state = self.action_client.get_state()
-            if (motion_state == actionlib_msgs.GoalStatus.PENDING or motion_state == actionlib_msgs.GoalStatus.ACTIVE):
-                self.action_client.cancel_goal()
-            self.has_goal = False
+    def stop(self, new_status):
+        # if we have an action client and the current goal has not already
+        # succeeded, send a message to cancel the goal for this action client.
+        # if self.action_client is not None and self.action_client.get_state() != actionlib_msgs.GoalStatus.SUCCEEDED:
+        if self.action_client is None:
+            return
+        motion_state = self.action_client.get_state()
+        if (motion_state == actionlib_msgs.GoalStatus.PENDING) or (motion_state == actionlib_msgs.GoalStatus.ACTIVE):
+            self.action_client.cancel_goal()
 
 
 ##############################################################################

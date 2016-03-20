@@ -1,0 +1,91 @@
+#!/usr/bin/env python
+#
+# License: BSD
+#   https://raw.github.com/yujinrobot/gopher_crazy_hospital/license/LICENSE
+#
+##############################################################################
+# Documentation
+##############################################################################
+"""
+USE THE ROS LAUNCHER INSTEAD!!!
+
+gopher_behaviours/demo_simple_motion.launch
+"""
+##############################################################################
+# Imports
+##############################################################################
+
+import gopher_behaviours
+import gopher_configuration
+import gopher_std_msgs.msg as gopher_std_msgs
+import py_trees
+# import rocon_console.console as console
+import rospy
+
+##############################################################################
+# Tree
+##############################################################################
+
+
+class DemoSimpleMotions(object):
+    def __init__(self):
+        self.root = py_trees.Sequence("Root")
+        self.gopher = gopher_configuration.Configuration()
+        self.logger = py_trees.logging.get_logger("SimpleMotion")
+        rotation_angle = rospy.get_param("~rotation", 1.57)
+        translation_distance = rospy.get_param("~translation", 0.5)
+        self.rotate = gopher_behaviours.navigation.SimpleMotion(
+            "Rotate",
+            motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
+            motion_amount=rotation_angle,
+            unsafe=False)
+        self.translate = gopher_behaviours.navigation.SimpleMotion(
+            "Translate",
+            motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_TRANSLATE,
+            motion_amount=translation_distance,
+            unsafe=False)
+
+        self.root.add_child(self.rotate)
+        self.root.add_child(self.translate)
+        self.tree = py_trees.ROSBehaviourTree(self.root)
+        rospy.on_shutdown(self.shutdown)
+        # py_trees.display.render_dot_tree(self.root)
+        py_trees.display.print_ascii_tree(self.root, 0)
+
+    def wait_for_ros(self):
+        if not self.rotate.wait_for_server(15.0):
+            rospy.logerr("SimpleMotions: failed to find the simple motions action server.")
+
+    ##############################################################################
+    # Tick Tock
+    ##############################################################################
+
+    def tick_tock(self):
+        self.tree.visitors.append(gopher_behaviours.utilities.DebugVisitor())
+        rate = rospy.Rate(10)
+        while not rospy.is_shutdown():
+            self.tree.tick(pre_tick_handler=self.pre_tick_handler)
+            if self.root.status == py_trees.Status.SUCCESS or self.root.status == py_trees.Status.FAILURE:
+                break
+            rate.sleep()
+
+    def pre_tick_handler(self, behaviour_tree):
+        self.logger.debug("")
+        self.logger.debug("{:-^30}".format(" Run %s " % behaviour_tree.count))
+        self.logger.debug("")
+
+    def shutdown(self):
+        self.tree.destroy()  # destroy the tree on shutdown to stop the behaviour
+        self.tree.interrupt()
+
+##############################################################################
+# Main
+##############################################################################
+
+if __name__ == '__main__':
+    py_trees.logging.level = py_trees.logging.Level.DEBUG
+    rospy.init_node("simple_motion", log_level=rospy.DEBUG)
+
+    simple_motions = DemoSimpleMotions()
+    simple_motions.wait_for_ros()
+    simple_motions.tick_tock()
