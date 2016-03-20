@@ -4,9 +4,10 @@ import py_trees
 from py_trees.blackboard import Blackboard
 
 
-class LocationTraversalHandler(object):
+class LocationTraversalHandler(py_trees.Behaviour):
 
     def __init__(self, name):
+        super(LocationTraversalHandler, self).__init__(name)
         self.blackboard = Blackboard()
 
     def update(self):
