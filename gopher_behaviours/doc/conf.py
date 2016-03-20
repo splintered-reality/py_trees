@@ -44,6 +44,9 @@ extensions = [
     'sphinx.ext.viewcode',
 ]
 
+# If you don't add this, todos don't appear
+todo_include_todos = True
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['.templates']
 

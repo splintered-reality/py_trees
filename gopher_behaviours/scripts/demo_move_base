@@ -15,9 +15,9 @@ gopher_behaviours/demo_simple_motion.launch
 # Imports
 ##############################################################################
 
+import geometry_msgs.msg as geometry_msgs
 import gopher_behaviours
 import gopher_configuration
-import gopher_std_msgs.msg as gopher_std_msgs
 import py_trees
 # import rocon_console.console as console
 import rospy
@@ -27,33 +27,27 @@ import rospy
 ##############################################################################
 
 
-class DemoSimpleMotions(object):
+class DemoMoveBase(object):
     def __init__(self):
-        self.root = py_trees.Sequence("Root")
         self.gopher = gopher_configuration.Configuration()
-        self.logger = py_trees.logging.get_logger("SimpleMotion")
-        rotation_angle = rospy.get_param("~rotation", 0.88)
-        translation_distance = rospy.get_param("~translation", 0.25)
-        self.rotate = gopher_behaviours.navigation.SimpleMotion(
-            "Rotate",
-            motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
-            motion_amount=rotation_angle,
-            unsafe=False)
-        self.translate = gopher_behaviours.navigation.SimpleMotion(
-            "Translate",
-            motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_TRANSLATE,
-            motion_amount=translation_distance,
-            unsafe=False)
-
-        self.root.add_child(self.rotate)
-        self.root.add_child(self.translate)
+        self.logger = py_trees.logging.get_logger("MoveBase")
+        distance = rospy.get_param("~distance", 0.5)
+        pose = geometry_msgs.Pose2D()
+        pose.x = distance
+        pose.y = 0.0
+        pose.theta = 0.0
+        self.root = gopher_behaviours.navigation.MoveIt(
+            "MoveBase",
+            pose,
+            dont_ever_give_up=False
+        )
         self.tree = py_trees.ROSBehaviourTree(self.root)
         rospy.on_shutdown(self.shutdown)
         # py_trees.display.render_dot_tree(self.root)
         py_trees.display.print_ascii_tree(self.root, 0)
 
     def wait_for_ros(self):
-        if not self.rotate.setup_ros(15.0):
+        if not self.root.setup_ros(15.0):
             rospy.logerr("SimpleMotions: failed to find the simple motions action server.")
 
     ##############################################################################
@@ -84,8 +78,8 @@ class DemoSimpleMotions(object):
 
 if __name__ == '__main__':
     py_trees.logging.level = py_trees.logging.Level.DEBUG
-    rospy.init_node("simple_motion", log_level=rospy.DEBUG)
+    rospy.init_node("demo_move_base", log_level=rospy.DEBUG)
 
-    simple_motions = DemoSimpleMotions()
-    simple_motions.wait_for_ros()
-    simple_motions.tick_tock()
+    move_base = DemoMoveBase()
+    move_base.wait_for_ros()
+    move_base.tick_tock()

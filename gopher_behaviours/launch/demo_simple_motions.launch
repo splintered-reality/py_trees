@@ -7,7 +7,6 @@
   <arg name="rotation"    default="0.87"    doc="rotation angle [radians]" />
 
   <include if="$(arg minimal)" file="$(find gopher_robot)/launch/minimal.launch"/>
-  <rosparam unless="$(arg minimal)" ns="gopher/configuration" command="load" file="$(find gopher_configuration)/parameters/defaults.yaml"/>
 
   <node ns="demo" name="demo_simple_motions" type="demo_simple_motions" pkg="gopher_behaviours">
       <param name="translation" value="$(arg translation)"/>
