@@ -33,14 +33,14 @@ class FlashAndWait(object):
         self.logger = py_trees.logging.get_logger("FlashAndWait")
         flash_leds_need_input = gopher_behaviours.interactions.SendNotification(
             "Waiting for Input",
-            led_pattern=LEDStrip(led_strip_pattern=self.gopher.led_patterns.humans_give_me_input),
+            led_pattern=self.gopher.led_patterns.humans_give_me_input,
             message="waiting for the user to hit the button"
         )
         flash_leds_need_input.add_child(gopher_behaviours.interactions.WaitForButton("Wait for Button", self.gopher.buttons.go))
         honk = gopher_behaviours.interactions.Articulate("Honk", self.gopher.sounds.honk)
         flash_leds_pause = gopher_behaviours.interactions.SendNotification(
             "Waiting",
-            led_pattern=LEDStrip(led_strip_pattern=self.gopher.led_patterns.holding),
+            led_pattern=self.gopher.led_patterns.holding,
             message="flashing while pausing...for a bit"
         )
         flash_leds_pause.add_child(gopher_behaviours.time.Pause("Pause 5s", 5.0))
@@ -52,7 +52,8 @@ class FlashAndWait(object):
 
         rospy.on_shutdown(self.shutdown)
 
-        py_trees.display.render_dot_tree(self.root)
+        # py_trees.display.render_dot_tree(self.root)
+        py_trees.display.print_ascii_tree(self.root, 0)
 
     ##############################################################################
     # Tick Tock
