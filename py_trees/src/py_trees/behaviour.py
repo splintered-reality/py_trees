@@ -95,12 +95,36 @@ class Behaviour(object):
         """
         visitor.run(self)
 
+    def tickOnce(self):
+        """
+        A direct means of calling tick on this object without using the generator
+        mechanism.
+        """
+        for unused in self.tick():
+            pass
+
     def tick(self):
         """
-        The update mechanism for the behaviour. Customisation goes
-        into the update() function.
+        This function is a generator that can be used by an iterator on
+        an entire behaviour tree. It handles the logic for initialisation and return
+        state, but the actual work should go into the implementation of the update() function.
+        Once it's worked out the logic, it will then yield itself (generator
+        mechanism) so that it can be used as part of an iterator for the
+        entire tree.
 
-        :return Status: resulting state after the tick is completed
+        .. note:: This is a generator function, do not call directly.
+
+        Calling ``my_behaviour.tick()`` will not actually do anything.
+        It has to be used as part of an iterator, e.g.
+
+        .. code-block:: python
+
+           for node in my_behaviour.tick():
+               print("Do something")
+
+        Prefer instead :py:function::`tickOnce` method for making a direct call.
+
+        :return py_trees.Behaviour: a reference to itself
         """
         self.logger.debug("  %s [tick()]" % self.name)
         if self.status != Status.RUNNING:
