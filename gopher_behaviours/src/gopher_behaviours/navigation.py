@@ -23,6 +23,7 @@ Bless my noggin with a tickle from your noodly appendages!
 
 import actionlib
 import actionlib_msgs.msg as actionlib_msgs
+import elf_msgs.msg as elf_msgs
 import gopher_configuration
 import gopher_navi_msgs.msg as gopher_navi_msgs
 import move_base_msgs.msg as move_base_msgs
@@ -31,6 +32,9 @@ import gopher_std_msgs.srv as gopher_std_srvs
 import py_trees
 import rospy
 import tf
+
+from . import interactions
+from . import time
 
 ##############################################################################
 # Classes
@@ -233,3 +237,109 @@ class Teleport(py_trees.Behaviour):
         # succeeded, send a message to cancel the goal for this action client.
         if self.action_client is not None and self.action_client.get_state() != actionlib_msgs.GoalStatus.SUCCEEDED:
             self.action_client.cancel_goal()
+
+
+class PoseIntialisation(py_trees.Sequence):
+    """
+    This class implements the sequence of initialising the robot's pose. The sequence consists of the following:
+
+    - enable AR (behaviour)
+    - initialise (selector)
+        - check dslam init status (behaviour)
+        - manual init (sequence)
+            - check cancel button (behaviour)
+            - wait for confirm button press (behaviour)
+            - teleport to home base (behaviour)
+        - rotate (behaviour)
+    - disable AR (behaviour)
+    """
+    def __init__(self, name):
+        """
+        Put together the pose intialisation sequence
+        """
+        super(PoseIntialisation, self).__init__(name)
+        self._config = gopher_configuration.Configuration()
+
+        # enable tracker
+#         self.add_child(interactions.ControlARMarkerTracker("Enable AR Marker Tracker",
+#                                                            self._config.topics.ar_tracker_long_range,
+#                                                            True))
+        initialise = py_trees.Selector("Initialise")
+        # check status
+        check_status = py_trees.Sequence("Verify Localisation")
+        check_status.add_child(CheckELFInitialised("Check ELF localiser state",
+                                                   self._config.topics.elf_status))
+        notify_done = interactions.SendNotification(
+            "Intialised",
+            led_pattern=gopher_std_msgs.LEDStrip.AROUND_RIGHT_GREEN,
+            sound=self._config.sounds.done,
+            message="intialised pose"
+        )
+        notify_done.add_child(time.Pause("Celebrate the Success", 2.0))
+        check_status.add_child(notify_done)
+        initialise.add_child(check_status)
+
+        # manual init
+        manual_init = py_trees.Sequence("Manual Initialisation")
+        manual_init.add_child(interactions.CheckButtonPressed("Check Cancel Button", self._config.buttons.stop))
+        manual_init.add_child(interactions.WaitForButton("Wait for Go Button Trigger", self._config.buttons.go))
+        manual_init.add_child(Teleport("Teleport to Homebase",
+                                       gopher_navi_msgs.TeleportGoal(location="homebase", special_effects=True)))
+        manual_init.add_child(time.Timeout("Wait for Initialisation", 60.0))
+        initialise.add_child(manual_init)
+        # auto init
+        initialise.add_child(time.Pause("Autonomous Initialisation", 20.0))
+        self.add_child(initialise)
+        # disable tracker
+#         self.add_child(interactions.ControlARMarkerTracker("Disable AR Marker Tracker",
+#                                                            self._config.topics.ar_tracker_long_range,
+#                                                            False))
+
+    def initialise(self):
+        """
+        Initialise the pose intialisation sequence
+        """
+        super(PoseIntialisation, self).initialise()
+
+    def stop(self, new_status=py_trees.Status.INVALID):
+        """
+        Stop the pose intialisation sequence
+        """
+        super(PoseIntialisation, self).stop(new_status)
+
+
+class CheckELFInitialised(py_trees.Behaviour):
+    """
+    Behaviour for checking wether ELF is initialised
+    """
+    def __init__(self, name, topic):
+        """
+        Put together the behaviour
+        """
+        super(CheckELFInitialised, self).__init__(name)
+        self._topic = topic
+        self._diagnostics_sub = None
+        self._elf_status = None
+
+    def _elf_status_cb(self, msg):
+        self._elf_status = msg.status
+
+    def initialise(self):
+        """
+        Initialise the status checker
+        """
+        if self._diagnostics_sub is None:
+            self.subscriber = rospy.Subscriber(self._topic, elf_msgs.ElfLocaliserStatus, self._elf_status_cb)
+
+    def update(self):
+        """
+        Called by the behaviour :py:meth:`tick() <py_trees.behaviours.Behaviour.tick>` function.
+        Does the real work...
+        """
+        if self._elf_status:
+            if self._elf_status == elf_msgs.ElfLocaliserStatus.WORKING:
+                return py_trees.Status.SUCCESS
+            else:
+                return py_trees.Status.FAILURE
+        else:
+            return py_trees.Status.RUNNING

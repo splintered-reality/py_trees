@@ -26,6 +26,7 @@ catkin_install_python(
     PROGRAMS
         scripts/demo_flash_and_wait
         scripts/demo_homebase_recovery
+        scripts/demo_pose_initialisation
         scripts/gopher_deliveries
         scripts/gopher_elevator_run
         scripts/gopher_delivery_run
@@ -35,7 +36,7 @@ catkin_install_python(
 )
 
 install(DIRECTORY launch DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
- 
+
 ##############################################################################
 # Unit Tests
 ##############################################################################
