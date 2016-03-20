@@ -138,16 +138,29 @@ class SendNotification(py_trees.Sequence):
     If not hooked up to the display notications, it will log an error, but quietly 'work' without
     displaying LEDs.
     """
-    def __init__(self, name, message, sound="", led_pattern=None, button_cancel=None, button_confirm=None, cancel_on_stop=True):
+    def __init__(self, name,
+                 message,
+                 sound="",
+                 led_pattern=None,
+                 button_cancel=None,
+                 button_confirm=None,
+                 cancel_on_stop=True,
+                 button_confirm=None,
+                 cancel_on_stop=True,
+                 duration=gopher_std_srvs.NotifyRequest.INDEFINITE
+                 ):
         """
-        He is a mere noodly appendage - don't expect him to check if the topic exists.
-
-        A pastafarian at a higher level should take care of that before construction.
+        This behaviour is a mere noodly appendage - don't expect it to check if the topic exists for receiving
+        the notifications. A pastafarian at a higher level should take care of that before construction.
 
         :param str name: behaviour name
         :param str led_pattern: any one of the string constants from Notification
         :param str message: a message for the status notifier to display.
-        :param bool stop_on_finish: if true, stop the notification when the behaviour finishes, otherwise display until the notification timeout
+        :param str led_pattern:
+        :param str button_cancel:
+        :param str button_confirm:
+        :param bool cancel_on_stop: if true, stop the notification when the behaviour finishes, otherwise display until the notification timeout
+        :param int duration: time in seconds for which to display this notification. Default is to display indefinitely. Useful to use with cancel_on_stop set to false.
         """
         super(SendNotification, self).__init__(name)
         self.gopher = gopher_configuration.Configuration()
@@ -163,6 +176,7 @@ class SendNotification(py_trees.Sequence):
         self.led_pattern = LEDStrip(led_strip_pattern=self.led_pattern)
         self.button_cancel = button_cancel if button_cancel is not None else Notification.RETAIN_PREVIOUS
         self.button_confirm = button_confirm if button_confirm is not None else Notification.RETAIN_PREVIOUS
+        self.duration = duration
 
         self.notification = Notification(sound_name=self.sound, led_pattern=self.led_pattern,
                                          button_confirm=self.button_confirm,
@@ -177,7 +191,7 @@ class SendNotification(py_trees.Sequence):
         request = gopher_std_srvs.NotifyRequest()
         request.id = unique_id.toMsg(self.id)
         request.action = gopher_std_srvs.NotifyRequest.START
-        request.duration = gopher_std_srvs.NotifyRequest.INDEFINITE
+        request.duration = self.duration
         request.notification = self.notification
         try:
             unused_response = self.service(request)
