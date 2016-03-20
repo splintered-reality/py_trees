@@ -39,4 +39,4 @@ class Status(Enum):
     RUNNING = "RUNNING"
     """Behaviour is in the middle of executing some action, result still pending."""
     INVALID = "INVALID"
-    """Behaviour is uninitialised and inactive."""
+    """Behaviour is uninitialised and inactive, i.e. this is the status before first entry, and after a higher priority switch has occurred."""
