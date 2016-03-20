@@ -109,38 +109,45 @@ def print_ascii_tree(tree, indent=0):
 
 def generate_pydot_graph(root):
     """
-    Render the dot tree to files - _name_.dot, .svg, .png.
-    These files will be created in the present working directory.
+    Generate the pydot graph - this is usually the first step in
+    rendering the tree to file. See also :py:func:`render_dot_tree`.
 
     :param root: the root of the tree, or subtree you want to generate
     :return: the dot graph as a pydot.Dot graph
     """
     def get_node_attributes(node):
         if isinstance(node, Selector):
-            return ('box', 'cyan')
+            return ('octagon', 'cyan')
         elif isinstance(node, Sequence):
-            return ('box', 'green')
+            return ('box', 'orange')
+        elif node.children != []:
+            return ('ellipse', 'green')  # encapsulating behaviour (e.g. wait)
         else:
             return ('ellipse', 'gray')
 
     fontsize = 11
     graph = pydot.Dot(graph_type='digraph')
-    graph.set_name(root.name)
+    graph.set_name(root.name.lower().replace(" ", "_"))
     (unused_node_shape, node_colour) = get_node_attributes(root)
     node_root = pydot.Node(root.name, shape="house", style="filled", fillcolor=node_colour, fontsize=fontsize)
     graph.add_node(node_root)
+    names = [root.name]
 
-    def add_edges(root):
+    def add_edges(root, root_dot_name):
         for c in root.children:
             (node_shape, node_colour) = get_node_attributes(c)
-            node = pydot.Node(c.name, shape=node_shape, style="filled", fillcolor=node_colour, fontsize=fontsize)
+            proposed_dot_name = c.name
+            while proposed_dot_name in names:
+                proposed_dot_name = proposed_dot_name + "*"
+            names.append(proposed_dot_name)
+            node = pydot.Node(proposed_dot_name, shape=node_shape, style="filled", fillcolor=node_colour, fontsize=fontsize)
             graph.add_node(node)
-            edge = pydot.Edge(root.name, c.name)
+            edge = pydot.Edge(root_dot_name, proposed_dot_name)
             graph.add_edge(edge)
             if c.children != []:
-                add_edges(c)
+                add_edges(c, proposed_dot_name)
 
-    add_edges(root)
+    add_edges(root, root.name)
     return graph
 
 
