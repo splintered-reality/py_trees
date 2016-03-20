@@ -66,7 +66,14 @@ class SimpleMotion(py_trees.Behaviour):
 
     def setup_ros(self, timeout):
         """
-        Allow a higher level pastafarian to wait for the server to come up.
+        Wait for the action server to come up. Note that ordinarily you do not
+        need to call this directly since the :py:function:initialise::`initialise`
+        method will call this for you on the first entry into the behaviour, but it
+        does so with an insignificant timeout. This however is relying on the
+        assumption that the underlying system is up and running before the
+        behaviour is started, so this method provides a means for a higher level
+        pastafarian to wait for the components to fall into place first.
+
         :param double timeout: time to wait (0.0 is blocking forver)
         :returns: whether it timed out waiting for the server or not.
         :rtype: boolean
@@ -158,7 +165,14 @@ class MoveIt(py_trees.Behaviour):
 
     def setup_ros(self, timeout):
         """
-        Allow a higher level pastafarian to wait for the server to come up.
+        Wait for the action server to come up. Note that ordinarily you do not
+        need to call this directly since the :py:function:initialise::`initialise`
+        method will call this for you on the first entry into the behaviour, but it
+        does so with an insignificant timeout. This however is relying on the
+        assumption that the underlying system is up and running before the
+        behaviour is started, so this method provides a means for a higher level
+        pastafarian to wait for the components to fall into place first.
+
         :param double timeout: time to wait (0.0 is blocking forver)
         :returns: whether it timed out waiting for the server or not.
         :rtype: boolean
