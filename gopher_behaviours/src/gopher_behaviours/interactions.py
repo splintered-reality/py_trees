@@ -145,8 +145,6 @@ class SendNotification(py_trees.Sequence):
                  button_cancel=None,
                  button_confirm=None,
                  cancel_on_stop=True,
-                 button_confirm=None,
-                 cancel_on_stop=True,
                  duration=gopher_std_srvs.NotifyRequest.INDEFINITE
                  ):
         """
