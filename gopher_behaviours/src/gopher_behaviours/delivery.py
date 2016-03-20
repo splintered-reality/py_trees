@@ -274,12 +274,11 @@ class GopherDeliveries(object):
                                                 remaining_locations=self.incoming_goal
                                                 )
                 # Assemble Behaviours
-                self.cancel_requested = blackboard_handlers.CheckBlackboardVariable(name="Cancel Requested?",
-                                                                                    var_name="cancel_requested",
-                                                                                    check_expected=True,
-                                                                                    expected_value=True,
-                                                                                    invert=False
-                                                                                    )
+                self.cancel_requested = py_trees.CheckBlackboardVariable(name="Cancel Requested?",
+                                                                         variable_name="cancel_requested",
+                                                                         expected_value=True,
+                                                                         invert=False
+                                                                         )
                 self.check_button_pressed = interactions.CheckButtonPressed("Cancel Pressed?",
                                                                             self.config.buttons.stop,
                                                                             latched=True
