@@ -1,0 +1,15 @@
+<!--
+  Demo the simple motions behaviour.
+ -->
+<launch>
+  <arg name="failure"   default="false" doc="set expected value different to incoming" />
+  <arg name="bad_topic" default="false" doc="look for wrong topic name" />
+
+  <include file="$(find rospy_tutorials)/006_parameters/param_talker.launch"/>
+
+  <node ns="demo" name="demo_subscriber_check" type="demo_subscriber_check" pkg="gopher_behaviours">
+      <param name="topic_name" value="/foo/chatter" />
+      <param name="failure"    value="$(arg failure)"/>
+      <param name="bad_topic"  value="$(arg bad_topic)"/>
+  </node>
+</launch>

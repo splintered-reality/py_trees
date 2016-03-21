@@ -27,9 +27,9 @@ import elf_msgs.msg as elf_msgs
 import geometry_msgs.msg as geometry_msgs
 import gopher_configuration
 import gopher_navi_msgs.msg as gopher_navi_msgs
-import move_base_msgs.msg as move_base_msgs
 import gopher_std_msgs.msg as gopher_std_msgs
 import gopher_std_msgs.srv as gopher_std_srvs
+import move_base_msgs.msg as move_base_msgs
 import py_trees
 import rospy
 import tf
@@ -298,6 +298,102 @@ class Teleport(py_trees.Behaviour):
                 return py_trees.Status.FAILURE
         else:
             self.feedback_message = "waiting for teleport to init pose and clear costmaps"
+            return py_trees.Status.RUNNING
+
+    def stop(self, new_status):
+        # if we have an action client and the current goal has not already
+        # succeeded, send a message to cancel the goal for this action client.
+        if self.action_client is not None and self.action_client.get_state() != actionlib_msgs.GoalStatus.SUCCEEDED:
+            self.action_client.cancel_goal()
+
+
+class GoalFinishing(py_trees.Behaviour):
+    """
+    Simple goal finishing behaviour; just connects to the goal finishing action and runs that, nothing else.
+
+    :param geometry_msgs/Pose2D goal_pose  the goal pose the robot shall finish at
+    """
+    def __init__(self, name, goal_pose, distance_threshold=0.1, timeout=30.0):
+        """
+        The user should prepare the goal as there are quite a few ways that the
+        goal message can be configured (see the comments in the msg file or
+        just the help descriptions for the ``gopher_teleport` command line
+        program for more information).
+
+        :param gopher_navi_msgs.TeleportGoal goal: a suitably configured goal message.
+        """
+        super(GoalFinishing, self).__init__(name)
+        self.goal = gopher_navi_msgs.GoalFinishingGoal()
+        pose_stamped = geometry_msgs.PoseStamped()
+        pose_stamped.header.stamp = rospy.Time.now()
+        pose_stamped.header.frame_id = "map"
+        pose_stamped.pose.position.x = goal_pose.x
+        pose_stamped.pose.position.y = goal_pose.y
+        pose_stamped.pose.position.z = 0.0
+        quaternion = tf.transformations.quaternion_from_euler(0.0, 0.0, goal_pose.theta)
+        pose_stamped.pose.orientation.x = quaternion[0]
+        pose_stamped.pose.orientation.y = quaternion[1]
+        pose_stamped.pose.orientation.z = quaternion[2]
+        pose_stamped.pose.orientation.w = quaternion[3]
+        self.goal.pose = pose_stamped
+        self.goal.align_on_failure = False
+        self.action_client = None
+        self.gopher = gopher_configuration.Configuration()
+
+        # parameters for re-trying
+        self._distance_threshold = distance_threshold
+        self._timeout = rospy.Duration(timeout)
+
+        self._time_finishing_start = None
+        self._final_goal_sent = False
+
+    def initialise(self):
+        self.logger.debug("  %s [GoalFinishing::initialise()]" % self.name)
+        self.action_client = actionlib.SimpleActionClient(self.gopher.actions.goal_finishing,
+                                                          gopher_navi_msgs.GoalFinishingAction)
+        # should not have to wait as this will occur way after the teleport server is up
+        connected = self.action_client.wait_for_server(rospy.Duration(0.5))
+        if not connected:
+            rospy.logwarn("GoalFinishing : behaviour could not connect with the goal finisher server.")
+            self.action_client = None
+            # we catch the failure in the first update() call
+        else:
+            self.action_client.send_goal(self.goal)
+
+        self._time_finishing_start = rospy.Time.now()
+        self._final_goal_sent = False
+
+    def update(self):
+        self.logger.debug("  %s [GoalFinishing::update()]" % self.name)
+
+        if self.action_client is None:
+            self.feedback_message = "failed, action client not connected."
+            return py_trees.Status.FAILURE
+
+        result = self.action_client.get_result()
+        if result is not None:
+            if result.value == gopher_navi_msgs.GoalFinishingResult.SUCCESS:
+                self.feedback_message = "success"
+                return py_trees.Status.SUCCESS
+            else:
+                if (result.goal_distance > self._distance_threshold) and not self._final_goal_sent:
+                    if (rospy.Time.now() - self._time_finishing_start) > self._timeout:
+                        # at last just try to align
+                        self.goal.align_on_failure = True
+                        if not self._final_goal_sent:
+                            self._final_goal_sent = True
+                    else:
+                        self.goal.align_on_failure = False
+                    # re-try
+                    self.action_client.send_goal(self.goal)
+                    return py_trees.Status.RUNNING
+                else:
+                    # consider success
+                    rospy.logwarn("GoalFinishing : Failed to finish at the goal, but considering finished anyway.")
+                    self.feedback_message = "failure, but ignoring"
+                    return py_trees.Status.SUCCESS
+        else:
+            self.feedback_message = "waiting for goal finisher to finish us"
             return py_trees.Status.RUNNING
 
     def stop(self, new_status):

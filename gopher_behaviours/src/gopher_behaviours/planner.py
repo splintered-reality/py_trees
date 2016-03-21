@@ -103,9 +103,10 @@ class Planner(object):
             if isinstance(current_node, gopher_semantic_msgs.Location):
                 children.extend([
                     navigation.MoveIt(
-                        name=current_node.name,
+                        name="Go to " + current_node.name,
                         pose=current_node.pose
                     ),
+                    navigation.GoalFinishing("Finish at " + current_node.name, current_node.pose),
                     blackboard_handlers.LocationTraversalHandler("Update location lists")]
                 )
                 if next_node is not None:

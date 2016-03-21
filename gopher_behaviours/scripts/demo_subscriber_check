@@ -1,0 +1,79 @@
+#!/usr/bin/env python
+#
+# License: BSD
+#   https://raw.github.com/yujinrobot/gopher_crazy_hospital/license/LICENSE
+#
+##############################################################################
+# Documentation
+##############################################################################
+"""
+USE THE ROS LAUNCHER INSTEAD!!!
+
+gopher_behaviours/demo_subscriber_check.launch
+"""
+##############################################################################
+# Imports
+##############################################################################
+
+import gopher_behaviours
+import std_msgs.msg as std_msgs
+import py_trees
+# import rocon_console.console as console
+import rospy
+
+##############################################################################
+# Tree
+##############################################################################
+
+
+class Demo(object):
+    def __init__(self):
+        generate_failure = rospy.get_param("~failure", False)
+        bad_topic = rospy.get_param("~bad_topic", False)
+        topic_name = rospy.get_param("~topic_name", "chatter") if not bad_topic else "wrong_topic"
+        expected_string = "Hello World" if not generate_failure else "Wrong String"
+        self.logger = py_trees.logging.get_logger("Subscriber Check")
+        self.root = gopher_behaviours.subscribers.CheckSubscriberVariable(
+            "Check",
+            topic_name=topic_name,
+            topic_type=std_msgs.String,
+            variable_name="data",
+            expected_value=expected_string
+        )
+        self.tree = py_trees.ROSBehaviourTree(self.root)
+        rospy.on_shutdown(self.shutdown)
+        # py_trees.display.render_dot_tree(self.root)
+        py_trees.display.print_ascii_tree(self.root, 0)
+
+    ##############################################################################
+    # Tick Tock
+    ##############################################################################
+
+    def tick_tock(self):
+        self.tree.visitors.append(gopher_behaviours.utilities.DebugVisitor())
+        rate = rospy.Rate(10)
+        while not rospy.is_shutdown():
+            self.tree.tick(pre_tick_handler=self.pre_tick_handler)
+            if self.root.status == py_trees.Status.SUCCESS or self.root.status == py_trees.Status.FAILURE:
+                break
+            rate.sleep()
+
+    def pre_tick_handler(self, behaviour_tree):
+        self.logger.debug("")
+        self.logger.debug("{:-^30}".format(" Run %s " % behaviour_tree.count))
+        self.logger.debug("")
+
+    def shutdown(self):
+        self.tree.destroy()  # destroy the tree on shutdown to stop the behaviour
+        self.tree.interrupt()
+
+##############################################################################
+# Main
+##############################################################################
+
+if __name__ == '__main__':
+    py_trees.logging.level = py_trees.logging.Level.DEBUG
+    rospy.init_node("simple_motion", log_level=rospy.DEBUG)
+
+    demo = Demo()
+    demo.tick_tock()

@@ -79,10 +79,10 @@ class CheckChargeSource(py_trees.Behaviour):
             self.feedback_message = "waiting for battery update"
             return py_trees.Status.RUNNING
         elif self.charge_source == self.expected_source:
-            self.feedback_message = "got expected charge source"
+            self.feedback_message = "got expected charge source [%s]" % self.expected_source
             return py_trees.Status.SUCCESS
         else:
-            self.feedback_message = "charge source differed from expected"
+            self.feedback_message = "charge source differed from expected [%s != %s]" % (self.charge_source, self.expected_source)
             return py_trees.Status.FAILURE
 
 
