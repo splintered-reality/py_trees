@@ -5,7 +5,7 @@
 <launch>
   <group ns="gopher">
     <group ns="configuration">
-      <rosparam command="load" file="$(find gopher_configuration)/param/defaults.yaml"/>
+      <rosparam command="load" file="$(find gopher_configuration)/parameters/defaults.yaml"/>
     </group>
   </group>
   <node name="homebase_recovery" type="demo_homebase_recovery" pkg="gopher_behaviours">
