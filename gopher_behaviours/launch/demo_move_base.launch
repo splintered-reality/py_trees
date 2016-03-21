@@ -1,0 +1,14 @@
+<!--
+  Demo the move base behaviour.
+ -->
+<launch>
+  <arg name="minimal"   default="false"   doc="fire up (or not) fake_navigation + minimal beneath this launcher."/>
+  <arg name="distance"  default="0.5"     doc="translation distance [m]" />
+
+  <include if="$(arg minimal)" file="$(find gopher_robot)/launch/minimal.launch"/>
+  <include if="$(arg minimal)" file="$(find gopher_bootstrap)/launch/fake_navigation.launch"/>
+
+  <node ns="demo" name="demo_simple_motions" type="demo_move_base" pkg="gopher_behaviours">
+      <param name="distance" value="$(arg distance)"/>
+  </node>
+</launch>
