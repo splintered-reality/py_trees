@@ -22,7 +22,7 @@ Bless my noggin with a tickle from your noodly appendages!
 ##############################################################################
 
 import gopher_configuration
-from gopher_std_msgs.msg import Notification, LEDStrip
+import gopher_std_msgs.msg as gopher_std_msgs
 import gopher_std_msgs.srv as gopher_std_srvs
 import py_trees
 import rocon_console.console as console
@@ -152,7 +152,7 @@ class SendNotification(py_trees.Sequence):
         the notifications. A pastafarian at a higher level should take care of that before construction.
 
         :param str name: behaviour name
-        :param str led_pattern: any one of the string constants from Notification
+        :param str led_pattern: any one of the led pattern constants from gopher_std_msgs/Notification
         :param str message: a message for the status notifier to display.
         :param str led_pattern:
         :param str button_cancel:
@@ -170,15 +170,18 @@ class SendNotification(py_trees.Sequence):
         self.service_failed = False
         self.message = message
 
-        self.led_pattern = led_pattern if led_pattern is not None else Notification.RETAIN_PREVIOUS
-        self.led_pattern = LEDStrip(led_strip_pattern=self.led_pattern)
-        self.button_cancel = button_cancel if button_cancel is not None else Notification.RETAIN_PREVIOUS
-        self.button_confirm = button_confirm if button_confirm is not None else Notification.RETAIN_PREVIOUS
+        led_pattern_id = led_pattern if led_pattern is not None else gopher_std_msgs.Notification.RETAIN_PREVIOUS
+        self.led_pattern = gopher_std_msgs.LEDStrip(led_strip_pattern=led_pattern_id)
+        self.button_cancel = button_cancel if button_cancel is not None else gopher_std_msgs.Notification.RETAIN_PREVIOUS
+        self.button_confirm = button_confirm if button_confirm is not None else gopher_std_msgs.Notification.RETAIN_PREVIOUS
         self.duration = duration
 
-        self.notification = Notification(sound_name=self.sound, led_pattern=self.led_pattern,
-                                         button_confirm=self.button_confirm,
-                                         button_cancel=self.button_cancel, message=self.message)
+        self.notification = gopher_std_msgs.Notification(
+            sound_name=self.sound, led_pattern=self.led_pattern,
+            button_confirm=self.button_confirm,
+            button_cancel=self.button_cancel,
+            message=self.message
+        )
 
         self.cancel_on_stop = cancel_on_stop
         # flag used to remember that we have a notification that needs cleaning up or not
@@ -205,7 +208,7 @@ class SendNotification(py_trees.Sequence):
             request = gopher_std_srvs.NotifyRequest()
             request.id = unique_id.toMsg(self.id)
             request.action = gopher_std_srvs.NotifyRequest.STOP
-            request.notification = Notification(message=self.message)
+            request.notification = gopher_std_msgs.Notification(message=self.message)
             self.sent_notification = False
             try:
                 unused_response = self.service(request)
