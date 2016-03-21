@@ -16,7 +16,7 @@ import sys
 import os
 import catkin_pkg.package
 
-catkin_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) 
+catkin_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 catkin_package = catkin_pkg.package.parse_package(os.path.join(catkin_dir, catkin_pkg.package.PACKAGE_MANIFEST_FILENAME))
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -43,6 +43,9 @@ extensions = [
     'sphinx.ext.viewcode'
 #    'sphinxcontrib.napoleon'
 ]
+
+# If you don't add this, todos don't appear
+todo_include_todos = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['.templates']

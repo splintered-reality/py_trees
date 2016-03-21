@@ -33,6 +33,7 @@ from . import recovery
 # Battery
 ##############################################################################
 
+
 class CheckChargeState(py_trees.Behaviour):
 
     def __init__(self, name, expected_state):
@@ -48,7 +49,7 @@ class CheckChargeState(py_trees.Behaviour):
         self.charge_state = msg.charge_state
 
     def update(self):
-        if self.charge_state == None:
+        if self.charge_state is None:
             self.feedback_message = "waiting for battery update"
             return py_trees.Status.RUNNING
         elif self.charge_state == self.expected_state:
@@ -57,6 +58,7 @@ class CheckChargeState(py_trees.Behaviour):
         else:
             self.feedback_message = "charge state differed from expected"
             return py_trees.Status.FAILURE
+
 
 class CheckChargeSource(py_trees.Behaviour):
 
@@ -73,15 +75,16 @@ class CheckChargeSource(py_trees.Behaviour):
         self.charge_source = msg.charging_source
 
     def update(self):
-        if self.charge_source == None:
+        if self.charge_source is None:
             self.feedback_message = "waiting for battery update"
             return py_trees.Status.RUNNING
         elif self.charge_source == self.expected_source:
-            self.feedback_message = "got expected charge source"
+            self.feedback_message = "got expected charge source [%s]" % self.expected_source
             return py_trees.Status.SUCCESS
         else:
-            self.feedback_message = "charge source differed from expected"
+            self.feedback_message = "charge source differed from expected [%s != %s]" % (self.charge_source, self.expected_source)
             return py_trees.Status.FAILURE
+
 
 class CheckBatteryLevel(py_trees.Behaviour):
     def __init__(self, name):
@@ -93,14 +96,18 @@ class CheckBatteryLevel(py_trees.Behaviour):
         rospy.Subscriber("~battery", somanet_msgs.SmartBatteryStatus, self.battery_callback)
 
     def update(self):
-        self.feedback_message = "battery %s%% [low: %s%%]" % (self.battery_percentage, self.gopher.battery.low)
+        # Note : battery % in the feedback message causes spam in behaviour
+        # tree rqt viewer, we are merely interested in the transitions, so do not send this
+        # self.feedback_message = "battery %s%% [low: %s%%]" % (self.battery_percentage, self.gopher.battery.low)
         self.logger.debug("  %s [update()]" % self.name)
         if self.battery_percentage < self.gopher.battery.low:
-            if self.successes % 10 == 0:
-                rospy.logwarn("Battery is low! I'm outta here!")
+            if self.successes % 10 == 0:  # throttling
+                rospy.logwarn("Behaviours [%s]: battery level is low!" % self.name)
             self.successes += 1
+            self.feedback_message = "Battery level is low."
             return py_trees.Status.SUCCESS
         else:
+            self.feedback_message = "Battery level is ok."
             return py_trees.Status.FAILURE
 
     def battery_callback(self, msg):

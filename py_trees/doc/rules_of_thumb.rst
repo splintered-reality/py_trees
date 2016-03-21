@@ -1,10 +1,14 @@
 Rules of Thumb
 ==============
 
-When to Initialise()?
----------------------
+Behaviours
+----------
 
-All behaviours/composites should call ``initialise()`` if not ``RUNNING`` upon entering ``tick()``, e.g.
+When to Initialise?
+^^^^^^^^^^^^^^^^^^^
+
+All behaviours/composites should call ``initialise()`` if not ``RUNNING`` upon entering
+their ``tick()`` method, e.g.
 
 .. code-block:: python
 
@@ -12,21 +16,42 @@ All behaviours/composites should call ``initialise()`` if not ``RUNNING`` upon e
        if self.status != Status.RUNNING:
            self.initialise()
 
-Switching Branches - Must Dos
------------------------------
+Stopping - Beware of Switching Branches
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 From one run to the next, if the currently running part of the tree gets switched out for a higher
 priority part, this will always happen via a ``Selector``. When this occurs, the selector *will* always
 send a ``stop(INVALID)`` to the previously running part of the tree.
 
-This ``stop(INVALID)`` call *must* percolate down through all previously running composites and behaviours.
+This ``stop(INVALID)`` call *must* percolate down through all previously running composites
+and behaviours, so make sure your stop behaviours are well composed and thought out.
 
-What Should go into Behaviour Messages?
----------------------------------------
+Stopping - Always Support the Default INVALID Status
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-*Only the significant things.*
+Always make sure your custom behaviour implements the ``stop()`` function with support for
+the default argument. This ensures that composites, trees and others can call the ``stop()``
+function as needed, conveniently and directly (you'll get crashes otherwise).
 
-This saves higher level programs (e.g. ``rqt_py_trees``) and hoomans be more tuned into
-what's happening rather than having to filter the noise themselves. A good example of
-this is the battery behaviour. You probably don't need to notify it changing every 1%.
+.. code-block:: python
 
+   class Foo(py_trees.Behaviour):
+
+       def stop(self, new_status=py_trees.Status.INVALID):
+           pass
+
+Behaviour Messages - What Should Go In Here?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+*The Signficance of Change*
+
+Usually we're not interested in data/stats. That is for diagnostics. What we are interested
+is when some decisional state in the behaviour tree changes. If you have a behaviour that is
+running for many ticks - *leave the message fairly constant* unless there is a significant
+event that is important to the user. This allows humans and higher level programs (e.g.
+``rqt_py_trees`` to be more tuned into the important events without having to filter through
+alot of noise to work it out.
+
+A good example of this is the battery behaviour. You probably don't need to notify
+the user of the percentage levels, just the full/high/low/emergency states so that
+a higher level program can detect a transition and make a notification.

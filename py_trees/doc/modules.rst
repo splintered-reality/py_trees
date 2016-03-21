@@ -7,7 +7,7 @@ py_trees
 --------
 
 .. automodule:: py_trees
-   :synopsis: look after your misbehaving robot with py_trees 
+   :synopsis: look after your misbehaving robot with py_trees
 
 py_trees.common
 ---------------
@@ -16,6 +16,12 @@ py_trees.common
     :members:
     :show-inheritance:
 
+py_trees.behaviour
+------------------
+
+.. automodule:: py_trees.behaviour
+    :members:
+    :show-inheritance:
 
 py_trees.behaviours
 -------------------

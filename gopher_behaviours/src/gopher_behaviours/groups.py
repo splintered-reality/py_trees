@@ -5,9 +5,7 @@ from . import dockit
 from . import parkit
 from . import interactions
 from . import battery
-from . import blackboard_handlers
 from .time import Pause
-from gopher_std_msgs.msg import LEDStrip
 from somanet_msgs.msg import SmartBatteryStatus
 import gopher_configuration
 
@@ -26,11 +24,11 @@ class Finishing(py_trees.Selector):
     def __init__(self, name):
         self.gopher = gopher_configuration.Configuration()
 
-        dock_notify = interactions.SendNotification("Notify", led_pattern=LEDStrip.FLASH_GREEN,
+        dock_notify = interactions.SendNotification("Notify", self.gopher.led_patterns.humans_i_am_done,
                                                     message="Successfully docked.", cancel_on_stop=False)
         dock_notify.add_child(py_trees.behaviours.Success())
 
-        park_notify = interactions.SendNotification("Notify", led_pattern=LEDStrip.FLASH_GREEN,
+        park_notify = interactions.SendNotification("Notify", self.gopher.led_patterns.humans_i_am_done,
                                                     message="Successfully parked.", cancel_on_stop=False)
         park_notify.add_child(py_trees.behaviours.Success())
 
@@ -38,14 +36,18 @@ class Finishing(py_trees.Selector):
                                                    interactions.Articulate("Yawn", self.gopher.sounds.done)
                                                    ]
                                    )
-        dockseq = py_trees.Sequence("Maybe dock", [blackboard_handlers.CheckBlackboardVariable("Was I docked?", 'parked', False),
+        dockseq = py_trees.Sequence("Maybe dock", [py_trees.CheckBlackboardVariable("Was I docked?",
+                                                                                    variable_name='parked'
+                                                                                    ),
                                                    dodock])
 
         dopark = py_trees.Sequence("Park/notify", [parkit.Park("Park"), park_notify,
                                                    interactions.Articulate("Yawn", self.gopher.sounds.done)
                                                    ]
                                    )
-        parkseq = py_trees.Sequence("Maybe park", [blackboard_handlers.CheckBlackboardVariable("Was I parked?", 'parked', True),
+        parkseq = py_trees.Sequence("Maybe park", [py_trees.CheckBlackboardVariable("Was I parked?",
+                                                                                    variable_name='parked'
+                                                                                    ),
                                                    dopark])
 
         wait_for_charge_confirm = interactions.SendNotification("Wait for Jack/Dock",

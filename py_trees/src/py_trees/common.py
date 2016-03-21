@@ -32,12 +32,11 @@ from enum import Enum
 class Status(Enum):
     """ An enumerator representing the status of a behaviour """
 
-    """Behaviour reports success."""
     SUCCESS = "SUCCESS"
-    """Behaviour, or condition check failed."""
+    """Behaviour check has passed, or execution of its action has finished with a successful result."""
     FAILURE = "FAILURE"
-    """Behaviour is executing"""
+    """Behaviour check has failed, or execution of its action finished with a failed result."""
     RUNNING = "RUNNING"
-    """Behaviour is in an invalid state"""
+    """Behaviour is in the middle of executing some action, result still pending."""
     INVALID = "INVALID"
-
+    """Behaviour is uninitialised and inactive, i.e. this is the status before first entry, and after a higher priority switch has occurred."""
