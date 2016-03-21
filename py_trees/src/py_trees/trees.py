@@ -22,21 +22,23 @@ This module creates tools for managing your entire behaviour tree.
 # Imports
 ##############################################################################
 
-import rospy
-import std_msgs.msg as std_msgs
-import time
 import datetime
+import py_trees_msgs.msg as py_trees_msgs
+import os
 import rosbag
 import rospkg
-import os
+import rospy
+import std_msgs.msg as std_msgs
 import threading
+import time
 
 from . import common
 from . import display
 from . import composites
 from . import conversions
+
+from .blackboard import Blackboard
 from .behaviours import Behaviour
-import py_trees_msgs.msg as py_trees_msgs
 
 
 CONTINUOUS_TICK_TOCK = -1
@@ -293,6 +295,8 @@ class ROSBehaviourTree(BehaviourTree):
         :raises AssertionError: if incoming root variable is not the correct type.
         """
         super(ROSBehaviourTree, self).__init__(root)
+        self.blackboard = Blackboard()
+        self.blackboard_publisher = rospy.Publisher('~blackboard', std_msgs.String, queue_size=1, latch=True)
         self.ascii_tree_publisher = rospy.Publisher('~ascii_tree', std_msgs.String, queue_size=1, latch=True)
         self.snapshot_ascii_tree_publisher = rospy.Publisher('~tick/ascii_tree', std_msgs.String, queue_size=1, latch=True)
         self.dot_tree_publisher = rospy.Publisher('~dot_tree', std_msgs.String, queue_size=1, latch=True)
@@ -306,6 +310,7 @@ class ROSBehaviourTree(BehaviourTree):
         self.visitors.append(self.snapshot_visitor)
         self.visitors.append(self.logging_visitor)
         self.post_tick_handlers.append(self.publish_tree_snapshots)
+        self.post_tick_handlers.append(self.publish_blackboard)
         self._bag_closed = False
 
         now = datetime.datetime.now()
@@ -324,6 +329,13 @@ class ROSBehaviourTree(BehaviourTree):
         self.lock = threading.Lock()
         # cleanup must come last as it assumes the existence of the bag
         rospy.on_shutdown(self.cleanup)
+
+    def publish_blackboard(self, tree):
+        """
+        Publishes the blackboard. Should be called at the end of every tick.
+        """
+        if self.blackboard_publisher.get_num_connections() > 0:
+            self.blackboard_publisher.publish("%s" % self.blackboard)
 
     def publish_tree_modifications(self, root):
         """
