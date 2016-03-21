@@ -361,6 +361,9 @@ class ROSBehaviourTree(BehaviourTree):
         # We're not interested in sending every single tree - only send a
         # message when the tree changes.
         if self.logging_visitor.tree.behaviours != self.last_tree.behaviours:
+            if self.root.tip() is None:
+                rospy.logerr("Behaviours: your tree is returning in an INVALID state (should always be FAILURE, RUNNING or SUCCESS)")
+                return
             self.tip_publisher.publish(conversions.behaviour_to_msg(self.root.tip()))
             self.snapshot_logging_publisher.publish(self.logging_visitor.tree)
             with self.lock:

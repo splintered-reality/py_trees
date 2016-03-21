@@ -70,6 +70,7 @@ def test_selector_composite():
     tree.add_child(a)
     tree.add_child(b)
     tree.add_child(c)
+    py_trees.display.print_ascii_tree(tree, 0)
     tick_tree(tree, visitor, 1, 3)
     print_summary(nodes=[a, b, c])
     print("--------- Assertions ---------\n")
@@ -508,13 +509,22 @@ def test_condition():
     assert(condition.status == py_trees.Status.SUCCESS)
     assert(d.status == py_trees.Status.SUCCESS)
 
-# def test_foo():
-#     print('--------- Nosetest Logs ---------')
-#     print_logging()
-#     py_trees.foo1()
-#     py_trees.foo2()
-#     print('--------- Behaviour Logs ---------')
-#     d = py_trees.behaviours.Count(name="D")
-#     d.initialise()
-#     print("Done")
-#     assert(True)
+def test_failed_tree():
+    print(console.bold + "\n****************************************************************************************" + console.reset)
+    print(console.bold + "* Failed Tree" + console.reset)
+    print(console.bold + "****************************************************************************************\n" + console.reset)
+
+    root = py_trees.Selector("Root")
+    f1 = py_trees.behaviours.Failure("Failure 1")
+    f2 = py_trees.behaviours.Failure("Failure 2")
+    f3 = py_trees.behaviours.Failure("Failure 3")
+    root.add_child(f1)
+    root.add_child(f2)
+    root.add_child(f3)
+    tree = py_trees.BehaviourTree(root)
+    tree.tick()
+    print("\n--------- Assertions ---------\n")
+    print("root.tip().name == Failure 3")
+    assert(root.tip().name == "Failure 3")
+
+    # TODO failed sequence tree

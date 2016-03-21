@@ -47,7 +47,6 @@ class Composite(Behaviour):
             self.children = []
         self.logger = logging.get_logger("Composite")
 
-
     ############################################
     # Worker Overrides
     ############################################
@@ -67,7 +66,8 @@ class Composite(Behaviour):
         self.iterator = self.tick()
 
     def tip(self):
-        """Recursive function to extract the last running node of the tree. Returns the
+        """
+        Recursive function to extract the last running node of the tree. Returns the
         tip function of the current child of this composite.
 
         """
@@ -189,7 +189,12 @@ class Selector(Composite):
                             previous.stop(Status.INVALID)
                         yield self
                         return
+        # all children failed, set failure ourselves and current child to the last bugger who failed us
         self.status = Status.FAILURE
+        try:
+            self.current_child = self.children[-1]
+        except:
+            self.current_child = None
         yield self
 
     def stop(self, new_status=Status.INVALID):
