@@ -4,6 +4,7 @@
 ##############################################################################
 # Description
 ##############################################################################
+from billiard.py2.connection import FAILURE
 
 """
 .. module:: interactions
@@ -243,8 +244,11 @@ class ControlARMarkerTracker(py_trees.Behaviour):
         """
         # connect to dynamic reconfig
         if not self._dyn_reconf_client_ar_tracker:
-            self._dyn_reconf_client_ar_tracker = dynamic_reconfigure.client.Client(self._topic,
-                                                                                   timeout=0.5)
+            try:
+                self._dyn_reconf_client_ar_tracker = dynamic_reconfigure.client.Client(self._topic,
+                                                                                       timeout=0.5)
+            except rospy.ROSException:
+                ros.logwarn("Behaviours [%s" % self.name + "]: Could not connect to dynamic reconfigure server.")
 
     def update(self):
         """
@@ -260,3 +264,7 @@ class ControlARMarkerTracker(py_trees.Behaviour):
         else:
             rospy.logwarn("ControlARMarkerTracker : Failed to connect to dynamic reconfigure server.")
             return FAILURE
+
+    def stop(self, new_status=py_trees.Status.INVALID):
+        super(ControlARMarkerTracker, self).stop(new_status)
+        # TODO: disable/enable the tracker+
