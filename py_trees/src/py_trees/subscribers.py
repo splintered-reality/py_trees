@@ -37,6 +37,7 @@ class CheckSubscriberVariable(py_trees.Behaviour):
     and optionally whether that variable has a specific value.
 
     .. todo:: base this off the subscriber handler.
+
     """
     def __init__(self,
                  name="Check Subscriber Variable",
@@ -44,7 +45,8 @@ class CheckSubscriberVariable(py_trees.Behaviour):
                  topic_type=None,
                  variable_name="bar",
                  expected_value=None,
-                 oneshot=True,
+                 fail_if_no_data=False,
+                 fail_if_bad_comparison=False,
                  comparison_operator=operator.eq,
                  monitor_continuously=False
                  ):
@@ -54,9 +56,14 @@ class CheckSubscriberVariable(py_trees.Behaviour):
         :param obj topic_type: class of the message type (e.g. std_msgs.String)
         :param str variable_name: name of the variable to check
         :param obj expected_value: expected value of the variable
-        :param bool oneshot: if false, then if unmatched, it will return RUNNING instead of FAILURE
+        :param bool fail_if_no_data: return FAILURE instead of RUNNING if there is no data yet
+        :param bool fail_if_bad_comparison: return FAILURE instead of RUNNING if there is data, but failed comparison
         :param function comparison_operator: one of the comparison operators from the python operator module
         :param bool monitor_continuously: setup subscriber immediately and continuously monitor the data
+
+        Note : if you set fail_if_no_data, then you should use the monitor_continuously flag as setting
+        the subscriber every time you enter the cell is not likely to give it enough time to collect data (unless
+        it is a latched topic).
 
         .. seealso:: https://docs.python.org/2/library/operator.html
         """
@@ -67,7 +74,8 @@ class CheckSubscriberVariable(py_trees.Behaviour):
         self.expected_value = expected_value
         self.comparison_operator = comparison_operator
         self.subscriber = None
-        self.oneshot = oneshot
+        self.fail_if_no_data = fail_if_no_data
+        self.fail_if_bad_comparison = fail_if_bad_comparison
         # Use cached_xxx variables to generate a status.feedback in the callback independent
         # of the behaviour tick status (i.e. it runs and updates continuously). The
         # behaviour's tick status then reflects this when required
@@ -108,7 +116,7 @@ class CheckSubscriberVariable(py_trees.Behaviour):
         begins running (i.e. on initialise).
         """
         with self.data_guard:
-            self.cached_status = py_trees.Status.RUNNING
+            self.cached_status = py_trees.Status.FAILURE if self.fail_if_no_data else py_trees.Status.RUNNING
             self.cached_feedback = "have not yet received any messages"
         # if it's a latched publisher, this will immediately trigger a callback, inside the constructor!
         # so make sure we aren't in a lock ourselves, otherwise we get a deadlock
@@ -133,7 +141,7 @@ class CheckSubscriberVariable(py_trees.Behaviour):
                 self.cached_status = py_trees.Status.SUCCESS
             else:
                 self.cached_feedback = "'%s' comparison failed [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
-                self.cached_status = py_trees.Status.FAILURE if self.oneshot else py_trees.Status.RUNNING
+                self.cached_status = py_trees.Status.FAILURE if self.fail_if_bad_comparison else py_trees.Status.RUNNING
 
     def update(self):
         with self.data_guard:
