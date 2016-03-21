@@ -21,6 +21,7 @@ Bless my noggin with a tickle from your noodly appendages!
 ##############################################################################
 
 import copy
+import operator
 import py_trees
 import rospy
 import threading
@@ -36,6 +37,7 @@ class CheckSubscriberVariable(py_trees.Behaviour):
     and optionally whether that variable has a specific value.
 
     .. todo:: base this off the subscriber handler.
+
     """
     def __init__(self,
                  name="Check Subscriber Variable",
@@ -43,7 +45,9 @@ class CheckSubscriberVariable(py_trees.Behaviour):
                  topic_type=None,
                  variable_name="bar",
                  expected_value=None,
-                 invert=False,
+                 fail_if_no_data=False,
+                 fail_if_bad_comparison=False,
+                 comparison_operator=operator.eq,
                  monitor_continuously=False
                  ):
         """
@@ -52,16 +56,40 @@ class CheckSubscriberVariable(py_trees.Behaviour):
         :param obj topic_type: class of the message type (e.g. std_msgs.String)
         :param str variable_name: name of the variable to check
         :param obj expected_value: expected value of the variable
-        :param bool invert: if true, check that the value of the variable is != expected_value, rather than ==
+        :param bool fail_if_no_data: return FAILURE instead of RUNNING if there is no data yet
+        :param bool fail_if_bad_comparison: return FAILURE instead of RUNNING if there is data, but failed comparison
+        :param function comparison_operator: one of the comparison operators from the python operator module
         :param bool monitor_continuously: setup subscriber immediately and continuously monitor the data
+
+        Usage Patterns:
+
+        As a guard at the start of a sequence (RUNNING until there is a successful comparison):
+
+        - fail_if_no_data=False
+        - fail_if_bad_comparison=False
+        - monitor_contiuously=False
+
+        As a priority chooser in a selector (FAILURE until there is a successful comparison)
+
+        - fail_if_no_data=True
+        - fail_if_bad_comparison=True
+        - monitor_contiuously=True
+
+        Note : if you set fail_if_no_data, then you should use the monitor_continuously flag as setting
+        the subscriber every time you enter the cell is not likely to give it enough time to collect data (unless
+        it is a latched topic).
+
+        .. seealso:: https://docs.python.org/2/library/operator.html
         """
         super(CheckSubscriberVariable, self).__init__(name)
         self.topic_name = topic_name
         self.topic_type = topic_type
         self.variable_name = variable_name
         self.expected_value = expected_value
-        self.invert = invert
+        self.comparison_operator = comparison_operator
         self.subscriber = None
+        self.fail_if_no_data = fail_if_no_data
+        self.fail_if_bad_comparison = fail_if_bad_comparison
         # Use cached_xxx variables to generate a status.feedback in the callback independent
         # of the behaviour tick status (i.e. it runs and updates continuously). The
         # behaviour's tick status then reflects this when required
@@ -102,9 +130,11 @@ class CheckSubscriberVariable(py_trees.Behaviour):
         begins running (i.e. on initialise).
         """
         with self.data_guard:
-            self.cached_status = py_trees.Status.RUNNING
+            self.cached_status = py_trees.Status.FAILURE if self.fail_if_no_data else py_trees.Status.RUNNING
             self.cached_feedback = "have not yet received any messages"
-            self.subscriber = rospy.Subscriber(self.topic_name, self.topic_type, self._callback)
+        # if it's a latched publisher, this will immediately trigger a callback, inside the constructor!
+        # so make sure we aren't in a lock ourselves, otherwise we get a deadlock
+        self.subscriber = rospy.Subscriber(self.topic_name, self.topic_type, self._callback)
 
     def _callback(self, msg):
         """
@@ -117,24 +147,15 @@ class CheckSubscriberVariable(py_trees.Behaviour):
                 self.cached_status = py_trees.Status.FAILURE
             return
         value = getattr(msg, self.variable_name)
-        matched_expected = (value == self.expected_value)
+        success = self.comparison_operator(value, self.expected_value)
 
         with self.data_guard:
-            if not self.invert:
-                if matched_expected:
-                    self.cached_feedback = "'%s' matched expected value (as required) [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
-                    self.cached_status = py_trees.Status.SUCCESS
-                else:
-                    self.cached_feedback = "'%s' did not match expected value (required otherwise) [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
-                    self.cached_status = py_trees.Status.FAILURE
+            if success:
+                self.cached_feedback = "'%s' comparison succeeded [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
+                self.cached_status = py_trees.Status.SUCCESS
             else:
-                result = not matched_expected
-                if result:
-                    self.cached_feedback = "'%s' did not match expected value (as required) [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
-                    self.cached_status = py_trees.Status.SUCCESS
-                else:
-                    self.cached_feedback = "'%s' matched expected value (required otherwise) [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
-                    self.cached_status = py_trees.Status.FAILURE
+                self.cached_feedback = "'%s' comparison failed [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
+                self.cached_status = py_trees.Status.FAILURE if self.fail_if_bad_comparison else py_trees.Status.RUNNING
 
     def update(self):
         with self.data_guard:
@@ -240,6 +261,6 @@ class SubscriberToBlackboard(SubscriberHandler):
                 self.feedback_message = "no message received yet"
                 return py_trees.Status.RUNNING
             else:
-                print("Saving: %s" % self.msg)
                 self.blackboard.set(self.blackboard_variable_name, self.msg)
+                self.feedback_message = "saved incoming message"
                 return py_trees.Status.SUCCESS

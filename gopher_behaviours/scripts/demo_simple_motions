@@ -30,7 +30,7 @@ import rospy
 class DemoSimpleMotions(object):
     def __init__(self):
         self.root = py_trees.Sequence("Root")
-        self.gopher = gopher_configuration.Configuration()
+        self.gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
         self.logger = py_trees.logging.get_logger("SimpleMotion")
         rotation_angle = rospy.get_param("~rotation", 0.88)
         translation_distance = rospy.get_param("~translation", 0.25)

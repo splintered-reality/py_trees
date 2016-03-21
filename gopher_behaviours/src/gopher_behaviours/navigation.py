@@ -33,8 +33,35 @@ import py_trees
 import rospy
 import tf
 
+
 ##############################################################################
-# Classes
+# Behaviour Factories
+##############################################################################
+
+def create_map_pose_to_blackboard_behaviour(
+    name="PoseToBlackboard",
+    blackboard_variable_name="pose"
+):
+    """
+    Hooks up a subscriber and transfers the pose topic to the blackboard.
+
+    :param str name: behaviour name
+    :param str blackboard_variable_name: name to write the message to
+    :returns: the behaviour
+    :rtype: subscribers.CheckSubscriberVariable
+    """
+    gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
+
+    behaviour = py_trees.SubscriberToBlackboard(
+        name,
+        topic_name=gopher.topics.odom,
+        topic_type=geometry_msgs.PoseWithCovarianceStamped,
+        blackboard_variable_name=blackboard_variable_name
+    )
+    return behaviour
+
+##############################################################################
+# Behaviours
 ##############################################################################
 
 

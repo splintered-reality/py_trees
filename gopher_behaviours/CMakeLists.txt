@@ -26,8 +26,8 @@ catkin_install_python(
     PROGRAMS
         scripts/demo_flash_and_wait
         scripts/demo_homebase_recovery
-        scripts/demo_subscriber_check
         scripts/demo_move_base
+        scripts/demo_parking
         scripts/demo_simple_motions
         scripts/gopher_deliveries
         scripts/gopher_elevator_run

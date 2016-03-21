@@ -48,7 +48,7 @@ class WaitForTransform(py_trees.Behaviour):
         self.attr_name = blackboard_attr_name
         self.from_frame = from_frame
         self.to_frame = to_frame
-        self.timeout = rospy.Time.now()  rospy.Duration(timeout)
+        self.timeout = rospy.Time.now() + rospy.Duration(timeout)
 
     def initialise(self):
         self.tf_listener = tf.TransformListener()

@@ -1,21 +1,46 @@
 #!/usr/bin/env python
+#
+# License: Yujin
+#   https://raw.github.com/yujinrobot/gopher_crazy_hospital/license/LICENSE
+#
+##############################################################################
+# Documentation
+##############################################################################
+
+"""
+.. module:: groups
+   :platform: Unix
+   :synopsis: Subtrees that meld multiple behaviours into a single cohesive functionality.
+
+----
+"""
+##############################################################################
+# Imports
+##############################################################################
 
 import py_trees
-from . import dockit
-from . import parkit
+import somanet_msgs.msg as somanet_msgs
+import gopher_configuration
+
 from . import interactions
 from . import battery
+
+from .dock import Dock
+from .park import Park
+from .undock import Undock
+from .unpark import UnPark
 from .time import Pause
-from somanet_msgs.msg import SmartBatteryStatus
-import gopher_configuration
+
+##############################################################################
+# Black Boxes
+##############################################################################
 
 
 class Starting(py_trees.Selector):
     def __init__(self, name):
-        undockseq = py_trees.Sequence("Undock", [battery.CheckChargeSource("Check for dock",
-                                                                           SmartBatteryStatus.CHARGING_SOURCE_DOCK),
-                                                 dockit.Undock("Undock"), Pause("Pause", 2)])
-        unparkseq = py_trees.Sequence("Unpark", [parkit.Unpark("Unpark"), Pause("Pause", 2)])
+        undockseq = py_trees.Sequence("Undock", [battery.create_check_docked_behaviour(),
+                                                 Undock("Undock"), Pause("Pause", 2)])
+        unparkseq = py_trees.Sequence("UnPark", [UnPark("UnPark"), Pause("Pause", 2)])
         children = [undockseq, unparkseq]
         super(Starting, self).__init__(name, children)
 
@@ -25,41 +50,25 @@ class Finishing(py_trees.Selector):
         self.gopher = gopher_configuration.Configuration()
 
         dock_notify = interactions.SendNotification("Notify", self.gopher.led_patterns.humans_i_am_done,
-                                                    message="Successfully docked.", cancel_on_stop=False)
-        dock_notify.add_child(py_trees.behaviours.Success())
+                                                    message="Successfully docked.", cancel_on_stop=False, duration=5)
+        dock_notify.add_child(interactions.Articulate("Yawn", self.gopher.sounds.done))
 
         park_notify = interactions.SendNotification("Notify", self.gopher.led_patterns.humans_i_am_done,
-                                                    message="Successfully parked.", cancel_on_stop=False)
-        park_notify.add_child(py_trees.behaviours.Success())
+                                                    message="Successfully parked.", cancel_on_stop=False, duration=5)
+        dock_notify.add_child(interactions.Articulate("Yawn", self.gopher.sounds.done))
 
-        dodock = py_trees.Sequence("Dock/notify", [dockit.Dock("Dock"), dock_notify,
-                                                   interactions.Articulate("Yawn", self.gopher.sounds.done)
-                                                   ]
-                                   )
-        dockseq = py_trees.Sequence("Maybe dock", [py_trees.CheckBlackboardVariable("Was I docked?",
-                                                                                    variable_name='parked'
-                                                                                    ),
-                                                   dodock])
-
-        dopark = py_trees.Sequence("Park/notify", [parkit.Park("Park"), park_notify,
-                                                   interactions.Articulate("Yawn", self.gopher.sounds.done)
-                                                   ]
-                                   )
-        parkseq = py_trees.Sequence("Maybe park", [py_trees.CheckBlackboardVariable("Was I parked?",
-                                                                                    variable_name='parked'
-                                                                                    ),
-                                                   dopark])
+        dockseq = py_trees.Sequence("Dock/notify", [Dock("Dock"), dock_notify])
+        parkseq = py_trees.Sequence("Park/notify", [Park("Park"), park_notify])
 
         wait_for_charge_confirm = interactions.SendNotification("Wait for Jack/Dock",
                                                                 led_pattern=self.gopher.led_patterns.humans_i_need_help,
                                                                 message="waiting for charge or confirm button press")
-        charge_confirm_selector = py_trees.Selector("Charge/Confirm", [battery.CheckChargeState("Charging?",
-                                                                                                SmartBatteryStatus.CHARGING),
-                                                                       interactions.CheckButtonPressed("Confirm pressed?",
-                                                                                                       self.gopher.buttons.go)
-                                                                       ]
-                                                    )
+        recovery_selector = py_trees.Selector("Charge/Confirm", [
+            battery.CheckChargeState("Charging?", somanet_msgs.SmartBatteryStatus.CHARGING),
+            interactions.CheckButtonPressed("Confirm pressed?", self.gopher.buttons.go)
+        ])
+        charge_confirm_condition = py_trees.behaviours.Condition('Wait for recovery', recovery_selector, py_trees.Status.SUCCESS)
+        wait_for_charge_confirm.add_child(charge_confirm_condition)
 
-        wait_for_charge_confirm.add_child(charge_confirm_selector)
         children = [parkseq, dockseq, wait_for_charge_confirm]
         super(Finishing, self).__init__(name, children)

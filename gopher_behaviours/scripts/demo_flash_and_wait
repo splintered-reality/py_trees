@@ -17,7 +17,6 @@ gopher_behaviours/demo_flash_and_wait.launch
 
 import gopher_configuration
 import gopher_behaviours
-from gopher_std_msgs.msg import LEDStrip
 import py_trees
 import rospy
 

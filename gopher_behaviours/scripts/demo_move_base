@@ -9,7 +9,7 @@
 """
 USE THE ROS LAUNCHER INSTEAD!!!
 
-gopher_behaviours/demo_simple_motion.launch
+gopher_behaviours/demo_move_base.launch
 """
 ##############################################################################
 # Imports
