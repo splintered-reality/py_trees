@@ -24,6 +24,7 @@ from . import interactions
 from . import navigation
 from . import planner
 from . import recovery
+from . import subscribers
 from . import time
 from . import utilities
 
