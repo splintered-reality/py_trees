@@ -161,7 +161,7 @@ class SubscriberHandler(py_trees.Behaviour):
         :param obj topic_type: class of the message type (e.g. std_msgs.String)
         :param bool monitor_continuously: setup subscriber immediately and continuously monitor the data
         """
-        super(CheckSubscriberVariable, self).__init__(name)
+        super(SubscriberHandler, self).__init__(name)
         self.topic_name = topic_name
         self.topic_type = topic_type
         self.msg = None
@@ -199,3 +199,47 @@ class SubscriberHandler(py_trees.Behaviour):
         """
         with self.data_guard:
             self.msg = msg
+
+
+class SubscriberToBlackboard(SubscriberHandler):
+    """
+    Saves the latest message to the blackboard and immediately returns success.
+    If no data has yet been received, this behaviour blocks (i.e. returns
+    RUNNING).
+
+    This writes only the pose part of the message - i.e. geometry_msgs/Pose
+    """
+    def __init__(self,
+                 name="SubscriberToBlackboard",
+                 topic_name="chatter",
+                 topic_type=None,
+                 blackboard_variable_name="chatter",
+                 monitor_continuously=False
+                 ):
+        """
+        :param str name: name of the behaviour
+        :param str topic_name: name of the topic to connect to
+        :param obj topic_type: class of the message type (e.g. std_msgs.String)
+        :param bool monitor_continuously: setup subscriber immediately and continuously monitor the data
+        """
+        super(SubscriberToBlackboard, self).__init__(
+            name,
+            topic_name=topic_name,
+            topic_type=topic_type,
+            monitor_continuously=monitor_continuously
+        )
+        self.blackboard = py_trees.Blackboard()
+        self.blackboard_variable_name = blackboard_variable_name
+
+    def update(self):
+        """
+        Writes the data to the blackboard.
+        """
+        with self.data_guard:
+            if self.msg is None:
+                self.feedback_message = "no message received yet"
+                return py_trees.Status.RUNNING
+            else:
+                print("Saving: %s" % self.msg)
+                self.blackboard.set(self.blackboard_variable_name, self.msg)
+                return py_trees.Status.SUCCESS
