@@ -193,7 +193,7 @@ class Selector(Composite):
         self.status = Status.FAILURE
         try:
             self.current_child = self.children[-1]
-        except:
+        except IndexError:
             self.current_child = None
         yield self
 
