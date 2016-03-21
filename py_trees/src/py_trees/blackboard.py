@@ -56,13 +56,47 @@ class Blackboard(object):
     def __init__(self):
         self.__dict__ = self.__shared_state
 
+    def set(self, name, value, overwrite=False):
+        """
+        For when you only have strings to identify and access the blackboard variables, this
+        provides a convenient setter.
+        """
+        if not overwrite:
+            try:
+                getattr(self, name)
+                return False
+            except AttributeError:
+                pass
+        setattr(self, name, value)
+        return True
+
+    def get(self, name):
+        """
+        For when you only have strings to identify and access the blackboard variables,
+        this provides a convenient accessor.
+        """
+        try:
+            return getattr(self, name)
+        except AttributeError:
+            return None
+
     def __str__(self):
         s = console.green + type(self).__name__ + "\n" + console.reset
         max_length = 0
         for k in self.__dict__.keys():
             max_length = len(k) if len(k) > max_length else max_length
         for key, value in self.__dict__.iteritems():
-            s += console.cyan + "  " + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ": " + console.yellow + "%s\n" % (value if value is not None else '-')
+            if value is None:
+                value_string = "-"
+                s += console.cyan + "  " + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ": " + console.yellow + "%s\n" % (value_string) + console.reset
+            else:
+                lines = ("%s" % value).split('\n')
+                if len(lines) > 1:
+                    s += console.cyan + "  " + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ":\n"
+                    for line in lines:
+                        s += console.yellow + "    %s\n" % line + console.reset
+                else:
+                    s += console.cyan + "  " + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ": " + console.yellow + "%s\n" % (value) + console.reset
         s += console.reset
         return s
 
