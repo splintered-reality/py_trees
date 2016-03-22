@@ -38,6 +38,8 @@
   <run_depend>somanet_msgs</run_depend>
   <run_depend>std_msgs</run_depend>
   <run_depend>tf</run_depend>
+  <run_depend>tf2_geometry_msgs</run_depend>
+  <run_depend>tf2_ros</run_depend>
   <run_depend>unique_identifier</run_depend>
   <run_depend>uuid_msgs</run_depend>
 
