@@ -61,6 +61,20 @@ class CheckSubscriberVariable(py_trees.Behaviour):
         :param function comparison_operator: one of the comparison operators from the python operator module
         :param bool monitor_continuously: setup subscriber immediately and continuously monitor the data
 
+        Usage Patterns:
+
+        As a guard at the start of a sequence (RUNNING until there is a successful comparison):
+
+        - fail_if_no_data=False
+        - fail_if_bad_comparison=False
+        - monitor_contiuously=False
+
+        As a priority chooser in a selector (FAILURE until there is a successful comparison)
+
+        - fail_if_no_data=True
+        - fail_if_bad_comparison=True
+        - monitor_contiuously=True
+
         Note : if you set fail_if_no_data, then you should use the monitor_continuously flag as setting
         the subscriber every time you enter the cell is not likely to give it enough time to collect data (unless
         it is a latched topic).
@@ -179,6 +193,7 @@ class SubscriberHandler(py_trees.Behaviour):
             self._setup()
 
     def initialise(self):
+        py_trees.Behaviour.initialise(self)
         if not self.monitor_continuously:
             self._setup()
 
@@ -189,6 +204,7 @@ class SubscriberHandler(py_trees.Behaviour):
                 if self.subscriber is not None:
                     self.subscriber.unregister()
                     self.subscriber = None
+        py_trees.Behaviour.stop(self, new_status)
 
     def _setup(self):
         """
@@ -247,6 +263,6 @@ class SubscriberToBlackboard(SubscriberHandler):
                 self.feedback_message = "no message received yet"
                 return py_trees.Status.RUNNING
             else:
-                self.blackboard.set(self.blackboard_variable_name, self.msg)
+                self.blackboard.set(self.blackboard_variable_name, self.msg, overwrite=True)
                 self.feedback_message = "saved incoming message"
                 return py_trees.Status.SUCCESS

@@ -21,6 +21,7 @@
   <run_depend>door_interactions_msgs</run_depend>
   <run_depend>dslam_msgs</run_depend>
   <run_depend>dynamic_reconfigure</run_depend>
+  <run_depend>elf_msgs</run_depend>
   <run_depend>geometry</run_depend>
   <run_depend>geometry_msgs</run_depend>
   <run_depend>goal_finisher</run_depend>

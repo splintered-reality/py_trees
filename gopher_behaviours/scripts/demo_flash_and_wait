@@ -17,7 +17,6 @@ gopher_behaviours/demo_flash_and_wait.launch
 
 import gopher_configuration
 import gopher_behaviours
-from gopher_std_msgs.msg import LEDStrip
 import py_trees
 import rospy
 
@@ -43,7 +42,7 @@ class FlashAndWait(object):
             led_pattern=self.gopher.led_patterns.holding,
             message="flashing while pausing...for a bit"
         )
-        flash_leds_pause.add_child(gopher_behaviours.time.Pause("Pause 5s", 5.0))
+        flash_leds_pause.add_child(py_trees.Pause("Pause 5s", 5.0))
 
         self.root.add_child(flash_leds_need_input)
         self.root.add_child(honk)

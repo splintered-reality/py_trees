@@ -60,30 +60,46 @@ class CheckChargeState(py_trees.Behaviour):
             return py_trees.Status.FAILURE
 
 
-class CheckChargeSource(py_trees.Behaviour):
+def create_check_docked_behaviour(name="Check Docked"):
+    """
+    Hooks up a subscriber and checks that the charging source is the dock.
 
-    def __init__(self, name, expected_source):
-        """
-        :param int expected_source: return success if the battery is being charged from this source
-        """
-        super(CheckChargeSource, self).__init__(name)
-        self.expected_source = expected_source
-        self.charge_source = None
-        self._battery_subscriber = rospy.Subscriber("~battery", somanet_msgs.SmartBatteryStatus, self.battery_callback)
+    :param str name: behaviour name
+    :returns: the behaviour
+    :rtype: subscribers.CheckSubscriberVariable
+    """
+    gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
+    check_docked = py_trees.CheckSubscriberVariable(
+        name=name,
+        topic_name=gopher.topics.battery,
+        topic_type=somanet_msgs.SmartBatteryStatus,
+        variable_name="charging_source",
+        expected_value=somanet_msgs.SmartBatteryStatus.CHARGING_SOURCE_DOCK,
+        fail_if_no_data=False,
+        fail_if_bad_comparison=False
+    )
+    return check_docked
 
-    def battery_callback(self, msg):
-        self.charge_source = msg.charging_source
 
-    def update(self):
-        if self.charge_source is None:
-            self.feedback_message = "waiting for battery update"
-            return py_trees.Status.RUNNING
-        elif self.charge_source == self.expected_source:
-            self.feedback_message = "got expected charge source [%s]" % self.expected_source
-            return py_trees.Status.SUCCESS
-        else:
-            self.feedback_message = "charge source differed from expected [%s != %s]" % (self.charge_source, self.expected_source)
-            return py_trees.Status.FAILURE
+def create_check_discharging_behaviour(name="Check Discharging"):
+    """
+    Hooks up a subscriber and checks that there is no current charging source.
+
+    :param str name: behaviour name
+    :returns: the behaviour
+    :rtype: subscribers.CheckSubscriberVariable
+    """
+    gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
+    check_docked = py_trees.CheckSubscriberVariable(
+        name=name,
+        topic_name=gopher.topics.battery,
+        topic_type=somanet_msgs.SmartBatteryStatus,
+        variable_name="charging_source",
+        expected_value=somanet_msgs.SmartBatteryStatus.CHARGING_SOURCE_NONE,
+        fail_if_no_data=False,
+        fail_if_bad_comparison=False
+    )
+    return check_docked
 
 
 class CheckBatteryLevel(py_trees.Behaviour):

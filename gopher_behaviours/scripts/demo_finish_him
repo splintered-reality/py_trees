@@ -70,7 +70,7 @@ class FinishHim(object):
             sound=gopher.sounds.done,
             message="finished at the goal pose"
         )
-        notify_arrival.add_child(gopher_behaviours.time.Pause("Chill 2s", 2.0))
+        notify_arrival.add_child(py_trees.Pause("Chill 2s", 2.0))
         self.root.add_child(notify_arrival)
         self.logger = py_trees.logging.get_logger("FinishHim")
         self.tree = py_trees.ROSBehaviourTree(self.root)

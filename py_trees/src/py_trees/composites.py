@@ -50,6 +50,24 @@ class Composite(Behaviour):
     ############################################
     # Worker Overrides
     ############################################
+    def setup(self, timeout):
+        """
+        Override this function to do any post-constructor setup that is necessary
+        for a runtime. A good example are any of the ros wait_for methods which
+        will block while looking for a ros master/topics/services.
+
+        This is best done here rather than in the constructor so that trees can
+        be instantiated on the fly without any runtime requirements to produce
+        visualisations such as dot graphs.
+
+        :param double timeout: time to wait (0.0 is blocking forever)
+        :returns: whether it timed out waiting for the server or not.
+        :rtype: boolean
+        """
+        result = True
+        for child in self.children:
+            result = result and child.setup(timeout)
+        return result
 
     def stop(self, new_status=Status.INVALID):
         """
@@ -103,6 +121,17 @@ class Composite(Behaviour):
         index = self.children.index(child)
         self.children.remove(child)
         return index
+
+    def remove_all_children(self):
+        """
+        Remove all children. Makes sure to stop each child if necessary.
+        """
+        for child in self.children:
+            if child.status == Status.RUNNING:
+                child.stop(Status.INVALID)
+        # makes sure to delete it for this class and all references to it
+        #   http://stackoverflow.com/questions/850795/clearing-python-lists
+        del self.children[:]
 
     def replace_child(self, child, replacement):
         """

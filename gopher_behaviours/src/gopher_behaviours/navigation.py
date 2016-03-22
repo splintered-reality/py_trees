@@ -21,8 +21,6 @@ Bless my noggin with a tickle from your noodly appendages!
 # Imports
 ##############################################################################
 
-import math
-
 import actionlib
 import actionlib_msgs.msg as actionlib_msgs
 import elf_msgs.msg as elf_msgs
@@ -31,25 +29,49 @@ import gopher_configuration
 import gopher_navi_msgs.msg as gopher_navi_msgs
 import gopher_std_msgs.msg as gopher_std_msgs
 import gopher_std_msgs.srv as gopher_std_srvs
+import math
 import move_base_msgs.msg as move_base_msgs
 import py_trees
 import rospy
 import tf
 
 from . import interactions
-from . import subscribers
-from . import time
 
 ##############################################################################
-# Classes
+# Behaviour Factories
+##############################################################################
+
+
+def create_map_pose_to_blackboard_behaviour(
+    name="PoseToBlackboard",
+    blackboard_variable_name="pose"
+):
+    """
+    Hooks up a subscriber and transfers the pose topic to the blackboard.
+
+    :param str name: behaviour name
+    :param str blackboard_variable_name: name to write the message to
+    :returns: the behaviour
+    :rtype: subscribers.CheckSubscriberVariable
+    """
+    gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
+
+    behaviour = py_trees.SubscriberToBlackboard(
+        name,
+        topic_name=gopher.topics.pose,
+        topic_type=geometry_msgs.PoseWithCovarianceStamped,
+        blackboard_variable_name=blackboard_variable_name
+    )
+    return behaviour
+
+##############################################################################
+# Behaviours
 ##############################################################################
 
 
 class SimpleMotion(py_trees.Behaviour):
     """
     Interface to the simple motions controller.
-
-    .. note:: This class assumes a higher level pastafarian has ensured the action client is available.
     """
     def __init__(self, name="simple_motions",
                  motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
@@ -65,11 +87,18 @@ class SimpleMotion(py_trees.Behaviour):
         :param bool unsafe: flag if you want the motion to be unsafe, i.e. not use the sensors
         :param bool keep_going: flag if you want the motion to return success in case the action aborts
         :param bool fail_if_complete: flag if you want the motion to return failure in case the motion is completed
+
+        The ``keep_going`` flag is useful if you are attempting to rotate the robot out of harms way, but don't mind
+        if it doesn't make the full specified rotation - this is oft used in navigation recovery style behaviours.
+
+        The ``fail_if_complete`` flag is useful if you are expecting something to happen before the rotation end, i.e.
+        if it gets to the end, it should be considered a failure - this could be used in a scanning rotation where it
+        is looking for a landmark in the environment.
         """
         super(SimpleMotion, self).__init__(name)
         self.gopher = None
         self.action_client = None
-        self.has_goal = False
+        self.sent_goal = False
         self.goal = gopher_std_msgs.SimpleMotionGoal()
         self.goal.motion_type = motion_type
         self.goal.motion_amount = motion_amount
@@ -77,7 +106,7 @@ class SimpleMotion(py_trees.Behaviour):
         self.keep_going = keep_going
         self.fail_if_complete = fail_if_complete
 
-    def setup_ros(self, timeout):
+    def setup(self, timeout):
         """
         Wait for the action server to come up. Note that ordinarily you do not
         need to call this directly since the :py:function:initialise::`initialise`
@@ -97,21 +126,30 @@ class SimpleMotion(py_trees.Behaviour):
                 self.gopher.actions.simple_motion_controller,
                 gopher_std_msgs.SimpleMotionAction
             )
-            if not self.action_client.wait_for_server(rospy.Duration(timeout)):
-                rospy.logerr("Behaviour [%s" % self.name + "] could not connect to the simple motions action server [%s]" % self.__class__.__name__)
-                self.action_client = None
-                return False
+            if timeout is not None:
+                if not self.action_client.wait_for_server(rospy.Duration(timeout)):
+                    rospy.logerr("Behaviour [%s" % self.name + "] could not connect to the simple motions action server [%s]" % self.__class__.__name__)
+                    self.action_client = None
+                    return False
+            # else just assume it's working, maybe someone called this prior to ticking the behaviour
         return True
 
     def initialise(self):
         self.logger.debug("  %s [SimpleMotion::initialise()]" % self.name)
         if not self.action_client:
-            if not self.setup_ros(timeout=0.01):
-                return
-        self.action_client.send_goal(self.goal)
+            self.setup(timeout=None)
+        self.sent_goal = False
 
     def update(self):
         self.logger.debug("  %s [SimpleMotion::update()]" % self.name)
+        if not self.sent_goal:
+            # pity there is no 'is_connected' api
+            if self.action_client.wait_for_server(rospy.Duration(0.01)):
+                self.action_client.send_goal(self.goal)
+                self.sent_goal = True
+            else:
+                self.feedback_message = "waiting for the simple motion server (correctly wired?)"
+                return py_trees.Status.RUNNING
         if self.action_client is None:
             self.feedback_message = "action client wasn't connected"
             return py_trees.Status.FAILURE
@@ -183,7 +221,7 @@ class MoveIt(py_trees.Behaviour):
         self.goal.target_pose.pose.orientation.z = quaternion[2]
         self.goal.target_pose.pose.orientation.w = quaternion[3]
 
-    def setup_ros(self, timeout):
+    def setup(self, timeout):
         """
         Wait for the action server to come up. Note that ordinarily you do not
         need to call this directly since the :py:function:initialise::`initialise`
@@ -193,7 +231,7 @@ class MoveIt(py_trees.Behaviour):
         behaviour is started, so this method provides a means for a higher level
         pastafarian to wait for the components to fall into place first.
 
-        :param double timeout: time to wait (0.0 is blocking forver)
+        :param double timeout: time to wait (0.0 is blocking forever)
         :returns: whether it timed out waiting for the server or not.
         :rtype: boolean
         """
@@ -222,7 +260,7 @@ class MoveIt(py_trees.Behaviour):
     def initialise(self):
         self.logger.debug("  %s [MoveIt::initialise()]" % self.name)
         if not self.action_client:
-            if not self.setup_ros(timeout=0.01):
+            if not self.setup(timeout=0.1):
                 return
         self.action_client.send_goal(self.goal)
 
@@ -447,22 +485,23 @@ class PoseIntialisation(py_trees.Sequence):
         initialise = py_trees.Selector("Initialise")
         # check status
         check_status = py_trees.Sequence("Verify Localisation")
-        check_status.add_child(py_trees.CheckSubscriberVariable(name="Check ELF localiser state",
-                                                                topic_name=self._config.topics.elf_status,
-                                                                topic_type=elf_msgs.ElfLocaliserStatus,
-                                                                variable_name="status",
-                                                                expected_value=\
-                                                                    elf_msgs.ElfLocaliserStatus.STATUS_WORKING,
-                                                                fail_if_no_data=True,
-                                                                fail_if_bad_comparison=True,
-                                                                monitor_continuously=True))
+        check_status.add_child(py_trees.CheckSubscriberVariable(
+            name="Check ELF localiser state",
+            topic_name=self._config.topics.elf_status,
+            topic_type=elf_msgs.ElfLocaliserStatus,
+            variable_name="status",
+            expected_value=elf_msgs.ElfLocaliserStatus.STATUS_WORKING,
+            fail_if_no_data=True,
+            fail_if_bad_comparison=True,
+            monitor_continuously=True)
+        )
         notify_done = interactions.SendNotification(
             "Intialised",
             led_pattern=gopher_std_msgs.LEDStrip.AROUND_RIGHT_GREEN,
             sound=self._config.sounds.done,
             message="intialised pose"
         )
-        notify_done.add_child(time.Pause("Celebrate the Success", 2.0))
+        notify_done.add_child(py_trees.Pause("Celebrate the Success", 2.0))
         check_status.add_child(notify_done)
         initialise.add_child(check_status)
         # manual init
@@ -476,13 +515,12 @@ class PoseIntialisation(py_trees.Sequence):
         # auto init
         auto_init = py_trees.Selector("Autonomous Initialisation")
         rotate = SimpleMotion(name="Rotate", motion_amount=(2 * math.pi), keep_going=False, fail_if_complete=True)
-        rotate.setup_ros(timeout=1.0)
         auto_init.add_child(rotate)
-        wait_for_retry = time.Pause("Wait for Retry", 0.0)
+        wait_for_retry = py_trees.Pause("Wait for Retry", 0.0)
         auto_init.add_child(wait_for_retry)
         initialise.add_child(auto_init)
         # timeout
-        initialise.add_child(time.Timeout("Initialisation Timeout", 600.0))
+        initialise.add_child(py_trees.Timeout("Initialisation Timeout", 600.0))
         self.add_child(initialise)
         # disable tracker
         self.add_child(interactions.ControlARMarkerTracker("Disable AR Marker Tracker",
