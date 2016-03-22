@@ -273,7 +273,6 @@ class SubscriberToBlackboard(SubscriberHandler):
         """
         Writes the data to the blackboard.
         """
-        print("Name: %s" % self.name)
         with self.data_guard:
             if self.msg is None:
                 self.feedback_message = "no message received yet"
