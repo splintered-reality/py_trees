@@ -104,6 +104,17 @@ class Composite(Behaviour):
         self.children.remove(child)
         return index
 
+    def remove_all_children(self):
+        """
+        Remove all children. Makes sure to stop each child if necessary.
+        """
+        for child in self.children:
+            if child.status == Status.RUNNING:
+                child.stop(Status.INVALID)
+        # makes sure to delete it for this class and all references to it
+        #   http://stackoverflow.com/questions/850795/clearing-python-lists
+        del self.children[:]
+
     def replace_child(self, child, replacement):
         """
         Replace the child behaviour.
