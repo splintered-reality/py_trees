@@ -31,6 +31,7 @@ import gopher_std_msgs.msg as gopher_std_msgs
 import gopher_std_msgs.srv as gopher_std_srvs
 import math
 import move_base_msgs.msg as move_base_msgs
+import nav_msgs.msg as nav_msgs
 import py_trees
 import rospy
 import tf
@@ -42,9 +43,78 @@ from . import interactions
 ##############################################################################
 
 
+def create_homebase_teleport(name="Homebase Teleport"):
+    behaviour = Teleport(
+        name=name,
+        goal=gopher_navi_msgs.TeleportGoal(location="homebase", special_effects=True)
+    )
+    return behaviour
+
+
+def create_elf_localisation_check_behaviour(name="Localised?"):
+    """
+    Hooks up a subscriber to the elf to check if everything is
+    nice and localised.
+    """
+    gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
+    behaviour = py_trees.CheckSubscriberVariable(
+        name=name,
+        topic_name=gopher.topics.elf_status,
+        topic_type=elf_msgs.ElfLocaliserStatus,
+        variable_name="status",
+        expected_value=elf_msgs.ElfLocaliserStatus.STATUS_WORKING,
+        fail_if_no_data=True,
+        fail_if_bad_comparison=True,
+        monitor_continuously=True
+    )
+    return behaviour
+
+
+def create_elf_localisation_to_blackboard_behaviour(
+        name="ElfToBlackboard",
+        blackboard_variables={"elf_localisation_status", None}
+):
+    """
+    Hooks up a subscriber to the elf and transfers the status
+    message to the blackboard.
+    """
+    gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
+
+    behaviour = py_trees.SubscriberToBlackboard(
+        name=name,
+        topic_name=gopher.topics.elf_status,
+        topic_type=elf_msgs.ElfLocaliserStatus,
+        blackboard_variables=blackboard_variables
+    )
+    return behaviour
+
+
+def create_odom_pose_to_blackboard_behaviour(
+    name="OdomToBlackboard",
+    blackboard_variables={"odom", None}
+):
+    """
+    Hooks up a subscriber and transfers the odometry topic to the blackboard.
+
+    :param str name: behaviour name
+    :param str blackboard_variable_name: name to write the message to
+    :returns: the behaviour
+    :rtype: subscribers.CheckSubscriberVariable
+    """
+    gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
+
+    behaviour = py_trees.SubscriberToBlackboard(
+        name,
+        topic_name=gopher.topics.odom,
+        topic_type=nav_msgs.Odometry,
+        blackboard_variables=blackboard_variables
+    )
+    return behaviour
+
+
 def create_map_pose_to_blackboard_behaviour(
     name="PoseToBlackboard",
-    blackboard_variable_name="pose"
+    blackboard_variables={"pose", None}
 ):
     """
     Hooks up a subscriber and transfers the pose topic to the blackboard.
@@ -60,7 +130,7 @@ def create_map_pose_to_blackboard_behaviour(
         name,
         topic_name=gopher.topics.pose,
         topic_type=geometry_msgs.PoseWithCovarianceStamped,
-        blackboard_variable_name=blackboard_variable_name
+        blackboard_variables=blackboard_variables
     )
     return behaviour
 

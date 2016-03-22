@@ -17,7 +17,6 @@ gopher_behaviours/demo_parking.launch
 
 import gopher_behaviours
 import gopher_configuration
-import gopher_navi_msgs.msg as gopher_navi_msgs
 import py_trees
 # import rocon_console.console as console
 import rospy
@@ -33,14 +32,9 @@ class Demo(object):
         self.gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
         self.logger = py_trees.logging.get_logger("UnPark")
 
-        self.root = py_trees.Sequence("Root")
+        self.root = py_trees.Sequence("Demo Parking")
         unpark = gopher_behaviours.UnPark("UnPark")
         park = gopher_behaviours.Park("Park")
-
-        teleport = gopher_behaviours.navigation.Teleport(
-            name="Activate the Homebase Teleport!",
-            goal=gopher_navi_msgs.TeleportGoal(location="homebase", special_effects=True)
-        )
 
         wait_for_button = gopher_behaviours.interactions.WaitForButton('Wait for Go Button', self.gopher.buttons.go)
         switch_to_parking = gopher_behaviours.interactions.SendNotification('Switch to Parking', message='waiting for button to switch to parking', led_pattern=self.gopher.led_patterns.im_doing_something_cool)
@@ -51,7 +45,6 @@ class Demo(object):
         restart.add_child(wait_for_button_two)
 
         self.root.add_child(unpark)
-        self.root.add_child(teleport)
         self.root.add_child(switch_to_parking)
         self.root.add_child(park)
         self.root.add_child(restart)
@@ -92,8 +85,9 @@ class Demo(object):
 ##############################################################################
 
 if __name__ == '__main__':
-    py_trees.logging.level = py_trees.logging.Level.DEBUG
-    rospy.init_node("demo", log_level=rospy.DEBUG)
+    rospy.init_node("demo", log_level=rospy.INFO)
+    if rospy.get_param("~debug", True):
+        py_trees.logging.level = py_trees.logging.Level.DEBUG
 
     demo = Demo()
     if rospy.get_param("~dot", False):
