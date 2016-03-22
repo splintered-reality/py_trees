@@ -118,9 +118,6 @@ class UnPark(py_trees.Selector):
         self.add_child(already_localised_seqeunce)
         self.add_child(not_yet_localised_sequence)
 
-    def setup_ros(self, timeout):
-        return True
-
     def initialise(self):
         if not hasattr(self.blackboard, 'homebase_translation'):
             semantic_locations = Semantics(self.gopher.namespaces.semantics)

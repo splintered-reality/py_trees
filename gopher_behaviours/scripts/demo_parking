@@ -9,7 +9,7 @@
 """
 USE THE ROS LAUNCHER INSTEAD!!!
 
-gopher_behaviours/demo_unpark.launch
+gopher_behaviours/demo_parking.launch
 """
 ##############################################################################
 # Imports
@@ -28,9 +28,9 @@ import sys
 ##############################################################################
 
 
-class DemoUnPark(object):
+class Demo(object):
     def __init__(self):
-        self.gopher = gopher_configuration.Configuration()
+        self.gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
         self.logger = py_trees.logging.get_logger("UnPark")
 
         self.root = py_trees.Sequence("Root")
@@ -60,9 +60,8 @@ class DemoUnPark(object):
         py_trees.display.print_ascii_tree(self.root, 0)
 
     def wait_for_ros(self):
-        pass
-        # if not self.root.setup_ros(15.0):
-        #     rospy.logerr("SimpleMotions: failed to setup the ros components for parking/unparking.")
+        if not self.root.setup(15.0):
+            rospy.logerr("SimpleMotions: failed to setup the parking/unparking demo tree.")
 
     ##############################################################################
     # Tick Tock
@@ -94,12 +93,11 @@ class DemoUnPark(object):
 
 if __name__ == '__main__':
     py_trees.logging.level = py_trees.logging.Level.DEBUG
-    rospy.init_node("demo_unpark", log_level=rospy.DEBUG)
+    rospy.init_node("demo", log_level=rospy.DEBUG)
 
+    demo = Demo()
     if rospy.get_param("~dot", False):
-        gopher_behaviours.UnPark.render_dot_tree()
+        py_trees.display.render_dot_tree(demo.root)
         sys.exit()
-
-    unpark = DemoUnPark()
-    unpark.wait_for_ros()
-    unpark.tick_tock()
+    demo.wait_for_ros()
+    demo.tick_tock()

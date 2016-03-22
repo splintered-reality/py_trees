@@ -85,13 +85,13 @@ class SimpleMotion(py_trees.Behaviour):
         super(SimpleMotion, self).__init__(name)
         self.gopher = None
         self.action_client = None
-        self.has_goal = False
+        self.sent_goal = False
         self.goal = gopher_std_msgs.SimpleMotionGoal()
         self.goal.motion_type = motion_type
         self.goal.motion_amount = motion_amount
         self.goal.unsafe = unsafe
 
-    def setup_ros(self, timeout):
+    def setup(self, timeout):
         """
         Wait for the action server to come up. Note that ordinarily you do not
         need to call this directly since the :py:function:initialise::`initialise`
@@ -111,21 +111,30 @@ class SimpleMotion(py_trees.Behaviour):
                 self.gopher.actions.simple_motion_controller,
                 gopher_std_msgs.SimpleMotionAction
             )
-            if not self.action_client.wait_for_server(rospy.Duration(timeout)):
-                rospy.logerr("Behaviour [%s" % self.name + "] could not connect to the simple motions action server [%s]" % self.__class__.__name__)
-                self.action_client = None
-                return False
+            if timeout is not None:
+                if not self.action_client.wait_for_server(rospy.Duration(timeout)):
+                    rospy.logerr("Behaviour [%s" % self.name + "] could not connect to the simple motions action server [%s]" % self.__class__.__name__)
+                    self.action_client = None
+                    return False
+            # else just assume it's working, maybe someone called this prior to ticking the behaviour
         return True
 
     def initialise(self):
         self.logger.debug("  %s [SimpleMotion::initialise()]" % self.name)
         if not self.action_client:
-            if not self.setup_ros(timeout=0.5):
-                return
-        self.action_client.send_goal(self.goal)
+            self.setup(timeout=None)
+        self.sent_goal = False
 
     def update(self):
         self.logger.debug("  %s [SimpleMotion::update()]" % self.name)
+        if not self.sent_goal:
+            # pity there is no 'is_connected' api
+            if self.action_client.wait_for_server(rospy.Duration(0.01)):
+                self.action_client.send_goal(self.goal)
+                self.sent_goal = True
+            else:
+                self.feedback_message = "waiting for the simple motion server (correctly wired?)"
+                return py_trees.Status.RUNNING
         if self.action_client is None:
             self.feedback_message = "action client wasn't connected"
             return py_trees.Status.FAILURE
@@ -190,7 +199,7 @@ class MoveIt(py_trees.Behaviour):
         self.goal.target_pose.pose.orientation.z = quaternion[2]
         self.goal.target_pose.pose.orientation.w = quaternion[3]
 
-    def setup_ros(self, timeout):
+    def setup(self, timeout):
         """
         Wait for the action server to come up. Note that ordinarily you do not
         need to call this directly since the :py:function:initialise::`initialise`
@@ -200,7 +209,7 @@ class MoveIt(py_trees.Behaviour):
         behaviour is started, so this method provides a means for a higher level
         pastafarian to wait for the components to fall into place first.
 
-        :param double timeout: time to wait (0.0 is blocking forver)
+        :param double timeout: time to wait (0.0 is blocking forever)
         :returns: whether it timed out waiting for the server or not.
         :rtype: boolean
         """
@@ -229,7 +238,7 @@ class MoveIt(py_trees.Behaviour):
     def initialise(self):
         self.logger.debug("  %s [MoveIt::initialise()]" % self.name)
         if not self.action_client:
-            if not self.setup_ros(timeout=0.01):
+            if not self.setup(timeout=0.1):
                 return
         self.action_client.send_goal(self.goal)
 

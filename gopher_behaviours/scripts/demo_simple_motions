@@ -53,7 +53,7 @@ class DemoSimpleMotions(object):
         py_trees.display.print_ascii_tree(self.root, 0)
 
     def wait_for_ros(self):
-        if not self.rotate.setup_ros(15.0):
+        if not self.rotate.setup(15.0):
             rospy.logerr("SimpleMotions: failed to find the simple motions action server.")
 
     ##############################################################################

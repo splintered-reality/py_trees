@@ -22,18 +22,9 @@ Bless my noggin with a tickle from your noodly appendages!
 # Imports
 ##############################################################################
 
-from gopher_semantics.semantics import Semantics
-from numpy.linalg import norm
-
-import functools
-import geometry_msgs.msg as geometry_msgs
-import gopher_configuration
 import gopher_std_msgs.msg as gopher_std_msgs
 import navigation
 import py_trees
-import rospy
-import tf
-import tf_utilities
 
 from . import starting
 from . import transforms
@@ -69,21 +60,6 @@ class Park(py_trees.Sequence):
         self.add_child(check_previously_parked)
         self.add_child(write_pose_park_start_rel_map)
         self.add_child(parking_motions)
-
-#         self.add_child(transforms.WaitForTransform('wait for map->base_link', 'delivery_end_tf', 'map', 'base_link'))
-#         self.add_child(InitParkingTransforms('init transforms'))
-#
-#         self.blackboard = Blackboard()
-#         self.semantic_locations = Semantics(gopher_configuration.Configuration().namespaces.semantics)
-#         if not hasattr(self.blackboard, 'homebase_transform'):
-#             self.blackboard.homebase = self.semantic_locations.semantic_modules['locations']['homebase']
-#             # assume map frame is 0,0,0 with no rotation; translation of homebase is
-#             # the position of the homebase specified in semantic locations. We need
-#             # the homebase location regardless of whether dslam is initialised.
-#             hb_translation = (self.blackboard.homebase.pose.x, self.blackboard.homebase.pose.y, 0)
-#             # quaternion specified by rotating theta radians around the yaw axis
-#             hb_rotation = tuple(tf.transformations.quaternion_about_axis(self.blackboard.homebase.pose.theta, (0, 0, 1)))
-#             self.blackboard.homebase_transform = (hb_translation, hb_rotation)
 
     @classmethod
     def render_dot_tree(cls):
@@ -124,6 +100,12 @@ def compute_parking_geometry(pose_park_start_rel_map, pose_park_rel_map):
 
 class ParkingMotions(py_trees.Sequence):
     """
+    Dynamically stitches together some simple motions on the fly (on entry via
+    the initialise method with data from the blackboard) and adds them as children.
+    These children are then dumped when the sequence is stopped or invalidated.
+
+    Blackboard Variables:
+
      - pose_park_rel_map       (r) [geometry_msgs/Pose]                     : pose of the parking location relative to the homebase
      - pose_park_start_rel_map (w) [geometry_msgs.PoseWithCovarianceStamped]: transferred from /navi/pose when about to park
     """
@@ -219,66 +201,66 @@ class ParkingMotions(py_trees.Sequence):
 #         self.blackboard.rotation_at_parking = tf.transformations.euler_from_quaternion(T_current_to_parking[1])[2]
 #
 #         return py_trees.Status.SUCCESS
-
-
-class ParkingMotions2(py_trees.Behaviour):
-
-    def __init__(self, name):
-        super(ParkingMotions, self).__init__(name)
-        self.motion = navigation.SimpleMotion()
-        self.blackboard = py_trees.Blackboard()
-        rospy.on_shutdown(functools.partial(self.stop, py_trees.Status.FAILURE))
-
-    def initialise(self):
-        # if the distance to the parking spot is small, do not rotate and
-        # translate, just do the final rotation to face the same orientation.
-        if self.blackboard.parking_distance < 0.5:
-            self.motions_to_execute = [["rotate", self.blackboard.rotation_at_parking]]
-        else:
-            # rotation to perform when at the parking location to align us as
-            # before - need to subtract the rotation we made to face the parking
-            # location
-            self.blackboard.rotation_at_parking = self.blackboard.rotation_at_parking - self.blackboard.rotation_to_parking
-            self.motions_to_execute = [["rotate", self.blackboard.rotation_to_parking],
-                                       ["translate", self.blackboard.parking_distance], ["rotate", self.blackboard.rotation_at_parking]]
-
-        # Start execution of the rotation motion which will orient us facing the
-        # parking location. Update will check if the motion is complete and
-        # whether or not it was successful
-        rospy.loginfo("Parking : executing motions {0}".format(self.motions_to_execute))
-        next_motion = self.motions_to_execute.pop(0)
-        self.motion.execute(next_motion[0], next_motion[1])
-
-    def update(self):
-        # if the motion isn't complete, we're running
-        if not self.motion.complete():
-            rospy.logdebug("Park : waiting for motion to complete")
-            self.feedback_message = "waiting for motion to complete"
-            return py_trees.Status.RUNNING
-        else:
-            # Otherwise, the motion is finished. If either of the motions fail,
-            # the behaviour fails.
-            if not self.motion.success():
-                self.blackboard.unpark_success = False
-                rospy.logdebug("Park : motion failed")
-                self.feedback_message = "motion failed"
-#                self.log_parking_location(False)
-                return py_trees.Status.FAILURE
-            else:
-                # The motion successfully completed. Check if there is another
-                # motion to do, and execute it if there is, otherwise return
-                # success
-                if len(self.motions_to_execute) == 0:
-                    rospy.logdebug("Park : successfully completed all motions")
-                    self.feedback_message = "successfully completed all motions"
- #                   self.log_parking_location(True)
-                    return py_trees.Status.SUCCESS
-                else:
-                    next_motion = self.motions_to_execute.pop(0)
-                    self.motion.execute(next_motion[0], next_motion[1])
-                    rospy.logdebug("Park : waiting for motion to complete")
-                    self.feedback_message = "waiting for motion to complete"
-                    return py_trees.Status.RUNNING
+#
+#
+# class ParkingMotions2(py_trees.Behaviour):
+#
+#     def __init__(self, name):
+#         super(ParkingMotions, self).__init__(name)
+#         self.motion = navigation.SimpleMotion()
+#         self.blackboard = py_trees.Blackboard()
+#         rospy.on_shutdown(functools.partial(self.stop, py_trees.Status.FAILURE))
+#
+#     def initialise(self):
+#         # if the distance to the parking spot is small, do not rotate and
+#         # translate, just do the final rotation to face the same orientation.
+#         if self.blackboard.parking_distance < 0.5:
+#             self.motions_to_execute = [["rotate", self.blackboard.rotation_at_parking]]
+#         else:
+#             # rotation to perform when at the parking location to align us as
+#             # before - need to subtract the rotation we made to face the parking
+#             # location
+#             self.blackboard.rotation_at_parking = self.blackboard.rotation_at_parking - self.blackboard.rotation_to_parking
+#             self.motions_to_execute = [["rotate", self.blackboard.rotation_to_parking],
+#                                        ["translate", self.blackboard.parking_distance], ["rotate", self.blackboard.rotation_at_parking]]
+#
+#         # Start execution of the rotation motion which will orient us facing the
+#         # parking location. Update will check if the motion is complete and
+#         # whether or not it was successful
+#         rospy.loginfo("Parking : executing motions {0}".format(self.motions_to_execute))
+#         next_motion = self.motions_to_execute.pop(0)
+#         self.motion.execute(next_motion[0], next_motion[1])
+#
+#     def update(self):
+#         # if the motion isn't complete, we're running
+#         if not self.motion.complete():
+#             rospy.logdebug("Park : waiting for motion to complete")
+#             self.feedback_message = "waiting for motion to complete"
+#             return py_trees.Status.RUNNING
+#         else:
+#             # Otherwise, the motion is finished. If either of the motions fail,
+#             # the behaviour fails.
+#             if not self.motion.success():
+#                 self.blackboard.unpark_success = False
+#                 rospy.logdebug("Park : motion failed")
+#                 self.feedback_message = "motion failed"
+# #                self.log_parking_location(False)
+#                 return py_trees.Status.FAILURE
+#             else:
+#                 # The motion successfully completed. Check if there is another
+#                 # motion to do, and execute it if there is, otherwise return
+#                 # success
+#                 if len(self.motions_to_execute) == 0:
+#                     rospy.logdebug("Park : successfully completed all motions")
+#                     self.feedback_message = "successfully completed all motions"
+#  #                   self.log_parking_location(True)
+#                     return py_trees.Status.SUCCESS
+#                 else:
+#                     next_motion = self.motions_to_execute.pop(0)
+#                     self.motion.execute(next_motion[0], next_motion[1])
+#                     rospy.logdebug("Park : waiting for motion to complete")
+#                     self.feedback_message = "waiting for motion to complete"
+#                     return py_trees.Status.RUNNING
 
     # def log_parking_location(self, success):
     #     """Debug function to store some information about parking locations used.
@@ -314,28 +296,28 @@ class ParkingMotions2(py_trees.Behaviour):
     #         f.write("finishing" + tf_utilities.human_transform(current_transform, oneline=True) + "\n")
     #         f.write("disparity" + tf_utilities.human_transform(T_current_to_parking, oneline=True) + "\n")
 
-    def stop(self, new_status):
-        self.motion.stop()
-
-if __name__ == '__main__':
-    # assumes simulation is running
-    rospy.init_node("park_test")
-
-    blackboard = py_trees.blackboard.Blackboard()
-    blackboard.__shared_state = {}
-
-    park = Park("park")
-
-    dslam_pub = rospy.Publisher("/dslam/diagnostics", dslam_msgs.Diagnostics, queue_size=1, latch=True)
-
-    # initialise a transform with the pose of the station
-    ds_translation = (1, 1, 0)
-    # quaternion specified by rotating theta radians around the yaw axis
-    ds_rotation = tuple(tf.transformations.quaternion_about_axis(0.2, (0, 0, 1)))
-    hb_translation = (0, 0, 0)
-    hb_rotation = tuple(tf.transformations.quaternion_about_axis(0, (0, 0, 1)))
-
-    blackboard.T_hb_to_parking = tf_utilities.inverse_times((hb_translation, hb_rotation), (ds_translation, ds_rotation))
-
-    tree = py_trees.ROSBehaviourTree(park)
-    tree.tick_tock(500)
+#     def stop(self, new_status):
+#         self.motion.stop()
+#
+# if __name__ == '__main__':
+#     # assumes simulation is running
+#     rospy.init_node("park_test")
+#
+#     blackboard = py_trees.blackboard.Blackboard()
+#     blackboard.__shared_state = {}
+#
+#     park = Park("park")
+#
+#     dslam_pub = rospy.Publisher("/dslam/diagnostics", dslam_msgs.Diagnostics, queue_size=1, latch=True)
+#
+#     # initialise a transform with the pose of the station
+#     ds_translation = (1, 1, 0)
+#     # quaternion specified by rotating theta radians around the yaw axis
+#     ds_rotation = tuple(tf.transformations.quaternion_about_axis(0.2, (0, 0, 1)))
+#     hb_translation = (0, 0, 0)
+#     hb_rotation = tuple(tf.transformations.quaternion_about_axis(0, (0, 0, 1)))
+#
+#     blackboard.T_hb_to_parking = tf_utilities.inverse_times((hb_translation, hb_rotation), (ds_translation, ds_rotation))
+#
+#     tree = py_trees.ROSBehaviourTree(park)
+#     tree.tick_tock(500)

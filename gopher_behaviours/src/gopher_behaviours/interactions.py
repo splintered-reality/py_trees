@@ -164,7 +164,6 @@ class SendNotification(py_trees.Sequence):
         super(SendNotification, self).__init__(name)
         self.gopher = gopher_configuration.Configuration()
         self.topic_name = self.gopher.services.notification
-        rospy.wait_for_service(self.topic_name, 5)  # should never need to wait
         self.service = rospy.ServiceProxy(self.topic_name, gopher_std_srvs.Notify)
         self.timer = None
         self.sound = sound
@@ -187,6 +186,20 @@ class SendNotification(py_trees.Sequence):
         self.cancel_on_stop = cancel_on_stop
         # flag used to remember that we have a notification that needs cleaning up or not
         self.sent_notification = False
+
+    def setup(self, timeout):
+        # Delayed setup checks, can be done by something like the tree container
+        # First the kids
+        if not py_trees.Sequence.setup(self, timeout):
+            return False
+        # Then ourselves
+        try:
+            rospy.wait_for_service(self.topic_name, timeout)
+            return True
+        except rospy.ROSException:  # timeout
+            return False
+        except rospy.ROSInterruptException:  # ros shutdown
+            return False
 
     def initialise(self):
         super(SendNotification, self).initialise()
