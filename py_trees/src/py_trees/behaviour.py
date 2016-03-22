@@ -47,6 +47,25 @@ class Behaviour(object):
     # User Defined Functions (virtual)
     ############################################
 
+    def setup(self, timeout):
+        """
+        Override this function to do any post-constructor setup that is necessary
+        for a runtime. A good example are any of the ros wait_for methods which
+        will block while looking for a ros master/topics/services.
+
+        This is best done here rather than in the constructor so that trees can
+        be instantiated on the fly without any runtime requirements to produce
+        visualisations such as dot graphs.
+
+        If there is necessary construction in here, then make sure you call
+        it appropriately the first time you enter (i.e. in initialise).
+
+        :param double timeout: time to wait (0.0 is blocking forever)
+        :returns: whether it timed out waiting for the server or not.
+        :rtype: boolean
+        """
+        return True
+
     def initialise(self):
         self.logger.debug("  %s [initialise()]" % self.name)
 
