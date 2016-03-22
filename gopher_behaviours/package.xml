@@ -18,9 +18,13 @@
 
   <run_depend>actionlib</run_depend>
   <run_depend>ar_track_alvar_msgs</run_depend>
+  <run_depend>door_interactions_msgs</run_depend>
   <run_depend>dslam_msgs</run_depend>
+  <run_depend>dynamic_reconfigure</run_depend>
+  <run_depend>elf_msgs</run_depend>
   <run_depend>geometry</run_depend>
   <run_depend>geometry_msgs</run_depend>
+  <run_depend>goal_finisher</run_depend>
   <run_depend>gopher_configuration</run_depend>
   <run_depend>gopher_semantics</run_depend>
   <run_depend>gopher_std_msgs</run_depend>
@@ -35,7 +39,6 @@
   <run_depend>somanet_msgs</run_depend>
   <run_depend>std_msgs</run_depend>
   <run_depend>tf</run_depend>
-  <run_depend>door_interactions_msgs</run_depend>
   <run_depend>unique_identifier</run_depend>
   <run_depend>uuid_msgs</run_depend>
 

@@ -1,0 +1,117 @@
+#!/usr/bin/env python
+#
+# License: Yujin
+#
+##############################################################################
+# Documentation
+##############################################################################
+"""
+
+Program that moves the robot to the goal pose using the finishing behaviour
+
+"""
+##############################################################################
+# Imports
+##############################################################################
+
+import argparse
+import geometry_msgs.msg as geometry_msgs
+import gopher_behaviours
+import gopher_configuration
+import gopher_std_msgs.msg as gopher_std_msgs
+import py_trees
+import rocon_console.console as console
+import rospy
+import sys
+
+##############################################################################
+# Core Controller
+##############################################################################
+
+
+def show_usage():
+    s = "\n"
+    s += console.white
+    s += console.bold + "    Introspection" + console.reset + "\n"
+    s += console.cyan + "        finish_him" + console.yellow + " [option]" + console.reset + "\n"
+    s += "\n"
+    s += console.bold + "    Command" + console.reset + "\n"
+    s += console.cyan + "        finish_him" + console.yellow + " <x> <y> <yaw>" + console.reset + "\n"
+    s += "\n"
+    return s
+
+
+def parse_arguments(command_line_args):
+    parser = argparse.ArgumentParser(description=console.green + 'Finish the move' + console.reset,
+                                     usage=show_usage(),
+                                     epilog="And his noodly appendage reached forth to tickle the blessed...",
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter
+                                     )
+    command_group = parser.add_argument_group('Command')
+    command_group.add_argument('x', nargs='?', default=0.0, type=float, help='x-cooridnate of the goal pose')
+    command_group.add_argument('y', nargs='?', default=0.0, type=float, help='y-cooridnate of the goal pose')
+    command_group.add_argument('yaw', nargs='?', default=0.0, type=float, help='yaw of the goal pose')
+
+    args = parser.parse_args(command_line_args)
+
+    print("Will move to goal pose (" + str(args.x) + ", " + str(args.y) + ", " + str(args.yaw) + ").")
+    return args
+
+
+class FinishHim(object):
+    def __init__(self, goal_pose):
+        gopher = gopher_configuration.Configuration()
+        self.root = py_trees.Sequence("FinishHim")
+        goal_finishing = gopher_behaviours.navigation.GoalFinishing("GoalFinishing", goal_pose)
+        self.root.add_child(goal_finishing)
+        notify_arrival = gopher_behaviours.interactions.SendNotification(
+            "Finished",
+            led_pattern=gopher_std_msgs.LEDStrip.AROUND_RIGHT_GREEN,
+            sound=gopher.sounds.done,
+            message="finished at the goal pose"
+        )
+        notify_arrival.add_child(py_trees.Pause("Chill 2s", 2.0))
+        self.root.add_child(notify_arrival)
+        self.logger = py_trees.logging.get_logger("FinishHim")
+        self.tree = py_trees.ROSBehaviourTree(self.root)
+        rospy.on_shutdown(self.shutdown)
+        py_trees.display.render_dot_tree(self.root)
+        py_trees.display.print_ascii_tree(self.root)
+
+    ##############################################################################
+    # Tick Tock
+    ##############################################################################
+
+    def tick_tock(self):
+        loop_around = rospy.Rate(10)
+        self.tree.visitors.append(gopher_behaviours.utilities.DebugVisitor())
+        while not self.root.status == py_trees.Status.SUCCESS\
+                and not self.root.status == py_trees.Status.FAILURE\
+                and not rospy.is_shutdown():
+            self.tree.tick(pre_tick_handler=self.pre_tick_handler)
+            loop_around.sleep()
+
+    def pre_tick_handler(self, behaviour_tree):
+        self.logger.debug("")
+        self.logger.debug("{:-^30}".format(" Run %s " % behaviour_tree.count))
+        self.logger.debug("")
+
+    def shutdown(self):
+        self.tree.destroy()  # destroy the tree on shutdown to stop the behaviour
+        self.tree.interrupt()
+
+##############################################################################
+# Main
+##############################################################################
+
+if __name__ == '__main__':
+    py_trees.logging.level = py_trees.logging.Level.DEBUG
+    rospy.init_node("finish_him", log_level=rospy.DEBUG)
+    command_line_args = rospy.myargv(argv=sys.argv)[1:]
+    args = parse_arguments(command_line_args)
+    goal_pose = geometry_msgs.Pose2D()
+    goal_pose.pose.x = args.x
+    goal_pose.pose.y = args.y
+    goal_pose.pose.theta = args.yaw
+    finish_him = FinishHim(goal_pose)
+    finish_him.tick_tock()

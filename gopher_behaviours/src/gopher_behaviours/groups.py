@@ -29,7 +29,6 @@ from .dock import Dock
 from .park import Park
 from .undock import Undock
 from .unpark import UnPark
-from .time import Pause
 
 ##############################################################################
 # Black Boxes
@@ -39,8 +38,8 @@ from .time import Pause
 class Starting(py_trees.Selector):
     def __init__(self, name):
         undockseq = py_trees.Sequence("Undock", [battery.create_check_docked_behaviour(),
-                                                 Undock("Undock"), Pause("Pause", 2)])
-        unparkseq = py_trees.Sequence("UnPark", [UnPark("UnPark"), Pause("Pause", 2)])
+                                                 Undock("Undock"), py_trees.Pause("Pause", 2)])
+        unparkseq = py_trees.Sequence("UnPark", [UnPark("UnPark"), py_trees.Pause("Pause", 2)])
         children = [undockseq, unparkseq]
         super(Starting, self).__init__(name, children)
 

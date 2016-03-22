@@ -8,7 +8,6 @@ from navigation import SimpleMotion
 import gopher_configuration
 from gopher_semantics.semantics import Semantics
 import functools
-from gopher_behaviours.time import Pause
 from py_trees.blackboard import Blackboard
 import gopher_std_msgs.msg as gopher_std_msgs
 import actionlib_msgs.msg as actionlib_msgs
@@ -22,7 +21,7 @@ class Dock(py_trees.Sequence):
         self.add_child(GetTransforms('get transforms'))
         # motion to dock blackboard variable initialised by get transforms
         self.add_child(DoMotion('rotate to dock', 'motion_to_dock'))
-        self.add_child(Pause('pause', 2))
+        self.add_child(py_trees.Pause('pause', 2))
         self.add_child(AutoDock("dock"))
 
         self.blackboard = py_trees.blackboard.Blackboard()

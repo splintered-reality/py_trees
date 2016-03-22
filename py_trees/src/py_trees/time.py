@@ -8,7 +8,7 @@
 """
 .. module:: time
    :platform: Unix
-   :synopsis: Ros time related behaviours.
+   :synopsis: Time related behaviours.
 
 Oh my spaghettified magnificence,
 Bless my noggin with a tickle from your noodly appendages!
@@ -31,14 +31,17 @@ import rospy
 
 class Pause(py_trees.Behaviour):
     """
-    Does nothing until a specified timeout is reached.
+    Does nothing until the specified timeout is reached, then returns SUCCESS
     """
-    def __init__(self, name, duration):
+    def __init__(self, name="Pause", timeout=1.0):
         """
-        :param float timeout: number of seconds to pause for.
+        Prepare the behaviour
+
+        :param string name this behaviour's name
+        :param float timeout the amount of time to pause for; set to zero to pause indefinitely
         """
         super(Pause, self).__init__(name)
-        self.duration = rospy.Duration(duration)
+        self.duration = rospy.Duration(timeout)
         self.start_time = None
         self.finish_time = None
 
@@ -47,4 +50,12 @@ class Pause(py_trees.Behaviour):
         self.finish_time = self.start_time + self.duration
 
     def update(self):
-        return py_trees.Status.SUCCESS if rospy.get_rostime() > self.finish_time else py_trees.Status.RUNNING
+        if self.duration == rospy.Duration(0):
+            return py_trees.Status.RUNNING
+        else:
+            return py_trees.Status.SUCCESS if rospy.get_rostime() > self.finish_time else py_trees.Status.RUNNING
+
+
+@py_trees.meta.inverter
+class Timeout(Pause):
+    pass
