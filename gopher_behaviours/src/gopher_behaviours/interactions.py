@@ -22,7 +22,6 @@ Bless my noggin with a tickle from your noodly appendages!
 # Imports
 ##############################################################################
 
-import dynamic_reconfigure.client
 import gopher_configuration
 import gopher_std_msgs.msg as gopher_std_msgs
 import gopher_std_msgs.srv as gopher_std_srvs
@@ -231,54 +230,3 @@ class SendNotification(py_trees.Sequence):
             except rospy.ServiceException as e:
                 rospy.logwarn("SendNotification : failed to process notification cancel request [%s][%s]" % (self.message, str(e)))
 
-
-class ControlARMarkerTracker(py_trees.Behaviour):
-    """
-    Behaviour for enabling/disabling an AR marker tracker
-    """
-    def __init__(self, name, topic, enable=True):
-        """
-        Put together the behaviour
-        """
-        super(ControlARMarkerTracker, self).__init__(name)
-        self._topic = topic
-        self._enable = enable
-        self._dyn_reconf_client_ar_tracker = None
-
-    def _ar_tracker_control(self, enable):
-        if enable:
-            params = {'enabled' : 'true'}
-        else:
-            params = {'enabled' : 'false'}
-        self._dyn_reconf_client_ar_tracker.update_configuration(params)
-
-    def initialise(self):
-        """
-        Initialise the control for the AR marker tracker
-        """
-        # connect to dynamic reconfig
-        if not self._dyn_reconf_client_ar_tracker:
-            try:
-                self._dyn_reconf_client_ar_tracker = dynamic_reconfigure.client.Client(self._topic,
-                                                                                       timeout=0.5)
-            except rospy.ROSException:
-                rospy.logwarn("Behaviours [%s" % self.name + "]: Could not connect to dynamic reconfigure server.")
-
-    def update(self):
-        """
-        Called by the behaviour :py:meth:`tick() <py_trees.behaviours.Behaviour.tick>` function.
-        Does the real work...
-        """
-        if self._dyn_reconf_client_ar_tracker:
-            if self.get_status() != py_trees.Status.RUNNING:
-                self._ar_tracker_control(self._enable)
-                return py_trees.Status.RUNNING
-            else:
-                return py_trees.Status.SUCCESS
-        else:
-            rospy.logwarn("ControlARMarkerTracker : Failed to connect to dynamic reconfigure server.")
-            return py_trees.Status.FAILURE
-
-    def stop(self, new_status=py_trees.Status.INVALID):
-        super(ControlARMarkerTracker, self).stop(new_status)
-        # TODO: disable/enable the tracker+

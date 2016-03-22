@@ -29,7 +29,7 @@ catkin_install_python(
         scripts/demo_homebase_recovery
         scripts/demo_move_base
         scripts/demo_parking
-        scripts/demo_pose_initialisation
+        scripts/demo_initialisation
         scripts/demo_simple_motions
         scripts/demo_subscriber_check
         scripts/gopher_deliveries

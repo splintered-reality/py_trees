@@ -185,6 +185,7 @@ class Selector(Composite):
         self.logger = logging.get_logger("Selector ")
 
     def initialise(self):
+        super(Selector, self).initialise()
         self.current_child = None
 
     def update(self):
@@ -259,7 +260,7 @@ class Sequence(Composite):
         If it isn't already running, then start the sequence from the
         beginning.
         """
-        self.logger.debug("  %s [initialise()]" % self.name)
+        super(Sequence, self).initialise()
         self.current_index = 0
 
     def tick(self):

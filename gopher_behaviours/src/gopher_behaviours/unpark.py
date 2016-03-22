@@ -26,11 +26,9 @@ import elf_msgs.msg as elf_msgs
 from gopher_semantics.semantics import Semantics
 import geometry_msgs.msg as geometry_msgs
 import gopher_configuration
-import numpy
 import py_trees
 import rospy
 import tf
-import tf_utilities
 
 from . import battery
 from . import navigation

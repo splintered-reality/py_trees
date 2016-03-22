@@ -392,6 +392,7 @@ class ROSBehaviourTree(BehaviourTree):
                 rospy.logerr("Behaviours: your tree is returning in an INVALID state (should always be FAILURE, RUNNING or SUCCESS)")
                 return
             self.tip_publisher.publish(conversions.behaviour_to_msg(self.root.tip()))
+            self.logging_visitor.tree.ticked_behaviours
             self.snapshot_logging_publisher.publish(self.logging_visitor.tree)
             with self.lock:
                 if not self._bag_closed:

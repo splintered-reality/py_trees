@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-
-#!/usr/bin/env python
 #
 # License: BSD
 #   https://raw.github.com/yujinrobot/gopher_crazy_hospital/license/LICENSE
@@ -25,6 +23,7 @@ import unique_id
 import uuid_msgs.msg as uuid_msgs
 import py_trees_msgs.msg as py_trees_msgs
 
+
 def convert_type(behaviour):
     # problems with decorators?
     if isinstance(behaviour, composites.Sequence):
@@ -35,6 +34,7 @@ def convert_type(behaviour):
         return py_trees_msgs.Behaviour.BEHAVIOUR
     else:
         return 0  # unknown type
+
 
 def convert_status(status):
     if status == common.Status.INVALID:
@@ -67,4 +67,4 @@ def behaviour_to_msg(behaviour):
     new_behaviour.status = convert_status(behaviour.status)
     new_behaviour.message = behaviour.feedback_message
 
-    return new_behaviour    
+    return new_behaviour
