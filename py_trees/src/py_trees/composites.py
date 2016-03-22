@@ -251,7 +251,7 @@ class Sequence(Composite):
 
     def __init__(self, name="Sequence", children=None, *args, **kwargs):
         super(Sequence, self).__init__(name, children, *args, **kwargs)
-        self.current_index = -1 # -1 indicates uninitialised
+        self.current_index = -1  # -1 indicates uninitialised
         self.logger = logging.get_logger("Sequence ")
 
     def initialise(self):
@@ -275,7 +275,7 @@ class Sequence(Composite):
                     return
             self.current_index += 1
         # At this point, all children are happy with their SUCCESS, so we should be happy too
-        self.current_index -= 1 # went off the end of the list if we got to here
+        self.current_index -= 1  # went off the end of the list if we got to here
         self.stop(Status.SUCCESS)
         yield self
 
