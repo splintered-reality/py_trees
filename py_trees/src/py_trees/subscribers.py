@@ -230,20 +230,29 @@ class SubscriberToBlackboard(SubscriberHandler):
     If no data has yet been received, this behaviour blocks (i.e. returns
     RUNNING).
 
-    This writes only the pose part of the message - i.e. geometry_msgs/Pose
+    Typically this will save the entire message, however a sub fields can be
+    designated, in which case they will write to
     """
     def __init__(self,
                  name="SubscriberToBlackboard",
                  topic_name="chatter",
                  topic_type=None,
-                 blackboard_variable_name="chatter",
+                 blackboard_variables={"chatter": None},
                  monitor_continuously=False
                  ):
         """
         :param str name: name of the behaviour
         :param str topic_name: name of the topic to connect to
         :param obj topic_type: class of the message type (e.g. std_msgs.String)
+        :param dict blackboard_variables: blackboard variable string or dict {names (keys) - message subfields (values)}
         :param bool monitor_continuously: setup subscriber immediately and continuously monitor the data
+
+        If a dict is used to designate the blackboard variables, then a value of None will force the entire
+        message to be saved to the string identified by the key.
+
+        .. code-block:: python
+
+           blackboard_variables={"pose_with_covariance_stamped": None, "pose": "pose.pose"}
         """
         super(SubscriberToBlackboard, self).__init__(
             name,
@@ -252,7 +261,13 @@ class SubscriberToBlackboard(SubscriberHandler):
             monitor_continuously=monitor_continuously
         )
         self.blackboard = py_trees.Blackboard()
-        self.blackboard_variable_name = blackboard_variable_name
+        if isinstance(blackboard_variables, basestring):
+            self.blackboard_variable_mapping = {blackboard_variables: None}
+        elif not isinstance(blackboard_variables, dict):
+            rospy.logerr("SubscriberToBlackboard: blackboard_variables is not a dict, please rectify [%s]" % self.name)
+            self.blackboard_variable_mapping = {}
+        else:
+            self.blackboard_variable_mapping = blackboard_variables
 
     def update(self):
         """
@@ -263,6 +278,14 @@ class SubscriberToBlackboard(SubscriberHandler):
                 self.feedback_message = "no message received yet"
                 return py_trees.Status.RUNNING
             else:
-                self.blackboard.set(self.blackboard_variable_name, self.msg, overwrite=True)
+                for k, v in self.blackboard_variable_mapping.iteritems():
+                    if v is None:
+                        self.blackboard.set(k, self.msg, overwrite=True)
+                    else:
+                        fields = v.split(".")
+                        value = copy.copy(self.msg)
+                        for field in fields:
+                            value = getattr(value, field)
+                            self.blackboard.set(k, value, overwrite=True)
                 self.feedback_message = "saved incoming message"
                 return py_trees.Status.SUCCESS

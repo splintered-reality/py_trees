@@ -22,6 +22,7 @@ Bless my noggin with a tickle from your noodly appendages!
 # Imports
 ##############################################################################
 
+import elf_msgs.msg as elf_msgs
 from gopher_semantics.semantics import Semantics
 import geometry_msgs.msg as geometry_msgs
 import gopher_configuration
@@ -32,7 +33,7 @@ import tf
 import tf_utilities
 
 from . import battery
-from . import odometry
+from . import navigation
 from . import starting
 from . import transform_utilities
 from .interactions import WaitForButton, SendNotification
@@ -42,19 +43,21 @@ from .interactions import WaitForButton, SendNotification
 ##############################################################################
 
 
-class UnPark(py_trees.Selector):
+class UnPark(py_trees.Sequence):
     """
     Unpark the robot from its parking spot
 
     Blackboard Variables:
 
-     - homebase                    (w) [custom dict]            : semantic information about the homebase
-     - pose_homebase_rel_map       (w) [geometry_msgs/Pose]     : pose of the homebase relative to the map, obtained from semantics
-     - pose_unpark_start_rel_odom  (w) [geometry_msgs/Odometry] : nav_msgs/Odometry message of the starting park location, transferred from /gopher/odom
-     - pose_unpark_finish_rel_odom (w) [geometry_msgs/Odometry] : nav_msgs/Odometry message of the robot after teleop to homebase, transferred from /gopher/odom
-     - pose_park_rel_homebase      (w) [geometry_msgs/Pose]     : pose of the parking location relative to the homebase computed from start/finish poses
-     - pose_park_rel_map           (w) [geometry_msgs/Pose]     : pose of the parking location relative to the homebase, computed from pose_park_rel_homebase and pose_homebase_rel_map
-     - last_starting_action        (w) [starting.StartingAction]: last starting action gets set to unparked
+     - elf_localisation_status     (w) [elf_msgs/ElfLocaliserStatus]: the localisation status (gathered at the start of this behaviour)
+     - homebase                    (w) [custom dict]                : semantic information about the homebase
+     - pose_homebase_rel_map       (w) [geometry_msgs/Pose]         : pose of the homebase relative to the map, obtained from semantics
+     - pose_unpark_start_rel_map   (w) [geometry_msgs/Pose]         : starting park location when already localised, transferred from /navi/pose
+     - pose_unpark_start_rel_odom  (w) [geometry_msgs/Pose]         : starting park location when not yet localised, transferred from /gopher/odom
+     - pose_unpark_finish_rel_odom (w) [geometry_msgs/Pose]         : finishing park location when not yet localised, transferred from /gopher/odom
+     - pose_park_rel_homebase      (w) [geometry_msgs/Pose]         : pose of the parking location relative to the homebase computed from start/finish poses
+     - pose_park_rel_map           (w) [geometry_msgs/Pose]         : pose of the parking location relative to the homebase, computed from pose_park_rel_homebase and pose_homebase_rel_map
+     - last_starting_action        (w) [starting.StartingAction]    : last starting action gets set to unparked
     """
     def __init__(self, name="unpark"):
         super(UnPark, self).__init__(name)
@@ -64,61 +67,70 @@ class UnPark(py_trees.Selector):
         self.blackboard = py_trees.Blackboard()
 
         ################################################################
-        # Already Localised Sequence
+        # Preliminary Guards & Data Gathering
+        ################################################################
+
+        wait_to_be_unplugged = SendNotification('UnPlug Me', message='waiting to be unplugged', led_pattern=self.gopher.led_patterns.humans_i_need_help)
+        discharging = battery.create_check_discharging_behaviour()
+        wait_to_be_unplugged_condition_one = py_trees.behaviours.Condition('Wait to be Unplugged', child=discharging, succeed_status=py_trees.Status.SUCCESS)
+        wait_to_be_unplugged.add_child(wait_to_be_unplugged_condition_one)
+        write_localisation_status = navigation.create_elf_localisation_to_blackboard_behaviour(name="Get Localisation Status", blackboard_variables={"elf_localisation_status": "status"})
+        path_chooser = py_trees.Selector("Localised?")
+
+        ################################################################
+        # Already Localised Sequence Components
         ################################################################
         # TODO : check if we significantly moved from the saved location
 
-        # need to make sure the robot is not using the jack as a charging source
-        wait_to_be_unplugged_one = SendNotification('UnPlug Me', message='waiting to be unplugged', led_pattern=self.gopher.led_patterns.humans_i_need_help)
-        discharging_one = battery.create_check_discharging_behaviour()
-        wait_to_be_unplugged_condition_one = py_trees.behaviours.Condition('Wait to be Unplugged', child=discharging_one, succeed_status=py_trees.Status.SUCCESS)
-        wait_to_be_unplugged_one.add_child(wait_to_be_unplugged_condition_one)
-
-        # TODO : replace with the elf messages check
-#         dslam_seq.add_child(WaitForDSLAM('Wait for DSlam'))
-        are_we_localised = py_trees.behaviours.Failure("Localised?")
-
-        # TODO : replace with the /pose topic lookup.
-        # NOTE : we only want to update the saved blackboard variable if it already isn't there, or it has moved significantly
-#         dslam_seq.add_child(transforms.WaitForTransform('map transform', 'parking_start_transform', from_frame='map', to_frame='base_link'))
-        update_parking_pose_from_map = py_trees.behaviours.Success("Save Parking Pose (Map)")
-
-        already_localised_seqeunce = py_trees.Sequence("Already Localised")
-        already_localised_seqeunce.add_child(are_we_localised)
-        already_localised_seqeunce.add_child(update_parking_pose_from_map)
-        already_localised_seqeunce.add_child(wait_to_be_unplugged_one)
+        already_localised_sequence = py_trees.Sequence("Already Localised")
+        are_we_localised = py_trees.CheckBlackboardVariable(
+            name="Check ELF Status",
+            variable_name="elf_localisation_status",
+            expected_value=elf_msgs.ElfLocaliserStatus.STATUS_WORKING
+        )
+        write_starting_pose_from_map = navigation.create_map_pose_to_blackboard_behaviour(
+            name="Start Pose (Map)",
+            blackboard_variables={"pose_unpark_start_rel_map": "pose.pose"}
+        )
+        update_parking_pose_from_map = UpdateParkingPoseFromMap(name="Update Pose (Map)")
 
         ################################################################
-        # Not Yet Localised Sequence
+        # Not Localised Sequence Components
         ################################################################
-
-        # Check charging
-        wait_to_be_unplugged_two = SendNotification('UnPlug Me', message='waiting to be unplugged', led_pattern=self.gopher.led_patterns.humans_i_need_help)
-        discharging_two = battery.create_check_discharging_behaviour()
-        wait_to_be_unplugged_condition_two = py_trees.behaviours.Condition('Wait to be Unplugged', child=discharging_two, succeed_status=py_trees.Status.SUCCESS)
-        wait_to_be_unplugged_two.add_child(wait_to_be_unplugged_condition_two)
 
         # Pose updates
-        write_starting_pose_from_odom = odometry.create_odom_pose_to_blackboard_behaviour(name="Starting Pose (Odom)", blackboard_variable_name="pose_unpark_start_rel_odom")
-        write_finishing_pose_from_odom = odometry.create_odom_pose_to_blackboard_behaviour(name="Final Pose (Odom)", blackboard_variable_name="pose_unpark_finish_rel_odom")
-        save_parking_pose = SaveParkingPose("Save Parking Pose (Odom)")
+        write_starting_pose_from_odom = navigation.create_odom_pose_to_blackboard_behaviour(name="Start Pose (Odom)", blackboard_variables={"pose_unpark_start_rel_odom": "pose.pose"})
+        write_finishing_pose_from_odom = navigation.create_odom_pose_to_blackboard_behaviour(name="Final Pose (Odom)", blackboard_variables={"pose_unpark_finish_rel_odom": "pose.pose"})
+        update_parking_pose_from_odom = SaveParkingPoseFromOdom("Save Pose (Odom)")
 
-        # Teleop Homebase
+        # Teleop/Teleport Homebase
         wait_for_button_press = WaitForButton('Wait for Go Button', self.gopher.buttons.go)
+        teleport = navigation.create_homebase_teleport()
         go_to_homebase = SendNotification('Teleop to Homebase', message='waiting for button press to continue', led_pattern=self.gopher.led_patterns.humans_i_need_help)
         go_to_homebase.add_child(wait_for_button_press)
 
-        not_yet_localised_sequence = py_trees.Sequence("Not Yet Localised")
-        not_yet_localised_sequence.add_child(wait_to_be_unplugged_two)
+        not_yet_localised_sequence = py_trees.Sequence("Not Localised")
+
+        ################################################################
+        # All Together
+        ################################################################
+
+        self.add_child(wait_to_be_unplugged)
+        self.add_child(write_localisation_status)
+        self.add_child(path_chooser)
+        path_chooser.add_child(already_localised_sequence)
+        already_localised_sequence.add_child(are_we_localised)
+        already_localised_sequence.add_child(write_starting_pose_from_map)
+        already_localised_sequence.add_child(update_parking_pose_from_map)
+        path_chooser.add_child(not_yet_localised_sequence)
         not_yet_localised_sequence.add_child(write_starting_pose_from_odom)
         not_yet_localised_sequence.add_child(go_to_homebase)
+        not_yet_localised_sequence.add_child(teleport)
         not_yet_localised_sequence.add_child(write_finishing_pose_from_odom)
-        not_yet_localised_sequence.add_child(save_parking_pose)
-
-        self.add_child(already_localised_seqeunce)
-        self.add_child(not_yet_localised_sequence)
+        not_yet_localised_sequence.add_child(update_parking_pose_from_odom)
 
     def initialise(self):
+        py_trees.Sequence.initialise(self)
         if not hasattr(self.blackboard, 'homebase_translation'):
             semantic_locations = Semantics(self.gopher.namespaces.semantics)
             self.blackboard.homebase = semantic_locations.semantic_modules['locations']['homebase']
@@ -139,7 +151,34 @@ class UnPark(py_trees.Selector):
         py_trees.display.render_dot_tree(root)
 
 
-class SaveParkingPose(py_trees.Behaviour):
+class UpdateParkingPoseFromMap(py_trees.Behaviour):
+    """
+    This will compare the starting pose (rel map) with the currently saved parking pose. If there's a
+    significant difference, it will replace the existing parking pose in the blackboard.
+
+    Blackboard Variables:
+
+     - pose_unpark_start_rel_map   (w) [geometry_msgs/Pose] : starting park location when already localised, transferred from /navi/pose
+     - pose_park_rel_map          (rw) [geometry_msgs/Pose] : pre-existing pose of the parking location relative to the homebase
+    """
+    def __init__(self, name="Update Parking Pose"):
+        super(UpdateParkingPoseFromMap, self).__init__(name)
+        self.blackboard = py_trees.Blackboard()
+        self.close_to_park_distance_threshold = 0.25
+
+    def update(self):
+        pose_start_rel_park = transform_utilities.get_relative_pose(
+            self.blackboard.pose_unpark_start_rel_map,
+            self.blackboard.pose_park_rel_map
+        )
+        distance = transform_utilities.norm_from_geometry_msgs_pose(pose_start_rel_park)
+        if distance > self.close_to_park_distance_threshold:
+            rospy.loginfo("Behaviours [%s]: parking location shifted, updating." % self.name)
+            self.blackboard.pose_park_rel_map = self.blackboard.pose_unpark_start_rel_map
+        return py_trees.Status.SUCCESS
+
+
+class SaveParkingPoseFromOdom(py_trees.Behaviour):
     """
     Takes the two odom readings and stitches them together to form pose_park_rel_homebase.
     Not worrying about generalising this operation here, it is a worker for the UnPark blackbox.
@@ -147,19 +186,19 @@ class SaveParkingPose(py_trees.Behaviour):
     Blackboard Variables:
 
      - pose_homebase_rel_map       (r) [geometry_msgs/Pose]     : pose of the homebase relative to the map, obtained from semantics
-     - pose_unpark_start_rel_odom  (r) [geometry_msgs/Odometry] : nav_msgs/Odometry message of the starting park location
-     - pose_unpark_finish_rel_odom (r) [geometry_msgs/Odometry] : nav_msgs/Odometry message of the robot after teleop to homebase
+     - pose_unpark_start_rel_odom  (w) [geometry_msgs/Pose]     : starting park location when not yet localised, transferred from /gopher/odom
+     - pose_unpark_finish_rel_odom (w) [geometry_msgs/Pose]     : finishing park location when not yet localised, transferred from /gopher/odom
      - pose_park_rel_homebase      (w) [geometry_msgs/Pose]     : pose of the parking location relative to the homebase
      - pose_park_rel_map           (w) [geometry_msgs/Pose]     : pose of the parking location relative to the homebase, computed from pose_park_rel_homebase and pose_homebase_rel_map
      - last_starting_action        (w) [starting.StartingAction]: last starting action gets set to unparked
     """
     def __init__(self, name="Save Parking Pose"):
-        super(SaveParkingPose, self).__init__(name)
+        super(SaveParkingPoseFromOdom, self).__init__(name)
         self.blackboard = py_trees.Blackboard()
 
     def update(self):
-        geometry_msgs_pose_start_rel_odom = self.blackboard.pose_unpark_start_rel_odom.pose.pose
-        geometry_msgs_pose_finish_rel_odom = self.blackboard.pose_unpark_finish_rel_odom.pose.pose
+        geometry_msgs_pose_start_rel_odom = self.blackboard.pose_unpark_start_rel_odom
+        geometry_msgs_pose_finish_rel_odom = self.blackboard.pose_unpark_finish_rel_odom
 
         pose_start_rel_finish = transform_utilities.get_relative_pose(
             geometry_msgs_pose_start_rel_odom,

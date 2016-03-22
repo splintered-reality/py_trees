@@ -9,7 +9,7 @@ from billiard.py2.connection import FAILURE
 """
 .. module:: interactions
    :platform: Unix
-   :synopsis: Behaviours for gopher interactions.
+   :synopsis: Behaviours for gopher interactions with humans.
 
 Oh my spaghettified magnificence,
 Bless my noggin with a tickle from your noodly appendages!
