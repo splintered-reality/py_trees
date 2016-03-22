@@ -1,8 +1,10 @@
-HowTos
-======
+Examples
+========
 
-Watching a Demo Tree in Action
-------------------------------
+A Demo Tree
+-----------
+
+.. graphviz:: dot/demo_tree.dot
 
 Run the `py_trees/scripts/demo_tree` script.
 
@@ -10,13 +12,14 @@ Run the `py_trees/scripts/demo_tree` script.
 .. todo:: point out some important highlight points of the script, e.g. step 4 'such and such happens'
 .. todo:: maybe put these pointers in as descriptive comments in the tree itself.
 
-Guide to Making SubTrees
-------------------------
+A Demo ROS Tree
+---------------
 
-Dotviz a Subtree Offline
-------------------------
+Making a SubTree
+----------------
 
-ROSBehaviourTree Containers
----------------------------
+Offline DotViz Generation
+-------------------------
+
 
 

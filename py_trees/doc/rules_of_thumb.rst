@@ -4,18 +4,6 @@ Rules of Thumb
 Behaviours
 ----------
 
-When to Initialise?
-^^^^^^^^^^^^^^^^^^^
-
-All behaviours/composites should call ``initialise()`` if not ``RUNNING`` upon entering
-their ``tick()`` method, e.g.
-
-.. code-block:: python
-
-   def tick(self):
-       if self.status != Status.RUNNING:
-           self.initialise()
-
 Stopping - Beware of Switching Branches
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -45,8 +33,8 @@ Behaviour Messages - What Should Go In Here?
 
 *The Signficance of Change*
 
-Usually we're not interested in data/stats. That is for diagnostics. What we are interested
-is when some decisional state in the behaviour tree changes. If you have a behaviour that is
+The most interesting/useful data from a behaviour tree are the decision events - i.e. exactly
+*when* some decisional state in the behaviour tree changes. If you have a behaviour that is
 running for many ticks - *leave the message fairly constant* unless there is a significant
 event that is important to the user. This allows humans and higher level programs (e.g.
 ``rqt_py_trees`` to be more tuned into the important events without having to filter through

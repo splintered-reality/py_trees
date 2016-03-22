@@ -169,6 +169,15 @@ class BehaviourTree(object):
                     return True
         return False
 
+    def setup(self, timeout):
+        """
+        Calls setup on the root of the tree. This should then percolate down into the tree itself
+        via the :py:meth:`~py_trees.composites.Composite.setup` function in each composited behaviour.
+
+        :returns: success or failure of the setup operation
+        """
+        return self.root.setup(timeout)
+
     def tick(self, pre_tick_handler=None, post_tick_handler=None):
         """
         Tick over the tree just once.
@@ -296,13 +305,6 @@ class ROSBehaviourTree(BehaviourTree):
         """
         super(ROSBehaviourTree, self).__init__(root)
         self.blackboard = Blackboard()
-        self.blackboard_publisher = rospy.Publisher('~blackboard', std_msgs.String, queue_size=1, latch=True)
-        self.ascii_tree_publisher = rospy.Publisher('~ascii_tree', std_msgs.String, queue_size=1, latch=True)
-        self.snapshot_ascii_tree_publisher = rospy.Publisher('~tick/ascii_tree', std_msgs.String, queue_size=1, latch=True)
-        self.dot_tree_publisher = rospy.Publisher('~dot_tree', std_msgs.String, queue_size=1, latch=True)
-        self.snapshot_dot_tree_publisher = rospy.Publisher('~tick/dot_tree', std_msgs.String, queue_size=1, latch=True)
-        self.snapshot_logging_publisher = rospy.Publisher('~log/tree', py_trees_msgs.BehaviourTree, queue_size=1, latch=True)
-        self.tip_publisher = rospy.Publisher('~tip', py_trees_msgs.Behaviour, queue_size=1, latch=True)
         # tree_update_handler is in the base class, set this to the callback function here.
         self.tree_update_handler = self.publish_tree_modifications
         self.snapshot_visitor = ROSBehaviourTree.SnapshotVisitor()
@@ -327,13 +329,34 @@ class ROSBehaviourTree(BehaviourTree):
 
         self.last_tree = py_trees_msgs.BehaviourTree()
         self.lock = threading.Lock()
+
+        # delay the publishers so we can instantiate this class without connecting to ros (private names need init_node)
+        self.blackboard_publisher = None
+        self.ascii_tree_publisher = None
+        self.snapshot_ascii_tree_publisher = None
+        self.dot_tree_publisher = None
+        self.snapshot_dot_tree_publisher = None
+        self.snapshot_logging_publisher = None
+        self.tip_publisher = None
+
         # cleanup must come last as it assumes the existence of the bag
         rospy.on_shutdown(self.cleanup)
+
+    def setup_publishers(self):
+        self.blackboard_publisher = rospy.Publisher('~blackboard', std_msgs.String, queue_size=1, latch=True)
+        self.ascii_tree_publisher = rospy.Publisher('~ascii_tree', std_msgs.String, queue_size=1, latch=True)
+        self.snapshot_ascii_tree_publisher = rospy.Publisher('~tick/ascii_tree', std_msgs.String, queue_size=1, latch=True)
+        self.dot_tree_publisher = rospy.Publisher('~dot_tree', std_msgs.String, queue_size=1, latch=True)
+        self.snapshot_dot_tree_publisher = rospy.Publisher('~tick/dot_tree', std_msgs.String, queue_size=1, latch=True)
+        self.snapshot_logging_publisher = rospy.Publisher('~log/tree', py_trees_msgs.BehaviourTree, queue_size=1, latch=True)
+        self.tip_publisher = rospy.Publisher('~tip', py_trees_msgs.Behaviour, queue_size=1, latch=True)
 
     def publish_blackboard(self, tree):
         """
         Publishes the blackboard. Should be called at the end of every tick.
         """
+        if self.blackboard_publisher is None:
+            self.setup_publishers()
         if self.blackboard_publisher.get_num_connections() > 0:
             self.blackboard_publisher.publish("%s" % self.blackboard)
 
@@ -344,6 +367,8 @@ class ROSBehaviourTree(BehaviourTree):
         This function is passed in as a visitor to the underlying behaviour tree and triggered
         when there has been a change.
         """
+        if self.ascii_tree_publisher is None:
+            self.setup_publishers()
         self.ascii_tree_publisher.publish(std_msgs.String(display.ascii_tree(self.root)))
         self.dot_tree_publisher.publish(std_msgs.String(display.stringify_dot_tree(self.root)))
 
@@ -355,6 +380,8 @@ class ROSBehaviourTree(BehaviourTree):
         :param tree: the behaviour tree
         :type tree: :py:class:`BehaviourTree <py_trees.trees.BehaviourTree>`
         """
+        if self.snapshot_ascii_tree_publisher is None:
+            self.setup_publishers()
         snapshot = "\n\n%s" % display.ascii_tree(self.root, snapshot_information=self.snapshot_visitor)
         self.snapshot_ascii_tree_publisher.publish(std_msgs.String(snapshot))
 

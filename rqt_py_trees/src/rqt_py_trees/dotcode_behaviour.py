@@ -87,8 +87,12 @@ class RosBehaviourTreeDotcodeGenerator(object):
         return self.dotcode
 
     def type_to_shape(self, behaviour_type):
+        """
+        qt_dotgraph.node_item only supports drawing in qt of two
+        shapes - box, ellipse.
+        """
         if behaviour_type == py_trees_msgs.Behaviour.BEHAVIOUR:
-            return 'box'
+            return 'ellipse'
         elif behaviour_type == py_trees_msgs.Behaviour.SEQUENCE:
             return 'box'
         elif behaviour_type == py_trees_msgs.Behaviour.SELECTOR:
@@ -139,8 +143,6 @@ class RosBehaviourTreeDotcodeGenerator(object):
             return 'Success'
         else:
             return None
-
-
 
     def behaviour_to_tooltip_string(self, behaviour):
         to_display = ['class_name', 'type', 'status', 'message'] # should be static
@@ -193,8 +195,8 @@ class RosBehaviourTreeDotcodeGenerator(object):
                     edge_color = (0,255,0)
                 elif state == py_trees_msgs.Behaviour.FAILURE:
                     edge_color = (255,0,0)
-                    
-                self.dotcode_factory.add_edge_to_graph(graph, 
+
+                self.dotcode_factory.add_edge_to_graph(graph,
                                                        str(behaviour.own_id),
                                                        str(child_id),
                                                        color=edge_color)

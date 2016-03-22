@@ -94,7 +94,7 @@ if __name__ == '__main__':
 
     idle = py_trees.behaviours.Success("Idle")
 
-    root = py_trees.Selector(name="Root")
+    root = py_trees.Selector(name="Demo Tree")
     root.add_child(every_n_success)
     root.add_child(sequence)
     root.add_child(idle)

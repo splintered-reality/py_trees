@@ -15,7 +15,8 @@ Contents:
 
    background
    building_blocks
-   howtos
+   examples
+   graphs
    rules_of_thumb
    terminology
    modules
