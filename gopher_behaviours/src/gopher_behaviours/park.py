@@ -57,7 +57,7 @@ class Park(py_trees.Sequence):
 
         check_previously_parked = py_trees.CheckBlackboardVariable(
             name='Previously Unparked?',
-            variable_name='last_action_unparked',
+            variable_name='last_starting_action',
             expected_value=starting.StartingAction.UNPARKED
         )
         write_pose_park_start_rel_map = navigation.create_map_pose_to_blackboard_behaviour(
@@ -70,20 +70,20 @@ class Park(py_trees.Sequence):
         self.add_child(write_pose_park_start_rel_map)
         self.add_child(parking_motions)
 
-        self.add_child(transforms.WaitForTransform('wait for map->base_link', 'delivery_end_tf', 'map', 'base_link'))
-        self.add_child(InitParkingTransforms('init transforms'))
-
-        self.blackboard = Blackboard()
-        self.semantic_locations = Semantics(gopher_configuration.Configuration().namespaces.semantics)
-        if not hasattr(self.blackboard, 'homebase_transform'):
-            self.blackboard.homebase = self.semantic_locations.semantic_modules['locations']['homebase']
-            # assume map frame is 0,0,0 with no rotation; translation of homebase is
-            # the position of the homebase specified in semantic locations. We need
-            # the homebase location regardless of whether dslam is initialised.
-            hb_translation = (self.blackboard.homebase.pose.x, self.blackboard.homebase.pose.y, 0)
-            # quaternion specified by rotating theta radians around the yaw axis
-            hb_rotation = tuple(tf.transformations.quaternion_about_axis(self.blackboard.homebase.pose.theta, (0, 0, 1)))
-            self.blackboard.homebase_transform = (hb_translation, hb_rotation)
+#         self.add_child(transforms.WaitForTransform('wait for map->base_link', 'delivery_end_tf', 'map', 'base_link'))
+#         self.add_child(InitParkingTransforms('init transforms'))
+#
+#         self.blackboard = Blackboard()
+#         self.semantic_locations = Semantics(gopher_configuration.Configuration().namespaces.semantics)
+#         if not hasattr(self.blackboard, 'homebase_transform'):
+#             self.blackboard.homebase = self.semantic_locations.semantic_modules['locations']['homebase']
+#             # assume map frame is 0,0,0 with no rotation; translation of homebase is
+#             # the position of the homebase specified in semantic locations. We need
+#             # the homebase location regardless of whether dslam is initialised.
+#             hb_translation = (self.blackboard.homebase.pose.x, self.blackboard.homebase.pose.y, 0)
+#             # quaternion specified by rotating theta radians around the yaw axis
+#             hb_rotation = tuple(tf.transformations.quaternion_about_axis(self.blackboard.homebase.pose.theta, (0, 0, 1)))
+#             self.blackboard.homebase_transform = (hb_translation, hb_rotation)
 
     @classmethod
     def render_dot_tree(cls):
@@ -94,52 +94,84 @@ class Park(py_trees.Sequence):
         py_trees.display.render_dot_tree(root)
 
 
+def compute_parking_geometry(pose_park_start_rel_map, pose_park_rel_map):
+    """
+    Helper function for computing the parking geometry from the starting pose and the stored
+    parking pose (both relative to map).
+
+    :param geometry_msgs.Pose pose_park_start_rel_map: starting pose for the maneuvre
+    :param geometry_msgs.Pose pose_park_rel_map      : saved parking location
+
+    :returns: 3-tuple of distance_to_park, point_to_park_angle, orient_with_park_angle
+    """
+    pose_park_rel_start = transform_utilities.get_relative_pose(pose_park_rel_map, pose_park_start_rel_map)
+    # do some trig
+    distance_to_park = transform_utilities.norm_from_geometry_msgs_pose(pose_park_rel_start)
+    translation_park_rel_start = [
+        pose_park_rel_map.position.x - pose_park_start_rel_map.position.x,
+        pose_park_rel_map.position.y - pose_park_start_rel_map.position.y,
+        pose_park_rel_map.position.z - pose_park_start_rel_map.position.z
+    ]
+    direction_to_park_angle = transform_utilities.angle_between([1.0, 0.0, 0.0], translation_park_rel_start)
+    current_pose_angle = transform_utilities.angle_from_geometry_msgs_quaternion(pose_park_start_rel_map.orientation)
+    park_pose_angle = transform_utilities.angle_from_geometry_msgs_quaternion(pose_park_rel_map.orientation)
+
+    # now work out the rotation angles we need
+    point_to_park_angle = direction_to_park_angle - current_pose_angle
+    orient_with_park_angle = park_pose_angle - current_pose_angle - point_to_park_angle
+    return (distance_to_park, point_to_park_angle, orient_with_park_angle)
+
+
 class ParkingMotions(py_trees.Sequence):
     """
      - pose_park_rel_map       (r) [geometry_msgs/Pose]                     : pose of the parking location relative to the homebase
      - pose_park_start_rel_map (w) [geometry_msgs.PoseWithCovarianceStamped]: transferred from /navi/pose when about to park
     """
     def __init__(self, name="ParkingMotions"):
-        self.close_to_park_distance_threshold = 0.5
+        super(ParkingMotions, self).__init__(name)
+        self.close_to_park_distance_threshold = 0.25
 
     def initialise(self):
+        super(ParkingMotions, self).initialise()
         self.blackboard = py_trees.Blackboard()
         pose_park_rel_map = self.blackboard.pose_park_rel_map
         pose_park_start_rel_map = self.blackboard.pose_park_start_rel_map.pose.pose  # get the geometry_msgs.Pose object
-        pose_park_rel_start = transform_utilities.get_relative_pose(pose_park_rel_map, pose_park_start_rel_map)
-        parking_distance = transform_utilities.norm_from_geometry_msgs_pose(pose_park_rel_start)
 
-        translation_park_rel_start = [
-            pose_park_rel_map.position.x - pose_park_start_rel_map.position.x,
-            pose_park_rel_map.position.y - pose_park_start_rel_map.position.y,
-            pose_park_rel_map.position.z - pose_park_start_rel_map.position.z
-        ]
-        point_to_park_angle = transform_utilities.angle_between(translation_park_rel_start, [1.0, 0.0, 0.0])
-        orient_with_park_angle = transform_utilities.angle_
+        # do some trig
+        distance_to_park, point_to_park_angle, orient_with_park_angle = compute_parking_geometry(
+            pose_park_start_rel_map,
+            pose_park_rel_map
+        )
+
+        self.blackboard.distance_to_park = distance_to_park
+        self.blackboard.point_to_park_angle = point_to_park_angle
+        self.blackboard.orient_with_park_angle = orient_with_park_angle
 
         point_to_park = navigation.SimpleMotion(
-            name="Point to Park",
+            name="Point to Park %0.2f rad" % point_to_park_angle,
             motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
-            motion_amount=0,
+            motion_amount=point_to_park_angle,
         )
         move_to_park = navigation.SimpleMotion(
-            name="Move to Park",
+            name="Move to Park %0.2f m" % distance_to_park,
             motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_TRANSLATE,
-            motion_amount=0,
+            motion_amount=distance_to_park,
         )
         orient_with_park = navigation.SimpleMotion(
-            name="Orient to Park",
+            name="Orient to Park %0.2f rad" % orient_with_park_angle,
             motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
             motion_amount=orient_with_park_angle,
         )
 
-        self.add_child(py_trees.Status.SUCCESS)
+        # if we're close, just orient
+        if distance_to_park > self.close_to_park_distance_threshold:
+            self.add_child(point_to_park)
+            self.add_child(move_to_park)
+        self.add_child(orient_with_park)
 
-#         # if we're close, just orient
-#         if parking_distance > self.close_to_park_distance_threshold:
-#             self.add_child(point_to_park)
-#             self.add_child(move_to_park)
-#         self.add_child(orient_with_park)
+    def stop(self, new_status=py_trees.Status.INVALID):
+        super(ParkingMotions, self).stop(new_status)
+        self.remove_all_children()
 
 # class InitParkingTransforms(py_trees.Behaviour):
 #

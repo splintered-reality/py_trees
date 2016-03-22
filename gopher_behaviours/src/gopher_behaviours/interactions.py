@@ -124,6 +124,7 @@ class WaitForButton(py_trees.Behaviour):
     def stop(self, new_status=py_trees.Status.INVALID):
         if self.subscriber is not None:
             self.subscriber.unregister()
+        super(WaitForButton, self).stop(new_status)
 
 
 class SendNotification(py_trees.Sequence):

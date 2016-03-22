@@ -12,21 +12,21 @@
 # (unicode_literals not compatible with python2 uuid module)
 from __future__ import absolute_import, print_function
 
-from nose.tools import assert_raises
+from nose.tools import assert_raises, assert_almost_equal
 import geometry_msgs.msg as geometry_msgs
 import gopher_behaviours.transform_utilities as transform_utilities
 import math
 import os
 import rocon_console.console as console
 
+
 ##############################################################################
 # Tests
 ##############################################################################
 
-
 def test_pose_start_rel_finish():
     print(console.bold + "\n****************************************************************************************" + console.reset)
-    print(console.bold + "* pose_finish_rel_start " + console.reset)
+    print(console.bold + "* get_relative_pose " + console.reset)
     print(console.bold + "****************************************************************************************" + console.reset)
     print(console.green + "1m Forward" + console.reset)
     start_pose = geometry_msgs.Pose()
@@ -61,8 +61,35 @@ def test_pose_start_rel_finish():
     pose_finish_rel_start = transform_utilities.get_relative_pose(finish_pose, start_pose)
     print("%s" % pose_finish_rel_start)
 
-#     assert(isinstance(topological_path[0], gopher_semantic_msgs.Location))
-#     assert(isinstance(topological_path[1], gopher_semantic_msgs.Location))
-#     assert(isinstance(topological_path[2], gopher_semantic_msgs.Elevator))
-#     assert(isinstance(topological_path[3], gopher_semantic_msgs.Location))
+    print(console.bold + "\n****************************************************************************************" + console.reset)
+    print(console.bold + "* angle_between " + console.reset)
+    print(console.bold + "****************************************************************************************" + console.reset)
 
+    vector_x = [1, 0, 0]
+    vector_90 = [0, 1, 0]
+    vector_135 = [-1, 1, 0]
+    vector_180 = [-1, 0, 0]
+    vector_225 = [-1, -1, 0]
+    vector_270 = [0, -1, 0]
+    vector_315 = [1, -1, 0]
+    angle_90_to_x = transform_utilities.angle_between(vector_90, vector_x)
+    angle_x_to_90 = transform_utilities.angle_between(vector_x, vector_90)
+    angle_x_to_135 = transform_utilities.angle_between(vector_x, vector_135)
+    angle_x_to_180 = transform_utilities.angle_between(vector_x, vector_180)
+    angle_x_to_225 = transform_utilities.angle_between(vector_x, vector_225)
+    angle_x_to_270 = transform_utilities.angle_between(vector_x, vector_270)
+    angle_x_to_315 = transform_utilities.angle_between(vector_x, vector_315)
+    print("-90: %s" % angle_90_to_x)
+    assert_almost_equal(angle_90_to_x, -1.57079632679)
+    print(" 90: %s"  % angle_x_to_90)
+    assert_almost_equal(angle_x_to_90, 1.57079632679)
+    print("135: %s" % angle_x_to_135)
+    assert_almost_equal(angle_x_to_135, 2.35619449019)
+    print("180: %s" % angle_x_to_180)
+    assert_almost_equal(angle_x_to_180, 3.14159265359)
+    print("225: %s" % angle_x_to_225)
+    assert_almost_equal(angle_x_to_225, -2.35619449019)
+    print("270: %s" % angle_x_to_270)
+    assert_almost_equal(angle_x_to_270, -1.57079632679)
+    print("315: %s" % angle_x_to_315)
+    assert_almost_equal(angle_x_to_315, -0.785398163397)

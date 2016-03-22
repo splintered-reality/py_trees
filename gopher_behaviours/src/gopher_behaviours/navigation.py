@@ -54,7 +54,7 @@ def create_map_pose_to_blackboard_behaviour(
 
     behaviour = py_trees.SubscriberToBlackboard(
         name,
-        topic_name=gopher.topics.odom,
+        topic_name=gopher.topics.pose,
         topic_type=geometry_msgs.PoseWithCovarianceStamped,
         blackboard_variable_name=blackboard_variable_name
     )
@@ -120,7 +120,7 @@ class SimpleMotion(py_trees.Behaviour):
     def initialise(self):
         self.logger.debug("  %s [SimpleMotion::initialise()]" % self.name)
         if not self.action_client:
-            if not self.setup_ros(timeout=0.01):
+            if not self.setup_ros(timeout=0.5):
                 return
         self.action_client.send_goal(self.goal)
 

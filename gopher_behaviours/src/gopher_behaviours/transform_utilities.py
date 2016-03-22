@@ -41,17 +41,23 @@ def unit_vector(vector):
     return vector / numpy.linalg.norm(vector)
 
 
-def angle_between(vector_one, vector_two):
+def angle_between(vector_one, vector_two, normal=[0.0, 0.0, 1.0]):
     """
-    Angle between two vectors.
+    Angle from vector_one to vector_two with sign generated from the
+    specified normal.
 
     :param [] vector_one: list of float length three
     :param [] vector_two: list of float length three
+    :param [] normal : should be one of the two unit normals pointing away from the plane of the two vectors
+
+    .. todo:: checks that make sure the normal really is a normal of the two vectors
     """
     unit_vector_one = unit_vector(vector_one)
     unit_vector_two = unit_vector(vector_two)
-    # http://stackoverflow.com/questions/2827393/angles-between-two-n-dimensional-vectors-in-python
-    return numpy.arccos(numpy.clip(numpy.dot(unit_vector_one, unit_vector_two), -1, 1))
+    cos_angle = numpy.dot(unit_vector_one, unit_vector_two)
+    axis_of_rotation = numpy.cross(unit_vector_one, unit_vector_two)
+    sin_angle = math.copysign(1, numpy.dot(axis_of_rotation, normal)) * numpy.linalg.norm(axis_of_rotation)
+    return numpy.arctan2(sin_angle, cos_angle)
 
 
 def norm_from_geometry_msgs_pose(pose):
@@ -68,7 +74,9 @@ def angle_from_geometry_msgs_quaternion(quaternion):
     """
     Get the angle-axis angle from the given quaternion.
     """
-    angle = 0.0
+    q = [quaternion.x, quaternion.y, quaternion.z, quaternion.w]
+    R = tf.transformations.quaternion_matrix(q)
+    angle, unused_direction, unused_point = tf.transformations.rotation_from_matrix(R)
     return angle
 
 
