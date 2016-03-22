@@ -193,6 +193,7 @@ class SubscriberHandler(py_trees.Behaviour):
             self._setup()
 
     def initialise(self):
+        py_trees.Behaviour.initialise(self)
         if not self.monitor_continuously:
             self._setup()
 
@@ -203,6 +204,7 @@ class SubscriberHandler(py_trees.Behaviour):
                 if self.subscriber is not None:
                     self.subscriber.unregister()
                     self.subscriber = None
+        py_trees.Behaviour.stop(self, new_status)
 
     def _setup(self):
         """
@@ -261,6 +263,6 @@ class SubscriberToBlackboard(SubscriberHandler):
                 self.feedback_message = "no message received yet"
                 return py_trees.Status.RUNNING
             else:
-                self.blackboard.set(self.blackboard_variable_name, self.msg)
+                self.blackboard.set(self.blackboard_variable_name, self.msg, overwrite=True)
                 self.feedback_message = "saved incoming message"
                 return py_trees.Status.SUCCESS
