@@ -9,7 +9,7 @@
 """
 USE THE ROS LAUNCHER INSTEAD!!!
 
-gopher_behaviours/demo_simple_motion.launch
+gopher_behaviours/demo_move_base.launch
 """
 ##############################################################################
 # Imports
@@ -47,7 +47,7 @@ class DemoMoveBase(object):
         py_trees.display.print_ascii_tree(self.root, 0)
 
     def wait_for_ros(self):
-        if not self.root.setup_ros(15.0):
+        if not self.root.setup(15.0):
             rospy.logerr("SimpleMotions: failed to find the simple motions action server.")
 
     ##############################################################################

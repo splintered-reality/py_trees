@@ -9,18 +9,18 @@
 """
 USE THE ROS LAUNCHER INSTEAD!!!
 
-gopher_behaviours/demo_subscriber_check.launch
+gopher_behaviours/demo_parking.launch
 """
 ##############################################################################
 # Imports
 ##############################################################################
 
 import gopher_behaviours
-import std_msgs.msg as std_msgs
-import operator
+import gopher_configuration
 import py_trees
 # import rocon_console.console as console
 import rospy
+import sys
 
 ##############################################################################
 # Tree
@@ -29,23 +29,32 @@ import rospy
 
 class Demo(object):
     def __init__(self):
-        generate_failure = rospy.get_param("~failure", False)
-        bad_topic = rospy.get_param("~bad_topic", False)
-        topic_name = rospy.get_param("~topic_name", "chatter") if not bad_topic else "wrong_topic"
-        expected_string = "Hello World" if not generate_failure else "Wrong String"
-        self.logger = py_trees.logging.get_logger("Subscriber Check")
-        self.root = py_trees.CheckSubscriberVariable(
-            "Check",
-            topic_name=topic_name,
-            topic_type=std_msgs.String,
-            variable_name="data",
-            expected_value=expected_string,
-            comparison_operator=operator.eq
-        )
+        self.gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
+        self.logger = py_trees.logging.get_logger("UnPark")
+
+        self.root = py_trees.Sequence("Demo Parking")
+        unpark = gopher_behaviours.UnPark("UnPark")
+        park = gopher_behaviours.Park("Park")
+
+        wait_for_button = gopher_behaviours.interactions.WaitForButton('Wait for Go Button', self.gopher.buttons.go)
+        switch_to_parking = gopher_behaviours.interactions.SendNotification('Switch to Parking', message='waiting for button to switch to parking', led_pattern=self.gopher.led_patterns.im_doing_something_cool)
+        switch_to_parking.add_child(wait_for_button)
+
+        wait_for_button_two = gopher_behaviours.interactions.WaitForButton('Wait for Go Button', self.gopher.buttons.go)
+        restart = gopher_behaviours.interactions.SendNotification('Restart', message='reset and get ready to start again', led_pattern=self.gopher.led_patterns.holding)
+        restart.add_child(wait_for_button_two)
+
+        self.root.add_child(unpark)
+        self.root.add_child(switch_to_parking)
+        self.root.add_child(park)
+        self.root.add_child(restart)
         self.tree = py_trees.ROSBehaviourTree(self.root)
         rospy.on_shutdown(self.shutdown)
-        # py_trees.display.render_dot_tree(self.root)
         py_trees.display.print_ascii_tree(self.root, 0)
+
+    def wait_for_ros(self):
+        if not self.root.setup(15.0):
+            rospy.logerr("SimpleMotions: failed to setup the parking/unparking demo tree.")
 
     ##############################################################################
     # Tick Tock
@@ -56,8 +65,10 @@ class Demo(object):
         rate = rospy.Rate(10)
         while not rospy.is_shutdown():
             self.tree.tick(pre_tick_handler=self.pre_tick_handler)
-            if self.root.status == py_trees.Status.SUCCESS or self.root.status == py_trees.Status.FAILURE:
+            if self.root.status == py_trees.Status.FAILURE:
                 break
+            if self.root.status == py_trees.Status.SUCCESS:
+                pass  # break
             rate.sleep()
 
     def pre_tick_handler(self, behaviour_tree):
@@ -74,8 +85,13 @@ class Demo(object):
 ##############################################################################
 
 if __name__ == '__main__':
-    py_trees.logging.level = py_trees.logging.Level.DEBUG
-    rospy.init_node("simple_motion", log_level=rospy.DEBUG)
+    rospy.init_node("demo", log_level=rospy.INFO)
+    if rospy.get_param("~debug", True):
+        py_trees.logging.level = py_trees.logging.Level.DEBUG
 
     demo = Demo()
+    if rospy.get_param("~dot", False):
+        py_trees.display.render_dot_tree(demo.root)
+        sys.exit()
+    demo.wait_for_ros()
     demo.tick_tock()

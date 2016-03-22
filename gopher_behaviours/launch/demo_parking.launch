@@ -1,0 +1,23 @@
+<!--
+  Demo the move base behaviour.
+ -->
+<launch>
+  <arg name="minimal"    default="false" doc="fire up minimal beneath this launcher"/>
+  <arg name="dot"        default="False" doc="render dot graph/png/svg" />
+  <arg name="debug"      default="False"  doc="verbose py_tree debug logging" />
+
+  <include if="$(arg minimal)" file="$(find gopher_robot)/launch/minimal.launch"/>
+
+  <node ns="demo" name="demo_parking" type="demo_parking" pkg="gopher_behaviours">
+      <param name="dot"   value="$(arg dot)"/>
+      <param name="debug" value="$(arg debug)"/>
+  </node>
+
+    <!--
+     -->
+    <group ns="navi">
+        <node name="fake_elf" pkg="gopher_bootstrap" type="fake_elf.py">
+            <param name="always_initialising" value="false"/>
+        </node>
+    </group>
+</launch>

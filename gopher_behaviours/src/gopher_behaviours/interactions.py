@@ -9,7 +9,7 @@ from billiard.py2.connection import FAILURE
 """
 .. module:: interactions
    :platform: Unix
-   :synopsis: Behaviours for gopher interactions.
+   :synopsis: Behaviours for gopher interactions with humans.
 
 Oh my spaghettified magnificence,
 Bless my noggin with a tickle from your noodly appendages!
@@ -126,6 +126,7 @@ class WaitForButton(py_trees.Behaviour):
     def stop(self, new_status=py_trees.Status.INVALID):
         if self.subscriber is not None:
             self.subscriber.unregister()
+        super(WaitForButton, self).stop(new_status)
 
 
 class SendNotification(py_trees.Sequence):
@@ -165,7 +166,6 @@ class SendNotification(py_trees.Sequence):
         super(SendNotification, self).__init__(name)
         self.gopher = gopher_configuration.Configuration()
         self.topic_name = self.gopher.services.notification
-        rospy.wait_for_service(self.topic_name, 5)  # should never need to wait
         self.service = rospy.ServiceProxy(self.topic_name, gopher_std_srvs.Notify)
         self.timer = None
         self.sound = sound
@@ -188,6 +188,20 @@ class SendNotification(py_trees.Sequence):
         self.cancel_on_stop = cancel_on_stop
         # flag used to remember that we have a notification that needs cleaning up or not
         self.sent_notification = False
+
+    def setup(self, timeout):
+        # Delayed setup checks, can be done by something like the tree container
+        # First the kids
+        if not py_trees.Sequence.setup(self, timeout):
+            return False
+        # Then ourselves
+        try:
+            rospy.wait_for_service(self.topic_name, timeout)
+            return True
+        except rospy.ROSException:  # timeout
+            return False
+        except rospy.ROSInterruptException:  # ros shutdown
+            return False
 
     def initialise(self):
         super(SendNotification, self).initialise()
@@ -248,7 +262,7 @@ class ControlARMarkerTracker(py_trees.Behaviour):
                 self._dyn_reconf_client_ar_tracker = dynamic_reconfigure.client.Client(self._topic,
                                                                                        timeout=0.5)
             except rospy.ROSException:
-                ros.logwarn("Behaviours [%s" % self.name + "]: Could not connect to dynamic reconfigure server.")
+                rospy.logwarn("Behaviours [%s" % self.name + "]: Could not connect to dynamic reconfigure server.")
 
     def update(self):
         """
@@ -263,7 +277,7 @@ class ControlARMarkerTracker(py_trees.Behaviour):
                 return py_trees.Status.SUCCESS
         else:
             rospy.logwarn("ControlARMarkerTracker : Failed to connect to dynamic reconfigure server.")
-            return FAILURE
+            return py_trees.Status.FAILURE
 
     def stop(self, new_status=py_trees.Status.INVALID):
         super(ControlARMarkerTracker, self).stop(new_status)
