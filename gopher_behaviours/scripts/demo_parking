@@ -15,12 +15,59 @@ gopher_behaviours/demo_parking.launch
 # Imports
 ##############################################################################
 
+import argparse
 import gopher_behaviours
 import gopher_configuration
 import py_trees
-# import rocon_console.console as console
+import rocon_console.console as console
 import rospy
 import sys
+
+##############################################################################
+# Arg Parsing
+##############################################################################
+
+
+def show_description():
+    s = "\n"
+    s += console.green + "This program executes unparking/init/parking in a loop for convenient testing." + console.reset
+    s += "\n"
+    return s
+
+
+def show_usage():
+    s = "\n"
+    s += console.white
+    s += console.bold + "************************************************************************************\n" + console.reset
+    s += console.bold + "                                 Demo Parking\n" + console.reset
+    s += console.bold + "************************************************************************************\n" + console.reset
+    s += "\n"
+    s += console.white
+    s += console.bold + "    Generate Dot" + console.reset + "\n"
+    s += console.cyan + "        demo_parking" + console.yellow + " --render" + console.reset + "\n"
+    s += "\n"
+    s += console.bold + "    Execute" + console.reset + "\n"
+    s += console.cyan + "        demo_parking" + console.yellow + " [options]" + console.reset + "\n"
+    s += "\n"
+    s += console.white
+    s += console.bold + "    Required Launchers" + console.reset + "\n"
+    s += console.cyan + "        + minimal.launch" + console.reset + "\n"
+    s += console.cyan + "        + fake_navigation.launch" + console.reset + "\n"
+    s += "\n"
+    return s
+
+
+def parse_arguments(command_line_args):
+    parser = argparse.ArgumentParser(description=show_description(),
+                                     usage=show_usage(),
+                                     epilog="And his noodly appendage reached forth to tickle the blessed...",
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter
+                                     )
+    parser.add_argument('-r', '--render', action='store_true', help='render the graph to dot/png/svg.')
+    parser.add_argument('-d', '--debug', action='store_true', help='debug level tree logging.')
+
+    args = parser.parse_args(command_line_args)
+    return args
 
 ##############################################################################
 # Tree
@@ -85,13 +132,17 @@ class Demo(object):
 ##############################################################################
 
 if __name__ == '__main__':
-    rospy.init_node("demo", log_level=rospy.INFO)
-    if rospy.get_param("~debug", True):
+    command_line_args = rospy.myargv(argv=sys.argv)[1:]
+    args = parse_arguments(command_line_args)
+    if args.debug:
         py_trees.logging.level = py_trees.logging.Level.DEBUG
 
     demo = Demo()
-    if rospy.get_param("~dot", False):
+    if args.render:
+        py_trees.display.print_ascii_tree(demo.root, 0)
         py_trees.display.render_dot_tree(demo.root)
         sys.exit()
+
+    rospy.init_node("demo", log_level=rospy.INFO)
     demo.wait_for_ros()
     demo.tick_tock()

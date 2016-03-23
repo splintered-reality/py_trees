@@ -1,9 +1,0 @@
-<!--
-  Launcher for testing the pose initialisation
- -->
-<launch>
-<!--   <group ns="gopher/configuration">
-    <rosparam command="load" file="$(find gopher_configuration)/parameters/defaults.yaml"/>
-  </group> -->
-  <node name="demo_pose_initialisation" type="demo_pose_initialisation" pkg="gopher_behaviours"/>
-</launch>

@@ -58,13 +58,6 @@ gopher_behaviours.recovery
     :members:
     :show-inheritance:
 
-gopher_behaviours.time
-----------------------
-
-.. automodule:: gopher_behaviours.time
-    :members:
-    :show-inheritance:
-
 gopher_behaviours.utilities
 ---------------------------
 

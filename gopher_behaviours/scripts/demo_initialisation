@@ -23,28 +23,37 @@ import rospy
 import sys
 
 ##############################################################################
-# Core Controller
+# Arg Parsing
 ##############################################################################
+
+
+def show_description():
+    s = "\n"
+    s += console.green + "This will check if already localised and will rotate the robot until ar markers have" + console.reset
+    s += console.green + "been detected and the hint providers have successfully initialised the elf." + console.reset
+    s += "\n"
+    return s
 
 
 def show_usage():
     s = "\n"
     s += console.white
-    s += console.bold + "    Introspection" + console.reset + "\n"
-    s += console.cyan + "        demo_initialisation" + console.yellow + " [option]" + console.reset + "\n"
+    s += console.bold + "************************************************************************************\n" + console.reset
+    s += console.bold + "                                 Demo Initialisation\n" + console.reset
+    s += console.bold + "************************************************************************************\n" + console.reset
     s += "\n"
-    s += console.bold + "    Command" + console.reset + "\n"
-    s += console.cyan + "        demo_initialisation" + console.yellow + " " + console.reset + "\n"
+    s += console.white
+    s += console.bold + "    Generate Dot" + console.reset + "\n"
+    s += console.cyan + "        demo_initialisation" + console.yellow + " --render" + console.reset + "\n"
     s += "\n"
-    return s
-
-
-def show_description():
-    s = ""
-    s += console.green
-    s += "This will check if already localised and will rotate the robot until ar markers have"
-    s += "been detected and the hint providers have successfully initialised dslam."
-    s += console.reset
+    s += console.bold + "    Execute" + console.reset + "\n"
+    s += console.cyan + "        demo_initialisation" + console.yellow + " [options]" + console.reset + "\n"
+    s += "\n"
+    s += console.white
+    s += console.bold + "    Required Launchers" + console.reset + "\n"
+    s += console.cyan + "        + minimal.launch" + console.reset + "\n"
+    s += console.cyan + "        + fake_navigation.launch || dslam_navigation.launch" + console.reset + "\n"
+    s += "\n"
     return s
 
 
@@ -54,27 +63,27 @@ def parse_arguments(command_line_args):
                                      epilog="And his noodly appendage reached forth to tickle the blessed...",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter
                                      )
-    command_group = parser.add_argument_group('Command')
-    command_group.add_argument('x', nargs='?', default=0.0, type=float, help='x-cooridnate of the goal pose')
-    command_group.add_argument('y', nargs='?', default=0.0, type=float, help='y-cooridnate of the goal pose')
-    command_group.add_argument('yaw', nargs='?', default=0.0, type=float, help='yaw of the goal pose')
+    parser.add_argument('-r', '--render', action='store_true', help='render the graph to dot/png/svg.')
+    parser.add_argument('-d', '--debug', action='store_true', help='debug level tree logging.')
+
+    # parser.add_argument('-r', '--render-dot-tree', action='store', default=gopher.namespaces.semantics, help='namespace for the semantics parameters.')
 
     args = parser.parse_args(command_line_args)
-
-    print("Will move to goal pose (" + str(args.x) + ", " + str(args.y) + ", " + str(args.yaw) + ").")
     return args
 
+
+##############################################################################
+# Demo
+##############################################################################
 
 
 class Demo(object):
     def __init__(self):
         self.logger = py_trees.logging.get_logger("Demo Intialisation")
         self.gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
-        self.root = gopher_behaviours.navigation.ElfInitialisation("Intialise Pose")
+        self.root = gopher_behaviours.navigation.ElfInitialisation("Demo Initialisation")
         self.tree = py_trees.ROSBehaviourTree(self.root)
         rospy.on_shutdown(self.shutdown)
-        # py_trees.display.render_dot_tree(self.root)
-        py_trees.display.print_ascii_tree(self.root)
 
     ##############################################################################
     # Tick Tock
@@ -103,8 +112,18 @@ class Demo(object):
 ##############################################################################
 
 if __name__ == '__main__':
-    py_trees.logging.level = py_trees.logging.Level.DEBUG
-    rospy.init_node("demo_pose_initalisation", log_level=rospy.DEBUG)
+    command_line_args = rospy.myargv(argv=sys.argv)[1:]
+    args = parse_arguments(command_line_args)
+    if args.debug:
+        py_trees.logging.level = py_trees.logging.Level.DEBUG
+
     demo = Demo()
-    demo.setup(5)
+    if args.render:
+        py_trees.display.print_ascii_tree(demo.root, 0)
+        py_trees.display.render_dot_tree(demo.root)
+        sys.exit()
+
+    rospy.init_node("demo", log_level=rospy.INFO)
+    if not demo.tree.setup(5):
+        sys.exit(console.red + "[ERROR] failed to setup required ros components." + console.reset)
     demo.tick_tock()

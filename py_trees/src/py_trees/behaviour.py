@@ -64,6 +64,7 @@ class Behaviour(object):
         :returns: whether it timed out waiting for the server or not.
         :rtype: boolean
         """
+        self.logger.debug("  %s [setup()]" % self.name)
         return True
 
     def initialise(self):

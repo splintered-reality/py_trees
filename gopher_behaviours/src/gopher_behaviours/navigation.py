@@ -164,7 +164,8 @@ class SimpleMotion(py_trees.Behaviour):
 
         The ``fail_if_complete`` flag is useful if you are expecting something to happen before the rotation end, i.e.
         if it gets to the end, it should be considered a failure - this could be used in a scanning rotation where it
-        is looking for a landmark in the environment.
+        is looking for a landmark in the environment. Note that this cannot be achieved by the py_trees invert decorator,
+        since that would also invert failed aborts.
         """
         super(SimpleMotion, self).__init__(name)
         self.gopher = None
@@ -578,7 +579,7 @@ class ElfInitialisation(py_trees.Sequence):
         searching = py_trees.Selector("Searching")
         confirmation = py_trees.Sequence("Confirmation")
         check_elf_status = py_trees.CheckSubscriberVariable(
-            name="Check ELF localiser state",
+            name="Check ELF State",
             topic_name=self.gopher.topics.elf_status,
             topic_type=elf_msgs.ElfLocaliserStatus,
             variable_name="status",
@@ -589,15 +590,15 @@ class ElfInitialisation(py_trees.Sequence):
         )
         timeout = py_trees.Timeout("Timeout", 600.0)
         notify_done = interactions.SendNotification(
-            "Intialised",
+            "Celebrate",
             led_pattern=gopher_std_msgs.LEDStrip.AROUND_RIGHT_GREEN,
             sound=self.gopher.sounds.done,
             message="intialised pose"
         )
-        celebrate = py_trees.Pause("Celebrate", 2.0)
-        scanning = py_trees.Selector("Scanning")
-        rotate = SimpleMotion(name="Rotate", motion_amount=(2 * math.pi), keep_going=False, fail_if_complete=True)
-        wait_for_retry = py_trees.Pause("Wait for Retry", 0.0)
+        celebrate = py_trees.Pause("Take Time to Celebrate", 2.0)
+        scanning = py_trees.Sequence("Scanning")
+        rotate = py_trees.meta.failure_is_success(SimpleMotion(name="Rotate", motion_amount=(2 * math.pi)))
+        wait_for_retry = py_trees.meta.inverter(py_trees.Pause("Wait for Retry", 2.0))
 
         # Graph
         self.add_child(ar_markers_on)

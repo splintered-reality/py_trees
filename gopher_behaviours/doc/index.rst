@@ -16,7 +16,7 @@ Contents:
    :maxdepth: 2
 
    overview
-   create_new_behaviours
+   graphs
    modules
    changelog
 
