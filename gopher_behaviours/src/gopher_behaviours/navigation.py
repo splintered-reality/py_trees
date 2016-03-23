@@ -38,6 +38,7 @@ import tf
 import tf2_geometry_msgs
 import tf2_ros
 
+from . import ar_markers
 from . import interactions
 
 ##############################################################################
@@ -137,7 +138,7 @@ def create_map_pose_to_blackboard_behaviour(
     return behaviour
 
 ##############################################################################
-# Behaviours
+# Simple Motion Behaviour
 ##############################################################################
 
 
@@ -165,7 +166,8 @@ class SimpleMotion(py_trees.Behaviour):
 
         The ``fail_if_complete`` flag is useful if you are expecting something to happen before the rotation end, i.e.
         if it gets to the end, it should be considered a failure - this could be used in a scanning rotation where it
-        is looking for a landmark in the environment.
+        is looking for a landmark in the environment. Note that this cannot be achieved by the py_trees invert decorator,
+        since that would also invert failed aborts.
         """
         super(SimpleMotion, self).__init__(name)
         self.gopher = None
@@ -255,7 +257,7 @@ class SimpleMotion(py_trees.Behaviour):
 
 
 ##############################################################################
-# Behaviours
+# Move Base Behaviour
 ##############################################################################
 
 
@@ -376,6 +378,10 @@ class MoveIt(py_trees.Behaviour):
         if (motion_state == actionlib_msgs.GoalStatus.PENDING) or (motion_state == actionlib_msgs.GoalStatus.ACTIVE):
             self.action_client.cancel_goal()
 
+##############################################################################
+# Teleport Behaviour
+##############################################################################
+
 
 class Teleport(py_trees.Behaviour):
     """
@@ -431,6 +437,10 @@ class Teleport(py_trees.Behaviour):
         # succeeded, send a message to cancel the goal for this action client.
         if self.action_client is not None and self.action_client.get_state() != actionlib_msgs.GoalStatus.SUCCEEDED:
             self.action_client.cancel_goal()
+
+##############################################################################
+# Goal Finishing Behaviour
+##############################################################################
 
 
 class GoalFinishing(py_trees.Behaviour):
@@ -548,85 +558,91 @@ class GoalFinishing(py_trees.Behaviour):
         if self.action_client is not None and self.action_client.get_state() != actionlib_msgs.GoalStatus.SUCCEEDED:
             self.action_client.cancel_goal()
 
+##############################################################################
+# Pose Initialisation w/ ELF Behaviour
+##############################################################################
 
-class PoseIntialisation(py_trees.Sequence):
+
+class ElfInitialisation(py_trees.Sequence):
     """
-    This class implements the sequence of initialising the robot's pose. The sequence consists of the following:
+    This class implements the sequence of initialising the robot's pose
+    using means from the hint providers in the elf localisation framework.
 
     - enable AR (behaviour)
     - initialise (selector)
-        - check dslam init status (behaviour)
-        - manual init (sequence)
-            - check cancel button (behaviour)
-            - wait for confirm button press (behaviour)
-            - teleport to home base (behaviour)
-        - rotate (behaviour)
+        - check elf init status (sequence)
+            - check elf topic
+            - notify success (*sequence)
+                - celebrate success (behaviour)
+        - automatic initialisation (sequence)
+            - rotate simple motion (behaviour)
+            - wait to retry (behaviour)
+        - timeout (behaviour)
     - disable AR (behaviour)
     """
     def __init__(self, name):
         """
         Put together the pose intialisation sequence
         """
-        super(PoseIntialisation, self).__init__(name)
-        self._config = gopher_configuration.Configuration()
+        super(ElfInitialisation, self).__init__(name)
+        self.gopher = gopher_configuration.Configuration()
 
-        # enable tracker
-        self.add_child(interactions.ControlARMarkerTracker("Enable AR Marker Tracker",
-                                                           self._config.topics.ar_tracker_long_range,
-                                                           True))
-        initialise = py_trees.Selector("Initialise")
-        # check status
-        check_status = py_trees.Sequence("Verify Localisation")
-        check_status.add_child(py_trees.CheckSubscriberVariable(
-            name="Check ELF localiser state",
-            topic_name=self._config.topics.elf_status,
+        # Behaviours
+        ar_markers_on = ar_markers.ControlARMarkerTracker(
+            "AR Markers On",
+            self.gopher.topics.ar_tracker_long_range,
+            True
+        )
+        ar_markers_off = ar_markers.ControlARMarkerTracker(
+            "AR Markers Off",
+            self.gopher.topics.ar_tracker_long_range,
+            False
+        )
+        searching = py_trees.Selector("Searching")
+        confirmation = py_trees.Sequence("Confirmation")
+        check_elf_status = py_trees.CheckSubscriberVariable(
+            name="Check ELF State",
+            topic_name=self.gopher.topics.elf_status,
             topic_type=elf_msgs.ElfLocaliserStatus,
             variable_name="status",
             expected_value=elf_msgs.ElfLocaliserStatus.STATUS_WORKING,
             fail_if_no_data=True,
             fail_if_bad_comparison=True,
-            monitor_continuously=True)
+            monitor_continuously=True
         )
+        timeout = py_trees.Timeout("Timeout", 600.0)
         notify_done = interactions.SendNotification(
-            "Intialised",
+            "Celebrate",
             led_pattern=gopher_std_msgs.LEDStrip.AROUND_RIGHT_GREEN,
-            sound=self._config.sounds.done,
+            sound=self.gopher.sounds.done,
             message="intialised pose"
         )
-        notify_done.add_child(py_trees.Pause("Celebrate the Success", 2.0))
-        check_status.add_child(notify_done)
-        initialise.add_child(check_status)
-        # manual init
-        manual_init = py_trees.Sequence("Manual Initialisation")
-        manual_init.add_child(interactions.CheckButtonPressed("Check Cancel Button", self._config.buttons.stop))
-        manual_init.add_child(interactions.WaitForButton("Wait for Go Button Trigger", self._config.buttons.go))
-        manual_init.add_child(Teleport("Teleport to Homebase",
-                                       gopher_navi_msgs.TeleportGoal(location="homebase", special_effects=True)))
-        manual_init.add_child(time.Timeout("Wait for Initialisation", 600.0))
-        initialise.add_child(manual_init)
-        # auto init
-        auto_init = py_trees.Selector("Autonomous Initialisation")
-        rotate = SimpleMotion(name="Rotate", motion_amount=(2 * math.pi), keep_going=False, fail_if_complete=True)
-        auto_init.add_child(rotate)
-        wait_for_retry = py_trees.Pause("Wait for Retry", 0.0)
-        auto_init.add_child(wait_for_retry)
-        initialise.add_child(auto_init)
-        # timeout
-        initialise.add_child(py_trees.Timeout("Initialisation Timeout", 600.0))
-        self.add_child(initialise)
-        # disable tracker
-        self.add_child(interactions.ControlARMarkerTracker("Disable AR Marker Tracker",
-                                                           self._config.topics.ar_tracker_long_range,
-                                                           False))
+        celebrate = py_trees.Pause("Take Time to Celebrate", 2.0)
+        scanning = py_trees.Sequence("Scanning")
+        rotate = py_trees.meta.failure_is_success(SimpleMotion(name="Rotate", motion_amount=(2 * math.pi)))
+        wait_for_retry = py_trees.meta.inverter(py_trees.Pause("Wait for Retry", 2.0))
 
-    def initialise(self):
-        """
-        Initialise the pose intialisation sequence
-        """
-        super(PoseIntialisation, self).initialise()
+        # Graph
+        self.add_child(ar_markers_on)
+        self.add_child(searching)
+        searching.add_child(confirmation)
+        confirmation.add_child(check_elf_status)
+        confirmation.add_child(notify_done)
+        notify_done.add_child(celebrate)
+        searching.add_child(scanning)
+        searching.add_child(timeout)
+        scanning.add_child(rotate)
+        scanning.add_child(wait_for_retry)
+        self.add_child(ar_markers_off)
 
-    def stop(self, new_status=py_trees.Status.INVALID):
-        """
-        Stop the pose intialisation sequence
-        """
-        super(PoseIntialisation, self).stop(new_status)
+#     def initialise(self):
+#         """
+#         Initialise the pose intialisation sequence
+#         """
+#         super(ElfInitialisation, self).initialise()
+#
+#     def stop(self, new_status=py_trees.Status.INVALID):
+#         """
+#         Stop the pose intialisation sequence
+#         """
+#         super(ElfInitialisation, self).stop(new_status)

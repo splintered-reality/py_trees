@@ -35,6 +35,7 @@ catkin_package = catkin_pkg.package.parse_package(os.path.join(catkin_dir, catki
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
+    'sphinx.ext.graphviz',
     'sphinx.ext.intersphinx',
     'sphinx.ext.todo',
     'sphinx.ext.coverage',

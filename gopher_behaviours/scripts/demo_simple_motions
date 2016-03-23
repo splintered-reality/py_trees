@@ -4,36 +4,76 @@
 #   https://raw.github.com/yujinrobot/gopher_crazy_hospital/license/LICENSE
 #
 ##############################################################################
-# Documentation
-##############################################################################
-"""
-USE THE ROS LAUNCHER INSTEAD!!!
-
-gopher_behaviours/demo_simple_motion.launch
-"""
-##############################################################################
 # Imports
 ##############################################################################
 
+import argparse
 import gopher_behaviours
 import gopher_configuration
 import gopher_std_msgs.msg as gopher_std_msgs
 import py_trees
-# import rocon_console.console as console
+import rocon_console.console as console
 import rospy
+import sys
+
+##############################################################################
+# Arg Parsing
+##############################################################################
+
+
+def show_description():
+    s = "\n"
+    s += console.green + "This will stitch together a rotation/translation behaviour as requested by the user." + console.reset
+    s += "\n"
+    return s
+
+
+def show_usage():
+    s = "\n"
+    s += console.white
+    s += console.bold + "************************************************************************************\n" + console.reset
+    s += console.bold + "                              Demo Simple Motions\n" + console.reset
+    s += console.bold + "************************************************************************************\n" + console.reset
+    s += "\n"
+    s += console.white
+    s += console.bold + "    Generate Dot" + console.reset + "\n"
+    s += console.cyan + "        demo_simple_motions" + console.yellow + " --render" + console.reset + "\n"
+    s += "\n"
+    s += console.bold + "    Execute" + console.reset + "\n"
+    s += console.cyan + "        demo_simple_motions" + console.yellow + " [options]" + console.reset + "\n"
+    s += "\n"
+    s += console.white
+    s += console.bold + "    Required Launchers" + console.reset + "\n"
+    s += console.cyan + "        + minimal.launch" + console.reset + "\n"
+    s += "\n"
+    return s
+
+
+def parse_arguments(command_line_args):
+    parser = argparse.ArgumentParser(description=show_description(),
+                                     usage=show_usage(),
+                                     epilog="And his noodly appendage reached forth to tickle the blessed...",
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter
+                                     )
+    parser.add_argument('-r', '--render', action='store_true', help='render the graph to dot/png/svg.')
+    parser.add_argument('-d', '--debug', action='store_true', help='debug level tree logging.')
+
+    parser.add_argument('-a', '--rotation-angle', action='store', default=0.87, help='angle to rotate.')
+    parser.add_argument('-t', '--translation-distance', action='store', default=0.25, help='distance to translate')
+
+    args = parser.parse_args(command_line_args)
+    return args
 
 ##############################################################################
 # Tree
 ##############################################################################
 
 
-class DemoSimpleMotions(object):
-    def __init__(self):
-        self.root = py_trees.Sequence("Root")
+class Demo(object):
+    def __init__(self, rotation_angle, translation_distance):
+        self.root = py_trees.Sequence("Demo Simple Motions")
         self.gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
         self.logger = py_trees.logging.get_logger("SimpleMotion")
-        rotation_angle = rospy.get_param("~rotation", 0.88)
-        translation_distance = rospy.get_param("~translation", 0.25)
         self.rotate = gopher_behaviours.navigation.SimpleMotion(
             "Rotate",
             motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
@@ -51,10 +91,6 @@ class DemoSimpleMotions(object):
         rospy.on_shutdown(self.shutdown)
         # py_trees.display.render_dot_tree(self.root)
         py_trees.display.print_ascii_tree(self.root, 0)
-
-    def wait_for_ros(self):
-        if not self.rotate.setup(15.0):
-            rospy.logerr("SimpleMotions: failed to find the simple motions action server.")
 
     ##############################################################################
     # Tick Tock
@@ -83,9 +119,18 @@ class DemoSimpleMotions(object):
 ##############################################################################
 
 if __name__ == '__main__':
-    py_trees.logging.level = py_trees.logging.Level.DEBUG
-    rospy.init_node("simple_motion", log_level=rospy.DEBUG)
+    command_line_args = rospy.myargv(argv=sys.argv)[1:]
+    args = parse_arguments(command_line_args)
+    if args.debug:
+        py_trees.logging.level = py_trees.logging.Level.DEBUG
 
-    simple_motions = DemoSimpleMotions()
-    simple_motions.wait_for_ros()
-    simple_motions.tick_tock()
+    demo = Demo(rotation_angle=args.rotation_angle, translation_distance=args.translation_distance)
+    if args.render:
+        py_trees.display.print_ascii_tree(demo.root, 0)
+        py_trees.display.render_dot_tree(demo.root)
+        sys.exit()
+
+    rospy.init_node("demo", log_level=rospy.INFO)
+    if not demo.tree.setup(5):
+        sys.exit(console.red + "[ERROR] failed to setup required ros components." + console.reset)
+    demo.tick_tock()

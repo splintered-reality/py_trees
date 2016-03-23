@@ -1,0 +1,3 @@
+digraph demo_movebase {
+"Demo MoveBase" [shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+}

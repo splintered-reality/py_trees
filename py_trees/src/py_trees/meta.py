@@ -90,7 +90,6 @@ def _oneshot_tick(func):
     """
     Replace the default tick with one which runs the original function only if
     the oneshot variable is unset, yielding the unmodified object otherwise.
-
     """
     @functools.wraps(func)
     def wrapped(self, *args, **kwargs):
@@ -109,7 +108,6 @@ def oneshot(cls):
     """
     Makes the given behaviour run only until it returns success or failure,
     retaining that state for all subsequent updates.
-
     """
     setattr(cls, "tick", _oneshot_tick(cls.tick))
     return cls

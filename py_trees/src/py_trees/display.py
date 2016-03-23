@@ -117,19 +117,19 @@ def generate_pydot_graph(root):
     """
     def get_node_attributes(node):
         if isinstance(node, Selector):
-            return ('octagon', 'cyan')
+            return ('octagon', 'cyan')  # octagon
         elif isinstance(node, Sequence):
             return ('box', 'orange')
         elif node.children != []:
-            return ('ellipse', 'green')  # encapsulating behaviour (e.g. wait)
+            return ('ellipse', 'ghostwhite')  # encapsulating behaviour (e.g. wait)
         else:
             return ('ellipse', 'gray')
 
     fontsize = 11
     graph = pydot.Dot(graph_type='digraph')
     graph.set_name(root.name.lower().replace(" ", "_"))
-    (unused_node_shape, node_colour) = get_node_attributes(root)
-    node_root = pydot.Node(root.name, shape="house", style="filled", fillcolor=node_colour, fontsize=fontsize)
+    (node_shape, node_colour) = get_node_attributes(root)
+    node_root = pydot.Node(root.name, shape=node_shape, style="filled", fillcolor=node_colour, fontsize=fontsize)
     graph.add_node(node_root)
     names = [root.name]
 

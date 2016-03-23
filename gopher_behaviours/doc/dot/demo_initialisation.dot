@@ -1,0 +1,25 @@
+digraph demo_initialisation {
+"Demo Initialisation" [shape=box, fontsize=11, style=filled, fillcolor=orange];
+"AR Markers On" [shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+"Demo Initialisation" -> "AR Markers On";
+Searching [shape=octagon, fontsize=11, style=filled, fillcolor=cyan];
+"Demo Initialisation" -> Searching;
+Confirmation [shape=box, fontsize=11, style=filled, fillcolor=orange];
+Searching -> Confirmation;
+"Check ELF State" [shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+Confirmation -> "Check ELF State";
+Celebrate [shape=box, fontsize=11, style=filled, fillcolor=orange];
+Confirmation -> Celebrate;
+"Take Time to Celebrate" [shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+Celebrate -> "Take Time to Celebrate";
+Scanning [shape=box, fontsize=11, style=filled, fillcolor=orange];
+Searching -> Scanning;
+Rotate [shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+Scanning -> Rotate;
+"Wait for Retry" [shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+Scanning -> "Wait for Retry";
+Timeout [shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+Searching -> Timeout;
+"AR Markers Off" [shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+"Demo Initialisation" -> "AR Markers Off";
+}

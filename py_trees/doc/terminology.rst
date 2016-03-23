@@ -18,13 +18,14 @@ Terminology
 
       Once a tick is done..you can stop for breath! In this space you can pause to avoid
       eating the cpu, send some statistics out to a monitoring program, manipulate the
-      underlying blackboard (data), have a coffee...This is absolutely awesome - without
-      this it would be a concurrent mess of locks and threads.
+      underlying blackboard (data), ... At no point does the traversal of the tree get mired in
+      execution - it's just in and out and then stop for a coffee. This is absolutely awesome
+      - without this it would be a concurrent mess of locks and threads.
 
-      Concurrency for free...almost. Always, always keep in mind that your behaviours
-      executions must be light. We are not parallelising here. In almost all cases, most of our
-      robot behaviour trees are probably not going to be significantly expensive (unlike games
-      with thousands of characters).
+
+      Always, always keep in mind that your behaviours' executions must be light. There is no
+      parallelising here. In almost all cases, most of your robot behaviour trees are probably
+      not going to be significantly expensive (unlike games with thousands of characters).
 
 .. todo:: Add an image of a ticking tree here.
 
