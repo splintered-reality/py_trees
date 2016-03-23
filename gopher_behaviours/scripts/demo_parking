@@ -76,7 +76,7 @@ class Demo(object):
         park = gopher_behaviours.Park("Park")
 
         wait_for_button = gopher_behaviours.interactions.WaitForButton('Wait for Go Button', self.gopher.buttons.go)
-        switch_to_parking = gopher_behaviours.interactions.SendNotification('Switch to Parking', message='waiting for button to switch to parking', led_pattern=self.gopher.led_patterns.im_doing_something_cool)
+        switch_to_parking = gopher_behaviours.interactions.SendNotification('Drive Around', message='do a delivery, get a coffee', led_pattern=self.gopher.led_patterns.im_doing_something_cool)
         switch_to_parking.add_child(wait_for_button)
 
         wait_for_button_two = gopher_behaviours.interactions.WaitForButton('Wait for Go Button', self.gopher.buttons.go)
@@ -90,10 +90,6 @@ class Demo(object):
         self.tree = py_trees.ROSBehaviourTree(self.root)
         rospy.on_shutdown(self.shutdown)
         py_trees.display.print_ascii_tree(self.root, 0)
-
-    def wait_for_ros(self):
-        if not self.root.setup(15.0):
-            rospy.logerr("SimpleMotions: failed to setup the parking/unparking demo tree.")
 
     ##############################################################################
     # Tick Tock
@@ -136,5 +132,6 @@ if __name__ == '__main__':
         sys.exit()
 
     rospy.init_node("demo", log_level=rospy.INFO)
-    demo.wait_for_ros()
+    if not demo.tree.setup(5):
+        sys.exit(console.red + "[ERROR] failed to setup required ros components." + console.reset)
     demo.tick_tock()

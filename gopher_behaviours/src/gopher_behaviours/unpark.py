@@ -34,7 +34,7 @@ from . import battery
 from . import navigation
 from . import starting
 from . import transform_utilities
-from .interactions import WaitForButton, SendNotification
+from .interactions import WaitForButton, CheckButtonPressed, SendNotification
 
 ##############################################################################
 # Implementation
@@ -90,24 +90,40 @@ class UnPark(py_trees.Sequence):
             name="Start Pose (Map)",
             blackboard_variables={"pose_unpark_start_rel_map": "pose.pose"}
         )
-        update_parking_pose_from_map = UpdateParkingPoseFromMap(name="Update Pose (Map)")
+        update_parking_pose_from_map = UpdateParkingPoseFromMap(name="Update Park Pose (Map)")
 
         ################################################################
         # Not Localised Sequence Components
         ################################################################
 
-        # Pose updates
-        write_starting_pose_from_odom = navigation.create_odom_pose_to_blackboard_behaviour(name="Start Pose (Odom)", blackboard_variables={"pose_unpark_start_rel_odom": "pose.pose"})
-        write_finishing_pose_from_odom = navigation.create_odom_pose_to_blackboard_behaviour(name="Final Pose (Odom)", blackboard_variables={"pose_unpark_finish_rel_odom": "pose.pose"})
-        update_parking_pose_from_odom = SaveParkingPoseFromOdom("Save Pose (Odom)")
+        not_yet_localised_sequence = py_trees.Sequence("Not Localised")
+        manual_unpark = py_trees.Sequence("Manual UnPark")
+        automatic_unpark = py_trees.Sequence("Automatic UnPark")
+        manual_or_auto = py_trees.Selector("Manual or Auto")
 
-        # Teleop/Teleport Homebase
-        wait_for_button_press = WaitForButton('Wait for Go Button', self.gopher.buttons.go)
+        ##############################
+        # Common
+        ##############################
+        write_starting_pose_from_odom = navigation.create_odom_pose_to_blackboard_behaviour(name="Start Pose (Odom)", blackboard_variables={"pose_unpark_start_rel_odom": "pose.pose"})
+
+        ##############################
+        # Manual
+        ##############################
+        manual_write_finishing_pose_from_odom = navigation.create_odom_pose_to_blackboard_behaviour(name="Final Pose (Odom)", blackboard_variables={"pose_unpark_finish_rel_odom": "pose.pose"})
+        is_cancel_activated = CheckButtonPressed('Cancel Activated?', self.gopher.buttons.cancel, latched=True)
+        wait_for_go_button_press = WaitForButton('Wait for Go Button', self.gopher.buttons.go)
         teleport = navigation.create_homebase_teleport()
         go_to_homebase = SendNotification('Teleop to Homebase', message='waiting for button press to continue', led_pattern=self.gopher.led_patterns.humans_i_need_help)
-        go_to_homebase.add_child(wait_for_button_press)
+        go_to_homebase.add_child(wait_for_go_button_press)
+        update_parking_pose_from_odom = SaveParkingPoseFromOdom("Save Park Pose (Manual)")
 
-        not_yet_localised_sequence = py_trees.Sequence("Not Localised")
+        ##############################
+        # Automatic
+        ##############################
+        auto_initialisation = navigation.ElfInitialisation(name="Elf Initialisation")
+        auto_write_finishing_pose_from_odom = navigation.create_odom_pose_to_blackboard_behaviour(name="Final Pose (Odom)", blackboard_variables={"pose_unpark_finish_rel_odom": "pose.pose"})
+        auto_write_finishing_pose_from_map = navigation.create_map_pose_to_blackboard_behaviour(name="Finishing Pose (Map)", blackboard_variables={"pose_unpark_finish_rel_map": "pose.pose"})
+        auto_update_parking_pose_from_odom_and_map = py_trees.behaviours.Success("Save Park Pose (Auto)")
 
         ################################################################
         # All Together
@@ -122,10 +138,18 @@ class UnPark(py_trees.Sequence):
         already_localised_sequence.add_child(update_parking_pose_from_map)
         path_chooser.add_child(not_yet_localised_sequence)
         not_yet_localised_sequence.add_child(write_starting_pose_from_odom)
-        not_yet_localised_sequence.add_child(go_to_homebase)
-        not_yet_localised_sequence.add_child(teleport)
-        not_yet_localised_sequence.add_child(write_finishing_pose_from_odom)
-        not_yet_localised_sequence.add_child(update_parking_pose_from_odom)
+        not_yet_localised_sequence.add_child(manual_or_auto)
+        manual_or_auto.add_child(manual_unpark)
+        manual_unpark.add_child(is_cancel_activated)
+        manual_unpark.add_child(go_to_homebase)
+        manual_unpark.add_child(teleport)
+        manual_unpark.add_child(manual_write_finishing_pose_from_odom)
+        manual_unpark.add_child(update_parking_pose_from_odom)
+        manual_or_auto.add_child(automatic_unpark)
+        automatic_unpark.add_child(auto_initialisation)
+        automatic_unpark.add_child(auto_write_finishing_pose_from_odom)
+        automatic_unpark.add_child(auto_write_finishing_pose_from_map)
+        automatic_unpark.add_child(auto_update_parking_pose_from_odom_and_map)
 
     def initialise(self):
         py_trees.Sequence.initialise(self)

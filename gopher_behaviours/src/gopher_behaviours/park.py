@@ -114,10 +114,32 @@ class ParkingMotions(py_trees.Sequence):
         self.close_to_park_distance_threshold = 0.25
         self.blackboard = py_trees.Blackboard()
 
+        # dummy children for dot graph rendering purposes
+        # they will get cleaned up the first time this enters initialise
+        point_to_park = navigation.SimpleMotion(
+            name="Point to Park (?rad)",
+            motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
+            motion_amount=0.0,
+        )
+        move_to_park = navigation.SimpleMotion(
+            name="Move to Park (?m)",
+            motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_TRANSLATE,
+            motion_amount=0.0,
+        )
+        orient_with_park = navigation.SimpleMotion(
+            name="Orient to Park (?rad)",
+            motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
+            motion_amount=0.0,
+        )
+        self.add_child(point_to_park)
+        self.add_child(move_to_park)
+        self.add_child(orient_with_park)
+
+
     def initialise(self):
         super(ParkingMotions, self).initialise()
 
-        # if it's not our first entry, cleanup the old children
+        # cleanup the old children
         self.remove_all_children()
 
         pose_park_rel_map = self.blackboard.pose_park_rel_map
