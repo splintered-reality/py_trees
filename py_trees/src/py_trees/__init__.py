@@ -17,16 +17,21 @@ package. It provides ...
 # Imports
 ##############################################################################
 
+from . import behaviour
+from . import behaviours
+from . import blackboard
+from . import composites
+from . import display
+from . import meta
+from . import rostime
+from . import subscribers
+from . import trees
+
+# conveniences
 from .behaviour import Behaviour
-
-import meta        # factories and operators on behaviours
-import behaviours  # specific behaviours
-
 from .blackboard import Blackboard, CheckBlackboardVariable
 from .common import Status
 from .composites import Composite, Selector, Sequence, OneshotSequence
 from .subscribers import CheckSubscriberVariable, SubscriberToBlackboard
 from .rostime import Pause, Timeout
 from .trees import BehaviourTree, ROSBehaviourTree, CONTINUOUS_TICK_TOCK, VisitorBase
-
-import display
