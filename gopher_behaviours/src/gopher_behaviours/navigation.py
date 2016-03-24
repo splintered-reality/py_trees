@@ -192,6 +192,7 @@ class SimpleMotion(py_trees.Behaviour):
         :returns: whether it timed out waiting for the server or not.
         :rtype: boolean
         """
+        self.logger.debug("  %s [SimpleMotion::setup()]" % self.name)
         if not self.action_client:
             self.gopher = gopher_configuration.Configuration()
             self.action_client = actionlib.SimpleActionClient(
