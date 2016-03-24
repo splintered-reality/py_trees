@@ -217,8 +217,7 @@ class SendNotification(py_trees.Sequence):
             self.service_failed = True
             self.stop(py_trees.Status.FAILURE)
 
-    def stop(self, new_status=py_trees.Status.INVALID):
-        super(SendNotification, self).stop(new_status)
+    def terminate(self, new_status=py_trees.Status.INVALID):
         if self.cancel_on_stop and not self.service_failed and self.sent_notification:
             request = gopher_std_srvs.NotifyRequest()
             request.id = unique_id.toMsg(self.id)
@@ -229,4 +228,6 @@ class SendNotification(py_trees.Sequence):
                 unused_response = self.service(request)
             except rospy.ServiceException as e:
                 rospy.logwarn("SendNotification : failed to process notification cancel request [%s][%s]" % (self.message, str(e)))
-
+            except rospy.exceptions.ROSInterruptException:
+                # ros shutting down
+                pass
