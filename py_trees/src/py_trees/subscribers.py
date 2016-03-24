@@ -22,16 +22,19 @@ Bless my noggin with a tickle from your noodly appendages!
 
 import copy
 import operator
-import py_trees
 import rospy
 import threading
+
+from . import behaviour
+from . import blackboard
+from . import common
 
 ##############################################################################
 # Behaviour
 ##############################################################################
 
 
-class CheckSubscriberVariable(py_trees.Behaviour):
+class CheckSubscriberVariable(behaviour.Behaviour):
     """
     Check a subscriber to see if it has a specific variable
     and optionally whether that variable has a specific value.
@@ -82,6 +85,7 @@ class CheckSubscriberVariable(py_trees.Behaviour):
         .. seealso:: https://docs.python.org/2/library/operator.html
         """
         super(CheckSubscriberVariable, self).__init__(name)
+        self.logger.debug("  %s [CheckSubscriberVariable::initialise()]" % self.name)
         self.topic_name = topic_name
         self.topic_type = topic_type
         self.variable_name = variable_name
@@ -93,18 +97,17 @@ class CheckSubscriberVariable(py_trees.Behaviour):
         # Use cached_xxx variables to generate a status.feedback in the callback independent
         # of the behaviour tick status (i.e. it runs and updates continuously). The
         # behaviour's tick status then reflects this when required
-        self.cached_status = py_trees.Status.INVALID
+        self.cached_status = common.Status.INVALID
         self.cached_feedback = ""
         self.data_guard = threading.Lock()
         self.monitor_continuously = monitor_continuously
-        if self.monitor_continuously:
-            self._setup()
 
     def initialise(self):
+        self.logger.debug("  %s [CheckSubscriberVariable::initialise()]" % self.name)
         if not self.monitor_continuously:
-            self._setup()
+            self.setup()
 
-    def stop(self, new_status=py_trees.Status.INVALID):
+    def terminate(self, new_status):
         """
         Cleanup if we're not tasked with monitoring continuously.
 
@@ -114,6 +117,7 @@ class CheckSubscriberVariable(py_trees.Behaviour):
            continously. If that turns out to be a use case, we need to implement
            something for that.
         """
+        self.logger.debug("  %s [CheckSubscriberVariable::terminate()]" % self.name)
         if not self.monitor_continuously:
             with self.data_guard:
                 self.cached_status = new_status
@@ -122,7 +126,8 @@ class CheckSubscriberVariable(py_trees.Behaviour):
                     self.subscriber.unregister()
                     self.subscriber = None
 
-    def _setup(self):
+    def setup(self, unused_timeout):
+        self.logger.debug("  %s [CheckSubscriberVariable::setup()]" % self.name)
         """
         This will get called early if it was flagged in the constructor. This is useful
         if you want to continuously monitor and just reflect the result as needed.
@@ -130,11 +135,12 @@ class CheckSubscriberVariable(py_trees.Behaviour):
         begins running (i.e. on initialise).
         """
         with self.data_guard:
-            self.cached_status = py_trees.Status.FAILURE if self.fail_if_no_data else py_trees.Status.RUNNING
+            self.cached_status = common.Status.FAILURE if self.fail_if_no_data else common.Status.RUNNING
             self.cached_feedback = "have not yet received any messages"
         # if it's a latched publisher, this will immediately trigger a callback, inside the constructor!
         # so make sure we aren't in a lock ourselves, otherwise we get a deadlock
         self.subscriber = rospy.Subscriber(self.topic_name, self.topic_type, self._callback)
+        return True
 
     def _callback(self, msg):
         """
@@ -144,7 +150,7 @@ class CheckSubscriberVariable(py_trees.Behaviour):
             rospy.logerr("Behaviours [%s" % self.name + "]: expected variable name in message not found [%s]" % self.variable_name)
             with self.data_guard:
                 self.cached_feedback = "expected variable name in message not found [%s]" % self.variable_name
-                self.cached_status = py_trees.Status.FAILURE
+                self.cached_status = common.Status.FAILURE
             return
         value = getattr(msg, self.variable_name)
         success = self.comparison_operator(value, self.expected_value)
@@ -152,19 +158,23 @@ class CheckSubscriberVariable(py_trees.Behaviour):
         with self.data_guard:
             if success:
                 self.cached_feedback = "'%s' comparison succeeded [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
-                self.cached_status = py_trees.Status.SUCCESS
+                self.cached_status = common.Status.SUCCESS
             else:
                 self.cached_feedback = "'%s' comparison failed [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
-                self.cached_status = py_trees.Status.FAILURE if self.fail_if_bad_comparison else py_trees.Status.RUNNING
+                self.cached_status = common.Status.FAILURE if self.fail_if_bad_comparison else common.Status.RUNNING
 
     def update(self):
+        self.logger.debug("  %s [CheckSubscriberVariable::update()]" % self.name)
+        if self.subscriber is None:
+            self.feedback_message = "no subscriber, did you call setup() on your tree?"
+            return common.Status.FAILURE
         with self.data_guard:
             self.feedback_message = copy.copy(self.cached_feedback)
             status = copy.copy(self.cached_status)
         return status
 
 
-class SubscriberHandler(py_trees.Behaviour):
+class SubscriberHandler(behaviour.Behaviour):
     """
     Not intended for direct use, as this just absorbs the mechanics of setting up
     a subscriber for use by children who inherit and implement their own custom
@@ -193,29 +203,30 @@ class SubscriberHandler(py_trees.Behaviour):
             self._setup()
 
     def initialise(self):
-        py_trees.Behaviour.initialise(self)
         if not self.monitor_continuously:
-            self._setup()
+            self.setup(timeout=None)
 
-    def stop(self, new_status=py_trees.Status.INVALID):
+    def terminate(self, new_status=common.Status.INVALID):
         if not self.monitor_continuously:
             with self.data_guard:
                 self.msg = None
                 if self.subscriber is not None:
                     self.subscriber.unregister()
                     self.subscriber = None
-        py_trees.Behaviour.stop(self, new_status)
 
-    def _setup(self):
+    def setup(self, timeout):
         """
-        This will get called early if it was flagged in the constructor. This is useful
-        if you want to continuously monitor and just reflect the result as needed.
+        This is necessary if you want to continuously monitor and just reflect the result as needed.
+        Note that the constructor automatically calls this (ros doesn't care if you are init'd or
+        not at this point).
+
         The converse case is when you only want to start monitoring as soon as the behaviour
-        begins running (i.e. on initialise).
+        begins running, this will happen via initialise if monitor_continuously is not True.
         """
         # if it's a latched publisher, this will immediately trigger a callback, inside the constructor!
         # so make sure we aren't in a lock ourselves, otherwise we get a deadlock
         self.subscriber = rospy.Subscriber(self.topic_name, self.topic_type, self._callback)
+        return True
 
     def _callback(self, msg):
         """
@@ -231,8 +242,8 @@ class SubscriberToBlackboard(SubscriberHandler):
     If no data has yet been received, this behaviour blocks (i.e. returns
     RUNNING).
 
-    Typically this will save the entire message, however a sub fields can be
-    designated, in which case they will write to
+   Typically this will save the entire message, however sub fields can be
+    designated, in which case they will write to the specified keys.
     """
     def __init__(self,
                  name="SubscriberToBlackboard",
@@ -261,7 +272,7 @@ class SubscriberToBlackboard(SubscriberHandler):
             topic_type=topic_type,
             monitor_continuously=monitor_continuously
         )
-        self.blackboard = py_trees.Blackboard()
+        self.blackboard = blackboard.Blackboard()
         if isinstance(blackboard_variables, basestring):
             self.blackboard_variable_mapping = {blackboard_variables: None}
         elif not isinstance(blackboard_variables, dict):
@@ -277,7 +288,7 @@ class SubscriberToBlackboard(SubscriberHandler):
         with self.data_guard:
             if self.msg is None:
                 self.feedback_message = "no message received yet"
-                return py_trees.Status.RUNNING
+                return common.Status.RUNNING
             else:
                 for k, v in self.blackboard_variable_mapping.iteritems():
                     if v is None:
@@ -289,4 +300,4 @@ class SubscriberToBlackboard(SubscriberHandler):
                             value = getattr(value, field)
                             self.blackboard.set(k, value, overwrite=True)
                 self.feedback_message = "saved incoming message"
-                return py_trees.Status.SUCCESS
+                return common.Status.SUCCESS

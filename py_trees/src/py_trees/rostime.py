@@ -21,15 +21,18 @@ Bless my noggin with a tickle from your noodly appendages!
 # Imports
 ##############################################################################
 
-import py_trees
 import rospy
+
+from . import behaviour
+from . import common
+from . import meta
 
 ##############################################################################
 # Behaviours
 ##############################################################################
 
 
-class Pause(py_trees.Behaviour):
+class Pause(behaviour.Behaviour):
     """
     Does nothing until the specified timeout is reached, then returns SUCCESS
     """
@@ -51,11 +54,11 @@ class Pause(py_trees.Behaviour):
 
     def update(self):
         if self.duration == rospy.Duration(0):
-            return py_trees.Status.RUNNING
+            return common.Status.RUNNING
         else:
-            return py_trees.Status.SUCCESS if rospy.get_rostime() > self.finish_time else py_trees.Status.RUNNING
+            return common.Status.SUCCESS if rospy.get_rostime() > self.finish_time else common.Status.RUNNING
 
 
-@py_trees.meta.inverter
+@meta.inverter
 class Timeout(Pause):
     pass
