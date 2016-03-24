@@ -80,6 +80,9 @@ class Composite(Behaviour):
         if new_status == Status.INVALID:
             for child in self.children:
                 child.stop(new_status)
+        # This part just replicates the Behaviour.stop function. We replicate it here so that
+        # the Behaviour logging doesn't duplicate the composite logging here, just a bit cleaner this way.
+        self.terminate(new_status)
         self.status = new_status
         self.iterator = self.tick()
 
@@ -228,6 +231,12 @@ class Selector(Composite):
         yield self
 
     def stop(self, new_status=Status.INVALID):
+        """
+        Stopping a selector requires setting the current child to none. Note that it
+        is important to implement this here intead of terminate, so users are free
+        to subclass this easily with their own terminate and not have to remember
+        that they need to call this function manually.
+        """
         # retain information about the last running child if the new status is
         # SUCCESS or FAILURE
         if new_status == Status.INVALID:
@@ -260,7 +269,7 @@ class Sequence(Composite):
         If it isn't already running, then start the sequence from the
         beginning.
         """
-        super(Sequence, self).initialise()
+        self.logger.debug("  %s [initialise()]" % self.name)
         self.current_index = 0
 
     def tick(self):
@@ -287,12 +296,17 @@ class Sequence(Composite):
         return self.children[self.current_index] if self.children else None
 
     def stop(self, new_status=Status.INVALID):
+        """
+        Stopping a sequence requires taking care of the current index. Note that
+        is important to implement this here intead of terminate, so users are free
+        to subclass this easily with their own terminate and not have to remember
+        that they need to call this function manually.
+        """
         self.logger.debug("  %s [stop()][%s->%s]" % (self.name, self.status, new_status))
         # retain information about the last running child if the new status is
         # SUCCESS or FAILURE
         if new_status == Status.INVALID:
             self.current_index = -1
-        self.status = new_status
         Composite.stop(self, new_status)
 
 
