@@ -193,6 +193,7 @@ class UpdateParkingPoseFromMap(py_trees.Behaviour):
         Grab the difference between previously stored and currently retrieved parking locations
         and if there is a significant difference, update it.
         """
+        self.blackboard.last_starting_action = starting.StartingAction.UNPARKED
         # First check that a previous location was stored - this can happen if we are first tick
         # through the unparking tree and the navigation system happened to be already localised
         if not hasattr(self.blackboard, "pose_park_rel_map"):
