@@ -25,9 +25,9 @@ import gopher_configuration
 from . import interactions
 from . import battery
 
-from .dock import Dock
+# from .dock import Dock
 from .park import Park
-from .undock import Undock
+# from .undock import Undock
 from .unpark import UnPark
 
 ##############################################################################
