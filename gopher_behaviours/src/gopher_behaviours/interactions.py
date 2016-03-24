@@ -110,6 +110,7 @@ class WaitForButton(py_trees.Behaviour):
         self.subscriber = None
 
     def initialise(self):
+        self.logger.debug("  %s [WaitForButton::initialise()]" % self.name)
         self.subscriber = rospy.Subscriber(self.topic_name, std_msgs.Empty, self.button_callback)
         self.button_pressed = False
 
@@ -117,15 +118,16 @@ class WaitForButton(py_trees.Behaviour):
         self.button_pressed = True
 
     def update(self):
+        self.logger.debug("  %s [WaitForButton::update()]" % self.name)
         if self.button_pressed:
             return py_trees.Status.SUCCESS
         else:
             return py_trees.Status.RUNNING
 
-    def stop(self, new_status=py_trees.Status.INVALID):
+    def terminate(self, new_status):
+        self.logger.debug("  %s [WaitForButton::terminate()][%s->%s]" % (self.name, self.status, new_status))
         if self.subscriber is not None:
             self.subscriber.unregister()
-        super(WaitForButton, self).stop(new_status)
 
 
 class SendNotification(py_trees.Sequence):
@@ -144,10 +146,10 @@ class SendNotification(py_trees.Sequence):
                  message,
                  sound="",
                  led_pattern=None,
-                 button_cancel=None,
-                 button_confirm=None,
+                 button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
+                 button_confirm=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
                  cancel_on_stop=True,
-                 duration=gopher_std_srvs.NotifyRequest.INDEFINITE
+                 duration=None
                  ):
         """
         This behaviour is a mere noodly appendage - don't expect it to check if the topic exists for receiving
@@ -173,14 +175,19 @@ class SendNotification(py_trees.Sequence):
 
         led_pattern_id = led_pattern if led_pattern is not None else gopher_std_msgs.Notification.RETAIN_PREVIOUS
         self.led_pattern = gopher_std_msgs.LEDStrip(led_strip_pattern=led_pattern_id)
-        self.button_cancel = button_cancel if button_cancel is not None else gopher_std_msgs.Notification.RETAIN_PREVIOUS
-        self.button_confirm = button_confirm if button_confirm is not None else gopher_std_msgs.Notification.RETAIN_PREVIOUS
-        self.duration = duration
+        self.button_cancel = button_cancel
+        self.button_confirm = button_confirm
+        if duration is None:
+            # convert this to a standard behaviour configuration exception
+            rospy.logerr("Behaviours [%s]: duration was not set, defaulting to INDEFINITE" % self.name)
+        self.duration = duration if duration is not None else gopher_std_srvs.NotifyRequest.INDEFINITE
 
         self.notification = gopher_std_msgs.Notification(
-            sound_name=self.sound, led_pattern=self.led_pattern,
+            sound_name=self.sound,
+            led_pattern=self.led_pattern,
             button_confirm=self.button_confirm,
             button_cancel=self.button_cancel,
+            override_previous=True,  # DJS is this going to cause problems?
             message=self.message
         )
 
@@ -189,6 +196,7 @@ class SendNotification(py_trees.Sequence):
         self.sent_notification = False
 
     def setup(self, timeout):
+        self.logger.debug("  %s [SendNotification::setup()]" % self.name)
         # Delayed setup checks, can be done by something like the tree container
         # First the kids
         if not py_trees.Sequence.setup(self, timeout):
@@ -203,7 +211,7 @@ class SendNotification(py_trees.Sequence):
             return False
 
     def initialise(self):
-        super(SendNotification, self).initialise()
+        self.logger.debug("  %s [SendNotification::initialise()]" % self.name)
         request = gopher_std_srvs.NotifyRequest()
         request.id = unique_id.toMsg(self.id)
         request.action = gopher_std_srvs.NotifyRequest.START
@@ -216,9 +224,11 @@ class SendNotification(py_trees.Sequence):
             rospy.logwarn("SendNotification : failed to process notification request [%s][%s]" % (self.message, str(e)))
             self.service_failed = True
             self.stop(py_trees.Status.FAILURE)
+        # Make sure we call initialise on the sequence to handle the current child pointers
+        py_trees.Sequence.initialise(self)
 
-    def stop(self, new_status=py_trees.Status.INVALID):
-        super(SendNotification, self).stop(new_status)
+    def terminate(self, new_status):
+        self.logger.debug("  %s [SendNotification::terminate()][%s->%s]" % (self.name, self.status, new_status))
         if self.cancel_on_stop and not self.service_failed and self.sent_notification:
             request = gopher_std_srvs.NotifyRequest()
             request.id = unique_id.toMsg(self.id)
@@ -229,4 +239,6 @@ class SendNotification(py_trees.Sequence):
                 unused_response = self.service(request)
             except rospy.ServiceException as e:
                 rospy.logwarn("SendNotification : failed to process notification cancel request [%s][%s]" % (self.message, str(e)))
-
+            except rospy.exceptions.ROSInterruptException:
+                # ros shutting down
+                pass

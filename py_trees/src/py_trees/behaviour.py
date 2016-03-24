@@ -64,11 +64,11 @@ class Behaviour(object):
         :returns: whether it timed out waiting for the server or not.
         :rtype: boolean
         """
-        self.logger.debug("  %s [setup()]" % self.name)
+        # user function, no need to report on any activity here - user should do that in his class
         return True
 
     def initialise(self):
-        self.logger.debug("  %s [initialise()]" % self.name)
+        pass  # user function, no need to report on any activity here - user should do that in his class
 
     def terminate(self, new_status):
         """
@@ -79,7 +79,7 @@ class Behaviour(object):
         :param Status new_status: compare with current status for decision logic.
 
         """
-        self.logger.debug("  %s [terminate()]" % self.name)
+        pass  # user function, no need to report on any activity here - user should do that in his class
 
     def update(self):
         """
@@ -87,7 +87,7 @@ class Behaviour(object):
 
         :return: the behaviour's current :py:class:`Status <py_trees.common.Status>`
         """
-        self.logger.debug("  %s [update()]" % self.name)
+        self.logger.debug("  %s [Behaviour.update()]" % self.name)
         return Status.INVALID
 
     ############################################
@@ -146,7 +146,7 @@ class Behaviour(object):
 
         :return py_trees.Behaviour: a reference to itself
         """
-        self.logger.debug("  %s [tick()]" % self.name)
+        self.logger.debug("  %s [Behaviour.tick()]" % self.name)
         if self.status != Status.RUNNING:
             self.initialise()
         # don't set self.status yet, terminate() may need to check what the current state is first
@@ -188,7 +188,7 @@ class Behaviour(object):
         should not be done here - it could be a long time before the behaviour gets
         called again, and you shouldn't consume those resources in the meantime).
         """
-        self.logger.debug("  %s [stop()]" % self.name)
+        self.logger.debug("  %s [Behaviour.stop()]" % self.name)
         self.terminate(new_status)
         self.status = new_status
         self.iterator = self.tick()

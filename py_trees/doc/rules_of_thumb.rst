@@ -14,20 +14,6 @@ send a ``stop(INVALID)`` to the previously running part of the tree.
 This ``stop(INVALID)`` call *must* percolate down through all previously running composites
 and behaviours, so make sure your stop behaviours are well composed and thought out.
 
-Stopping - Always Support the Default INVALID Status
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Always make sure your custom behaviour implements the ``stop()`` function with support for
-the default argument. This ensures that composites, trees and others can call the ``stop()``
-function as needed, conveniently and directly (you'll get crashes otherwise).
-
-.. code-block:: python
-
-   class Foo(py_trees.Behaviour):
-
-       def stop(self, new_status=py_trees.Status.INVALID):
-           pass
-
 Behaviour Messages - What Should Go In Here?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

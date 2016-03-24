@@ -213,8 +213,9 @@ class SubscriberHandler(py_trees.Behaviour):
         The converse case is when you only want to start monitoring as soon as the behaviour
         begins running (i.e. on initialise).
         """
-        with self.data_guard:
-            self.subscriber = rospy.Subscriber(self.topic_name, self.topic_type, self._callback)
+        # if it's a latched publisher, this will immediately trigger a callback, inside the constructor!
+        # so make sure we aren't in a lock ourselves, otherwise we get a deadlock
+        self.subscriber = rospy.Subscriber(self.topic_name, self.topic_type, self._callback)
 
     def _callback(self, msg):
         """

@@ -16,7 +16,6 @@ Contents:
    background
    building_blocks
    examples
-   graphs
    rules_of_thumb
    terminology
    modules

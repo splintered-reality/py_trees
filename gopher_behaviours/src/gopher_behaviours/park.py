@@ -70,31 +70,46 @@ class Park(py_trees.Sequence):
         py_trees.display.render_dot_tree(root)
 
 
-def compute_parking_geometry(pose_park_start_rel_map, pose_park_rel_map):
+def compute_parking_geometry(pose_park_start_rel_map, pose_park_rel_map, distance_threshold=0.5):
     """
     Helper function for computing the parking geometry from the starting pose and the stored
     parking pose (both relative to map).
 
     :param geometry_msgs.Pose pose_park_start_rel_map: starting pose for the maneuvre
     :param geometry_msgs.Pose pose_park_rel_map      : saved parking location
+    :param float distance_threshold: 'close enough' parameter with respect to translations
 
     :returns: 3-tuple of distance_to_park, point_to_park_angle, orient_with_park_angle
+
+    The return angles are the rotation amounts that are required for each step of a
+    rotate - translate - rotate simple motions maneuvre.
+
+    If the current pose is closer than the distance threshold from the parking pose, then
+    it will drop back to computing for a one step simple motions maneuvre and return
+    (0.0 - 0.0 - angle) 3-tuple.
     """
+    # init some variables
     pose_park_rel_start = transform_utilities.get_relative_pose(pose_park_rel_map, pose_park_start_rel_map)
-    # do some trig
-    distance_to_park = transform_utilities.norm_from_geometry_msgs_pose(pose_park_rel_start)
-    translation_park_rel_start = [
-        pose_park_rel_map.position.x - pose_park_start_rel_map.position.x,
-        pose_park_rel_map.position.y - pose_park_start_rel_map.position.y,
-        pose_park_rel_map.position.z - pose_park_start_rel_map.position.z
-    ]
-    direction_to_park_angle = transform_utilities.angle_between([1.0, 0.0, 0.0], translation_park_rel_start)
     current_pose_angle = transform_utilities.angle_from_geometry_msgs_quaternion(pose_park_start_rel_map.orientation)
     park_pose_angle = transform_utilities.angle_from_geometry_msgs_quaternion(pose_park_rel_map.orientation)
+    # how far to go?
+    distance_to_park = transform_utilities.norm_from_geometry_msgs_pose(pose_park_rel_start)
 
-    # now work out the rotation angles we need
-    point_to_park_angle = direction_to_park_angle - current_pose_angle
-    orient_with_park_angle = park_pose_angle - current_pose_angle - point_to_park_angle
+    # 1-step or 3-step?
+    if distance_to_park < distance_threshold:
+        distance_to_park = 0.0
+        point_to_park_angle = 0.0
+        orient_with_park_angle = park_pose_angle - current_pose_angle
+    else:
+        translation_park_rel_start = [
+            pose_park_rel_map.position.x - pose_park_start_rel_map.position.x,
+            pose_park_rel_map.position.y - pose_park_start_rel_map.position.y,
+            pose_park_rel_map.position.z - pose_park_start_rel_map.position.z
+        ]
+        direction_to_park_angle = transform_utilities.angle_between([1.0, 0.0, 0.0], translation_park_rel_start)
+        point_to_park_angle = direction_to_park_angle - current_pose_angle
+        orient_with_park_angle = park_pose_angle - current_pose_angle - point_to_park_angle
+
     return (distance_to_park, point_to_park_angle, orient_with_park_angle)
 
 
@@ -109,15 +124,38 @@ class ParkingMotions(py_trees.Sequence):
      - pose_park_rel_map       (r) [geometry_msgs/Pose]                     : pose of the parking location relative to the homebase
      - pose_park_start_rel_map (w) [geometry_msgs.PoseWithCovarianceStamped]: transferred from /navi/pose when about to park
     """
+
     def __init__(self, name="ParkingMotions"):
         super(ParkingMotions, self).__init__(name)
-        self.close_to_park_distance_threshold = 0.25
+
+        self.close_to_park_distance_threshold = 0.1
         self.blackboard = py_trees.Blackboard()
+
+        # dummy children for dot graph rendering purposes
+        # they will get cleaned up the first time this enters initialise
+        point_to_park = navigation.SimpleMotion(
+            name="Point to Park (?rad)",
+            motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
+            motion_amount=0.0,
+        )
+        move_to_park = navigation.SimpleMotion(
+            name="Move to Park (?m)",
+            motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_TRANSLATE,
+            motion_amount=0.0,
+        )
+        orient_with_park = navigation.SimpleMotion(
+            name="Orient to Park (?rad)",
+            motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
+            motion_amount=0.0,
+        )
+        self.add_child(point_to_park)
+        self.add_child(move_to_park)
+        self.add_child(orient_with_park)
 
     def initialise(self):
         super(ParkingMotions, self).initialise()
 
-        # if it's not our first entry, cleanup the old children
+        # cleanup the old children
         self.remove_all_children()
 
         pose_park_rel_map = self.blackboard.pose_park_rel_map
@@ -126,37 +164,34 @@ class ParkingMotions(py_trees.Sequence):
         # do some trig
         distance_to_park, point_to_park_angle, orient_with_park_angle = compute_parking_geometry(
             pose_park_start_rel_map,
-            pose_park_rel_map
+            pose_park_rel_map,
+            self.close_to_park_distance_threshold
         )
 
         self.blackboard.distance_to_park = distance_to_park
         self.blackboard.point_to_park_angle = point_to_park_angle
         self.blackboard.orient_with_park_angle = orient_with_park_angle
 
-        if distance_to_park > self.close_to_park_distance_threshold:
+        epsilon = 0.01
+        if abs(point_to_park_angle) > epsilon:
             point_to_park = navigation.SimpleMotion(
                 name="Point to Park %0.2f rad" % point_to_park_angle,
                 motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
                 motion_amount=point_to_park_angle,
             )
+            self.add_child(point_to_park)
+        if abs(distance_to_park) > epsilon:
             move_to_park = navigation.SimpleMotion(
                 name="Move to Park %0.2f m" % distance_to_park,
                 motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_TRANSLATE,
                 motion_amount=distance_to_park,
             )
+            self.add_child(move_to_park)
+        if abs(orient_with_park_angle) > epsilon:
             orient_with_park = navigation.SimpleMotion(
                 name="Orient to Park %0.2f rad" % orient_with_park_angle,
                 motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
                 motion_amount=orient_with_park_angle,
-            )
-            self.add_child(point_to_park)
-            self.add_child(move_to_park)
-            self.add_child(orient_with_park)
-        else:
-            orient_with_park = navigation.SimpleMotion(
-                name="Orient to Park %0.2f rad" % (orient_with_park_angle + point_to_park_angle),
-                motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
-                motion_amount=orient_with_park_angle + point_to_park_angle,
             )
             self.add_child(orient_with_park)
 

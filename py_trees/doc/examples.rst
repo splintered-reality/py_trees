@@ -1,16 +1,33 @@
 Examples
 ========
 
+A Skeleton Behaviour
+--------------------
+
+.. literalinclude:: examples/skeleton_behaviour.py
+   :language: python
+   :linenos:
+   :caption: py_trees/doc/examples/skeleton_behaviour.py
+   :name: skeleton_behaviour
+
+
+A Skeleton Sequence
+-------------------
+
+A Skeleton Selector
+-------------------
+
 A Demo Tree
 -----------
 
 .. graphviz:: dot/demo_tree.dot
 
-Run the `py_trees/scripts/demo_tree` script.
-
-.. todo:: link to the file from here
-.. todo:: point out some important highlight points of the script, e.g. step 4 'such and such happens'
-.. todo:: maybe put these pointers in as descriptive comments in the tree itself.
+.. literalinclude:: ../scripts/demo_tree
+   :language: python
+   :emphasize-lines: 12,15-18
+   :linenos:
+   :caption: py_trees/scripts/demo_tree
+   :name: demo_tree
 
 A Demo ROS Tree
 ---------------
