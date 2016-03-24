@@ -110,7 +110,7 @@ class UnPark(py_trees.Sequence):
         # Manual
         ##############################
         manual_write_finishing_pose_from_odom = navigation.create_odom_pose_to_blackboard_behaviour(name="Final Pose (Odom)", blackboard_variables={"pose_unpark_finish_rel_odom": "pose.pose"})
-        is_cancel_activated = CheckButtonPressed('Cancel Activated?', self.gopher.buttons.cancel, latched=True)
+        is_cancel_activated = CheckButtonPressed('Is Cancelled?', self.gopher.buttons.cancel, latched=False)
         wait_for_go_button_press = WaitForButton('Wait for Go Button', self.gopher.buttons.go)
         teleport = navigation.create_homebase_teleport()
         go_to_homebase = SendNotification('Teleop to Homebase', message='waiting for button press to continue', led_pattern=self.gopher.led_patterns.humans_i_need_help)
@@ -189,6 +189,18 @@ class UpdateParkingPoseFromMap(py_trees.Behaviour):
         self.close_to_park_distance_threshold = 0.25
 
     def update(self):
+        """
+        Grab the difference between previously stored and currently retrieved parking locations
+        and if there is a significant difference, update it.
+        """
+        # First check that a previous location was stored - this can happen if we are first tick
+        # through the unparking tree and the navigation system happened to be already localised
+        if not hasattr(self.blackboard, "pose_park_rel_map"):
+            rospy.loginfo("Behaviours [%s]: new parking location identified, writing." % self.name)
+            self.blackboard.pose_park_rel_map = self.blackboard.pose_unpark_start_rel_map
+            return py_trees.Status.SUCCESS
+
+        # Typical case - we already registered a park pose from previous ticks through the behaviour tree
         pose_start_rel_park = transform_utilities.get_relative_pose(
             self.blackboard.pose_unpark_start_rel_map,
             self.blackboard.pose_park_rel_map
