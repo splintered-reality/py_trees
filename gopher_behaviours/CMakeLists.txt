@@ -24,6 +24,7 @@ catkin_add_env_hooks(42.gopher_deliveries SHELLS sh DIRECTORY ${CMAKE_CURRENT_SO
 
 catkin_install_python(
     PROGRAMS
+        scripts/demo_docking
         scripts/demo_finish_him
         scripts/demo_flash_and_wait
         scripts/demo_homebase_recovery

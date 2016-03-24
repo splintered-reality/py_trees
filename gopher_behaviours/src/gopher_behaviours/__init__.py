@@ -17,14 +17,16 @@ Imports for the gopher_behaviours_ package.
 ##############################################################################
 
 # behaviour collectives
+from . import ar_markers
 from . import battery
+from . import docking
 from . import delivery
 from . import elevators
 from . import interactions
 from . import navigation
 from . import planner
 from . import recovery
-from . import time
+from . import transform_utilities
 from . import utilities
 
 # behaviours for which it is a bit babo calling lower_case, then CamelCase

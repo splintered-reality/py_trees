@@ -22,7 +22,7 @@ import sys
 
 def show_description():
     s = "\n"
-    s += console.green + "This program executes unparking/init/parking in a loop for convenient testing." + console.reset
+    s += console.green + "This program executes undocking/docking in a loop for convenient testing." + console.reset
     s += "\n"
     return s
 
@@ -31,20 +31,19 @@ def show_usage():
     s = "\n"
     s += console.white
     s += console.bold + "************************************************************************************\n" + console.reset
-    s += console.bold + "                                 Demo Parking\n" + console.reset
+    s += console.bold + "                                 Demo Docking\n" + console.reset
     s += console.bold + "************************************************************************************\n" + console.reset
     s += "\n"
     s += console.white
     s += console.bold + "    Generate Dot" + console.reset + "\n"
-    s += console.cyan + "        demo_parking" + console.yellow + " --render" + console.reset + "\n"
+    s += console.cyan + "        demo_docking" + console.yellow + " --render" + console.reset + "\n"
     s += "\n"
     s += console.bold + "    Execute" + console.reset + "\n"
-    s += console.cyan + "        demo_parking" + console.yellow + " [options]" + console.reset + "\n"
+    s += console.cyan + "        demo_docking" + console.yellow + " [options]" + console.reset + "\n"
     s += "\n"
     s += console.white
     s += console.bold + "    Required Launchers" + console.reset + "\n"
     s += console.cyan + "        + minimal.launch" + console.reset + "\n"
-    s += console.cyan + "        + fake_navigation.launch" + console.reset + "\n"
     s += "\n"
     return s
 
@@ -69,32 +68,18 @@ def parse_arguments(command_line_args):
 class Demo(object):
     def __init__(self):
         self.gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
-        self.logger = py_trees.logging.get_logger("Demo Parking")
+        self.logger = py_trees.logging.get_logger("Demo Docking")
 
-        self.root = py_trees.Sequence("Demo Parking")
-        unpark = gopher_behaviours.UnPark("UnPark")
-        park = gopher_behaviours.Park("Park")
+        self.root = py_trees.Sequence("Demo Docking")
 
-        wait_for_button = gopher_behaviours.interactions.WaitForButton('Wait for Go Button', self.gopher.buttons.go)
-        switch_to_parking = gopher_behaviours.interactions.SendNotification(
-            name='Drive Around, Get a Coffee',
-            message='do a delivery, get a coffee',
-            led_pattern=self.gopher.led_patterns.im_doing_something_cool
-        )
-        switch_to_parking.add_child(wait_for_button)
+        wait_to_be_docked = gopher_behaviours.battery.create_wait_to_be_docked(name="Wait to be Docked")
+        auto_undock = gopher_behaviours.docking.AutoDock(name="Auto UnDock", undock=True)
+        auto_dock = gopher_behaviours.docking.AutoDock(name="Auto Dock")
 
-        wait_for_button_two = gopher_behaviours.interactions.WaitForButton('Wait for Go Button', self.gopher.buttons.go)
-        restart = gopher_behaviours.interactions.SendNotification(
-            name='Restart',
-            message='reset and get ready to start again',
-            led_pattern=self.gopher.led_patterns.holding
-        )
-        restart.add_child(wait_for_button_two)
+        self.root.add_child(wait_to_be_docked)
+        self.root.add_child(auto_undock)
+        self.root.add_child(auto_dock)
 
-        self.root.add_child(unpark)
-        self.root.add_child(switch_to_parking)
-        self.root.add_child(park)
-        self.root.add_child(restart)
         self.tree = py_trees.ROSBehaviourTree(self.root)
         rospy.on_shutdown(self.shutdown)
         py_trees.display.print_ascii_tree(self.root, 0)
@@ -109,7 +94,7 @@ class Demo(object):
         while not rospy.is_shutdown():
             self.tree.tick(pre_tick_handler=self.pre_tick_handler)
             if self.root.status == py_trees.Status.FAILURE:
-                pass  # break
+                rospy.logerr("Demo Docking: failed, %s" % self.root.tip().feedback_message)
             if self.root.status == py_trees.Status.SUCCESS:
                 pass  # break
             rate.sleep()

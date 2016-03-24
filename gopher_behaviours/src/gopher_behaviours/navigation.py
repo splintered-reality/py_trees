@@ -149,7 +149,8 @@ class SimpleMotion(py_trees.Behaviour):
                  motion_amount=0,
                  unsafe=False,
                  keep_going=True,
-                 fail_if_complete=False
+                 fail_if_complete=False,
+                 live_dangerously=False
                  ):
         """
         :param str name: behaviour name
@@ -158,6 +159,7 @@ class SimpleMotion(py_trees.Behaviour):
         :param bool unsafe: flag if you want the motion to be unsafe, i.e. not use the sensors
         :param bool keep_going: flag if you want the motion to return success in case the action aborts
         :param bool fail_if_complete: flag if you want the motion to return failure in case the motion is completed
+        :param bool live_dangeorusly: do not worry about checking the action client is connected
 
         The ``keep_going`` flag is useful if you are attempting to rotate the robot out of harms way, but don't mind
         if it doesn't make the full specified rotation - this is oft used in navigation recovery style behaviours.
@@ -166,6 +168,9 @@ class SimpleMotion(py_trees.Behaviour):
         if it gets to the end, it should be considered a failure - this could be used in a scanning rotation where it
         is looking for a landmark in the environment. Note that this cannot be achieved by the py_trees invert decorator,
         since that would also invert failed aborts.
+
+        The ``live_dangerously`` flag is useful if you're dynamically creating and adding children in the middle of
+        tick_tock. Just makes sure you have your checks done by a higher level pastafarian.
         """
         super(SimpleMotion, self).__init__(name)
         self.gopher = None
@@ -177,6 +182,7 @@ class SimpleMotion(py_trees.Behaviour):
         self.goal.unsafe = unsafe
         self.keep_going = keep_going
         self.fail_if_complete = fail_if_complete
+        self.live_dangerously = live_dangerously
 
     def setup(self, timeout):
         """
@@ -201,33 +207,32 @@ class SimpleMotion(py_trees.Behaviour):
             )
             if timeout is not None:
                 if not self.action_client.wait_for_server(rospy.Duration(timeout)):
+                    # replace with a py_trees exception!
+                    self.logger.error("  %s [SimpleMotion::setup()] could not connect to the docking action server" % self.name)
                     rospy.logerr("Behaviour [%s" % self.name + "] could not connect to the simple motions action server [%s]" % self.__class__.__name__)
                     self.action_client = None
                     return False
-            # else just assume it's working, maybe someone called this prior to ticking the behaviour
+            # else just assume it's working, maybe None should be handled like infinite blocking
         return True
 
     def initialise(self):
         self.logger.debug("  %s [SimpleMotion::initialise()]" % self.name)
-        if not self.action_client:
-            self.setup(timeout=None)
         self.sent_goal = False
 
     def update(self):
         self.logger.debug("  %s [SimpleMotion::update()]" % self.name)
-        if not self.sent_goal:
-            # pity there is no 'is_connected' api
-            if self.action_client.wait_for_server(rospy.Duration(0.01)):
-                self.action_client.send_goal(self.goal)
-                self.sent_goal = True
-                self.feedback_message = "sent goal to the action server"
-                return py_trees.Status.RUNNING
+        if not self.action_client:
+            if self.live_dangerously:
+                self.setup(None)
             else:
-                self.feedback_message = "waiting for the simple motion server (correctly wired?)"
-                return py_trees.Status.RUNNING
-        if self.action_client is None:
-            self.feedback_message = "action client wasn't connected"
-            return py_trees.Status.FAILURE
+                self.feedback_message = "no action client, did you call setup() on your tree?"
+                return py_trees.Status.FAILURE
+        # pity there is no 'is_connected' api like there is for c++
+        if not self.sent_goal:
+            self.action_client.send_goal(self.goal)
+            self.sent_goal = True
+            self.feedback_message = "sent goal to the action server"
+            return py_trees.Status.RUNNING
         if self.action_client.get_state() == actionlib_msgs.GoalStatus.ABORTED:
             if self.keep_going:
                 self.feedback_message = "simple motion aborted, but we keep on marching forward"
@@ -246,7 +251,7 @@ class SimpleMotion(py_trees.Behaviour):
             self.feedback_message = "moving"
             return py_trees.Status.RUNNING
 
-    def terminate(self, new_status=py_trees.Status.INVALID):
+    def terminate(self, new_status):
         # if we have an action client and the current goal has not already
         # succeeded, send a message to cancel the goal for this action client.
         # if self.action_client is not None and self.action_client.get_state() != actionlib_msgs.GoalStatus.SUCCEEDED:

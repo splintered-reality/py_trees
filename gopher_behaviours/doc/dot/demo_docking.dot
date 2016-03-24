@@ -1,0 +1,15 @@
+digraph demo_docking {
+"Demo Docking" [shape=box, fontsize=11, style=filled, fillcolor=orange];
+Undock [shape=octagon, fontsize=11, style=filled, fillcolor=cyan];
+"Demo Docking" -> Undock;
+"Is Not Docked" [shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+Undock -> "Is Not Docked";
+"Auto UnDock" [shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+Undock -> "Auto UnDock";
+"Auto Dock" [shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+"Demo Docking" -> "Auto Dock";
+"Drive Around" [shape=box, fontsize=11, style=filled, fillcolor=orange];
+"Demo Docking" -> "Drive Around";
+"Wait for Go Button" [shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+"Drive Around" -> "Wait for Go Button";
+}

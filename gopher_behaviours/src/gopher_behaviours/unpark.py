@@ -22,19 +22,35 @@ Bless my noggin with a tickle from your noodly appendages!
 # Imports
 ##############################################################################
 
+import enum
 import elf_msgs.msg as elf_msgs
 from gopher_semantics.semantics import Semantics
 import geometry_msgs.msg as geometry_msgs
+import gopher_std_msgs.msg as gopher_std_msgs
+import gopher_std_msgs.srv as gopher_std_srvs
 import gopher_configuration
 import py_trees
 import rospy
 import tf
 
 from . import battery
+from . import docking
+from . import interactions
 from . import navigation
-from . import starting
 from . import transform_utilities
-from .interactions import WaitForButton, CheckButtonPressed, SendNotification
+
+##############################################################################
+# Enums
+##############################################################################
+
+
+class StartingAction(enum.Enum):
+    """ An enumerator representing the kind of starting action that was engaged."""
+
+    NONE = "none"
+    """No special actions taken when starting"""
+    UNDOCKED = "undocked"
+    """Undocked"""
 
 ##############################################################################
 # Implementation
@@ -56,7 +72,7 @@ class UnPark(py_trees.Sequence):
      - pose_unpark_finish_rel_map  (w) [geometry_msgs/Pose]         : finishing park location after having observed it is localised, transferred from /navi/pose
      - pose_park_rel_homebase      (w) [geometry_msgs/Pose]         : pose of the parking location relative to the homebase computed from start/finish poses
      - pose_park_rel_map           (w) [geometry_msgs/Pose]         : pose of the parking location relative to the homebase, computed from pose_park_rel_homebase and pose_homebase_rel_map
-     - last_starting_action        (w) [starting.StartingAction]    : last starting action gets set to unparked
+     - last_starting_action        (w) [StartingAction]             : last starting action gets set to unparked
     """
     def __init__(self, name="unpark"):
         super(UnPark, self).__init__(name)
@@ -66,13 +82,26 @@ class UnPark(py_trees.Sequence):
         self.blackboard = py_trees.Blackboard()
 
         ################################################################
-        # Preliminary Guards & Data Gathering
+        # Undock
         ################################################################
+        unplug_undock = py_trees.Selector(name="UnPlug/UnDock")
+        undocking = py_trees.Sequence(name="UnDock")
+        break_out = py_trees.meta.failure_is_success(
+            navigation.SimpleMotion(
+                name="Break Out",
+                motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_TRANSLATE,
+                motion_amount=0.5
+            )
+        )
+        is_docked = battery.create_is_docked(name="Is Docked?")
+        is_discharging = battery.create_is_discharging(name="Is Discharging?")
+        unplug = py_trees.Selector(name="UnPlug")
+        wait_to_be_unplugged = battery.create_wait_to_be_unplugged(name="Flash for Help")
+        auto_undock = docking.AutoDock(name="Auto UnDock", undock=True)
 
-        wait_to_be_unplugged = SendNotification('UnPlug Me', message='waiting to be unplugged', led_pattern=self.gopher.led_patterns.humans_i_need_help)
-        discharging = battery.create_check_discharging_behaviour()
-        wait_to_be_unplugged_condition_one = py_trees.behaviours.Condition('Wait to be Unplugged', child=discharging, succeed_status=py_trees.Status.SUCCESS)
-        wait_to_be_unplugged.add_child(wait_to_be_unplugged_condition_one)
+        ################################################################
+        # Unplug and Pre-Localising
+        ################################################################
         write_localisation_status = navigation.create_elf_localisation_to_blackboard_behaviour(name="Get Localisation Status", blackboard_variables={"elf_localisation_status": "status"})
         path_chooser = py_trees.Selector("Localised?")
 
@@ -98,9 +127,9 @@ class UnPark(py_trees.Sequence):
         ################################################################
 
         not_yet_localised_sequence = py_trees.Sequence("Not Localised")
-        manual_unpark = py_trees.Sequence("Manual UnPark")
-        automatic_unpark = py_trees.Sequence("Automatic UnPark")
-        manual_or_auto = py_trees.Selector("Manual or Auto")
+        manual_unpark = py_trees.Sequence("Manual")
+        automatic_unpark = py_trees.Sequence("Automatic")
+        manual_or_auto = py_trees.Selector("Initialisation")
 
         ##############################
         # Common
@@ -111,10 +140,13 @@ class UnPark(py_trees.Sequence):
         # Manual
         ##############################
         manual_write_finishing_pose_from_odom = navigation.create_odom_pose_to_blackboard_behaviour(name="Final Pose (Odom)", blackboard_variables={"pose_unpark_finish_rel_odom": "pose.pose"})
-        is_cancel_activated = CheckButtonPressed('Is Cancelled?', self.gopher.buttons.cancel, latched=False)
-        wait_for_go_button_press = WaitForButton('Wait for Go Button', self.gopher.buttons.go)
+        is_cancel_activated = interactions.CheckButtonPressed('Is Cancelled?', self.gopher.buttons.cancel, latched=False)
+        wait_for_go_button_press = interactions.WaitForButton('Wait for Go Button', self.gopher.buttons.go)
         teleport = navigation.create_homebase_teleport()
-        go_to_homebase = SendNotification('Teleop to Homebase', message='waiting for button press to continue', led_pattern=self.gopher.led_patterns.humans_i_need_help)
+        go_to_homebase = interactions.SendNotification('Teleop to Homebase',
+                                                       message='waiting for button press to continue',
+                                                       led_pattern=self.gopher.led_patterns.humans_i_need_help,
+                                                       duration=gopher_std_srvs.NotifyRequest.INDEFINITE)
         go_to_homebase.add_child(wait_for_go_button_press)
         manual_save_parking_pose = SaveParkingPoseManual("Save Park Pose (Manual)")
 
@@ -130,7 +162,14 @@ class UnPark(py_trees.Sequence):
         # All Together
         ################################################################
 
-        self.add_child(wait_to_be_unplugged)
+        self.add_child(unplug_undock)
+        unplug_undock.add_child(undocking)
+        undocking.add_child(is_docked)
+        undocking.add_child(auto_undock)
+        undocking.add_child(break_out)
+        unplug_undock.add_child(unplug)
+        unplug.add_child(is_discharging)
+        unplug.add_child(wait_to_be_unplugged)
         self.add_child(write_localisation_status)
         self.add_child(path_chooser)
         path_chooser.add_child(already_localised_sequence)
@@ -152,8 +191,8 @@ class UnPark(py_trees.Sequence):
         automatic_unpark.add_child(auto_write_finishing_pose_from_map)
         automatic_unpark.add_child(auto_save_park_pose)
 
-    def initialise(self):
-        py_trees.Sequence.initialise(self)
+    def setup(self, timeout):
+        self.logger.debug("  %s [UnPark::setup()]" % self.name)
         if not hasattr(self.blackboard, 'homebase_translation'):
             semantic_locations = Semantics(self.gopher.namespaces.semantics)
             self.blackboard.homebase = semantic_locations.semantic_modules['locations']['homebase']
@@ -164,6 +203,7 @@ class UnPark(py_trees.Sequence):
             q = tf.transformations.quaternion_about_axis(self.blackboard.homebase.pose.theta, (0, 0, 1))  # returns a []
             orientation = geometry_msgs.Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
             self.blackboard.pose_homebase_rel_map = geometry_msgs.Pose(position=position, orientation=orientation)
+        return py_trees.Sequence.setup(self, timeout)
 
     @classmethod
     def render_dot_tree(cls):
@@ -194,7 +234,7 @@ class UpdateParkingPoseFromMap(py_trees.Behaviour):
         Grab the difference between previously stored and currently retrieved parking locations
         and if there is a significant difference, update it.
         """
-        self.blackboard.last_starting_action = starting.StartingAction.UNPARKED
+        self.blackboard.last_starting_action = StartingAction.NONE
         # First check that a previous location was stored - this can happen if we are first tick
         # through the unparking tree and the navigation system happened to be already localised
         if not hasattr(self.blackboard, "pose_park_rel_map"):
@@ -229,7 +269,7 @@ class SaveParkingPoseManual(py_trees.Behaviour):
      - pose_unpark_finish_rel_odom (r) [geometry_msgs/Pose]     : finishing park location when not yet localised, transferred from /gopher/odom
      - pose_park_rel_homebase      (w) [geometry_msgs/Pose]     : pose of the parking location relative to the homebase
      - pose_park_rel_map           (w) [geometry_msgs/Pose]     : pose of the parking location relative to the homebase, computed from pose_park_rel_homebase and pose_homebase_rel_map
-     - last_starting_action        (w) [starting.StartingAction]: last starting action gets set to unparked
+     - last_starting_action        (w) [StartingAction]: last starting action gets set to unparked
     """
     def __init__(self, name="Save Parking Pose"):
         super(SaveParkingPoseManual, self).__init__(name)
@@ -249,7 +289,7 @@ class SaveParkingPoseManual(py_trees.Behaviour):
             self.blackboard.pose_homebase_rel_map
         )
 
-        self.blackboard.last_starting_action = starting.StartingAction.UNPARKED
+        self.blackboard.last_starting_action = StartingAction.NONE
         return py_trees.Status.SUCCESS
 
 
@@ -267,7 +307,7 @@ class SaveParkingPoseAuto(py_trees.Behaviour):
      - pose_unpark_start_rel_odom  (r) [geometry_msgs/Pose]     : starting park location when not yet localised, transferred from /gopher/odom
      - pose_unpark_finish_rel_map  (r) [geometry_msgs/Pose]     : finishing park location after having observed it is localised, transferred from /navi/pose
      - pose_park_rel_map           (w) [geometry_msgs/Pose]     : pose of the parking location relative to the homebase, computed from pose_park_rel_homebase and pose_homebase_rel_map
-     - last_starting_action        (w) [starting.StartingAction]: last starting action gets set to unparked
+     - last_starting_action        (w) [StartingAction]         : last starting action gets set to unparked
     """
     def __init__(self, name="Save Parking Pose"):
         super(SaveParkingPoseAuto, self).__init__(name)
@@ -288,5 +328,5 @@ class SaveParkingPoseAuto(py_trees.Behaviour):
         # for completeness we could compute this from park_rel_map and homebase_rel_map, but do we need to?
         # self.blackboard.pose_park_rel_homebase =
 
-        self.blackboard.last_starting_action = starting.StartingAction.UNPARKED
+        self.blackboard.last_starting_action = StartingAction.NONE
         return py_trees.Status.SUCCESS
