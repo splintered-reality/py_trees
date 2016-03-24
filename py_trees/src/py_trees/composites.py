@@ -64,9 +64,14 @@ class Composite(Behaviour):
         :returns: whether it timed out waiting for the server or not.
         :rtype: boolean
         """
+        self.logger.debug("  %s [Composite.setup()])" % (self.name))
         result = True
         for child in self.children:
-            result = result and child.setup(timeout)
+            new_result = child.setup(timeout)
+            if new_result is None:
+                # replace with py_trees exception!
+                self.logger.error("  %s [Composite.setup()]['%s'.setup() returned None (must be True||False)" % (self.name, child.name))
+            result = result and new_result
         return result
 
     def stop(self, new_status=Status.INVALID):
