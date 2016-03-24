@@ -187,10 +187,6 @@ class Selector(Composite):
         self.current_child = None
         self.logger = logging.get_logger("Selector ")
 
-    def initialise(self):
-        super(Selector, self).initialise()
-        self.current_child = None
-
     def update(self):
         self.logger.debug("  %s [update()]" % self.name)
         for child in self.children:
@@ -203,13 +199,12 @@ class Selector(Composite):
     def tick(self):
         # Required behaviour for *all* behaviours and composites is
         # for tick() to check if it isn't running and initialise
-        #
-        # Selector doesn't actually have anything to do though, but just
-        # in case someone inherits the class and overrides initialise()
-        # but not tick()
-        if self.status != Status.RUNNING:
-            self.initialise()
         self.logger.debug("  %s [tick()]" % self.name)
+        if self.status != Status.RUNNING:
+            # sequence specific handling
+            self.current_child = None
+            # subclass (user) handling
+            self.initialise()
         previous = self.current_child
         for child in self.children:
             for node in child.tick():
@@ -264,16 +259,11 @@ class Sequence(Composite):
         self.current_index = -1  # -1 indicates uninitialised
         self.logger = logging.get_logger("Sequence ")
 
-    def initialise(self):
-        """
-        If it isn't already running, then start the sequence from the
-        beginning.
-        """
-        self.logger.debug("  %s [initialise()]" % self.name)
-        self.current_index = 0
-
     def tick(self):
         if self.status != Status.RUNNING:
+            # sequence specific handling
+            self.current_index = 0
+            # subclass (user) handling
             self.initialise()
         self.logger.debug("  %s [tick()]" % self.name)
         for child in itertools.islice(self.children, self.current_index, None):
