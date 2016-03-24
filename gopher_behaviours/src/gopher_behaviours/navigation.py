@@ -219,6 +219,8 @@ class SimpleMotion(py_trees.Behaviour):
             if self.action_client.wait_for_server(rospy.Duration(0.01)):
                 self.action_client.send_goal(self.goal)
                 self.sent_goal = True
+                self.feedback_message = "sent goal to the action server"
+                return py_trees.Status.RUNNING
             else:
                 self.feedback_message = "waiting for the simple motion server (correctly wired?)"
                 return py_trees.Status.RUNNING
@@ -243,15 +245,16 @@ class SimpleMotion(py_trees.Behaviour):
             self.feedback_message = "moving"
             return py_trees.Status.RUNNING
 
-    def stop(self, new_status=py_trees.Status.INVALID):
+    def terminate(self, new_status=py_trees.Status.INVALID):
         # if we have an action client and the current goal has not already
         # succeeded, send a message to cancel the goal for this action client.
         # if self.action_client is not None and self.action_client.get_state() != actionlib_msgs.GoalStatus.SUCCEEDED:
-        if self.action_client is None:
-            return
-        motion_state = self.action_client.get_state()
-        if (motion_state == actionlib_msgs.GoalStatus.PENDING) or (motion_state == actionlib_msgs.GoalStatus.ACTIVE):
-            self.action_client.cancel_goal()
+        self.logger.debug("  %s [SimpleMotions.terminate()][%s->%s]" % (self.name, self.status, new_status))
+        if self.action_client is not None and self.sent_goal:
+            motion_state = self.action_client.get_state()
+            if (motion_state == actionlib_msgs.GoalStatus.PENDING) or (motion_state == actionlib_msgs.GoalStatus.ACTIVE):
+                self.action_client.cancel_goal()
+        self.sent_goal = False
 
 
 ##############################################################################
