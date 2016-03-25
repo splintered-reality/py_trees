@@ -24,7 +24,6 @@ from . import interactions
 from . import navigation
 from . import planner
 from . import recovery
-from . import time
 from . import utilities
 
 # behaviours for which it is a bit babo calling lower_case, then CamelCase
