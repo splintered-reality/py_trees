@@ -29,6 +29,7 @@
   <run_depend>uuid_msgs</run_depend>
   <run_depend>message_runtime</run_depend>
   <run_depend>python-pydot</run_depend>
+  <run_depend>python-termcolor</run_depend>
   <run_depend>py_trees_msgs</run_depend>
 
   <test_depend>rosunit</test_depend>

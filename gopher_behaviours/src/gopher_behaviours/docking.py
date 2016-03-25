@@ -3,7 +3,6 @@ import rospy
 import py_trees
 import actionlib
 import gopher_configuration
-from gopher_semantics.semantics import Semantics
 import functools
 from py_trees.blackboard import Blackboard
 import gopher_std_msgs.msg as gopher_std_msgs
