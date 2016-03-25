@@ -542,6 +542,7 @@ class GoalFinishing(py_trees.Behaviour):
                         self.goal.align_on_failure = True
                         if not self._final_goal_sent:
                             self._final_goal_sent = True
+                            rospy.logwarn("GoalFinishing: Giving up to reach the goal, but will try to align at least.")
                     else:
                         self.goal.align_on_failure = False
                     # re-try
