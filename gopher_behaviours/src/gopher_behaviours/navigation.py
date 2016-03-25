@@ -453,7 +453,7 @@ class GoalFinishing(py_trees.Behaviour):
 
     :param geometry_msgs/Pose2D goal_pose  the goal pose (relative to the map frame) the robot shall finish at
     """
-    def __init__(self, name, goal_pose, distance_threshold=0.1, timeout=30.0):
+    def __init__(self, name, goal_pose, distance_threshold=0.1, timeout=50.0):
         """
         The user should prepare the goal as there are quite a few ways that the
         goal message can be configured (see the comments in the msg file or
