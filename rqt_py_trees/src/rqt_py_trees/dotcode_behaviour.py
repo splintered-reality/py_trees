@@ -38,6 +38,7 @@ import yaml
 import uuid_msgs.msg as uuid_msgs
 import py_trees_msgs.msg as py_trees_msgs
 
+
 class RosBehaviourTreeDotcodeGenerator(object):
 
     def __init__(self):
@@ -145,7 +146,7 @@ class RosBehaviourTreeDotcodeGenerator(object):
             return None
 
     def behaviour_to_tooltip_string(self, behaviour):
-        to_display = ['class_name', 'type', 'status', 'message'] # should be static
+        to_display = ['class_name', 'type', 'status', 'message']  # should be static
         string = ''
 
         for attr in to_display:

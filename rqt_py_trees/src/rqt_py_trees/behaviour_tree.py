@@ -33,18 +33,18 @@
 from __future__ import division
 
 import argparse
+import fnmatch
 import functools
+import py_trees_msgs.msg as py_trees_msgs
 import os
 import re
-import sys
-import fnmatch
-
 import rosbag
 import rospkg
 import rospy
-
-import py_trees_msgs.msg as py_trees_msgs
+import sys
+import termcolor
 import uuid_msgs.msg as uuid_msgs
+
 
 from .dotcode_behaviour import RosBehaviourTreeDotcodeGenerator
 from .dynamic_timeline import DynamicTimeline
@@ -538,11 +538,13 @@ class RosBehaviourTree(QObject):
         Cache replaces LRU.
 
         Mostly stolen from rqt_bag.MessageLoaderThread
-
         """
         if message is None:
             return ""
 
+        #######################################################
+        # Get the tip, from the perspective of the root
+        #######################################################
         # this is pretty inefficient, and ignores caching
         tip_id = None
         self._tip_message = None
@@ -551,19 +553,20 @@ class RosBehaviourTree(QObject):
         for behaviour in reversed(message.behaviours):
             # root has empty parent ID
             if str(behaviour.parent_id) == str(uuid_msgs.UniqueID()):
+                # parent is the root behaviour, so
                 tip_id = behaviour.tip_id
 
-            # might be able to catch the tip on iterating through the behaviours
-            # after the root
-            if tip_id and behaviour.own_id == tip_id:
-                self._tip_message = behaviour.message
-
-        # if the tip message wasn't set, go through all the behaviours again to
-        # get the tip
+        # Run through the behaviours and do a couple of things:
+        #  - get the tip
+        #  - protect against feedback messages with quotes (https://bitbucket.org/yujinrobot/gopher_crazy_hospital/issues/72/rqt_py_trees-fails-to-display-tree)
         if self._tip_message is None:
             for behaviour in message.behaviours:
                 if str(behaviour.own_id) == str(tip_id):
                     self._tip_message = behaviour.message
+                if '"' in behaviour.message:
+                    print("%s" % termcolor.colored('[ERROR] found double quotes in the feedback message [%s]' % behaviour.message, 'red'))
+                    behaviour.message = behaviour.message.replace('"', '')
+                    print("%s" % termcolor.colored('[ERROR] stripped to stop from crashing, but do catch the culprit! [%s]' % behaviour.message, 'red'))
 
         key = str(message.header.stamp)  # stamps are unique
         if key in self._dotcode_cache:
@@ -576,7 +579,6 @@ class RosBehaviourTree(QObject):
         dotcode = self.dotcode_generator.generate_dotcode(dotcode_factory=self.dotcode_factory,
                                                           tree=message,
                                                           force_refresh=force_refresh)
-
         self._dotcode_cache[key] = dotcode
         self._dotcode_cache_keys.append(key)
 
@@ -819,7 +821,6 @@ class RosBehaviourTree(QObject):
             fhandle.close()
         except IOError:
             return
-
         self._update_graph_view(dotcode)
 
     def _fit_in_view(self):
