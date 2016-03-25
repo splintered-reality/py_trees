@@ -27,7 +27,7 @@ import rospy
 
 class FlashAndWait(object):
     def __init__(self):
-        self.root = py_trees.Sequence("FlashAndWait")
+        #self.root = py_trees.Sequence("FlashAndWait")
         self.gopher = gopher_configuration.Configuration()
         self.logger = py_trees.logging.get_logger("FlashAndWait")
         flash_leds_need_input = gopher_behaviours.interactions.SendNotification(
@@ -35,7 +35,9 @@ class FlashAndWait(object):
             led_pattern=self.gopher.led_patterns.humans_give_me_input,
             message="waiting for the user to hit the button"
         )
-        flash_leds_need_input.add_child(gopher_behaviours.interactions.WaitForButton("Wait for Button", self.gopher.buttons.go))
+        wait_for_go_button_press = gopher_behaviours.interactions.create_wait_for_go_button("Wait for Go Button")
+        flash_leds_need_input.add_child(wait_for_go_button_press)
+
         honk = gopher_behaviours.interactions.Articulate("Honk", self.gopher.sounds.honk)
         flash_leds_pause = gopher_behaviours.interactions.SendNotification(
             "Waiting",
@@ -44,9 +46,10 @@ class FlashAndWait(object):
         )
         flash_leds_pause.add_child(py_trees.Pause("Pause 5s", 5.0))
 
-        self.root.add_child(flash_leds_need_input)
-        self.root.add_child(honk)
-        self.root.add_child(flash_leds_pause)
+        self.root = wait_for_go_button_press
+        #self.root.add_child(flash_leds_need_input)
+        #self.root.add_child(honk)
+        #self.root.add_child(flash_leds_pause)
         self.tree = py_trees.ROSBehaviourTree(self.root)
 
         rospy.on_shutdown(self.shutdown)
@@ -71,12 +74,33 @@ class FlashAndWait(object):
         self.tree.destroy()  # destroy the tree on shutdown to stop the behaviour
         self.tree.interrupt()
 
+def callback(msg):
+    """
+    Simple stores the message for children of this class to implement a custom update function.
+    """
+    print("_callback")
+#     with self.data_guard:
+#         this_is_not_a_latched_callback = self.latched_callback_guard.acquire(False)
+    #print("this_is_not_a_latched_callback %s" % this_is_not_a_latched_callback)
+    #if this_is_not_a_latched_callback or not self.ignore_latched_messages:
+    print("External Callback")
+    my_msg = msg
+        # else ignore it
+
+import std_msgs.msg as std_msgs
 ##############################################################################
 # Main
 ##############################################################################
 
 if __name__ == '__main__':
     py_trees.logging.level = py_trees.logging.Level.DEBUG
-    rospy.init_node("flash_and_wait", log_level=rospy.DEBUG)
-    flash_and_wait = FlashAndWait()
-    flash_and_wait.tick_tock()
+    rospy.init_node("flash_and_wait", log_level=rospy.INFO)
+    demo = FlashAndWait()
+    #subscriber2 = rospy.Subscriber("/gopher/buttons/go", std_msgs.Empty, demo.root._callback, queue_size=5)
+    #subscriber = rospy.Subscriber("/gopher/buttons/go", std_msgs.Empty, callback, queue_size=5)
+    #rospy.spin()
+
+
+
+    #demo.root.setup(15)
+    demo.tick_tock()

@@ -13,6 +13,7 @@ import gopher_configuration
 import py_trees
 import rocon_console.console as console
 import rospy
+import std_msgs.msg as std_msgs
 import sys
 
 ##############################################################################
@@ -75,7 +76,12 @@ class Demo(object):
         unpark = gopher_behaviours.UnPark("UnPark")
         park = gopher_behaviours.Park("Park")
 
-        wait_for_button = gopher_behaviours.interactions.WaitForButton('Wait for Go Button', self.gopher.buttons.go)
+        wait_for_button = py_trees.subscribers.WaitForSubscriberData(
+            name="Wait for Go Button",
+            topic_name=self.gopher.buttons.go,
+            topic_type=std_msgs.String
+        )
+
         switch_to_parking = gopher_behaviours.interactions.SendNotification(
             name='Drive Around, Get a Coffee',
             message='do a delivery, get a coffee',
@@ -83,7 +89,12 @@ class Demo(object):
         )
         switch_to_parking.add_child(wait_for_button)
 
-        wait_for_button_two = gopher_behaviours.interactions.WaitForButton('Wait for Go Button', self.gopher.buttons.go)
+        wait_for_button_two = py_trees.subscribers.WaitForSubscriberData(
+            name="Wait for Go Button",
+            topic_name=self.gopher.buttons.go,
+            topic_type=std_msgs.String
+        )
+
         restart = gopher_behaviours.interactions.SendNotification(
             name='Restart',
             message='reset and get ready to start again',

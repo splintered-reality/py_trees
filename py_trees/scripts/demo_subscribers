@@ -15,12 +15,12 @@ gopher_behaviours/demo_subscriber_check.launch
 # Imports
 ##############################################################################
 
-import gopher_behaviours
 import std_msgs.msg as std_msgs
 import operator
 import py_trees
 # import rocon_console.console as console
 import rospy
+
 
 ##############################################################################
 # Tree
@@ -34,7 +34,8 @@ class Demo(object):
         topic_name = rospy.get_param("~topic_name", "chatter") if not bad_topic else "wrong_topic"
         expected_string = "Hello World" if not generate_failure else "Wrong String"
         self.logger = py_trees.logging.get_logger("Subscriber Check")
-        self.root = py_trees.CheckSubscriberVariable(
+        self.root = py_trees.Sequence(name="Demo Subscribers")
+        check_subscriber_variable = py_trees.subscribers.CheckSubscriberVariable(
             "Check",
             topic_name=topic_name,
             topic_type=std_msgs.String,
@@ -42,6 +43,14 @@ class Demo(object):
             expected_value=expected_string,
             comparison_operator=operator.eq
         )
+        wait_for_subscriber = py_trees.subscribers.WaitForSubscriberData(
+            "Wait",
+            topic_name=topic_name,
+            topic_type=std_msgs.String,
+            ignore_latched_messages=True
+        )
+        self.root.add_child(check_subscriber_variable)
+        self.root.add_child(wait_for_subscriber)
         self.tree = py_trees.ROSBehaviourTree(self.root)
         rospy.on_shutdown(self.shutdown)
         # py_trees.display.render_dot_tree(self.root)
@@ -52,7 +61,7 @@ class Demo(object):
     ##############################################################################
 
     def tick_tock(self):
-        self.tree.visitors.append(gopher_behaviours.utilities.DebugVisitor())
+        self.tree.visitors.append(py_trees.trees.DebugVisitor())
         rate = rospy.Rate(10)
         while not rospy.is_shutdown():
             self.tree.tick(pre_tick_handler=self.pre_tick_handler)

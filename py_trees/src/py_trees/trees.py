@@ -36,15 +36,15 @@ from . import common
 from . import display
 from . import composites
 from . import conversions
+from . import logging
 
 from .blackboard import Blackboard
 from .behaviours import Behaviour
 
-
 CONTINUOUS_TICK_TOCK = -1
 
 ##############################################################################
-# Classes
+# Visitors
 ##############################################################################
 
 
@@ -60,6 +60,25 @@ class VisitorBase(object):
 
         """
         self.full = full
+
+
+class DebugVisitor(VisitorBase):
+    def __init__(self):
+        super(DebugVisitor, self).__init__(full=False)
+        self.logger = logging.get_logger("Visitor")
+
+    def initialise(self):
+        pass
+
+    def run(self, behaviour):
+        if behaviour.feedback_message:
+            self.logger.debug("  %s [visited][%s][%s]" % (behaviour.name, behaviour.status, behaviour.feedback_message))
+        else:
+            self.logger.debug("  %s [visited][%s]" % (behaviour.name, behaviour.status))
+
+##############################################################################
+# Trees
+##############################################################################
 
 
 class BehaviourTree(object):

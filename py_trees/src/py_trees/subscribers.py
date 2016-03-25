@@ -105,7 +105,7 @@ class CheckSubscriberVariable(behaviour.Behaviour):
     def initialise(self):
         self.logger.debug("  %s [CheckSubscriberVariable::initialise()]" % self.name)
         if not self.monitor_continuously:
-            self.setup()
+            self.setup(None)
 
     def terminate(self, new_status):
         """
@@ -184,13 +184,15 @@ class SubscriberHandler(behaviour.Behaviour):
                  name="Subscriber Handler",
                  topic_name="/foo",
                  topic_type=None,
-                 monitor_continuously=False
+                 monitor_continuously=False,
+                 ignore_latched_messages=False
                  ):
         """
         :param str name: name of the behaviour
         :param str topic_name: name of the topic to connect to
         :param obj topic_type: class of the message type (e.g. std_msgs.String)
         :param bool monitor_continuously: setup subscriber immediately and continuously monitor the data
+        :param bool ignore_latched_messages: if data comes in during the Subscriber's constructor, then throw away if this is True.
         """
         super(SubscriberHandler, self).__init__(name)
         self.topic_name = topic_name
@@ -198,19 +200,24 @@ class SubscriberHandler(behaviour.Behaviour):
         self.msg = None
         self.subscriber = None
         self.data_guard = threading.Lock()
+        self.latched_callback_guard = threading.Lock()
         self.monitor_continuously = monitor_continuously
+        self.ignore_latched_messages = ignore_latched_messages
         if self.monitor_continuously:
             self._setup()
 
     def initialise(self):
+        self.logger.debug("  %s [SubscriberHandler::initialise()]" % self.name)
         if not self.monitor_continuously:
             self.setup(timeout=None)
 
-    def terminate(self, new_status=common.Status.INVALID):
+    def terminate(self, new_status):
+        self.logger.debug("  %s [SubscriberHandler::terminate()][%s->%s]" % (self.name, self.status, new_status))
         if not self.monitor_continuously:
             with self.data_guard:
                 self.msg = None
                 if self.subscriber is not None:
+                    print("Unregister")
                     self.subscriber.unregister()
                     self.subscriber = None
 
@@ -223,17 +230,65 @@ class SubscriberHandler(behaviour.Behaviour):
         The converse case is when you only want to start monitoring as soon as the behaviour
         begins running, this will happen via initialise if monitor_continuously is not True.
         """
+        self.logger.debug("  %s [SubscriberHandler::setup()]" % self.name)
         # if it's a latched publisher, this will immediately trigger a callback, inside the constructor!
         # so make sure we aren't in a lock ourselves, otherwise we get a deadlock
-        self.subscriber = rospy.Subscriber(self.topic_name, self.topic_type, self._callback)
+        with self.latched_callback_guard:
+            print("Setting up the subscriber on %s [%s]" % (self.topic_name, self.topic_type))
+            self.subscriber = rospy.Subscriber(self.topic_name, self.topic_type, self._callback, queue_size=5)
         return True
 
     def _callback(self, msg):
         """
         Simple stores the message for children of this class to implement a custom update function.
         """
+        print("_callback")
         with self.data_guard:
-            self.msg = msg
+            this_is_not_a_latched_callback = self.latched_callback_guard.acquire(False)
+            print("this_is_not_a_latched_callback %s" % this_is_not_a_latched_callback)
+            if this_is_not_a_latched_callback or not self.ignore_latched_messages:
+                print("Setting message")
+                self.msg = msg
+            # else ignore it
+
+
+class WaitForSubscriberData(SubscriberHandler):
+    """
+    Waits for a subscriber's callback to be triggered. This is mostly useful
+    for std_msgs.Empty topics.
+    """
+    def __init__(self,
+                 name="Wait For Subscriber",
+                 topic_name="chatter",
+                 topic_type=None,
+                 ignore_latched_messages=False
+                 ):
+        """
+        :param str name: name of the behaviour
+        :param str topic_name: name of the topic to connect to
+        :param obj topic_type: class of the message type (e.g. std_msgs.String)
+        """
+        super(WaitForSubscriberData, self).__init__(
+            name,
+            topic_name=topic_name,
+            topic_type=topic_type,
+            monitor_continuously=False,
+            ignore_latched_messages=ignore_latched_messages
+        )
+
+    def update(self):
+        """
+        RUNNING if no data yet, SUCCESS otherwise.
+        """
+        self.logger.debug("  %s [WaitForSubscriberData::update()]" % self.name)
+        self.logger.info("  %s [WaitForSubscriberData::update()]" % self.name)
+        with self.data_guard:
+            if self.msg is None:
+                self.feedback_message = "no message received yet"
+                return common.Status.RUNNING
+            else:
+                self.feedback_message = "got incoming"
+                return common.Status.SUCCESS
 
 
 class SubscriberToBlackboard(SubscriberHandler):

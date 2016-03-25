@@ -32,7 +32,6 @@ catkin_install_python(
         scripts/demo_parking
         scripts/demo_initialisation
         scripts/demo_simple_motions
-        scripts/demo_subscriber_check
         scripts/gopher_deliveries
         scripts/gopher_elevator_run
         scripts/gopher_delivery_run

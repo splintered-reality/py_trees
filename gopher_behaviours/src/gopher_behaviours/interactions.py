@@ -32,7 +32,26 @@ import std_msgs.msg as std_msgs
 import unique_id
 
 ##############################################################################
-# Interactions
+# Creational patterns
+##############################################################################
+
+
+def create_wait_for_go_button(name="Wait For Go Button"):
+    """
+    Tune into the go button signal.
+
+    :param str name: the behaviour name.
+    """
+    gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
+    behaviour = py_trees.subscribers.WaitForSubscriberData(
+        name="Wait for Go Button",
+        topic_name=gopher.buttons.go,
+        topic_type=std_msgs.String
+    )
+    return behaviour
+
+##############################################################################
+# Behaviours
 ##############################################################################
 
 

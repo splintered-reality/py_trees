@@ -15,17 +15,22 @@ catkin_python_setup()
 
 catkin_package()
 
+
 ##############################################################################
 # Installs
 ##############################################################################
 
 #install(FILES src/rocon_uri/rules/rules.yaml DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/rules.yaml)
 
-#install(
-#    PROGRAMS 
-#        scripts/rocon_uri
-#    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-#    )
+catkin_install_python(
+    PROGRAMS
+        scripts/demo_subscribers
+        scripts/demo_tree
+    DESTINATION
+        ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(DIRECTORY launch DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 
 ##############################################################################
 # Unit Tests

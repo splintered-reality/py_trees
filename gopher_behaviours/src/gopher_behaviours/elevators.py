@@ -24,6 +24,7 @@ Bless my noggin with a tickle from your noodly appendages!
 import gopher_configuration
 import gopher_navi_msgs.msg as gopher_navi_msgs
 import py_trees
+import std_msgs.msg as std_msgs
 
 from . import interactions
 from . import navigation
@@ -36,6 +37,7 @@ from . import recovery
 
 class Elevators(py_trees.Sequence):
     pass
+
 
 class HumanAssistedElevators(Elevators):
 
@@ -73,7 +75,7 @@ def _generate_elevator_children(gopher_configuration, elevator_name, elevator_le
     honk = interactions.Articulate("Honk", gopher_configuration.sounds.honk)
     telesound = interactions.Articulate("Transporter sound", gopher_configuration.sounds.teleport)
     flash_leds_travelling = interactions.SendNotification("Travelling", led_pattern=gopher_configuration.led_patterns.humans_give_me_input, button_confirm=True, message="Waiting for confirm button press in front of elevator")
-    flash_leds_travelling.add_child(interactions.WaitForButton("Wait for Button", gopher_configuration.buttons.go))
+    flash_leds_travelling.add_child(py_trees.subscribers.WaitForSubscriberData(name="Wait for Button", topic_name=gopher_configuration.buttons.go, topic_type=std_msgs.String))
 
     flash_leds_teleporting = interactions.SendNotification("Teleporting", led_pattern=gopher_configuration.led_patterns.im_doing_something_cool, message="teleporting from {0} to {1}".format(elevator_level_origin, elevator_level_destination))
 
