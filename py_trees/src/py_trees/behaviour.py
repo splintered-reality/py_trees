@@ -34,6 +34,7 @@ class Behaviour(object):
     """ A node in a behavior tree that uses coroutines in its tick function """
 
     def __init__(self, name="", *args, **kwargs):
+        assert isinstance(name, basestring), "a behaviour name should be a string, but you passed in %s" % type(name)
         self.id = unique_id.fromRandom()  # used to uniquely identify this node (helps with removing children from a tree)
         self.name = name
         self.status = Status.INVALID
