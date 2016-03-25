@@ -305,8 +305,6 @@ class ROSBehaviourTree(BehaviourTree):
         """
         super(ROSBehaviourTree, self).__init__(root)
         self.blackboard = Blackboard()
-        # tree_update_handler is in the base class, set this to the callback function here.
-        self.tree_update_handler = self.publish_tree_modifications
         self.snapshot_visitor = ROSBehaviourTree.SnapshotVisitor()
         self.logging_visitor = ROSBehaviourTree.LoggingVisitor()
         self.visitors.append(self.snapshot_visitor)
@@ -351,6 +349,12 @@ class ROSBehaviourTree(BehaviourTree):
         self.snapshot_logging_publisher = rospy.Publisher('~log/tree', py_trees_msgs.BehaviourTree, queue_size=1, latch=True)
         self.tip_publisher = rospy.Publisher('~tip', py_trees_msgs.Behaviour, queue_size=1, latch=True)
 
+        # publish current state
+        self.publish_tree_modifications(self.root)
+        # set a handler to publish future modifiactions
+        # tree_update_handler is in the base class, set this to the callback function here.
+        self.tree_update_handler = self.publish_tree_modifications
+
     def publish_blackboard(self, tree):
         """
         Publishes the blackboard. Should be called at the end of every tick.
@@ -360,7 +364,7 @@ class ROSBehaviourTree(BehaviourTree):
         if self.blackboard_publisher.get_num_connections() > 0:
             self.blackboard_publisher.publish("%s" % self.blackboard)
 
-    def publish_tree_modifications(self, root):
+    def publish_tree_modifications(self, tree):
         """
         Publishes updates when the whole tree has been modified.
 
