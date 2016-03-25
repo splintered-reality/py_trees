@@ -111,6 +111,7 @@ class Composite(Behaviour):
         :type child: instance or descendant of :class:`Behaviour <py_trees.behaviours.Behaviour>`
         :return: a unique id for this child (store and use to form remove requests)
         """
+        assert isinstance(child, Behaviour), "children must be behaviours, but you passed in %s" % type(child)
         self.children.append(child)
         child.parent = self
         return child.id
