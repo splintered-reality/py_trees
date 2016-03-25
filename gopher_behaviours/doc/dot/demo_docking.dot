@@ -1,15 +1,15 @@
 digraph demo_docking {
 "Demo Docking" [shape=box, fontsize=11, style=filled, fillcolor=orange];
-Undock [shape=octagon, fontsize=11, style=filled, fillcolor=cyan];
-"Demo Docking" -> Undock;
-"Is Not Docked" [shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
-Undock -> "Is Not Docked";
+"Wait to be Docked" [shape=box, fontsize=11, style=filled, fillcolor=orange];
+"Demo Docking" -> "Wait to be Docked";
+"Check Docked Contact" [shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+"Wait to be Docked" -> "Check Docked Contact";
 "Auto UnDock" [shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
-Undock -> "Auto UnDock";
+"Demo Docking" -> "Auto UnDock";
+"AR Markers On" [shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+"Demo Docking" -> "AR Markers On";
 "Auto Dock" [shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
 "Demo Docking" -> "Auto Dock";
-"Drive Around" [shape=box, fontsize=11, style=filled, fillcolor=orange];
-"Demo Docking" -> "Drive Around";
-"Wait for Go Button" [shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
-"Drive Around" -> "Wait for Go Button";
+"AR Markers Off" [shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+"Demo Docking" -> "AR Markers Off";
 }

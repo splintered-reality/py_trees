@@ -73,12 +73,17 @@ class Demo(object):
         self.root = py_trees.Sequence("Demo Docking")
 
         wait_to_be_docked = gopher_behaviours.battery.create_wait_to_be_docked(name="Wait to be Docked")
-        auto_undock = gopher_behaviours.docking.AutoDock(name="Auto UnDock", undock=True)
-        auto_dock = gopher_behaviours.docking.AutoDock(name="Auto Dock")
+        auto_undock = gopher_behaviours.docking.DockingController(name="Auto UnDock", undock=True)
+        auto_dock = gopher_behaviours.docking.DockingController(name="Auto Dock")
+
+        ar_markers_on = gopher_behaviours.ar_markers.ControlARMarkerTracker("AR Markers On", self.gopher.topics.ar_tracker_long_range, True)
+        ar_markers_off = gopher_behaviours.ar_markers.ControlARMarkerTracker("AR Markers Off", self.gopher.topics.ar_tracker_long_range, False)
 
         self.root.add_child(wait_to_be_docked)
         self.root.add_child(auto_undock)
+        self.root.add_child(ar_markers_on)
         self.root.add_child(auto_dock)
+        self.root.add_child(ar_markers_off)
 
         self.tree = py_trees.ROSBehaviourTree(self.root)
         rospy.on_shutdown(self.shutdown)

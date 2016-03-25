@@ -1,32 +1,53 @@
 #!/usr/bin/env python
+#
+# License: Yujin
+#
+##############################################################################
+# Description
+##############################################################################
+
+"""
+.. module:: docking
+   :platform: Unix
+   :synopsis: Docking related behaviours and generators
+
+Oh my spaghettified magnificence,
+Bless my noggin with a tickle from your noodly appendages!
+
+----
+
+"""
+
+##############################################################################
+# Imports
+##############################################################################
+
 import rospy
 import py_trees
 import actionlib
 import gopher_configuration
 import functools
-from py_trees.blackboard import Blackboard
 import gopher_std_msgs.msg as gopher_std_msgs
 import actionlib_msgs.msg as actionlib_msgs
 
+##############################################################################
+# Docking Controller
+##############################################################################
 
-class AutoDock(py_trees.Behaviour):
+
+class DockingController(py_trees.Behaviour):
     """
     Behaviour interface to the docking/undocking controller.
-
-    Blackboard Variables:
-
-     - undocked (w) [bool]: if undocking, true if the last update was a success, false otherwise (unused for docking)
     """
-    def __init__(self, name="AutoDock", undock=False):
+    def __init__(self, name="Docking Controller", undock=False):
         """
         :param str name: the behaviour name
         :param bool undock: do undocking instead of docking.
         """
-        super(AutoDock, self).__init__(name)
+        super(DockingController, self).__init__(name)
         rospy.on_shutdown(functools.partial(self.stop, py_trees.Status.FAILURE))
         self.action_client = None
         self.sent_goal = False
-        self.blackboard = Blackboard()
         self.goal = gopher_std_msgs.AutonomousDockingGoal()
         self.goal.command = gopher_std_msgs.AutonomousDockingGoal.DOCK if not undock else gopher_std_msgs.AutonomousDockingGoal.UNDOCK
 
@@ -50,8 +71,6 @@ class AutoDock(py_trees.Behaviour):
     def initialise(self):
         self.logger.debug("  %s [AutoDock::initialise()]" % self.name)
         self.sent_goal = False
-        if self.goal.command == gopher_std_msgs.AutonomousDockingGoal.UNDOCK:
-            self.blackboard.undocked = False
 
     def update(self):
         self.logger.debug("  %s [AutoDock::update()]" % self.name)
@@ -71,8 +90,6 @@ class AutoDock(py_trees.Behaviour):
         result = self.action_client.get_result()
         if result:
             if result.value == gopher_std_msgs.AutonomousDockingResult.SUCCESS:
-                if self.goal.command == gopher_std_msgs.AutonomousDockingGoal.UNDOCK:
-                    self.blackboard.undocked = True
                 self.feedback_message = result.message
                 return py_trees.Status.SUCCESS
             elif result.value == gopher_std_msgs.AutonomousDockingResult.ABORTED_OBSTACLES:

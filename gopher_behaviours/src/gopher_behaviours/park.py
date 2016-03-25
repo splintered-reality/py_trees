@@ -22,12 +22,14 @@ Bless my noggin with a tickle from your noodly appendages!
 # Imports
 ##############################################################################
 
+import gopher_configuration
 import gopher_std_msgs.msg as gopher_std_msgs
 import navigation
 import py_trees
 
+from . import ar_markers
 from . import battery
-from . import unpark  # has the starting action enum
+from . import docking
 from . import transform_utilities
 
 ##############################################################################
@@ -39,34 +41,54 @@ class Park(py_trees.Sequence):
     """
     Blackboard Variables:
 
-     - pose_park_rel_map       (r) [geometry_msgs/Pose]                     : pose of the parking location relative to the homebase
-     - last_starting_action    (r) [starting.StartingAction]                : checks this variable to see if parking is a valid move
-     - pose_park_start_rel_map (w) [geometry_msgs.PoseWithCovarianceStamped]: transferred from /navi/pose when about to park
+     - pose_park_rel_map       (r)  [geometry_msgs/Pose]                     : pose of the parking location relative to the homebase
+     - pose_park_start_rel_map (w)  [geometry_msgs.PoseWithCovarianceStamped]: transferred from /navi/pose when about to park
+     - undocked                (rc) [bool]                                   : reads to determine if it should dock, and clears afterwards
     """
     def __init__(self, name="Park"):
         super(Park, self).__init__(name)
+        self.gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
 
+        ############################################
+        # Behaviours
+        ############################################
         check_didnt_undock = py_trees.meta.inverter(py_trees.CheckBlackboardVariable(
-            name='Didnt Undock?',
-            variable_name='last_starting_action',
-            expected_value=unpark.StartingAction.UNDOCKED
+            name='Didnt Undock',
+            variable_name='undocked',
+            expected_value=True
         ))
         write_pose_park_start_rel_map = navigation.create_map_pose_to_blackboard_behaviour(
             name="Start Pose (Map)",
             blackboard_variables={"pose_park_start_rel_map": None}
         )
         parking_motions = ParkingMotions()
-        docking = py_trees.Selector(name="Docking")
-        docking_control = py_trees.Selector(name="Docking Control")
-        docking_controller = py_trees.behaviours.Success(name="Docking Controller")
-        wait_for_docking_contact = battery.create_wait_to_be_docked(name="Teleop to Dock")
+        todock_or_not_todock = py_trees.Selector(name="ToDock or Not ToDock")
+        docking_control = py_trees.Sequence(name="Automatic")
+        pre_dock_rotation = navigation.SimpleMotion(
+            name="Pre-Rotation",
+            motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
+            motion_amount=3.14
+        )
+        ar_markers_on = ar_markers.ControlARMarkerTracker("AR Markers On", self.gopher.topics.ar_tracker_long_range, True)
+        ar_markers_off = ar_markers.ControlARMarkerTracker("AR Markers Off", self.gopher.topics.ar_tracker_long_range, False)
+        docking_controller = docking.DockingController(name="Docking Controller")
+        clearing_flags = py_trees.blackboard.ClearBlackboardVariable(name="Clear Flags", variable_name="undocked")
+        wait_for_docking_contact = battery.create_wait_to_be_docked(name="Manual")
+
+        ############################################
+        # Assembly
+        ############################################
         self.add_child(write_pose_park_start_rel_map)
         self.add_child(parking_motions)
-        self.add_child(docking)
-        docking.add_child(check_didnt_undock)
-        docking.add_child(docking_control)
+        self.add_child(todock_or_not_todock)
+        todock_or_not_todock.add_child(check_didnt_undock)
+        todock_or_not_todock.add_child(docking_control)
+        docking_control.add_child(pre_dock_rotation)
+        docking_control.add_child(ar_markers_on)
         docking_control.add_child(docking_controller)
-        docking_control.add_child(wait_for_docking_contact)
+        docking_control.add_child(ar_markers_off)
+        todock_or_not_todock.add_child(wait_for_docking_contact)
+        self.add_child(clearing_flags)
 
     @classmethod
     def render_dot_tree(cls):
