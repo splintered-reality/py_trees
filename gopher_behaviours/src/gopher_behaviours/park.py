@@ -25,6 +25,7 @@ Bless my noggin with a tickle from your noodly appendages!
 import gopher_configuration
 import gopher_std_msgs.msg as gopher_std_msgs
 import navigation
+import numpy
 import py_trees
 
 from . import ar_markers
@@ -138,6 +139,10 @@ def compute_parking_geometry(pose_park_start_rel_map, pose_park_rel_map, distanc
         direction_to_park_angle = transform_utilities.angle_between([1.0, 0.0, 0.0], translation_park_rel_start)
         point_to_park_angle = direction_to_park_angle - current_pose_angle
         orient_with_park_angle = park_pose_angle - current_pose_angle - point_to_park_angle
+
+    # wrap to -pi, pi
+    point_to_park_angle = (point_to_park_angle + numpy.pi) % (2 * numpy.pi) - numpy.pi
+    orient_with_park_angle = (orient_with_park_angle + numpy.pi) % (2 * numpy.pi) - numpy.pi
 
     return (distance_to_park, point_to_park_angle, orient_with_park_angle)
 
