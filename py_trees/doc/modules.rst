@@ -9,13 +9,6 @@ py_trees
 .. automodule:: py_trees
    :synopsis: look after your misbehaving robot with py_trees
 
-py_trees.common
----------------
-
-.. automodule:: py_trees.common
-    :members:
-    :show-inheritance:
-
 py_trees.behaviour
 ------------------
 
@@ -30,11 +23,33 @@ py_trees.behaviours
     :members:
     :show-inheritance:
 
+py_trees.common
+---------------
+
+.. automodule:: py_trees.common
+    :members:
+    :show-inheritance:
+
 py_trees.composites
 -------------------
 
 .. automodule:: py_trees.composites
     :members:
+    :show-inheritance:
+
+py_trees.display
+----------------
+
+.. automodule:: py_trees.display
+    :members:
+    :show-inheritance:
+
+py_trees.subscribers
+--------------------
+
+.. automodule:: py_trees.subscribers
+    :members:
+    :special-members:
     :show-inheritance:
 
 py_trees.trees

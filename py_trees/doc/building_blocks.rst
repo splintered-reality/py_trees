@@ -102,7 +102,7 @@ Visualisations
 Dot Graphs
 ^^^^^^^^^^
 
-You can render trees into dot/png/svg files simply by calling the :py:function:`~py_trees.display.render_dot_tree`
+You can render trees into dot/png/svg files simply by calling the :py:func:`~py_trees.display.render_dot_tree`
 function. There is also an ascii version.
 
 .. code-block:: python

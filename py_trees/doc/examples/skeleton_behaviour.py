@@ -1,3 +1,5 @@
+# doc/examples/skeleton_behaviour.py
+
 import py_trees
 import random
 

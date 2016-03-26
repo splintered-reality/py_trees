@@ -46,7 +46,7 @@ def create_wait_for_go_button(name="Wait For Go Button"):
     behaviour = py_trees.subscribers.WaitForSubscriberData(
         name="Wait for Go Button",
         topic_name=gopher.buttons.go,
-        topic_type=std_msgs.String
+        topic_type=std_msgs.Empty
     )
     return behaviour
 
@@ -78,8 +78,8 @@ class Articulate(py_trees.Behaviour):
 class CheckButtonPressed(py_trees.Behaviour):
     """Checks whether a button has been pressed.
 
-    This behaviour always returns success or failure. This design is
-    intended to be utilised a guard for a selector.
+    This behaviour always returns ``SUCCESS`` or ``FAILURE`` (never ``RUNNING``).
+    This design is intended to be utilised a guard for a selector.
 
     Latched is a special characteristic. If latched, it will return true
     and continue returning true if the button is pressed anytime after
@@ -112,41 +112,6 @@ class CheckButtonPressed(py_trees.Behaviour):
         if not self.latched:
             self.button_pressed = False
         return result
-
-
-class WaitForButton(py_trees.Behaviour):
-    def __init__(self, name, topic_name):
-        """
-        He is a mere noodly appendage - don't expect him to check if the topic exists.
-
-        A pastafarian at a higher level should take care of that before construction.
-
-        :param str name: behaviour name
-        :param str topic_name:
-        """
-        super(WaitForButton, self).__init__(name)
-        self.topic_name = topic_name
-        self.subscriber = None
-
-    def initialise(self):
-        self.logger.debug("  %s [WaitForButton::initialise()]" % self.name)
-        self.subscriber = rospy.Subscriber(self.topic_name, std_msgs.Empty, self.button_callback)
-        self.button_pressed = False
-
-    def button_callback(self, msg):
-        self.button_pressed = True
-
-    def update(self):
-        self.logger.debug("  %s [WaitForButton::update()]" % self.name)
-        if self.button_pressed:
-            return py_trees.Status.SUCCESS
-        else:
-            return py_trees.Status.RUNNING
-
-    def terminate(self, new_status):
-        self.logger.debug("  %s [WaitForButton::terminate()][%s->%s]" % (self.name, self.status, new_status))
-        if self.subscriber is not None:
-            self.subscriber.unregister()
 
 
 class SendNotification(py_trees.Sequence):

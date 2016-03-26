@@ -32,7 +32,7 @@ class Demo(object):
         generate_failure = rospy.get_param("~failure", False)
         bad_topic = rospy.get_param("~bad_topic", False)
         topic_name = rospy.get_param("~topic_name", "chatter") if not bad_topic else "wrong_topic"
-        expected_string = "Hello World" if not generate_failure else "Wrong String"
+        expected_string = "Hello Dude" if not generate_failure else "Wrong String"
         self.logger = py_trees.logging.get_logger("Subscriber Check")
         self.root = py_trees.Sequence(name="Demo Subscribers")
         check_subscriber_variable = py_trees.subscribers.CheckSubscriberVariable(
@@ -47,7 +47,6 @@ class Demo(object):
             "Wait",
             topic_name=topic_name,
             topic_type=std_msgs.String,
-            ignore_latched_messages=True
         )
         self.root.add_child(check_subscriber_variable)
         self.root.add_child(wait_for_subscriber)
