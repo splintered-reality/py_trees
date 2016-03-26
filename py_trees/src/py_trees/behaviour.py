@@ -31,9 +31,26 @@ from .common import Status
 
 
 class Behaviour(object):
-    """ A node in a behavior tree that uses coroutines in its tick function """
+    """
+    A node in a behavior tree that uses coroutines in its tick function.
+    When implementing (subclassing) your own behaviour, there are four methods you should
+    consider implementing. All are optional.
 
+    * :py:meth:`setup` : do any delayed (e.g. ros) initialisation here.
+    * :py:meth:`initialise` : init/clear/reset variables ready for a new run of the behaviour
+    * :py:meth:`update` : where the :term:`tick` happens (i.e. work), computes the new behaviour status
+    * :py:meth:`terminate` : cleanup required after the behaviour has finished running or been interrupted
+
+    :ivar str name: the behaviour name
+    :ivar Status status: the behaviour status (:py:data:`~py_trees.common.Status.INVALID`, :py:data:`~py_trees.common.Status.RUNNING`, :py:data:`~py_trees.common.Status.FAILURE`, :py:data:`~py_trees.common.Status.SUCCESS`)
+    :ivar Behaviour parent: None of it is the root otherwise usually a :py:class:`~py_trees.composites.Composite`
+    :ivar [] children: a :py:class:`Behaviour` list, empty for standalones, but popuated by composites.
+    :ivar str feedback_message: a simple message usually set in the :py:meth:`update`.
+    """
     def __init__(self, name="", *args, **kwargs):
+        """
+        :param str name: the behaviour name (doesn't have to be unique and can include capitals and spaces)
+        """
         assert isinstance(name, basestring), "a behaviour name should be a string, but you passed in %s" % type(name)
         self.id = unique_id.fromRandom()  # used to uniquely identify this node (helps with removing children from a tree)
         self.name = name
@@ -50,40 +67,59 @@ class Behaviour(object):
 
     def setup(self, timeout):
         """
-        Override this function to do any post-constructor setup that is necessary
-        for a runtime. A good example are any of the ros wait_for methods which
-        will block while looking for a ros master/topics/services.
-
-        This is best done here rather than in the constructor so that trees can
-        be instantiated on the fly without any runtime requirements to produce
-        visualisations such as dot graphs.
-
-        If there is necessary construction in here, then make sure you call
-        it appropriately the first time you enter (i.e. in initialise).
-
         :param double timeout: time to wait (0.0 is blocking forever)
         :returns: whether it timed out waiting for the server or not.
         :rtype: boolean
+
+        **User Customisable Callback**
+
+        Subclasses may implement this method to do any delayed construction that
+        is necessary for runtime. This is best done here rather than in the constructor
+        so that trees can be instantiated on the fly without any severe runtime requirements
+        (e.g. a ros master) to produce visualisations such as dot graphs.
+
+        A good example of its use include any of the ros wait_for methods which
+        will block while looking for a ros master/topics/services.
         """
         # user function, no need to report on any activity here - user should do that in his class
         return True
 
     def initialise(self):
+        """
+        **User Customisable Callback**
+
+        Subclasses may implement this method to perform any necessary initialising/clearing/resetting
+        of variables when when preparing to enter a behaviour. By entry, this means every time
+        the behaviour switches from a non-running state (is :py:data:`~py_trees.common.Status.INVALID`,
+        or previously had :py:data:`~py_trees.common.Status.FAILURE`||:py:data:`~py_trees.common.Status.SUCCESS`),
+        so expect to to run more than once!
+        """
         pass  # user function, no need to report on any activity here - user should do that in his class
 
     def terminate(self, new_status):
         """
-        User defined terminate (cleanup) function. For comparison tests, it is
-        often useful to check if the current status is Status.RUNNING and
-        the new status is different to trigger appropriate cleanup actions.
+        :param :py:class:`~py_trees.common.Status` new_status: compare with current status for decision logic.
 
-        :param Status new_status: compare with current status for decision logic.
+        **User Customisable Callback**
 
+        Subclasses may implement this method to be triggered when a behaviour either finishes
+        execution (switching from :py:data:`~py_trees.common.Status.RUNNING` to
+        :py:data:`~py_trees.common.Status.FAILURE` || :py:data:`~py_trees.common.Status.SUCCESS`)
+        or it got interrupted by a higher priority branch (switching to
+        :py:data:`~py_trees.common.Status.INVALID`). Remember that the :py:meth:`initialise` method
+        will handle any resetting of variables before re-entry, so this method is more about cancelling
+        and disabling anything that you do not wish to continue running while waiting for the next
+        chance to run the behaviour. e.g.
+
+        * cancel an external action that got started
+        * shut down any tempoarary communication handles
         """
         pass  # user function, no need to report on any activity here - user should do that in his class
 
     def update(self):
         """
+        **User Customisable Callback**
+
         User customisable update function called on by the :py:meth:`tick() <py_trees.behaviours.Behaviour.tick>` method.
 
         :return: the behaviour's current :py:class:`Status <py_trees.common.Status>`
@@ -96,14 +132,13 @@ class Behaviour(object):
     ############################################
 
     def tip(self):
-        """Get the "tip" of this behaviour tree. This corresponds to the
-        bottom-rightmost node in the tree that was reached on the last tick, in
-        other words the deepest node that was running. This description kind of
-        makes sense?
+        """
+        Get the "tip" of this behaviour's subtree (if it has one).
+        This corresponds to the the deepest node that was running before the
+        subtree traversal reversed direction and headed back to this node.
 
-        In the case of a raw behaviour, it returns itself if it is not invalid,
-        otherwise none.
-
+        In the case of a standalone behaviour with no children, it
+        returns itself if it is not invalid, otherwise None.
         """
         return self if self.status != Status.INVALID else None
 
@@ -133,7 +168,10 @@ class Behaviour(object):
         mechanism) so that it can be used as part of an iterator for the
         entire tree.
 
-        .. note:: This is a generator function, do not call directly.
+        .. warning::
+
+           This is a generator function, you must use this with *yield*. If you need a direct call,
+           prefer :py:meth:`tickOnce` instead.
 
         Calling ``my_behaviour.tick()`` will not actually do anything.
         It has to be used as part of an iterator, e.g.
@@ -181,31 +219,9 @@ class Behaviour(object):
         current status field for decision making within the terminate function
         itself.
 
-        Do not think of this as an stop only for shutdown and invalid state setting
-        (though this is the default argument). Stop is also the proper call when
-        the behaviour returns success at which point the behaviour must stop
-        any processing and do any required cleanup so it doesn't sit around
-        consuming resources awaiting the next time it must be called (initialisation
-        should not be done here - it could be a long time before the behaviour gets
-        called again, and you shouldn't consume those resources in the meantime).
+        .. warning:: Do not override this method, use :py:meth:`terminate` instead.
         """
         self.logger.debug("  %s [Behaviour.stop()]" % self.name)
         self.terminate(new_status)
         self.status = new_status
         self.iterator = self.tick()
-
-    ############################################
-    # Status
-    ############################################
-
-    def get_status(self):
-        return self.status
-
-    def set_status(self, s):
-        self.status = s
-
-    def is_running(self):
-        return self.status == Status.RUNNING
-
-    def is_terminated(self):
-        return (self.status == Status.SUCCESS) or (self.status == Status.FAILURE)

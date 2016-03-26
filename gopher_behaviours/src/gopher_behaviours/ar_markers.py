@@ -73,7 +73,7 @@ class ControlARMarkerTracker(py_trees.Behaviour):
         Does the real work...
         """
         if self._dyn_reconf_client_ar_tracker:
-            if self.get_status() != py_trees.Status.RUNNING:
+            if self.status != py_trees.Status.RUNNING:
                 self._ar_tracker_control(self._enable)
                 return py_trees.Status.RUNNING
             else:
