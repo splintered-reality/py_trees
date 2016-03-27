@@ -627,10 +627,10 @@ class ElfInitialisation(py_trees.Sequence):
             sound=self.gopher.sounds.done,
             message="intialised pose"
         )
-        celebrate = py_trees.Pause("Take Time to Celebrate", 2.0)
+        celebrate = py_trees.timers.Pause("Take Time to Celebrate", 2.0)
         scanning = py_trees.Sequence("Scanning")
         rotate = py_trees.meta.failure_is_success(SimpleMotion(name="Rotate", motion_amount=(2 * math.pi)))
-        wait_for_retry = py_trees.meta.inverter(py_trees.Pause("Wait for Retry", 2.0))
+        wait_for_retry = py_trees.meta.inverter(py_trees.timers.Pause("Wait for Retry", 2.0))
 
         # Graph
         self.add_child(ar_markers_on)

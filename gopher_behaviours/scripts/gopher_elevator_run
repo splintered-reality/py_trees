@@ -108,7 +108,7 @@ class DoElevatorRun(object):
 
     def tick_tock(self):
         loop_around = rospy.Rate(10)
-        self.tree.visitors.append(gopher_behaviours.utilities.DebugVisitor())
+        self.tree.visitors.append(py_trees.trees.DebugVisitor())
         while self.root.status != py_trees.Status.SUCCESS and not rospy.is_shutdown():
             self.tree.tick(pre_tick_handler=self.pre_tick_handler)
             loop_around.sleep()

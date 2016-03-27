@@ -44,7 +44,7 @@ class FlashAndWait(object):
             led_pattern=self.gopher.led_patterns.holding,
             message="flashing while pausing...for a bit"
         )
-        flash_leds_pause.add_child(py_trees.Pause("Pause 5s", 5.0))
+        flash_leds_pause.add_child(py_trees.timers.Pause("Pause 5s", 5.0))
 
         self.root.add_child(flash_leds_need_input)
         self.root.add_child(honk)
@@ -61,7 +61,7 @@ class FlashAndWait(object):
     ##############################################################################
 
     def tick_tock(self):
-        self.tree.visitors.append(gopher_behaviours.utilities.DebugVisitor())
+        self.tree.visitors.append(py_trees.trees.DebugVisitor())
         self.tree.tick_tock(sleep_ms=500, number_of_iterations=py_trees.CONTINUOUS_TICK_TOCK, pre_tick_handler=self.pre_tick_handler)
 
     def pre_tick_handler(self, behaviour_tree):

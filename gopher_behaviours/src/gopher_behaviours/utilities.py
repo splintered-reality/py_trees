@@ -22,27 +22,7 @@ Bless my noggin with a tickle from your noodly appendages!
 ##############################################################################
 
 import os
-import py_trees
 import rospkg
-
-##############################################################################
-# Debugging
-##############################################################################
-
-
-class DebugVisitor(py_trees.trees.VisitorBase):
-    def __init__(self):
-        super(DebugVisitor, self).__init__()
-        self.logger = py_trees.logging.get_logger("Visitor")
-
-    def initialise(self):
-        pass
-
-    def run(self, behaviour):
-        if behaviour.feedback_message:
-            self.logger.debug("  %s [visited][%s][%s]" % (behaviour.name, behaviour.status, behaviour.feedback_message))
-        else:
-            self.logger.debug("  %s [visited][%s]" % (behaviour.name, behaviour.status))
 
 ##############################################################################
 # Configuration

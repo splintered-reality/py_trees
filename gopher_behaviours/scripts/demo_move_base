@@ -91,7 +91,7 @@ class Demo(object):
     ##############################################################################
 
     def tick_tock(self):
-        self.tree.visitors.append(gopher_behaviours.utilities.DebugVisitor())
+        self.tree.visitors.append(py_trees.trees.DebugVisitor())
         rate = rospy.Rate(10)
         while not rospy.is_shutdown():
             self.tree.tick(pre_tick_handler=self.pre_tick_handler)

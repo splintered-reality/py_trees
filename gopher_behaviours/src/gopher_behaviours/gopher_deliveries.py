@@ -142,7 +142,7 @@ class GopherHiveMind(object):
     ##############################################################################
 
     def tick_tock(self):
-        self.tree.visitors.append(gopher_behaviours.utilities.DebugVisitor())
+        self.tree.visitors.append(py_trees.trees.DebugVisitor())
         self.tree.tick_tock(sleep_ms=500, number_of_iterations=py_trees.CONTINUOUS_TICK_TOCK, pre_tick_handler=self.pre_tick_handler, post_tick_handler=self.post_tick_handler)
 
     def pre_tick_handler(self, behaviour_tree):
