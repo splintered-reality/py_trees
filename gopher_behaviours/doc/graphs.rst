@@ -1,6 +1,11 @@
 Graphs
 ======
 
+Demo Docking
+------------
+
+.. graphviz:: dot/demo_docking.dot
+
 Demo Initialisation
 -------------------
 

@@ -12,13 +12,13 @@
    :platform: Unix
    :synopsis: Shared data storage for py_trees behaviours.
 
-----
-
 """
 
 ##############################################################################
 # Imports
 ##############################################################################
+
+from . import behaviours
 
 from .common import Status
 from .behaviour import Behaviour
@@ -56,7 +56,7 @@ class Blackboard(object):
     def __init__(self):
         self.__dict__ = self.__shared_state
 
-    def set(self, name, value, overwrite=False):
+    def set(self, name, value, overwrite=True):
         """
         For when you only have strings to identify and access the blackboard variables, this
         provides a convenient setter.
@@ -99,6 +99,57 @@ class Blackboard(object):
                     s += console.cyan + "  " + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ": " + console.yellow + "%s\n" % (value) + console.reset
         s += console.reset
         return s
+
+
+class ClearBlackboardVariable(behaviours.Success):
+    """
+    Clear the specified value from the blackboard.
+    """
+    def __init__(self,
+                 name="Clear Blackboard Variable",
+                 variable_name="dummy",
+                 ):
+        """
+        :param name: name of the behaviour
+        :param variable_name: name of the variable to clear
+        """
+        super(ClearBlackboardVariable, self).__init__(name)
+        self.variable_name = variable_name
+
+    def initialise(self):
+        self.blackboard = Blackboard()
+        try:
+            delattr(self.blackboard, self.variable_name)
+        except AttributeError:
+            pass
+
+
+class SetBlackboardVariable(behaviours.Success):
+    """
+    Set the specified variable on the blackboard.
+    Usually we set variables from inside other behaviours, but can
+    be convenient to set them from a behaviour of their own sometimes so you
+    don't get blackboard logic mixed up with more atomic behaviours.
+
+    .. todo:: overwrite option, leading to possible failure/success logic.
+    """
+    def __init__(self,
+                 name="Set Blackboard Variable",
+                 variable_name="dummy",
+                 variable_value=None
+                 ):
+        """
+        :param name: name of the behaviour
+        :param variable_name: name of the variable to set
+        :param value_name: value of the variable to set
+        """
+        super(SetBlackboardVariable, self).__init__(name)
+        self.variable_name = variable_name
+        self.variable_value = variable_value
+
+    def initialise(self):
+        self.blackboard = Blackboard()
+        self.blackboard.set(self.variable_name, self.variable_value, overwrite=True)
 
 
 class CheckBlackboardVariable(Behaviour):

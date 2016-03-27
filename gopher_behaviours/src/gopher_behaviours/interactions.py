@@ -32,8 +32,109 @@ import std_msgs.msg as std_msgs
 import unique_id
 
 ##############################################################################
-# Interactions
+# Creational patterns
 ##############################################################################
+
+
+def create_wait_for_go_button(name="Wait For Go Button"):
+    """
+    Tune into the go button signal. Will be RUNNING until an event
+    is caught. This is useful to block at the start of a sequence.
+
+    :param str name: the behaviour name.
+    """
+    gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
+    behaviour = py_trees.subscribers.WaitForSubscriberData(
+        name=name,
+        topic_name=gopher.buttons.go,
+        topic_type=std_msgs.Empty,
+        clearing_policy=py_trees.common.ClearingPolicy.ON_INITIALISE
+    )
+    return behaviour
+
+
+def create_check_for_go_button_press(name="Check for Go Button Press"):
+    """
+    Has there recently been a go button press anytime in the recent past?
+    This is more useful as a non-blocking decision element (as opposed to
+    the :py:func:`~gopher_behaviours.interactions.create_wait_for_go_button`
+    function.
+
+    Note that it will reset as soon as an event (i.e. SUCCESS) is detected.
+
+    :param str name: the behaviour name.
+    """
+    gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
+    behaviour = py_trees.meta.running_is_failure(
+        py_trees.subscribers.WaitForSubscriberData(
+            name=name,
+            topic_name=gopher.buttons.go,
+            topic_type=std_msgs.Empty,
+            clearing_policy=py_trees.common.ClearingPolicy.ON_SUCCESS
+        )
+    )
+    return behaviour
+
+
+def create_check_for_stop_button_press(name="Check for Stop Button Press"):
+    """
+    Has there recently been a go button press anytime in the recent past?
+    This is more useful as a non-blocking decision element (as opposed to
+    the :py:func:`~gopher_behaviours.interactions.create_wait_for_go_button`
+    function.
+
+    Note that it will reset as soon as an event (i.e. SUCCESS) is detected.
+
+    :param str name: the behaviour name.
+    """
+    gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
+    behaviour = py_trees.meta.running_is_failure(
+        py_trees.subscribers.WaitForSubscriberData(
+            name=name,
+            topic_name=gopher.buttons.stop,
+            topic_type=std_msgs.Empty,
+            clearing_policy=py_trees.common.ClearingPolicy.ON_SUCCESS
+        )
+    )
+    return behaviour
+
+##############################################################################
+# Behaviours
+##############################################################################
+
+
+class MonitorButtonEvents(py_trees.subscribers.SubscriberHandler):
+    """
+    Monitor button events and write them to the blackboard. Ideally
+    you need this at the very highest part of the tree so that it gets triggered
+    every time - once this happens, then the rest of the behaviour tree can
+    utilise the variables.
+    """
+    def __init__(self,
+                 name="Monitor Button Events",
+                 topic_name="/gopher/buttons/go",
+                 variable_name="go_button_event"
+                 ):
+        super(MonitorButtonEvents, self).__init__(
+            name=name,
+            topic_name=topic_name,
+            topic_type=std_msgs.Empty,
+            clearing_policy=py_trees.common.ClearingPolicy.ON_SUCCESS
+        )
+        self.variable_name = variable_name
+        self.blackboard = py_trees.Blackboard()
+
+    def update(self):
+        """
+        Check for data and write to the board. We also always return success from
+        this as its just a worker, not a logic element.
+        """
+        self.logger.debug("  %s [MonitorButtonEvents::update()]" % self.name)
+        with self.data_guard:
+            self.blackboard.set(self.variable_name, self.msg is not None, overwrite=True)
+            # ON_SUCCESS is the only clearing_policy that subclasses of SubscriberHandler must implement themselves
+            self.msg = None
+        return py_trees.common.Status.SUCCESS
 
 
 class Articulate(py_trees.Behaviour):
@@ -56,80 +157,6 @@ class Articulate(py_trees.Behaviour):
         return py_trees.Status.SUCCESS
 
 
-class CheckButtonPressed(py_trees.Behaviour):
-    """Checks whether a button has been pressed.
-
-    This behaviour always returns success or failure. This design is
-    intended to be utilised a guard for a selector.
-
-    Latched is a special characteristic. If latched, it will return true
-    and continue returning true if the button is pressed anytime after
-    it is 'ticked' for the first time.
-
-    If not latched, it will return the result of a button press
-    inbetween ticks.
-
-    :param bool latched: configures the behaviour as described above.
-    """
-    def __init__(self, name, topic_name, latched=False):
-        super(CheckButtonPressed, self).__init__(name)
-        self.topic_name = topic_name
-        self.subscriber = None
-        self.latched = latched
-        self.button_pressed = False
-
-    def initialise(self):
-        if self.subscriber is None:
-            self.subscriber = rospy.Subscriber(self.topic_name, std_msgs.Empty, self.button_callback)
-
-    def button_callback(self, msg):
-        self.button_pressed = True
-
-    def update(self):
-        if self.button_pressed:
-            result = py_trees.Status.SUCCESS
-        else:
-            result = py_trees.Status.FAILURE
-        if not self.latched:
-            self.button_pressed = False
-        return result
-
-
-class WaitForButton(py_trees.Behaviour):
-    def __init__(self, name, topic_name):
-        """
-        He is a mere noodly appendage - don't expect him to check if the topic exists.
-
-        A pastafarian at a higher level should take care of that before construction.
-
-        :param str name: behaviour name
-        :param str topic_name:
-        """
-        super(WaitForButton, self).__init__(name)
-        self.topic_name = topic_name
-        self.subscriber = None
-
-    def initialise(self):
-        self.logger.debug("  %s [WaitForButton::initialise()]" % self.name)
-        self.subscriber = rospy.Subscriber(self.topic_name, std_msgs.Empty, self.button_callback)
-        self.button_pressed = False
-
-    def button_callback(self, msg):
-        self.button_pressed = True
-
-    def update(self):
-        self.logger.debug("  %s [WaitForButton::update()]" % self.name)
-        if self.button_pressed:
-            return py_trees.Status.SUCCESS
-        else:
-            return py_trees.Status.RUNNING
-
-    def terminate(self, new_status):
-        self.logger.debug("  %s [WaitForButton::terminate()][%s->%s]" % (self.name, self.status, new_status))
-        if self.subscriber is not None:
-            self.subscriber.unregister()
-
-
 class SendNotification(py_trees.Sequence):
     """
     This class runs as a sequence. Since led's turn off, you need a behaviour that is continuously
@@ -149,7 +176,7 @@ class SendNotification(py_trees.Sequence):
                  button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
                  button_confirm=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
                  cancel_on_stop=True,
-                 duration=None
+                 duration=gopher_std_srvs.NotifyRequest.INDEFINITE
                  ):
         """
         This behaviour is a mere noodly appendage - don't expect it to check if the topic exists for receiving
@@ -177,10 +204,7 @@ class SendNotification(py_trees.Sequence):
         self.led_pattern = gopher_std_msgs.LEDStrip(led_strip_pattern=led_pattern_id)
         self.button_cancel = button_cancel
         self.button_confirm = button_confirm
-        if duration is None:
-            # convert this to a standard behaviour configuration exception
-            rospy.logerr("Behaviours [%s]: duration was not set, defaulting to INDEFINITE" % self.name)
-        self.duration = duration if duration is not None else gopher_std_srvs.NotifyRequest.INDEFINITE
+        self.duration = duration
 
         self.notification = gopher_std_msgs.Notification(
             sound_name=self.sound,
@@ -224,8 +248,9 @@ class SendNotification(py_trees.Sequence):
             rospy.logwarn("SendNotification : failed to process notification request [%s][%s]" % (self.message, str(e)))
             self.service_failed = True
             self.stop(py_trees.Status.FAILURE)
-        # Make sure we call initialise on the sequence to handle the current child pointers
-        py_trees.Sequence.initialise(self)
+        except rospy.exceptions.ROSInterruptException:
+            # ros shutdown, close quietly
+            return
 
     def terminate(self, new_status):
         self.logger.debug("  %s [SendNotification::terminate()][%s->%s]" % (self.name, self.status, new_status))

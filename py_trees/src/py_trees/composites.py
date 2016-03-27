@@ -64,9 +64,14 @@ class Composite(Behaviour):
         :returns: whether it timed out waiting for the server or not.
         :rtype: boolean
         """
+        self.logger.debug("  %s [Composite.setup()])" % (self.name))
         result = True
         for child in self.children:
-            result = result and child.setup(timeout)
+            new_result = child.setup(timeout)
+            if new_result is None:
+                # replace with py_trees exception!
+                self.logger.error("  %s [Composite.setup()]['%s'.setup() returned None (must be True||False)" % (self.name, child.name))
+            result = result and new_result
         return result
 
     def stop(self, new_status=Status.INVALID):
@@ -106,6 +111,7 @@ class Composite(Behaviour):
         :type child: instance or descendant of :class:`Behaviour <py_trees.behaviours.Behaviour>`
         :return: a unique id for this child (store and use to form remove requests)
         """
+        assert isinstance(child, Behaviour), "children must be behaviours, but you passed in %s" % type(child)
         self.children.append(child)
         child.parent = self
         return child.id
@@ -187,29 +193,15 @@ class Selector(Composite):
         self.current_child = None
         self.logger = logging.get_logger("Selector ")
 
-    def initialise(self):
-        super(Selector, self).initialise()
-        self.current_child = None
-
-    def update(self):
-        self.logger.debug("  %s [update()]" % self.name)
-        for child in self.children:
-            status = next(child.iterator)
-            if (status == Status.RUNNING) or (status == Status.SUCCESS):
-                self.current = child
-                return status
-        return Status.FAILURE
-
     def tick(self):
         # Required behaviour for *all* behaviours and composites is
         # for tick() to check if it isn't running and initialise
-        #
-        # Selector doesn't actually have anything to do though, but just
-        # in case someone inherits the class and overrides initialise()
-        # but not tick()
+        self.logger.debug("  %s [Selector.tick()]" % self.name)
         if self.status != Status.RUNNING:
+            # sequence specific handling
+            self.current_child = None
+            # subclass (user) handling
             self.initialise()
-        self.logger.debug("  %s [tick()]" % self.name)
         previous = self.current_child
         for child in self.children:
             for node in child.tick():
@@ -264,16 +256,11 @@ class Sequence(Composite):
         self.current_index = -1  # -1 indicates uninitialised
         self.logger = logging.get_logger("Sequence ")
 
-    def initialise(self):
-        """
-        If it isn't already running, then start the sequence from the
-        beginning.
-        """
-        self.logger.debug("  %s [initialise()]" % self.name)
-        self.current_index = 0
-
     def tick(self):
         if self.status != Status.RUNNING:
+            # sequence specific handling
+            self.current_index = 0
+            # subclass (user) handling
             self.initialise()
         self.logger.debug("  %s [tick()]" % self.name)
         for child in itertools.islice(self.children, self.current_index, None):

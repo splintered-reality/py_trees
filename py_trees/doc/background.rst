@@ -49,18 +49,15 @@ Why Py Trees?
 
 We needed a way to model the overall behaviour of a robot and didn't find anything that really fit till
 we tried behaviour trees. This is a python implementation that uses all the whizbang tricks (generators, decorators)
-that python has to offer to make it as fast as possible in python. Nonetheless, it's not a c++ implementation
-of behaviour trees - however robot scenarios are more than often not likely to need a full blown c++ implementation
-that would handle thousands of behaviours at once. If we do, then we'll make a c++ implementation :)
+that python has to offer. It doesn't have the speed of c++, however most of our robot scenarios do not need an
+implementation that can handle thousands of behaviours at once. If we do, then we'll make that c++ implementation :)
 
-What about other behaviour tree implementations? Actually there are almost none that are open. Some have started, but
+Other behaviour tree implementations? There are almost none that are open. Some have started, but
 haven't progressed far (e.g. `Owyl`_). Does this mean people don't use them? It is more likely that most behaviour tree
-implementations happen within the closed doors of gaming companies. `Youtube - Second Generation of Behaviour Trees`_
+implementations happen within the closed doors of gaming/robot companies. `Youtube - Second Generation of Behaviour Trees`_
 is an enlightening video about behaviour trees and the developments of the last ten years from an industry expert. He even
-walks you through a simple c++ implementation. His advice? Go it on your own - they are *relatively simple* to build
-and your own implementation can cater more flexibly for your own needs.
-
-*Hence this implementation for our needs in robotics....*
+walks you through a simple c++ implementation. His advice? It is *relatively simple* to roll your own and given that the
+scenery is still changing, this way you can more flexibly cater for your own needs....which in our case is for robotics.
 
 Readings
 --------

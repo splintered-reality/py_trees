@@ -1,0 +1,15 @@
+digraph demo_docking {
+"Demo Docking" [shape=box, fontsize=11, style=filled, fillcolor=orange];
+"Wait to be Docked" [shape=box, fontsize=11, style=filled, fillcolor=orange];
+"Demo Docking" -> "Wait to be Docked";
+"Check Docked Contact" [shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+"Wait to be Docked" -> "Check Docked Contact";
+"Auto UnDock" [shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+"Demo Docking" -> "Auto UnDock";
+"AR Markers On" [shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+"Demo Docking" -> "AR Markers On";
+"Auto Dock" [shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+"Demo Docking" -> "Auto Dock";
+"AR Markers Off" [shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+"Demo Docking" -> "AR Markers Off";
+}

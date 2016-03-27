@@ -22,11 +22,12 @@ Behaviours related to checking and reacting to battery notifications.
 # Imports
 ##############################################################################
 
+import gopher_configuration
 import py_trees
 import rospy
 import somanet_msgs.msg as somanet_msgs
-import gopher_configuration
 
+from . import interactions
 from . import recovery
 
 ##############################################################################
@@ -60,7 +61,36 @@ class CheckChargeState(py_trees.Behaviour):
             return py_trees.Status.FAILURE
 
 
-def create_check_docked_behaviour(name="Check Docked"):
+def create_wait_to_be_docked(name="Wait to be Docked"):
+    """
+    Hooks up a subscriber and waits for docking contact to be detected.
+    Flashes for help in the meantime.
+
+    :param str name: behaviour name
+    :returns: the behaviour
+    :rtype: subscribers.CheckSubscriberVariable
+    """
+    gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
+    wait_to_be_docked = interactions.SendNotification(
+        name,
+        message='waiting to be docked',
+        led_pattern=gopher.led_patterns.humans_i_need_help
+    )
+    checked_docked_contact = py_trees.CheckSubscriberVariable(
+        name="Check Docked Contact",
+        topic_name=gopher.topics.battery,
+        topic_type=somanet_msgs.SmartBatteryStatus,
+        variable_name="charging_source",
+        expected_value=somanet_msgs.SmartBatteryStatus.CHARGING_SOURCE_DOCK,
+        fail_if_no_data=False,
+        fail_if_bad_comparison=False,
+        clearing_policy=py_trees.common.ClearingPolicy.NEVER
+    )
+    wait_to_be_docked.add_child(checked_docked_contact)
+    return wait_to_be_docked
+
+
+def create_is_docked(name="Is Docked?"):
     """
     Hooks up a subscriber and checks that the charging source is the dock.
 
@@ -69,6 +99,7 @@ def create_check_docked_behaviour(name="Check Docked"):
     :rtype: subscribers.CheckSubscriberVariable
     """
     gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
+
     check_docked = py_trees.CheckSubscriberVariable(
         name=name,
         topic_name=gopher.topics.battery,
@@ -76,30 +107,60 @@ def create_check_docked_behaviour(name="Check Docked"):
         variable_name="charging_source",
         expected_value=somanet_msgs.SmartBatteryStatus.CHARGING_SOURCE_DOCK,
         fail_if_no_data=False,
-        fail_if_bad_comparison=False
+        fail_if_bad_comparison=True,
+        clearing_policy=py_trees.common.ClearingPolicy.NEVER
     )
     return check_docked
 
 
-def create_check_discharging_behaviour(name="Check Discharging"):
+def create_is_discharging(name="Is Discharging?"):
     """
     Hooks up a subscriber and checks that there is no current charging source.
+    This will 'block', i.e. return RUNNING until it detects that it is discharging.
 
     :param str name: behaviour name
-    :returns: the behaviour
     :rtype: subscribers.CheckSubscriberVariable
     """
     gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
-    check_docked = py_trees.CheckSubscriberVariable(
+    is_discharging = py_trees.CheckSubscriberVariable(
         name=name,
         topic_name=gopher.topics.battery,
         topic_type=somanet_msgs.SmartBatteryStatus,
         variable_name="charging_source",
         expected_value=somanet_msgs.SmartBatteryStatus.CHARGING_SOURCE_NONE,
         fail_if_no_data=False,
-        fail_if_bad_comparison=False
+        fail_if_bad_comparison=True,
+        clearing_policy=py_trees.common.ClearingPolicy.NEVER
     )
-    return check_docked
+    return is_discharging
+
+
+def create_wait_to_be_unplugged(name="Unplug Me"):
+    """
+    Hooks up a subscriber and checks that there is no current charging source.
+    This will 'block', i.e. return RUNNING until it detects that it is discharging.
+
+    :param str name: subtree root name
+    :returns: the subtree
+    """
+    gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
+    wait_for_discharging = py_trees.CheckSubscriberVariable(
+        name="Wait for Discharging",
+        topic_name=gopher.topics.battery,
+        topic_type=somanet_msgs.SmartBatteryStatus,
+        variable_name="charging_source",
+        expected_value=somanet_msgs.SmartBatteryStatus.CHARGING_SOURCE_NONE,
+        fail_if_no_data=False,
+        fail_if_bad_comparison=False,
+        clearing_policy=py_trees.common.ClearingPolicy.NEVER
+    )
+    wait_to_be_unplugged = interactions.SendNotification(
+        name=name,
+        message='waiting to be unplugged',
+        led_pattern=gopher.led_patterns.humans_i_need_help
+    )
+    wait_to_be_unplugged.add_child(wait_for_discharging)
+    return wait_to_be_unplugged
 
 
 class CheckBatteryLevel(py_trees.Behaviour):

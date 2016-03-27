@@ -33,18 +33,18 @@
 from __future__ import division
 
 import argparse
+import fnmatch
 import functools
+import py_trees_msgs.msg as py_trees_msgs
 import os
 import re
-import sys
-import fnmatch
-
 import rosbag
 import rospkg
 import rospy
-
-import py_trees_msgs.msg as py_trees_msgs
+import sys
+import termcolor
 import uuid_msgs.msg as uuid_msgs
+
 
 from .dotcode_behaviour import RosBehaviourTreeDotcodeGenerator
 from .dynamic_timeline import DynamicTimeline
@@ -53,13 +53,14 @@ from .timeline_listener import TimelineListener
 from qt_dotgraph.dot_to_qt import DotToQtGenerator
 from qt_dotgraph.pydotfactory import PydotFactory
 from rqt_bag.bag_timeline import BagTimeline
-from rqt_bag.bag_widget import BagGraphicsView
+# from rqt_bag.bag_widget import BagGraphicsView
 from rqt_graph.interactive_graphics_view import InteractiveGraphicsView
 
 from python_qt_binding import loadUi
 from python_qt_binding.QtCore import QFile, QIODevice, QObject, Qt, Signal, QEvent
 from python_qt_binding.QtGui import QFileDialog, QGraphicsView, QGraphicsScene, QIcon, QImage, QPainter, QWidget, QShortcut, QKeySequence
 from python_qt_binding.QtSvg import QSvgGenerator
+
 
 class RosBehaviourTree(QObject):
 
@@ -111,8 +112,8 @@ class RosBehaviourTree(QObject):
 
         self.context = context
         self.initialized = False
-        self._current_dotcode = None # dotcode for the tree that is currently displayed
-        self._viewing_bag = False # true if a bag file is loaded
+        self._current_dotcode = None  # dotcode for the tree that is currently displayed
+        self._viewing_bag = False  # true if a bag file is loaded
         # True if next or previous buttons are pressed. Reset if the tree being
         # viewed is the last one in the list.
         self._browsing_timeline = False
@@ -126,8 +127,8 @@ class RosBehaviourTree(QObject):
         self.dotcode_generator = RosBehaviourTreeDotcodeGenerator()
         self.current_topic = None
         self.behaviour_sub = None
-        self._tip_message = None # message of the tip of the tree
-        self._saved_settings_topic = None # topic subscribed to by previous instance
+        self._tip_message = None  # message of the tip of the tree
+        self._saved_settings_topic = None  # topic subscribed to by previous instance
 
         # dot_to_qt transforms into Qt elements using dot layout
         self.dot_to_qt = DotToQtGenerator()
@@ -238,7 +239,7 @@ class RosBehaviourTree(QObject):
 
         # Update the timeline buttons to correspond with a completely
         # uninitialised state.
-        self._set_timeline_buttons(first=False, previous=False, next=False, last=False)
+        self._set_timeline_buttons(first_snapshot=False, previous_snapshot=False, next_snapshot=False, last_snapshot=False)
 
         self._deferred_fit_in_view.connect(self._fit_in_view,
                                            Qt.QueuedConnection)
@@ -255,7 +256,7 @@ class RosBehaviourTree(QObject):
         if self.live_update:
             context.add_widget(self._widget)
         else:
-            self.initialized = True # this needs to be set for trees to be displayed
+            self.initialized = True  # this needs to be set for trees to be displayed
             context.setCentralWidget(self._widget)
 
         if parsed_args.bag:
@@ -301,7 +302,7 @@ class RosBehaviourTree(QObject):
             return
 
         files = []
-        for root, dirnames, filenames in os.walk(bag_dir, topdown=True):
+        for root, unused_dirnames, filenames in os.walk(bag_dir, topdown=True):
             files.extend(fnmatch.filter(map(lambda p: os.path.join(root, p), filenames), '*.bag'))
 
         if not files:
@@ -323,7 +324,7 @@ class RosBehaviourTree(QObject):
                 latest_bag = sorted(valid)[-1]
 
         if by_time:
-            latest_bag = sorted(files, cmp=lambda x,y: cmp(os.path.getctime(x), os.path.getctime(y)))[-1]
+            latest_bag = sorted(files, cmp=lambda x, y: cmp(os.path.getctime(x), os.path.getctime(y)))[-1]
 
         self._load_bag(latest_bag)
 
@@ -335,7 +336,7 @@ class RosBehaviourTree(QObject):
         msg = None
         if self._timeline_listener:
             try:
-                msg = self._timeline_listener.msg 
+                msg = self._timeline_listener.msg
             except KeyError:
                 pass
 
@@ -396,17 +397,17 @@ class RosBehaviourTree(QObject):
                 self._widget.topic_combo_box.setCurrentIndex(self._widget.topic_combo_box.count() - 1)
                 self._choose_topic(self._widget.topic_combo_box.currentIndex())
 
-    def _set_timeline_buttons(self, first=None, previous=None, next=None, last=None):
+    def _set_timeline_buttons(self, first_snapshot=None, previous_snapshot=None, next_snapshot=None, last_snapshot=None):
         """Allows timeline buttons to be enabled and disabled.
         """
-        if first is not None:
-            self._widget.first_tool_button.setEnabled(first)
-        if previous is not None:
-            self._widget.previous_tool_button.setEnabled(previous)
-        if next is not None:
-            self._widget.next_tool_button.setEnabled(next)
-        if last is not None:
-            self._widget.last_tool_button.setEnabled(last)
+        if first_snapshot is not None:
+            self._widget.first_tool_button.setEnabled(first_snapshot)
+        if previous_snapshot is not None:
+            self._widget.previous_tool_button.setEnabled(previous_snapshot)
+        if next_snapshot is not None:
+            self._widget.next_tool_button.setEnabled(next_snapshot)
+        if last_snapshot is not None:
+            self._widget.last_tool_button.setEnabled(last_snapshot)
 
     def _play(self):
         """Start a timer which will automatically call the next function every time its
@@ -438,7 +439,7 @@ class RosBehaviourTree(QObject):
         """
         self._timeline.navigate_start()
 
-        self._set_timeline_buttons(first=False, previous=False, next=True, last=True)
+        self._set_timeline_buttons(first_snapshot=False, previous_snapshot=False, next_snapshot=True, last_snapshot=True)
         self._refresh_view.emit()
         self._browsing_timeline = True
 
@@ -457,10 +458,10 @@ class RosBehaviourTree(QObject):
         self._timeline.navigate_previous()
         # now browsing the timeline
         self._browsing_timeline = True
-        self._set_timeline_buttons(last=True, next=True)
+        self._set_timeline_buttons(last_snapshot=True, next_snapshot=True)
         # if now at the beginning, disable timeline buttons.
         if self._timeline._timeline_frame.playhead == self._timeline._get_end_stamp():
-            self._set_timeline_buttons(next=False, last=False)
+            self._set_timeline_buttons(next_snapshot=False, last_snapshot=False)
 
         self._refresh_view.emit()
 
@@ -472,7 +473,7 @@ class RosBehaviourTree(QObject):
         """
         self._timeline.navigate_end()
 
-        self._set_timeline_buttons(first=True, previous=True, next=False, last=False)
+        self._set_timeline_buttons(first_snapshot=True, previous_snapshot=True, next_snapshot=False, last_snapshot=False)
         self._refresh_view.emit()
         self._browsing_timeline = False
         self._new_messages = 0
@@ -489,10 +490,10 @@ class RosBehaviourTree(QObject):
 
         # otherwise, go to the next message
         self._timeline.navigate_next()
-        self._set_timeline_buttons(first=True, previous=True)
+        self._set_timeline_buttons(first_snapshot=True, previous_snapshot=True)
         # if now at the end, disable timeline buttons and shutdown the play timer if active
         if self._timeline._timeline_frame.playhead == self._timeline._get_end_stamp():
-            self._set_timeline_buttons(next=False, last=False)
+            self._set_timeline_buttons(next_snapshot=False, last_snapshot=False)
             self._browsing_timeline = False
             if self._play_timer:
                 self._play_timer.shutdown()
@@ -505,7 +506,7 @@ class RosBehaviourTree(QObject):
         instance_settings.set_value('highlight_connections_check_box_state',
                                     self._widget.highlight_connections_check_box.isChecked())
         combo_text = self._widget.topic_combo_box.currentText()
-        if not combo_text in [self._empty_topic, self._unselected_topic]:
+        if combo_text not in [self._empty_topic, self._unselected_topic]:
             instance_settings.set_value('combo_box_subscribed_topic', combo_text)
 
     def restore_settings(self, plugin_settings, instance_settings):
@@ -537,11 +538,13 @@ class RosBehaviourTree(QObject):
         Cache replaces LRU.
 
         Mostly stolen from rqt_bag.MessageLoaderThread
-
         """
         if message is None:
             return ""
 
+        #######################################################
+        # Get the tip, from the perspective of the root
+        #######################################################
         # this is pretty inefficient, and ignores caching
         tip_id = None
         self._tip_message = None
@@ -550,21 +553,22 @@ class RosBehaviourTree(QObject):
         for behaviour in reversed(message.behaviours):
             # root has empty parent ID
             if str(behaviour.parent_id) == str(uuid_msgs.UniqueID()):
+                # parent is the root behaviour, so
                 tip_id = behaviour.tip_id
 
-            # might be able to catch the tip on iterating through the behaviours
-            # after the root
-            if tip_id and behaviour.own_id == tip_id:
-                self._tip_message = behaviour.message
-
-        # if the tip message wasn't set, go through all the behaviours again to
-        # get the tip
+        # Run through the behaviours and do a couple of things:
+        #  - get the tip
+        #  - protect against feedback messages with quotes (https://bitbucket.org/yujinrobot/gopher_crazy_hospital/issues/72/rqt_py_trees-fails-to-display-tree)
         if self._tip_message is None:
             for behaviour in message.behaviours:
                 if str(behaviour.own_id) == str(tip_id):
                     self._tip_message = behaviour.message
+                if '"' in behaviour.message:
+                    print("%s" % termcolor.colored('[ERROR] found double quotes in the feedback message [%s]' % behaviour.message, 'red'))
+                    behaviour.message = behaviour.message.replace('"', '')
+                    print("%s" % termcolor.colored('[ERROR] stripped to stop from crashing, but do catch the culprit! [%s]' % behaviour.message, 'red'))
 
-        key = str(message.header.stamp) # stamps are unique
+        key = str(message.header.stamp)  # stamps are unique
         if key in self._dotcode_cache:
             return self._dotcode_cache[key]
 
@@ -575,7 +579,6 @@ class RosBehaviourTree(QObject):
         dotcode = self.dotcode_generator.generate_dotcode(dotcode_factory=self.dotcode_factory,
                                                           tree=message,
                                                           force_refresh=force_refresh)
-
         self._dotcode_cache[key] = dotcode
         self._dotcode_cache_keys.append(key)
 
@@ -596,7 +599,7 @@ class RosBehaviourTree(QObject):
         key = str(self.get_current_message().header.stamp)
         if key in self._scene_cache:
             self._scene = self._scene_cache[key]
-        else: # cache miss
+        else:  # cache miss
             new_scene = QGraphicsScene()
             new_scene.setBackgroundBrush(Qt.white)
 
@@ -652,9 +655,9 @@ class RosBehaviourTree(QObject):
 
         """
         if self._timeline._timeline_frame.playhead == self._timeline._get_start_stamp():
-            self._set_timeline_buttons(first=False, previous=False)
+            self._set_timeline_buttons(first_snapshot=False, previous_snapshot=False)
         else:
-            self._set_timeline_buttons(first=True, previous=True)
+            self._set_timeline_buttons(first_snapshot=True, previous_snapshot=True)
 
     def message_changed(self):
         """This function should be called when the message being viewed changes. Will
@@ -664,14 +667,14 @@ class RosBehaviourTree(QObject):
 
         """
         if self._timeline._timeline_frame.playhead == self._timeline._get_end_stamp():
-            self._set_timeline_buttons(last=False, next=False)
+            self._set_timeline_buttons(last_snapshot=False, next_snapshot=False)
         else:
-            self._set_timeline_buttons(last=True, next=True)
+            self._set_timeline_buttons(last_snapshot=True, next_snapshot=True)
 
         if self._timeline._timeline_frame.playhead == self._timeline._get_start_stamp():
-            self._set_timeline_buttons(first=False, previous=False)
+            self._set_timeline_buttons(first_snapshot=False, previous_snapshot=False)
         else:
-            self._set_timeline_buttons(first=True, previous=True)
+            self._set_timeline_buttons(first_snapshot=True, previous_snapshot=True)
 
         self._refresh_view.emit()
 
@@ -779,10 +782,10 @@ class RosBehaviourTree(QObject):
         # ugh...
         topics = bag.get_type_and_topic_info()[1].keys()
         types = []
-        for i in range(0,len(bag.get_type_and_topic_info()[1].values())):
+        for i in range(0, len(bag.get_type_and_topic_info()[1].values())):
             types.append(bag.get_type_and_topic_info()[1].values()[i][0])
 
-        tree_topics = [] # only look at the first matching topic
+        tree_topics = []  # only look at the first matching topic
         for ind, tp in enumerate(types):
             if tp == 'py_trees_msgs/BehaviourTree':
                 tree_topics.append(topics[ind])
@@ -794,11 +797,11 @@ class RosBehaviourTree(QObject):
         self.message_list = []
         self._viewing_bag = True
         rospy.loginfo('Reading behaviour trees from topic {0}'.format(tree_topics[0]))
-        for topic, msg, t in bag.read_messages(topics=[tree_topics[0]]):
+        for unused_topic, msg, unused_t in bag.read_messages(topics=[tree_topics[0]]):
             self.message_list.append(msg)
 
         self.current_topic = tree_topics[0]
-        self._set_timeline_buttons(first=True, previous=True, next=False, last=False)
+        self._set_timeline_buttons(first_snapshot=True, previous_snapshot=True, next_snapshot=False, last_snapshot=False)
         self._set_bag_timeline(bag)
         self._refresh_view.emit()
 
@@ -818,7 +821,6 @@ class RosBehaviourTree(QObject):
             fhandle.close()
         except IOError:
             return
-
         self._update_graph_view(dotcode)
 
     def _fit_in_view(self):
@@ -833,12 +835,12 @@ class RosBehaviourTree(QObject):
         if file_name is None or file_name == '':
             return
 
-        file = QFile(file_name)
-        if not file.open(QIODevice.WriteOnly | QIODevice.Text):
+        dot_file = QFile(file_name)
+        if not dot_file.open(QIODevice.WriteOnly | QIODevice.Text):
             return
 
-        file.write(self._current_dotcode)
-        file.close()
+        dot_file.write(self._current_dotcode)
+        dot_file.close()
 
     def _save_svg(self):
         file_name, _ = QFileDialog.getSaveFileName(

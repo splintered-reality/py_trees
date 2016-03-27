@@ -40,9 +40,9 @@ _behaviour_status_to_ascii = {
 }
 
 
-def generate_ascii_tree(tree, indent=0, snapshot_information=None):
+def _generate_ascii_tree(tree, indent=0, snapshot_information=None):
     """
-    Generate the ascii tree (worker function).
+    Generator for spinning out the ascii tree.
 
     :param tree: the root of the tree, or subtree you want to show
     :param indent: the number of characters to indent the tree
@@ -74,7 +74,7 @@ def generate_ascii_tree(tree, indent=0, snapshot_information=None):
         else:
             yield "    " * indent + bullet + child.name
         if child.children != []:
-            for line in generate_ascii_tree(child, indent + 1, snapshot_information):
+            for line in _generate_ascii_tree(child, indent + 1, snapshot_information):
                 yield line
 
 
@@ -90,7 +90,7 @@ def ascii_tree(tree, indent=0, snapshot_information=None):
 
     """
     s = ""
-    for line in generate_ascii_tree(tree, indent, snapshot_information):
+    for line in _generate_ascii_tree(tree, indent, snapshot_information):
         s += "%s\n" % line
     return s
 
@@ -103,7 +103,7 @@ def print_ascii_tree(tree, indent=0):
     :param indent: the number of characters to indent the tree
     :return: nothing
     """
-    for line in generate_ascii_tree(tree, indent):
+    for line in _generate_ascii_tree(tree, indent):
         print("%s" % line)
 
 
@@ -153,7 +153,8 @@ def generate_pydot_graph(root):
 
 def stringify_dot_tree(root):
     """
-    Generate dot tree graphs and return a string representation of the dot graph.
+    Generate dot tree graphs and return a string representation
+    of the dot graph.
 
     :param root: the root of the tree, or subtree you want to show
     :return: dot graph as a string
@@ -164,8 +165,8 @@ def stringify_dot_tree(root):
 
 def render_dot_tree(root):
     """
-    Render the dot tree to files - _name_.dot, .svg, .png.
-    These files will be created in the present working directory.
+    Render the dot tree to .dot, .svg, .png. files in the current
+    working directory. These will be named with the root behaviour name.
 
     :param root: the root of the tree, or subtree you want to show
     """

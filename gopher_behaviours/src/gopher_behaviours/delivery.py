@@ -279,10 +279,7 @@ class GopherDeliveries(object):
                                                                          expected_value=True,
                                                                          invert=False
                                                                          )
-                self.check_button_pressed = interactions.CheckButtonPressed("Cancel Pressed?",
-                                                                            self.config.buttons.stop,
-                                                                            latched=True
-                                                                            )
+                self.check_button_pressed = interactions.create_check_for_stop_button_press("Cancel Pressed?")
                 self.cancel_required = py_trees.Selector(name="Cancellation Required?",
                                                          children=[self.check_button_pressed,
                                                                    self.cancel_requested]

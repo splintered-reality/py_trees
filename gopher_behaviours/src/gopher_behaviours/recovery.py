@@ -47,7 +47,7 @@ class HomebaseRecovery(py_trees.Sequence):
         flash_leds = interactions.SendNotification("Flash - I Need Help",
                                                    led_pattern=self.gopher.led_patterns.humans_i_need_help,
                                                    message="homebase recovery - need human assistance to teleop home")
-        wait_for_button = interactions.WaitForButton("Teleop -> Homebase and Hit the Green Button!", self.gopher.buttons.go)
+        wait_for_button = interactions.create_wait_for_go_button(name="Teleop -> Homebase and Hit the Green Button!")
         teleport = navigation.Teleport("Activate the Homebase Teleport!",
                                        gopher_navi_msgs.TeleportGoal(location="homebase", special_effects=True)
                                        )

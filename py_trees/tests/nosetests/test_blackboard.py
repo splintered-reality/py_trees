@@ -94,3 +94,38 @@ def test_expected_value_inverted():
     for b, asserted_result in tuples:
         print("%s: %s [%s]" % (b.name, b.status, asserted_result))
         assert(b.status == asserted_result)
+
+def test_clear_blackboard_variable():
+    print(console.bold + "\n****************************************************************************************" + console.reset)
+    print(console.bold + "* Clear Blackboard Variable" + console.reset)
+    print(console.bold + "****************************************************************************************\n" + console.reset)
+    blackboard = create_blackboard()
+    blackboard.foo = "bar"
+    clear_foo = py_trees.blackboard.ClearBlackboardVariable(name="Clear Foo", variable_name="foo")
+    clear_bar = py_trees.blackboard.ClearBlackboardVariable(name="Clear Bar", variable_name="bar")
+    print("%s" % blackboard)
+    print(" - Assert blackboard has attribute 'foo'")
+    assert(hasattr(blackboard, "foo"))
+    print(" - Clearing 'foo'")
+    clear_foo.tickOnce()
+    print(" - Assert blackboard does not have attribute 'foo'")
+    assert(not hasattr(blackboard, "foo"))
+    print(" - Clearing 'bar'")
+    clear_bar.tickOnce()
+    print(" - Asserting nothing wierd happened")
+    assert(not hasattr(blackboard, "foo"))
+
+def test_set_blackboard_variable():
+    print(console.bold + "\n****************************************************************************************" + console.reset)
+    print(console.bold + "* Set Blackboard Variable" + console.reset)
+    print(console.bold + "****************************************************************************************\n" + console.reset)
+    blackboard = create_blackboard()
+    set_foo = py_trees.blackboard.SetBlackboardVariable(name="Set Foo", variable_name="foo", variable_value="bar")
+    print(" - Set 'foo'")
+    set_foo.tickOnce()
+    print("\n%s" % blackboard)
+    print(" - Assert blackboard.foo='bar'")
+    assert(hasattr(blackboard, "foo"))
+    assert(blackboard.foo == "bar")
+    print(" - Assert set_foo.status == SUCCESS")
+    assert(set_foo.status == py_trees.Status.SUCCESS)

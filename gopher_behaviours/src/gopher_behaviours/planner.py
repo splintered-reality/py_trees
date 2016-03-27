@@ -12,7 +12,6 @@ import rocon_python_utils
 
 from . import elevators
 from . import interactions
-from . import groups
 from . import blackboard_handlers
 from . import navigation
 
