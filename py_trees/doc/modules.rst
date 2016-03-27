@@ -52,6 +52,14 @@ py_trees.subscribers
     :special-members:
     :show-inheritance:
 
+py_trees.timers
+---------------
+
+.. automodule:: py_trees.timers
+    :members:
+    :special-members:
+    :show-inheritance:
+
 py_trees.trees
 --------------
 

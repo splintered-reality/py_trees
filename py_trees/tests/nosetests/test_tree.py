@@ -27,17 +27,6 @@ logger = py_trees.logging.get_logger("Nosetest")
 # Classes
 ##############################################################################
 
-class Visitor(py_trees.VisitorBase):
-    def __init__(self):
-        super(Visitor, self).__init__(full=False)
-        self.logger = py_trees.logging.get_logger("Visitor")
-
-    def initialise(self):
-        pass
-
-    def run(self, behaviour):
-        self.logger.debug("  %s [visited][%s]" % (behaviour.name, behaviour.status))
-
 def pre_tick_visitor(behaviour_tree):
     print("\n--------- Run %s ---------\n" % behaviour_tree.count)
 
@@ -62,7 +51,7 @@ def test_selector_composite():
     print(console.bold + "\n****************************************************************************************" + console.reset)
     print(console.bold + "* Selector" + console.reset)
     print(console.bold + "****************************************************************************************" + console.reset)
-    visitor = Visitor()
+    visitor = py_trees.trees.DebugVisitor()
     tree = py_trees.Selector(name='Selector')
     a = py_trees.behaviours.Count(name="A")
     b = py_trees.behaviours.Count(name="B")
@@ -99,7 +88,7 @@ def test_sequence_composite():
     print(console.bold + "\n****************************************************************************************" + console.reset)
     print(console.bold + "* Sequence" + console.reset)
     print(console.bold + "****************************************************************************************" + console.reset)
-    visitor = Visitor()
+    visitor = py_trees.trees.DebugVisitor()
     tree = py_trees.Sequence(name='Sequence')
     a = py_trees.behaviours.Count(name="A", fail_until=0, running_until=3, success_until=6)
     b = py_trees.behaviours.Count(name="B", fail_until=0, running_until=3, success_until=6)
@@ -139,7 +128,7 @@ def test_mixed_tree():
     print(console.bold + "\n****************************************************************************************" + console.reset)
     print(console.bold + "* Mixed Tree" + console.reset)
     print(console.bold + "****************************************************************************************" + console.reset)
-    visitor = Visitor()
+    visitor = py_trees.trees.DebugVisitor()
 
     a = py_trees.behaviours.Count(name="A", fail_until=3, running_until=5, success_until=7)
 
@@ -232,8 +221,8 @@ def test_full_iteration():
     print(console.bold + "\n****************************************************************************************" + console.reset)
     print(console.bold + "* Visit Whole Tree" + console.reset)
     print(console.bold + "****************************************************************************************\n" + console.reset)
-    visitor = Visitor()
 
+    visitor = py_trees.trees.DebugVisitor()
     a = py_trees.behaviours.Count(name="A")
     sequence = py_trees.Sequence(name="Sequence")
     b = py_trees.behaviours.Count(name="B")
@@ -332,7 +321,8 @@ def test_tick_tock_behaviour_tree():
     tree = py_trees.BehaviourTree(root)
     py_trees.display.print_ascii_tree(tree.root)
 
-    tree.visitors.append(Visitor())
+    visitor = py_trees.trees.DebugVisitor()
+    tree.visitors.append(visitor)
     tree.tick_tock(100, 5, pre_tick_handler=pre_tick_visitor)
 
     print("\n--------- Assertions ---------\n")
@@ -351,7 +341,7 @@ def test_success_failure_tree():
     root.add_child(failure2)
     root.add_child(success)
     py_trees.display.print_ascii_tree(root)
-    visitor = Visitor()
+    visitor = py_trees.trees.DebugVisitor()
     tick_tree(root, visitor, 1, 1)
 
     print("\n--------- Assertions ---------\n")
@@ -379,7 +369,8 @@ def test_tip_simple():
     tree = py_trees.BehaviourTree(seq)
     py_trees.display.print_ascii_tree(tree.root)
 
-    tree.visitors.append(Visitor())
+    visitor = py_trees.trees.DebugVisitor()
+    tree.visitors.append(visitor)
 
     print("\n--------- Assertions (before initialisation) ---------\n")
     # an uninitialised tree/behaviour always has a tip of None
@@ -449,7 +440,8 @@ def test_tip_complex():
     tree = py_trees.BehaviourTree(sel)
     py_trees.display.print_ascii_tree(tree.root)
 
-    tree.visitors.append(Visitor())
+    visitor = py_trees.trees.DebugVisitor()
+    tree.visitors.append(visitor)
     tree.tick()
 
     print("\n--------- Assertions ---------\n")
@@ -490,7 +482,8 @@ def test_condition():
     tree = py_trees.BehaviourTree(condition)
     py_trees.display.print_ascii_tree(tree.root)
 
-    tree.visitors.append(Visitor())
+    visitor = py_trees.trees.DebugVisitor()
+    tree.visitors.append(visitor)
     tree.tick()
 
     print("\n--------- Assertions ---------\n")

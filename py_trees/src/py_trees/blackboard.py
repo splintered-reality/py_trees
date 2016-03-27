@@ -12,8 +12,6 @@
    :platform: Unix
    :synopsis: Shared data storage for py_trees behaviours.
 
-----
-
 """
 
 ##############################################################################

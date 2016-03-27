@@ -76,6 +76,11 @@ def inverter(cls):
     .. code-block:: python
 
        failure = inverter(Success("Failure"))
+
+    .. warning::
+
+       Inverting the result could have consequences in the behaviour's handling of status changes
+       in the :py_trees:class:`terminate` method.
     """
     update = getattr(cls, "update")
     setattr(cls, "update", _invert(update))
@@ -139,6 +144,11 @@ def running_is_failure(cls):
     .. code-block:: python
 
        need_results_now = running_is_failure(Pontificating("Greek Philosopher"))
+
+    .. warning::
+
+       Inverting the result could have consequences in the behaviour's handling of status changes
+       in the :py_trees:class:`terminate` method.
     """
     update = getattr(cls, "update")
     setattr(cls, "update", _running_is_failure(update))
@@ -171,6 +181,11 @@ def failure_is_success(cls):
     .. code-block:: python
 
        must_go_on_regardless = failure_is_success(ActingLikeAGoon("Goon"))
+
+    .. warning::
+
+       Inverting the result could have consequences in the behaviour's handling of status changes
+       in the :py_trees:class:`terminate` method.
     """
     update = getattr(cls, "update")
     setattr(cls, "update", _failure_is_success(update))

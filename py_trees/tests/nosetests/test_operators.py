@@ -27,15 +27,6 @@ logger = py_trees.logging.get_logger("Nosetest")
 # Classes
 ##############################################################################
 
-class Visitor:
-    def __init__(self):
-        self.logger = py_trees.logging.get_logger("Visitor")
-
-    def initialise(self):
-        pass
-
-    def run(self, behaviour):
-        self.logger.debug("  %s [visited][%s]" % (behaviour.name, behaviour.status))
 
 def pre_tick_visitor(behaviour_tree):
     print("\n--------- Run %s ---------\n" % behaviour_tree.count)
@@ -71,9 +62,9 @@ def test_failure_is_success_tree():
     root.add_child(failure)
     root.add_child(goon)
     py_trees.display.print_ascii_tree(root)
-    visitor = Visitor()
+    visitor = py_trees.trees.DebugVisitor()
     tick_tree(root, visitor, 1, 1)
-      
+
     print("\n--------- Assertions ---------\n")
     print("root.status == py_trees.Status.SUCCESS")
     assert(root.status == py_trees.Status.SUCCESS)
@@ -82,7 +73,7 @@ def test_failure_is_success_tree():
     print("goon.status == py_trees.Status.SUCCESS")
     assert(goon.status == py_trees.Status.SUCCESS)
 
-      
+
 def test_success_failure_tree():
     print(console.bold + "\n****************************************************************************************" + console.reset)
     print(console.bold + "* Success Failure Tree" + console.reset)
@@ -99,9 +90,9 @@ def test_success_failure_tree():
     root.add_child(selector)
     root.add_child(success2)
     py_trees.display.print_ascii_tree(root)
-    visitor = Visitor()
+    visitor = py_trees.trees.DebugVisitor()
     tick_tree(root, visitor, 1, 1)
-      
+
     print("\n--------- Assertions ---------\n")
     print("success.status == py_trees.Status.SUCCESS")
     assert(success.status == py_trees.Status.SUCCESS)

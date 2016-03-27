@@ -76,6 +76,7 @@ class DebugVisitor(VisitorBase):
         else:
             self.logger.debug("  %s [visited][%s]" % (behaviour.name, behaviour.status))
 
+
 ##############################################################################
 # Trees
 ##############################################################################
