@@ -113,12 +113,43 @@ def oneshot(cls):
     return cls
 
 #############################
+# RunningIsFailure
+#############################
+
+
+def _running_is_failure(func):
+    def wrapped(*args, **kwargs):
+        status = func(*args, **kwargs)
+        return common.Status.FAILURE if (status == common.Status.RUNNING) else status
+    return wrapped
+
+
+def running_is_failure(cls):
+    """
+    Got to be snappy! We want results...yesterday!
+
+    .. code-block:: python
+
+       @running_is_failure
+       class NeedResultsNow(Pontificating)
+           pass
+
+    or
+
+    .. code-block:: python
+
+       need_results_now = running_is_failure(Pontificating("Greek Philosopher"))
+    """
+    update = getattr(cls, "update")
+    setattr(cls, "update", _running_is_failure(update))
+    return cls
+
+#############################
 # FailureIsSuccess
 #############################
 
 
 def _failure_is_success(func):
-    """Flips all failure to be success, used for the 'failure is success' decorator."""
     def wrapped(*args, **kwargs):
         status = func(*args, **kwargs)
         return common.Status.SUCCESS if (status == common.Status.FAILURE) else status
