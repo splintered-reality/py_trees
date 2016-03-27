@@ -5,7 +5,6 @@
 ##############################################################################
 # Description
 ##############################################################################
-
 """
 .. module:: unpark
    :platform: Unix
@@ -49,7 +48,9 @@ class UnPark(py_trees.Sequence):
 
     Blackboard Variables:
 
+     - auto_init_failed            (r) [bool]                       : written by the auto-init program, use it to trigger a manual initialisation
      - elf_localisation_status     (w) [elf_msgs/ElfLocaliserStatus]: the localisation status (gathered at the start of this behaviour)
+     - event_stop_button           (r) [bool]                       : written onto the blackboard by an event handler, catch it for cancelling purposes
      - homebase                    (w) [custom dict]                : semantic information about the homebase
      - pose_homebase_rel_map       (w) [geometry_msgs/Pose]         : pose of the homebase relative to the map, obtained from semantics
      - pose_unpark_start_rel_map   (w) [geometry_msgs/Pose]         : starting park location when already localised, transferred from /navi/pose
@@ -131,7 +132,24 @@ class UnPark(py_trees.Sequence):
         # Manual
         ##############################
         manual_write_finishing_pose_from_odom = navigation.create_odom_pose_to_blackboard_behaviour(name="Final Pose (Odom)", blackboard_variables={"pose_unpark_finish_rel_odom": "pose.pose"})
-        is_cancel_activated = interactions.create_check_for_stop_button_press('Is Cancelled?')
+        manual_checks = py_trees.composites.Selector("Manual Checks")
+        is_cancel_activated = py_trees.CheckBlackboardVariable(
+            name='Is Cancelled?',
+            variable_name='event_stop_button',
+            expected_value=True
+        )
+        interactions.create_check_for_stop_button_press('Is Cancelled?')
+        did_auto_init_fail = py_trees.composites.Sequence("Auto Init Timed Out?")
+        check_auto_init_flag = py_trees.CheckBlackboardVariable(
+            name='Check Flag',
+            variable_name='auto_init_failed',
+            expected_value=True
+        )
+        clear_auto_init_flag = py_trees.blackboard.ClearBlackboardVariable(
+            name="Clear Flag",
+            variable_name='auto_init_failed'
+        )
+
         wait_for_go_button_press = interactions.create_wait_for_go_button("Wait for Go Button")
 
         teleport = navigation.create_homebase_teleport()
@@ -174,7 +192,11 @@ class UnPark(py_trees.Sequence):
         not_yet_localised_sequence.add_child(write_starting_pose_from_odom)
         not_yet_localised_sequence.add_child(manual_or_auto)
         manual_or_auto.add_child(manual_unpark)
-        manual_unpark.add_child(is_cancel_activated)
+        manual_unpark.add_child(manual_checks)
+        manual_checks.add_child(is_cancel_activated)
+        manual_checks.add_child(did_auto_init_fail)
+        did_auto_init_fail.add_child(check_auto_init_flag)
+        did_auto_init_fail.add_child(clear_auto_init_flag)
         manual_unpark.add_child(go_to_homebase)
         manual_unpark.add_child(teleport)
         manual_unpark.add_child(manual_write_finishing_pose_from_odom)

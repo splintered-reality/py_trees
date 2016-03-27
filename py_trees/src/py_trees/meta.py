@@ -168,7 +168,7 @@ def _failure_is_success(func):
 
 def failure_is_success(cls):
     """
-    Inverts the result of a class's update function.
+    Be positive, always succeed.
 
     .. code-block:: python
 
@@ -189,4 +189,41 @@ def failure_is_success(cls):
     """
     update = getattr(cls, "update")
     setattr(cls, "update", _failure_is_success(update))
+    return cls
+
+#############################
+# FailureIsSuccess
+#############################
+
+
+def _success_is_failure(func):
+    def wrapped(*args, **kwargs):
+        status = func(*args, **kwargs)
+        return common.Status.FAILURE if (status == common.Status.SUCCESS) else status
+    return wrapped
+
+
+def success_is_failure(cls):
+    """
+    Be depressed, always fail.
+
+    .. code-block:: python
+
+       @success_is_failure
+       class TheEndIsNigh(ActingLikeAGoon)
+           pass
+
+    or
+
+    .. code-block:: python
+
+       the_end_is_night = success_is_failure(ActingLikeAGoon("Goon"))
+
+    .. warning::
+
+       Inverting the result could have consequences in the behaviour's handling of status changes
+       in the :py_trees:class:`terminate` method.
+    """
+    update = getattr(cls, "update")
+    setattr(cls, "update", _success_is_failure(update))
     return cls

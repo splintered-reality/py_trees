@@ -103,6 +103,40 @@ def create_check_for_stop_button_press(name="Check for Stop Button Press"):
 ##############################################################################
 
 
+class MonitorButtonEvents(py_trees.subscribers.SubscriberHandler):
+    """
+    Monitor button events and write them to the blackboard. Ideally
+    you need this at the very highest part of the tree so that it gets triggered
+    every time - once this happens, then the rest of the behaviour tree can
+    utilise the variables.
+    """
+    def __init__(self,
+                 name="Monitor Button Events",
+                 topic_name="/gopher/buttons/go",
+                 variable_name="go_button_event"
+                 ):
+        super(MonitorButtonEvents, self).__init__(
+            name=name,
+            topic_name=topic_name,
+            topic_type=std_msgs.Empty,
+            clearing_policy=py_trees.common.ClearingPolicy.ON_SUCCESS
+        )
+        self.variable_name = variable_name
+        self.blackboard = py_trees.Blackboard()
+
+    def update(self):
+        """
+        Check for data and write to the board. We also always return success from
+        this as its just a worker, not a logic element.
+        """
+        self.logger.debug("  %s [MonitorButtonEvents::update()]" % self.name)
+        with self.data_guard:
+            self.blackboard.set(self.variable_name, self.msg is not None)
+        # the SubscriberHandler will clear the variable immediately so we can
+        # get a fresh update next tick
+        return py_trees.common.Status.SUCCESS
+
+
 class Articulate(py_trees.Behaviour):
     """
     Articulate a sound.

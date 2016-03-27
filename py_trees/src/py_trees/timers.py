@@ -34,34 +34,36 @@ from . import meta
 ##############################################################################
 
 
-class Pause(behaviour.Behaviour):
-    """
-    Does nothing until the specified timeout is reached, then returns SUCCESS.
-    If the duration is 0.0, then this behaviour blocks indefinitely.
-    """
-    def __init__(self, name="Pause", duration=1.0):
-        """
-        Prepare the behaviour
-
-        :param string name: this behaviour's name
-        :param float duration: the amount of time to pause for; set to zero to pause indefinitely
-        """
-        super(Pause, self).__init__(name)
-        self.duration = duration
-        self.start_time = None
-        self.finish_time = None
-
-    def initialise(self):
-        self.logger.debug("  %s [Pause::initialise()]" % self.name)
-        self.start_time = time.time()
-        self.finish_time = self.start_time + self.duration
-
-    def update(self):
-        self.logger.debug("  %s [Pause::update()]" % self.name)
-        if self.duration == 0.0:
-            return common.Status.RUNNING
-        else:
-            return common.Status.SUCCESS if time.time() > self.finish_time else common.Status.RUNNING
+# class Pause(behaviour.Behaviour):
+#     """
+#     Does nothing until the specified timeout is reached, then returns SUCCESS.
+#     If the duration is 0.0, then this behaviour blocks indefinitely.
+#
+#     This can also be used as a timeout with highest priority in a selector.
+#     """
+#     def __init__(self, name="Pause", duration=1.0):
+#         """
+#         Prepare the behaviour
+#
+#         :param string name: this behaviour's name
+#         :param float duration: the amount of time to pause for; set to zero to pause indefinitely
+#         """
+#         super(Pause, self).__init__(name)
+#         self.duration = duration
+#         self.start_time = None
+#         self.finish_time = None
+#
+#     def initialise(self):
+#         self.logger.debug("  %s [Pause::initialise()]" % self.name)
+#         self.start_time = time.time()
+#         self.finish_time = self.start_time + self.duration
+#
+#     def update(self):
+#         self.logger.debug("  %s [Pause::update()]" % self.name)
+#         if self.duration == 0.0:
+#             return common.Status.RUNNING
+#         else:
+#             return common.Status.SUCCESS if time.time() > self.finish_time else common.Status.RUNNING
 
 
 class Timer(behaviour.Behaviour):
@@ -76,6 +78,36 @@ class Timer(behaviour.Behaviour):
     if it hasn't already been set and gets cleared when it either runs out, or the behaviour is
     interrupted (i.e. switches to :py:data:`~py_trees.common.Status.SUCCESS` or
     :py:data:`~py_trees.common.Status.INVALID`).
+
+    **Usage Patterns**
+
+    *TimeOut*
+
+    Typical use case is at the highest priority branch of a selector. As soon
+    as the timeout activates, then all other branches are invalidated.
+
+    This does mean however, that the selector should
+    return :py:data:`~py_trees.common.Status.FAILURE` to signify that the actual
+    non-timeout branches succeeded. A typical code block would look like:
+
+    .. code-block:: python
+
+       root = py_trees.meta.inverter(py_trees.composites.Selector("Foo"))
+       timeout = py_trees.meta.running_is_failure(py_trees.timers.Timeout("Timeout", 10.0))
+       work = py_trees.meta.inverter(py_trees.composites.Sequence("Work"))
+       work_behaviour_one = my.work.behaviours.One("One")
+       work_behaviour_two = my.work.behaviours.Two("Two")
+
+       root.add_child(timeout)
+       root.add_child(work)
+       work.add_child(work_behaviour_one)
+       work.add_child(work_behaviour_two)
+
+    This will return:
+
+    * `~py_trees.common.Status.RUNNING` if no timeout and the sequence is not yet finished
+    * `~py_trees.common.Status.FAILURE` if timeout has been exceeded
+    * `~py_trees.common.Status.SUCCESS` if the sequence has finished successfully.
     """
     def __init__(self, name="Timer", duration=5.0):
         """
@@ -97,7 +129,7 @@ class Timer(behaviour.Behaviour):
             self.feedback_message = "timer ran out (finished)"
             return common.Status.SUCCESS
         else:
-            self.feedback_message = "still running"  # don't want spammy messages (%s)" % (self.finish_time - current_time)
+            self.feedback_message = "still running (%s)" % (self.finish_time - current_time)
             return common.Status.RUNNING
 
     def terminate(self, new_status):
@@ -107,20 +139,20 @@ class Timer(behaviour.Behaviour):
             self.finish_time = None
 
 
-def create_timeout_subtree(behaviour, timeout):
-    """
-    :param Behaviour behaviour: behaviour to keep retrying until the timeout is reached.
-    :param float timeout:
-    """
-    timeout_selector = composites.Selector("Timeout")
-    timer = Timer(name="Timer", duration=timeout)
-    failing_timer = meta.running_is_failure(timer)
-
-    timeout_selector.add_child(failing_timer)
-    timeout_selector.add_child(behaviour)
-    timeout_selector.add_child(behaviours.Running(name="Retry"))
-    return timeout_selector
-
-# @meta.inverter
-# class Timeout(Pause):
-#     pass
+# def create_timeout_subtree(name, behaviour, timeout, timeout_behaviour=None):
+#     """
+#     :param Behaviour behaviour: behaviour to keep retrying until the timeout is reached.
+#     :param float timeout:
+#     """
+#     timeout_selector = composites.Selector(name)  # meta.inverter(composites.Selector(name))
+#     inverter = behaviours.Inverter("Flip Result", timeout_selector)
+#     timeout_sequence = composites.Sequence("Timeout")
+#     failing_timer = meta.running_is_failure(Timer("Timer", duration=timeout))
+#
+#     timeout_selector.add_child(timeout_sequence)
+#     timeout_sequence.add_child(failing_timer)
+#     if timeout_behaviour is not None:
+#         timeout_sequence.add_child(timeout_behaviour)
+#     behaviour_inverter = behaviours.Inverter(name="Inverter", child=behaviour)
+#     timeout_selector.add_child(behaviour_inverter)
+#     return inverter

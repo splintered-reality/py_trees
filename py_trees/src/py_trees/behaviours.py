@@ -23,6 +23,7 @@ This module defines the interface for behaviours to be used in py_trees.
 ##############################################################################
 
 import rospy
+from . import common
 from . import logging
 from .common import Status
 from .behaviour import Behaviour
@@ -60,6 +61,49 @@ Running = meta.create_behaviour_from_function(running)
 ##############################################################################
 # Other Behaviours
 ##############################################################################
+
+
+class Inverter(Behaviour):
+    """
+    Wraps a child and inverts its result without directly affecting the
+    child's result. This is a temporary utility until the decorators
+    are updated to work properly without directly modifying the underlying
+    status variables.
+    """
+    def __init__(self, name="Inverter", child=Success()):
+        super(Inverter, self).__init__(name)
+        self.children = [child]
+
+    def setup(self, timeout):
+        return self.children[0].setup(timeout)
+
+    def update(self):
+        self.logger.debug("  %s [Inverter.update()]" % self.name)
+        if self.children[0].status == common.Status.SUCCESS:
+            return common.Status.FAILURE
+        elif self.children[0].status == common.Status.FAILURE:
+            return common.Status.SUCCESS
+        else:
+            return self.children[0].status
+
+    def tick(self):
+        self.logger.debug("  %s [Inverter.tick()]" % self.name)
+        if self.status != common.Status.RUNNING:
+            self.children[0].initialise()
+            self.initialise()
+        self.children[0].tickOnce()
+        new_status = self.update()
+        if new_status != common.Status.RUNNING:
+            # don't need to stop the child, it will already have looked after itself via the tickOnce()
+            self.stop(new_status)
+        else:
+            self.status = common.Status.RUNNING
+        yield self
+
+    def stop(self, new_status=common.Status.INVALID):
+        if new_status == Status.INVALID:
+            self.children[0].stop(new_status)
+        Behaviour.stop(self, new_status)
 
 
 class Periodic(Behaviour):

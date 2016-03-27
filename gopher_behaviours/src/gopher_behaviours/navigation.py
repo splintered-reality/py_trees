@@ -377,7 +377,7 @@ class MoveIt(py_trees.Behaviour):
             self.feedback_message = "moving"
             return py_trees.Status.RUNNING
 
-    def stop(self, new_status=py_trees.Status.INVALID):
+    def terminate(self, new_status):
         """
         If we have an action client and the current goal has not already
         succeeded, send a message to cancel the goal for this action client.
@@ -501,7 +501,7 @@ class GoalFinishing(py_trees.Behaviour):
         pose_stamped.pose.orientation.w = quaternion[3]
         # convert goal pose from "map" into the "odom" frame, since this one is more reliable for short-distances
         tf_buffer = tf2_ros.Buffer(rospy.Duration(10.0))
-        tf_listener = tf2_ros.TransformListener(tf_buffer)
+        unused_tf_listener = tf2_ros.TransformListener(tf_buffer)
         try:
             # origin frame hard-coded since goal_pose is not stamped
             transform_map_odom = tf_buffer.lookup_transform("odom",
@@ -578,17 +578,9 @@ class ElfInitialisation(py_trees.Sequence):
     This class implements the sequence of initialising the robot's pose
     using means from the hint providers in the elf localisation framework.
 
-    - enable AR (behaviour)
-    - initialise (selector)
-        - check elf init status (sequence)
-            - check elf topic
-            - notify success (*sequence)
-                - celebrate success (behaviour)
-        - automatic initialisation (sequence)
-            - rotate simple motion (behaviour)
-            - wait to retry (behaviour)
-        - timeout (behaviour)
-    - disable AR (behaviour)
+    Blackboard Variables:
+
+     - auto_init_failed     (w) [bool]      : signal to others that the initialisation failed.
     """
     def __init__(self, name):
         """
@@ -598,18 +590,10 @@ class ElfInitialisation(py_trees.Sequence):
         self.gopher = gopher_configuration.Configuration()
 
         # Behaviours
-        ar_markers_on = ar_markers.ControlARMarkerTracker(
-            "AR Markers On",
-            self.gopher.topics.ar_tracker_long_range,
-            True
-        )
-        ar_markers_off = ar_markers.ControlARMarkerTracker(
-            "AR Markers Off",
-            self.gopher.topics.ar_tracker_long_range,
-            False
-        )
-        searching = py_trees.Selector("Searching")
-        confirmation = py_trees.Sequence("Confirmation")
+        ar_markers_on = ar_markers.ControlARMarkerTracker("AR Markers On", self.gopher.topics.ar_tracker_long_range, True)
+        ar_markers_off = ar_markers.ControlARMarkerTracker("AR Markers Off", self.gopher.topics.ar_tracker_long_range, False)
+        ar_markers_off_two = ar_markers.ControlARMarkerTracker("AR Markers Off", self.gopher.topics.ar_tracker_long_range, False)
+        # the worker components
         check_elf_status = py_trees.CheckSubscriberVariable(
             name="Check ELF State",
             topic_name=self.gopher.topics.elf_status,
@@ -620,29 +604,43 @@ class ElfInitialisation(py_trees.Sequence):
             fail_if_bad_comparison=True,
             clearing_policy=py_trees.common.ClearingPolicy.NEVER
         )
-        timeout = py_trees.Timeout("Timeout", 600.0)
+        scanning = py_trees.Selector("Scanning")
+        confirmation = py_trees.Sequence("Confirmation")
         notify_done = interactions.SendNotification(
             "Celebrate",
             led_pattern=gopher_std_msgs.LEDStrip.AROUND_RIGHT_GREEN,
             sound=self.gopher.sounds.done,
             message="intialised pose"
         )
-        celebrate = py_trees.timers.Pause("Take Time to Celebrate", 2.0)
-        scanning = py_trees.Sequence("Scanning")
-        rotate = py_trees.meta.failure_is_success(SimpleMotion(name="Rotate", motion_amount=(2 * math.pi)))
-        wait_for_retry = py_trees.meta.inverter(py_trees.timers.Pause("Wait for Retry", 2.0))
+        celebrate = py_trees.timers.Timer("Take Time to Celebrate", 2.0)
+        rotate_with_timeout = py_trees.composites.Sequence("Rotate w/ Timeout")
+        # always succeed so we can go on to the timer
+        rotate_ad_nauseum = py_trees.meta.failure_is_success(SimpleMotion(name="Rotate Ad Nauseum", motion_amount=(0.25 * math.pi)))
+        # poor man's timeout since it comes after incremental rotations
+        timeout = py_trees.meta.success_is_failure(py_trees.timers.Timer("Fail on Timeout", 5.0))
+        timed_out = py_trees.composites.Sequence("Timed Out")
+        write_auto_initialisation_failed = py_trees.blackboard.SetBlackboardVariable("Flag AutoInit Failed", "auto_init_failed", True)
 
-        # Graph
         self.add_child(ar_markers_on)
-        self.add_child(searching)
-        searching.add_child(confirmation)
+        self.add_child(scanning)
+        scanning.add_child(confirmation)
         confirmation.add_child(check_elf_status)
         confirmation.add_child(notify_done)
         notify_done.add_child(celebrate)
-        searching.add_child(scanning)
-        searching.add_child(timeout)
-        scanning.add_child(rotate)
-        scanning.add_child(wait_for_retry)
+        scanning.add_child(rotate_with_timeout)
+        rotate_with_timeout.add_child(rotate_ad_nauseum)
+        rotate_with_timeout.add_child(timeout)
+        scanning.add_child(timed_out)
+        timed_out.add_child(write_auto_initialisation_failed)
+        timed_out.add_child(py_trees.meta.success_is_failure(ar_markers_off_two))  # cleaning up, just make sure we send fail from here
+
+#         timeout = py_trees.timers.create_timeout_subtree(
+#             name="Scanning",
+#             behaviour=searching,
+#             timeout=1.0,
+#             timeout_behaviour=ar_markers_off_two
+#         )
+
         self.add_child(ar_markers_off)
 
 #     def initialise(self):

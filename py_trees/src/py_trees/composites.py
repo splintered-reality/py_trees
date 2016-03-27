@@ -193,19 +193,10 @@ class Selector(Composite):
         self.current_child = None
         self.logger = logging.get_logger("Selector ")
 
-    def update(self):
-        self.logger.debug("  %s [update()]" % self.name)
-        for child in self.children:
-            status = next(child.iterator)
-            if (status == Status.RUNNING) or (status == Status.SUCCESS):
-                self.current = child
-                return status
-        return Status.FAILURE
-
     def tick(self):
         # Required behaviour for *all* behaviours and composites is
         # for tick() to check if it isn't running and initialise
-        self.logger.debug("  %s [tick()]" % self.name)
+        self.logger.debug("  %s [Selector.tick()]" % self.name)
         if self.status != Status.RUNNING:
             # sequence specific handling
             self.current_child = None

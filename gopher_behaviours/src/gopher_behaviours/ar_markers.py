@@ -50,7 +50,10 @@ class ControlARMarkerTracker(py_trees.Behaviour):
         else:
             params = {'enabled': 'false'}
         if self._dyn_reconf_client_ar_tracker is not None:
-            self._dyn_reconf_client_ar_tracker.update_configuration(params)
+            try:
+                self._dyn_reconf_client_ar_tracker.update_configuration(params)
+            except rospy.service.ServiceException as e:
+                rospy.logwarn("Behaviours [%s" % self.name + "]: caught exception from the ar marker service, probably just shutdown issues [%s]" % str(e))
 
     def setup(self, timeout):
         """

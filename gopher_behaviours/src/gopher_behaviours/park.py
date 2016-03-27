@@ -74,7 +74,14 @@ class Park(py_trees.Sequence):
         ar_markers_off = ar_markers.ControlARMarkerTracker("AR Markers Off", self.gopher.topics.ar_tracker_long_range, False)
         docking_controller = docking.DockingController(name="Docking Controller")
         clearing_flags = py_trees.blackboard.ClearBlackboardVariable(name="Clear Flags", variable_name="undocked")
-        wait_for_docking_contact = battery.create_wait_to_be_docked(name="Manual")
+        wait_for_docking_contact = battery.create_wait_to_be_docked(name="Manual Recovery")
+        manual_divert = py_trees.composites.Sequence("Manual Divert")
+        is_cancel_activated = py_trees.CheckBlackboardVariable(
+            name='Is Cancelled?',
+            variable_name='event_stop_button',
+            expected_value=True
+        )
+        manual_dock = battery.create_wait_to_be_docked(name="Manual Dock")
 
         ############################################
         # Assembly
@@ -83,6 +90,9 @@ class Park(py_trees.Sequence):
         self.add_child(parking_motions)
         self.add_child(todock_or_not_todock)
         todock_or_not_todock.add_child(check_didnt_undock)
+        todock_or_not_todock.add_child(manual_divert)
+        manual_divert.add_child(is_cancel_activated)
+        manual_divert.add_child(manual_dock)
         todock_or_not_todock.add_child(docking_control)
         docking_control.add_child(pre_dock_rotation)
         docking_control.add_child(ar_markers_on)
