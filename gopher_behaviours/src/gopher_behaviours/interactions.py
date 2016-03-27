@@ -38,15 +38,63 @@ import unique_id
 
 def create_wait_for_go_button(name="Wait For Go Button"):
     """
-    Tune into the go button signal.
+    Tune into the go button signal. Will be RUNNING until an event
+    is caught. This is useful to block at the start of a sequence.
 
     :param str name: the behaviour name.
     """
     gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
     behaviour = py_trees.subscribers.WaitForSubscriberData(
-        name="Wait for Go Button",
+        name=name,
         topic_name=gopher.buttons.go,
-        topic_type=std_msgs.Empty
+        topic_type=std_msgs.Empty,
+        clearing_policy=py_trees.common.ClearingPolicy.ON_INITIALISE
+    )
+    return behaviour
+
+
+def create_check_for_go_button_press(name="Check for Go Button Press"):
+    """
+    Has there recently been a go button press anytime in the recent past?
+    This is more useful as a non-blocking decision element (as opposed to
+    the :py:func:`~gopher_behaviours.interactions.create_wait_for_go_button`
+    function.
+
+    Note that it will reset as soon as an event (i.e. SUCCESS) is detected.
+
+    :param str name: the behaviour name.
+    """
+    gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
+    behaviour = py_trees.meta.running_is_failure(
+        py_trees.subscribers.WaitForSubscriberData(
+            name=name,
+            topic_name=gopher.buttons.go,
+            topic_type=std_msgs.Empty,
+            clearing_policy=py_trees.common.ClearingPolicy.ON_SUCCESS
+        )
+    )
+    return behaviour
+
+
+def create_check_for_stop_button_press(name="Check for Stop Button Press"):
+    """
+    Has there recently been a go button press anytime in the recent past?
+    This is more useful as a non-blocking decision element (as opposed to
+    the :py:func:`~gopher_behaviours.interactions.create_wait_for_go_button`
+    function.
+
+    Note that it will reset as soon as an event (i.e. SUCCESS) is detected.
+
+    :param str name: the behaviour name.
+    """
+    gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
+    behaviour = py_trees.meta.running_is_failure(
+        py_trees.subscribers.WaitForSubscriberData(
+            name=name,
+            topic_name=gopher.buttons.stop,
+            topic_type=std_msgs.Empty,
+            clearing_policy=py_trees.common.ClearingPolicy.ON_SUCCESS
+        )
     )
     return behaviour
 
@@ -73,45 +121,6 @@ class Articulate(py_trees.Behaviour):
     def update(self):
         self.publisher.publish(std_msgs.Empty())
         return py_trees.Status.SUCCESS
-
-
-class CheckButtonPressed(py_trees.Behaviour):
-    """Checks whether a button has been pressed.
-
-    This behaviour always returns ``SUCCESS`` or ``FAILURE`` (never ``RUNNING``).
-    This design is intended to be utilised a guard for a selector.
-
-    Latched is a special characteristic. If latched, it will return true
-    and continue returning true if the button is pressed anytime after
-    it is 'ticked' for the first time.
-
-    If not latched, it will return the result of a button press
-    inbetween ticks.
-
-    :param bool latched: configures the behaviour as described above.
-    """
-    def __init__(self, name, topic_name, latched=False):
-        super(CheckButtonPressed, self).__init__(name)
-        self.topic_name = topic_name
-        self.subscriber = None
-        self.latched = latched
-        self.button_pressed = False
-
-    def initialise(self):
-        if self.subscriber is None:
-            self.subscriber = rospy.Subscriber(self.topic_name, std_msgs.Empty, self.button_callback)
-
-    def button_callback(self, msg):
-        self.button_pressed = True
-
-    def update(self):
-        if self.button_pressed:
-            result = py_trees.Status.SUCCESS
-        else:
-            result = py_trees.Status.FAILURE
-        if not self.latched:
-            self.button_pressed = False
-        return result
 
 
 class SendNotification(py_trees.Sequence):

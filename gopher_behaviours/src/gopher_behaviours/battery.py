@@ -84,7 +84,7 @@ def create_wait_to_be_docked(name="Wait to be Docked"):
         expected_value=somanet_msgs.SmartBatteryStatus.CHARGING_SOURCE_DOCK,
         fail_if_no_data=False,
         fail_if_bad_comparison=False,
-        old_data_is_valid=True
+        clearing_policy=py_trees.common.ClearingPolicy.NEVER
     )
     wait_to_be_docked.add_child(checked_docked_contact)
     return wait_to_be_docked
@@ -108,7 +108,7 @@ def create_is_docked(name="Is Docked?"):
         expected_value=somanet_msgs.SmartBatteryStatus.CHARGING_SOURCE_DOCK,
         fail_if_no_data=False,
         fail_if_bad_comparison=True,
-        old_data_is_valid=True
+        clearing_policy=py_trees.common.ClearingPolicy.NEVER
     )
     return check_docked
 
@@ -130,7 +130,7 @@ def create_is_discharging(name="Is Discharging?"):
         expected_value=somanet_msgs.SmartBatteryStatus.CHARGING_SOURCE_NONE,
         fail_if_no_data=False,
         fail_if_bad_comparison=True,
-        old_data_is_valid=True
+        clearing_policy=py_trees.common.ClearingPolicy.NEVER
     )
     return is_discharging
 
@@ -152,7 +152,7 @@ def create_wait_to_be_unplugged(name="Unplug Me"):
         expected_value=somanet_msgs.SmartBatteryStatus.CHARGING_SOURCE_NONE,
         fail_if_no_data=False,
         fail_if_bad_comparison=False,
-        old_data_is_valid=True
+        clearing_policy=py_trees.common.ClearingPolicy.NEVER
     )
     wait_to_be_unplugged = interactions.SendNotification(
         name=name,

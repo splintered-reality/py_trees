@@ -131,7 +131,7 @@ class UnPark(py_trees.Sequence):
         # Manual
         ##############################
         manual_write_finishing_pose_from_odom = navigation.create_odom_pose_to_blackboard_behaviour(name="Final Pose (Odom)", blackboard_variables={"pose_unpark_finish_rel_odom": "pose.pose"})
-        is_cancel_activated = interactions.CheckButtonPressed('Is Cancelled?', self.gopher.buttons.cancel, latched=False)
+        is_cancel_activated = interactions.create_check_for_stop_button_press('Is Cancelled?')
         wait_for_go_button_press = interactions.create_wait_for_go_button("Wait for Go Button")
 
         teleport = navigation.create_homebase_teleport()
