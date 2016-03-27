@@ -138,6 +138,29 @@ def create_map_pose_to_blackboard_behaviour(
     )
     return behaviour
 
+
+def create_elf_pose_to_blackboard_behaviour(
+    name="Elf Pose To Blackboard",
+    blackboard_variables={"pose", None}
+):
+    """
+    Hooks up a subscriber and transfers the elf pose to the blackboard.
+
+    :param str name: behaviour name
+    :param str blackboard_variable_name: name to write the message to
+    :returns: the behaviour
+    :rtype: subscribers.CheckSubscriberVariable
+    """
+    gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
+
+    behaviour = py_trees.SubscriberToBlackboard(
+        name,
+        topic_name=gopher.topics.elf_status,
+        topic_type=elf_msgs.ElfLocaliserStatus,
+        blackboard_variables=blackboard_variables
+    )
+    return behaviour
+
 ##############################################################################
 # Simple Motion Behaviour
 ##############################################################################

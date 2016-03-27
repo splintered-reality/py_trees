@@ -10,6 +10,8 @@
 import argparse
 import gopher_behaviours
 import gopher_configuration
+import gopher_std_msgs.msg as gopher_std_msgs
+import math
 import py_trees
 import rocon_console.console as console
 import rospy
@@ -79,9 +81,22 @@ class Demo(object):
         ar_markers_on = gopher_behaviours.ar_markers.ControlARMarkerTracker("AR Markers On", self.gopher.topics.ar_tracker_long_range, True)
         ar_markers_off = gopher_behaviours.ar_markers.ControlARMarkerTracker("AR Markers Off", self.gopher.topics.ar_tracker_long_range, False)
 
+        rotate_half_circle = gopher_behaviours.navigation.SimpleMotion(
+            name="Rotate",
+            motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
+            motion_amount=(math.pi)
+        )
+        break_out = gopher_behaviours.navigation.SimpleMotion(
+            name="Break Out",
+            motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_TRANSLATE,
+            motion_amount=0.5
+        )
+
         self.root.add_child(wait_to_be_docked)
-        self.root.add_child(auto_undock)
         self.root.add_child(ar_markers_on)
+        self.root.add_child(auto_undock)
+        self.root.add_child(break_out)
+        self.root.add_child(rotate_half_circle)
         self.root.add_child(auto_dock)
         self.root.add_child(ar_markers_off)
 

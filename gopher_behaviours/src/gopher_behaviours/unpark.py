@@ -31,6 +31,7 @@ import py_trees
 import rospy
 import tf
 
+from . import ar_markers
 from . import battery
 from . import docking
 from . import interactions
@@ -77,6 +78,8 @@ class UnPark(py_trees.Sequence):
         # Undock
         ################################################################
         unplug_undock = py_trees.Selector(name="UnPlug/UnDock")
+        ar_markers_on = ar_markers.ControlARMarkerTracker("AR Markers On", self.gopher.topics.ar_tracker_long_range, True)
+        ar_markers_off = ar_markers.ControlARMarkerTracker("AR Markers Off", self.gopher.topics.ar_tracker_long_range, False)
         undocking = py_trees.Sequence(name="UnDock")
         break_out = py_trees.meta.failure_is_success(
             navigation.SimpleMotion(
@@ -165,7 +168,7 @@ class UnPark(py_trees.Sequence):
         ##############################
         auto_initialisation = navigation.ElfInitialisation(name="Elf Initialisation")
         auto_write_finishing_pose_from_odom = navigation.create_odom_pose_to_blackboard_behaviour(name="Final Pose (Odom)", blackboard_variables={"pose_unpark_finish_rel_odom": "pose.pose"})
-        auto_write_finishing_pose_from_map = navigation.create_map_pose_to_blackboard_behaviour(name="Finishing Pose (Map)", blackboard_variables={"pose_unpark_finish_rel_map": "pose.pose"})
+        auto_write_finishing_pose_from_map = navigation.create_elf_pose_to_blackboard_behaviour(name="Finishing Pose (Map)", blackboard_variables={"pose_unpark_finish_rel_map": "pose.pose"})
         auto_save_park_pose = SaveParkingPoseAuto("Save Park Pose (Auto)")
 
         ################################################################
@@ -176,7 +179,9 @@ class UnPark(py_trees.Sequence):
         self.add_child(unplug_undock)
         unplug_undock.add_child(undocking)
         undocking.add_child(is_docked)
+        undocking.add_child(ar_markers_on)
         undocking.add_child(auto_undock)
+        undocking.add_child(ar_markers_off)
         undocking.add_child(break_out)
         undocking.add_child(set_docked_flag)
         unplug_undock.add_child(unplug)

@@ -24,10 +24,7 @@ Bless my noggin with a tickle from your noodly appendages!
 import time
 
 from . import behaviour
-from . import behaviours
 from . import common
-from . import composites
-from . import meta
 
 ##############################################################################
 # Behaviours

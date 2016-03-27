@@ -131,9 +131,9 @@ class MonitorButtonEvents(py_trees.subscribers.SubscriberHandler):
         """
         self.logger.debug("  %s [MonitorButtonEvents::update()]" % self.name)
         with self.data_guard:
-            self.blackboard.set(self.variable_name, self.msg is not None)
-        # the SubscriberHandler will clear the variable immediately so we can
-        # get a fresh update next tick
+            self.blackboard.set(self.variable_name, self.msg is not None, overwrite=True)
+            # ON_SUCCESS is the only clearing_policy that subclasses of SubscriberHandler must implement themselves
+            self.msg = None
         return py_trees.common.Status.SUCCESS
 
 
