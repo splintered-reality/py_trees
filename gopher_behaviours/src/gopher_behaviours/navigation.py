@@ -87,7 +87,8 @@ def create_elf_localisation_to_blackboard_behaviour(
         name=name,
         topic_name=gopher.topics.elf_status,
         topic_type=elf_msgs.ElfLocaliserStatus,
-        blackboard_variables=blackboard_variables
+        blackboard_variables=blackboard_variables,
+        old_data_is_valid=True
     )
     return behaviour
 
@@ -617,7 +618,7 @@ class ElfInitialisation(py_trees.Sequence):
             expected_value=elf_msgs.ElfLocaliserStatus.STATUS_WORKING,
             fail_if_no_data=True,
             fail_if_bad_comparison=True,
-            monitor_continuously=True
+            old_data_is_valid=True
         )
         timeout = py_trees.Timeout("Timeout", 600.0)
         notify_done = interactions.SendNotification(
