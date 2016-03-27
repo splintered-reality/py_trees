@@ -43,15 +43,14 @@ class Status(Enum):
     """Behaviour is uninitialised and inactive, i.e. this is the status before first entry, and after a higher priority switch has occurred."""
 
 
-# class ClearingPolicy(Enum):
-#     """
-#     Policy rules for behaviours to dictate when data should be cleared/reset.
-#     """
-#     ON_INITIALISE = 1
-#     """Clear when entering the :py:meth:`~py_trees.behaviour.Behaviour.initialise` method."""
-#     ON_TERMINATE = 2
-#     """Clear when entering the :py:meth:`~py_trees.behaviour.Behaviour.terminate` method."""
-#     ON_INVALID = 3
-#     """Only when interrupted by a higher priority branch."""
-#     NEVER_CLEAR = 4
-#     """Never clear the data"""
+class ClearingPolicy(Enum):
+    """
+    Policy rules for behaviours to dictate when data should be cleared/reset.
+    Used by the :py:mod:`~py_trees.subscribers` module.
+    """
+    ON_INITIALISE = 1
+    """Clear when entering the :py:meth:`~py_trees.behaviour.Behaviour.initialise` method."""
+    ON_SUCCESS = 2
+    """Clear when returning :py:data:`~py_trees.common.Status.SUCCESS`."""
+    NEVER = 3
+    """Never clear the data"""

@@ -48,29 +48,42 @@ from . import common
 class SubscriberHandler(behaviour.Behaviour):
     """
     Not intended for direct use, as this just absorbs the mechanics of setting up
-    a subscriber for inheritance by user-defined behaviour classes. There are two use cases:
+    a subscriber for inheritance by user-defined behaviour classes. There are several
+    options for the mechanism of clearing the data so that a new result can be processed.
 
-    **Look for New Data**
+    **Always Look for New Data**
 
     This will clear any currently stored data upon entry into the behaviour (i.e. when
-    :py:meth:`initialise` is called). This is useful for catching new triggers/events.
+    :py:meth:`initialise` is called). This is useful for a behaviour in a sequence
+    that is looking to start fresh as it is about to tick and be
+    in a :py:data:`~py_trees.common.Status.RUNNING` state
+    until new data arrives.
+
+    **Look for New Data only after SUCCESS**
+
+    This will clear any currently stored data as soon as the behaviour returns
+    :py:data:`~py_trees.common.Status.SUCCESS`. This is useful for catching new
+    triggers/events from things like buttons where you don't want to miss things
+    even though you may not actually be ticking.
 
     **Use the Latest Data**
 
     Even if this data was received before entry into the behaviour. In this case
-    :py:meth:`initialise` does not do anything with the currently stored data.
+    :py:meth:`initialise` does not do anything with the currently stored data. Useful
+    as a blocking behaviour to wait on some some topic having been initialised with
+    some data (e.g. CameraInfo).
     """
     def __init__(self,
                  name="Subscriber Handler",
                  topic_name="/foo",
                  topic_type=None,
-                 old_data_is_valid=False
+                 clearing_policy=common.ClearingPolicy.ON_INITIALISE
                  ):
         """
         :param str name: name of the behaviour
         :param str topic_name: name of the topic to connect to
         :param obj topic_type: class of the message type (e.g. std_msgs.String)
-        :param bool old_data_is_valid: latest data is always valid even if received before initialising the behaviour.
+        :param clearing_policy: when to clear the data, see :py:class:`~py_trees.common.ClearingPolicy`
         """
         super(SubscriberHandler, self).__init__(name)
         self.topic_name = topic_name
@@ -78,7 +91,7 @@ class SubscriberHandler(behaviour.Behaviour):
         self.msg = None
         self.subscriber = None
         self.data_guard = threading.Lock()
-        self.old_data_is_valid = old_data_is_valid
+        self.clearing_policy = clearing_policy
         # ros doesn't care if it is init'd or not for subscriber construction
         self.subscriber = rospy.Subscriber(self.topic_name, self.topic_type, self._callback, queue_size=5)
 
@@ -89,7 +102,7 @@ class SubscriberHandler(behaviour.Behaviour):
         """
         self.logger.debug("  %s [SubscriberHandler::initialise()]" % self.name)
         with self.data_guard:
-            if not self.old_data_is_valid:
+            if self.clearing_policy == common.ClearingPolicy.ON_INITIALISE:
                 self.msg = None
 
     def _callback(self, msg):
@@ -127,7 +140,7 @@ class CheckSubscriberVariable(SubscriberHandler):
                  fail_if_no_data=False,
                  fail_if_bad_comparison=False,
                  comparison_operator=operator.eq,
-                 old_data_is_valid=False
+                 clearing_policy=common.ClearingPolicy.ON_INITIALISE
                  ):
         """
         :param str name: name of the behaviour
@@ -138,6 +151,7 @@ class CheckSubscriberVariable(SubscriberHandler):
         :param bool fail_if_no_data: FAILURE instead of RUNNING if there is no data yet
         :param bool fail_if_bad_comparison: FAILURE instead of RUNNING if comparison failed
         :param function comparison_operator: one from the python `operator module`_
+        :param clearing_policy: when to clear the data, see :py:class:`~py_trees.common.ClearingPolicy`
 
         .. _operator module: https://docs.python.org/2/library/operator.html
         """
@@ -145,7 +159,7 @@ class CheckSubscriberVariable(SubscriberHandler):
             name,
             topic_name=topic_name,
             topic_type=topic_type,
-            old_data_is_valid=old_data_is_valid,
+            clearing_policy=clearing_policy,
         )
         self.variable_name = variable_name
         self.expected_value = expected_value
@@ -178,6 +192,9 @@ class CheckSubscriberVariable(SubscriberHandler):
 
         if success:
             self.feedback_message = "'%s' comparison succeeded [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
+            if self.clearing_policy == common.ClearingPolicy.ON_SUCCESS:
+                with self.data_guard:
+                    self.msg = None
             return common.Status.SUCCESS
         else:
             self.feedback_message = "'%s' comparison failed [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
@@ -196,34 +213,43 @@ class WaitForSubscriberData(SubscriberHandler):
 
     *Got Something, Sometime*
 
-    * ``old_data_is_valid = True``
+    * clearing_policy == :py:data:`~py_trees.common.ClearingPolicy.NEVER`
 
     Don't care when data arrived, just that it arrived. This could be for something
     like a map topic, or a configuration that you need to block. Once it returns SUCCESS,
     it will always return SUCCESS.
 
-    *Wating for the Next Thing*
+    *Wating for the Next Thing, Starting From Now*
 
-    * ``old_data_is_valid = False``
+    * clearing_policy == :py:data:`~py_trees.common.ClearingPolicy.ON_INTIALISE`
 
-    Usually used when waiting for something like a button press.
+    Useful as a gaurd at the start of a sequence, that is waiting for an event to
+    trigger after the sequence has started (i.e. been initialised).
+
+    *Wating for the Next Thing, Starting from the Last*
+
+    * clearing_policy == :py:data:`~py_trees.common.ClearingPolicy.ON_SUCCESS`
+
+    Useful as a guard watching for an event that could have come in anytime, but for
+    which we do with to reset (and subsequently look for the next event). e.g. button events.
     """
     def __init__(self,
                  name="Wait For Subscriber",
                  topic_name="chatter",
                  topic_type=None,
-                 old_data_is_valid=False
+                 clearing_policy=common.ClearingPolicy.ON_INITIALISE
                  ):
         """
         :param str name: name of the behaviour
         :param str topic_name: name of the topic to connect to
         :param obj topic_type: class of the message type (e.g. std_msgs.String)
+        :param clearing_policy: when to clear the data, see :py:class:`~py_trees.common.ClearingPolicy`
         """
         super(WaitForSubscriberData, self).__init__(
             name,
             topic_name=topic_name,
             topic_type=topic_type,
-            old_data_is_valid=old_data_is_valid,
+            clearing_policy=clearing_policy
         )
 
     def update(self):
@@ -237,6 +263,8 @@ class WaitForSubscriberData(SubscriberHandler):
                 return common.Status.RUNNING
             else:
                 self.feedback_message = "got incoming"
+                if self.clearing_policy == common.ClearingPolicy.ON_SUCCESS:
+                    self.msg = None
                 return common.Status.SUCCESS
 
 
@@ -254,14 +282,14 @@ class SubscriberToBlackboard(SubscriberHandler):
                  topic_name="chatter",
                  topic_type=None,
                  blackboard_variables={"chatter": None},
-                 old_data_is_valid=False
+                 clearing_policy=common.ClearingPolicy.ON_INITIALISE
                  ):
         """
         :param str name: name of the behaviour
         :param str topic_name: name of the topic to connect to
         :param obj topic_type: class of the message type (e.g. std_msgs.String)
         :param dict blackboard_variables: blackboard variable string or dict {names (keys) - message subfields (values)}
-        :param bool old_data_is_valid: use old data, even if received before :py:meth:`initialise` is called
+        :param clearing_policy: when to clear the data, see :py:class:`~py_trees.common.ClearingPolicy`
 
         If a dict is used to designate the blackboard variables, then a value of None will force the entire
         message to be saved to the string identified by the key.
@@ -274,7 +302,7 @@ class SubscriberToBlackboard(SubscriberHandler):
             name,
             topic_name=topic_name,
             topic_type=topic_type,
-            old_data_is_valid=old_data_is_valid
+            clearing_policy=clearing_policy
         )
         self.blackboard = blackboard.Blackboard()
         if isinstance(blackboard_variables, basestring):
