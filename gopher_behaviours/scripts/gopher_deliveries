@@ -1,17 +1,72 @@
 #!/usr/bin/env python
 
-import rospy
+import argparse
+import gopher_behaviours
 import py_trees
-from gopher_behaviours.gopher_deliveries import GopherHiveMind
+import rocon_console.console as console
+import rospy
+import sys
+
+
+##############################################################################
+# Arg Parsing
+##############################################################################
+
+
+def show_description():
+    s = "\n"
+    s += console.green + "The official gopher delivery tree" + console.reset
+    s += "\n"
+    return s
+
+
+def show_usage():
+    s = "\n"
+    s += console.white
+    s += console.bold + "************************************************************************************\n" + console.reset
+    s += console.bold + "                                Gopher Deliveries\n" + console.reset
+    s += console.bold + "************************************************************************************\n" + console.reset
+    s += "\n"
+    s += console.white
+    s += console.bold + "    Generate Dot" + console.reset + "\n"
+    s += console.cyan + "        gopher_deliveries" + console.yellow + " --render" + console.reset + "\n"
+    s += "\n"
+    s += console.bold + "    RosLaunch" + console.reset + "\n"
+    s += console.cyan + "        + gopher_deliveries.launch" + console.reset + "\n"
+    s += "\n"
+    return s
+
+
+def parse_arguments(command_line_args):
+    parser = argparse.ArgumentParser(description=show_description(),
+                                     usage=show_usage(),
+                                     epilog="And his noodly appendage reached forth to tickle the blessed...",
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter
+                                     )
+    parser.add_argument('-r', '--render', action='store_true', help='render the graph to dot/png/svg.')
+    parser.add_argument('-d', '--debug', action='store_true', help='debug level tree logging.')
+
+    args = parser.parse_args(command_line_args)
+    return args
 
 ##############################################################################
 # Main
 ##############################################################################
 
 if __name__ == '__main__':
+
+    myargs = rospy.myargv(argv=sys.argv)
+    args = parse_arguments(command_line_args=myargs[1:])
+
+    gopher_compulsion = gopher_behaviours.gopher_deliveries.GopherHiveMind()
+
+    if args.render:
+        print("Rendering")
+        sys.exit()
+
     # have to read debug param before initialising node, it's not possible to
     # change the log level after node is initialised.
-    debug_mode = rospy.get_param("/gopher_deliveries/debug", False)
+    debug_mode = rospy.get_param("/gopher_deliveries/debug", False) or args.debug
     log_lev = rospy.INFO
     if debug_mode:
         py_trees.logging.level = py_trees.logging.Level.DEBUG
@@ -19,5 +74,5 @@ if __name__ == '__main__':
 
     rospy.init_node("gopher_compulsion", log_level=log_lev)
 
-    gopher_compulsion = GopherHiveMind()
+    gopher_compulsion.setup(30)
     gopher_compulsion.tick_tock()

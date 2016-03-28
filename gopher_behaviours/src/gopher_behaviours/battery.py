@@ -198,5 +198,5 @@ def create_battery_tree(name):
     # this needs more thought...
     # also need a wait for charge once you're back...
     # children=[check_battery_level, go_home, moveit.Finishing("Finishing")]
-    root = py_trees.Sequence(children=children, name=name)
+    root = py_trees.Sequence(name=name, children=children)
     return root
