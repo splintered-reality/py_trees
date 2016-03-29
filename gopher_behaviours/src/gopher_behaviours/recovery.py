@@ -43,7 +43,7 @@ class HomebaseRecovery(py_trees.Sequence):
         :param str name: behaviour name
         """
         super(HomebaseRecovery, self).__init__(name)
-        self.gopher = gopher_configuration.Configuration()
+        self.gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
         flash_leds = interactions.SendNotification("Flash - I Need Help",
                                                    led_pattern=self.gopher.led_patterns.humans_i_need_help,
                                                    message="homebase recovery - need human assistance to teleop home")
@@ -54,3 +54,4 @@ class HomebaseRecovery(py_trees.Sequence):
         flash_leds.add_child(wait_for_button)
         self.add_child(flash_leds)
         self.add_child(teleport)
+

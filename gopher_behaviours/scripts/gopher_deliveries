@@ -61,7 +61,7 @@ if __name__ == '__main__':
     gopher_compulsion = gopher_behaviours.gopher_deliveries.GopherHiveMind()
 
     if args.render:
-        print("Rendering")
+        "Stub for Rendering"
         sys.exit()
 
     # have to read debug param before initialising node, it's not possible to

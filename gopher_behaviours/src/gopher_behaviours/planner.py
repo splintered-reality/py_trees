@@ -64,10 +64,20 @@ class Planner(object):
     def __init__(self, express_deliveries=False):
         self.current_location = None
         self.express = express_deliveries
+        self.gopher = None
+        self.semantics = None
+
+    def setup(self):
+        """
+        Delayed ROS setup. This will be called by the worker methods if not already set
+        so by and large it doesn't require a manual call.
+        """
         self.gopher = gopher_configuration.Configuration()
         self.semantics = gopher_semantics.Semantics(self.gopher.namespaces.semantics)
 
     def check_locations(self, locations):
+        if self.semantics is None:
+            self.setup()
         for location in locations:
             if location not in self.semantics.locations:
                 return False
@@ -85,6 +95,8 @@ class Planner(object):
 
            Clean up the key error handling
         """
+        if self.semantics is None:
+            self.setup()
         ########################################
         # Topological Path
         ########################################

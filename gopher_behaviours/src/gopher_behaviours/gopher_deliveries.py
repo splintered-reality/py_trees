@@ -73,11 +73,9 @@ class Parameters(object):
 
 class GopherHiveMind(object):
     def __init__(self):
-
         self.battery_subtree = gopher_behaviours.battery.create_battery_tree(name="Eating Disorder")
         self.gopher = gopher_configuration.Configuration()
-        self.parameters = Parameters()
-        self.planner = Planner(self.parameters.express)
+        self.planner = Planner(express_deliveries=False)
         self.current_world_subscriber = rospy.Subscriber(self.gopher.topics.world, std_msgs.String, self.current_world_callback)
         self.current_world = None
         self.quirky_deliveries = gopher_behaviours.delivery.GopherDeliveries(name="Quirky Deliveries", planner=self.planner)
@@ -97,7 +95,12 @@ class GopherHiveMind(object):
         ##################################
 
     def setup(self, timeout):
+        """
+        Delayed ros setup.
+        """
         rospy.on_shutdown(self.shutdown)
+        self.parameters = Parameters()
+        self.planner.express = self.parameters.express
 
         self._delivery_goal_service = rospy.Service('delivery/goal', gopher_delivery_srvs.DeliveryGoal, self._goal_service_callback)
         self._delivery_feedback_publisher = rospy.Publisher('delivery/feedback', gopher_delivery_msgs.DeliveryFeedback, queue_size=1, latch=True)
