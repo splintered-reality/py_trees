@@ -11,8 +11,8 @@ Terminology
 
       When a **behaviour tree** ticks, it traverses the behaviours (starting at the root of
       the tree), ticking each behaviour, catching its result and then using that result to
-      make decisions on the direction the tree traversal will take. Once the traversal
-      ends back at the root of the tree, the tick is over.
+      make decisions on the direction the tree traversal will take. This is the decision part
+      of the tree. Once the traversal ends back at the root, the tick is over.
 
       Once a tick is done..you can stop for breath! In this space you can pause to avoid
       eating the cpu, send some statistics out to a monitoring program, manipulate the
@@ -24,11 +24,10 @@ Terminology
       parallelising here. In almost all cases, most of your robot behaviour trees are probably
       not going to be significantly expensive (unlike games with thousands of characters).
 
-.. todo:: Add an image of a ticking tree here.
+      Add an image of a ticking tree here.
 
    blocking
-      A behaviour is sometimes referred to as a 'blocking' behaviour. This, despite the fact that
-      everywhere in this documentation, behaviours and trees are oft quoted as non-blocking!
-      Blocking is used here because it fits better than another, new and unfamiliar term. So
-      what characteristics does a blocking behaviour have? A blocking behaviour is one that
-      can take more than one tick to reach a SUCCESS/FAILURE state. In short, `blocking == RUNNING`.
+      A behaviour is sometimes referred to as a 'blocking' behaviour. Technically, the execution
+      of a behaviour should be non-blocking (i.e. the tick part), however when it's progress from
+      'RUNNING' to 'FAILURE/SUCCESS' takes more than one tick, we say that the beahviour itself
+      is blocking. In short, `blocking == RUNNING`.

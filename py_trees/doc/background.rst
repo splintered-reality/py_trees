@@ -18,8 +18,8 @@ simple, yet able to deliver surprisingly rich results.
 Ticking
 -------
 
-A key feature of behaviour trees is the way they 'tick'. To tick a behaviour is to execute some small chunk of
-code on that behaviour to arrive at a decision - success, failure, or pending (still running). To tick an entire
+A key feature of behaviours and their trees is in the way they :term:`tick`. The execution is like a slice - some small chunk of
+code on a behaviour to arrive at a decision - success, failure, or pending (still running). To tick an entire
 tree of behaviours is to start ticking from the root, using their decisions and the selector-sequence
 logic to choose which behaviour should next be ticked. This results in traversing the tree (though not necessarily
 all of it) at the end of which the root of the tree will return a result.
