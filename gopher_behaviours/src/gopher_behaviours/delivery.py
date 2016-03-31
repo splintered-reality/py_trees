@@ -298,11 +298,16 @@ class GopherDeliveries(object):
                 self.root = py_trees.Selector(name="Deliver Unto Me",
                                               children=[self.cancel_sequence, self.delivery_selector])
 
-                # Finalise variables
-                self.locations = self.incoming_goal
-                self.has_a_new_goal = True
+                if self.root.setup(10):
+                    # Finalise variables
+                    self.locations = self.incoming_goal
+                    self.has_a_new_goal = True
+                else:
+                    rospy.logerr("Gopher Deliveries : Failed to set up new delivery tree.")
+                    self.root = None
 
             self.incoming_goal = None
+
         elif self.root is not None and self.root.status == py_trees.Status.SUCCESS:
             # if we succeeded, then we should be at the previously traversed
             # location (assuming that no task can occur in between locations.)
