@@ -28,7 +28,6 @@ import rospy
 import somanet_msgs.msg as somanet_msgs
 
 from . import interactions
-from . import recovery
 
 ##############################################################################
 # Battery
@@ -202,14 +201,3 @@ class CheckBatteryLevel(py_trees.Behaviour):
 
     def battery_callback(self, msg):
         self.battery_percentage = msg.percentage
-
-
-def create_battery_tree(name):
-    check_battery_level = CheckBatteryLevel("Check Battery Level")
-    homebase_recovery = recovery.HomebaseRecovery("Homebase Recovery")
-    children = [check_battery_level, homebase_recovery]
-    # this needs more thought...
-    # also need a wait for charge once you're back...
-    # children=[check_battery_level, go_home, moveit.Finishing("Finishing")]
-    root = py_trees.Sequence(name=name, children=children)
-    return root

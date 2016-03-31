@@ -33,20 +33,6 @@ import threading
 ##############################################################################
 
 
-def show_usage(root):
-    print("")
-    print("************************************************************************************")
-    print("                                 Gopher HiveMind")
-    print("************************************************************************************")
-    print("")
-    print("Node that acts as caretaker of the behaviour tree for gopher deliveries.")
-    print("")
-    py_trees.display.print_ascii_tree(root)
-    print("")
-    print("************************************************************************************")
-    print("")
-
-
 class Parameters(object):
     """
     The variables of this class are default constructed from parameters on the
@@ -74,14 +60,15 @@ class Parameters(object):
 
 class GopherHiveMind(object):
     def __init__(self):
-        self.battery_subtree = gopher_behaviours.battery.create_battery_tree(name="Eating Disorder")
+        self.battery_subtree = gopher_behaviours.recovery.create_battery_recovery_tree(name="Eating Disorder")
         self.gopher = gopher_configuration.Configuration()
         self.planner = Planner(express_deliveries=False)
         self.current_world_subscriber = rospy.Subscriber(self.gopher.topics.world, std_msgs.String, self.current_world_callback)
         self.current_world = None
         self.quirky_deliveries = gopher_behaviours.delivery.GopherDeliveries(name="Quirky Deliveries", planner=self.planner)
+        self.event_handler = gopher_behaviours.interactions.create_button_event_handler()
         self.idle = py_trees.behaviours.Success("Idle")
-        self.root = py_trees.Selector(name="HiveMind", children=[self.battery_subtree, self.idle])
+        self.root = py_trees.Selector(name="HiveMind", children=[self.event_handler, self.battery_subtree, self.idle])
         self.tree = py_trees.ROSBehaviourTree(self.root)
         self.logger = py_trees.logging.get_logger("HiveMind")
         self.render = False

@@ -23,6 +23,7 @@ from . import docking
 from . import delivery
 from . import elevators
 from . import gopher_deliveries
+from . import hive_mind
 from . import interactions
 from . import navigation
 from . import planner

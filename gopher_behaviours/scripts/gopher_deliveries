@@ -58,7 +58,7 @@ if __name__ == '__main__':
     myargs = rospy.myargv(argv=sys.argv)
     args = parse_arguments(command_line_args=myargs[1:])
 
-    gopher_compulsion = gopher_behaviours.gopher_deliveries.GopherHiveMind()
+    gopher_compulsion = gopher_behaviours.hive_mind.GopherHiveMind()
 
     if args.render:
         "Stub for Rendering"

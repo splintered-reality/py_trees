@@ -36,6 +36,26 @@ import unique_id
 ##############################################################################
 
 
+def create_button_event_handler(name="Event Handler"):
+    event_handler = py_trees.composites.Sequence(name)
+    gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
+    go_button_events = MonitorButtonEvents(
+        name="Go Button Events",
+        topic_name=gopher.buttons.go,
+        variable_name="event_go_button"
+    )
+    stop_button_events = MonitorButtonEvents(
+        name="Stop Button Events",
+        topic_name=gopher.buttons.stop,
+        variable_name="event_stop_button"
+    )
+    let_it_go = py_trees.behaviours.Failure(name="Let it Go!")
+    event_handler.add_child(go_button_events)
+    event_handler.add_child(stop_button_events)
+    event_handler.add_child(let_it_go)
+    return event_handler
+
+
 def create_wait_for_go_button(name="Wait For Go Button"):
     """
     Tune into the go button signal. Will be RUNNING until an event
