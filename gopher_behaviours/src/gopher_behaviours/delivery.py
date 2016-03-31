@@ -38,6 +38,7 @@ import std_msgs.msg as std_msgs
 import gopher_configuration
 import unique_id
 from py_trees.blackboard import Blackboard
+
 from . import elevators
 from . import recovery
 from . import interactions
@@ -91,6 +92,20 @@ class State(IntEnum):
     TRAVELLING = 2
     """Behaviour is in an invalid state"""
     INVALID = 3
+
+
+# this exactly matches the codes in gopher_delivery_msgs/DeliveryFeedback
+class PreTickResult(IntEnum):
+    """ An enumerator representing the status of a delivery behaviour """
+
+    """Had an incoming goal and successfully setup a new delivery tree."""
+    NEW_DELIVERY_TREE = 0
+    """Had an incoming goal but failed to setup a new delivery tree."""
+    NEW_DELIVERY_TREE_WITHERED_AND_DIED = 1
+    """Delivery finished and delivery tree removed."""
+    TREE_FELLED = 2
+    """Nothing at all happened that is of interest."""
+    BORING_NOTHING = 3
 
 ##############################################################################
 # Delivery Specific Behaviours
@@ -176,7 +191,6 @@ class GopherDeliveries(object):
     :ivar blackboard:
     :ivar incoming_goal:
     :ivar locations:
-    :ivar has_a_new_goal:
     :ivar feedback_message:
     :ivar old_goal_id:
 
@@ -202,7 +216,6 @@ class GopherDeliveries(object):
         self.root = None
         self.state = State.IDLE
         self.locations = []
-        self.has_a_new_goal = False  # DJS : this is badly named, it is more appropriately 'has_a_new_root'
         self.feedback_message = ""
         self.old_goal_id = None
         self.planner = planner
@@ -249,11 +262,14 @@ class GopherDeliveries(object):
     def pre_tick_update(self, current_world):
         """
         Check if we have a new goal, then assemble the sub-behaviours required to
-        complete that goal. Finally kick out the current root and set the notification
-        flag (self.has_a_new_goal) that this subtree has changed.
+        complete that goal. Finally kick out the current root if the last delivery
+        succeeded.
 
         :param str current_world: update our knowledge of what the current world is.
+        :returns: what happened...
+        :rtype: PreTickResult
         """
+        result = PreTickResult.BORING_NOTHING
         if self.incoming_goal is not None and self.incoming_goal:
             # use the planner to initialise the behaviours that we are to follow
             # to get to the delivery location. If this is empty/None, then the
@@ -298,11 +314,17 @@ class GopherDeliveries(object):
                 self.root = py_trees.Selector(name="Deliver Unto Me",
                                               children=[self.cancel_sequence, self.delivery_selector])
 
-                # Finalise variables
-                self.locations = self.incoming_goal
-                self.has_a_new_goal = True
-
+                if self.root.setup(10):
+                    self.locations = self.incoming_goal
+                    result = PreTickResult.NEW_DELIVERY_TREE
+                else:
+                    rospy.logerr("Gopher Deliveries: failed to set up new delivery tree.")
+                    if self.root is None:
+                        rospy.logerr("Gopher Deliveries: shouldn't ever get here, but in case you do...call Dan")
+                    result = PreTickResult.NEW_DELIVERY_TREE_WITHERED_AND_DIED
+                    self.root = None
             self.incoming_goal = None
+
         elif self.root is not None and self.root.status == py_trees.Status.SUCCESS:
             # if we succeeded, then we should be at the previously traversed
             # location (assuming that no task can occur in between locations.)
@@ -310,9 +332,8 @@ class GopherDeliveries(object):
             # last goal was achieved and no new goal, so swap this current subtree out
             self.old_goal_id = self.root.id if self.root is not None else None
             self.root = None
-            self.has_a_new_goal = True
-        else:
-            self.has_a_new_goal = False
+            result = PreTickResult.TREE_FELLED
+        return result
 
     def is_executing(self):
         """

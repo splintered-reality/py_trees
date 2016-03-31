@@ -4,15 +4,16 @@
 # Imports
 ##############################################################################
 
+import gopher_behaviours
 import gopher_configuration
 import gopher_semantics
 import gopher_semantic_msgs.msg as gopher_semantic_msgs
 import delivery
 import rocon_python_utils
 
+from . import blackboard_handlers
 from . import elevators
 from . import interactions
-from . import blackboard_handlers
 from . import navigation
 
 ##############################################################################
@@ -61,9 +62,10 @@ class Planner(object):
     :ivar express: whether deliveries should stop and wait for a button press at each location (or not)
     :vartype express: bool
     """
-    def __init__(self, express_deliveries=False):
+    def __init__(self, express_deliveries=False, force_parking=False):
         self.current_location = None
         self.express = express_deliveries
+        self.force_parking = force_parking
         self.gopher = None
         self.semantics = None
 
@@ -144,13 +146,15 @@ class Planner(object):
         #################################################
         # Parking/Unparking or Docking/Undocking
         #################################################
-        if include_parking_behaviours:
-            children.insert(0, groups.Starting("Starting"))
+        if include_parking_behaviours or self.force_parking:
+            unpark_behaviour = gopher_behaviours.UnPark("UnPark")
+            children.insert(0, unpark_behaviour)
 
         # assume that we will go back to somewhere with a dock at the end of
         # each task, but only if the last location is homebase
-        if include_parking_behaviours and locations[-1] == 'homebase':
-            children.append(groups.Finishing("Finishing"))
+        if (include_parking_behaviours or self.force_parking) and locations[-1] == 'homebase':
+            park_behaviour = gopher_behaviours.Park("Park")
+            children.append(park_behaviour)
         if not include_parking_behaviours:
             children.append(interactions.Articulate("Done", self.gopher.sounds.done))
 
