@@ -78,14 +78,24 @@ class UnPark(py_trees.Sequence):
         # Undock
         ################################################################
         unplug_undock = py_trees.Selector(name="UnPlug/UnDock")
-        ar_markers_on = ar_markers.ControlARMarkerTracker("AR Markers On", self.gopher.topics.ar_tracker_long_range, True)
-        ar_markers_off = ar_markers.ControlARMarkerTracker("AR Markers Off", self.gopher.topics.ar_tracker_long_range, False)
+        ar_tracker_on_long_range = ar_markers.ControlARMarkerTracker("Long-Range AR Tracker On",
+                                                                     self.gopher.topics.ar_tracker_long_range,
+                                                                     True)
+        ar_tracker_on_short_range = ar_markers.ControlARMarkerTracker("Short-Range AR Tracker On",
+                                                                      self.gopher.topics.ar_tracker_short_range,
+                                                                      True)
+        ar_tracker_off_long_range = ar_markers.ControlARMarkerTracker("Long-Range AR Tracker Off",
+                                                                      self.gopher.topics.ar_tracker_long_range,
+                                                                      False)
+        ar_tracker_off_short_range = ar_markers.ControlARMarkerTracker("Short-Range AR Tracker Off",
+                                                                       self.gopher.topics.ar_tracker_short_range,
+                                                                       False)
         undocking = py_trees.Sequence(name="UnDock")
         break_out = py_trees.meta.failure_is_success(
             navigation.SimpleMotion(
                 name="Break Out",
                 motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_TRANSLATE,
-                motion_amount=0.5
+                motion_amount=0.8
             )
         )
         is_docked = battery.create_is_docked(name="Is Docked?")
@@ -179,9 +189,11 @@ class UnPark(py_trees.Sequence):
         self.add_child(unplug_undock)
         unplug_undock.add_child(undocking)
         undocking.add_child(is_docked)
-        undocking.add_child(ar_markers_on)
+        undocking.add_child(ar_tracker_on_long_range)
+        undocking.add_child(ar_tracker_on_short_range)
         undocking.add_child(auto_undock)
-        undocking.add_child(ar_markers_off)
+        undocking.add_child(ar_tracker_off_long_range)
+        undocking.add_child(ar_tracker_off_short_range)
         undocking.add_child(break_out)
         undocking.add_child(set_docked_flag)
         unplug_undock.add_child(unplug)

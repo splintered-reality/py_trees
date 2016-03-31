@@ -70,8 +70,18 @@ class Park(py_trees.Sequence):
             motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
             motion_amount=3.14
         )
-        ar_markers_on = ar_markers.ControlARMarkerTracker("AR Markers On", self.gopher.topics.ar_tracker_long_range, True)
-        ar_markers_off = ar_markers.ControlARMarkerTracker("AR Markers Off", self.gopher.topics.ar_tracker_long_range, False)
+        ar_tracker_on_long_range = ar_markers.ControlARMarkerTracker("Long-Range AR Tracker On",
+                                                                     self.gopher.topics.ar_tracker_long_range,
+                                                                     True)
+        ar_tracker_on_short_range = ar_markers.ControlARMarkerTracker("Short-Range AR Tracker On",
+                                                                      self.gopher.topics.ar_tracker_short_range,
+                                                                      True)
+        ar_tracker_off_long_range = ar_markers.ControlARMarkerTracker("Long-Range AR Tracker Off",
+                                                                      self.gopher.topics.ar_tracker_long_range,
+                                                                      False)
+        ar_tracker_off_short_range = ar_markers.ControlARMarkerTracker("Short-Range AR Tracker Off",
+                                                                       self.gopher.topics.ar_tracker_short_range,
+                                                                       False)
         docking_controller = docking.DockingController(name="Docking Controller")
         clearing_flags = py_trees.blackboard.ClearBlackboardVariable(name="Clear Flags", variable_name="undocked")
         wait_for_docking_contact = battery.create_wait_to_be_docked(name="Manual Recovery")
@@ -95,9 +105,11 @@ class Park(py_trees.Sequence):
         manual_divert.add_child(manual_dock)
         todock_or_not_todock.add_child(docking_control)
         docking_control.add_child(pre_dock_rotation)
-        docking_control.add_child(ar_markers_on)
+        docking_control.add_child(ar_tracker_on_long_range)
+        docking_control.add_child(ar_tracker_on_short_range)
         docking_control.add_child(docking_controller)
-        docking_control.add_child(ar_markers_off)
+        docking_control.add_child(ar_tracker_off_long_range)
+        docking_control.add_child(ar_tracker_off_short_range)
         todock_or_not_todock.add_child(wait_for_docking_contact)
         self.add_child(clearing_flags)
 
