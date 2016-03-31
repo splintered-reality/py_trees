@@ -6,14 +6,28 @@ cmake_minimum_required(VERSION 2.8.3)
 project(gopher_behaviours)
 
 ##############################################################################
-# Catkin
+# Find Packages
 ##############################################################################
 
-find_package(catkin REQUIRED rospy uuid_msgs unique_id)
-catkin_package()
+find_package(catkin REQUIRED dynamic_reconfigure rospy uuid_msgs unique_id)
+
+##############################################################################
+# Python Configuration
+##############################################################################
 
 catkin_python_setup()
 
+##############################################################################
+# Dynamic Reconfigure
+##############################################################################
+
+generate_dynamic_reconfigure_options(dynamic_reconfigure/CustomDeliveries.cfg)
+
+##############################################################################
+# Catkin
+##############################################################################
+
+catkin_package()
 catkin_add_env_hooks(42.gopher_deliveries SHELLS sh DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/env-hooks)
 
 ##############################################################################
@@ -40,6 +54,7 @@ catkin_install_python(
         ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
+install(DIRECTORY dynamic_reconfigure DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 install(DIRECTORY launch DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 
 ##############################################################################

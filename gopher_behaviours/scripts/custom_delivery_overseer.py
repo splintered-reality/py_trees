@@ -16,7 +16,9 @@ deliveries.
 # Imports
 ##############################################################################
 
+import dynamic_reconfigure.server
 import gopher_behaviours
+from gopher_behaviours.cfg import CustomDeliveriesConfig
 import gopher_configuration
 import gopher_delivery_msgs.msg as gopher_delivery_msgs
 import gopher_navi_msgs.msg as gopher_navi_msgs
@@ -42,8 +44,10 @@ class CustomDeliveryOverseer(object):
         self.gopher = gopher_configuration.Configuration()
         self.delivering = False  # is the delivery manager busy?
         self.custom_delivering = False  # are we doing something ourselves?
-        self.locations = rospy.get_param('~locations')  # assumed to be a list of strings
-        rospy.loginfo("Custom Delivery : setup for [" + "->".join(self.locations) + "] deliveries.")
+
+        self.dynamic_reconfigure_server =\
+            dynamic_reconfigure.server.Server(CustomDeliveriesConfig, self.dynamic_reconfigure_cb)
+
         self.express_delivery = gopher_behaviours.scripts.deliveries.ExpressDelivery(verbose_feedback=False)
         self.subscribers = rocon_python_comms.utils.Subscribers(
             [
@@ -83,6 +87,16 @@ class CustomDeliveryOverseer(object):
             goal.special_effects = True
             action_goal.goal = goal
             self.publishers.teleport_homebase.publish(action_goal)
+
+    def dynamic_reconfigure_cb(self, config, level):
+        """
+        Don't use the incoming config except as a read only
+        tool. If we write variables, make sure to use the server's update_configuration, which will trigger
+        this callback here.
+        """
+        self.locations = config.locations.split(", ")
+        rospy.loginfo("Custom Delivery : setup for [" + "->".join(self.locations) + "] deliveries.")
+        return config
 
     def spin(self):
         rate = rospy.Rate(10)
