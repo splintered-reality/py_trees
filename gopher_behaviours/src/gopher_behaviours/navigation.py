@@ -567,7 +567,6 @@ class GoalFinishing(py_trees.Behaviour):
                 self.feedback_message = "success"
                 return py_trees.Status.SUCCESS
             else:
-
                 if (result.goal_distance > self._distance_threshold):
                     if (current_finishing_duration > self._approach_timeout) and\
                        (current_finishing_duration <= self._timeout):

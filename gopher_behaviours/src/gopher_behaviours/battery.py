@@ -28,7 +28,6 @@ import rospy
 import somanet_msgs.msg as somanet_msgs
 
 from . import interactions
-from . import recovery
 
 ##############################################################################
 # Battery
@@ -164,19 +163,32 @@ def create_wait_to_be_unplugged(name="Unplug Me"):
 
 
 class CheckBatteryLevel(py_trees.Behaviour):
+    """
+    Subscribes to the battery message and continually checks on the battery level, returning
+    a FAILURE when it is low, SUCCESS otherwise
+    """
     def __init__(self, name):
         # setup
         super(CheckBatteryLevel, self).__init__(name)
-        self.gopher = gopher_configuration.Configuration()
         self.successes = 0
         self.battery_percentage = 100
-        rospy.Subscriber("~battery", somanet_msgs.SmartBatteryStatus, self.battery_callback)
+        self.gopher = None
+        self.subscriber = None
+
+    def setup(self, unused_timeout):
+        self.logger.debug("  %s [CheckBatteryLevel.setup()]" % self.name)
+        self.gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
+        self.subscriber = rospy.Subscriber(self.gopher.topics.battery, somanet_msgs.SmartBatteryStatus, self.battery_callback)
+        return True
 
     def update(self):
+        self.logger.debug("  %s [CheckBatteryLevel.update()]" % self.name)
+        if self.subscriber is None:
+            # safe to setup the subscriber in here...no blocking involved
+            self.setup(None)
         # Note : battery % in the feedback message causes spam in behaviour
         # tree rqt viewer, we are merely interested in the transitions, so do not send this
         # self.feedback_message = "battery %s%% [low: %s%%]" % (self.battery_percentage, self.gopher.battery.low)
-        self.logger.debug("  %s [update()]" % self.name)
         if self.battery_percentage < self.gopher.battery.low:
             if self.successes % 10 == 0:  # throttling
                 rospy.logwarn("Behaviours [%s]: battery level is low!" % self.name)
@@ -189,14 +201,3 @@ class CheckBatteryLevel(py_trees.Behaviour):
 
     def battery_callback(self, msg):
         self.battery_percentage = msg.percentage
-
-
-def create_battery_tree(name):
-    check_battery_level = CheckBatteryLevel("Check Battery Level")
-    homebase_recovery = recovery.HomebaseRecovery("Homebase Recovery")
-    children = [check_battery_level, homebase_recovery]
-    # this needs more thought...
-    # also need a wait for charge once you're back...
-    # children=[check_battery_level, go_home, moveit.Finishing("Finishing")]
-    root = py_trees.Sequence(children=children, name=name)
-    return root

@@ -16,12 +16,12 @@ delivery pipeline.
 ##############################################################################
 
 import argparse
+import gopher_behaviours
 import gopher_configuration
 import gopher_semantics
 import rocon_console.console as console
 import rospy
 import sys
-import gopher_behaviours
 
 ##############################################################################
 # Core Controller
@@ -48,7 +48,6 @@ def parse_arguments(command_line_args):
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter
                                      )
     parser.add_argument('-n', '--namespace', action='store', default=gopher.namespaces.semantics, help='namespace for the semantics parameters.')
-
     parser.add_argument('-l', '--locations', action='store_true', help='list available delivery locations')
     parser.add_argument('-p', '--parking', action='store_true', help='include parking/unparking behaviours in the delivery run')
 

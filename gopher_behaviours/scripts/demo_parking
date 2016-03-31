@@ -77,17 +77,7 @@ class Demo(object):
         unpark = gopher_behaviours.UnPark("UnPark")
         park = gopher_behaviours.Park("Park")
 
-        event_handler = py_trees.composites.Sequence("Event Handler")
-        go_button_events = gopher_behaviours.interactions.MonitorButtonEvents(
-            name="Go Button Events",
-            topic_name=self.gopher.buttons.go,
-            variable_name="event_go_button"
-        )
-        stop_button_events = gopher_behaviours.interactions.MonitorButtonEvents(
-            name="Stop Button Events",
-            topic_name=self.gopher.buttons.stop,
-            variable_name="event_stop_button"
-        )
+        event_handler = gopher_behaviours.interactions.create_button_event_handler()
 
         wait_for_button = py_trees.subscribers.WaitForSubscriberData(
             name="Wait for Go Button",
@@ -116,9 +106,6 @@ class Demo(object):
         restart.add_child(wait_for_button_two)
 
         self.root.add_child(event_handler)
-        event_handler.add_child(go_button_events)
-        event_handler.add_child(stop_button_events)
-        event_handler.add_child(py_trees.behaviours.Failure(name="Let it Go!"))
         self.root.add_child(just_do_it)
         just_do_it.add_child(unpark)
         just_do_it.add_child(switch_to_parking)

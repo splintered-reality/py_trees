@@ -28,7 +28,6 @@ import std_msgs.msg as std_msgs
 
 from . import interactions
 from . import navigation
-from . import recovery
 
 ##############################################################################
 # Behaviours
