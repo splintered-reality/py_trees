@@ -88,6 +88,7 @@ class GopherHiveMind(object):
         self.success = None  # non goal
         self.cancelled = False
         self.cancelling = False
+        self.cancelled_message = None
         self.current_eta = gopher_delivery_msgs.DeliveryETA()  # empty ETA
         self.monitor_ok = True
 
@@ -157,13 +158,12 @@ class GopherHiveMind(object):
         self.logger.debug("")
         self.logger.debug("{:-^30}".format(" Run %s " % behaviour_tree.count))
         self.logger.debug("")
-        self.quirky_deliveries.pre_tick_update(self.current_world)
-        if self.quirky_deliveries.has_a_new_goal:
+        result = self.quirky_deliveries.pre_tick_update(self.current_world)
+        if result == gopher_behaviours.delivery.PreTickResult.TREE_FELLED or result == gopher_behaviours.delivery.PreTickResult.NEW_DELIVERY_TREE:
             if self.quirky_deliveries.old_goal_id is not None:
                 self.tree.prune_subtree(self.quirky_deliveries.old_goal_id)
             if self.quirky_deliveries.root:
                 self.tree.insert_subtree(self.quirky_deliveries.root, self.root.id, 1)
-            self.quirky_deliveries.has_a_new_goal = False
             print("")
             print("************************************************************************************")
             print("                   Gopher Hivemind (Behaviour Tree Update)")
@@ -171,6 +171,9 @@ class GopherHiveMind(object):
             py_trees.display.print_ascii_tree(self.tree.root)
             print("************************************************************************************")
             print("")
+        elif result == gopher_behaviours.delivery.PreTickResult.NEW_DELIVERY_TREE_WITHERED_AND_DIED:
+            self.cancelled = True
+            self.cancelled_message = "Failed to grow the delivery subtree."
 
     def post_tick_handler(self, behaviour_tree):
         """
@@ -194,12 +197,11 @@ class GopherHiveMind(object):
             self._delivery_feedback_publisher.publish(msg)
         if self.quirky_deliveries.completed_on_last_tick():
             if self.quirky_deliveries.succeeded_on_last_tick():
-                print("Gopher Deliveries Setting Success = True")
                 self.success = True
-            elif self.quirky_deliveries.recovered_on_last_tick():
-                print("Gopher Deliveries Setting Cancelled = True")
+            elif self.quirky_deliveries.recovered_on_last_tick():  # i.e. delivery cancelled, homebase recovery kicked in
                 self.cancelling = False
                 self.cancelled = True
+                self.cancelled_message = "Delivery was cancelled (via teleop button or balcony scheduler)."
             else:
                 # shouldn't get here
                 pass
@@ -257,6 +259,7 @@ class GopherHiveMind(object):
                 # reset flags upon confirming a new goal
                 self.success = False
                 self.cancelled = False
+                self.cancelled_message = None
             else:
                 message = "refused goal request [%s]" % message
                 rospy.logwarn("Delivery : [%s]" % message)
@@ -293,7 +296,7 @@ class GopherHiveMind(object):
             msg.error_message = "Success !"
         elif self.cancelled:
             msg.result = gopher_delivery_msgs.DeliveryErrorCodes.CANCELLED
-            msg.error_message = "Delivery was cancelled."
+            msg.error_message = self.cancelled_message
         elif self.cancelling:
             msg.result = gopher_delivery_msgs.DeliveryErrorCodes.UNKNOWN
             msg.error_message = "Cancelling..."
