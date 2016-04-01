@@ -71,7 +71,6 @@ class GopherHiveMind(object):
         self.root = py_trees.Selector(name="HiveMind", children=[self.event_handler, self.battery_subtree, self.idle])
         self.tree = py_trees.ROSBehaviourTree(self.root)
         self.logger = py_trees.logging.get_logger("HiveMind")
-        self.render = False
         self.success = None  # non goal
         self.cancelled = False
         self.cancelling = False
@@ -79,9 +78,24 @@ class GopherHiveMind(object):
         self.current_eta = gopher_delivery_msgs.DeliveryETA()  # empty ETA
         self.monitor_ok = True
 
-        ##################################
-        # Ros Components
-        ##################################
+    def render_dot_tree(self):
+        """
+        Fill in the tree with a 'default' delivery so we can render an exampler tree running
+        with a delivery.
+        """
+        (deliveries_root, unused_delivery_sequence) = gopher_behaviours.delivery.GopherDeliveries.build_new_root(
+            planner=self.planner,
+            world="earth",
+            locations=["pizza_shop", "penthouse", "ashokas_hell"],
+            include_parking_behaviours=True
+        )
+        self.tree.insert_subtree(deliveries_root, deliveries_root.id, 1)
+        py_trees.display.render_dot_tree(self.root)
+        self.tree.prune_subtree(deliveries_root.id)
+
+    ##################################
+    # Ros Components
+    ##################################
 
     def setup(self, timeout):
         """
@@ -91,7 +105,6 @@ class GopherHiveMind(object):
         self.parameters = Parameters()
         self.planner.express = self.parameters.express
         self.planner.force_parking = self.parameters.force_parking
-
         self._delivery_goal_service = rospy.Service('delivery/goal', gopher_delivery_srvs.DeliveryGoal, self._goal_service_callback)
         self._delivery_feedback_publisher = rospy.Publisher('delivery/feedback', gopher_delivery_msgs.DeliveryFeedback, queue_size=1, latch=True)
         self._status_pub = rospy.Publisher('~status', gopher_delivery_msgs.DeliveryManagerStatus, queue_size=1, latch=True)
@@ -168,9 +181,6 @@ class GopherHiveMind(object):
 
         Could/should possibly move this into the delivery class itself.
         """
-        if self.render:
-            py_trees.display.render_dot_tree(self.root)
-            self.render = False
         self.quirky_deliveries.post_tock_update()
         # make sure to publish one last message to the feedback publisher once the task has succeded
         if self.quirky_deliveries.is_executing() or (self.quirky_deliveries.succeeded_on_last_tick() and not self.success):

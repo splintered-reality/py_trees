@@ -259,6 +259,53 @@ class GopherDeliveries(object):
         """
         self.blackboard.cancel_requested = True
 
+    @staticmethod
+    def build_new_root(planner, world, locations, include_parking_behaviours):
+        """
+        Build a new root.
+
+        .. todo:: this is a little mixed up..part here, part in the planner.create_tree()
+
+        :param str world: start from our current world
+        :param [str] locations: semantic location string identifiers
+        :param bool include_parking_behaviours: include the parking behaviours...or not
+        """
+        children = planner.create_tree(world,
+                                       locations,
+                                       include_parking_behaviours=include_parking_behaviours
+                                       )
+        if not children:
+            rospy.logerr("Gopher Deliveries : received a goal, but none of the locations were valid...we're FUBAR! (TODO need to handle this.")
+            return (None, None)
+
+        cancel_requested = py_trees.CheckBlackboardVariable(name="Cancel Requested?",
+                                                            variable_name="cancel_requested",
+                                                            expected_value=True,
+                                                            invert=False
+                                                            )
+        check_button_pressed = interactions.create_check_for_stop_button_press("Cancel Pressed?")
+        cancel_required = py_trees.Selector(name="Cancellation Required?",
+                                            children=[check_button_pressed,
+                                                      cancel_requested]
+                                            )
+        homebase_recovery = recovery.HomebaseRecovery(name="Delivery Cancelled")
+        cancel_sequence = py_trees.Sequence(name="Cancellation",
+                                            children=[cancel_required,
+                                                      homebase_recovery
+                                                      ]
+                                            )
+        # delivery sequence is oneshot - will only run once, retaining its succeeded or failed state
+        delivery_sequence = py_trees.OneshotSequence(name="Balli Balli Deliveries", children=children)
+        delivery_selector = py_trees.Selector(
+            name="Deliver or recover",
+            children=[delivery_sequence,
+                      recovery.HomebaseRecovery("Delivery Failed")
+                      ]
+        )
+        root = py_trees.Selector(name="Deliver Unto Me",
+                                 children=[cancel_sequence, delivery_selector])
+        return (root, delivery_sequence)
+
     def pre_tick_update(self, current_world):
         """
         Check if we have a new goal, then assemble the sub-behaviours required to
@@ -275,54 +322,27 @@ class GopherDeliveries(object):
             # to get to the delivery location. If this is empty/None, then the
             # semantic locations provided were wrong.
             include_parking_behaviours = False if self.always_assume_initialised or self.root else True
-            children = self.planner.create_tree(current_world,
-                                                self.incoming_goal,
-                                                include_parking_behaviours=include_parking_behaviours
-                                                )
-            if not children:
-                # TODO is this enough?
-                rospy.logwarn("Gopher Deliveries : Received a goal, but none of the locations were valid.")
-            else:
-                self.old_goal_id = self.root.id if self.root is not None else None
-                # Blackboard
-                self.reset_blackboard_variables(traversed_locations=[] if not self.root else self.blackboard.traversed_locations,
-                                                remaining_locations=self.incoming_goal
-                                                )
-                # Assemble Behaviours
-                self.cancel_requested = py_trees.CheckBlackboardVariable(name="Cancel Requested?",
-                                                                         variable_name="cancel_requested",
-                                                                         expected_value=True,
-                                                                         invert=False
-                                                                         )
-                self.check_button_pressed = interactions.create_check_for_stop_button_press("Cancel Pressed?")
-                self.cancel_required = py_trees.Selector(name="Cancellation Required?",
-                                                         children=[self.check_button_pressed,
-                                                                   self.cancel_requested]
-                                                         )
-                self.homebase_recovery = recovery.HomebaseRecovery(name="Delivery Cancelled")
-                self.cancel_sequence = py_trees.Sequence(name="Cancellation",
-                                                         children=[self.cancel_required,
-                                                                   self.homebase_recovery
-                                                                   ]
-                                                         )
-                # delivery sequence is oneshot - will only run once, retaining its succeeded or failed state
-                self.delivery_sequence = py_trees.OneshotSequence(name="Balli Balli Deliveries",
-                                                                  children=children)
-                self.delivery_selector = py_trees.Selector(name="Deliver or recover",
-                                                           children=[self.delivery_sequence,
-                                                                     recovery.HomebaseRecovery("Delivery Failed")])
-                self.root = py_trees.Selector(name="Deliver Unto Me",
-                                              children=[self.cancel_sequence, self.delivery_selector])
 
-                if self.root.setup(10):
-                    self.locations = self.incoming_goal
-                    result = PreTickResult.NEW_DELIVERY_TREE
-                else:
-                    rospy.logerr("Gopher Deliveries: failed to set up new delivery tree.")
-                    if self.root is None:
-                        rospy.logerr("Gopher Deliveries: shouldn't ever get here, but in case you do...call Dan")
-                    result = PreTickResult.NEW_DELIVERY_TREE_WITHERED_AND_DIED
-                    self.root = None
+            self.old_goal_id = self.root.id if self.root is not None else None
+            self.reset_blackboard_variables(traversed_locations=[] if not self.root else self.blackboard.traversed_locations,
+                                            remaining_locations=self.incoming_goal
+                                            )
+            (self.root, self.delivery_sequence) = GopherDeliveries.build_new_root(
+                self.planner,
+                current_world,
+                self.incoming_goal,
+                include_parking_behaviours
+            )
+
+            if self.root.setup(10):
+                self.locations = self.incoming_goal
+                result = PreTickResult.NEW_DELIVERY_TREE
+            else:
+                rospy.logerr("Gopher Deliveries: failed to set up new delivery tree.")
+                if self.root is None:
+                    rospy.logerr("Gopher Deliveries: shouldn't ever get here, but in case you do...call Dan")
+                result = PreTickResult.NEW_DELIVERY_TREE_WITHERED_AND_DIED
+                self.root = None
             self.incoming_goal = None
 
         elif self.root is not None and self.root.status == py_trees.Status.SUCCESS:
