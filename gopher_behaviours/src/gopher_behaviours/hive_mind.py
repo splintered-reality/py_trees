@@ -86,11 +86,13 @@ class GopherHiveMind(object):
         (deliveries_root, unused_delivery_sequence) = gopher_behaviours.delivery.GopherDeliveries.build_new_root(
             planner=self.planner,
             world="earth",
-            locations=["pizza_shop", "penthouse", "ashokas_hell"],
+            locations=["beer_fridge", "ashokas_hell"],
             include_parking_behaviours=True
         )
         self.tree.insert_subtree(deliveries_root, deliveries_root.id, 1)
-        py_trees.display.render_dot_tree(self.root)
+        py_trees.display.print_ascii_tree(deliveries_root)
+        py_trees.display.print_ascii_tree(self.tree.root)
+        py_trees.display.render_dot_tree(self.tree.root)
         self.tree.prune_subtree(deliveries_root.id)
 
     ##################################

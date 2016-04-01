@@ -66,13 +66,14 @@ class Planner(object):
         self.current_location = None
         self.express = express_deliveries
         self.force_parking = force_parking
-        self.gopher = None
-        self.semantics = None
+        # load defaults, so we can get on with rendering graphs
+        self.gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
+        self.semantics = gopher_semantics.Semantics(fallback_to_defaults=True)
 
     def setup(self):
         """
-        Delayed ROS setup. This will be called by the worker methods if not already set
-        so by and large it doesn't require a manual call.
+        Re-initialises from the ros parameter server if a delayed
+        ROS setup is required.
         """
         self.gopher = gopher_configuration.Configuration()
         self.semantics = gopher_semantics.Semantics(self.gopher.namespaces.semantics)
@@ -97,11 +98,12 @@ class Planner(object):
 
            Clean up the key error handling
         """
-        if self.semantics is None:
-            self.setup()
         ########################################
         # Topological Path
         ########################################
+        print("Create Tree")
+        print("  - world : %s" % current_world)
+        print("  - locations: %s" % locations)
         # TODO check all locations are in semantics, provide meaningful error message otherwise
         topological_path = find_topological_path(current_world, locations, self.semantics)
         # TODO check its not empty, error message if so

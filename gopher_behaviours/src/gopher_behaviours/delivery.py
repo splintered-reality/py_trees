@@ -132,8 +132,8 @@ class Waiting(py_trees.Behaviour):
         self.feedback_message = "hanging around at '%s' waiting for lazy bastards" % (location)
         self.notify_id = unique_id.toMsg(unique_id.fromRandom())
 
-        # ros communications
-        # could potentially have this in the waiting behaviour
+    def setup(self, timeout):
+        """Delayed ROS Setup"""
         self._go_button_subscriber = rospy.Subscriber(self.config.buttons.go, std_msgs.Empty, self._go_button_callback)
         rospy.wait_for_service(self.config.services.notification)
         self._notify_srv = rospy.ServiceProxy(self.config.services.notification, gopher_std_srvs.Notify)
