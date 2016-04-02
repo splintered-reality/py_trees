@@ -7,10 +7,7 @@
 ##############################################################################
 
 """
-Imports for the gopher_behaviours_ package.
-
-.. _gopher_behaviours: http://wiki.ros.org/gopher_behaviours
-
+Imports for the gopher_behaviours package.
 """
 ##############################################################################
 # Imports
@@ -22,7 +19,6 @@ from . import battery
 from . import docking
 from . import delivery
 from . import elevators
-from . import gopher_deliveries
 from . import hive_mind
 from . import interactions
 from . import navigation

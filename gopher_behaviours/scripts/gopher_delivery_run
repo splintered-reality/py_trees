@@ -87,6 +87,6 @@ if __name__ == '__main__':
     command_line_args = rospy.myargv(argv=sys.argv)[1:]
     args = parse_arguments(command_line_args)
 
-    express_delivery = gopher_behaviours.scripts.deliveries.ExpressDelivery()
+    express_delivery = gopher_behaviours.scripts.deliveries.CustomDelivery()
     express_delivery.send(args.delivery_locations, args.parking)
     express_delivery.spin()

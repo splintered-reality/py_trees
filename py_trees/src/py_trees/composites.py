@@ -116,6 +116,17 @@ class Composite(Behaviour):
         child.parent = self
         return child.id
 
+    def add_children(self, children):
+        """
+        Adds a child.
+
+        :param Behaviour[] children: children to append to the composite.
+        """
+        for child in children:
+            assert isinstance(child, Behaviour), "children must be behaviours, but you passed in %s" % type(child)
+            self.children.append(child)
+            child.parent = self
+
     def remove_child(self, child):
         """
         Remove the child behaviour from this composite.

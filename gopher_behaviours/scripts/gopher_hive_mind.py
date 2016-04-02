@@ -24,14 +24,13 @@ def show_usage():
     s = "\n"
     s += console.white
     s += console.bold + "************************************************************************************\n" + console.reset
-    s += console.bold + "                                Gopher Deliveries\n" + console.reset
+    s += console.bold + "                                Gopher Hive Mind\n" + console.reset
     s += console.bold + "************************************************************************************\n" + console.reset
     s += "\n"
     s += console.white
     s += console.bold + "    Generate Dot" + console.reset + "\n"
-    s += console.cyan + "        gopher_deliveries" + console.yellow + " --render" + console.reset + "\n"
+    s += console.cyan + "        gopher_hive_mind.py" + console.yellow + " --render" + console.reset + "\n"
     s += "\n"
-    s += console.cyan + "        + gopher_deliveries.launch" + console.reset + "\n"
     s += console.bold + "    RosLaunch" + console.reset + "\n"
     s += console.cyan + "        roslaunch gopher_behaviours gopher_deliveries.launch" + console.reset + "\n"
     s += "\n"
@@ -57,6 +56,7 @@ def parse_arguments(command_line_args):
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter
                                      )
     parser.add_argument('-r', '--render', action='store_true', help='render the graph to dot/png/svg.')
+    parser.add_argument('-d', '--debug', action='store_true', help='debug level tree logging.')
 
     args = parser.parse_args(command_line_args)
     return args
