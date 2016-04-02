@@ -1,0 +1,91 @@
+#!/usr/bin/env python
+#
+##############################################################################
+# Documentation
+##############################################################################
+"""
+Simple demo program illustrating the behaviour lifecycle.
+"""
+##############################################################################
+# Imports
+##############################################################################
+
+import argparse
+import py_trees
+import time
+
+##############################################################################
+# Classes
+##############################################################################
+
+
+def show_usage():
+    print("")
+    print("************************************************************************************")
+    print("                              Demo Behaviour")
+    print("************************************************************************************")
+    print("")
+    print("Displays the behaviour lifecycle for a behaviour that counts to 1, 2, 3 and")
+    print("then resets, repeats.")
+    print("")
+    print("")
+    print("************************************************************************************")
+    print("")
+
+
+class Counter(py_trees.Behaviour):
+
+    def __init__(self, name="Counter"):
+        super(Counter, self).__init__(name)
+        self.logger = py_trees.logging.get_logger("Demo Behaviours")
+        self.logger.debug("  %s [Counter::__init__()]" % self.name)
+        self.counter = 0
+
+    def setup(self):
+        """
+        Manually called after instantiation. Do your ros delayed (possibly blocking)
+        setup here.
+        """
+        self.logger.debug("  %s [Counter::setup()]" % self.name)
+
+    def initialise(self):
+        """
+        Called immediately upon ticking if not already RUNNING.
+        (i.e. after a previous SUCCESS, FAILURE or after an abort to INVALID).
+        """
+        self.logger.debug("  %s [Counter::initialise()]" % self.name)
+        self.counter = 0
+
+    def update(self):
+        """
+        Where the execution of the tick happens. Must return a status result.
+        """
+        self.counter += 1
+        self.feedback_message = "%s" % self.counter
+        new_status = py_trees.Status.SUCCESS if self.counter == 3 else py_trees.Status.RUNNING
+        self.logger.debug("  %s [Counter.update()][%s->%s][counter: %s]" % (self.name, self.status, new_status, self.feedback_message))
+        return new_status
+
+    def terminate(self, new_status):
+        """
+        Cleanup handler for whenever the behaviour reaches a result, or switches to INVALID because a higher
+        priority branch has superceded this behaviour.
+        """
+        self.logger.debug("  %s [Counter.terminate()][%s->%s]" % (self.name, self.status, new_status))
+
+
+##############################################################################
+# Main
+##############################################################################
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Demo the behaviours', usage=show_usage())
+    args = parser.parse_args()
+
+    py_trees.logging.level = py_trees.logging.Level.DEBUG
+
+    counter = Counter()
+    counter.setup()
+    for i in range(0, 7):
+        counter.tickOnce()
+        time.sleep(0.5)
