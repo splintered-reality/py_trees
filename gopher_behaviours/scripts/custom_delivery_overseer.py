@@ -22,6 +22,7 @@ from gopher_behaviours.cfg import CustomDeliveriesConfig
 import gopher_configuration
 import gopher_delivery_msgs.msg as gopher_delivery_msgs
 import gopher_navi_msgs.msg as gopher_navi_msgs
+import gopher_semantics
 import rocon_console.console as console
 import rocon_python_comms
 import rospy
@@ -42,6 +43,7 @@ class CustomDeliveryOverseer(object):
     """
     def __init__(self):
         self.gopher = gopher_configuration.Configuration()
+        self.semantics = gopher_semantics.Semantics(self.gopher.namespaces.semantics)
         self.delivering = False  # is the delivery manager busy?
         self.custom_delivering = False  # are we doing something ourselves?
         self.locations = None
@@ -97,8 +99,14 @@ class CustomDeliveryOverseer(object):
         temp_string = temp_string.replace('[', ' ')
         temp_string = temp_string.replace(']', ' ')
         temp_string = temp_string.replace(',', ' ')
-        self.locations = [l for l in temp_string.split(' ') if l]
-        rospy.loginfo("Custom Delivery : setup for [" + "->".join(self.locations) + "] deliveries.")
+        new_locations = [l for l in temp_string.split(' ') if l]
+        self.locations = []
+        for location in new_locations:
+            if location in self.semantics.locations:
+                self.locations.append(location)
+            else:
+                rospy.logerr("Custom Delivery: tried to reconfigure with an invalid location, dropping [%s]" % location)
+        rospy.loginfo("Custom Delivery: setup for [" + "->".join(self.locations) + "] deliveries.")
         return config
 
     def spin(self):
