@@ -465,7 +465,7 @@ class Teleport(py_trees.Behaviour):
             self.feedback_message = "waiting for teleport to init pose and clear costmaps"
             return py_trees.Status.RUNNING
 
-    def stop(self, new_status):
+    def terminate(self, new_status):
         # if we have an action client and the current goal has not already
         # succeeded, send a message to cancel the goal for this action client.
         if self.action_client is not None and self.action_client.get_state() != actionlib_msgs.GoalStatus.SUCCEEDED:
@@ -611,7 +611,7 @@ class GoalFinishing(py_trees.Behaviour):
                 self.feedback_message = "waiting for goal finisher to finish us"
                 return py_trees.Status.RUNNING
 
-    def stop(self, new_status):
+    def terminate(self, new_status):
         # if we have an action client and the current goal has not already
         # succeeded, send a message to cancel the goal for this action client.
         if self.action_client is not None and self.action_client.get_state() != actionlib_msgs.GoalStatus.SUCCEEDED:
@@ -698,8 +698,7 @@ class ElfInitialisation(py_trees.Sequence):
 #         """
 #         super(ElfInitialisation, self).initialise()
 #
-#     def stop(self, new_status=py_trees.Status.INVALID):
+#     def terminate(self, new_status):
 #         """
 #         Stop the pose intialisation sequence
 #         """
-#         super(ElfInitialisation, self).stop(new_status)
