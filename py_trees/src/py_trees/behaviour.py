@@ -62,7 +62,7 @@ class Behaviour(object):
         self.feedback_message = ""  # useful for debugging, or human readable updates, but not necessary to implement
 
     ############################################
-    # User Defined Functions (virtual)
+    # User Customisable Functions (virtual)
     ############################################
 
     def setup(self, timeout):
@@ -128,6 +128,18 @@ class Behaviour(object):
         return Status.INVALID
 
     ############################################
+    # User Methods
+    ############################################
+
+    def tick_once(self):
+        """
+        A direct means of calling tick on this object without using the generator
+        mechanism.
+        """
+        for unused in self.tick():
+            pass
+
+    ############################################
     # Workers
     ############################################
 
@@ -151,14 +163,6 @@ class Behaviour(object):
         """
         visitor.run(self)
 
-    def tickOnce(self):
-        """
-        A direct means of calling tick on this object without using the generator
-        mechanism.
-        """
-        for unused in self.tick():
-            pass
-
     def tick(self):
         """
         This function is a generator that can be used by an iterator on
@@ -171,7 +175,7 @@ class Behaviour(object):
         .. warning::
 
            This is a generator function, you must use this with *yield*. If you need a direct call,
-           prefer :py:meth:`tickOnce` instead.
+           prefer :py:meth:`tick_once` instead.
 
         Calling ``my_behaviour.tick()`` will not actually do anything.
         It has to be used as part of an iterator, e.g.
@@ -181,7 +185,7 @@ class Behaviour(object):
            for node in my_behaviour.tick():
                print("Do something")
 
-        Prefer instead :py:function::`tickOnce` method for making a direct call.
+        Prefer instead :py:function::`tick_once` method for making a direct call.
 
         :return py_trees.Behaviour: a reference to itself
         """
@@ -221,7 +225,7 @@ class Behaviour(object):
 
         .. warning:: Do not override this method, use :py:meth:`terminate` instead.
         """
-        self.logger.debug("  %s [Behaviour.stop()]" % self.name)
+        self.logger.debug("  %s [Behaviour.stop()][%s->%s]" % (self.name, self.status, new_status))
         self.terminate(new_status)
         self.status = new_status
         self.iterator = self.tick()

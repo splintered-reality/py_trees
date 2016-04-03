@@ -91,10 +91,10 @@ class Inverter(Behaviour):
         if self.status != common.Status.RUNNING:
             self.children[0].initialise()
             self.initialise()
-        self.children[0].tickOnce()
+        self.children[0].tick_once()
         new_status = self.update()
         if new_status != common.Status.RUNNING:
-            # don't need to stop the child, it will already have looked after itself via the tickOnce()
+            # don't need to stop the child, it will already have looked after itself via the tick_once()
             self.stop(new_status)
         else:
             self.status = common.Status.RUNNING

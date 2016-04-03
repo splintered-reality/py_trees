@@ -28,7 +28,7 @@ from __future__ import absolute_import
 import itertools
 
 from . import logging
-from .behaviours import Behaviour
+from .behaviour import Behaviour
 from .common import Status
 from . import meta
 
@@ -226,6 +226,7 @@ class Selector(Composite):
                         yield self
                         return
         # all children failed, set failure ourselves and current child to the last bugger who failed us
+        print("All children failed?")
         self.status = Status.FAILURE
         try:
             self.current_child = self.children[-1]

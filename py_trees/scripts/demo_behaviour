@@ -87,5 +87,5 @@ if __name__ == '__main__':
     counter = Counter()
     counter.setup()
     for i in range(0, 7):
-        counter.tickOnce()
+        counter.tick_once()
         time.sleep(0.5)
