@@ -17,7 +17,7 @@ from nose.tools import assert_raises
 import py_trees
 from py_trees import Blackboard, CheckBlackboardVariable, Status
 import rocon_console.console as console
-
+import operator
 
 ##############################################################################
 # Logging Level
@@ -85,10 +85,10 @@ def test_expected_value_inverted():
     blackboard = create_blackboard()
 
     tuples = []
-    tuples.append((CheckBlackboardVariable(name="check_foo_equals_bar", variable_name="foo", expected_value="bar", invert=True), Status.FAILURE))
-    tuples.append((CheckBlackboardVariable(name="check_foo_equals_foo", variable_name="foo", expected_value="foo", invert=True), Status.SUCCESS))
-    tuples.append((CheckBlackboardVariable(name="check_bar_equals_bar", variable_name="bar", expected_value="bar", invert=True), Status.FAILURE))
-    tuples.append((CheckBlackboardVariable(name="check_bar_equals_foo", variable_name="bar", expected_value="foo", invert=True), Status.FAILURE))
+    tuples.append((CheckBlackboardVariable(name="check_foo_equals_bar", variable_name="foo", expected_value="bar", comparison_operator=operator.ne), Status.FAILURE))
+    tuples.append((CheckBlackboardVariable(name="check_foo_equals_foo", variable_name="foo", expected_value="foo", comparison_operator=operator.ne), Status.SUCCESS))
+    tuples.append((CheckBlackboardVariable(name="check_bar_equals_bar", variable_name="bar", expected_value="bar", comparison_operator=operator.ne), Status.FAILURE))
+    tuples.append((CheckBlackboardVariable(name="check_bar_equals_foo", variable_name="bar", expected_value="foo", comparison_operator=operator.ne), Status.FAILURE))
     for b, unused in tuples:
         b.tick_once()
     for b, asserted_result in tuples:
