@@ -105,8 +105,7 @@ def create_delivery_subtree(world, locations, include_parking_behaviours, expres
     recovery_required_by_cancel_request = py_trees.CheckBlackboardVariable(
         name="Cancel Requested?",
         variable_name="cancel_requested",
-        expected_value=True,
-        invert=False
+        expected_value=True
     )
     recovery_required_by_button = interactions.create_check_for_stop_button_press("Stop Button?")
     # TODO
