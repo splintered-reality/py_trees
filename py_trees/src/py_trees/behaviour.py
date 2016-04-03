@@ -23,6 +23,8 @@
 import unique_id
 
 from . import logging
+from . import common
+
 from .common import Status
 
 ##############################################################################
@@ -46,6 +48,7 @@ class Behaviour(object):
     :ivar Behaviour parent: None of it is the root otherwise usually a :py:class:`~py_trees.composites.Composite`
     :ivar [] children: a :py:class:`Behaviour` list, empty for standalones, but popuated by composites.
     :ivar str feedback_message: a simple message usually set in the :py:meth:`update`.
+    :ivar BlackBoxLevel blackbox_level: helper variable for dot graphs and runtime gui's to collapse/explode entire subtrees dependent upon the blackbox level.
     """
     def __init__(self, name="", *args, **kwargs):
         """
@@ -60,6 +63,7 @@ class Behaviour(object):
         self.children = []  # only set by composite behaviours
         self.logger = logging.get_logger("Behaviour")
         self.feedback_message = ""  # useful for debugging, or human readable updates, but not necessary to implement
+        self.blackbox_level = common.BlackBoxLevel.NOT_A_BLACKBOX
 
     ############################################
     # User Customisable Functions (virtual)

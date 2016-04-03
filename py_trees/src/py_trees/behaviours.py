@@ -23,7 +23,6 @@ This module defines the interface for behaviours to be used in py_trees.
 ##############################################################################
 
 import rospy
-from . import common
 from . import logging
 from .common import Status
 from .behaviour import Behaviour
@@ -52,11 +51,6 @@ def running(self):
 Success = meta.create_behaviour_from_function(success)
 Failure = meta.create_behaviour_from_function(failure)
 Running = meta.create_behaviour_from_function(running)
-
-# Another way of doing this via the inverter decorator
-# @meta.inverter
-# class Failure(Success):
-#    pass
 
 ##############################################################################
 # Other Behaviours
