@@ -187,7 +187,7 @@ class RosBehaviourTreeDotcodeGenerator(object):
         for behaviour in data:
             for child_id in behaviour.child_ids:
                 # edge colour is set differently for some reason
-                edge_color = (224,224,224)
+                edge_color = (224, 224, 224)
                 try:
                     state = states[unique_id.fromMsg(child_id)]
                 except KeyError:

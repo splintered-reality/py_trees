@@ -25,6 +25,7 @@ This module creates tools for managing your entire behaviour tree.
 import datetime
 import py_trees_msgs.msg as py_trees_msgs
 import os
+import rocon_python_comms
 import rosbag
 import rospkg
 import rospy
@@ -272,10 +273,10 @@ class ROSBehaviourTree(BehaviourTree):
 
     Publishers:
 
-     - ~/ascii_tree (std_msgs/String) : ascii representation of the entire tree.
-     - ~/snapshot/ascii_tree (std_msgs/String) : runtime snapshot of the ascii tree.
-     - ~/dot_tree (std_msgs/String) : dot graph representation of the entire tree.
-     - ~/snapshot/dot_tree (std_msgs/String) : runtime snapshot of the dot tree.
+     - ~/ascii/snapshot (std_msgs/String) : static snapshot of the entire tree.
+     - ~/ascii/tree (std_msgs/String) : runtime view of the ticking ascii tree.
+     - ~/dot/snapshot (std_msgs/String) : static dot graph snapshot of the entire tree.
+     - ~/log/tree (std_msgs/String) : runtime view, with logging information of the tree for rqt/bagging
     """
 
     class SnapshotVisitor(VisitorBase):
@@ -349,25 +350,23 @@ class ROSBehaviourTree(BehaviourTree):
         self.lock = threading.Lock()
 
         # delay the publishers so we can instantiate this class without connecting to ros (private names need init_node)
-        self.blackboard_publisher = None
-        self.ascii_tree_publisher = None
-        self.snapshot_ascii_tree_publisher = None
-        self.dot_tree_publisher = None
-        self.snapshot_dot_tree_publisher = None
-        self.snapshot_logging_publisher = None
-        self.tip_publisher = None
+        self.publishers = None
 
         # cleanup must come last as it assumes the existence of the bag
         rospy.on_shutdown(self.cleanup)
 
     def setup_publishers(self):
-        self.blackboard_publisher = rospy.Publisher('~blackboard', std_msgs.String, queue_size=1, latch=True)
-        self.ascii_tree_publisher = rospy.Publisher('~ascii_tree', std_msgs.String, queue_size=1, latch=True)
-        self.snapshot_ascii_tree_publisher = rospy.Publisher('~tick/ascii_tree', std_msgs.String, queue_size=1, latch=True)
-        self.dot_tree_publisher = rospy.Publisher('~dot_tree', std_msgs.String, queue_size=1, latch=True)
-        self.snapshot_dot_tree_publisher = rospy.Publisher('~tick/dot_tree', std_msgs.String, queue_size=1, latch=True)
-        self.snapshot_logging_publisher = rospy.Publisher('~log/tree', py_trees_msgs.BehaviourTree, queue_size=1, latch=True)
-        self.tip_publisher = rospy.Publisher('~tip', py_trees_msgs.Behaviour, queue_size=1, latch=True)
+        latched = True
+        self.publishers = rocon_python_comms.utils.Publishers(
+            [
+                ("blackboard", "~blackboard", std_msgs.String, latched, 2),
+                ("ascii_snapshot", "~ascii/snapshot", std_msgs.String, latched, 2),
+                ("ascii_tree", "~ascii/tree", std_msgs.String, latched, 2),
+                ("dot_snapshot", "~dot/snapshot", std_msgs.String, latched, 2),
+                ("log_tree", "~log/tree", py_trees_msgs.BehaviourTree, latched, 2),
+                ("tip", "~tip", py_trees_msgs.Behaviour, latched, 2)
+            ]
+        )
 
         # publish current state
         self.publish_tree_modifications(self.root)
@@ -379,10 +378,10 @@ class ROSBehaviourTree(BehaviourTree):
         """
         Publishes the blackboard. Should be called at the end of every tick.
         """
-        if self.blackboard_publisher is None:
+        if self.publishers is None:
             self.setup_publishers()
-        if self.blackboard_publisher.get_num_connections() > 0:
-            self.blackboard_publisher.publish("%s" % self.blackboard)
+        if self.publishers.blackboard.get_num_connections() > 0:
+            self.publishers.blackboard.publish("%s" % self.blackboard)
 
     def publish_tree_modifications(self, tree):
         """
@@ -391,10 +390,10 @@ class ROSBehaviourTree(BehaviourTree):
         This function is passed in as a visitor to the underlying behaviour tree and triggered
         when there has been a change.
         """
-        if self.ascii_tree_publisher is None:
+        if self.publishers is None:
             self.setup_publishers()
-        self.ascii_tree_publisher.publish(std_msgs.String(display.ascii_tree(self.root)))
-        self.dot_tree_publisher.publish(std_msgs.String(display.stringify_dot_tree(self.root)))
+        self.publishers.ascii_snapshot.publish(std_msgs.String(display.ascii_tree(self.root)))
+        self.publishers.dot_snapshot.publish(std_msgs.String(display.stringify_dot_tree(self.root)))
 
     def publish_tree_snapshots(self, tree):
         """
@@ -404,10 +403,10 @@ class ROSBehaviourTree(BehaviourTree):
         :param tree: the behaviour tree
         :type tree: :py:class:`BehaviourTree <py_trees.trees.BehaviourTree>`
         """
-        if self.snapshot_ascii_tree_publisher is None:
+        if self.publishers is None:
             self.setup_publishers()
         snapshot = "\n\n%s" % display.ascii_tree(self.root, snapshot_information=self.snapshot_visitor)
-        self.snapshot_ascii_tree_publisher.publish(std_msgs.String(snapshot))
+        self.publishers.ascii_tree.publish(std_msgs.String(snapshot))
 
         # We're not interested in sending every single tree - only send a
         # message when the tree changes.
@@ -415,11 +414,11 @@ class ROSBehaviourTree(BehaviourTree):
             if self.root.tip() is None:
                 rospy.logerr("Behaviours: your tree is returning in an INVALID state (should always be FAILURE, RUNNING or SUCCESS)")
                 return
-            self.tip_publisher.publish(conversions.behaviour_to_msg(self.root.tip()))
-            self.snapshot_logging_publisher.publish(self.logging_visitor.tree)
+            self.publishers.tip.publish(conversions.behaviour_to_msg(self.root.tip()))
+            self.publishers.log_tree.publish(self.logging_visitor.tree)
             with self.lock:
                 if not self._bag_closed:
-                    self.bag.write(self.snapshot_logging_publisher.name, self.logging_visitor.tree)
+                    self.bag.write(self.publishers.log_tree.name, self.logging_visitor.tree)
             self.last_tree = self.logging_visitor.tree
 
     def cleanup(self):
