@@ -32,6 +32,7 @@ import rospy
 import std_msgs.msg as std_msgs
 import threading
 import time
+import unique_id
 
 from . import common
 from . import display
@@ -273,10 +274,10 @@ class ROSBehaviourTree(BehaviourTree):
 
     Publishers:
 
-     - ~/ascii/snapshot (std_msgs/String) : static snapshot of the entire tree.
-     - ~/ascii/tree (std_msgs/String) : runtime view of the ticking ascii tree.
-     - ~/dot/snapshot (std_msgs/String) : static dot graph snapshot of the entire tree.
-     - ~/log/tree (std_msgs/String) : runtime view, with logging information of the tree for rqt/bagging
+     - ~/ascii/tree (std_msgs/String) : static view of the entire tree.
+     - ~/ascii/snapshot (std_msgs/String) : runtime snapshot of the ticking ascii tree.
+     - ~/dot/tree (std_msgs/String) : static dot graph view of the entire tree.
+     - ~/log/tree (std_msgs/String) : runtime view, with logging information of the entire tree for rqt/bagging
     """
 
     class SnapshotVisitor(VisitorBase):
@@ -304,7 +305,9 @@ class ROSBehaviourTree(BehaviourTree):
                 self.running_nodes.append(behaviour.id)
 
     class LoggingVisitor(VisitorBase):
-
+        """
+        Visits the entire tree and gathers logging information.
+        """
         def __init__(self):
             super(ROSBehaviourTree.LoggingVisitor, self).__init__()
             self.full = True  # examine all nodes
@@ -360,9 +363,9 @@ class ROSBehaviourTree(BehaviourTree):
         self.publishers = rocon_python_comms.utils.Publishers(
             [
                 ("blackboard", "~blackboard", std_msgs.String, latched, 2),
-                ("ascii_snapshot", "~ascii/snapshot", std_msgs.String, latched, 2),
                 ("ascii_tree", "~ascii/tree", std_msgs.String, latched, 2),
-                ("dot_snapshot", "~dot/snapshot", std_msgs.String, latched, 2),
+                ("ascii_snapshot", "~ascii/snapshot", std_msgs.String, latched, 2),
+                ("dot_tree", "~dot/tree", std_msgs.String, latched, 2),
                 ("log_tree", "~log/tree", py_trees_msgs.BehaviourTree, latched, 2),
                 ("tip", "~tip", py_trees_msgs.Behaviour, latched, 2)
             ]
@@ -392,8 +395,8 @@ class ROSBehaviourTree(BehaviourTree):
         """
         if self.publishers is None:
             self.setup_publishers()
-        self.publishers.ascii_snapshot.publish(std_msgs.String(display.ascii_tree(self.root)))
-        self.publishers.dot_snapshot.publish(std_msgs.String(display.stringify_dot_tree(self.root)))
+        self.publishers.ascii_tree.publish(std_msgs.String(display.ascii_tree(self.root)))
+        self.publishers.dot_tree.publish(std_msgs.String(display.stringify_dot_tree(self.root)))
 
     def publish_tree_snapshots(self, tree):
         """
@@ -406,7 +409,7 @@ class ROSBehaviourTree(BehaviourTree):
         if self.publishers is None:
             self.setup_publishers()
         snapshot = "\n\n%s" % display.ascii_tree(self.root, snapshot_information=self.snapshot_visitor)
-        self.publishers.ascii_tree.publish(std_msgs.String(snapshot))
+        self.publishers.ascii_snapshot.publish(std_msgs.String(snapshot))
 
         # We're not interested in sending every single tree - only send a
         # message when the tree changes.
@@ -415,6 +418,8 @@ class ROSBehaviourTree(BehaviourTree):
                 rospy.logerr("Behaviours: your tree is returning in an INVALID state (should always be FAILURE, RUNNING or SUCCESS)")
                 return
             self.publishers.tip.publish(conversions.behaviour_to_msg(self.root.tip()))
+            for behaviour in self.logging_visitor.tree.behaviours:
+                behaviour.is_active = True if unique_id.fromMsg(behaviour.own_id) in self.snapshot_visitor.nodes else False
             self.publishers.log_tree.publish(self.logging_visitor.tree)
             with self.lock:
                 if not self._bag_closed:

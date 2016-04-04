@@ -41,6 +41,26 @@ class RosBehaviourTreeDotcodeGenerator(object):
         self.ranksep = None
         self.graph = None
         self.dotcode_factory = None
+        self.active_and_status_colour_hex_map = {
+            (False, py_trees_msgs.Behaviour.INVALID): '#e4e4e4',
+            (True, py_trees_msgs.Behaviour.INVALID): '#e4e4e4',
+            (False, py_trees_msgs.Behaviour.RUNNING): '#e4e4f0',
+            (True, py_trees_msgs.Behaviour.RUNNING): '#0000ff',
+            (False, py_trees_msgs.Behaviour.FAILURE): '#f0e4e4',
+            (True, py_trees_msgs.Behaviour.FAILURE): '#ff0000',
+            (False, py_trees_msgs.Behaviour.SUCCESS): '#e4f0e4',
+            (True, py_trees_msgs.Behaviour.SUCCESS): '#00ff00',
+        }
+        self.active_and_status_colour_tuple_map = {
+            (False, py_trees_msgs.Behaviour.INVALID): (228, 228, 228),
+            (True, py_trees_msgs.Behaviour.INVALID): (228, 228, 228),
+            (False, py_trees_msgs.Behaviour.RUNNING): (228, 228, 255),
+            (True, py_trees_msgs.Behaviour.RUNNING): (0, 0, 255),
+            (False, py_trees_msgs.Behaviour.FAILURE): (255, 228, 228),
+            (True, py_trees_msgs.Behaviour.FAILURE): (255, 0, 0),
+            (False, py_trees_msgs.Behaviour.SUCCESS): (228, 255, 228),
+            (True, py_trees_msgs.Behaviour.SUCCESS): (0, 255, 0),
+        }
 
     def generate_dotcode(self,
                          dotcode_factory,
@@ -180,29 +200,22 @@ class RosBehaviourTreeDotcodeGenerator(object):
                                                    str(behaviour.own_id),
                                                    nodelabel=behaviour.name,
                                                    shape=self.type_to_shape(behaviour.type),
-                                                   color=self.status_to_colour(behaviour.status) or self.type_to_colour(behaviour.type),
+                                                   color=self.active_and_status_colour_hex_map[(behaviour.is_active, behaviour.status)],
                                                    tooltip=self.behaviour_to_tooltip_string(behaviour))
-            states[unique_id.fromMsg(behaviour.own_id)] = behaviour.status
+            states[unique_id.fromMsg(behaviour.own_id)] = (behaviour.is_active, behaviour.status)
 
         for behaviour in data:
             for child_id in behaviour.child_ids:
-                # edge colour is set differently for some reason
-                edge_color = (224, 224, 224)
+                # edge colour is set using integer tuples, not hexes
                 try:
-                    state = states[unique_id.fromMsg(child_id)]
+                    (is_active, status) = states[unique_id.fromMsg(child_id)]
                 except KeyError:
                     # the child isn't part of the 'visible' tree
                     continue
-                if state == py_trees_msgs.Behaviour.RUNNING:
-                    edge_color = (0, 0, 0)
-                elif state == py_trees_msgs.Behaviour.SUCCESS:
-                    edge_color = (0, 255, 0)
-                elif state == py_trees_msgs.Behaviour.FAILURE:
-                    edge_color = (255, 0, 0)
-
+                edge_colour = self.active_and_status_colour_tuple_map[(is_active, status)]
                 self.dotcode_factory.add_edge_to_graph(graph,
                                                        str(behaviour.own_id),
                                                        str(child_id),
-                                                       color=edge_color)
+                                                       color=edge_colour)
 
         return graph
