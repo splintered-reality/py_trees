@@ -15,7 +15,6 @@ Node that acts as caretaker of the behaviour tree for gopher deliveries.
 ##############################################################################
 
 import gopher_behaviours
-from gopher_behaviours.planner import Planner
 import gopher_configuration
 import gopher_delivery_msgs.srv as gopher_delivery_srvs
 import gopher_delivery_msgs.msg as gopher_delivery_msgs
@@ -62,16 +61,14 @@ class GopherHiveMind(object):
     def __init__(self):
         self.battery_subtree = gopher_behaviours.recovery.create_battery_recovery_tree(name="Eating Disorder")
         self.gopher = gopher_configuration.Configuration()
-        self.planner = Planner(express_deliveries=False)
         self.current_world_subscriber = rospy.Subscriber(self.gopher.topics.world, std_msgs.String, self.current_world_callback)
         self.current_world = None
-        self.quirky_deliveries = gopher_behaviours.delivery.GopherDeliveries(name="Quirky Deliveries", planner=self.planner)
+        self.quirky_deliveries = gopher_behaviours.delivery.GopherDeliveries(name="Quirky Deliveries")
         self.event_handler = gopher_behaviours.interactions.create_button_event_handler()
         self.idle = py_trees.behaviours.Success("Idle")
         self.root = py_trees.Selector(name="HiveMind", children=[self.event_handler, self.battery_subtree, self.idle])
         self.tree = py_trees.ROSBehaviourTree(self.root)
         self.logger = py_trees.logging.get_logger("HiveMind")
-        self.render = False
         self.success = None  # non goal
         self.cancelled = False
         self.cancelling = False
@@ -79,9 +76,24 @@ class GopherHiveMind(object):
         self.current_eta = gopher_delivery_msgs.DeliveryETA()  # empty ETA
         self.monitor_ok = True
 
-        ##################################
-        # Ros Components
-        ##################################
+    def render_dot_tree(self):
+        """
+        Fill in the tree with a 'default' delivery so we can render an exampler tree running
+        with a delivery.
+        """
+        (deliveries_root, unused_delivery_subtree, unused_emergency_subtree) = gopher_behaviours.delivery.create_delivery_subtree(
+            world="earth",
+            locations=["beer_fridge", "ashokas_hell"],
+            include_parking_behaviours=True,
+            express=False
+        )
+        self.tree.insert_subtree(deliveries_root, self.tree.root.id, 2)
+        py_trees.display.render_dot_tree(self.tree.root)
+        self.tree.prune_subtree(deliveries_root.id)
+
+    ##################################
+    # Ros Components
+    ##################################
 
     def setup(self, timeout):
         """
@@ -89,8 +101,9 @@ class GopherHiveMind(object):
         """
         rospy.on_shutdown(self.shutdown)
         self.parameters = Parameters()
-        self.planner.express = self.parameters.express
-        self.planner.force_parking = self.parameters.force_parking
+        self.quirky_deliveries.express = self.parameters.express
+        self.quirky_deliveries.include_parking_behaviours = self.parameters.force_parking
+        self.quirky_deliveries.setup(timeout)
 
         self._delivery_goal_service = rospy.Service('delivery/goal', gopher_delivery_srvs.DeliveryGoal, self._goal_service_callback)
         self._delivery_feedback_publisher = rospy.Publisher('delivery/feedback', gopher_delivery_msgs.DeliveryFeedback, queue_size=1, latch=True)
@@ -111,6 +124,12 @@ class GopherHiveMind(object):
         '''
         Loop around looking for move base and break out once its found it.
         We assume that once found, it will always be there.
+
+        .. todo::
+
+           This should be much more comprehensive than just looking for a move base,
+           Probably we should instantiate a hypothetical tree, call setup on that,
+           and then drop it.
         '''
         action_client = actionlib.SimpleActionClient(self.gopher.actions.move_base, move_base_msgs.MoveBaseAction)
         while not rospy.is_shutdown():
@@ -150,7 +169,7 @@ class GopherHiveMind(object):
             if self.quirky_deliveries.old_goal_id is not None:
                 self.tree.prune_subtree(self.quirky_deliveries.old_goal_id)
             if self.quirky_deliveries.root:
-                self.tree.insert_subtree(self.quirky_deliveries.root, self.root.id, 1)
+                self.tree.insert_subtree(self.quirky_deliveries.root, self.root.id, 2)
             print("")
             print("************************************************************************************")
             print("                   Gopher Hivemind (Behaviour Tree Update)")
@@ -168,9 +187,6 @@ class GopherHiveMind(object):
 
         Could/should possibly move this into the delivery class itself.
         """
-        if self.render:
-            py_trees.display.render_dot_tree(self.root)
-            self.render = False
         self.quirky_deliveries.post_tock_update()
         # make sure to publish one last message to the feedback publisher once the task has succeded
         if self.quirky_deliveries.is_executing() or (self.quirky_deliveries.succeeded_on_last_tick() and not self.success):

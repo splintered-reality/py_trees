@@ -13,89 +13,59 @@
    :synopsis: Delivery behaviours
 
 Gopher delivery behaviours! Are they good for anything else?
-
-----
-
 """
 
 ##############################################################################
 # Imports
 ##############################################################################
 
-from enum import IntEnum
-import collections
-import os
-import py_trees
-# import rocon_console.console as console
-import rospkg
-import rospy
-from geometry_msgs.msg import Pose2D
+import enum
+import gopher_configuration
+import gopher_delivery_msgs.msg as gopher_delivery_msgs
+import gopher_semantics
+import gopher_semantic_msgs.msg as gopher_semantic_msgs
 import gopher_std_msgs.msg as gopher_std_msgs
 import gopher_std_msgs.srv as gopher_std_srvs
-import gopher_delivery_msgs.msg as gopher_delivery_msgs
-import yaml
+import py_trees
+# import rocon_console.console as console
+import rocon_python_utils
+import rospy
 import std_msgs.msg as std_msgs
-import gopher_configuration
 import unique_id
-from py_trees.blackboard import Blackboard
 
 from . import elevators
 from . import recovery
 from . import interactions
 from . import navigation
-
-##############################################################################
-# Dummy Delivery Locations List (for testing)
-##############################################################################
-
-
-def desirable_destinations():
-    """
-    .. deprecated:: 0.1
-
-       Moving to the new semantics yaml modules and gopher_semantic_msgs.
-
-    :return: list of gopher_std_msgs.Location objects
-    """
-    rospack = rospkg.RosPack()
-    pkg_path = rospack.get_path("gopher_semantics")
-    filename = os.path.join(pkg_path, "param", "desirable_destinations.yaml")
-    desirables = []
-    loaded_locations = collections.OrderedDict(sorted(yaml.load(open(filename))['semantic_locations'].items()))
-    for key, value in loaded_locations.iteritems():
-        location = gopher_std_msgs.Location()
-        location.unique_name = key
-        location.name = value['name']
-        location.description = value['description']
-        location.pose = Pose2D()
-        location.pose.x = value['pose']['x']
-        location.pose.y = value['pose']['y']
-        location.pose.theta = value['pose']['theta']
-        location.keyframe_id = value['keyframe_id']
-        desirables.append(location)
-    return desirables
+from . import park
+from . import planner
+from . import unpark
 
 ##############################################################################
 # Machinery
 ##############################################################################
 
 
-# this exactly matches the codes in gopher_delivery_msgs/DeliveryFeedback
-class State(IntEnum):
-    """ An enumerator representing the status of a delivery behaviour """
+class State(enum.IntEnum):
+    """
+    An enumerator representing the status of a delivery behaviour. It reflects
+    what is currently in the delivery feedback message in a convenient enum
+    format.
+    """
 
-    """Behaviour has no current goal."""
-    IDLE = 0
-    """Behaviour is waiting for a hooman interaction"""
-    WAITING = 1
-    """Behaviour is executing"""
-    TRAVELLING = 2
-    """Behaviour is in an invalid state"""
-    INVALID = 3
+    """Delivery has no current goal."""
+    IDLE = gopher_delivery_msgs.DeliveryFeedback.IDLE
+    """Delivery is waiting for a hooman interaction"""
+    WAITING = gopher_delivery_msgs.DeliveryFeedback.WAITING
+    """Delivery is executing"""
+    TRAVELLING = gopher_delivery_msgs.DeliveryFeedback.TRAVELLING
+    """Delivery is in an invalid state"""
+    INVALID = gopher_delivery_msgs.DeliveryFeedback.INVALID
+    """Delivery was cancelled"""
+    CANCELLED = gopher_delivery_msgs.DeliveryFeedback.CANCELLED
 
 
-# this exactly matches the codes in gopher_delivery_msgs/DeliveryFeedback
-class PreTickResult(IntEnum):
+class PreTickResult(enum.IntEnum):
     """ An enumerator representing the status of a delivery behaviour """
 
     """Had an incoming goal and successfully setup a new delivery tree."""
@@ -107,17 +77,176 @@ class PreTickResult(IntEnum):
     """Nothing at all happened that is of interest."""
     BORING_NOTHING = 3
 
+
+def create_delivery_subtree(world, locations, include_parking_behaviours, express=False):
+    """
+    Build a new delivery subtree.
+
+    :param str world: start from our current world
+    :param [str] locations: semantic location string identifiers
+    :param bool include_parking_behaviours: include the parking behaviours...or not
+    :param bool express: dont wait when waiting
+    """
+    ########################
+    # Moving Around
+    ########################
+    movin_around_children = create_locations_subtree(world, locations, express)
+    if not movin_around_children:
+        rospy.logerr("Gopher Deliveries : received a goal, but none of the locations were valid...we're FUBAR! (TODO need to handle this.")
+        return (None, None)
+    movin_around = py_trees.OneshotSequence(name="Balli Balli", children=movin_around_children)
+
+    # TODO
+    record_delivery_failure = py_trees.behaviours.Running(name="Record Delivery Failure")
+
+    ########################
+    # Recovery
+    ########################
+    recovery_required_by_cancel_request = py_trees.CheckBlackboardVariable(
+        name="Cancel Requested?",
+        variable_name="cancel_requested",
+        expected_value=True
+    )
+    recovery_required_by_button = interactions.create_check_for_stop_button_press("Stop Button?")
+    # TODO
+    recovery_required_by_delivery_failure = py_trees.behaviours.Failure("Delivery Failed?")
+
+    recovery_check = py_trees.Selector(name="Needed?")
+    recovery_check.add_child(recovery_required_by_button)
+    recovery_check.add_child(recovery_required_by_cancel_request)
+    recovery_check.add_child(recovery_required_by_delivery_failure)
+
+    emergency_recovery = py_trees.Sequence(name="Emergency Recovery")
+    homebase_recovery_children = recovery.create_homebase_recovery_children()
+
+    root = py_trees.Sequence("Deliveries")
+    delivery_manager = py_trees.Selector(name="Manager")
+
+    ########################
+    # Parking/Unparking
+    ########################
+    if include_parking_behaviours:
+        unparking = unpark.UnPark("UnPark")
+        parking = park.Park("Park")
+
+    ########################
+    # Building The Tree
+    ########################
+    if include_parking_behaviours:
+        root.add_child(unparking)
+    root.add_child(delivery_manager)
+    if include_parking_behaviours:
+        root.add_child(parking)
+    delivery_manager.add_child(emergency_recovery)
+    emergency_recovery.add_child(recovery_check)
+    emergency_recovery.add_children(homebase_recovery_children)
+    delivery_manager.add_child(movin_around)
+    delivery_manager.add_child(record_delivery_failure)
+
+    return (root, movin_around, emergency_recovery)
+
+
+def create_locations_subtree(current_world, locations, express=False):
+    """
+    Find the semantic locations corresponding to the incoming string location identifier and
+    create the appropriate behaviours.
+
+    :param str current_world: unique_world name used to decide if we need to go straight to an elevator or not
+    :param str[] locations: list of location unique names given to us by the delivery goal.
+    :param bool express: don't wait at the waiting points
+
+    .. todo::
+
+       Clean up the key error handling
+    """
+    gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
+    semantics = gopher_semantics.Semantics(gopher.namespaces.semantics, fallback_to_defaults=True)
+    ########################################
+    # Topological Path
+    ########################################
+    # TODO check all locations are in semantics, provide meaningful error message otherwise
+    topological_path = planner.find_topological_path(current_world, locations, semantics)
+    # TODO check its not empty, error message if so
+
+    ########################################
+    # Tree
+    ########################################
+    children = []
+    last_location = None
+    for current_node, next_node in rocon_python_utils.iterables.lookahead(topological_path):
+        previous_world = current_world if last_location is None else last_location.world
+        if isinstance(current_node, gopher_semantic_msgs.Location):
+            children.extend([
+                navigation.MoveIt(
+                    name="Go to " + current_node.name,
+                    pose=current_node.pose
+                ),
+                navigation.GoalFinishing("Finish at " + current_node.name, current_node.pose),
+                LocationTraversalHandler("Update Locations")]
+            )
+            if next_node is not None:
+                children.extend([interactions.Articulate("Honk", gopher.sounds.honk)])
+                if not express:
+                    flash_leds_while_waiting = interactions.SendNotification(
+                        "Flash - Waiting",
+                        led_pattern=gopher.led_patterns.humans_give_me_input,
+                        message="waiting for the user to tell me to proceed"
+                    )
+                    waiting = Waiting(name="Waiting at " + current_node.name, location=current_node.unique_name)
+                    flash_leds_while_waiting.add_child(waiting)
+                    children.extend([flash_leds_while_waiting])
+            last_location = current_node
+        elif isinstance(current_node, gopher_semantic_msgs.Elevator):
+            # topological path guarantees there is a next...
+            elevator_subtree = elevators.HumanAssistedElevators("ElevatorRun", previous_world, current_node, next_node.world)
+            children.append(elevator_subtree)
+
+    # this can happen if none of the locations provided are in the semantic locations
+    if not children:
+        return None
+
+    children.append(interactions.Articulate("Done", gopher.sounds.done))
+    return children
+
 ##############################################################################
 # Delivery Specific Behaviours
 ##############################################################################
 
 
+class LocationTraversalHandler(py_trees.Behaviour):
+    """
+    Blackboard Variables:
+
+     - traversed_locations (rw) [str] : inserted from the front of the remaining locations
+     - remaining_locations (rw) [str] : popped and pushed to the traversed locations
+    """
+    def __init__(self, name):
+        super(LocationTraversalHandler, self).__init__(name)
+        self.blackboard = py_trees.blackboard.Blackboard()
+
+    def update(self):
+        if not hasattr(self.blackboard, 'traversed_locations'):
+            self.feedback_message = 'Blackboard did not have attribute traversed_locations. Location traversal failed.'
+            return py_trees.Status.FAILURE
+        elif not hasattr(self.blackboard, 'remaining_locations'):
+            self.feedback_message = 'Blackboard did not have attribute remaining_locations. Location traversal failed.'
+            return py_trees.Status.FAILURE
+        else:
+            try:
+                self.blackboard.traversed_locations.append(self.blackboard.remaining_locations.pop(0))
+            except IndexError:
+                self.feedback_message = 'Traversed location list was empty, but pop was attempted'
+                return py_trees.Status.FAILURE
+            self.feedback_message = 'Traversal sucessful. New location is {0}'.format(self.blackboard.traversed_locations[-1])
+            return py_trees.Status.SUCCESS
+
+
 class Waiting(py_trees.Behaviour):
     """
-    Requires blackboard variables:
+    Blackboard Variables:
 
-     - traversed_locations [list of strings]
-     - remaining locations [list of strings]
+     - remaining_locations (r) [str] : used to provide a meaningful behaviour feedback message
+
     """
     def __init__(self, name, location):
         """
@@ -127,16 +256,22 @@ class Waiting(py_trees.Behaviour):
         super(Waiting, self).__init__(name)
         self.config = gopher_configuration.Configuration()
         self.location = location
-        self.blackboard = Blackboard()
+        self.blackboard = py_trees.blackboard.Blackboard()
         self.go_requested = False
         self.feedback_message = "hanging around at '%s' waiting for lazy bastards" % (location)
         self.notify_id = unique_id.toMsg(unique_id.fromRandom())
 
-        # ros communications
-        # could potentially have this in the waiting behaviour
+    def setup(self, timeout):
+        """Delayed ROS Setup"""
         self._go_button_subscriber = rospy.Subscriber(self.config.buttons.go, std_msgs.Empty, self._go_button_callback)
-        rospy.wait_for_service(self.config.services.notification)
+        try:
+            rospy.wait_for_service(self.config.services.notification, timeout=timeout)
+        except rospy.ROSException:  # timeout
+            return False
+        except rospy.ROSInterruptException:  # shutdown
+            return False
         self._notify_srv = rospy.ServiceProxy(self.config.services.notification, gopher_std_srvs.Notify)
+        return True
 
     def initialise(self):
         req = gopher_std_srvs.NotifyRequest()
@@ -209,19 +344,30 @@ class GopherDeliveries(object):
            To mutex the self.incoming_goal variable
 
     """
-    def __init__(self, name, planner):
-        self.blackboard = Blackboard()
+    def __init__(self, name):
+        self.blackboard = py_trees.blackboard.Blackboard()
         self.reset_blackboard_variables(traversed_locations=[], remaining_locations=[])
         self.config = gopher_configuration.Configuration()
         self.root = None
         self.state = State.IDLE
+        self.current_location = None
         self.locations = []
         self.feedback_message = ""
         self.old_goal_id = None
-        self.planner = planner
-        self.always_assume_initialised = False
-        self.delivery_sequence = None
+        self.include_parking_behaviours = False
+        self.express = False
+        self.delivery_locations_subtree = None
+        self.emergency_recovery_subtree = None
         self.incoming_goal = None
+        self.gopher = None
+        self.semantics = None
+
+    def setup(self, timeout):
+        """
+        Delayed ROS Setup
+        """
+        self.gopher = gopher_configuration.Configuration()
+        self.semantics = gopher_semantics.Semantics(self.gopher.namespaces.semantics)
 
     def reset_blackboard_variables(self, traversed_locations=[], remaining_locations=[]):
         self.blackboard.traversed_locations = traversed_locations
@@ -239,7 +385,8 @@ class GopherDeliveries(object):
         if locations is None or not locations:
             return (gopher_delivery_msgs.DeliveryErrorCodes.GOAL_EMPTY_NOTHING_TO_DO, "goal empty, nothing to do.")
         if self.state == State.IDLE:
-            if self.planner.check_locations(locations):  # make sure locations are valid before returning success
+            # make sure locations are valid before returning success
+            if all([location in self.semantics.locations for location in locations]):
                 self.incoming_goal = locations
                 self.always_assume_initialised = always_assume_initialised
                 return (gopher_delivery_msgs.DeliveryErrorCodes.SUCCESS, "assigned new goal")
@@ -274,61 +421,33 @@ class GopherDeliveries(object):
             # use the planner to initialise the behaviours that we are to follow
             # to get to the delivery location. If this is empty/None, then the
             # semantic locations provided were wrong.
-            include_parking_behaviours = False if self.always_assume_initialised or self.root else True
-            children = self.planner.create_tree(current_world,
-                                                self.incoming_goal,
-                                                include_parking_behaviours=include_parking_behaviours
-                                                )
-            if not children:
-                # TODO is this enough?
-                rospy.logwarn("Gopher Deliveries : Received a goal, but none of the locations were valid.")
-            else:
-                self.old_goal_id = self.root.id if self.root is not None else None
-                # Blackboard
-                self.reset_blackboard_variables(traversed_locations=[] if not self.root else self.blackboard.traversed_locations,
-                                                remaining_locations=self.incoming_goal
-                                                )
-                # Assemble Behaviours
-                self.cancel_requested = py_trees.CheckBlackboardVariable(name="Cancel Requested?",
-                                                                         variable_name="cancel_requested",
-                                                                         expected_value=True,
-                                                                         invert=False
-                                                                         )
-                self.check_button_pressed = interactions.create_check_for_stop_button_press("Cancel Pressed?")
-                self.cancel_required = py_trees.Selector(name="Cancellation Required?",
-                                                         children=[self.check_button_pressed,
-                                                                   self.cancel_requested]
-                                                         )
-                self.homebase_recovery = recovery.HomebaseRecovery(name="Delivery Cancelled")
-                self.cancel_sequence = py_trees.Sequence(name="Cancellation",
-                                                         children=[self.cancel_required,
-                                                                   self.homebase_recovery
-                                                                   ]
-                                                         )
-                # delivery sequence is oneshot - will only run once, retaining its succeeded or failed state
-                self.delivery_sequence = py_trees.OneshotSequence(name="Balli Balli Deliveries",
-                                                                  children=children)
-                self.delivery_selector = py_trees.Selector(name="Deliver or recover",
-                                                           children=[self.delivery_sequence,
-                                                                     recovery.HomebaseRecovery("Delivery Failed")])
-                self.root = py_trees.Selector(name="Deliver Unto Me",
-                                              children=[self.cancel_sequence, self.delivery_selector])
 
-                if self.root.setup(10):
-                    self.locations = self.incoming_goal
-                    result = PreTickResult.NEW_DELIVERY_TREE
-                else:
-                    rospy.logerr("Gopher Deliveries: failed to set up new delivery tree.")
-                    if self.root is None:
-                        rospy.logerr("Gopher Deliveries: shouldn't ever get here, but in case you do...call Dan")
-                    result = PreTickResult.NEW_DELIVERY_TREE_WITHERED_AND_DIED
-                    self.root = None
+            self.old_goal_id = self.root.id if self.root is not None else None
+            self.reset_blackboard_variables(traversed_locations=[] if not self.root else self.blackboard.traversed_locations,
+                                            remaining_locations=self.incoming_goal
+                                            )
+            (self.root, self.delivery_locations_subtree, self.emergency_recovery_subtree) = create_delivery_subtree(
+                current_world,
+                self.incoming_goal,
+                self.include_parking_behaviours,
+                self.express
+            )
+
+            if self.root.setup(10):
+                self.locations = self.incoming_goal
+                result = PreTickResult.NEW_DELIVERY_TREE
+            else:
+                rospy.logerr("Gopher Deliveries: failed to set up new delivery tree.")
+                if self.root is None:
+                    rospy.logerr("Gopher Deliveries: shouldn't ever get here, but in case you do...call Dan")
+                result = PreTickResult.NEW_DELIVERY_TREE_WITHERED_AND_DIED
+                self.root = None
             self.incoming_goal = None
 
         elif self.root is not None and self.root.status == py_trees.Status.SUCCESS:
             # if we succeeded, then we should be at the previously traversed
             # location (assuming that no task can occur in between locations.)
-            self.planner.current_location = self.blackboard.traversed_locations[-1] if len(self.blackboard.traversed_locations) != 0 else None
+            self.current_location = self.blackboard.traversed_locations[-1] if len(self.blackboard.traversed_locations) != 0 else None
             # last goal was achieved and no new goal, so swap this current subtree out
             self.old_goal_id = self.root.id if self.root is not None else None
             self.root = None
@@ -355,7 +474,7 @@ class GopherDeliveries(object):
         Did the delivery subtree succeed on the last tick?
         """
         if self.root is not None:
-            return self.delivery_selector.status == py_trees.Status.SUCCESS
+            return self.delivery_locations_subtree.status == py_trees.Status.SUCCESS
         return False
 
     def recovered_on_last_tick(self):
@@ -363,7 +482,7 @@ class GopherDeliveries(object):
         Did the recovery subtree succeed on the last tick?
         """
         if self.root is not None:
-            return self.cancel_sequence.status == py_trees.Status.SUCCESS
+            return self.emergency_recovery_subtree.status == py_trees.Status.SUCCESS
         return False
 
     def post_tock_update(self):
@@ -372,8 +491,8 @@ class GopherDeliveries(object):
         """
         if self.root is not None and self.root.status == py_trees.Status.RUNNING:
             tip = self.root.tip()
-            delivery_child = self.delivery_sequence.current_child
-            if self.delivery_sequence.status == py_trees.Status.RUNNING:
+            delivery_child = self.delivery_locations_subtree.current_child
+            if self.delivery_locations_subtree.status == py_trees.Status.RUNNING:
                 if any(map(lambda x: isinstance(delivery_child, x), [navigation.MoveIt, elevators.Elevators])):
                     self.state = State.TRAVELLING
                     if self.blackboard.traversed_locations:

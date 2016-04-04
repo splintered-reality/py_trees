@@ -15,7 +15,7 @@ import sys
 
 def show_description():
     s = "\n"
-    s += console.green + "The official gopher delivery tree" + console.reset
+    s += console.green + "This node runs the delivery behaviour tree for gophers." + console.reset
     s += "\n"
     return s
 
@@ -24,15 +24,27 @@ def show_usage():
     s = "\n"
     s += console.white
     s += console.bold + "************************************************************************************\n" + console.reset
-    s += console.bold + "                                Gopher Deliveries\n" + console.reset
+    s += console.bold + "                                Gopher Hive Mind\n" + console.reset
     s += console.bold + "************************************************************************************\n" + console.reset
     s += "\n"
     s += console.white
     s += console.bold + "    Generate Dot" + console.reset + "\n"
-    s += console.cyan + "        gopher_deliveries" + console.yellow + " --render" + console.reset + "\n"
+    s += console.cyan + "        gopher_hive_mind.py" + console.yellow + " --render" + console.reset + "\n"
     s += "\n"
     s += console.bold + "    RosLaunch" + console.reset + "\n"
-    s += console.cyan + "        + gopher_deliveries.launch" + console.reset + "\n"
+    s += console.cyan + "        roslaunch gopher_behaviours gopher_deliveries.launch" + console.reset + "\n"
+    s += "\n"
+    s += console.white
+    s += console.bold + "    Requrired Launchers" + console.reset + "\n"
+    s += console.cyan + "        + gopher_robot/minimal.launch" + console.reset + "\n"
+    s += console.cyan + "        + ...(many - bring up instead with rapps)" + console.reset + "\n"
+    s += console.cyan + "        or" + console.reset
+    s += console.cyan + "        + gopher_desktop/gocart_sim.launch" + console.reset + "\n"
+    s += "\n"
+    s += console.white
+    s += console.bold + "    Rapps" + console.reset + "\n"
+    s += console.cyan + "        + gopher_robot/gocart_delivery" + console.reset + "\n"
+    s += console.cyan + "        + ...(many - bring up instead with rapps)" + console.reset + "\n"
     s += "\n"
     return s
 
@@ -54,14 +66,12 @@ def parse_arguments(command_line_args):
 ##############################################################################
 
 if __name__ == '__main__':
-
     myargs = rospy.myargv(argv=sys.argv)
     args = parse_arguments(command_line_args=myargs[1:])
 
-    gopher_compulsion = gopher_behaviours.hive_mind.GopherHiveMind()
-
     if args.render:
-        "Stub for Rendering"
+        gopher_compulsion = gopher_behaviours.hive_mind.GopherHiveMind()
+        gopher_compulsion.render_dot_tree()
         sys.exit()
 
     # have to read debug param before initialising node, it's not possible to
@@ -74,5 +84,6 @@ if __name__ == '__main__':
 
     rospy.init_node("gopher_compulsion", log_level=log_lev)
 
+    gopher_compulsion = gopher_behaviours.hive_mind.GopherHiveMind()
     gopher_compulsion.setup(30)
     gopher_compulsion.tick_tock()

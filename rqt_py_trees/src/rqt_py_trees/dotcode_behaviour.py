@@ -1,42 +1,33 @@
-# Software License Agreement (BSD License)
+#!/usr/bin/env python
 #
-# Copyright (c) 2008, Willow Garage, Inc.
-# All rights reserved.
+# License: BSD
+#   https://raw.github.com/yujinrobot/gopher_crazy_hospital/license/LICENSE
 #
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-#
-#  * Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-#  * Redistributions in binary form must reproduce the above
-#    copyright notice, this list of conditions and the following
-#    disclaimer in the documentation and/or other materials provided
-#    with the distribution.
-#  * Neither the name of Willow Garage, Inc. nor the names of its
-#    contributors may be used to endorse or promote products derived
-#    from this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-# COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-# POSSIBILITY OF SUCH DAMAGE.
+##############################################################################
+# Documentation
+##############################################################################
+
+"""
+.. module:: dotcode_behaviour
+   :platform: Unix
+   :synopsis: Dot code a behaviour tree
+
+Dotcode generation for a py_trees behaviour tree.
+"""
+
+##############################################################################
+# Imports
+##############################################################################
 
 from __future__ import with_statement, print_function
 
-import time
 import rospy
-import yaml
-import uuid_msgs.msg as uuid_msgs
 import py_trees_msgs.msg as py_trees_msgs
+import unique_id
+
+##############################################################################
+# Classes
+##############################################################################
 
 
 class RosBehaviourTreeDotcodeGenerator(object):
@@ -50,16 +41,38 @@ class RosBehaviourTreeDotcodeGenerator(object):
         self.ranksep = None
         self.graph = None
         self.dotcode_factory = None
+        self.active_and_status_colour_hex_map = {
+            (False, py_trees_msgs.Behaviour.INVALID): '#e4e4e4',
+            (True, py_trees_msgs.Behaviour.INVALID): '#e4e4e4',
+            (False, py_trees_msgs.Behaviour.RUNNING): '#e4e4f0',
+            (True, py_trees_msgs.Behaviour.RUNNING): '#0000ff',
+            (False, py_trees_msgs.Behaviour.FAILURE): '#f0e4e4',
+            (True, py_trees_msgs.Behaviour.FAILURE): '#ff0000',
+            (False, py_trees_msgs.Behaviour.SUCCESS): '#e4f0e4',
+            (True, py_trees_msgs.Behaviour.SUCCESS): '#00ff00',
+        }
+        self.active_and_status_colour_tuple_map = {
+            (False, py_trees_msgs.Behaviour.INVALID): (228, 228, 228),
+            (True, py_trees_msgs.Behaviour.INVALID): (228, 228, 228),
+            (False, py_trees_msgs.Behaviour.RUNNING): (228, 228, 255),
+            (True, py_trees_msgs.Behaviour.RUNNING): (0, 0, 255),
+            (False, py_trees_msgs.Behaviour.FAILURE): (255, 228, 228),
+            (True, py_trees_msgs.Behaviour.FAILURE): (255, 0, 0),
+            (False, py_trees_msgs.Behaviour.SUCCESS): (228, 255, 228),
+            (True, py_trees_msgs.Behaviour.SUCCESS): (0, 255, 0),
+        }
 
     def generate_dotcode(self,
                          dotcode_factory,
                          timer=rospy.Time,
-                         tree=None,
+                         behaviours=None,
+                         timestamp=None,
                          rank='same',   # None, same, min, max, source, sink
                          ranksep=0.2,   # vertical distance between layers
                          rankdir='TB',  # direction of layout (TB top > bottom, LR left > right)
                          force_refresh=False):
         """
+        :param py_trees_msgs.Behaviour[] behaviours:
         :param force_refresh: if False, may return same dotcode as last time
         """
         if self.firstcall is True:
@@ -82,7 +95,7 @@ class RosBehaviourTreeDotcodeGenerator(object):
             self.rankdir = rankdir
             self.ranksep = ranksep
 
-        self.graph = self.generate(tree.behaviours, tree.header.stamp)
+        self.graph = self.generate(behaviours, timestamp)
         self.dotcode = self.dotcode_factory.create_dot(self.graph)
 
         return self.dotcode
@@ -164,6 +177,10 @@ class RosBehaviourTreeDotcodeGenerator(object):
         return "\"" + string + "\""
 
     def generate(self, data, timestamp):
+        """
+        :param py_trees_msgs.Behaviour[] data:
+        :param ??? timestamp:
+        """
         graph = self.dotcode_factory.get_graph(rank=self.rank,
                                                rankdir=self.rankdir,
                                                ranksep=self.ranksep)
@@ -172,34 +189,33 @@ class RosBehaviourTreeDotcodeGenerator(object):
             self.dotcode_factory.add_node_to_graph(graph, 'No behaviour data received')
             return graph
 
-        # first, add nodes to the graph, and create a dict containing IDs and
-        # the current state of each behaviour. We use this on the second pass to
-        # colour edges
+        behaviour_dict_by_id = {}
+        for behaviour in data:
+            behaviour_dict_by_id[behaviour.own_id] = behaviour
+        # first, add nodes to the graph, along with some cached information to
+        # make it easy to create the coloured edges on the second pass
         states = {}
         for behaviour in data:
             self.dotcode_factory.add_node_to_graph(graph,
                                                    str(behaviour.own_id),
                                                    nodelabel=behaviour.name,
                                                    shape=self.type_to_shape(behaviour.type),
-                                                   color=self.status_to_colour(behaviour.status) or self.type_to_colour(behaviour.type),
+                                                   color=self.active_and_status_colour_hex_map[(behaviour.is_active, behaviour.status)],
                                                    tooltip=self.behaviour_to_tooltip_string(behaviour))
-            states[str(behaviour.own_id)] = behaviour.status
+            states[unique_id.fromMsg(behaviour.own_id)] = (behaviour.is_active, behaviour.status)
 
         for behaviour in data:
             for child_id in behaviour.child_ids:
-                # edge colour is set differently for some reason
-                edge_color = (224,224,224)
-                state = states[str(child_id)]
-                if state == py_trees_msgs.Behaviour.RUNNING:
-                    edge_color = (0,0,0)
-                elif state == py_trees_msgs.Behaviour.SUCCESS:
-                    edge_color = (0,255,0)
-                elif state == py_trees_msgs.Behaviour.FAILURE:
-                    edge_color = (255,0,0)
-
+                # edge colour is set using integer tuples, not hexes
+                try:
+                    (is_active, status) = states[unique_id.fromMsg(child_id)]
+                except KeyError:
+                    # the child isn't part of the 'visible' tree
+                    continue
+                edge_colour = self.active_and_status_colour_tuple_map[(is_active, status)]
                 self.dotcode_factory.add_edge_to_graph(graph,
                                                        str(behaviour.own_id),
                                                        str(child_id),
-                                                       color=edge_color)
+                                                       color=edge_colour)
 
         return graph

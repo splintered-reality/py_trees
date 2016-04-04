@@ -14,7 +14,7 @@
   <arg name="force_parking" default="false" doc="make sure all deliveries do parking/docking."/>
 
   <group ns="gopher">
-    <node name="behaviours" type="gopher_deliveries" pkg="gopher_behaviours">
+    <node name="behaviours" type="gopher_hive_mind.py" pkg="gopher_behaviours">
       <param name="express"       value="$(arg express)"/>
       <param name="force_parking" value="$(arg force_parking)"/>
       <remap from="behaviours/battery"                            to="/gopher/status/battery_slow"/>

@@ -35,6 +35,7 @@ from __future__ import division
 import argparse
 import fnmatch
 import functools
+import py_trees
 import py_trees_msgs.msg as py_trees_msgs
 import os
 import re
@@ -45,6 +46,7 @@ import sys
 import termcolor
 import uuid_msgs.msg as uuid_msgs
 
+from . import visibility
 
 from .dotcode_behaviour import RosBehaviourTreeDotcodeGenerator
 from .dynamic_timeline import DynamicTimeline
@@ -57,7 +59,7 @@ from rqt_bag.bag_timeline import BagTimeline
 from rqt_graph.interactive_graphics_view import InteractiveGraphicsView
 
 from python_qt_binding import loadUi
-from python_qt_binding.QtCore import QFile, QIODevice, QObject, Qt, Signal, QEvent
+from python_qt_binding.QtCore import QFile, QIODevice, QObject, Qt, Signal, QEvent, Slot
 from python_qt_binding.QtGui import QFileDialog, QGraphicsView, QGraphicsScene, QIcon, QImage, QPainter, QWidget, QShortcut, QKeySequence
 from python_qt_binding.QtSvg import QSvgGenerator
 
@@ -129,6 +131,7 @@ class RosBehaviourTree(QObject):
         self.behaviour_sub = None
         self._tip_message = None  # message of the tip of the tree
         self._saved_settings_topic = None  # topic subscribed to by previous instance
+        self.visibility_level = py_trees.common.VisibilityLevel.FINE_DETAIL
 
         # dot_to_qt transforms into Qt elements using dot layout
         self.dot_to_qt = DotToQtGenerator()
@@ -159,6 +162,11 @@ class RosBehaviourTree(QObject):
         self._widget.save_as_svg_push_button.pressed.connect(self._save_svg)
         self._widget.save_as_image_push_button.setIcon(QIcon.fromTheme('image'))
         self._widget.save_as_image_push_button.pressed.connect(self._save_image)
+
+        for text in visibility.combo_to_py_trees:
+            self._widget.visibility_level_combo_box.addItem(text)
+        self._widget.visibility_level_combo_box.setCurrentIndex(self.visibility_level)
+        self._widget.visibility_level_combo_box.currentIndexChanged['QString'].connect(self._update_visibility_level)
 
         # set up the function that is called whenever the box is resized -
         # ensures that the timeline is correctly drawn.
@@ -267,6 +275,14 @@ class RosBehaviourTree(QObject):
             bag_dir = parsed_args.bag_dir or os.getenv('ROS_HOME', os.path.expanduser('~/.ros')) + '/behaviour_trees'
             self.open_latest_bag(bag_dir, parsed_args.by_time)
 
+    @Slot(str)
+    def _update_visibility_level(self, visibility_level):
+        """
+        We match the combobox index to the visibility levels defined in py_trees.common.VisibilityLevel.
+        """
+        self.visibility_level = visibility.combo_to_py_trees[visibility_level]
+        self._refresh_tree_graph()
+
     @staticmethod
     def add_arguments(parser, group=True):
         """Allows for the addition of arguments to the rqt_gui loading method
@@ -329,9 +345,9 @@ class RosBehaviourTree(QObject):
         self._load_bag(latest_bag)
 
     def get_current_message(self):
-        """Get the message in the list or bag that is being viewed that should be
+        """
+        Get the message in the list or bag that is being viewed that should be
         displayed.
-
         """
         msg = None
         if self._timeline_listener:
@@ -501,6 +517,7 @@ class RosBehaviourTree(QObject):
         self._refresh_view.emit()
 
     def save_settings(self, plugin_settings, instance_settings):
+        instance_settings.set_value('visibility_level', self.visibility_level)
         instance_settings.set_value('auto_fit_graph_check_box_state',
                                     self._widget.auto_fit_graph_check_box.isChecked())
         instance_settings.set_value('highlight_connections_check_box_state',
@@ -515,6 +532,8 @@ class RosBehaviourTree(QObject):
         self._widget.highlight_connections_check_box.setChecked(
             instance_settings.value('highlight_connections_check_box_state', True) in [True, 'true'])
         self._saved_settings_topic = instance_settings.value('combo_box_subscribed_topic', None)
+        saved_visibility_level = instance_settings.value('visibility_level', 1)
+        self._widget.visibility_level_combo_box.setCurrentIndex(visibility.saved_setting_to_combo_index[saved_visibility_level])
         self.initialized = True
         self._update_combo_topics()
         self._refresh_tree_graph()
@@ -538,6 +557,8 @@ class RosBehaviourTree(QObject):
         Cache replaces LRU.
 
         Mostly stolen from rqt_bag.MessageLoaderThread
+
+        :param py_trees_msgs.BehavoiurTree message
         """
         if message is None:
             return ""
@@ -575,10 +596,14 @@ class RosBehaviourTree(QObject):
         force_refresh = self._force_refresh
         self._force_refresh = False
 
+        visible_behaviours = visibility.filter_behaviours_by_visibility_level(message.behaviours, self.visibility_level)
+
         # cache miss
         dotcode = self.dotcode_generator.generate_dotcode(dotcode_factory=self.dotcode_factory,
-                                                          tree=message,
-                                                          force_refresh=force_refresh)
+                                                          behaviours=visible_behaviours,
+                                                          timestamp=message.header.stamp,
+                                                          force_refresh=force_refresh
+                                                          )
         self._dotcode_cache[key] = dotcode
         self._dotcode_cache_keys.append(key)
 

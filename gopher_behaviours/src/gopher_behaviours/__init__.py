@@ -7,10 +7,7 @@
 ##############################################################################
 
 """
-Imports for the gopher_behaviours_ package.
-
-.. _gopher_behaviours: http://wiki.ros.org/gopher_behaviours
-
+Imports for the gopher_behaviours package.
 """
 ##############################################################################
 # Imports

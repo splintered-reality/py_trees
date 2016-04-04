@@ -13,6 +13,7 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
+  <build_depend>dynamic_reconfigure</build_depend>
   <build_depend>python-catkin-pkg</build_depend>
   <build_depend>python-sphinx-rtd-theme</build_depend>
   <build_depend>rospy</build_depend>

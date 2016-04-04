@@ -20,3 +20,8 @@ Demo Simple Motions
 -------------------
 
 .. graphviz:: dot/demo_simple_motions.dot
+
+Hive Mind
+---------
+
+.. graphviz:: dot/hivemind.dot

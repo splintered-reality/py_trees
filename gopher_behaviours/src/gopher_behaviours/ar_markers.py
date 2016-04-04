@@ -85,11 +85,10 @@ class ControlARMarkerTracker(py_trees.Behaviour):
             rospy.logwarn("Behaviours [%s" % self.name + "]: failed to connect to dynamic reconfigure server")
             return py_trees.Status.FAILURE
 
-    def stop(self, new_status=py_trees.Status.INVALID):
+    def terminate(self, new_status):
         """
         Make sure to disable it if we are responsible for starting it.
         """
-        super(ControlARMarkerTracker, self).stop(new_status)
         if new_status == py_trees.Status.INVALID:
             if self._enable:
                 self._ar_tracker_control(False)

@@ -44,6 +44,14 @@ py_trees.display
     :members:
     :show-inheritance:
 
+py_trees.meta
+-------------
+
+.. automodule:: py_trees.meta
+    :members:
+    :special-members:
+    :show-inheritance:
+
 py_trees.subscribers
 --------------------
 

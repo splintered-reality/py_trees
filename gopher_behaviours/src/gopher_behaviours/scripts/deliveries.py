@@ -14,11 +14,11 @@ import rospy
 import sys
 
 ##############################################################################
-# ExpressDelivery
+# CustomDelivery
 ##############################################################################
 
 
-class ExpressDelivery(object):
+class CustomDelivery(object):
     state_strings = {gopher_delivery_msgs.DeliveryFeedback.IDLE: "idle",
                      gopher_delivery_msgs.DeliveryFeedback.TRAVELLING: "travelling",
                      gopher_delivery_msgs.DeliveryFeedback.WAITING: "waiting",
@@ -28,7 +28,7 @@ class ExpressDelivery(object):
 
     def __init__(self, verbose_feedback=True):
         if verbose_feedback:
-            self.feedback_subscriber = rospy.Subscriber("/rocon/delivery/feedback", gopher_delivery_msgs.DeliveryFeedback, ExpressDelivery.feedback)
+            self.feedback_subscriber = rospy.Subscriber("/rocon/delivery/feedback", gopher_delivery_msgs.DeliveryFeedback, CustomDelivery.feedback)
 
     def send(self, goal_locations, include_parking_behaviours):
         delivery_goal_request = gopher_delivery_srvs.DeliveryGoalRequest()
@@ -56,7 +56,7 @@ class ExpressDelivery(object):
                 fetch_result = rospy.ServiceProxy('/rocon/delivery/result', gopher_delivery_srvs.DeliveryResult)
                 response = fetch_result()
                 if response.result != gopher_delivery_msgs.DeliveryErrorCodes.UNKNOWN:
-                    ExpressDelivery.result(response)
+                    CustomDelivery.result(response)
                     break
                 rate.sleep()
             except rospy.ServiceException, e:
@@ -73,7 +73,7 @@ class ExpressDelivery(object):
         print(console.cyan + "  timestamp: " + console.yellow + "%s" % date_string + console.reset)
         print(console.cyan + "  traversed: " + console.yellow + "%s" % msg.traversed_locations + console.reset)
         print(console.cyan + "  remaining: " + console.yellow + "%s" % msg.remaining_locations + console.reset)
-        print(console.cyan + "  state    : " + console.yellow + "%s" % ExpressDelivery.state_strings[msg.state] + console.reset)
+        print(console.cyan + "  state    : " + console.yellow + "%s" % CustomDelivery.state_strings[msg.state] + console.reset)
         print(console.cyan + "  message  : " + console.yellow + "%s" % msg.status_message + console.reset)
         print("")
 

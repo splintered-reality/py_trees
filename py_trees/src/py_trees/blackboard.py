@@ -23,6 +23,7 @@ from . import behaviours
 from .common import Status
 from .behaviour import Behaviour
 import rocon_console.console as console
+import operator
 
 ##############################################################################
 # Classes
@@ -161,7 +162,7 @@ class CheckBlackboardVariable(Behaviour):
                  name,
                  variable_name="dummy",
                  expected_value=None,
-                 invert=False
+                 comparison_operator=operator.eq
                  ):
         """
         :param name: name of the behaviour
@@ -173,8 +174,7 @@ class CheckBlackboardVariable(Behaviour):
         self.blackboard = Blackboard()
         self.variable_name = variable_name
         self.expected_value = expected_value
-        # if the user sets the expected value, we check it
-        self.invert = invert
+        self.comparison_operator = comparison_operator
 
     def update(self):
         # existence failure check
@@ -189,21 +189,11 @@ class CheckBlackboardVariable(Behaviour):
 
         # expected value matching
         value = getattr(self.blackboard, self.variable_name)
-        matched_expected = (value == self.expected_value)
+        success = self.comparison_operator(value, self.expected_value)
 
-        # result
-        if self.invert:
-            result = not matched_expected
-            if result:
-                self.feedback_message = "'%s' did not match expected value (as required) [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
-                return Status.SUCCESS
-            else:
-                self.feedback_message = "'%s' matched expected value (required otherwise) [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
-                return Status.FAILURE
+        if success:
+            self.feedback_message = "'%s' comparison succeeded [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
+            return Status.SUCCESS
         else:
-            if matched_expected:
-                self.feedback_message = "'%s' matched expected value (as required) [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
-                return Status.SUCCESS
-            else:
-                self.feedback_message = "'%s' did not match expected value (required otherwise) [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
-                return Status.FAILURE
+            self.feedback_message = "'%s' comparison failed [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
+            return Status.FAILURE

@@ -28,7 +28,7 @@ from __future__ import absolute_import
 import itertools
 
 from . import logging
-from .behaviours import Behaviour
+from .behaviour import Behaviour
 from .common import Status
 from . import meta
 
@@ -115,6 +115,17 @@ class Composite(Behaviour):
         self.children.append(child)
         child.parent = self
         return child.id
+
+    def add_children(self, children):
+        """
+        Adds a child.
+
+        :param Behaviour[] children: children to append to the composite.
+        """
+        for child in children:
+            assert isinstance(child, Behaviour), "children must be behaviours, but you passed in %s" % type(child)
+            self.children.append(child)
+            child.parent = self
 
     def remove_child(self, child):
         """
@@ -215,6 +226,7 @@ class Selector(Composite):
                         yield self
                         return
         # all children failed, set failure ourselves and current child to the last bugger who failed us
+        print("All children failed?")
         self.status = Status.FAILURE
         try:
             self.current_child = self.children[-1]

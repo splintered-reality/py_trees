@@ -16,10 +16,13 @@ deliveries.
 # Imports
 ##############################################################################
 
+import dynamic_reconfigure.server
 import gopher_behaviours
+from gopher_behaviours.cfg import CustomDeliveriesConfig
 import gopher_configuration
 import gopher_delivery_msgs.msg as gopher_delivery_msgs
 import gopher_navi_msgs.msg as gopher_navi_msgs
+import gopher_semantics
 import rocon_console.console as console
 import rocon_python_comms
 import rospy
@@ -40,11 +43,13 @@ class CustomDeliveryOverseer(object):
     """
     def __init__(self):
         self.gopher = gopher_configuration.Configuration()
+        self.semantics = gopher_semantics.Semantics(self.gopher.namespaces.semantics)
         self.delivering = False  # is the delivery manager busy?
         self.custom_delivering = False  # are we doing something ourselves?
-        self.locations = rospy.get_param('~locations')  # assumed to be a list of strings
-        rospy.loginfo("Custom Delivery : setup for [" + "->".join(self.locations) + "] deliveries.")
-        self.express_delivery = gopher_behaviours.scripts.deliveries.ExpressDelivery(verbose_feedback=False)
+        self.locations = None
+        self.dynamic_reconfigure_server =\
+            dynamic_reconfigure.server.Server(CustomDeliveriesConfig, self.dynamic_reconfigure_cb)
+        self.express_delivery = gopher_behaviours.scripts.deliveries.CustomDelivery(verbose_feedback=False)
         self.subscribers = rocon_python_comms.utils.Subscribers(
             [
                 ('delivery_manager_status', '~delivery_manager_status', gopher_delivery_msgs.DeliveryManagerStatus, self.delivery_manager_status_cb),
@@ -83,6 +88,26 @@ class CustomDeliveryOverseer(object):
             goal.special_effects = True
             action_goal.goal = goal
             self.publishers.teleport_homebase.publish(action_goal)
+
+    def dynamic_reconfigure_cb(self, config, level):
+        """
+        Don't use the incoming config except as a read only
+        tool. If we write variables, make sure to use the server's update_configuration, which will trigger
+        this callback here.
+        """
+        temp_string = config.locations
+        temp_string = temp_string.replace('[', ' ')
+        temp_string = temp_string.replace(']', ' ')
+        temp_string = temp_string.replace(',', ' ')
+        new_locations = [l for l in temp_string.split(' ') if l]
+        self.locations = []
+        for location in new_locations:
+            if location in self.semantics.locations:
+                self.locations.append(location)
+            else:
+                rospy.logerr("Custom Delivery: tried to reconfigure with an invalid location, dropping [%s]" % location)
+        rospy.loginfo("Custom Delivery: setup for [" + "->".join(self.locations) + "] deliveries.")
+        return config
 
     def spin(self):
         rate = rospy.Rate(10)
