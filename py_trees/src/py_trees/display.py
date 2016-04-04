@@ -13,9 +13,6 @@
    :synopsis: Render and write the behaviour tree visually to file or stdout.
 
 Various graph drawing tools.
-
-----
-
 """
 
 ##############################################################################
@@ -165,7 +162,7 @@ def stringify_dot_tree(root):
     :param root: the root of the tree, or subtree you want to show
     :return: dot graph as a string
     """
-    graph = generate_pydot_graph(root)
+    graph = generate_pydot_graph(root, visibility_level=common.VisibilityLevel.DETAIL)
     return graph.to_string()
 
 

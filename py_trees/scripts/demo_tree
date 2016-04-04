@@ -93,6 +93,7 @@ if __name__ == '__main__':
     sequence.add_child(guard)
     sequence.add_child(periodic_success)
     sequence.add_child(finisher)
+    sequence.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
 
     idle = py_trees.behaviours.Success("Idle")
 
