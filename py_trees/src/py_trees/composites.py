@@ -226,7 +226,6 @@ class Selector(Composite):
                         yield self
                         return
         # all children failed, set failure ourselves and current child to the last bugger who failed us
-        print("All children failed?")
         self.status = Status.FAILURE
         try:
             self.current_child = self.children[-1]
@@ -312,3 +311,38 @@ class Sequence(Composite):
 @meta.oneshot
 class OneshotSequence(Sequence):
     pass
+
+##############################################################################
+# Paralllel
+##############################################################################
+
+
+class Parallel(Composite):
+    """
+    Ticks every child every time the parallel is run (a poor man's form of paralellism).
+
+    Will return :py:data:`~py_trees.common.Status.RUNNING` if any one of them is still
+    running, :py:data:`~py_trees.common.Status.SUCCESS` if they all succeed, or
+    :py:data:`~py_trees.common.Status.FAILURE` if any single one of them fails.
+    """
+    def __init__(self, name="Parallel", children=None, *args, **kwargs):
+        super(Parallel, self).__init__(name, children, *args, **kwargs)
+        self.logger = logging.get_logger(name)
+
+    def tick(self):
+        if self.status != Status.RUNNING:
+            # subclass (user) handling
+            self.initialise()
+        self.logger.debug("  %s [tick()]" % self.name)
+        new_status = Status.SUCCESS
+        for child in self.children:
+            for node in child.tick():
+                yield node
+                if node.status == Status.RUNNING:
+                    new_status = node.status
+                elif node.status == Status.FAILURE and new_status != Status.RUNNING:
+                    new_status = node.status
+        if new_status != Status.RUNNING:
+            self.stop(new_status)
+        self.status = new_status
+        yield self

@@ -15,6 +15,7 @@ from __future__ import absolute_import, print_function
 from nose.tools import assert_raises
 import py_trees
 import rocon_console.console as console
+import time
 
 ##############################################################################
 # Logging Level
@@ -151,3 +152,51 @@ def test_running_is_failure_tree():
     print("root.status == py_trees.Status.SUCCESS")
     assert(root.status == py_trees.Status.SUCCESS)
 
+def test_inverter_sequence():
+    print(console.bold + "\n****************************************************************************************" + console.reset)
+    print(console.bold + "* Inverter Sequence Tree" + console.reset)
+    print(console.bold + "****************************************************************************************\n" + console.reset)
+    root = py_trees.meta.inverter(py_trees.Sequence)("Root")
+    selector = py_trees.Selector("Selector")
+    failure = py_trees.behaviours.Failure("Failure")
+    success = py_trees.behaviours.Success("Success")
+    selector.add_child(failure)
+    selector.add_child(success)
+    success2 = py_trees.behaviours.Success("Success2")
+    root.add_child(selector)
+    root.add_child(success2)
+    py_trees.display.print_ascii_tree(root)
+    visitor = py_trees.trees.DebugVisitor()
+    tick_tree(root, visitor, 1, 1)
+
+    print("\n--------- Assertions ---------\n")
+    print("root.status == py_trees.Status.FAILURE")
+    assert(root.status == py_trees.Status.FAILURE)
+    print("success.status == py_trees.Status.SUCCESS")
+    assert(success.status == py_trees.Status.SUCCESS)
+    print("success2.status == py_trees.Status.SUCCESS")
+    assert(success2.status == py_trees.Status.SUCCESS)
+    print("failure.status == py_trees.Status.FAILURE")
+    assert(failure.status == py_trees.Status.FAILURE)
+    print("selector.status == py_trees.Status.SUCCESS")
+    assert(selector.status == py_trees.Status.SUCCESS)
+
+def test_timeout():
+    print(console.bold + "\n****************************************************************************************" + console.reset)
+    print(console.bold + "* Timeout" + console.reset)
+    print(console.bold + "****************************************************************************************\n" + console.reset)
+    root = py_trees.meta.timeout(py_trees.behaviours.Running, 0.1)("Success w/ Timeout")
+    py_trees.display.print_ascii_tree(root)
+    visitor = py_trees.trees.DebugVisitor()
+    tick_tree(root, visitor, 1, 1)
+
+    print("\n--------- Assertions ---------\n")
+    print("root.status == py_trees.Status.RUNNING")
+    assert(root.status == py_trees.Status.RUNNING)
+
+    time.sleep(0.2)
+    tick_tree(root, visitor, 1, 1)
+
+    print("\n--------- Assertions ---------\n")
+    print("root.status == py_trees.Status.FAILURE")
+    assert(root.status == py_trees.Status.FAILURE)
