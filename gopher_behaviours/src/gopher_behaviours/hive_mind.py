@@ -237,7 +237,7 @@ class GopherHiveMind(object):
            * switch battery charging upon acceptance of a goal
            * check the first preempted goal location isn't the same as the current location and handle it
         '''
-        rospy.loginfo("Delivery : received a goal request: {0}".format(request))
+        rospy.loginfo("Delivery : received a goal request for {0}".format(request.semantic_locations))
 
         with self.monitor_lock:
             monitor_ok = self.monitor_ok
