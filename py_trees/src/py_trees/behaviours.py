@@ -35,16 +35,19 @@ from . import meta
 
 def success(self):
     self.logger.debug("  %s [Success::update()]" % self.name)
+    self.feedback_message = "success"
     return Status.SUCCESS
 
 
 def failure(self):
     self.logger.debug("  %s [Failure::update()]" % self.name)
+    self.feedback_message = "failure"
     return Status.FAILURE
 
 
 def running(self):
     self.logger.debug("  %s [Running::update()]" % self.name)
+    self.feedback_message = "running"
     return Status.RUNNING
 
 

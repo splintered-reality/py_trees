@@ -23,6 +23,7 @@ Usually in the form of factory-like functions or decorators.
 ##############################################################################
 
 import functools
+import time
 
 from . import behaviour
 from . import common
@@ -101,18 +102,9 @@ def imposter(cls):
                 new_args = tuple(new_args)
             super(Imposter, self).__init__(name)
             self.original = cls(*new_args, **kwargs)
-
-        def setup(self, timeout):
-            """
-            Call the underlying setup function.
-            """
-            self.original.setup(timeout)
-
-        def initialise(self):
-            """
-            Call the underlying initialise function.
-            """
-            self.original.initialise()
+            self.children = self.original.children
+            self.setup = self.original.setup
+            # initialise, terminate is called indirectly via the tick_once in update
 
         def update(self):
             """
@@ -121,12 +113,76 @@ def imposter(cls):
             """
             self.original.tick_once()
             return self.original.status
+
+        def __getattr__(self, name):
+            return getattr(self.original, name)
+
     return Imposter
 
+# ##############################################################################
+# # Timeout
+# ##############################################################################
 
-#############################
+
+def timeout(cls, duration):
+    """
+    A decorator that applies a timeout pattern to an existing behaviour.
+
+    .. code-block:: python
+
+        work_with_timeout = py_trees.meta.Timeout(WorkBehaviour, 10.0)(name="Work")
+    """
+
+    def _timeout_init(func, duration):
+        """
+        Replace the default tick with one which runs the original function only if
+        the oneshot variable is unset, yielding the unmodified object otherwise.
+        """
+        @functools.wraps(func)
+        def wrapped(self, *args, **kwargs):
+            func(self, *args, **kwargs)
+            self.duration = duration
+            self.finish_time = None
+        return wrapped
+
+    def _timeout_initialise(func):
+        @functools.wraps(func)
+        def wrapped(self, *args, **kwargs):
+            if self.finish_time is None:
+                self.finish_time = time.time() + self.duration
+        return wrapped
+
+    def _timeout_update(func):
+        @functools.wraps(func)
+        def wrapped(self, *args, **kwargs):
+            self.original.tick_once()
+            current_time = time.time()
+            if current_time > self.finish_time:
+                self.feedback_message = "timed out"
+                return common.Status.FAILURE
+            else:
+                self.feedback_message = self.original.feedback_message + " [time left: %s]" % (self.finish_time - current_time)
+                return self.original.status
+        return wrapped
+
+    def _timeout_terminate(func):
+        @functools.wraps(func)
+        def wrapped(self, new_status):
+            if new_status != common.Status.RUNNING:
+                self.finish_time = None
+        return wrapped
+
+    Timeout = imposter(cls)
+    setattr(Timeout, "__init__", _timeout_init(Timeout.__init__, duration))
+    setattr(Timeout, "initialise", _timeout_initialise(Timeout.initialise))
+    setattr(Timeout, "update", _timeout_update(Timeout.update))
+    setattr(Timeout, "terminate", _timeout_terminate(Timeout.terminate))
+    return Timeout
+
+
+##############################################################################
 # Inverter
-#############################
+##############################################################################
 
 
 def inverter(cls):
@@ -146,17 +202,23 @@ def inverter(cls):
        failure = inverter(Success)("Failure")
 
     """
-    def _update(self):
-        self.original.tick_once()
-        if self.original.status == common.Status.SUCCESS:
-            return common.Status.FAILURE
-        elif self.original.status == common.Status.FAILURE:
-            return common.Status.SUCCESS
-        else:
-            return self.original.status
+    def _update(func):
+        @functools.wraps(func)
+        def wrapped(self):
+            self.original.tick_once()
+            if self.original.status == common.Status.SUCCESS:
+                return common.Status.FAILURE
+                self.feedback_message = "success -> failure"
+            elif self.original.status == common.Status.FAILURE:
+                self.feedback_message = "failure -> success"
+                return common.Status.SUCCESS
+            else:
+                self.feedback_message = self.original.feedback_message
+                return self.original.status
+        return wrapped
 
     Inverter = imposter(cls)
-    setattr(Inverter, "update", _update)
+    setattr(Inverter, "update", _update(Inverter.update))
     return Inverter
 
 ##############################################################################
@@ -178,7 +240,6 @@ def _oneshot_tick(func):
             # otherwise, run the tick as normal yield from in python 3.3
             for child in func(self, *args, **kwargs):
                 yield child
-
     return wrapped
 
 
@@ -223,15 +284,20 @@ def running_is_failure(cls):
 
        need_results_now = running_is_failure(Pontificating)("Greek Philosopher")
     """
-    def _update(self):
-        self.original.tick_once()
-        if self.original.status == common.Status.RUNNING:
-            return common.Status.FAILURE
-        else:
-            return self.original.status
+    def _update(func):
+        @functools.wraps(func)
+        def wrapped(self):
+            self.original.tick_once()
+            if self.original.status == common.Status.RUNNING:
+                self.feedback_message = "running is failure"
+                return common.Status.FAILURE
+            else:
+                self.feedback_message = self.original.feedback_message
+                return self.original.status
+        return wrapped
 
     RunningIsFailure = imposter(cls)
-    setattr(RunningIsFailure, "update", _update)
+    setattr(RunningIsFailure, "update", _update(RunningIsFailure.update))
     return RunningIsFailure
 
 #############################
@@ -255,16 +321,20 @@ def failure_is_success(cls):
 
        must_go_on_regardless = failure_is_success(ActingLikeAGoon("Goon"))
     """
-
-    def _update(self):
-        self.original.tick_once()
-        if self.original.status == common.Status.FAILURE:
-            return common.Status.SUCCESS
-        else:
-            return self.original.status
+    def _update(func):
+        @functools.wraps(func)
+        def wrapped(self):
+            self.original.tick_once()
+            if self.original.status == common.Status.FAILURE:
+                self.feedback_message = "failure is success"
+                return common.Status.SUCCESS
+            else:
+                self.feedback_message = self.original.feedback_message
+                return self.original.status
+        return wrapped
 
     FailureIsSuccess = imposter(cls)
-    setattr(FailureIsSuccess, "update", _update)
+    setattr(FailureIsSuccess, "update", _update(FailureIsSuccess.update))
     return FailureIsSuccess
 
 #############################
@@ -288,13 +358,18 @@ def success_is_failure(cls):
 
        the_end_is_night = success_is_failure(ActingLikeAGoon("Goon"))
     """
-    def _update(self):
-        self.original.tick_once()
-        if self.original.status == common.Status.SUCCESS:
-            return common.Status.FAILURE
-        else:
-            return self.original.status
+    def _update(func):
+        @functools.wraps(func)
+        def wrapped(self):
+            self.original.tick_once()
+            if self.original.status == common.Status.SUCCESS:
+                self.feedback_message = "success is failure"
+                return common.Status.FAILURE
+            else:
+                self.feedback_message = self.original.feedback_message
+                return self.original.status
+        return wrapped
 
     SuccessIsFailure = imposter(cls)
-    setattr(SuccessIsFailure, "update", _update)
+    setattr(SuccessIsFailure, "update", _update(SuccessIsFailure.update))
     return SuccessIsFailure
