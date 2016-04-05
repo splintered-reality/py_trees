@@ -108,13 +108,12 @@ def create_check_for_stop_button_press(name="Check for Stop Button Press"):
     :param str name: the behaviour name.
     """
     gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
-    behaviour = py_trees.meta.running_is_failure(
-        py_trees.subscribers.WaitForSubscriberData(
-            name=name,
-            topic_name=gopher.buttons.stop,
-            topic_type=std_msgs.Empty,
-            clearing_policy=py_trees.common.ClearingPolicy.ON_SUCCESS
-        )
+    MetaBehaviour = py_trees.meta.running_is_failure(py_trees.subscribers.WaitForSubscriberData)
+    behaviour = MetaBehaviour(
+        name=name,
+        topic_name=gopher.buttons.stop,
+        topic_type=std_msgs.Empty,
+        clearing_policy=py_trees.common.ClearingPolicy.ON_SUCCESS
     )
     return behaviour
 
