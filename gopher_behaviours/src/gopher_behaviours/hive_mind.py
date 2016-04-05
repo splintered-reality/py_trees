@@ -43,7 +43,7 @@ class Parameters(object):
     """
     def __init__(self):
         self.express = rospy.get_param('~express', False)
-        self.force_parking = rospy.get_param('~force_parking', False)
+        self.parking = rospy.get_param('~parking', False)
 
     def __str__(self):
         s = console.bold + "\nParameters:\n" + console.reset
@@ -102,7 +102,7 @@ class GopherHiveMind(object):
         rospy.on_shutdown(self.shutdown)
         self.parameters = Parameters()
         self.quirky_deliveries.express = self.parameters.express
-        self.quirky_deliveries.include_parking_behaviours = self.parameters.force_parking
+        self.quirky_deliveries.include_parking_behaviours = self.parameters.parking
         self.quirky_deliveries.setup(timeout)
 
         self._delivery_goal_service = rospy.Service('delivery/goal', gopher_delivery_srvs.DeliveryGoal, self._goal_service_callback)
