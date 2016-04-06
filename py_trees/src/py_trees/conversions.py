@@ -56,9 +56,7 @@ def convert_status(status):
 
 
 def convert_blackbox_level(blackbox_level):
-    if blackbox_level == common.BlackBoxLevel.FINE_DETAIL:
-        return py_trees_msgs.Behaviour.BLACKBOX_LEVEL_FINE_DETAIL
-    elif blackbox_level == common.BlackBoxLevel.DETAIL:
+    if blackbox_level == common.BlackBoxLevel.DETAIL:
         return py_trees_msgs.Behaviour.BLACKBOX_LEVEL_DETAIL
     elif blackbox_level == common.BlackBoxLevel.COMPONENT:
         return py_trees_msgs.Behaviour.BLACKBOX_LEVEL_COMPONENT

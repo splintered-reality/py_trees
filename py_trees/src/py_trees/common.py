@@ -65,17 +65,15 @@ class BlackBoxLevel(enum.IntEnum):
     Blackbox levels are increasingly persistent in visualisations.
 
     Visualisations by default, should always collapse blackboxes that represent
-    `FINE_DETAIL`.
+    `DETAIL`.
     """
-    FINE_DETAIL = 1
-    """A blackbox that doesn't wish to expose the fine detail beneath unless forced."""
-    DETAIL = 2
+    DETAIL = 1
     """A blackbox that encapsulates detailed activity."""
-    COMPONENT = 3
+    COMPONENT = 2
     """A blackbox that encapsulates a subgroup of functionalities as a single group."""
-    BIG_PICTURE = 4
+    BIG_PICTURE = 3
     """A blackbox that represents a big picture part of the entire tree view."""
-    NOT_A_BLACKBOX = 5
+    NOT_A_BLACKBOX = 4
     """Not a blackbox, do not ever collapse."""
 
 
@@ -88,8 +86,6 @@ class VisibilityLevel(enum.IntEnum):
     """
     ALL = 0
     """Do not collapse any behaviour."""
-    FINE_DETAIL = BlackBoxLevel.FINE_DETAIL
-    """Collapse blackboxes marked as :py:data:`~py_trees.common.BlackBoxLevel.FINE_DETAIL`."""
     DETAIL = BlackBoxLevel.DETAIL
     """Collapse blackboxes marked with :py:data:`~py_trees.common.BlackBoxLevel.DETAIL` or lower."""
     COMPONENT = BlackBoxLevel.COMPONENT
@@ -98,7 +94,7 @@ class VisibilityLevel(enum.IntEnum):
     """Collapse any blackbox that isn't marked with :py:data:`~py_trees.common.BlackBoxLevel.BIG_PICTURE`."""
 
 
-visibility_level_strings = ["all", "fine_detail", "detail", "component", "big_picture"]
+visibility_level_strings = ["all", "detail", "component", "big_picture"]
 """Convenient string representations to use for command line input (amongst other things)."""
 
 
@@ -110,9 +106,7 @@ def string_to_visibility_level(level):
     :param str level: visibility level as a string
     :returns: :py:class:`~py_trees.common.VisibilityLevel` visibility level enum
     """
-    if level == "fine_detail":
-        return VisibilityLevel.FINE_DETAIL
-    elif level == "detail":
+    if level == "detail":
         return VisibilityLevel.DETAIL
     elif level == "component":
         return VisibilityLevel.COMPONENT
