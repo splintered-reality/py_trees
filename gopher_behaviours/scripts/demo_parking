@@ -57,9 +57,16 @@ def parse_arguments(command_line_args):
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter
                                      )
     parser.add_argument('-r', '--render', action='store_true', help='render the graph to dot/png/svg.')
+    parser.add_argument('-v', '--visibility-level',
+                        action='store',
+                        default="detail",
+                        choices=py_trees.common.visibility_level_strings,
+                        help='visibility level for blackboxes when using -r'
+                        )
     parser.add_argument('-d', '--debug', action='store_true', help='debug level tree logging.')
 
     args = parser.parse_args(command_line_args)
+    args.visibility_level = py_trees.common.string_to_visibility_level(args.visibility_level)
     return args
 
 ##############################################################################
@@ -152,7 +159,7 @@ if __name__ == '__main__':
     demo = Demo()
     if args.render:
         py_trees.display.print_ascii_tree(demo.root, 0)
-        py_trees.display.render_dot_tree(demo.root)
+        py_trees.display.render_dot_tree(demo.root, args.visibility_level)
         sys.exit()
 
     rospy.init_node("demo", log_level=rospy.INFO)

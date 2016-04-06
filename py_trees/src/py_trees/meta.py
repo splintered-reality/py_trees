@@ -14,8 +14,6 @@
 
 Usually in the form of factory-like functions or decorators.
 
-----
-
 """
 
 ##############################################################################

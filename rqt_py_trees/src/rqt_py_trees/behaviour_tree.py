@@ -131,7 +131,7 @@ class RosBehaviourTree(QObject):
         self.behaviour_sub = None
         self._tip_message = None  # message of the tip of the tree
         self._saved_settings_topic = None  # topic subscribed to by previous instance
-        self.visibility_level = py_trees.common.VisibilityLevel.FINE_DETAIL
+        self.visibility_level = py_trees.common.VisibilityLevel.DETAIL
 
         # dot_to_qt transforms into Qt elements using dot layout
         self.dot_to_qt = DotToQtGenerator()

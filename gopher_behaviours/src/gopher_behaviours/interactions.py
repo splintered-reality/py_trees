@@ -38,6 +38,8 @@ import unique_id
 
 def create_button_event_handler(name="Event Handler"):
     event_handler = py_trees.composites.Sequence(name)
+    event_handler.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
+
     gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
     go_button_events = MonitorButtonEvents(
         name="Go Button Events",

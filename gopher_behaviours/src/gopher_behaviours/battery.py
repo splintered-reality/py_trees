@@ -13,9 +13,6 @@
    :synopsis: Battery behaviours
 
 Behaviours related to checking and reacting to battery notifications.
-
-----
-
 """
 
 ##############################################################################

@@ -34,8 +34,10 @@ import tf
 from . import ar_markers
 from . import battery
 from . import docking
+from . import elf
 from . import interactions
 from . import navigation
+from . import simple_motions
 from . import transform_utilities
 
 ##############################################################################
@@ -67,6 +69,7 @@ class UnPark(py_trees.Sequence):
         self.gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
         self.semantic_locations = None
         self.blackboard = py_trees.Blackboard()
+        self.blackbox_level = py_trees.common.BlackBoxLevel.BIG_PICTURE
 
         ################################################################
         # Flags
@@ -78,25 +81,14 @@ class UnPark(py_trees.Sequence):
         # Undock
         ################################################################
         unplug_undock = py_trees.Selector(name="UnPlug/UnDock")
-        ar_tracker_on_long_range = ar_markers.ControlARMarkerTracker("Long-Range AR Tracker On",
-                                                                     self.gopher.topics.ar_tracker_long_range,
-                                                                     True)
-        ar_tracker_on_short_range = ar_markers.ControlARMarkerTracker("Short-Range AR Tracker On",
-                                                                      self.gopher.topics.ar_tracker_short_range,
-                                                                      True)
-        ar_tracker_off_long_range = ar_markers.ControlARMarkerTracker("Long-Range AR Tracker Off",
-                                                                      self.gopher.topics.ar_tracker_long_range,
-                                                                      False)
-        ar_tracker_off_short_range = ar_markers.ControlARMarkerTracker("Short-Range AR Tracker Off",
-                                                                       self.gopher.topics.ar_tracker_short_range,
-                                                                       False)
+        unplug_undock.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
+
+        (ar_tracker_on, ar_tracker_off) = ar_markers.create_ar_tracker_pair_blackboxes()
         undocking = py_trees.Sequence(name="UnDock")
-        break_out = py_trees.meta.failure_is_success(
-            navigation.SimpleMotion(
-                name="Break Out",
-                motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_TRANSLATE,
-                motion_amount=0.8
-            )
+        break_out = py_trees.meta.failure_is_success(simple_motions.SimpleMotion)(
+            name="Break Out",
+            motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_TRANSLATE,
+            motion_amount=0.8
         )
         is_docked = battery.create_is_docked(name="Is Docked?")
         is_discharging = battery.create_is_discharging(name="Is Discharging?")
@@ -107,7 +99,7 @@ class UnPark(py_trees.Sequence):
         ################################################################
         # Unplug and Pre-Localising
         ################################################################
-        write_localisation_status = navigation.create_elf_localisation_to_blackboard_behaviour(name="Get Localisation Status", blackboard_variables={"elf_localisation_status": "status"})
+        write_localisation_status = elf.create_localisation_to_blackboard_behaviour(name="Get Localisation Status", blackboard_variables={"elf_localisation_status": "status"})
         path_chooser = py_trees.Selector("Localised?")
 
         ################################################################
@@ -176,9 +168,9 @@ class UnPark(py_trees.Sequence):
         ##############################
         # Automatic
         ##############################
-        auto_initialisation = navigation.ElfInitialisation(name="Elf Initialisation")
+        auto_initialisation = elf.Initialisation(name="Elf Initialisation")
         auto_write_finishing_pose_from_odom = navigation.create_odom_pose_to_blackboard_behaviour(name="Final Pose (Odom)", blackboard_variables={"pose_unpark_finish_rel_odom": "pose.pose"})
-        auto_write_finishing_pose_from_map = navigation.create_elf_pose_to_blackboard_behaviour(name="Finishing Pose (Map)", blackboard_variables={"pose_unpark_finish_rel_map": "pose.pose"})
+        auto_write_finishing_pose_from_map = elf.create_pose_to_blackboard_behaviour(name="Finishing Pose (Map)", blackboard_variables={"pose_unpark_finish_rel_map": "pose.pose"})
         auto_save_park_pose = SaveParkingPoseAuto("Save Park Pose (Auto)")
 
         ################################################################
@@ -189,11 +181,9 @@ class UnPark(py_trees.Sequence):
         self.add_child(unplug_undock)
         unplug_undock.add_child(undocking)
         undocking.add_child(is_docked)
-        undocking.add_child(ar_tracker_on_long_range)
-        undocking.add_child(ar_tracker_on_short_range)
+        undocking.add_child(ar_tracker_on)
         undocking.add_child(auto_undock)
-        undocking.add_child(ar_tracker_off_long_range)
-        undocking.add_child(ar_tracker_off_short_range)
+        undocking.add_child(ar_tracker_off)
         undocking.add_child(break_out)
         undocking.add_child(set_docked_flag)
         unplug_undock.add_child(unplug)

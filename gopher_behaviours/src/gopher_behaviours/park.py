@@ -13,9 +13,6 @@
 
 Oh my spaghettified magnificence,
 Bless my noggin with a tickle from your noodly appendages!
-
-----
-
 """
 
 ##############################################################################
@@ -31,6 +28,7 @@ import py_trees
 from . import ar_markers
 from . import battery
 from . import docking
+from . import simple_motions
 from . import transform_utilities
 
 ##############################################################################
@@ -49,39 +47,30 @@ class Park(py_trees.Sequence):
     def __init__(self, name="Park"):
         super(Park, self).__init__(name)
         self.gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
+        self.blackbox_level = py_trees.common.BlackBoxLevel.BIG_PICTURE
 
         ############################################
         # Behaviours
         ############################################
-        check_didnt_undock = py_trees.meta.inverter(py_trees.CheckBlackboardVariable(
+        check_didnt_undock = py_trees.meta.inverter(py_trees.CheckBlackboardVariable)(
             name='Didnt Undock',
             variable_name='undocked',
             expected_value=True
-        ))
+        )
         write_pose_park_start_rel_map = navigation.create_map_pose_to_blackboard_behaviour(
             name="Start Pose (Map)",
             blackboard_variables={"pose_park_start_rel_map": None}
         )
         parking_motions = ParkingMotions()
         todock_or_not_todock = py_trees.Selector(name="ToDock or Not ToDock")
+        todock_or_not_todock.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
         docking_control = py_trees.Sequence(name="Automatic")
-        pre_dock_rotation = navigation.SimpleMotion(
+        pre_dock_rotation = simple_motions.SimpleMotion(
             name="Pre-Rotation",
             motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
             motion_amount=3.14
         )
-        ar_tracker_on_long_range = ar_markers.ControlARMarkerTracker("Long-Range AR Tracker On",
-                                                                     self.gopher.topics.ar_tracker_long_range,
-                                                                     True)
-        ar_tracker_on_short_range = ar_markers.ControlARMarkerTracker("Short-Range AR Tracker On",
-                                                                      self.gopher.topics.ar_tracker_short_range,
-                                                                      True)
-        ar_tracker_off_long_range = ar_markers.ControlARMarkerTracker("Long-Range AR Tracker Off",
-                                                                      self.gopher.topics.ar_tracker_long_range,
-                                                                      False)
-        ar_tracker_off_short_range = ar_markers.ControlARMarkerTracker("Short-Range AR Tracker Off",
-                                                                       self.gopher.topics.ar_tracker_short_range,
-                                                                       False)
+        (ar_tracker_on, ar_tracker_off) = ar_markers.create_ar_tracker_pair_blackboxes()
         docking_controller = docking.DockingController(name="Docking Controller")
         clearing_flags = py_trees.blackboard.ClearBlackboardVariable(name="Clear Flags", variable_name="undocked")
         wait_for_docking_contact = battery.create_wait_to_be_docked(name="Manual Recovery")
@@ -105,11 +94,9 @@ class Park(py_trees.Sequence):
         manual_divert.add_child(manual_dock)
         todock_or_not_todock.add_child(docking_control)
         docking_control.add_child(pre_dock_rotation)
-        docking_control.add_child(ar_tracker_on_long_range)
-        docking_control.add_child(ar_tracker_on_short_range)
+        docking_control.add_child(ar_tracker_on)
         docking_control.add_child(docking_controller)
-        docking_control.add_child(ar_tracker_off_long_range)
-        docking_control.add_child(ar_tracker_off_short_range)
+        docking_control.add_child(ar_tracker_off)
         todock_or_not_todock.add_child(wait_for_docking_contact)
         self.add_child(clearing_flags)
 
@@ -189,17 +176,17 @@ class ParkingMotions(py_trees.Sequence):
 
         # dummy children for dot graph rendering purposes
         # they will get cleaned up the first time this enters initialise
-        point_to_park = navigation.SimpleMotion(
+        point_to_park = simple_motions.SimpleMotion(
             name="Point to Park (?rad)",
             motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
             motion_amount=0.0,
         )
-        move_to_park = navigation.SimpleMotion(
+        move_to_park = simple_motions.SimpleMotion(
             name="Move to Park (?m)",
             motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_TRANSLATE,
             motion_amount=0.0,
         )
-        orient_with_park = navigation.SimpleMotion(
+        orient_with_park = simple_motions.SimpleMotion(
             name="Orient to Park (?rad)",
             motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
             motion_amount=0.0,
@@ -228,7 +215,7 @@ class ParkingMotions(py_trees.Sequence):
 
         epsilon = 0.01
         if abs(point_to_park_angle) > epsilon:
-            point_to_park = navigation.SimpleMotion(
+            point_to_park = simple_motions.SimpleMotion(
                 name="Point to Park %0.2f rad" % point_to_park_angle,
                 motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
                 motion_amount=point_to_park_angle,
@@ -236,7 +223,7 @@ class ParkingMotions(py_trees.Sequence):
             )
             self.add_child(point_to_park)
         if abs(distance_to_park) > epsilon:
-            move_to_park = navigation.SimpleMotion(
+            move_to_park = simple_motions.SimpleMotion(
                 name="Move to Park %0.2f m" % distance_to_park,
                 motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_TRANSLATE,
                 motion_amount=distance_to_park,
@@ -244,7 +231,7 @@ class ParkingMotions(py_trees.Sequence):
             )
             self.add_child(move_to_park)
         if abs(orient_with_park_angle) > epsilon:
-            orient_with_park = navigation.SimpleMotion(
+            orient_with_park = simple_motions.SimpleMotion(
                 name="Orient to Park %0.2f rad" % orient_with_park_angle,
                 motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
                 motion_amount=orient_with_park_angle,

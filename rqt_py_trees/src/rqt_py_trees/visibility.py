@@ -31,7 +31,6 @@ import unique_id
 
 combo_to_py_trees = collections.OrderedDict([
     ("All", py_trees.common.VisibilityLevel.ALL),
-    ("Fine Detail", py_trees.common.VisibilityLevel.FINE_DETAIL),
     ("Detail", py_trees.common.VisibilityLevel.DETAIL),
     ("Component", py_trees.common.VisibilityLevel.COMPONENT),
     ("Big Picture", py_trees.common.VisibilityLevel.BIG_PICTURE)]
@@ -41,12 +40,10 @@ saved_setting_to_combo_index = {
     0: 0,
     1: 1,
     2: 2,
-    3: 3,
-    4: 4
+    3: 3
 }
 
 msg_to_py_trees = {
-    py_trees_msgs.Behaviour.BLACKBOX_LEVEL_FINE_DETAIL: py_trees.common.BlackBoxLevel.FINE_DETAIL,
     py_trees_msgs.Behaviour.BLACKBOX_LEVEL_DETAIL: py_trees.common.BlackBoxLevel.DETAIL,
     py_trees_msgs.Behaviour.BLACKBOX_LEVEL_COMPONENT: py_trees.common.BlackBoxLevel.COMPONENT,
     py_trees_msgs.Behaviour.BLACKBOX_LEVEL_BIG_PICTURE: py_trees.common.BlackBoxLevel.BIG_PICTURE,
