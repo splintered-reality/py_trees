@@ -118,8 +118,12 @@ def generate_pydot_graph(root, visibility_level):
     :return: the dot graph as a pydot.Dot graph
     """
     def get_node_attributes(node, visibility_level):
+        blackbox_font_colours = {common.BlackBoxLevel.DETAIL: "dodgerblue",
+                                 common.BlackBoxLevel.COMPONENT: "lawngreen",
+                                 common.BlackBoxLevel.BIG_PICTURE: "white"
+                                 }
         if not visibility_level < node.blackbox_level:
-            return ('box', 'gray20', 'white')
+            return ('box', 'gray20', blackbox_font_colours[node.blackbox_level])
         if isinstance(node, Selector):
             return ('octagon', 'cyan', 'black')  # octagon
         elif isinstance(node, Sequence):
