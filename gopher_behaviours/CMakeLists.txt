@@ -21,7 +21,10 @@ catkin_python_setup()
 # Dynamic Reconfigure
 ##############################################################################
 
-generate_dynamic_reconfigure_options(dynamic_reconfigure/CustomDeliveries.cfg)
+generate_dynamic_reconfigure_options(
+    dynamic_reconfigure/CustomDeliveries.cfg
+    dynamic_reconfigure/HiveMind.cfg
+)
 
 ##############################################################################
 # Catkin
