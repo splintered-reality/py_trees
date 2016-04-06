@@ -117,33 +117,35 @@ def generate_pydot_graph(root, visibility_level):
     :param common.BlackBoxLevel blackbox_level: collapse subtrees at or under this level
     :return: the dot graph as a pydot.Dot graph
     """
-    def get_node_attributes(node):
+    def get_node_attributes(node, visibility_level):
+        if not visibility_level < node.blackbox_level:
+            return ('box', 'gray20', 'white')
         if isinstance(node, Selector):
-            return ('octagon', 'cyan')  # octagon
+            return ('octagon', 'cyan', 'black')  # octagon
         elif isinstance(node, Sequence):
-            return ('box', 'orange')
+            return ('box', 'orange', 'black')
         elif node.children != []:
-            return ('ellipse', 'ghostwhite')  # encapsulating behaviour (e.g. wait)
+            return ('ellipse', 'ghostwhite', 'black')  # encapsulating behaviour (e.g. wait)
         else:
-            return ('ellipse', 'gray')
+            return ('ellipse', 'gray', 'black')
 
     fontsize = 11
     graph = pydot.Dot(graph_type='digraph')
     graph.set_name(root.name.lower().replace(" ", "_"))
-    (node_shape, node_colour) = get_node_attributes(root)
-    node_root = pydot.Node(root.name, shape=node_shape, style="filled", fillcolor=node_colour, fontsize=fontsize)
+    (node_shape, node_colour, node_font_colour) = get_node_attributes(root, visibility_level)
+    node_root = pydot.Node(root.name, shape=node_shape, style="filled", fillcolor=node_colour, fontsize=fontsize, fontcolor=node_font_colour)
     graph.add_node(node_root)
     names = [root.name]
 
     def add_edges(root, root_dot_name, visibility_level):
         if visibility_level < root.blackbox_level:
             for c in root.children:
-                (node_shape, node_colour) = get_node_attributes(c)
+                (node_shape, node_colour, node_font_colour) = get_node_attributes(c, visibility_level)
                 proposed_dot_name = c.name
                 while proposed_dot_name in names:
                     proposed_dot_name = proposed_dot_name + "*"
                 names.append(proposed_dot_name)
-                node = pydot.Node(proposed_dot_name, shape=node_shape, style="filled", fillcolor=node_colour, fontsize=fontsize)
+                node = pydot.Node(proposed_dot_name, shape=node_shape, style="filled", fillcolor=node_colour, fontsize=fontsize, fontcolor=node_font_colour)
                 graph.add_node(node)
                 edge = pydot.Edge(root_dot_name, proposed_dot_name)
                 graph.add_edge(edge)
