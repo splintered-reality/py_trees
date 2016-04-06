@@ -96,3 +96,28 @@ class VisibilityLevel(enum.IntEnum):
     """Collapse blackboxes marked with :py:data:`~py_trees.common.BlackBoxLevel.COMPONENT` or lower."""
     BIG_PICTURE = BlackBoxLevel.BIG_PICTURE
     """Collapse any blackbox that isn't marked with :py:data:`~py_trees.common.BlackBoxLevel.BIG_PICTURE`."""
+
+
+visibility_level_strings = ["all", "fine_detail", "detail", "component", "big_picture"]
+"""Convenient string representations to use for command line input (amongst other things)."""
+
+
+def string_to_visibility_level(level):
+    """
+    Will convert a string to a visibility level. Note that it will quietly return ALL if
+    the string is not matched to any visibility level string identifier.
+
+    :param str level: visibility level as a string
+    :returns: :py:class:`~py_trees.common.VisibilityLevel` visibility level enum
+    """
+    if level == "fine_detail":
+        return VisibilityLevel.FINE_DETAIL
+    elif level == "detail":
+        return VisibilityLevel.DETAIL
+    elif level == "component":
+        return VisibilityLevel.COMPONENT
+    elif level == "big_picture":
+        return VisibilityLevel.BIG_PICTURE
+    else:
+        return VisibilityLevel.ALL
+
