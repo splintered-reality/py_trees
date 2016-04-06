@@ -122,16 +122,17 @@ def generate_pydot_graph(root, visibility_level):
                                  common.BlackBoxLevel.COMPONENT: "lawngreen",
                                  common.BlackBoxLevel.BIG_PICTURE: "white"
                                  }
-        if not visibility_level < node.blackbox_level:
-            return ('box', 'gray20', blackbox_font_colours[node.blackbox_level])
         if isinstance(node, Selector):
-            return ('octagon', 'cyan', 'black')  # octagon
+            attributes = ('octagon', 'cyan', 'black')  # octagon
         elif isinstance(node, Sequence):
-            return ('box', 'orange', 'black')
+            attributes = ('box', 'orange', 'black')
         elif node.children != []:
-            return ('ellipse', 'ghostwhite', 'black')  # encapsulating behaviour (e.g. wait)
+            attributes = ('ellipse', 'ghostwhite', 'black')  # encapsulating behaviour (e.g. wait)
         else:
-            return ('ellipse', 'gray', 'black')
+            attributes = ('ellipse', 'gray', 'black')
+        if node.blackbox_level != common.BlackBoxLevel.NOT_A_BLACKBOX:
+            attributes = (attributes[0], 'gray20', blackbox_font_colours[node.blackbox_level])
+        return attributes
 
     fontsize = 11
     graph = pydot.Dot(graph_type='digraph')
