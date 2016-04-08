@@ -274,7 +274,7 @@ class GopherDeliveries(object):
             # use the planner to initialise the behaviours that we are to follow
             # to get to the delivery location. If this is empty/None, then the
             # semantic locations provided were wrong.
-            include_parking_behaviours = False if self.always_assume_initialised or self.root else True
+            include_parking_behaviours = True if not self.always_assume_initialised else False
             children = self.planner.create_tree(current_world,
                                                 self.incoming_goal,
                                                 include_parking_behaviours=include_parking_behaviours

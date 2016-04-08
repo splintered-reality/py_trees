@@ -53,11 +53,11 @@ class HomebaseRecovery(py_trees.Sequence):
         teleport = navigation.Teleport("Activate the Homebase Teleport!",
                                        gopher_navi_msgs.TeleportGoal(location="homebase", special_effects=True)
                                        )
-        parking = park.Park("Park")
+        # parking = park.Park("Park")
         flash_leds.add_child(wait_for_button)
         self.add_child(flash_leds)
         self.add_child(teleport)
-        self.add_child(parking)
+        # self.add_child(parking)
 
 
 def create_battery_recovery_tree(name):
