@@ -421,7 +421,6 @@ class GopherDeliveries(object):
             # use the planner to initialise the behaviours that we are to follow
             # to get to the delivery location. If this is empty/None, then the
             # semantic locations provided were wrong.
-
             self.old_goal_id = self.root.id if self.root is not None else None
             self.reset_blackboard_variables(traversed_locations=[] if not self.root else self.blackboard.traversed_locations,
                                             remaining_locations=self.incoming_goal
