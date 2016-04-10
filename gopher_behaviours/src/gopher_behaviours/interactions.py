@@ -37,6 +37,14 @@ import unique_id
 
 
 def create_button_event_handler(name="Button Events"):
+    """
+    Blackboard Variables:
+
+     - event_go_button    (w) [bool] : true if at least one press, false otherwise
+     - event_stop_button  (w) [bool] : true if at least one press, false otherwise
+     - event_abort_button (w) [bool] : true if at least one press, false otherwise
+     - event_init_button  (w) [bool] : true if at least one press, false otherwise
+    """
     event_handler = py_trees.composites.Sequence(name)
     event_handler.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
 
@@ -138,10 +146,11 @@ def create_check_for_stop_button_press(name="Check for Stop Button Press"):
 
 class MonitorButtonEvents(py_trees.subscribers.SubscriberHandler):
     """
-    Monitor button events and write them to the blackboard. Ideally
-    you need this at the very highest part of the tree so that it gets triggered
-    every time - once this happens, then the rest of the behaviour tree can
-    utilise the variables.
+    This will catch a button event between every tick and write the result to
+    the blackboard (True for at least one button event, False otherwise).
+    Ideally you need this at the very highest part of the tree so that it
+    gets triggered every time - once this happens, then the rest of the behaviour
+    tree can utilise the variables.
     """
     def __init__(self,
                  name="Monitor Button Events",
@@ -174,7 +183,7 @@ class Articulate(py_trees.Behaviour):
     """
     Articulate a sound.
     """
-    def __init__(self, name, topic_name, volume=100):
+    def __init__(self, name, topic_name="/gopher/commands/sounds/yawn", volume=100):
         """
         He is a mere noodly appendage - don't expect him to check if the topic exists.
 
@@ -218,6 +227,7 @@ class SendNotification(py_trees.Sequence):
         :param str name: behaviour name
         :param str led_pattern: any one of the led pattern constants from gopher_std_msgs/Notification
         :param str message: a message for the status notifier to display.
+        :param str sound: usually prefer the :py:class:`~gopher_beahviours.interactions.Articulate` behaviour (until we have aliases working inside the status notifier)
         :param str led_pattern:
         :param str button_cancel:
         :param str button_confirm:

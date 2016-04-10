@@ -61,7 +61,7 @@ def create_odom_pose_to_blackboard_behaviour(
     """
     gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
 
-    behaviour = py_trees.SubscriberToBlackboard(
+    behaviour = py_trees.subscribers.ToBlackboard(
         name,
         topic_name=gopher.topics.odom,
         topic_type=nav_msgs.Odometry,
@@ -84,7 +84,7 @@ def create_map_pose_to_blackboard_behaviour(
     """
     gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
 
-    behaviour = py_trees.SubscriberToBlackboard(
+    behaviour = py_trees.subscribers.ToBlackboard(
         name,
         topic_name=gopher.topics.pose,
         topic_type=geometry_msgs.PoseWithCovarianceStamped,

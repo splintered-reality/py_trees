@@ -63,10 +63,17 @@ def parse_arguments(command_line_args):
                         choices=py_trees.common.visibility_level_strings,
                         help='visibility level for blackboxes when using -r'
                         )
+    parser.add_argument('-e', '--elf',
+                        action='store',
+                        default="teleop",
+                        choices=["ar", "teleop"],
+                        help='type of elf to use for initialisation'
+                        )
     parser.add_argument('-d', '--debug', action='store_true', help='debug level tree logging.')
 
     args = parser.parse_args(command_line_args)
     args.visibility_level = py_trees.common.string_to_visibility_level(args.visibility_level)
+    args.elf = gopher_behaviours.elf.string_to_elf_initialisation_type[args.elf]
     return args
 
 ##############################################################################
@@ -158,7 +165,6 @@ if __name__ == '__main__':
 
     demo = Demo()
     if args.render:
-        py_trees.display.print_ascii_tree(demo.root, 0)
         py_trees.display.render_dot_tree(demo.root, args.visibility_level)
         sys.exit()
 

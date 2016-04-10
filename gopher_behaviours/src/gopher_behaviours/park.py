@@ -61,10 +61,10 @@ class Park(py_trees.Sequence):
             name="Start Pose (Map)",
             blackboard_variables={"pose_park_start_rel_map": None}
         )
-        parking_motions = ParkingMotions()
+        parking_motions = Approach()
         todock_or_not_todock = py_trees.Selector(name="ToDock or Not ToDock")
-        todock_or_not_todock.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
-        docking_control = py_trees.Sequence(name="Automatic")
+        docking_control = py_trees.Sequence(name="Dock")
+        docking_control.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
         pre_dock_rotation = simple_motions.SimpleMotion(
             name="Pre-Rotation",
             motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
@@ -73,14 +73,6 @@ class Park(py_trees.Sequence):
         (ar_tracker_on, ar_tracker_off) = ar_markers.create_ar_tracker_pair_blackboxes()
         docking_controller = docking.DockingController(name="Docking Controller")
         clearing_flags = py_trees.blackboard.ClearBlackboardVariable(name="Clear Flags", variable_name="undocked")
-        wait_for_docking_contact = battery.create_wait_to_be_docked(name="Manual Recovery")
-        manual_divert = py_trees.composites.Sequence("Manual Divert")
-        is_cancel_activated = py_trees.CheckBlackboardVariable(
-            name='Is Cancelled?',
-            variable_name='event_stop_button',
-            expected_value=True
-        )
-        manual_dock = battery.create_wait_to_be_docked(name="Manual Dock")
 
         ############################################
         # Assembly
@@ -89,15 +81,11 @@ class Park(py_trees.Sequence):
         self.add_child(parking_motions)
         self.add_child(todock_or_not_todock)
         todock_or_not_todock.add_child(check_didnt_undock)
-        todock_or_not_todock.add_child(manual_divert)
-        manual_divert.add_child(is_cancel_activated)
-        manual_divert.add_child(manual_dock)
         todock_or_not_todock.add_child(docking_control)
         docking_control.add_child(pre_dock_rotation)
         docking_control.add_child(ar_tracker_on)
         docking_control.add_child(docking_controller)
         docking_control.add_child(ar_tracker_off)
-        todock_or_not_todock.add_child(wait_for_docking_contact)
         self.add_child(clearing_flags)
 
     @classmethod
@@ -156,7 +144,7 @@ def compute_parking_geometry(pose_park_start_rel_map, pose_park_rel_map, distanc
     return (distance_to_park, point_to_park_angle, orient_with_park_angle)
 
 
-class ParkingMotions(py_trees.Sequence):
+class Approach(py_trees.Sequence):
     """
     Dynamically stitches together some simple motions on the fly (on entry via
     the initialise method with data from the blackboard) and adds them as children.
@@ -168,8 +156,9 @@ class ParkingMotions(py_trees.Sequence):
      - pose_park_start_rel_map (w) [geometry_msgs.PoseWithCovarianceStamped]: transferred from /navi/pose when about to park
     """
 
-    def __init__(self, name="ParkingMotions"):
-        super(ParkingMotions, self).__init__(name)
+    def __init__(self, name="Approach"):
+        super(Approach, self).__init__(name)
+        self.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
 
         self.close_to_park_distance_threshold = 0.1
         self.blackboard = py_trees.Blackboard()
