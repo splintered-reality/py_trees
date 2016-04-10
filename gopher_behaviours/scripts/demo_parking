@@ -37,7 +37,7 @@ def show_usage():
     s += "\n"
     s += console.white
     s += console.bold + "    Generate Dot" + console.reset + "\n"
-    s += console.cyan + "        demo_parking" + console.yellow + " --render" + console.reset + "\n"
+    s += console.cyan + "        demo_parking" + console.yellow + " --render" + "[--visibility-level=all]" + console.reset + "\n"
     s += "\n"
     s += console.bold + "    Execute" + console.reset + "\n"
     s += console.cyan + "        demo_parking" + console.yellow + " [options]" + console.reset + "\n"

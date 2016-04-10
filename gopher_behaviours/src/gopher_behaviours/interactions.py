@@ -36,25 +36,37 @@ import unique_id
 ##############################################################################
 
 
-def create_button_event_handler(name="Event Handler"):
+def create_button_event_handler(name="Button Events"):
     event_handler = py_trees.composites.Sequence(name)
-    event_handler.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
+    event_handler.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
 
     gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
     go_button_events = MonitorButtonEvents(
-        name="Go Button Events",
+        name="Go",
         topic_name=gopher.buttons.go,
         variable_name="event_go_button"
     )
     stop_button_events = MonitorButtonEvents(
-        name="Stop Button Events",
+        name="Stop",
         topic_name=gopher.buttons.stop,
         variable_name="event_stop_button"
     )
-    let_it_go = py_trees.behaviours.Failure(name="Let it Go!")
+    abort_button_events = MonitorButtonEvents(
+        name="Abort",
+        topic_name=gopher.buttons.go,
+        variable_name="event_abort_button"
+    )
+    init_button_events = MonitorButtonEvents(
+        name="Init",
+        topic_name=gopher.buttons.go,
+        variable_name="event_init_button"
+    )
+    dont_block_the_selector = py_trees.behaviours.Failure(name="Continue")
     event_handler.add_child(go_button_events)
     event_handler.add_child(stop_button_events)
-    event_handler.add_child(let_it_go)
+    event_handler.add_child(abort_button_events)
+    event_handler.add_child(init_button_events)
+    event_handler.add_child(dont_block_the_selector)
     return event_handler
 
 
