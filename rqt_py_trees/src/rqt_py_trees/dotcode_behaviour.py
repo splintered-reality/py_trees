@@ -44,21 +44,21 @@ class RosBehaviourTreeDotcodeGenerator(object):
         self.active_and_status_colour_hex_map = {
             (False, py_trees_msgs.Behaviour.INVALID): '#e4e4e4',
             (True, py_trees_msgs.Behaviour.INVALID): '#e4e4e4',
-            (False, py_trees_msgs.Behaviour.RUNNING): '#e4e4f0',
+            (False, py_trees_msgs.Behaviour.RUNNING): '#9696c8',
             (True, py_trees_msgs.Behaviour.RUNNING): '#0000ff',
-            (False, py_trees_msgs.Behaviour.FAILURE): '#f0e4e4',
+            (False, py_trees_msgs.Behaviour.FAILURE): '#c89696',
             (True, py_trees_msgs.Behaviour.FAILURE): '#ff0000',
-            (False, py_trees_msgs.Behaviour.SUCCESS): '#e4f0e4',
+            (False, py_trees_msgs.Behaviour.SUCCESS): '#96c896',
             (True, py_trees_msgs.Behaviour.SUCCESS): '#00ff00',
         }
         self.active_and_status_colour_tuple_map = {
             (False, py_trees_msgs.Behaviour.INVALID): (228, 228, 228),
             (True, py_trees_msgs.Behaviour.INVALID): (228, 228, 228),
-            (False, py_trees_msgs.Behaviour.RUNNING): (228, 228, 255),
+            (False, py_trees_msgs.Behaviour.RUNNING): (150, 150, 200),
             (True, py_trees_msgs.Behaviour.RUNNING): (0, 0, 255),
-            (False, py_trees_msgs.Behaviour.FAILURE): (255, 228, 228),
+            (False, py_trees_msgs.Behaviour.FAILURE): (200, 150, 150),
             (True, py_trees_msgs.Behaviour.FAILURE): (255, 0, 0),
-            (False, py_trees_msgs.Behaviour.SUCCESS): (228, 255, 228),
+            (False, py_trees_msgs.Behaviour.SUCCESS): (150, 200, 150),
             (True, py_trees_msgs.Behaviour.SUCCESS): (0, 255, 0),
         }
 
