@@ -268,7 +268,7 @@ class WaitForSubscriberData(SubscriberHandler):
                 return common.Status.SUCCESS
 
 
-class SubscriberToBlackboard(SubscriberHandler):
+class ToBlackboard(SubscriberHandler):
     """
     Saves the latest message to the blackboard and immediately returns success.
     If no data has yet been received, this behaviour blocks (i.e. returns
@@ -278,7 +278,7 @@ class SubscriberToBlackboard(SubscriberHandler):
     designated, in which case they will write to the specified keys.
     """
     def __init__(self,
-                 name="SubscriberToBlackboard",
+                 name="ToBlackboard",
                  topic_name="chatter",
                  topic_type=None,
                  blackboard_variables={"chatter": None},
@@ -298,7 +298,7 @@ class SubscriberToBlackboard(SubscriberHandler):
 
            blackboard_variables={"pose_with_covariance_stamped": None, "pose": "pose.pose"}
         """
-        super(SubscriberToBlackboard, self).__init__(
+        super(ToBlackboard, self).__init__(
             name,
             topic_name=topic_name,
             topic_type=topic_type,
@@ -308,7 +308,7 @@ class SubscriberToBlackboard(SubscriberHandler):
         if isinstance(blackboard_variables, basestring):
             self.blackboard_variable_mapping = {blackboard_variables: None}
         elif not isinstance(blackboard_variables, dict):
-            rospy.logerr("SubscriberToBlackboard: blackboard_variables is not a dict, please rectify [%s]" % self.name)
+            rospy.logerr("ToBlackboard: blackboard_variables is not a dict, please rectify [%s]" % self.name)
             self.blackboard_variable_mapping = {}
         else:
             self.blackboard_variable_mapping = blackboard_variables
