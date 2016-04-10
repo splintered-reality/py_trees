@@ -200,7 +200,7 @@ class DynamicTimelineFrame(QGraphicsItem):
         """
         with self.scene()._playhead_lock:
             # do nothing if the playhead hasn't moved, or no messages were received yet
-            if playhead == self._playhead or self._stamp_right == None or self._stamp_left == None:
+            if playhead == self._playhead or self._stamp_right is None or self._stamp_left is None:
                 return
 
             self._playhead = playhead
