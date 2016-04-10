@@ -465,7 +465,6 @@ class RosBehaviourTree(QObject):
         refreshes the view. If the current message is the second message, then
         the first and previous buttons are disabled. Changes the state to be
         browsing the timeline.
-
         """
         # if already at the beginning, do nothing
         if self._timeline._timeline_frame.playhead == self._timeline._get_start_stamp():

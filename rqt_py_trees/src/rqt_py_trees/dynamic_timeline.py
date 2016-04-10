@@ -100,7 +100,7 @@ class DynamicTimeline(QGraphicsScene):
         self._play_timer = QTimer()
         self._play_timer.timeout.connect(self.on_idle)
         self._play_timer.setInterval(3)
-        self._redraw_timer = None # timer which can be used to periodically redraw the timeline
+        self._redraw_timer = None  # timer which can be used to periodically redraw the timeline
 
         # Plugin popup management
         self._context = context
@@ -168,6 +168,7 @@ class DynamicTimeline(QGraphicsScene):
         end = True if playhead >= self._timeline_frame.play_region[1] else False
         start = True if playhead <= self._timeline_frame.play_region[0] else False
 
+        # do not keep setting this if you want the timeline to just grow.
         self._timeline_frame._start_stamp = self._get_start_stamp()
         self._timeline_frame._end_stamp = self._get_end_stamp()
 
@@ -241,7 +242,6 @@ class DynamicTimeline(QGraphicsScene):
             self._timeline_frame.invalidated_caches.add(topic)
             if topic in self._timeline_frame.index_cache:
                 del self._timeline_frame.index_cache[topic]
-
             self._timeline_frame.index_cache_cv.notify()
 
         return True
