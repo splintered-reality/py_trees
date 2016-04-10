@@ -201,8 +201,8 @@ class DynamicTimeline(QGraphicsScene):
         # Invalidate entire cache for this topic
         with self._timeline_frame.index_cache_cv:
             self._timeline_frame.invalidated_caches.add(topic)
-            if topic in self._timeline_frame.index_cache:
-                del self._timeline_frame.index_cache[topic]
+            #if topic in self._timeline_frame.index_cache:
+            #    del self._timeline_frame.index_cache[topic]
             self._timeline_frame.index_cache_cv.notify()
 
     def add_topic(self, topic, type, num_msgs=20):
