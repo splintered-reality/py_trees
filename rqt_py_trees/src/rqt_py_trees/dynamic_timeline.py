@@ -157,7 +157,7 @@ class DynamicTimeline(QGraphicsScene):
             self.background_task_cancel = True
         self._timeline_frame.handle_close()
         for topic in self._topics:
-            self._topics[topic][0].unregister() # unregister the subscriber
+            self._topics[topic][0].unregister()  # unregister the subscriber
         for frame in self._views:
             if frame.parent():
                 self._context.remove_widget(frame)
@@ -187,7 +187,8 @@ class DynamicTimeline(QGraphicsScene):
         self.timeline_updated.emit()
 
     def topic_callback(self, msg, topic):
-        """Called whenever a message is received on any of the subscribed topics
+        """
+        Called whenever a message is received on any of the subscribed topics
 
         :param topic: the topic on which the message was received
         :param msg: the message received
@@ -202,11 +203,10 @@ class DynamicTimeline(QGraphicsScene):
             self._timeline_frame.invalidated_caches.add(topic)
             if topic in self._timeline_frame.index_cache:
                 del self._timeline_frame.index_cache[topic]
-
             self._timeline_frame.index_cache_cv.notify()
-        
+
     def add_topic(self, topic, type, num_msgs=20):
-        """creates an indexing thread for the new topic. Fixes the borders and notifies
+        """Creates an indexing thread for the new topic. Fixes the borders and notifies
         the indexing thread to index the new items bags
 
         :param topic: a topic to listen to
@@ -224,7 +224,7 @@ class DynamicTimeline(QGraphicsScene):
             self._datatypes.setdefault(type, []).append(topic)
         else:
             return False
-            
+
         self._playhead_positions_cvs[topic] = threading.Condition()
         self._messages_cvs[topic] = threading.Condition()
         self._message_loaders[topic] = MessageLoaderThread(self, topic)
@@ -424,7 +424,7 @@ class DynamicTimeline(QGraphicsScene):
             entry = None
             if topic in self._topics:
                 _, entry = self._entry_at(t, self._topics[topic].queue)
-                
+
             return entry
 
     def get_entry_before(self, t):
@@ -599,8 +599,10 @@ class DynamicTimeline(QGraphicsScene):
         with self._topic_lock:
             return self.get_entry(position, topic).message
 
-    ### Mouse events
     def on_mouse_down(self, event):
+        """
+        When the user clicks down in the timeline.
+        """
         if event.buttons() == Qt.LeftButton:
             self._timeline_frame.on_left_down(event)
         elif event.buttons() == Qt.MidButton:

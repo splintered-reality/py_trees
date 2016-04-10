@@ -68,7 +68,6 @@ class DynamicTimelineFrame(QGraphicsItem):
     (time delimiters, labels, topic names and backgrounds).
     Also handles mouse callbacks since they interact closely with the drawn elements
     """
-
     def __init__(self, dynamic_timeline):
         super(DynamicTimelineFrame, self).__init__()
         self._dynamic_timeline = dynamic_timeline
@@ -1033,7 +1032,7 @@ class DynamicTimelineFrame(QGraphicsItem):
         self.pause()
 
     def on_left_down(self, event):
-        if self.playhead == None:
+        if self.playhead is None:
             return
 
         self._clicked_pos = self._dragged_pos = event.pos()
