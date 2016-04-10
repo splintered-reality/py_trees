@@ -205,6 +205,21 @@ class Selector(Composite):
         self.logger = logging.get_logger("Selector ")
 
     def tick(self):
+        """
+        Run the tick behaviour for this selector. Note that the status
+        of the tick is (for now) always determined by its children, not
+        by the user customised update function.
+
+        For now, the update function just provides a place where classes
+        that inherit this one can do some work *before* running the children.
+        The return status is ignored.
+
+        .. todo::
+
+           Need a strict policy about handling the return status.
+           Should it abort if that returns success or fail, should it be ignored,
+           should it be done before/after children, should it be open to configuration?
+        """
         # Required behaviour for *all* behaviours and composites is
         # for tick() to check if it isn't running and initialise
         self.logger.debug("  %s [Selector.tick()]" % self.name)
@@ -213,6 +228,8 @@ class Selector(Composite):
             self.current_child = None
             # subclass (user) handling
             self.initialise()
+        # run any work designated by a customised instance of this class
+        self.update()
         previous = self.current_child
         for child in self.children:
             for node in child.tick():
