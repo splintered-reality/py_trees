@@ -65,7 +65,7 @@ def get_start_stamp(topic):
         start_stamp = topic.queue[0].stamp
     except IndexError:
         pass
-    
+
     return start_stamp
 
 def get_end_stamp(topic):
@@ -81,5 +81,5 @@ def get_end_stamp(topic):
         end_stamp = topic.queue[-1].stamp
     except IndexError:
         pass
-    
+
     return end_stamp

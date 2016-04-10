@@ -380,10 +380,10 @@ class RosBehaviourTree(QObject):
                 self._set_dynamic_timeline()
 
     def _update_combo_topics(self):
-        """Update the topics displayed in the combo box that the user can use to select
+        """
+        Update the topics displayed in the combo box that the user can use to select
         which topic they want to listen on for trees, filtered so that only
         topics with the correct message type are shown.
-
         """
         # Only update topics if we're running with live updating
         if not self.live_update:
@@ -414,7 +414,8 @@ class RosBehaviourTree(QObject):
                 self._choose_topic(self._widget.topic_combo_box.currentIndex())
 
     def _set_timeline_buttons(self, first_snapshot=None, previous_snapshot=None, next_snapshot=None, last_snapshot=None):
-        """Allows timeline buttons to be enabled and disabled.
+        """
+        Allows timeline buttons to be enabled and disabled.
         """
         if first_snapshot is not None:
             self._widget.first_tool_button.setEnabled(first_snapshot)
@@ -426,17 +427,17 @@ class RosBehaviourTree(QObject):
             self._widget.last_tool_button.setEnabled(last_snapshot)
 
     def _play(self):
-        """Start a timer which will automatically call the next function every time its
+        """
+        Start a timer which will automatically call the next function every time its
         duration is up. Only works if the current message is not the final one.
-
         """
         if not self._play_timer:
             self._play_timer = rospy.Timer(rospy.Duration(1), self._timer_next)
 
     def _timer_next(self, timer):
-        """Helper functions for the timer so that it can call the next function without
+        """
+        Helper function for the timer so that it can call the next function without
         breaking.
-
         """
         self._next()
 
@@ -464,7 +465,6 @@ class RosBehaviourTree(QObject):
         refreshes the view. If the current message is the second message, then
         the first and previous buttons are disabled. Changes the state to be
         browsing the timeline.
-
         """
         # if already at the beginning, do nothing
         if self._timeline._timeline_frame.playhead == self._timeline._get_start_stamp():
@@ -685,11 +685,11 @@ class RosBehaviourTree(QObject):
             self._set_timeline_buttons(first_snapshot=True, previous_snapshot=True)
 
     def message_changed(self):
-        """This function should be called when the message being viewed changes. Will
+        """
+        This function should be called when the message being viewed changes. Will
         change the current message and update the view. Also ensures that the
         timeline buttons are correctly set for the current position of the
         playhead on the timeline.
-
         """
         if self._timeline._timeline_frame.playhead == self._timeline._get_end_stamp():
             self._set_timeline_buttons(last_snapshot=False, next_snapshot=False)
@@ -704,9 +704,9 @@ class RosBehaviourTree(QObject):
         self._refresh_view.emit()
 
     def message_cleared(self):
-        """This function should be called when the message being viewed was cleared.
+        """
+        This function should be called when the message being viewed was cleared.
         Currently no situation where this happens?
-
         """
         pass
 
@@ -722,9 +722,9 @@ class RosBehaviourTree(QObject):
         return wrapper
 
     def _set_dynamic_timeline(self):
-        """Set the timeline to a dynamic timeline, listening to messages on the topic
+        """
+        Set the timeline to a dynamic timeline, listening to messages on the topic
         selected in the combo box.
-
         """
         self._timeline = DynamicTimeline(self, publish_clock=False)
         # connect timeline events so that the timeline will update when events happen

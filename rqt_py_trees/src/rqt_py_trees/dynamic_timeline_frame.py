@@ -68,7 +68,6 @@ class DynamicTimelineFrame(QGraphicsItem):
     (time delimiters, labels, topic names and backgrounds).
     Also handles mouse callbacks since they interact closely with the drawn elements
     """
-
     def __init__(self, dynamic_timeline):
         super(DynamicTimelineFrame, self).__init__()
         self._dynamic_timeline = dynamic_timeline
@@ -82,7 +81,10 @@ class DynamicTimelineFrame(QGraphicsItem):
         self._stamp_right = None  # latest currently visible timestamp on the timeline
         self._history_top = 30
         self._history_left = 0
+
         self._history_width = 0
+        """Width of the history timeline in pixels."""
+
         self._history_bottom = 0
         self._history_bounds = {}
         self._margin_left = 4
@@ -404,7 +406,7 @@ class DynamicTimelineFrame(QGraphicsItem):
         msg_combine_interval = None
         if topic in self._rendered_topics:
             renderer = self._timeline_renderers.get(datatype)
-            if not renderer is None:
+            if renderer is not None:
                 msg_combine_interval = self.map_dx_to_dstamp(renderer.msg_combine_px)
         if msg_combine_interval is None:
             msg_combine_interval = self.map_dx_to_dstamp(self._default_msg_combine_px)
@@ -799,9 +801,10 @@ class DynamicTimelineFrame(QGraphicsItem):
 
     def _find_regions(self, stamps, max_interval):
         """
-        Group timestamps into regions connected by timestamps less than max_interval secs apart
-        :param start_stamp: a list of stamps, ''list''
-        :param stamp_step: seconds between each division, ''int''
+        Group timestamps into regions connected by timestamps less than max_interval secs apart.
+        If no other timestamps are within the interval, then return start = end.
+        :param float[] start_stamp:
+        :param float max_interval: maximum size of each region
         """
         region_start, prev_stamp = None, None
         for stamp in stamps:
@@ -948,8 +951,12 @@ class DynamicTimelineFrame(QGraphicsItem):
         if start_stamp is None:
             return
 
-        if (end_stamp - start_stamp) < rospy.Duration.from_sec(5.0):
-            end_stamp = start_stamp + rospy.Duration.from_sec(5.0)
+        # if you just want the timeline to grow dynamically, leave this out
+#         if (end_stamp - start_stamp) < rospy.Duration.from_sec(5.0):
+#             end_stamp = start_stamp + rospy.Duration.from_sec(5.0)
+        # make sure at least that the difference is non-zero
+        if end_stamp == start_stamp:
+            end_stamp = start_stamp + rospy.Duration.from_sec(1.0)
 
         self.set_timeline_view(start_stamp.to_sec(), end_stamp.to_sec())
         self.scene().update()
@@ -1033,7 +1040,7 @@ class DynamicTimelineFrame(QGraphicsItem):
         self.pause()
 
     def on_left_down(self, event):
-        if self.playhead == None:
+        if self.playhead is None:
             return
 
         self._clicked_pos = self._dragged_pos = event.pos()
