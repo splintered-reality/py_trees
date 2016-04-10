@@ -411,6 +411,8 @@ class ROSBehaviourTree(BehaviourTree):
         snapshot = "\n\n%s" % display.ascii_tree(self.root, snapshot_information=self.snapshot_visitor)
         self.publishers.ascii_snapshot.publish(std_msgs.String(snapshot))
 
+        for behaviour in self.logging_visitor.tree.behaviours:
+            behaviour.is_active = True if unique_id.fromMsg(behaviour.own_id) in self.snapshot_visitor.nodes else False
         # We're not interested in sending every single tree - only send a
         # message when the tree changes.
         if self.logging_visitor.tree.behaviours != self.last_tree.behaviours:
@@ -418,8 +420,6 @@ class ROSBehaviourTree(BehaviourTree):
                 rospy.logerr("Behaviours: your tree is returning in an INVALID state (should always be FAILURE, RUNNING or SUCCESS)")
                 return
             self.publishers.tip.publish(conversions.behaviour_to_msg(self.root.tip()))
-            for behaviour in self.logging_visitor.tree.behaviours:
-                behaviour.is_active = True if unique_id.fromMsg(behaviour.own_id) in self.snapshot_visitor.nodes else False
             self.publishers.log_tree.publish(self.logging_visitor.tree)
             with self.lock:
                 if not self._bag_closed:
