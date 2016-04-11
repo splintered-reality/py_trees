@@ -78,72 +78,102 @@ class PreTickResult(enum.IntEnum):
     BORING_NOTHING = 3
 
 
-def create_delivery_subtree(world, locations, include_parking_behaviours, express=False):
+def create_delivery_subtree(world, locations, express=False):
     """
     Build a new delivery subtree.
 
     :param str world: start from our current world
     :param [str] locations: semantic location string identifiers
-    :param bool include_parking_behaviours: include the parking behaviours...or not
     :param bool express: dont wait when waiting
     """
-    ########################
-    # Moving Around
-    ########################
-    movin_around_children = create_locations_subtree(world, locations, express)
-    if not movin_around_children:
-        rospy.logerr("Gopher Deliveries : received a goal, but none of the locations were valid...we're FUBAR! (TODO need to handle this.")
-        return (None, None)
-    movin_around = py_trees.OneshotSequence(name="Balli Balli", children=movin_around_children)
-
-    # TODO
-    record_delivery_failure = py_trees.behaviours.Running(name="Record Delivery Failure")
+    gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
 
     ########################
-    # Recovery
+    # Cancel Guard
     ########################
-    recovery_required_by_cancel_request = py_trees.CheckBlackboardVariable(
+    cancelled_by_cancel_request = py_trees.CheckBlackboardVariable(
         name="Cancel Requested?",
         variable_name="cancel_requested",
         expected_value=True
     )
-    recovery_required_by_button = interactions.create_check_for_stop_button_press("Stop Button?")
-    # TODO
-    recovery_required_by_delivery_failure = py_trees.behaviours.Failure("Delivery Failed?")
+    cancelled_by_button = interactions.create_check_for_stop_button_press("Stop Button?")
 
-    recovery_check = py_trees.Selector(name="Needed?")
-    recovery_check.add_child(recovery_required_by_button)
-    recovery_check.add_child(recovery_required_by_cancel_request)
-    recovery_check.add_child(recovery_required_by_delivery_failure)
+    cancelled = py_trees.Selector(name="Cancelled?")
 
-    emergency_recovery = py_trees.Sequence(name="Emergency Recovery")
-    homebase_recovery_children = recovery.create_homebase_recovery_children()
-
-    root = py_trees.Sequence("Deliveries")
-    delivery_manager = py_trees.Selector(name="Manager")
+    ########################
+    # Moving Around
+    ########################
+    walkabout = py_trees.OneshotSequence(name="Delivery")
+    movin_around_children = create_locations_subtree(world, locations, express)
+    if not movin_around_children:
+        rospy.logerr("Gopher Deliveries : received a goal, but none of the locations were valid...we're FUBAR! (TODO need to handle this.")
+        return (None, None)
 
     ########################
     # Parking/Unparking
     ########################
-    if include_parking_behaviours:
-        unparking = unpark.UnPark("UnPark")
-        parking = park.Park("Park")
+    unparking = unpark.UnPark("UnPark")
+    parking = park.Park("Park")
+    repark = park.create_repark_subtree()
 
     ########################
-    # Building The Tree
+    # Core
     ########################
-    if include_parking_behaviours:
-        root.add_child(unparking)
-    root.add_child(delivery_manager)
-    if include_parking_behaviours:
-        root.add_child(parking)
-    delivery_manager.add_child(emergency_recovery)
-    emergency_recovery.add_child(recovery_check)
-    emergency_recovery.add_children(homebase_recovery_children)
-    delivery_manager.add_child(movin_around)
-    delivery_manager.add_child(record_delivery_failure)
+    root = py_trees.composites.Selector(name="Deliver or Die")
+    deliveries = py_trees.Sequence("Deliveries")
+    todo_or_not = py_trees.composites.Selector(name="Do or be Cancelled?")
+    en_route = py_trees.composites.Parallel(
+        name="En Route",
+        policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ALL
+    )
 
-    return (root, movin_around, emergency_recovery)
+    ########################
+    # Teleop Home on Cancel
+    ########################
+    cancel_recovery = py_trees.composites.Sequence("Cancel Recovery")
+    teleop_to_homebase = py_trees.composites.Parallel(
+        name="Teleop to Homebase",
+        policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE
+    )
+    flash_i_need_help = interactions.Notification(
+        name='Flash Help Me',
+        message='waiting for button press to continue',
+        led_pattern=gopher.led_patterns.humans_i_need_help,
+        duration=gopher_std_srvs.NotifyRequest.INDEFINITE
+    )
+    wait_for_go_button_press = interactions.create_wait_for_go_button("Wait for Go Button")
+    teleport = navigation.create_homebase_teleport()
+
+    ########################
+    # Blackboxes
+    ########################
+    todo_or_not.blackbox_level = py_trees.common.BlackBoxLevel.BIG_PICTURE
+    cancelled.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
+    walkabout.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
+    cancel_recovery.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
+    teleop_to_homebase.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
+
+    ########################
+    # Graph
+    ########################
+    root.add_child(deliveries)
+    deliveries.add_child(unparking)
+    deliveries.add_child(todo_or_not)
+    todo_or_not.add_child(en_route)
+    en_route.add_child(cancelled)
+    cancelled.add_child(cancelled_by_button)
+    cancelled.add_child(cancelled_by_cancel_request)
+    en_route.add_child(walkabout)
+    walkabout.add_children(movin_around_children)
+    todo_or_not.add_child(cancel_recovery)
+    cancel_recovery.add_child(teleop_to_homebase)
+    teleop_to_homebase.add_child(flash_i_need_help)
+    teleop_to_homebase.add_child(wait_for_go_button_press)
+    cancel_recovery.add_child(teleport)
+    deliveries.add_child(parking)
+    root.add_child(repark)
+
+    return (root, walkabout)
 
 
 def create_locations_subtree(current_world, locations, express=False):
@@ -176,29 +206,45 @@ def create_locations_subtree(current_world, locations, express=False):
     for current_node, next_node in rocon_python_utils.iterables.lookahead(topological_path):
         previous_world = current_world if last_location is None else last_location.world
         if isinstance(current_node, gopher_semantic_msgs.Location):
-            children.extend([
-                navigation.MoveIt(
-                    name="Go to " + current_node.name,
-                    pose=current_node.pose
-                ),
-                navigation.GoalFinishing("Finish at " + current_node.name, current_node.pose),
-                LocationTraversalHandler("Update Locations")]
+            go_to = py_trees.composites.Sequence(
+                name="Go to %s" % current_node.name
             )
+            move_to = navigation.MoveIt(
+                name="Move To " + current_node.name,
+                pose=current_node.pose
+            )
+            goal_finishing = navigation.GoalFinishing("Finish at %s" % current_node.name, current_node.pose)
+            update_locations = LocationTraversalHandler("Update Locations")
+            go_to.add_child(move_to)
+            go_to.add_child(goal_finishing)
+            go_to.add_child(update_locations)
+            go_to.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
+            waiting = None
             if next_node is not None:
-                children.extend([interactions.Articulate("Honk", gopher.sounds.honk)])
+                honk = interactions.Articulate("Honk", gopher.sounds.honk)
+                go_to.add_child(honk)
                 if not express:
-                    flash_leds_while_waiting = interactions.SendNotification(
-                        "Flash - Waiting",
+                    waiting = py_trees.composites.Parallel(
+                        name="Waiting",
+                        policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE
+                    )
+                    flash_leds_while_waiting = interactions.Notification(
+                        "Flash for Input",
                         led_pattern=gopher.led_patterns.humans_give_me_input,
                         message="waiting for the user to tell me to proceed"
                     )
-                    waiting = Waiting(name="Waiting at " + current_node.name, location=current_node.unique_name)
-                    flash_leds_while_waiting.add_child(waiting)
-                    children.extend([flash_leds_while_waiting])
+                    waiting_at = Waiting(name="Waiting at %s" % current_node.name, location=current_node.unique_name)
+                    waiting.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
+                    waiting.add_child(flash_leds_while_waiting)
+                    waiting.add_child(waiting_at)
+            children.extend([go_to])
+            if waiting is not None:
+                children.extend([waiting])
             last_location = current_node
         elif isinstance(current_node, gopher_semantic_msgs.Elevator):
             # topological path guarantees there is a next...
-            elevator_subtree = elevators.HumanAssistedElevators("ElevatorRun", previous_world, current_node, next_node.world)
+            elevator_subtree = elevators.HumanAssistedElevators("Elevator to %s" % next_node.world, previous_world, current_node, next_node.world)
+            elevator_subtree.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
             children.append(elevator_subtree)
 
     # this can happen if none of the locations provided are in the semantic locations
@@ -286,7 +332,7 @@ class Waiting(py_trees.Behaviour):
         try:
             unused_response = self._notify_srv(req)
         except rospy.ServiceException as e:
-            rospy.logwarn("SendNotification : Service failed to process notification request: {0}".format(str(e)))
+            rospy.logwarn("Notification : Service failed to process notification request: {0}".format(str(e)))
 
     def update(self):
         """
@@ -312,7 +358,7 @@ class Waiting(py_trees.Behaviour):
         try:
             unused_response = self._notify_srv(req)
         except rospy.ServiceException as e:
-            rospy.logwarn("SendNotification : Service failed to process notification request: {0}".format(str(e)))
+            rospy.logwarn("Notification : service failed to process notification request: {0}".format(str(e)))
 
 
 class GopherDeliveries(object):
@@ -425,7 +471,7 @@ class GopherDeliveries(object):
             self.reset_blackboard_variables(traversed_locations=[] if not self.root else self.blackboard.traversed_locations,
                                             remaining_locations=self.incoming_goal
                                             )
-            (self.root, self.delivery_locations_subtree, self.emergency_recovery_subtree) = create_delivery_subtree(
+            (self.root, self.delivery_locations_subtree) = create_delivery_subtree(
                 current_world,
                 self.incoming_goal,
                 self.include_parking_behaviours,
@@ -476,12 +522,12 @@ class GopherDeliveries(object):
             return self.delivery_locations_subtree.status == py_trees.Status.SUCCESS
         return False
 
-    def recovered_on_last_tick(self):
+    def cancelled_on_last_tick(self):
         """
-        Did the recovery subtree succeed on the last tick?
+        Did the recovery subtree get cancelled on the last tick?
         """
         if self.root is not None:
-            return self.emergency_recovery_subtree.status == py_trees.Status.SUCCESS
+            return self.cancelled_subtree.status == py_trees.Status.SUCCESS
         return False
 
     def post_tock_update(self):

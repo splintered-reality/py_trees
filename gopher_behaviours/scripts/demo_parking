@@ -10,7 +10,6 @@
 import argparse
 import gopher_behaviours
 import gopher_configuration
-import gopher_std_msgs.srv as gopher_std_srvs
 import py_trees
 import rocon_console.console as console
 import rospy
@@ -44,9 +43,9 @@ def show_usage():
     s += console.cyan + "        demo_parking" + console.yellow + " [options]" + console.reset + "\n"
     s += "\n"
     s += console.white
-    s += console.bold + "    Required Launchers" + console.reset + "\n"
-    s += console.cyan + "        + minimal.launch" + console.reset + "\n"
-    s += console.cyan + "        + fake_navigation.launch" + console.reset + "\n"
+    s += console.bold + "    Launchers" + console.reset + "\n"
+    s += console.cyan + "        gopher_robot/apps_gocart.launch + 'Fake Navigation'" + console.reset + "\n"
+    s += console.cyan + "        gopher_podium/apps_gocart.launch + 'Navigation'" + console.reset + "\n"
     s += "\n"
     return s
 
@@ -112,7 +111,6 @@ class Demo(object):
         unpark = gopher_behaviours.unpark.UnPark("UnPark")
         park = gopher_behaviours.park.Park("Park")
         repark = gopher_behaviours.park.create_repark_subtree()
-        # repark.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
 
         #################################
         # Drive Around
@@ -139,8 +137,12 @@ class Demo(object):
             topic_type=std_msgs.String
         )
 
-        restart = gopher_behaviours.interactions.SendNotification(
-            name='Restart',
+        restart = py_trees.composites.Parallel(
+            name="Restart",
+            policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE
+        )
+        restart_flash_holding = gopher_behaviours.interactions.Notification(
+            name='Flash Holding',
             message='reset and get ready to start again',
             led_pattern=self.gopher.led_patterns.holding
         )
@@ -159,6 +161,7 @@ class Demo(object):
         drive_around_get_a_coffee.add_child(wait_for_button)
         just_do_it.add_child(park)
         just_do_it.add_child(restart)
+        restart.add_child(restart_flash_holding)
         restart.add_child(restart_wait_for_go_button)
         self.root.add_child(repark)
         self.tree = py_trees.ROSBehaviourTree(self.root)

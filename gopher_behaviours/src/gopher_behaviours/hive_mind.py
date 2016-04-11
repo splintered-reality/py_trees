@@ -64,10 +64,7 @@ class GopherHiveMind(object):
         self.current_world_subscriber = rospy.Subscriber(self.gopher.topics.world, std_msgs.String, self.current_world_callback)
         self.current_world = None
         self.quirky_deliveries = gopher_behaviours.delivery.GopherDeliveries(name="Quirky Deliveries")
-        self.event_handler = gopher_behaviours.interactions.create_button_event_handler()
-        self.idle = py_trees.behaviours.Success("Idle")
-        self.root = py_trees.Selector(name="HiveMind", children=[self.event_handler, self.battery_subtree, self.idle])
-        self.tree = py_trees.ROSBehaviourTree(self.root)
+        self._init_tree()
         self.logger = py_trees.logging.get_logger("HiveMind")
         self.success = None  # non goal
         self.cancelled = False
@@ -76,19 +73,57 @@ class GopherHiveMind(object):
         self.current_eta = gopher_delivery_msgs.DeliveryETA()  # empty ETA
         self.monitor_ok = True
 
-    def render_dot_tree(self):
+    def _init_tree(self):
+        self.root = py_trees.Selector(name="HiveMind")
+
+        #################################
+        # Event Handler
+        #################################
+        self.event_handler = gopher_behaviours.interactions.create_button_event_handler()
+
+        #################################
+        # Global Abort
+        #################################
+        self.global_abort = py_trees.composites.Sequence(name="Global Abort")
+        is_global_abort_activated = py_trees.CheckBlackboardVariable(
+            name='Is Aborted?',
+            variable_name='event_abort_button',
+            expected_value=True
+        )
+        global_abort_repark = gopher_behaviours.park.create_repark_subtree()
+
+        #################################
+        # Idle
+        #################################
+        self.idle = py_trees.behaviours.Success("Idle")
+
+        #################################
+        # Blackboxes
+        #################################
+        self.global_abort.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
+
+        #################################
+        # Graph
+        #################################
+        self.root.add_child(self.event_handler)
+        self.root.add_child(self.global_abort)
+        self.global_abort.add_child(is_global_abort_activated)
+        self.global_abort.add_child(global_abort_repark)
+        self.root.add_child(self.idle)
+        self.tree = py_trees.ROSBehaviourTree(self.root)
+
+    def render_dot_tree(self, visibility_level):
         """
         Fill in the tree with a 'default' delivery so we can render an exampler tree running
         with a delivery.
         """
-        (deliveries_root, unused_delivery_subtree, unused_emergency_subtree) = gopher_behaviours.delivery.create_delivery_subtree(
+        (deliveries_root, unused_delivery_subtree) = gopher_behaviours.delivery.create_delivery_subtree(
             world="earth",
             locations=["beer_fridge", "ashokas_hell"],
-            include_parking_behaviours=True,
             express=False
         )
         self.tree.insert_subtree(deliveries_root, self.tree.root.id, 2)
-        py_trees.display.render_dot_tree(self.tree.root)
+        py_trees.display.render_dot_tree(self.tree.root, visibility_level)
         self.tree.prune_subtree(deliveries_root.id)
 
     ##################################
@@ -201,7 +236,7 @@ class GopherHiveMind(object):
         if self.quirky_deliveries.completed_on_last_tick():
             if self.quirky_deliveries.succeeded_on_last_tick():
                 self.success = True
-            elif self.quirky_deliveries.recovered_on_last_tick():  # i.e. delivery cancelled, homebase recovery kicked in
+            elif False:  # is the delivery cancelling?
                 self.cancelling = False
                 self.cancelled = True
                 self.cancelled_message = "Delivery was cancelled (via teleop button or balcony scheduler)."

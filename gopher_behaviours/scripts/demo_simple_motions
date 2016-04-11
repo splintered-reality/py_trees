@@ -43,8 +43,9 @@ def show_usage():
     s += console.cyan + "        demo_simple_motions" + console.yellow + " [options]" + console.reset + "\n"
     s += "\n"
     s += console.white
-    s += console.bold + "    Required Launchers" + console.reset + "\n"
-    s += console.cyan + "        + minimal.launch" + console.reset + "\n"
+    s += console.bold + "    Launchers" + console.reset + "\n"
+    s += console.cyan + "        gopher_robot/apps_gocart.launch + 'Fake Navigation'" + console.reset + "\n"
+    s += console.cyan + "        gopher_podium/apps_gocart.launch + 'Navigation'" + console.reset + "\n"
     s += "\n"
     return s
 

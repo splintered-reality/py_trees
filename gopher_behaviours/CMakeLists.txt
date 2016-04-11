@@ -44,7 +44,7 @@ catkin_install_python(
         scripts/demo_docking
         scripts/demo_finish_him
         scripts/demo_flash_and_wait
-        scripts/demo_homebase_recovery
+        scripts/demo_repark
         scripts/demo_move_base
         scripts/demo_parking
         scripts/demo_initialisation

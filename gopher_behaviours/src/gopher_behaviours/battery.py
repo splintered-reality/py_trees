@@ -20,6 +20,7 @@ Behaviours related to checking and reacting to battery notifications.
 ##############################################################################
 
 import gopher_configuration
+import gopher_std_msgs.srv as gopher_std_srvs
 import py_trees
 import rospy
 import somanet_msgs.msg as somanet_msgs
@@ -55,35 +56,6 @@ class CheckChargeState(py_trees.Behaviour):
         else:
             self.feedback_message = "charge state differed from expected"
             return py_trees.Status.FAILURE
-
-
-def create_wait_to_be_docked(name="Wait to be Docked"):
-    """
-    Hooks up a subscriber and waits for docking contact to be detected.
-    Flashes for help in the meantime.
-
-    :param str name: behaviour name
-    :returns: the behaviour
-    :rtype: subscribers.CheckSubscriberVariable
-    """
-    gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
-    wait_to_be_docked = interactions.SendNotification(
-        name,
-        message='waiting to be docked',
-        led_pattern=gopher.led_patterns.humans_i_need_help
-    )
-    checked_docked_contact = py_trees.CheckSubscriberVariable(
-        name="Check Docked Contact",
-        topic_name=gopher.topics.battery,
-        topic_type=somanet_msgs.SmartBatteryStatus,
-        variable_name="charging_source",
-        expected_value=somanet_msgs.SmartBatteryStatus.CHARGING_SOURCE_DOCK,
-        fail_if_no_data=False,
-        fail_if_bad_comparison=False,
-        clearing_policy=py_trees.common.ClearingPolicy.NEVER
-    )
-    wait_to_be_docked.add_child(checked_docked_contact)
-    return wait_to_be_docked
 
 
 def create_is_docked(name="Is Docked?"):
@@ -140,8 +112,20 @@ def create_wait_to_be_unplugged(name="Unplug Me"):
     :returns: the subtree
     """
     gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
-    wait_for_discharging = py_trees.CheckSubscriberVariable(
-        name="Wait for Discharging",
+
+    wait_to_be_unplugged = py_trees.composites.Parallel(
+        name="Wait to be Unplugged",
+        policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE
+    )
+    wait_to_be_unplugged.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
+    flash_notification = interactions.Notification(
+        name='Flash for Help',
+        message='waiting for button press to continue',
+        led_pattern=gopher.led_patterns.humans_i_need_help,
+        duration=gopher_std_srvs.NotifyRequest.INDEFINITE
+    )
+    check_if_discharging = py_trees.CheckSubscriberVariable(
+        name="Check if Discharging",
         topic_name=gopher.topics.battery,
         topic_type=somanet_msgs.SmartBatteryStatus,
         variable_name="charging_source",
@@ -150,12 +134,8 @@ def create_wait_to_be_unplugged(name="Unplug Me"):
         fail_if_bad_comparison=False,
         clearing_policy=py_trees.common.ClearingPolicy.NEVER
     )
-    wait_to_be_unplugged = interactions.SendNotification(
-        name=name,
-        message='waiting to be unplugged',
-        led_pattern=gopher.led_patterns.humans_i_need_help
-    )
-    wait_to_be_unplugged.add_child(wait_for_discharging)
+    wait_to_be_unplugged.add_child(flash_notification)
+    wait_to_be_unplugged.add_child(check_if_discharging)
     return wait_to_be_unplugged
 
 

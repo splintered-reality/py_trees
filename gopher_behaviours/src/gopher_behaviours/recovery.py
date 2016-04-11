@@ -47,15 +47,23 @@ def create_homebase_recovery_children():
        exactly that he should do this.
     """
     gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
-    flash_leds = interactions.SendNotification("Flash - I Need Help",
-                                               led_pattern=gopher.led_patterns.humans_i_need_help,
-                                               message="homebase recovery - need human assistance to teleop home")
+
+    teleop_home = py_trees.composites.Parallel(
+        name="Teleop Home",
+        policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE
+    )
+    flash_leds = interactions.Notification(
+        name="Flash - I Need Help",
+        led_pattern=gopher.led_patterns.humans_i_need_help,
+        message="homebase recovery - need human assistance to teleop home"
+    )
     wait_for_button = interactions.create_wait_for_go_button(name="Teleop -> Homebase and Hit the Green Button!")
     teleport = navigation.Teleport("Activate the Homebase Teleport!",
                                    gopher_navi_msgs.TeleportGoal(location="homebase", special_effects=True)
                                    )
-    flash_leds.add_child(wait_for_button)
-    return [flash_leds, teleport]
+    teleop_home.add_child(flash_leds)
+    teleop_home.add_child(wait_for_button)
+    return [teleop_home, teleport]
 
 
 def create_battery_recovery_tree(name):

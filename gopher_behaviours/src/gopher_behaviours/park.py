@@ -44,7 +44,7 @@ def create_repark_subtree():
     """
     gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
     telepark = py_trees.composites.Parallel(
-        name="TelePark",
+        name="Repark",
         policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE
     )
     telepark.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
