@@ -1,0 +1,17 @@
+digraph demo_flash_and_wait {
+"Demo Flash And Wait" [fontcolor=black, shape=box, fontsize=11, style=filled, fillcolor=orange];
+Party [fontcolor=black, shape=note, fontsize=11, style=filled, fillcolor=gold];
+"Demo Flash And Wait" -> Party;
+"Waiting for Input" [fontcolor=black, shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+Party -> "Waiting for Input";
+"Wait for Go Button" [fontcolor=black, shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+Party -> "Wait for Go Button";
+Honk [fontcolor=black, shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+"Demo Flash And Wait" -> Honk;
+"Party*" [fontcolor=black, shape=note, fontsize=11, style=filled, fillcolor=gold];
+"Demo Flash And Wait" -> "Party*";
+Waiting [fontcolor=black, shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+"Party*" -> Waiting;
+"Pause 5s" [fontcolor=black, shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+"Party*" -> "Pause 5s";
+}

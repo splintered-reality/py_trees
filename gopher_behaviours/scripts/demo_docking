@@ -81,12 +81,12 @@ class Demo(object):
         ar_markers_on = gopher_behaviours.ar_markers.ControlARMarkerTracker("AR Markers On", self.gopher.topics.ar_tracker_long_range, True)
         ar_markers_off = gopher_behaviours.ar_markers.ControlARMarkerTracker("AR Markers Off", self.gopher.topics.ar_tracker_long_range, False)
 
-        rotate_half_circle = gopher_behaviours.navigation.SimpleMotion(
+        rotate_half_circle = gopher_behaviours.simple_motions.SimpleMotion(
             name="Rotate",
             motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
             motion_amount=(math.pi)
         )
-        break_out = gopher_behaviours.navigation.SimpleMotion(
+        break_out = gopher_behaviours.simple_motions.SimpleMotion(
             name="Break Out",
             motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_TRANSLATE,
             motion_amount=0.5

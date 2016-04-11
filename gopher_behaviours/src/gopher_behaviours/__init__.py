@@ -19,11 +19,13 @@ from . import battery
 from . import docking
 from . import delivery
 from . import elevators
+from . import elf
 from . import hive_mind
 from . import interactions
 from . import navigation
 from . import planner
 from . import recovery
+from . import simple_motions
 from . import transform_utilities
 from . import utilities
 

@@ -15,10 +15,65 @@ gopher_behaviours/demo_flash_and_wait.launch
 # Imports
 ##############################################################################
 
+import argparse
 import gopher_configuration
 import gopher_behaviours
 import py_trees
+import rocon_console.console as console
 import rospy
+import sys
+
+##############################################################################
+# Arg Parsing
+##############################################################################
+
+
+def show_description():
+    s = "\n"
+    s += console.green + "This program executes unparking/init/parking in a loop for convenient testing." + console.reset
+    s += "\n"
+    return s
+
+
+def show_usage():
+    s = "\n"
+    s += console.white
+    s += console.bold + "************************************************************************************\n" + console.reset
+    s += console.bold + "                                 Flash And Wait\n" + console.reset
+    s += console.bold + "************************************************************************************\n" + console.reset
+    s += "\n"
+    s += console.white
+    s += console.bold + "    Generate Dot" + console.reset + "\n"
+    s += console.cyan + "        demo_flash_and_wait" + console.yellow + " --render" + "[--visibility-level=all]" + console.reset + "\n"
+    s += "\n"
+    s += console.bold + "    Execute" + console.reset + "\n"
+    s += console.cyan + "        demo_flash_and_wait" + console.yellow + " [options]" + console.reset + "\n"
+    s += "\n"
+    s += console.white
+    s += console.bold + "    Required Launchers" + console.reset + "\n"
+    s += console.cyan + "        + minimal.launch" + console.reset + "\n"
+    s += "\n"
+    return s
+
+
+def parse_arguments(command_line_args):
+    parser = argparse.ArgumentParser(description=show_description(),
+                                     usage=show_usage(),
+                                     epilog="And his noodly appendage reached forth to tickle the blessed...",
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter
+                                     )
+    parser.add_argument('-r', '--render', action='store_true', help='render the graph to dot/png/svg.')
+    parser.add_argument('-v', '--visibility-level',
+                        action='store',
+                        default="detail",
+                        choices=py_trees.common.visibility_level_strings,
+                        help='visibility level for blackboxes when using -r'
+                        )
+    parser.add_argument('-d', '--debug', action='store_true', help='debug level tree logging.')
+
+    args = parser.parse_args(command_line_args)
+    args.visibility_level = py_trees.common.string_to_visibility_level(args.visibility_level)
+    return args
 
 ##############################################################################
 # Core Controller
@@ -27,28 +82,38 @@ import rospy
 
 class FlashAndWait(object):
     def __init__(self):
-        self.root = py_trees.Sequence("FlashAndWait")
+        self.root = py_trees.Sequence("Demo Flash And Wait")
         self.gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
         self.logger = py_trees.logging.get_logger("FlashAndWait")
-        flash_leds_need_input = gopher_behaviours.interactions.SendNotification(
+        party = py_trees.composites.Parallel(
+            name="Party",
+            policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE
+        )
+        flash_leds_need_input = gopher_behaviours.interactions.Notification(
             "Waiting for Input",
             led_pattern=self.gopher.led_patterns.humans_give_me_input,
             message="waiting for the user to hit the button"
         )
         wait_for_go_button_press = gopher_behaviours.interactions.create_wait_for_go_button("Wait for Go Button")
-        flash_leds_need_input.add_child(wait_for_go_button_press)
+        party.add_child(flash_leds_need_input)
+        party.add_child(wait_for_go_button_press)
 
         honk = gopher_behaviours.interactions.Articulate("Honk", self.gopher.sounds.honk)
-        flash_leds_pause = gopher_behaviours.interactions.SendNotification(
-            "Waiting",
+        pausing = py_trees.composites.Parallel(
+            name="Hangover",
+            policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE
+        )
+        flash_leds_pause = gopher_behaviours.interactions.Notification(
+            name="Waiting",
             led_pattern=self.gopher.led_patterns.holding,
             message="flashing while pausing...for a bit"
         )
-        flash_leds_pause.add_child(py_trees.timers.Pause("Pause 5s", 5.0))
+        pausing.add_child(flash_leds_pause)
+        pausing.add_child(py_trees.timers.Timer("Pause 5s", duration=5.0))
 
-        self.root.add_child(flash_leds_need_input)
+        self.root.add_child(party)
         self.root.add_child(honk)
-        self.root.add_child(flash_leds_pause)
+        self.root.add_child(pausing)
         self.tree = py_trees.ROSBehaviourTree(self.root)
 
         rospy.on_shutdown(self.shutdown)
@@ -78,8 +143,15 @@ class FlashAndWait(object):
 ##############################################################################
 
 if __name__ == '__main__':
-    py_trees.logging.level = py_trees.logging.Level.DEBUG
-    rospy.init_node("flash_and_wait", log_level=rospy.INFO)
+    command_line_args = rospy.myargv(argv=sys.argv)[1:]
+    args = parse_arguments(command_line_args)
+    if args.debug:
+        py_trees.logging.level = py_trees.logging.Level.DEBUG
     demo = FlashAndWait()
-    demo.root.setup(15)
+    if args.render:
+        py_trees.display.render_dot_tree(demo.root, args.visibility_level)
+        sys.exit()
+    rospy.init_node("flash_and_wait", log_level=rospy.INFO)
+    if not demo.tree.setup(15):
+        sys.exit(console.red + "[ERROR] failed to setup required ros components." + console.reset)
     demo.tick_tock()
