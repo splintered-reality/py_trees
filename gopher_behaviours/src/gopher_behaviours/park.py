@@ -21,15 +21,43 @@ Bless my noggin with a tickle from your noodly appendages!
 
 import gopher_configuration
 import gopher_std_msgs.msg as gopher_std_msgs
+import gopher_std_msgs.srv as gopher_std_srvs
 import navigation
 import numpy
 import py_trees
 
 from . import ar_markers
-from . import battery
 from . import docking
+from . import interactions
 from . import simple_motions
 from . import transform_utilities
+
+##############################################################################
+# Subtrees
+##############################################################################
+
+
+def create_repark_subtree():
+    """
+    Used when unparking/parking or anything inbetween fails. This ensures we
+    get the robot back into a good state for deliveries.
+    """
+    gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
+    telepark = py_trees.composites.Parallel(
+        name="TelePark",
+        policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE
+    )
+    telepark.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
+    flash_notification = interactions.Notification(
+        name='Flash FixMe LEDs',
+        message='waiting for button press to continue',
+        led_pattern=gopher.led_patterns.humans_fix_me_i_am_broken,
+        duration=gopher_std_srvs.NotifyRequest.INDEFINITE
+    )
+    wait_for_go_button_press = interactions.create_wait_for_go_button("Wait for Go Button")
+    telepark.add_child(flash_notification)
+    telepark.add_child(wait_for_go_button_press)
+    return telepark
 
 ##############################################################################
 # Behaviours

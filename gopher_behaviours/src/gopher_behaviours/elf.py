@@ -163,11 +163,11 @@ def create_check_elf_status_subtree():
 class TeleopInitialisation(py_trees.Selector):
     def __init__(self, name="Teleop Elf"):
         super(TeleopInitialisation, self).__init__(name)
-        self.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
         self.gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
 
         localised_yet = create_check_elf_status_subtree()
         initialising = py_trees.composites.Sequence("Teleop & Teleport")
+        initialising.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
         teleop_to_homebase = interactions.SendNotification(
             name='Teleop to Homebase',
             message='waiting for button press to continue',
@@ -184,17 +184,6 @@ class TeleopInitialisation(py_trees.Selector):
         teleop_to_homebase.add_child(wait_for_go_button_press)
         initialising.add_child(teleport)
         initialising.add_child(hang_around)
-
-#     def setup(self, timeout):
-#         # This publisher 'blips' like a radar while the initialising subtree is scanning.
-#         # Not useful on the robot except for debugging, but useful for podium simulations and tests
-#         self.fake_init_publisher = rospy.Publisher(self.gopher.topics.elf_fake_init, std_msgs.Empty, queue_size=1)
-#         return True
-#
-#     def update(self):
-#         if self.status == py_trees.common.Status.RUNNING:
-#             print("Publishing Fake Init")
-#             self.fake_init_publisher.publish(std_msgs.Empty())
 
 
 class ARInitialisation(py_trees.Sequence):

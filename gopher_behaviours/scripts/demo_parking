@@ -10,6 +10,7 @@
 import argparse
 import gopher_behaviours
 import gopher_configuration
+import gopher_std_msgs.srv as gopher_std_srvs
 import py_trees
 import rocon_console.console as console
 import rospy
@@ -87,26 +88,52 @@ class Demo(object):
         self.logger = py_trees.logging.get_logger("Demo Parking")
 
         self.root = py_trees.Selector("Demo Parking")
-        just_do_it = py_trees.Sequence("Just Do It!")
-        unpark = gopher_behaviours.UnPark("UnPark")
-        park = gopher_behaviours.Park("Park")
 
+        #################################
+        # Event Handler
+        #################################
         event_handler = gopher_behaviours.interactions.create_button_event_handler()
 
+        #################################
+        # Global Abort
+        #################################
+        global_abort = py_trees.composites.Sequence(name="Global Abort")
+        is_global_abort_activated = py_trees.CheckBlackboardVariable(
+            name='Is Aborted?',
+            variable_name='event_abort_button',
+            expected_value=True
+        )
+        global_abort_repark = gopher_behaviours.park.create_repark_subtree()
+
+        #################################
+        # Just Do It - Park/Unpark/Repark
+        #################################
+        just_do_it = py_trees.Sequence("Just Do It!")
+        unpark = gopher_behaviours.unpark.UnPark("UnPark")
+        park = gopher_behaviours.park.Park("Park")
+        repark = gopher_behaviours.park.create_repark_subtree()
+        # repark.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
+
+        #################################
+        # Drive Around
+        #################################
+        drive_around_get_a_coffee = py_trees.composites.Parallel(
+            name='Drive Around, Get a Coffee', policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE)
+        drive_around_flash_leds = gopher_behaviours.interactions.Notification(
+            name='Flash Cool',
+            message='do a delivery, get a coffee',
+            led_pattern=self.gopher.led_patterns.im_doing_something_cool
+        )
         wait_for_button = py_trees.subscribers.WaitForSubscriberData(
             name="Wait for Go Button",
             topic_name=self.gopher.buttons.go,
             topic_type=std_msgs.String
         )
 
-        switch_to_parking = gopher_behaviours.interactions.SendNotification(
-            name='Drive Around, Get a Coffee',
-            message='do a delivery, get a coffee',
-            led_pattern=self.gopher.led_patterns.im_doing_something_cool
-        )
-        switch_to_parking.add_child(wait_for_button)
-
-        wait_for_button_two = py_trees.subscribers.WaitForSubscriberData(
+        #################################
+        # Restart
+        #################################
+        restart_wait_for_go_button = py_trees.subscribers.WaitForSubscriberData(
             name="Wait for Go Button",
             topic_name=self.gopher.buttons.go,
             topic_type=std_msgs.String
@@ -117,14 +144,23 @@ class Demo(object):
             message='reset and get ready to start again',
             led_pattern=self.gopher.led_patterns.holding
         )
-        restart.add_child(wait_for_button_two)
 
+        #################################
+        # Graph
+        #################################
         self.root.add_child(event_handler)
+        self.root.add_child(global_abort)
+        global_abort.add_child(is_global_abort_activated)
+        global_abort.add_child(global_abort_repark)
         self.root.add_child(just_do_it)
         just_do_it.add_child(unpark)
-        just_do_it.add_child(switch_to_parking)
+        just_do_it.add_child(drive_around_get_a_coffee)
+        drive_around_get_a_coffee.add_child(drive_around_flash_leds)
+        drive_around_get_a_coffee.add_child(wait_for_button)
         just_do_it.add_child(park)
         just_do_it.add_child(restart)
+        restart.add_child(restart_wait_for_go_button)
+        self.root.add_child(repark)
         self.tree = py_trees.ROSBehaviourTree(self.root)
         rospy.on_shutdown(self.shutdown)
         py_trees.display.print_ascii_tree(self.root, 0)

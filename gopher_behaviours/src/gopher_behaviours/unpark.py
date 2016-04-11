@@ -25,7 +25,6 @@ import elf_msgs.msg as elf_msgs
 from gopher_semantics.semantics import Semantics
 import geometry_msgs.msg as geometry_msgs
 import gopher_std_msgs.msg as gopher_std_msgs
-import gopher_std_msgs.srv as gopher_std_srvs
 import gopher_configuration
 import py_trees
 import rospy
@@ -35,7 +34,6 @@ from . import ar_markers
 from . import battery
 from . import docking
 from . import elf
-from . import interactions
 from . import navigation
 from . import simple_motions
 from . import transform_utilities
@@ -185,6 +183,7 @@ class UnPark(py_trees.Sequence):
         # TODO : check if we significantly moved from the saved location
 
         already_localised_sequence = py_trees.Sequence("Already Localised")
+        already_localised_sequence.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
         are_we_localised = py_trees.CheckBlackboardVariable(
             name="Check ELF Status",
             variable_name="elf_localisation_status",
@@ -201,6 +200,7 @@ class UnPark(py_trees.Sequence):
         ################################################################
 
         not_yet_localised_sequence = py_trees.Sequence("Not Localised")
+        not_yet_localised_sequence.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
         # automatic_unpark = py_trees.Sequence("Automatic")
         if elf_type == elf.ElfInitialisationType.TELEOP:
             elf_initialisation = elf.TeleopInitialisation()
