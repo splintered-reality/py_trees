@@ -31,7 +31,7 @@ import enum
 
 
 class Status(enum.Enum):
-    """ An enumerator representing the status of a behaviour """
+    """An enumerator representing the status of a behaviour """
 
     SUCCESS = "SUCCESS"
     """Behaviour check has passed, or execution of its action has finished with a successful result."""
@@ -41,6 +41,15 @@ class Status(enum.Enum):
     """Behaviour is in the middle of executing some action, result still pending."""
     INVALID = "INVALID"
     """Behaviour is uninitialised and inactive, i.e. this is the status before first entry, and after a higher priority switch has occurred."""
+
+
+class ParallelPolicy(enum.Enum):
+    """Policy rules for :py:class:`~py_trees.composites.Parallel` composites."""
+
+    SUCCESS_ON_ALL = "SUCCESS_ON_ALL"
+    """:py:data:`~py_trees.common.Status.SUCCESS` only when each and every child returns :py:data:`~py_trees.common.Status.SUCCESS`."""
+    SUCCESS_ON_ONE = "SUCCESS_ON_ONE"
+    """:py:data:`~py_trees.common.Status.SUCCESS` so long as at least one child has :py:data:`~py_trees.common.Status.SUCCESS` and the remainder are :py:data:`~py_trees.common.Status.RUNNING`"""
 
 
 class ClearingPolicy(enum.IntEnum):

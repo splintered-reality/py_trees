@@ -24,7 +24,7 @@ import rocon_console.console as console
 
 from . import common
 
-from .composites import Sequence, Selector
+from .composites import Sequence, Selector, Parallel
 from .common import Status
 
 
@@ -67,6 +67,8 @@ def _generate_ascii_tree(tree, indent=0, snapshot_information=None):
             bullet = "[-] "
         elif isinstance(child, Selector):
             bullet = "(-) "
+        elif isinstance(child, Parallel):
+            bullet = "(o) "
         if child.id in nodes:
             message = "" if not child.feedback_message else " -- " + child.feedback_message
             yield "    " * indent + bullet + child.name + " [%s]" % _behaviour_status_to_ascii[nodes[child.id]] + message
@@ -126,6 +128,8 @@ def generate_pydot_graph(root, visibility_level):
             attributes = ('octagon', 'cyan', 'black')  # octagon
         elif isinstance(node, Sequence):
             attributes = ('box', 'orange', 'black')
+        elif isinstance(node, Parallel):
+            attributes = ('note', 'gold', 'black')
         elif node.children != []:
             attributes = ('ellipse', 'ghostwhite', 'black')  # encapsulating behaviour (e.g. wait)
         else:

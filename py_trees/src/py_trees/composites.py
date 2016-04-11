@@ -27,6 +27,7 @@ from __future__ import absolute_import
 
 import itertools
 
+from . import common
 from . import logging
 from .behaviour import Behaviour
 from .common import Status
@@ -342,24 +343,46 @@ class Parallel(Composite):
     running, :py:data:`~py_trees.common.Status.SUCCESS` if they all succeed, or
     :py:data:`~py_trees.common.Status.FAILURE` if any single one of them fails.
     """
-    def __init__(self, name="Parallel", children=None, *args, **kwargs):
+    def __init__(self, name="Parallel", policy=common.ParallelPolicy.SUCCESS_ON_ALL, children=None, *args, **kwargs):
         super(Parallel, self).__init__(name, children, *args, **kwargs)
         self.logger = logging.get_logger(name)
+        self.policy = policy
 
     def tick(self):
         if self.status != Status.RUNNING:
             # subclass (user) handling
             self.initialise()
         self.logger.debug("  %s [tick()]" % self.name)
-        new_status = Status.SUCCESS
+        new_status = Status.SUCCESS if self.policy == common.ParallelPolicy.SUCCESS_ON_ALL else Status.RUNNING
         for child in self.children:
             for node in child.tick():
                 yield node
-                if node.status == Status.RUNNING:
-                    new_status = node.status
-                elif node.status == Status.FAILURE and new_status != Status.RUNNING:
-                    new_status = node.status
+                if self.policy == common.ParallelPolicy.SUCCESS_ON_ALL:
+                    if node.status == Status.RUNNING:
+                        new_status = node.status
+                    elif node.status == Status.FAILURE and new_status != Status.RUNNING:
+                        new_status = node.status
+                elif self.policy == common.ParallelPolicy.SUCCESS_ON_ONE:
+                    if node.status != Status.FAILURE:
+                        if node.status != Status.RUNNING:
+                            new_status = node.status
         if new_status != Status.RUNNING:
             self.stop(new_status)
         self.status = new_status
         yield self
+
+    @property
+    def current_child(self):
+        if self.status == Status.INVALID:
+            return None
+        if self.status == Status.FAILURE:
+            for child in self.children:
+                if child.status == Status.FAILURE:
+                    return child
+            # shouldn't get here
+        elif self.status == Status.SUCCESS and self.policy == common.ParallelPolicy.SUCCESS_ON_ONE:
+            for child in self.children:
+                if child.status == Status.SUCCESS:
+                    return child
+        else:
+            return self.children[-1]
