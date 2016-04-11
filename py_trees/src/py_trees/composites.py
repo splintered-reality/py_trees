@@ -366,7 +366,13 @@ class Parallel(Composite):
                     if node.status != Status.FAILURE:
                         if node.status != Status.RUNNING:
                             new_status = node.status
+        # special case composite - this parallel may have children that are still running
+        # so if the parallel itself has reached a final status, then these running children
+        # need to be made aware of it too
         if new_status != Status.RUNNING:
+            for child in self.children:
+                if child.status == Status.RUNNING:
+                    child.stop(new_status)
             self.stop(new_status)
         self.status = new_status
         yield self
