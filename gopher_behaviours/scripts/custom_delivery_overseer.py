@@ -53,21 +53,21 @@ class CustomDeliveryOverseer(object):
         self.subscribers = rocon_python_comms.utils.Subscribers(
             [
                 ('delivery_manager_status', '~delivery_manager_status', gopher_delivery_msgs.DeliveryManagerStatus, self.delivery_manager_status_cb),
-                ('trigger', self.gopher.buttons.go, std_msgs.Empty, self.go_cb),
-                ('init_homebase', self.gopher.buttons.stop, std_msgs.Empty, self.stop_cb)
+                ('trigger', self.gopher.topics.delivery_custom, std_msgs.Empty, self.delivery_custom_trigger_cb),
+                # ('init_homebase', self.gopher.buttons.stop, std_msgs.Empty, self.stop_cb)
             ]
         )
-        not_latched = False
-        self.publishers = rocon_python_comms.utils.Publishers(
-            [
-                ('teleport_homebase', self.gopher.actions.teleport + "/goal", gopher_navi_msgs.TeleportActionGoal, not_latched, 5),
-            ]
-        )
+#        not_latched = False
+#         self.publishers = rocon_python_comms.utils.Publishers(
+#             [
+#                 ('teleport_homebase', self.gopher.actions.teleport + "/goal", gopher_navi_msgs.TeleportActionGoal, not_latched, 5),
+#             ]
+#         )
 
     def delivery_manager_status_cb(self, msg):
         self.delivering = (msg.status != gopher_delivery_msgs.DeliveryManagerStatus.IDLING)
 
-    def go_cb(self, unused_msg):
+    def delivery_custom_trigger_cb(self, unused_msg):
         if not self.delivering:
             rospy.loginfo("Custom Delivery : custom delivery triggered via joystick and initiated.")
             self.express_delivery.send(self.locations, include_parking_behaviours=False)
@@ -78,16 +78,16 @@ class CustomDeliveryOverseer(object):
         else:
             rospy.loginfo("Custom Delivery : rejecting request as the delivery manager is already busy.")
 
-    def stop_cb(self, unused_msg):
-        if not self.delivering:
-            rospy.loginfo("Custom Delivery : init'ing the robot on the homebase.")
-            action_goal = gopher_navi_msgs.TeleportActionGoal()
-            action_goal.header.stamp = rospy.Time.now()
-            goal = gopher_navi_msgs.TeleportGoal()
-            goal.location = "homebase"
-            goal.special_effects = True
-            action_goal.goal = goal
-            self.publishers.teleport_homebase.publish(action_goal)
+#     def stop_cb(self, unused_msg):
+#         if not self.delivering:
+#             rospy.loginfo("Custom Delivery : init'ing the robot on the homebase.")
+#             action_goal = gopher_navi_msgs.TeleportActionGoal()
+#             action_goal.header.stamp = rospy.Time.now()
+#             goal = gopher_navi_msgs.TeleportGoal()
+#             goal.location = "homebase"
+#             goal.special_effects = True
+#             action_goal.goal = goal
+#             self.publishers.teleport_homebase.publish(action_goal)
 
     def dynamic_reconfigure_cb(self, config, level):
         """
