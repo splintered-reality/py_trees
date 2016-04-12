@@ -12,8 +12,11 @@
    -->
   <arg name="express" default="false" doc="dont wait at each location for the user to press the button."/>
   <arg name="parking" default="false" doc="make sure all deliveries do parking/docking."/>
+  <arg name="debug"   default="false" doc="debug mode logging of behaviours."/>
+
 
   <group ns="gopher">
+    <param name="deliveries/debug" value="$(arg debug)"/>
     <node name="behaviours" type="gopher_hive_mind.py" pkg="gopher_behaviours">
       <param name="express"                       value="$(arg express)"/>
       <param name="parking"                       value="$(arg parking)"/>
