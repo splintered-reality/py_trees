@@ -100,9 +100,14 @@ def imposter(cls):
                 new_args = tuple(new_args)
             super(Imposter, self).__init__(name)
             self.original = cls(*new_args, **kwargs)
+
+            # aliases to original variables/methods
+            self.blackbox_level = self.original.blackbox_level
             self.children = self.original.children
+            self.feedback_message = self.original.feedback_message
             self.setup = self.original.setup
-            # initialise, terminate is called indirectly via the tick_once in update
+            # id is important to match for composites...the children must relate to the correct parent id
+            self.id = self.original.id
 
         def update(self):
             """
@@ -113,6 +118,9 @@ def imposter(cls):
             return self.original.status
 
         def __getattr__(self, name):
+            """
+            So we can pull extra attributes in the original above and beyond the behaviour attributes.
+            """
             return getattr(self.original, name)
 
     return Imposter
@@ -371,3 +379,40 @@ def success_is_failure(cls):
     SuccessIsFailure = imposter(cls)
     setattr(SuccessIsFailure, "update", _update(SuccessIsFailure.update))
     return SuccessIsFailure
+
+#############################
+# SuccessIsRunning
+#############################
+
+
+def success_is_running(cls):
+    """
+    Be depressed, always fail.
+
+    .. code-block:: python
+
+       @success_is_running
+       class TheEndIsSillNotNigh(ActingLikeAGoon)
+           pass
+
+    or
+
+    .. code-block:: python
+
+       the_end_is_still_not_night = success_is_running(ActingLikeAGoon("Goon"))
+    """
+    def _update(func):
+        @functools.wraps(func)
+        def wrapped(self):
+            self.original.tick_once()
+            if self.original.status == common.Status.SUCCESS:
+                self.feedback_message = "success is running"
+                return common.Status.RUNNING
+            else:
+                self.feedback_message = self.original.feedback_message
+                return self.original.status
+        return wrapped
+
+    SuccessIsRunning = imposter(cls)
+    setattr(SuccessIsRunning, "update", _update(SuccessIsRunning.update))
+    return SuccessIsRunning
