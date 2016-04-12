@@ -23,8 +23,8 @@ Bless my noggin with a tickle from your noodly appendages!
 
 import gopher_configuration
 import gopher_navi_msgs.msg as gopher_navi_msgs
-import gopher_std_msgs.msg as gopher_std_msgs
 import py_trees
+import gopher_std_msgs.msg as gopher_std_msgs
 import std_msgs.msg as std_msgs
 
 from . import interactions
@@ -85,15 +85,13 @@ def _generate_elevator_children(gopher_configuration, elevator_name, elevator_le
     )
     teleporting_jobs = py_trees.composites.Sequence("Teleport Jobs")
 
-    flash_leds_travelling = interactions.Notification("Flash for Input", led_pattern=gopher_configuration.led_patterns.humans_give_me_input, button_confirm=True, message="Waiting for confirm button press in front of elevator")
-    flash_button_travelling = interactions.Notification(
-        name="Light Go Button",
-        led_pattern=None,  # gopher_std_msgs.Notification.RETAIN_PREVIOUS,
+    flash_leds_travelling = interactions.Notification(
+        name="Flash for Input",
+        led_pattern=gopher_configuration.led_patterns.humans_give_me_input,
         button_confirm=gopher_std_msgs.Notification.BUTTON_ON,
         button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
         cancel_on_stop=True,
-        message="Flashing the go button in front of elevator"
-    )
+        message="Waiting for confirm button press in front of elevator")
     wait_for_go_button_travelling = py_trees.subscribers.WaitForSubscriberData(name="Wait for Button", topic_name=gopher_configuration.buttons.go, topic_type=std_msgs.String)
     flash_leds_teleporting = interactions.Notification("Flash Cool", led_pattern=gopher_configuration.led_patterns.im_doing_something_cool, message="teleporting from {0} to {1}".format(elevator_level_origin, elevator_level_destination))
 
@@ -106,7 +104,6 @@ def _generate_elevator_children(gopher_configuration, elevator_name, elevator_le
     elevator_teleport = navigation.Teleport("Elevator Teleport", goal)
 
     travelling.add_child(flash_leds_travelling)
-    travelling.add_child(flash_button_travelling)
     travelling.add_child(wait_for_go_button_travelling)
     teleporting.add_child(flash_leds_teleporting)
     teleporting.add_child(teleporting_jobs)

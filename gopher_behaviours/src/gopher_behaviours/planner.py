@@ -4,18 +4,6 @@
 # Imports
 ##############################################################################
 
-import gopher_behaviours
-import gopher_configuration
-import gopher_semantics
-import gopher_semantic_msgs.msg as gopher_semantic_msgs
-import delivery
-import rocon_python_utils
-
-from . import blackboard_handlers
-from . import elevators
-from . import interactions
-from . import navigation
-
 ##############################################################################
 # Implementation
 ##############################################################################

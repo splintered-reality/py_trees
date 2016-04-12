@@ -182,6 +182,8 @@ class TeleopInitialisation(py_trees.Selector):
             name='Flash Help Me',
             message='waiting for button press to continue',
             led_pattern=self.gopher.led_patterns.humans_i_need_help,
+            button_confirm=gopher_std_msgs.Notification.BUTTON_ON,
+            button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
             duration=gopher_std_srvs.NotifyRequest.INDEFINITE
         )
         wait_for_go_button_press = interactions.create_wait_for_go_button("Wait for Go Button")

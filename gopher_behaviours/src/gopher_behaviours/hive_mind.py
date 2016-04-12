@@ -259,6 +259,7 @@ class GopherHiveMind(object):
             message = "received goal request [%s]" % message
             rospy.loginfo("Delivery : [%s]" % message)
             self.response.result = gopher_delivery_msgs.DeliveryErrorCodes.RESULT_PENDING
+            self.response.error_message = 'pending'
         else:
             message = "refused goal request [%s]" % message
             rospy.logwarn("Delivery : [%s]" % message)

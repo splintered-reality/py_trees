@@ -53,15 +53,15 @@ class State(enum.Enum):
     """
 
     """Ready to accept a goal."""
-    IDLE = "IDLE"  # gopher_delivery_msgs.DeliveryFeedback.IDLE
+    IDLE = "IDLE"
     """Interrupted by a higher priority branch."""
     INTERRUPTED = "INTERRUPTED"
     """Unparking, signifies the start of a delivery"""
-    UNPARKING = gopher_delivery_msgs.DeliveryFeedback.BUSY
+    UNPARKING = "UNPARKING"
     """On the delivery route"""
-    EN_ROUTE = "EN_ROUTE"  # gopher_delivery_msgs.DeliveryFeedback.DELIVERING
+    EN_ROUTE = "EN_ROUTE"
     """Parking, signifying the end of a delivery run"""
-    PARKING = "PARKING"  # gopher_delivery_msgs.DeliveryFeedback.BUSY
+    PARKING = "PARKING"
     """Cancelling, an automated run home upon request"""
     CANCELLING = "CANCELLING"
     """Reparking after a delivery has failed for whatever reason"""
@@ -144,6 +144,9 @@ def create_delivery_subtree(world, locations, express=False):
         name='Flash Help Me',
         message='waiting for button press to continue',
         led_pattern=gopher.led_patterns.humans_i_need_help,
+        button_confirm=gopher_std_msgs.Notification.BUTTON_ON,
+        button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
+        cancel_on_stop=True,
         duration=gopher_std_srvs.NotifyRequest.INDEFINITE
     )
     wait_for_go_button_press = interactions.create_wait_for_go_button("Wait for Go Button")
@@ -602,7 +605,7 @@ class GopherDeliveries(object):
 
     def is_running_but_cancelled(self):
         if self.root is not None and self.root.status != py_trees.Status.INVALID:
-            return self.is_cancelled_subtree.status != py_trees.Status.INVALID
+            return self.is_cancelled_subtree.status == py_trees.Status.FAILURE
         return False
 
     def is_running_and_en_route(self):
