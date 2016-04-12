@@ -353,19 +353,21 @@ class Parallel(Composite):
             # subclass (user) handling
             self.initialise()
         self.logger.debug("  %s [tick()]" % self.name)
-        new_status = Status.SUCCESS if self.policy == common.ParallelPolicy.SUCCESS_ON_ALL else Status.RUNNING
+        # process them all first
         for child in self.children:
             for node in child.tick():
                 yield node
-                if self.policy == common.ParallelPolicy.SUCCESS_ON_ALL:
-                    if node.status == Status.RUNNING:
-                        new_status = node.status
-                    elif node.status == Status.FAILURE and new_status != Status.RUNNING:
-                        new_status = node.status
-                elif self.policy == common.ParallelPolicy.SUCCESS_ON_ONE:
-                    if node.status != Status.FAILURE:
-                        if node.status != Status.RUNNING:
-                            new_status = node.status
+        # new_status = Status.SUCCESS if self.policy == common.ParallelPolicy.SUCCESS_ON_ALL else Status.RUNNING
+        new_status = Status.RUNNING
+        if any([c.status == Status.FAILURE for c in self.children]):
+            new_status = Status.FAILURE
+        else:
+            if self.policy == common.ParallelPolicy.SUCCESS_ON_ALL:
+                if all([c.status == Status.SUCCESS for c in self.children]):
+                    new_status = Status.SUCCESS
+            elif self.policy == common.ParallelPolicy.SUCCESS_ON_ONE:
+                if any([c.status == Status.SUCCESS for c in self.children]):
+                    new_status = Status.SUCCESS
         # special case composite - this parallel may have children that are still running
         # so if the parallel itself has reached a final status, then these running children
         # need to be made aware of it too
