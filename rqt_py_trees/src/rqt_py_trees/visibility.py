@@ -65,8 +65,8 @@ def get_branch_blackbox_level(behaviours, behaviour_id, current_level):
     Computes the critial (minimum) blackbox level present in the branch above
     this behaviour.
 
-    :param {id: py_trees_msgs.Behaviour} behaviours:
-    :param uuid.UUID behaviour_id:
+    :param {id: py_trees_msgs.Behaviour} behaviours: (sub)tree of all behaviours, including this one
+    :param uuid.UUID behaviour_id: id of this behavour
     :param py_trees.common.BlackBoxLevel current_level
     """
     if is_root(behaviour_id):
@@ -99,7 +99,7 @@ def filter_behaviours_by_visibility_level(behaviours, visibility_level):
     :param py_trees_msgs.msg.Behaviour[] behaviours
     :returns: py_trees_msgs.msg.Behaviour[]
     """
-    behaviours_by_id = {unique_id.fromMsg(behaviour.own_id): behaviour for behaviour in behaviours}
+    behaviours_by_id = {unique_id.fromMsg(b.own_id): b for b in behaviours}
     visible_behaviours = [b for b in behaviours if is_visible(behaviours_by_id,
                                                               unique_id.fromMsg(b.own_id),
                                                               visibility_level)
