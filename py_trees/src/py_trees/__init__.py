@@ -20,6 +20,7 @@ package. It provides ...
 from . import behaviour
 from . import behaviours
 from . import blackboard
+from . import common
 from . import composites
 from . import display
 from . import meta
