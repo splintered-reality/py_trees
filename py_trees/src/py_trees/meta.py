@@ -104,7 +104,6 @@ def imposter(cls):
             # aliases to original variables/methods
             self.blackbox_level = self.original.blackbox_level
             self.children = self.original.children
-            self.feedback_message = self.original.feedback_message
             self.setup = self.original.setup
             # id is important to match for composites...the children must relate to the correct parent id
             self.id = self.original.id
@@ -295,7 +294,7 @@ def running_is_failure(cls):
         def wrapped(self):
             self.original.tick_once()
             if self.original.status == common.Status.RUNNING:
-                self.feedback_message = "running is failure"
+                self.feedback_message = "running is failure [%s]" % self.original.feedback_message
                 return common.Status.FAILURE
             else:
                 self.feedback_message = self.original.feedback_message
@@ -305,6 +304,43 @@ def running_is_failure(cls):
     RunningIsFailure = imposter(cls)
     setattr(RunningIsFailure, "update", _update(RunningIsFailure.update))
     return RunningIsFailure
+
+#############################
+# RunningIsSuccess
+#############################
+
+
+def running_is_success(cls):
+    """
+    Don't hang around...
+
+    .. code-block:: python
+
+       @running_is_success
+       class DontHangAround(Pontificating)
+           pass
+
+    or
+
+    .. code-block:: python
+
+       dont_hang_around = running_is_success(Pontificating)("Greek Philosopher")
+    """
+    def _update(func):
+        @functools.wraps(func)
+        def wrapped(self):
+            self.original.tick_once()
+            if self.original.status == common.Status.RUNNING:
+                self.feedback_message = "running is success [%s]" % self.original.feedback_message
+                return common.Status.SUCCESS
+            else:
+                self.feedback_message = self.original.feedback_message
+                return self.original.status
+        return wrapped
+
+    RunningIsSuccess = imposter(cls)
+    setattr(RunningIsSuccess, "update", _update(RunningIsSuccess.update))
+    return RunningIsSuccess
 
 #############################
 # FailureIsSuccess
@@ -332,7 +368,7 @@ def failure_is_success(cls):
         def wrapped(self):
             self.original.tick_once()
             if self.original.status == common.Status.FAILURE:
-                self.feedback_message = "failure is success"
+                self.feedback_message = "failure is success [%s]" % self.original.feedback_message
                 return common.Status.SUCCESS
             else:
                 self.feedback_message = self.original.feedback_message
@@ -369,7 +405,7 @@ def success_is_failure(cls):
         def wrapped(self):
             self.original.tick_once()
             if self.original.status == common.Status.SUCCESS:
-                self.feedback_message = "success is failure"
+                self.feedback_message = "success is failure [%s]" % self.original.feedback_message
                 return common.Status.FAILURE
             else:
                 self.feedback_message = self.original.feedback_message
@@ -406,7 +442,7 @@ def success_is_running(cls):
         def wrapped(self):
             self.original.tick_once()
             if self.original.status == common.Status.SUCCESS:
-                self.feedback_message = "success is running"
+                self.feedback_message = "success is running [%s]" % self.original.feedback_message
                 return common.Status.RUNNING
             else:
                 self.feedback_message = self.original.feedback_message
