@@ -262,6 +262,7 @@ class Notification(py_trees.Behaviour):
 
     def setup(self, timeout):
         self.logger.debug("  %s [Notification::setup()]" % self.name)
+        self.logger.info("  %s [Notification::setup()]" % self.name)
         try:
             rospy.wait_for_service(self.topic_name, timeout)
             return True
@@ -272,6 +273,7 @@ class Notification(py_trees.Behaviour):
 
     def initialise(self):
         self.logger.debug("  %s [Notification::initialise()]" % self.name)
+        self.logger.info("  %s [Notification::initialise()]" % self.name)
         request = gopher_std_srvs.NotifyRequest()
         request.id = unique_id.toMsg(self.id)
         request.action = gopher_std_srvs.NotifyRequest.START
@@ -295,6 +297,7 @@ class Notification(py_trees.Behaviour):
         Might be useful having a timer here if the notification is a timed one so that it returns
         success when the notification is supposed to have stopped.
         """
+        self.logger.info("  %s [Notification::update()]" % self.name)
         return py_trees.Status.RUNNING
 
     def terminate(self, new_status):
@@ -302,6 +305,7 @@ class Notification(py_trees.Behaviour):
         Send a stop message to the status notifier if necessary.
         """
         self.logger.debug("  %s [Notification::terminate()][%s->%s]" % (self.name, self.status, new_status))
+        self.logger.info("  %s [Notification::terminate()][%s->%s]" % (self.name, self.status, new_status))
         if self.cancel_on_stop and not self.service_failed and self.sent_notification:
             request = gopher_std_srvs.NotifyRequest()
             request.id = unique_id.toMsg(self.id)

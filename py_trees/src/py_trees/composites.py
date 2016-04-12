@@ -374,6 +374,10 @@ class Parallel(Composite):
         if new_status != Status.RUNNING:
             for child in self.children:
                 if child.status == Status.RUNNING:
+                    # yes, INVALID is right, we are interrupting it. Couldn't use new_status
+                    # anyway, because composites only pass along stop to their children on
+                    # INVALID. That policy is so that we don't end up virallly failing behaviours
+                    # that already succeeded.
                     child.stop(new_status)
             self.stop(new_status)
         self.status = new_status
