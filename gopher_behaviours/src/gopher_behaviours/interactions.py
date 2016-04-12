@@ -38,6 +38,13 @@ import unique_id
 
 def create_button_event_handler(name="Button Events"):
     """
+    A subtree designed to run *every* tick to check for button events and record
+    them on the blackboard.
+
+    Will always be in a RUNNING state so be sure to put this in a parallel
+    composite...OR use the running_is_failure  decorator and put it under a
+    selector at the highest priority level.
+
     Blackboard Variables:
 
      - event_go_button    (w) [bool] : true if at least one press, false otherwise
@@ -69,12 +76,10 @@ def create_button_event_handler(name="Button Events"):
         topic_name=gopher.buttons.init,
         variable_name="event_init_button"
     )
-    dont_block_the_selector = py_trees.behaviours.Failure(name="Continue")
     event_handler.add_child(go_button_events)
     event_handler.add_child(stop_button_events)
     event_handler.add_child(abort_button_events)
     event_handler.add_child(init_button_events)
-    event_handler.add_child(dont_block_the_selector)
     return event_handler
 
 

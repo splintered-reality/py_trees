@@ -45,13 +45,13 @@ class DockingController(py_trees.Behaviour):
         :param bool undock: do undocking instead of docking.
         """
         super(DockingController, self).__init__(name)
-        rospy.on_shutdown(functools.partial(self.stop, py_trees.Status.FAILURE))
         self.action_client = None
         self.sent_goal = False
         self.goal = gopher_std_msgs.AutonomousDockingGoal()
         self.goal.command = gopher_std_msgs.AutonomousDockingGoal.DOCK if not undock else gopher_std_msgs.AutonomousDockingGoal.UNDOCK
 
     def setup(self, timeout):
+        rospy.on_shutdown(functools.partial(self.stop, py_trees.Status.FAILURE))
         self.logger.debug("  %s [AutoDock::setup()]" % self.name)
         if not self.action_client:
             self.gopher = gopher_configuration.Configuration()

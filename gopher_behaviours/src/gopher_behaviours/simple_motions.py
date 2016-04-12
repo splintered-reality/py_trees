@@ -175,4 +175,3 @@ class SimpleMotion(py_trees.Behaviour):
             if (motion_state == actionlib_msgs.GoalStatus.PENDING) or (motion_state == actionlib_msgs.GoalStatus.ACTIVE):
                 self.action_client.cancel_goal()
         self.sent_goal = False
-

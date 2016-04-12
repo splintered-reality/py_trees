@@ -21,6 +21,7 @@ Bless my noggin with a tickle from your noodly appendages!
 import actionlib
 import actionlib_msgs.msg as actionlib_msgs
 import elf_msgs.msg as elf_msgs
+import functools
 import geometry_msgs.msg as geometry_msgs
 import gopher_configuration
 import gopher_navi_msgs.msg as gopher_navi_msgs
@@ -130,6 +131,7 @@ class MoveIt(py_trees.Behaviour):
         self.goal.target_pose.pose.orientation.y = quaternion[1]
         self.goal.target_pose.pose.orientation.z = quaternion[2]
         self.goal.target_pose.pose.orientation.w = quaternion[3]
+        self.sent_goal = False
 
     def setup(self, timeout):
         """
@@ -173,6 +175,7 @@ class MoveIt(py_trees.Behaviour):
             if not self.setup(timeout=0.1):
                 return
         self.action_client.send_goal(self.goal)
+        self.sent_goal = True
 
     def update(self):
         self.logger.debug("  %s [MoveIt::update()]" % self.name)
@@ -208,11 +211,11 @@ class MoveIt(py_trees.Behaviour):
         If we have an action client and the current goal has not already
         succeeded, send a message to cancel the goal for this action client.
         """
-        if self.action_client is None:
-            return
-        motion_state = self.action_client.get_state()
-        if (motion_state == actionlib_msgs.GoalStatus.PENDING) or (motion_state == actionlib_msgs.GoalStatus.ACTIVE):
-            self.action_client.cancel_goal()
+        if self.action_client is not None and self.sent_goal:
+            motion_state = self.action_client.get_state()
+            if (motion_state == actionlib_msgs.GoalStatus.PENDING) or (motion_state == actionlib_msgs.GoalStatus.ACTIVE):
+                self.action_client.cancel_goal()
+        self.sent_goal = False
 
 ##############################################################################
 # Teleport Behaviour
@@ -234,30 +237,50 @@ class Teleport(py_trees.Behaviour):
         :param gopher_navi_msgs.TeleportGoal goal: a suitably configured goal message.
         """
         super(Teleport, self).__init__(name)
-        self.goal = goal
         self.action_client = None
-        self.gopher = gopher_configuration.Configuration()
+        self.sent_goal = False
+        self.goal = goal
 
     def initialise(self):
         self.logger.debug("  %s [Teleport::initialise()]" % self.name)
-        self.action_client = actionlib.SimpleActionClient(self.gopher.actions.teleport, gopher_navi_msgs.TeleportAction)
-        # should not have to wait as this will occur way after the teleport server is up
-        connected = self.action_client.wait_for_server(rospy.Duration(0.5))
-        if not connected:
-            rospy.logwarn("Teleport : behaviour could not connect with the teleport server.")
-            self.action_client = None
-            # we catch the failure in the first update() call
-        else:
-            self.action_client.send_goal(self.goal)
+        self.sent_goal = False
+
+    def setup(self, timeout):
+        rospy.on_shutdown(functools.partial(self.stop, py_trees.Status.FAILURE))
+        self.logger.debug("  %s [Teleport::setup()]" % self.name)
+        if not self.action_client:
+            self.gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
+            self.action_client = actionlib.SimpleActionClient(
+                self.gopher.actions.teleport,
+                gopher_navi_msgs.TeleportAction
+            )
+            if timeout is not None:
+                if not self.action_client.wait_for_server(rospy.Duration(timeout)):
+                    # replace with a py_trees exception!
+                    self.logger.error("  %s [Teleport::setup()] could not connect to the action server" % self.name)
+                    rospy.logerr("Behaviour [%s" % self.name + "] could not connect to the action server [%s]" % self.__class__.__name__)
+                    self.action_client = None
+                    return False
+            # else just assume it's working, maybe None should be handled like infinite blocking
+        return True
 
     def update(self):
         self.logger.debug("  %s [Teleport::update()]" % self.name)
-        if self.action_client is None:
-            self.feedback_message = "failed, action client not connected."
+        if not self.action_client:
+            self.feedback_message = "no action client, did you call setup() on your tree?"
+            return py_trees.Status.FAILURE
+        # pity there is no 'is_connected' api like there is for c++
+        if not self.sent_goal:
+            self.action_client.send_goal(self.goal)
+            self.sent_goal = True
+            self.feedback_message = "sent goal to the action server"
+            return py_trees.Status.RUNNING
+        if self.action_client.get_state() == actionlib_msgs.GoalStatus.ABORTED:
+            self.feedback_message = "aborted"
             return py_trees.Status.FAILURE
         result = self.action_client.get_result()
         # self.action_client.wait_for_result(rospy.Duration(0.1))  # < 0.1 is moot here - the internal loop is 0.1
-        if result is not None:
+        if result:
             if result.value == gopher_navi_msgs.TeleportResult.SUCCESS:
                 self.feedback_message = "success"
                 return py_trees.Status.SUCCESS
@@ -271,8 +294,13 @@ class Teleport(py_trees.Behaviour):
     def terminate(self, new_status):
         # if we have an action client and the current goal has not already
         # succeeded, send a message to cancel the goal for this action client.
-        if self.action_client is not None and self.action_client.get_state() != actionlib_msgs.GoalStatus.SUCCEEDED:
-            self.action_client.cancel_goal()
+        # if self.action_client is not None and self.action_client.get_state() != actionlib_msgs.GoalStatus.SUCCEEDED:
+        self.logger.debug("  %s [Teleport.terminate()][%s->%s]" % (self.name, self.status, new_status))
+        if self.action_client is not None and self.sent_goal:
+            motion_state = self.action_client.get_state()
+            if (motion_state == actionlib_msgs.GoalStatus.PENDING) or (motion_state == actionlib_msgs.GoalStatus.ACTIVE):
+                self.action_client.cancel_goal()
+        self.sent_goal = False
 
 ##############################################################################
 # Goal Finishing Behaviour

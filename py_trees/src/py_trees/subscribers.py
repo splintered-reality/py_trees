@@ -39,6 +39,7 @@ import threading
 from . import behaviour
 from . import blackboard
 from . import common
+from . import logging
 
 ##############################################################################
 # Behaviours
@@ -304,11 +305,12 @@ class ToBlackboard(SubscriberHandler):
             topic_type=topic_type,
             clearing_policy=clearing_policy
         )
+        self.logger = logging.get_logger("%s" % self.name)
         self.blackboard = blackboard.Blackboard()
         if isinstance(blackboard_variables, basestring):
             self.blackboard_variable_mapping = {blackboard_variables: None}
         elif not isinstance(blackboard_variables, dict):
-            rospy.logerr("ToBlackboard: blackboard_variables is not a dict, please rectify [%s]" % self.name)
+            self.logger.error("blackboard_variables is not a dict, please rectify")
             self.blackboard_variable_mapping = {}
         else:
             self.blackboard_variable_mapping = blackboard_variables

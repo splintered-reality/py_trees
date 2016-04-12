@@ -19,13 +19,6 @@ import sys
 
 
 class CustomDelivery(object):
-    state_strings = {gopher_delivery_msgs.DeliveryFeedback.IDLE: "idle",
-                     gopher_delivery_msgs.DeliveryFeedback.TRAVELLING: "travelling",
-                     gopher_delivery_msgs.DeliveryFeedback.WAITING: "waiting",
-                     gopher_delivery_msgs.DeliveryFeedback.INVALID: "invalid",
-                     gopher_delivery_msgs.DeliveryFeedback.CANCELLED: "cancelled"
-                     }
-
     def __init__(self, verbose_feedback=True):
         if verbose_feedback:
             self.feedback_subscriber = rospy.Subscriber("/rocon/delivery/feedback", gopher_delivery_msgs.DeliveryFeedback, CustomDelivery.feedback)
@@ -55,7 +48,7 @@ class CustomDelivery(object):
             try:
                 fetch_result = rospy.ServiceProxy('/rocon/delivery/result', gopher_delivery_srvs.DeliveryResult)
                 response = fetch_result()
-                if response.result != gopher_delivery_msgs.DeliveryErrorCodes.UNKNOWN:
+                if response.result != gopher_delivery_msgs.DeliveryErrorCodes.RESULT_PENDING:
                     CustomDelivery.result(response)
                     break
                 rate.sleep()
@@ -73,7 +66,7 @@ class CustomDelivery(object):
         print(console.cyan + "  timestamp: " + console.yellow + "%s" % date_string + console.reset)
         print(console.cyan + "  traversed: " + console.yellow + "%s" % msg.traversed_locations + console.reset)
         print(console.cyan + "  remaining: " + console.yellow + "%s" % msg.remaining_locations + console.reset)
-        print(console.cyan + "  state    : " + console.yellow + "%s" % CustomDelivery.state_strings[msg.state] + console.reset)
+        print(console.cyan + "  state    : " + console.yellow + "%s" % msg.state + console.reset)
         print(console.cyan + "  message  : " + console.yellow + "%s" % msg.status_message + console.reset)
         print("")
 

@@ -20,7 +20,7 @@
 
 from . import behaviours
 
-from .common import Status
+from . import common
 from .behaviour import Behaviour
 import rocon_console.console as console
 import operator
@@ -86,7 +86,9 @@ class Blackboard(object):
         max_length = 0
         for k in self.__dict__.keys():
             max_length = len(k) if len(k) > max_length else max_length
-        for key, value in self.__dict__.iteritems():
+        keys = sorted(self.__dict__)
+        for key in keys:
+            value = self.__dict__[key]
             if value is None:
                 value_string = "-"
                 s += console.cyan + "  " + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ": " + console.yellow + "%s\n" % (value_string) + console.reset
@@ -180,12 +182,12 @@ class CheckBlackboardVariable(Behaviour):
         # existence failure check
         if not hasattr(self.blackboard, self.variable_name):
             self.feedback_message = 'blackboard variable {0} did not exist'.format(self.variable_name)
-            return Status.FAILURE
+            return common.Status.FAILURE
 
         # if existence check required only
         if self.expected_value is None:
             self.feedback_message = "'%s' exists on the blackboard (as required)" % self.variable_name
-            return Status.SUCCESS
+            return common.Status.SUCCESS
 
         # expected value matching
         value = getattr(self.blackboard, self.variable_name)
@@ -193,7 +195,7 @@ class CheckBlackboardVariable(Behaviour):
 
         if success:
             self.feedback_message = "'%s' comparison succeeded [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
-            return Status.SUCCESS
+            return common.Status.SUCCESS
         else:
             self.feedback_message = "'%s' comparison failed [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
-            return Status.FAILURE
+            return common.Status.FAILURE

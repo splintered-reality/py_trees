@@ -139,42 +139,44 @@ def create_wait_to_be_unplugged(name="Unplug Me"):
     return wait_to_be_unplugged
 
 
-class CheckBatteryLevel(py_trees.Behaviour):
+class ToBlackboard(py_trees.subscribers.ToBlackboard):
     """
-    Subscribes to the battery message and continually checks on the battery level, returning
-    a FAILURE when it is low, SUCCESS otherwise
-    """
-    def __init__(self, name):
-        # setup
-        super(CheckBatteryLevel, self).__init__(name)
-        self.successes = 0
-        self.battery_percentage = 100
-        self.gopher = None
-        self.subscriber = None
+    Subscribes to the battery message and writes battery data to the blackboard.
+    Also adds a qualitative low/high to the blackboard that buffers against ping-pong
+    around the threshold.
 
-    def setup(self, unused_timeout):
-        self.logger.debug("  %s [CheckBatteryLevel.setup()]" % self.name)
-        self.gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
-        self.subscriber = rospy.Subscriber(self.gopher.topics.battery, somanet_msgs.SmartBatteryStatus, self.battery_callback)
-        return True
+    This behaviour returns RUNNING if it got no data, SUCCESS otherwise.
+
+    Blackboard Variables:
+
+     * battery_percentage  (w) [int]  : battery percentage
+     * battery_low_warning (w) [bool] : False if battery is ok, True if critically low
+    """
+    def __init__(self, name, topic_name):
+        super(ToBlackboard, self).__init__(name=name,
+                                           topic_name=topic_name,
+                                           topic_type=somanet_msgs.SmartBatteryStatus,
+                                           blackboard_variables={"battery_percentage": "percentage"},
+                                           clearing_policy=py_trees.common.ClearingPolicy.NEVER
+                                           )
+        self.successes = 0
+        self.blackboard = py_trees.blackboard.Blackboard()
+        self.blackboard.battery_percentage = 0
+        self.blackboard.battery_low_warning = False
+        self.gopher = gopher_configuration.configuration.Configuration(fallback_to_defaults=True)
 
     def update(self):
-        self.logger.debug("  %s [CheckBatteryLevel.update()]" % self.name)
-        if self.subscriber is None:
-            # safe to setup the subscriber in here...no blocking involved
-            self.setup(None)
-        # Note : battery % in the feedback message causes spam in behaviour
-        # tree rqt viewer, we are merely interested in the transitions, so do not send this
-        # self.feedback_message = "battery %s%% [low: %s%%]" % (self.battery_percentage, self.gopher.battery.low)
-        if self.battery_percentage < self.gopher.battery.low:
-            if self.successes % 10 == 0:  # throttling
-                rospy.logwarn("Behaviours [%s]: battery level is low!" % self.name)
-            self.successes += 1
-            self.feedback_message = "Battery level is low."
-            return py_trees.Status.SUCCESS
-        else:
-            self.feedback_message = "Battery level is ok."
-            return py_trees.Status.FAILURE
-
-    def battery_callback(self, msg):
-        self.battery_percentage = msg.percentage
+        self.logger.debug("  %s [ToBlackboard.update()]" % self.name)
+        status = super(ToBlackboard, self).update()
+        if status != py_trees.common.Status.RUNNING:
+            # we got something
+            if self.blackboard.battery_percentage < self.gopher.battery.low:
+                if self.successes % 10 == 0:  # throttling
+                    self.blackboard.battery_low_warning = True
+                    rospy.logwarn("Behaviours [%s]: battery level is low!" % self.name)
+                self.successes += 1
+                self.feedback_message = "Battery level is low."
+            else:
+                self.blackboard.battery_low_warning = False
+                self.feedback_message = "Battery level is ok."
+        return status

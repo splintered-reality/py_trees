@@ -17,14 +17,10 @@
     <node name="behaviours" type="gopher_hive_mind.py" pkg="gopher_behaviours">
       <param name="express"                       value="$(arg express)"/>
       <param name="parking"                       value="$(arg parking)"/>
-      <remap from="behaviours/battery"            to="/gopher/status/battery_slow"/>
-      <remap from="behaviours/semantic_locations" to="/navi/semantic_locations"/>
       <remap from="delivery/goal"                 to="/rocon/delivery/goal"/>
       <remap from="delivery/feedback"             to="/rocon/delivery/feedback"/>
       <remap from="delivery/cancel"               to="/rocon/delivery/cancel"/>
       <remap from="delivery/result"               to="/rocon/delivery/result"/>
-      <remap from="behaviours/go"                 to="/gopher/buttons/go"/>
-      <remap from="ar_pose_marker_short_range"    to="/gopher/ar_pose_marker_short_range"/>
     </node>
 
     <include file="$(find gopher_behaviours)/launch/custom_delivery_overseer.launch"/>
