@@ -122,7 +122,10 @@ class ControlARMarkerTracker(py_trees.Behaviour):
 
     def terminate(self, new_status):
         """
-        Make sure to disable it if we are responsible for starting it.
+        Terminating - even if you have an 'off' ar markers instance elsewhere, it is
+        important to disable them here since your tree may go down before you get to the 'off'.
+        The alternative requires you to put in complicated wiring - easier just to multiply disable
+        to be sure.
         """
         if new_status == py_trees.Status.INVALID:
             if self._enable:
