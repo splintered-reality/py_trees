@@ -170,7 +170,7 @@ class CheckBlackboardVariable(Behaviour):
         :param name: name of the behaviour
         :param variable_name: name of the variable to check
         :param expected_value: expected value of the variable, if None it will only check for existence
-        :param invert: if true, check that the value of the variable is != expected_value, rather than ==
+        :param function comparison_operator: one from the python `operator module`_
         """
         super(CheckBlackboardVariable, self).__init__(name)
         self.blackboard = Blackboard()
@@ -179,6 +179,7 @@ class CheckBlackboardVariable(Behaviour):
         self.comparison_operator = comparison_operator
 
     def update(self):
+        self.logger.debug("  %s [CheckBlackboardVariable::update()]" % self.name)
         # existence failure check
         if not hasattr(self.blackboard, self.variable_name):
             self.feedback_message = 'blackboard variable {0} did not exist'.format(self.variable_name)
@@ -199,3 +200,84 @@ class CheckBlackboardVariable(Behaviour):
         else:
             self.feedback_message = "'%s' comparison failed [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
             return common.Status.FAILURE
+
+
+class WaitForBlackboardVariable(Behaviour):
+    """
+    Check the blackboard to see if it has a specific variable
+    and optionally whether that variable has a specific value.
+    Unlike :py:class:`~py_trees.blackboard.CheckBlackboardVariable`
+    this class will be in a running state until the variable appears
+    and (optionally) is matched.
+    """
+    def __init__(self,
+                 name,
+                 variable_name="dummy",
+                 expected_value=None,
+                 comparison_operator=operator.eq,
+                 clearing_policy=common.ClearingPolicy.ON_INITIALISE
+                 ):
+        """
+        :param name: name of the behaviour
+        :param variable_name: name of the variable to check
+        :param expected_value: expected value of the variable, if None it will only check for existence
+        :param function comparison_operator: one from the python `operator module`_
+        :param clearing_policy: when to clear the data, see :py:class:`~py_trees.common.ClearingPolicy`
+        """
+        super(WaitForBlackboardVariable, self).__init__(name)
+        self.blackboard = Blackboard()
+        self.variable_name = variable_name
+        self.expected_value = expected_value
+        self.comparison_operator = comparison_operator
+        self.clearing_policy = clearing_policy
+        self.matching_result = None
+
+    def initialise(self):
+        """
+        Clears the internally stored message ready for a new run
+        if ``old_data_is_valid`` wasn't set.
+        """
+        self.logger.debug("  %s [WaitForBlackboardVariable::initialise()]" % self.name)
+        if self.clearing_policy == common.ClearingPolicy.ON_INITIALISE:
+            self.matching_result = None
+
+    def update(self):
+        self.logger.debug("  %s [WaitForBlackboardVariable::update()]" % self.name)
+        if self.matching_result is not None:
+            return self.matching_result
+
+        # existence failure check
+        if not hasattr(self.blackboard, self.variable_name):
+            self.feedback_message = 'blackboard variable {0} did not exist'.format(self.variable_name)
+            result = common.Status.RUNNING
+
+        # if existence check required only
+        elif self.expected_value is None:
+            self.feedback_message = "'%s' exists on the blackboard (as required)" % self.variable_name
+            result = common.Status.SUCCESS
+
+        else:
+            # expected value matching
+            value = getattr(self.blackboard, self.variable_name)
+            success = self.comparison_operator(value, self.expected_value)
+
+            if success:
+                self.feedback_message = "'%s' comparison succeeded [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
+                result = common.Status.SUCCESS
+            else:
+                self.feedback_message = "'%s' comparison failed [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
+                result = common.Status.RUNNING
+
+        if result == common.Status.SUCCESS and self.clearing_policy == common.ClearingPolicy.ON_SUCCESS:
+            self.matching_result = None
+        elif result != common.Status.RUNNING:
+            self.matching_result = result
+        return result
+
+    def terminate(self, new_status):
+        """
+        Always reset the variable if it was invalidated.
+        """
+        self.logger.info("  %s [Notification::terminate()][%s->%s]" % (self.name, self.status, new_status))
+        if new_status == common.Status.INVALID:
+            self.matching_result = None
