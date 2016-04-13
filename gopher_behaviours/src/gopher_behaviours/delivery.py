@@ -162,7 +162,7 @@ def create_delivery_subtree(world, locations, express=False):
     # Core
     ########################
     root = py_trees.composites.Selector(name="Deliver or Die")
-    subtrees.deliveries = py_trees.Sequence("Deliveries")
+    subtrees.deliveries = py_trees.OneshotSequence(py_trees.Sequence("Deliveries"))
     todo_or_not = py_trees.composites.Selector(name="Do or be Cancelled?")
 
     ########################
