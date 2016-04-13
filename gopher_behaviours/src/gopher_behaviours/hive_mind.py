@@ -18,14 +18,11 @@ import gopher_behaviours
 import gopher_configuration
 import gopher_delivery_msgs.srv as gopher_delivery_srvs
 import gopher_delivery_msgs.msg as gopher_delivery_msgs
-import move_base_msgs.msg as move_base_msgs
 import std_msgs.msg as std_msgs
 import py_trees
-import actionlib
-from py_trees.common import Status
 import rocon_console.console as console
+import rocon_python_comms
 import rospy
-import threading
 
 from . import battery
 
@@ -63,9 +60,7 @@ class GopherHiveMind(object):
     def __init__(self):
         self.logger = py_trees.logging.get_logger("HiveMind")
         self.gopher = gopher_configuration.Configuration()
-        self.current_world_subscriber = rospy.Subscriber(self.gopher.topics.world, std_msgs.String, self.current_world_callback)
         self.current_world = None
-        self._init_tree()
         self.quirky_deliveries = gopher_behaviours.delivery.GopherDeliveries(name="Quirky Deliveries")
         self.current_eta = gopher_delivery_msgs.DeliveryETA()  # empty ETA
         self.response = gopher_delivery_srvs.DeliveryResultResponse()
@@ -73,6 +68,7 @@ class GopherHiveMind(object):
         self.response.error_message = ""
 
     def _init_tree(self):
+        self.gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
         self.root = py_trees.composites.Parallel(
             name="HiveMind",
             policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ALL
@@ -140,20 +136,38 @@ class GopherHiveMind(object):
         """
         Delayed ros setup.
         """
+        self._init_tree()
+
         rospy.on_shutdown(self.shutdown)
         self.parameters = Parameters()
         self.quirky_deliveries.express = self.parameters.express
         self.quirky_deliveries.include_parking_behaviours = self.parameters.parking
         self.quirky_deliveries.setup(timeout)
+        self.behaviour_status = gopher_delivery_msgs.BehaviourReport.BUSY
 
-        self._delivery_goal_service = rospy.Service('delivery/goal', gopher_delivery_srvs.DeliveryGoal, self._goal_service_callback)
-        self._delivery_feedback_publisher = rospy.Publisher('delivery/feedback', gopher_delivery_msgs.DeliveryFeedback, queue_size=1, latch=True)
-        self._status_pub = rospy.Publisher('~status', gopher_delivery_msgs.DeliveryManagerStatus, queue_size=1, latch=True)
-        self._delivery_goal_cancel_sub = rospy.Subscriber('delivery/cancel', std_msgs.Empty, self._goal_cancel_callback)
-        self._eta_sub = rospy.Subscriber('/navi/eta', gopher_delivery_msgs.DeliveryETA, self._eta_callback)
-        self._delivery_result_service = rospy.Service('delivery/result', gopher_delivery_srvs.DeliveryResult, self._result_service_callback)
-        self._status_pub.publish(gopher_delivery_msgs.DeliveryManagerStatus(status=gopher_delivery_msgs.DeliveryManagerStatus.BUSY))
+        latched = True
+        queue_size_five = 5
+        self.publishers = rocon_python_comms.utils.Publishers(
+            [
+                ('feedback', self.gopher.topics.delivery_feedback, gopher_delivery_msgs.DeliveryFeedback, latched, queue_size_five),
+                ('report', self.gopher.topics.behaviour_report, gopher_delivery_msgs.BehaviourReport, latched, queue_size_five),
+            ]
+        )
+        self.services = rocon_python_comms.utils.Services(
+            [
+                ('delivery_result', self.gopher.services.delivery_result, gopher_delivery_srvs.DeliveryResult, self._result_service_callback),
+                ('delivery_goal', self.gopher.services.delivery_goal, gopher_delivery_srvs.DeliveryGoal, self._goal_service_callback)
+            ]
+        )
+        self.subscribers = rocon_python_comms.utils.Subscribers(
+            [
+                ('current_world', self.gopher.topics.world, std_msgs.String, self.current_world_callback),
+                ('delivery_cancel', self.gopher.topics.delivery_cancel, std_msgs.Empty, self._goal_cancel_callback),
+                ('eta', self.gopher.topics.eta, gopher_delivery_msgs.DeliveryETA, self._eta_callback),
+            ]
+        )
 
+        self.publishers.report.publish(gopher_delivery_msgs.BehaviourReport(status=self.behaviour_status))
         self.tree.setup(timeout)
 
     def _eta_callback(self, msg):
@@ -192,8 +206,8 @@ class GopherHiveMind(object):
             print("************************************************************************************")
             print("")
         elif result == gopher_behaviours.delivery.PreTickResult.NEW_DELIVERY_TREE_WITHERED_AND_DIED:
-            self.cancelled = True
-            self.cancelled_message = "Failed to grow the delivery subtree."
+            self.response.result = gopher_delivery_msgs.DeliveryErrorCodes.RESULT_FAILED
+            self.response.error_message = "delivery couldn't create the required behaviours to execute"
 
     def post_tick_handler(self, behaviour_tree):
         """
@@ -202,7 +216,7 @@ class GopherHiveMind(object):
         self.quirky_deliveries.post_tock_update()
         # Check for delivery result update
         if self.response.result == gopher_delivery_msgs.DeliveryErrorCodes.RESULT_PENDING:
-            if self.global_abort.status == py_trees.common.Status.RUNNING:
+            if self.quirky_deliveries.is_interrupted():
                 self.response.result = gopher_delivery_msgs.DeliveryErrorCodes.RESULT_ABORTED
                 self.response.error_message = "delivery aborted"
             elif self.quirky_deliveries.is_running_but_cancelled():
@@ -223,17 +237,18 @@ class GopherHiveMind(object):
             msg.remaining_locations = self.quirky_deliveries.blackboard.remaining_locations
             msg.status_message = self.quirky_deliveries.feedback_message
             msg.eta = self.current_eta
-            self._delivery_feedback_publisher.publish(msg)
+            self.publishers.feedback.publish(msg)
 
         # Manager Status
+        old_status = self.behaviour_status
         if self.idle.status == py_trees.common.Status.SUCCESS:
-            self._status_pub.publish(gopher_delivery_msgs.DeliveryManagerStatus(status=gopher_delivery_msgs.DeliveryManagerStatus.READY))
-        elif self.global_abort.status == py_trees.common.Status.RUNNING:
-            self._status_pub.publish(gopher_delivery_msgs.DeliveryManagerStatus(status=gopher_delivery_msgs.DeliveryManagerStatus.BUSY))
+            self.behaviour_status = gopher_delivery_msgs.BehaviourReport.READY
         elif self.response.result == gopher_delivery_msgs.DeliveryErrorCodes.RESULT_PENDING:
-            self._status_pub.publish(gopher_delivery_msgs.DeliveryManagerStatus(status=gopher_delivery_msgs.DeliveryManagerStatus.DELIVERING))
-        else:  # it's failed setup, or it's busy cancelling, parking or something
-            self._status_pub.publish(gopher_delivery_msgs.DeliveryManagerStatus(status=gopher_delivery_msgs.DeliveryManagerStatus.BUSY))
+            self.behaviour_status = gopher_delivery_msgs.BehaviourReport.DELIVERING
+        else:  # it's aborting, failed setup, or it's busy cancelling, parking or something
+            self.behaviour_status = gopher_delivery_msgs.BehaviourReport.BUSY
+        if old_status != self.behaviour_status:
+            self.publishers.report.publish(gopher_delivery_msgs.BehaviourReport(status=self.behaviour_status))
 
     ##############################################################################
     # Ros Methods

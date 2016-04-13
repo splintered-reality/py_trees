@@ -21,7 +21,6 @@ import gopher_behaviours
 from gopher_behaviours.cfg import CustomDeliveriesConfig
 import gopher_configuration
 import gopher_delivery_msgs.msg as gopher_delivery_msgs
-import gopher_navi_msgs.msg as gopher_navi_msgs
 import gopher_semantics
 import rocon_console.console as console
 import rocon_python_comms
@@ -44,7 +43,7 @@ class CustomDeliveryOverseer(object):
     def __init__(self):
         self.gopher = gopher_configuration.Configuration()
         self.semantics = gopher_semantics.Semantics(self.gopher.namespaces.semantics)
-        self.delivering = False  # is the delivery manager busy?
+        self.busy = False  # is the gopher busy?
         self.custom_delivering = False  # are we doing something ourselves?
         self.locations = None
         self.dynamic_reconfigure_server =\
@@ -52,23 +51,17 @@ class CustomDeliveryOverseer(object):
         self.express_delivery = gopher_behaviours.scripts.deliveries.CustomDelivery(verbose_feedback=False)
         self.subscribers = rocon_python_comms.utils.Subscribers(
             [
-                ('delivery_manager_status', '~delivery_manager_status', gopher_delivery_msgs.DeliveryManagerStatus, self.delivery_manager_status_cb),
+                ('report', self.gopher.topics.behaviour_report, gopher_delivery_msgs.BehaviourReport, self.behaviour_report_cb),
                 ('trigger', self.gopher.topics.delivery_custom, std_msgs.Empty, self.delivery_custom_trigger_cb),
                 # ('init_homebase', self.gopher.buttons.stop, std_msgs.Empty, self.stop_cb)
             ]
         )
-#        not_latched = False
-#         self.publishers = rocon_python_comms.utils.Publishers(
-#             [
-#                 ('teleport_homebase', self.gopher.actions.teleport + "/goal", gopher_navi_msgs.TeleportActionGoal, not_latched, 5),
-#             ]
-#         )
 
-    def delivery_manager_status_cb(self, msg):
-        self.delivering = (msg.status != gopher_delivery_msgs.DeliveryManagerStatus.READY)
+    def behaviour_report_cb(self, msg):
+        self.busy = (msg.status != gopher_delivery_msgs.BehaviourReport.READY)
 
     def delivery_custom_trigger_cb(self, unused_msg):
-        if not self.delivering:
+        if not self.busy:
             rospy.loginfo("Custom Delivery : custom delivery triggered via joystick and initiated.")
             self.express_delivery.send(self.locations, include_parking_behaviours=False)
             # Small chance of race condition here since it now competes with the official
@@ -77,17 +70,6 @@ class CustomDeliveryOverseer(object):
             self.custom_delivering = True
         else:
             rospy.loginfo("Custom Delivery : rejecting request as the delivery manager is already busy.")
-
-#     def stop_cb(self, unused_msg):
-#         if not self.delivering:
-#             rospy.loginfo("Custom Delivery : init'ing the robot on the homebase.")
-#             action_goal = gopher_navi_msgs.TeleportActionGoal()
-#             action_goal.header.stamp = rospy.Time.now()
-#             goal = gopher_navi_msgs.TeleportGoal()
-#             goal.location = "homebase"
-#             goal.special_effects = True
-#             action_goal.goal = goal
-#             self.publishers.teleport_homebase.publish(action_goal)
 
     def dynamic_reconfigure_cb(self, config, level):
         """

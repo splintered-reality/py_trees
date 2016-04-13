@@ -122,28 +122,6 @@ def create_check_for_go_button_press(name="Check for Go Button Press"):
     )
     return behaviour
 
-
-def create_check_for_stop_button_press(name="Check for Stop Button Press"):
-    """
-    Has there recently been a go button press anytime in the recent past?
-    This is more useful as a non-blocking decision element (as opposed to
-    the :py:func:`~gopher_behaviours.interactions.create_wait_for_go_button`
-    function.
-
-    Note that it will reset as soon as an event (i.e. SUCCESS) is detected.
-
-    :param str name: the behaviour name.
-    """
-    gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
-    MetaBehaviour = py_trees.meta.running_is_failure(py_trees.subscribers.WaitForSubscriberData)
-    behaviour = MetaBehaviour(
-        name=name,
-        topic_name=gopher.buttons.stop,
-        topic_type=std_msgs.Empty,
-        clearing_policy=py_trees.common.ClearingPolicy.ON_SUCCESS
-    )
-    return behaviour
-
 ##############################################################################
 # Behaviours
 ##############################################################################
@@ -262,7 +240,6 @@ class Notification(py_trees.Behaviour):
 
     def setup(self, timeout):
         self.logger.debug("  %s [Notification::setup()]" % self.name)
-        self.logger.info("  %s [Notification::setup()]" % self.name)
         try:
             rospy.wait_for_service(self.topic_name, timeout)
             return True
@@ -273,7 +250,6 @@ class Notification(py_trees.Behaviour):
 
     def initialise(self):
         self.logger.debug("  %s [Notification::initialise()]" % self.name)
-        self.logger.info("  %s [Notification::initialise()]" % self.name)
         request = gopher_std_srvs.NotifyRequest()
         request.id = unique_id.toMsg(self.id)
         request.action = gopher_std_srvs.NotifyRequest.START
@@ -297,7 +273,6 @@ class Notification(py_trees.Behaviour):
         Might be useful having a timer here if the notification is a timed one so that it returns
         success when the notification is supposed to have stopped.
         """
-        self.logger.info("  %s [Notification::update()]" % self.name)
         return py_trees.Status.RUNNING
 
     def terminate(self, new_status):
@@ -305,7 +280,6 @@ class Notification(py_trees.Behaviour):
         Send a stop message to the status notifier if necessary.
         """
         self.logger.debug("  %s [Notification::terminate()][%s->%s]" % (self.name, self.status, new_status))
-        self.logger.info("  %s [Notification::terminate()][%s->%s]" % (self.name, self.status, new_status))
         if self.cancel_on_stop and not self.service_failed and self.sent_notification:
             request = gopher_std_srvs.NotifyRequest()
             request.id = unique_id.toMsg(self.id)

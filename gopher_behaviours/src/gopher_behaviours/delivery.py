@@ -26,6 +26,7 @@ import gopher_semantics
 import gopher_semantic_msgs.msg as gopher_semantic_msgs
 import gopher_std_msgs.msg as gopher_std_msgs
 import gopher_std_msgs.srv as gopher_std_srvs
+import operator
 import py_trees
 # import rocon_console.console as console
 import rocon_python_utils
@@ -99,8 +100,14 @@ def create_delivery_subtree(world, locations, express=False):
         variable_name="cancel_requested",
         expected_value=True
     )
-    cancelled_by_button = interactions.create_check_for_stop_button_press("Stop Button?")
-
+    # this needs to remember its state...once cancelled, there is no going back
+    cancelled_by_button = py_trees.blackboard.WaitForBlackboardVariable(
+        name="Stop Button?",
+        variable_name="event_stop_button",
+        expected_value=True,
+        comparison_operator=operator.eq,
+        clearing_policy=py_trees.common.ClearingPolicy.NEVER
+    )
     is_cancelled = py_trees.meta.inverter(py_trees.Selector)(name="Cancelled?")
 
     ########################
@@ -550,8 +557,8 @@ class GopherDeliveries(object):
                 self.init()
             self.incoming_goal = None
 
-        elif self.root is not None and self.root.status == py_trees.Status.SUCCESS:
-            # last goal was achieved and no new goal, so swap this current subtree out
+        elif self.root is not None and (self.root.status != py_trees.Status.RUNNING):
+            # last goal was achieved, failed, or interrupted and no new goal, so swap this current subtree out
             self.old_goal_id = self.root.id if self.root is not None else None
             self.init()
             result = PreTickResult.TREE_FELLED
