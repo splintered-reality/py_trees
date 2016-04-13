@@ -23,6 +23,7 @@ import gopher_configuration
 import gopher_std_msgs.msg as gopher_std_msgs
 import gopher_std_msgs.srv as gopher_std_srvs
 import navigation
+import operator
 import numpy
 import py_trees
 
@@ -57,7 +58,14 @@ def create_repark_subtree():
         cancel_on_stop=True,
         duration=gopher_std_srvs.NotifyRequest.INDEFINITE
     )
-    wait_for_go_button_press = interactions.create_wait_for_go_button("Wait for Go Button")
+    # usually have the button event handler/blackboard combo and that is less expensive than the subscriber method
+    wait_for_go_button_press = py_trees.blackboard.WaitForBlackboardVariable(
+        name="Wait for Go Button",
+        variable_name="event_go_button",
+        expected_value=True,
+        comparison_operator=operator.eq,
+        clearing_policy=py_trees.common.ClearingPolicy.ON_INITIALISE
+    )
     telepark.add_child(flash_notification)
     telepark.add_child(wait_for_go_button_press)
     return telepark

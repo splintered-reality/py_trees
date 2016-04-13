@@ -278,6 +278,6 @@ class WaitForBlackboardVariable(Behaviour):
         """
         Always reset the variable if it was invalidated.
         """
-        self.logger.info("  %s [Notification::terminate()][%s->%s]" % (self.name, self.status, new_status))
+        self.logger.debug("  %s [WaitForBlackboardVariable::terminate()][%s->%s]" % (self.name, self.status, new_status))
         if new_status == common.Status.INVALID:
             self.matching_result = None

@@ -24,6 +24,7 @@ import elf_msgs.msg as elf_msgs
 import gopher_configuration
 import gopher_std_msgs.msg as gopher_std_msgs
 import gopher_std_msgs.srv as gopher_std_srvs
+import operator
 import py_trees
 import rospy
 import std_msgs.msg as std_msgs
@@ -186,7 +187,14 @@ class TeleopInitialisation(py_trees.Selector):
             button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
             duration=gopher_std_srvs.NotifyRequest.INDEFINITE
         )
-        wait_for_go_button_press = interactions.create_wait_for_go_button("Wait for Go Button")
+        # usually have the button event handler/blackboard combo and that is less expensive than the subscriber method
+        wait_for_go_button_press = py_trees.blackboard.WaitForBlackboardVariable(
+            name="Wait for Go Button",
+            variable_name="event_go_button",
+            expected_value=True,
+            comparison_operator=operator.eq,
+            clearing_policy=py_trees.common.ClearingPolicy.ON_INITIALISE
+        )
         hang_around = py_trees.behaviours.Running("Hang Around")
         teleport = navigation.create_homebase_teleport()
 

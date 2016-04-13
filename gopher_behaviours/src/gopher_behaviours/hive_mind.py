@@ -59,7 +59,6 @@ class Parameters(object):
 class GopherHiveMind(object):
     def __init__(self):
         self.logger = py_trees.logging.get_logger("HiveMind")
-        self.gopher = gopher_configuration.Configuration()
         self.current_world = None
         self.quirky_deliveries = gopher_behaviours.delivery.GopherDeliveries(name="Quirky Deliveries")
         self.current_eta = gopher_delivery_msgs.DeliveryETA()  # empty ETA
@@ -119,11 +118,12 @@ class GopherHiveMind(object):
         Fill in the tree with a 'default' delivery so we can render an exampler tree running
         with a delivery.
         """
-        (deliveries_root, unused_deliveries, unused_en_route, unused_is_cancelled) = gopher_behaviours.delivery.create_delivery_subtree(
+        (deliveries_root, unused_subtrees) = gopher_behaviours.delivery.create_delivery_subtree(
             world="earth",
             locations=["beer_fridge", "ashokas_hell"],
             express=False
         )
+        self._init_tree()
         self.tree.insert_subtree(deliveries_root, self.priorities.id, 1)
         py_trees.display.render_dot_tree(self.tree.root, visibility_level)
         self.tree.prune_subtree(deliveries_root.id)

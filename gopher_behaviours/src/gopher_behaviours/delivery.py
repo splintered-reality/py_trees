@@ -28,7 +28,7 @@ import gopher_std_msgs.msg as gopher_std_msgs
 import gopher_std_msgs.srv as gopher_std_srvs
 import operator
 import py_trees
-# import rocon_console.console as console
+import rocon_console.console as console
 import rocon_python_utils
 import rospy
 import std_msgs.msg as std_msgs
@@ -69,6 +69,16 @@ class State(enum.Enum):
     RECOVERING = "RECOVERING"
 
 
+class Subtrees(object):
+    def __init__(self):
+        self.unparking = None
+        self.parking = None
+        self.recovering = None
+        self.cancelling = None
+        self.is_cancelled = None
+        self.en_route = None
+
+
 class PreTickResult(enum.IntEnum):
     """ An enumerator representing the status of a delivery behaviour """
 
@@ -91,29 +101,49 @@ def create_delivery_subtree(world, locations, express=False):
     :param bool express: dont wait when waiting
     """
     gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
+    subtrees = Subtrees()
 
     ########################
     # Cancel Guard
     ########################
+    subtrees.cancelling = py_trees.composites.Sequence(name="Cancelling")
+    subtrees.is_cancelled = py_trees.Selector(name="Is Cancelled?")
     cancelled_by_cancel_request = py_trees.blackboard.CheckBlackboardVariable(
         name="Cancel Requested?",
         variable_name="cancel_requested",
         expected_value=True
     )
-    # this needs to remember its state...once cancelled, there is no going back
-    cancelled_by_button = py_trees.blackboard.WaitForBlackboardVariable(
+    cancelled_by_button = py_trees.blackboard.CheckBlackboardVariable(
         name="Stop Button?",
         variable_name="event_stop_button",
+        expected_value=True
+    )
+    teleop_to_homebase = py_trees.composites.Parallel(
+        name="Teleop to Homebase",
+        policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE
+    )
+    flash_i_need_help_cancelling = interactions.Notification(
+        name='Flash Help Me',
+        message='flashing for help while cancelling',
+        led_pattern=gopher.led_patterns.humans_i_need_help,
+        button_confirm=gopher_std_msgs.Notification.BUTTON_ON,
+        button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
+        cancel_on_stop=True,
+        duration=gopher_std_srvs.NotifyRequest.INDEFINITE
+    )
+    teleport = navigation.create_homebase_teleport()
+    wait_for_go_button_cancelling = py_trees.blackboard.WaitForBlackboardVariable(
+        name="Wait for Go Button",
+        variable_name="event_go_button",
         expected_value=True,
         comparison_operator=operator.eq,
-        clearing_policy=py_trees.common.ClearingPolicy.NEVER
+        clearing_policy=py_trees.common.ClearingPolicy.ON_INITIALISE
     )
-    is_cancelled = py_trees.meta.inverter(py_trees.Selector)(name="Cancelled?")
 
     ########################
     # Moving Around
     ########################
-    en_route = py_trees.OneshotSequence(name="En Route")
+    subtrees.en_route = py_trees.OneshotSequence(name="En Route")
     movin_around_children = create_locations_subtree(world, locations, express)
 
     if not movin_around_children:
@@ -123,87 +153,49 @@ def create_delivery_subtree(world, locations, express=False):
     ########################
     # Parking/Unparking
     ########################
-    unparking = unpark.UnPark("UnPark")
-    parking = park.Park("Park")
-    recovering = py_trees.composites.Sequence(name="Recovering")
+    subtrees.unparking = unpark.UnPark("UnPark")
+    subtrees.parking = park.Park("Park")
+    subtrees.recovering = py_trees.composites.Sequence(name="Recovering")
     repark = park.create_repark_subtree()
 
     ########################
     # Core
     ########################
     root = py_trees.composites.Selector(name="Deliver or Die")
-    deliveries = py_trees.Sequence("Deliveries")
+    subtrees.deliveries = py_trees.Sequence("Deliveries")
     todo_or_not = py_trees.composites.Selector(name="Do or be Cancelled?")
-    delivery = py_trees.composites.Parallel(
-        name="Delivery",
-        policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ALL
-    )
-
-    ########################
-    # Teleop Home on Cancel
-    ########################
-    cancelling = py_trees.composites.Sequence("Cancelled")
-    teleop_to_homebase = py_trees.composites.Parallel(
-        name="Teleop to Homebase",
-        policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE
-    )
-    flash_i_need_help = interactions.Notification(
-        name='Flash Help Me',
-        message='waiting for button press to continue',
-        led_pattern=gopher.led_patterns.humans_i_need_help,
-        button_confirm=gopher_std_msgs.Notification.BUTTON_ON,
-        button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
-        cancel_on_stop=True,
-        duration=gopher_std_srvs.NotifyRequest.INDEFINITE
-    )
-    wait_for_go_button_press = interactions.create_wait_for_go_button("Wait for Go Button")
-    teleport = navigation.create_homebase_teleport()
-
-    ########################
-    # Delivery State
-    ########################
-    state_cancelling = py_trees.blackboard.SetBlackboardVariable(name="DS 'Cancelling'", variable_name="delivery_state", variable_value=State.CANCELLING)
-    state_en_route = py_trees.blackboard.SetBlackboardVariable(name="DS 'En Route'", variable_name="delivery_state", variable_value=State.EN_ROUTE)
-    state_unparking = py_trees.blackboard.SetBlackboardVariable(name="DS 'Unparking'", variable_name="delivery_state", variable_value=State.UNPARKING)
-    state_parking = py_trees.blackboard.SetBlackboardVariable(name="DS 'Parking'", variable_name="delivery_state", variable_value=State.PARKING)
-    state_recovering = py_trees.blackboard.SetBlackboardVariable(name="DS 'Recovering'", variable_name="delivery_state", variable_value=State.RECOVERING)
 
     ########################
     # Blackboxes
     ########################
     todo_or_not.blackbox_level = py_trees.common.BlackBoxLevel.BIG_PICTURE
-    delivery.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
-    recovering.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
-    cancelling.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
+    subtrees.is_cancelled.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
+    subtrees.recovering.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
+    subtrees.cancelling.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
     teleop_to_homebase.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
 
     ########################
     # Graph
     ########################
-    root.add_child(deliveries)
-    deliveries.add_child(state_unparking)
-    deliveries.add_child(unparking)
-    deliveries.add_child(todo_or_not)
-    todo_or_not.add_child(delivery)
-    delivery.add_child(is_cancelled)
-    is_cancelled.add_child(cancelled_by_button)
-    is_cancelled.add_child(cancelled_by_cancel_request)
-    delivery.add_child(en_route)
-    en_route.add_child(state_en_route)
-    en_route.add_children(movin_around_children)
-    todo_or_not.add_child(cancelling)
-    cancelling.add_child(state_cancelling)
-    cancelling.add_child(teleop_to_homebase)
-    teleop_to_homebase.add_child(flash_i_need_help)
-    teleop_to_homebase.add_child(wait_for_go_button_press)
-    cancelling.add_child(teleport)
-    deliveries.add_child(state_parking)
-    deliveries.add_child(parking)
-    root.add_child(recovering)
-    recovering.add_child(state_recovering)
-    recovering.add_child(repark)
+    root.add_child(subtrees.deliveries)
+    subtrees.deliveries.add_child(subtrees.unparking)
+    subtrees.deliveries.add_child(todo_or_not)
+    todo_or_not.add_child(subtrees.cancelling)
+    subtrees.cancelling.add_child(subtrees.is_cancelled)
+    subtrees.is_cancelled.add_child(cancelled_by_button)
+    subtrees.is_cancelled.add_child(cancelled_by_cancel_request)
+    subtrees.cancelling.add_child(teleop_to_homebase)
+    teleop_to_homebase.add_child(flash_i_need_help_cancelling)
+    teleop_to_homebase.add_child(wait_for_go_button_cancelling)
+    subtrees.cancelling.add_child(teleport)
 
-    return (root, deliveries, en_route, is_cancelled)
+    todo_or_not.add_child(subtrees.en_route)
+    subtrees.en_route.add_children(movin_around_children)
+    subtrees.deliveries.add_child(subtrees.parking)
+    root.add_child(subtrees.recovering)
+    subtrees.recovering.add_child(repark)
+
+    return (root, subtrees)
 
 
 def create_locations_subtree(current_world, locations, express=False):
@@ -440,11 +432,9 @@ class GopherDeliveries(object):
         Reusable initialisation for when we clear the delivery tree.
         """
         self.root = None
-        self.deliveries_subtree = None
-        self.en_route_subtree = None
-        self.is_cancelled_subtree = None
+        self.subtrees = None
         self.init_blackboard_variables(traversed_locations=[], remaining_locations=[])
-        self.state = self.blackboard.delivery_state
+        self.state = State.IDLE
 
     @property
     def state(self):
@@ -461,7 +451,7 @@ class GopherDeliveries(object):
         """
         self.gopher = gopher_configuration.Configuration()
         self.semantics = gopher_semantics.Semantics(self.gopher.namespaces.semantics)
-        (deliveries_root, unused_deliveries, unused_en_route, unused_is_cancelled) = create_delivery_subtree(
+        (deliveries_root, unused_subtrees) = create_delivery_subtree(
             world="earth",
             locations=["beer_fridge", "ashokas_hell"],
             express=False
@@ -482,7 +472,12 @@ class GopherDeliveries(object):
 
     def set_goal(self, locations):
         """
-        Callback for receipt of a new goal
+        Callback for receipt of a new goal. This can be called while the tree is ticking,
+        so make sure you don't read/do anything with the blackboard here.
+
+        This makes alot of checks to see whether it is viable to insert a new goal on
+        the *next* tick. It doesn't actually do the insertion, yet.
+
         :param [str] locations: semantic locations (try to match these against the system served Map Locations list via the unique_name)
         :return: tuple of (gopher_delivery_msgs.DeliveryErrorCodes, string)
         """
@@ -540,7 +535,7 @@ class GopherDeliveries(object):
             self.init_blackboard_variables(traversed_locations=[] if not self.root else self.blackboard.traversed_locations,
                                            remaining_locations=self.incoming_goal
                                            )
-            (self.root, self.deliveries_subtree, self.en_route_subtree, self.is_cancelled_subtree) = create_delivery_subtree(
+            (self.root, self.subtrees) = create_delivery_subtree(
                 current_world,
                 self.incoming_goal,
                 self.express
@@ -566,15 +561,32 @@ class GopherDeliveries(object):
 
     def post_tock_update(self):
         """
-        Check the current state and set a feedback message accordingly.
+        Save the state and set a feedback message that is useful for above.
         """
+        # state
+        if self.root is None or self.root.status == py_trees.common.Status.SUCCESS:
+            self.state = State.IDLE
+        elif self.subtrees.en_route.status == py_trees.common.Status.RUNNING:
+            self.state = State.EN_ROUTE
+        elif self.subtrees.cancelling.status == py_trees.common.Status.RUNNING:
+            self.state = State.CANCELLING
+        elif self.subtrees.unparking.status == py_trees.common.Status.RUNNING:
+            self.state = State.UNPARKING
+        elif self.subtrees.parking.status == py_trees.common.Status.RUNNING:
+            self.state = State.PARKING
+        elif self.subtrees.recovering.status == py_trees.common.Status.RUNNING:
+            self.state = State.RECOVERING
+        elif self.root.status == py_trees.common.Status.INVALID:
+            self.state = State.INTERRUPTED
+        else:
+            print(console.red + "ERROR : reached an invalid delivery tree state, please report." + console.reset)
+        # feedback message
         if self.root is None or self.root.status == py_trees.common.Status.SUCCESS:
             self.feedback_message = State.IDLE
-            self.blackboard.delivery_state = State.IDLE
-        elif self.blackboard.delivery_state == State.EN_ROUTE:
+        elif self.subtrees.en_route.status == py_trees.common.Status.RUNNING:
             tip = self.root.tip()
-            delivery_child = self.en_route_subtree.current_child
-            if self.en_route_subtree.status == py_trees.Status.RUNNING:
+            delivery_child = self.subtrees.en_route.current_child
+            if self.subtrees.en_route.status == py_trees.Status.RUNNING:
                 if any(map(lambda x: isinstance(delivery_child, x), [navigation.MoveIt, elevators.Elevators])):
                     if self.blackboard.traversed_locations:
                         self.feedback_message = "moving from '{0}' to '{1}'".format(self.blackboard.traversed_locations[-1], self.blackboard.remaining_locations[0])
@@ -583,14 +595,15 @@ class GopherDeliveries(object):
                 elif isinstance(tip, Waiting):
                     self.feedback_message = tip.feedback_message
         else:
-            self.feedback_message = str(self.blackboard.delivery_state).title()
+            tip = self.root.tip()
+            self.feedback_message = tip.feedback_message if self.root.tip() is not None else "interrupted"  # str(self.state).title()
 
     #################################
     # Introspection
     #################################
 
     def has_subtree(self):
-        return self.root.status is not None
+        return self.root is not None
 
     def is_running(self):
         if self.root is not None:
@@ -612,15 +625,15 @@ class GopherDeliveries(object):
 
     def is_running_but_cancelled(self):
         if self.root is not None and self.root.status != py_trees.Status.INVALID:
-            return self.is_cancelled_subtree.status == py_trees.Status.FAILURE
+            return self.subtrees.is_cancelled.status == py_trees.Status.SUCCESS
         return False
 
     def is_running_and_en_route(self):
         if self.root is not None and self.en_route.status == py_trees.Status.RUNNING:
-            return self.en_route_subtree.status != py_trees.Status.INVALID
+            return self.subtrees.en_route.status != py_trees.Status.INVALID
         return False
 
     def is_running_but_failed(self):
         if self.root is not None and self.root.status != py_trees.Status.INVALID:
-            return self.deliveries_subtree.status == py_trees.Status.FAILURE
+            return self.subtrees.deliveries.status == py_trees.Status.FAILURE
         return False
