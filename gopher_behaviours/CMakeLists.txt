@@ -47,9 +47,9 @@ catkin_install_python(
         scripts/demo_repark
         scripts/demo_move_base
         scripts/demo_parking
-        scripts/demo_initialisation
+        scripts/demo_elf
         scripts/demo_simple_motions
-        scripts/gopher_hive_mind.py
+        scripts/splintered_reality.py
         scripts/gopher_elevator_run
         scripts/gopher_delivery_run
         scripts/custom_delivery_overseer.py
