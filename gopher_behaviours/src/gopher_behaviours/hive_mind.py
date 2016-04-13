@@ -152,7 +152,7 @@ class GopherHiveMind(object):
         self._delivery_goal_cancel_sub = rospy.Subscriber('delivery/cancel', std_msgs.Empty, self._goal_cancel_callback)
         self._eta_sub = rospy.Subscriber('/navi/eta', gopher_delivery_msgs.DeliveryETA, self._eta_callback)
         self._delivery_result_service = rospy.Service('delivery/result', gopher_delivery_srvs.DeliveryResult, self._result_service_callback)
-        self._status_pub.publish(gopher_delivery_msgs.DeliveryManagerStatus(status=gopher_delivery_msgs.DeliveryManagerStatus.IDLING))
+        self._status_pub.publish(gopher_delivery_msgs.DeliveryManagerStatus(status=gopher_delivery_msgs.DeliveryManagerStatus.BUSY))
 
         self.tree.setup(timeout)
 
@@ -226,12 +226,14 @@ class GopherHiveMind(object):
             self._delivery_feedback_publisher.publish(msg)
 
         # Manager Status
-        if self.global_abort.status == py_trees.common.Status.RUNNING:
-            self._status_pub.publish(gopher_delivery_msgs.DeliveryManagerStatus(status=gopher_delivery_msgs.DeliveryManagerStatus.GLOBAL_ABORT))
-        elif self.quirky_deliveries.is_running():
+        if self.idle.status == py_trees.common.Status.SUCCESS:
+            self._status_pub.publish(gopher_delivery_msgs.DeliveryManagerStatus(status=gopher_delivery_msgs.DeliveryManagerStatus.READY))
+        elif self.global_abort.status == py_trees.common.Status.RUNNING:
+            self._status_pub.publish(gopher_delivery_msgs.DeliveryManagerStatus(status=gopher_delivery_msgs.DeliveryManagerStatus.BUSY))
+        elif self.response.result == gopher_delivery_msgs.DeliveryErrorCodes.RESULT_PENDING:
             self._status_pub.publish(gopher_delivery_msgs.DeliveryManagerStatus(status=gopher_delivery_msgs.DeliveryManagerStatus.DELIVERING))
-        else:
-            self._status_pub.publish(gopher_delivery_msgs.DeliveryManagerStatus(status=gopher_delivery_msgs.DeliveryManagerStatus.IDLING))
+        else:  # it's failed setup, or it's busy cancelling, parking or something
+            self._status_pub.publish(gopher_delivery_msgs.DeliveryManagerStatus(status=gopher_delivery_msgs.DeliveryManagerStatus.BUSY))
 
     ##############################################################################
     # Ros Methods

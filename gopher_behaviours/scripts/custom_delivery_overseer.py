@@ -65,7 +65,7 @@ class CustomDeliveryOverseer(object):
 #         )
 
     def delivery_manager_status_cb(self, msg):
-        self.delivering = (msg.status != gopher_delivery_msgs.DeliveryManagerStatus.IDLING)
+        self.delivering = (msg.status != gopher_delivery_msgs.DeliveryManagerStatus.READY)
 
     def delivery_custom_trigger_cb(self, unused_msg):
         if not self.delivering:
