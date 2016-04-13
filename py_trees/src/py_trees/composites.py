@@ -221,13 +221,13 @@ class Selector(Composite):
            Should it abort if that returns success or fail, should it be ignored,
            should it be done before/after children, should it be open to configuration?
         """
+        self.logger.debug("  %s [Selector.tick()]" % self.name)
         # Required behaviour for *all* behaviours and composites is
         # for tick() to check if it isn't running and initialise
-        self.logger.debug("  %s [Selector.tick()]" % self.name)
         if self.status != Status.RUNNING:
-            # sequence specific handling
-            self.current_child = None
-            # subclass (user) handling
+            # selectors dont do anything specific on initialisation
+            #   - the current child is managed by the update, never needs to be 'initialised'
+            # run subclass (user) handles
             self.initialise()
         # run any work designated by a customised instance of this class
         self.update()
@@ -239,7 +239,7 @@ class Selector(Composite):
                     if node.status == Status.RUNNING or node.status == Status.SUCCESS:
                         self.current_child = child
                         self.status = node.status
-                        if (previous is not None) and (previous != self.current_child) and (previous.status == Status.RUNNING):
+                        if (previous is not None) and (previous != self.current_child) and (previous.status != Status.INVALID):
                             previous.stop(Status.INVALID)
                         yield self
                         return
