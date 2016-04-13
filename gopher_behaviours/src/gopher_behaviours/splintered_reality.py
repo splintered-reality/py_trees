@@ -56,7 +56,7 @@ class Parameters(object):
 ##############################################################################
 
 
-class GopherHiveMind(object):
+class SplinteredReality(object):
     def __init__(self):
         self.logger = py_trees.logging.get_logger("HiveMind")
         self.current_world = None

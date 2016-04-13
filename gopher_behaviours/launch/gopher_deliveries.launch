@@ -17,7 +17,7 @@
 
   <group ns="gopher">
     <param name="deliveries/debug" value="$(arg debug)"/>
-    <node name="behaviours" type="gopher_hive_mind.py" pkg="gopher_behaviours">
+    <node name="behaviours" type="splintered_reality.py" pkg="gopher_behaviours">
       <param name="express"                       value="$(arg express)"/>
       <param name="parking"                       value="$(arg parking)"/>
       <remap from="delivery/goal"                 to="/rocon/delivery/goal"/>
