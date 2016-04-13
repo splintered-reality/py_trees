@@ -456,14 +456,18 @@ class GopherDeliveries(object):
         """
         self.gopher = gopher_configuration.Configuration()
         self.semantics = gopher_semantics.Semantics(self.gopher.namespaces.semantics)
-        (deliveries_root, unused_subtrees) = create_delivery_subtree(
-            world="earth",
-            locations=["beer_fridge", "ashokas_hell"],
-            express=False
-        )
-        self.ros_connected = deliveries_root.setup(timeout)
-        if not self.ros_connected:
-            rospy.logerr("Deliveries : failed to setup with the underlying ros subsystem")
+        if len(self.semantics.locations) > 1:
+            (deliveries_root, unused_subtrees) = create_delivery_subtree(
+                world=self.semantics.worlds.default,
+                locations=self.semantics.locations.keys()[:2],
+                express=False
+            )
+            self.ros_connected = deliveries_root.setup(timeout)
+            if not self.ros_connected:
+                rospy.logerr("Deliveries : failed to setup with the underlying ros subsystem")
+        else:
+            rospy.logerr("Deliveries : not enough locations listed in the semantics to support deliveries.")
+            self.ros_connected = False
 
     def init_blackboard_variables(self, traversed_locations=[], remaining_locations=[]):
         self.blackboard.traversed_locations = traversed_locations
