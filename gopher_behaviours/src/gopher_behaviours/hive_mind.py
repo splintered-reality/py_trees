@@ -64,7 +64,7 @@ class GopherHiveMind(object):
         self.current_eta = gopher_delivery_msgs.DeliveryETA()  # empty ETA
         self.response = gopher_delivery_srvs.DeliveryResultResponse()
         self.response.result = gopher_delivery_msgs.DeliveryErrorCodes.RESULT_UNKNOWN
-        self.response.error_message = ""
+        self.response.message = ""
 
     def _init_tree(self):
         self.gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
@@ -207,7 +207,7 @@ class GopherHiveMind(object):
             print("")
         elif result == gopher_behaviours.delivery.PreTickResult.NEW_DELIVERY_TREE_WITHERED_AND_DIED:
             self.response.result = gopher_delivery_msgs.DeliveryErrorCodes.RESULT_FAILED
-            self.response.error_message = "delivery couldn't create the required behaviours to execute"
+            self.response.message = "delivery couldn't create the required behaviours to execute"
 
     def post_tick_handler(self, behaviour_tree):
         """
@@ -218,16 +218,16 @@ class GopherHiveMind(object):
         if self.response.result == gopher_delivery_msgs.DeliveryErrorCodes.RESULT_PENDING:
             if self.quirky_deliveries.is_interrupted():
                 self.response.result = gopher_delivery_msgs.DeliveryErrorCodes.RESULT_ABORTED
-                self.response.error_message = "delivery aborted"
+                self.response.message = "delivery aborted"
             elif self.quirky_deliveries.is_running_but_cancelled():
                 self.response.result = gopher_delivery_msgs.DeliveryErrorCodes.RESULT_CANCELLED
-                self.response.error_message = "delivery cancelled"
+                self.response.message = "delivery cancelled"
             elif self.quirky_deliveries.is_running_but_failed():
                 self.response.result = gopher_delivery_msgs.DeliveryErrorCodes.RESULT_FAILED
-                self.response.error_message = "delivery failed"
+                self.response.message = "delivery failed"
             elif self.quirky_deliveries.is_finished():
                 self.response.result = gopher_delivery_msgs.DeliveryErrorCodes.SUCCESS
-                self.response.error_message = "success"
+                self.response.message = "success"
         # Feedback
         if self.quirky_deliveries.is_running():
             msg = gopher_delivery_msgs.DeliveryFeedback()
@@ -276,7 +276,7 @@ class GopherHiveMind(object):
             message = "received goal request [%s]" % message
             rospy.loginfo("Delivery : [%s]" % message)
             self.response.result = gopher_delivery_msgs.DeliveryErrorCodes.RESULT_PENDING
-            self.response.error_message = 'pending'
+            self.response.message = 'pending'
         else:
             message = "refused goal request [%s]" % message
             rospy.logwarn("Delivery : [%s]" % message)

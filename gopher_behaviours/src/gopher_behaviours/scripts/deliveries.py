@@ -35,7 +35,7 @@ class CustomDelivery(object):
         try:
             unused_delivery_goal_response = delivery_goal_service(delivery_goal_request)
             if not unused_delivery_goal_response.result == 0:
-                print(console.red + "Delivery goal service call failed: %s" % unused_delivery_goal_response.error_message + console.reset)
+                print(console.red + "Delivery goal service call failed: %s" % unused_delivery_goal_response.message + console.reset)
                 sys.exit()
         except rospy.ServiceException, e:
             print(console.red + "Delivery goal service call failed: %s" % e + console.reset)
@@ -81,7 +81,7 @@ class CustomDelivery(object):
         print(console.cyan + "  traversed: " + console.yellow + "%s" % msg.traversed_locations + console.reset)
         print(console.cyan + "  remaining: " + console.yellow + "%s" % msg.remaining_locations + console.reset)
         print(console.cyan + "  result   : " + console.yellow + "%s" % msg.result + console.reset)
-        print(console.cyan + "  message  : " + console.yellow + "%s" % msg.error_message + console.reset)
+        print(console.cyan + "  message  : " + console.yellow + "%s" % msg.message + console.reset)
         print("")
 
 ##############################################################################

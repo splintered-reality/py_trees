@@ -406,7 +406,6 @@ class GopherDeliveries(object):
 
     Blackboard variables:
 
-     * delivery_state      (rw) [str]   : behaviours in the subtree write the current state as they pass through
      * battery_low_warning (r)  [int]   : used to check if a goal should be accepted or not
      * traversed_locations (rw) [[str]] :
      * remaining_locations (rw) [[str]] :
@@ -438,10 +437,16 @@ class GopherDeliveries(object):
 
     @property
     def state(self):
+        """
+        Stored in the blackboard (for easy debugging).
+        """
         return self.blackboard.delivery_state
 
     @state.setter
     def state(self, new_state):
+        """
+        Nice way of reflecting the state into the blackboard for easy debugging.
+        """
         self.blackboard.delivery_state = new_state
 
     def setup(self, timeout):
@@ -461,7 +466,6 @@ class GopherDeliveries(object):
             rospy.logerr("Deliveries : failed to setup with the underlying ros subsystem")
 
     def init_blackboard_variables(self, traversed_locations=[], remaining_locations=[]):
-        self.blackboard.delivery_state = State.IDLE
         self.blackboard.traversed_locations = traversed_locations
         self.blackboard.remaining_locations = remaining_locations
         self.blackboard.cancel_requested = False
