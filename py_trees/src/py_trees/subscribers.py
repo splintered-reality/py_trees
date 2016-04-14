@@ -181,14 +181,16 @@ class CheckSubscriberVariable(SubscriberHandler):
             self.feedback_message = "have not yet received any messages"
             return common.Status.FAILURE if self.fail_if_no_data else common.Status.RUNNING
 
-        if not hasattr(msg, self.variable_name):
+        check_attr = operator.attrgetter(self.variable_name)
+        try:
+            value = check_attr(msg)
+        except AttributeError:
             rospy.logerr("Behaviours [%s" % self.name + "]: variable name not found [%s]" % self.variable_name)
             print("%s" % msg)
             with self.data_guard:
                 self.feedback_message = "variable name not found [%s]" % self.variable_name
                 return common.Status.FAILURE
 
-        value = getattr(msg, self.variable_name)
         success = self.comparison_operator(value, self.expected_value)
 
         if success:
