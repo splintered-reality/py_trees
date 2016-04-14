@@ -27,8 +27,9 @@ from __future__ import absolute_import
 
 import itertools
 
+from . import common
 from . import logging
-from .behaviours import Behaviour
+from .behaviour import Behaviour
 from .common import Status
 from . import meta
 
@@ -116,6 +117,17 @@ class Composite(Behaviour):
         child.parent = self
         return child.id
 
+    def add_children(self, children):
+        """
+        Adds a child.
+
+        :param Behaviour[] children: children to append to the composite.
+        """
+        for child in children:
+            assert isinstance(child, Behaviour), "children must be behaviours, but you passed in %s" % type(child)
+            self.children.append(child)
+            child.parent = self
+
     def remove_child(self, child):
         """
         Remove the child behaviour from this composite.
@@ -194,23 +206,44 @@ class Selector(Composite):
         self.logger = logging.get_logger("Selector ")
 
     def tick(self):
+        """
+        Run the tick behaviour for this selector. Note that the status
+        of the tick is (for now) always determined by its children, not
+        by the user customised update function.
+
+        For now, the update function just provides a place where classes
+        that inherit this one can do some work *before* running the children.
+        The return status is ignored.
+
+        .. todo::
+
+           Need a strict policy about handling the return status.
+           Should it abort if that returns success or fail, should it be ignored,
+           should it be done before/after children, should it be open to configuration?
+        """
+        self.logger.debug("  %s [Selector.tick()]" % self.name)
         # Required behaviour for *all* behaviours and composites is
         # for tick() to check if it isn't running and initialise
-        self.logger.debug("  %s [Selector.tick()]" % self.name)
         if self.status != Status.RUNNING:
-            # sequence specific handling
-            self.current_child = None
-            # subclass (user) handling
+            # selectors dont do anything specific on initialisation
+            #   - the current child is managed by the update, never needs to be 'initialised'
+            # run subclass (user) handles
             self.initialise()
+        # run any work designated by a customised instance of this class
+        self.update()
         previous = self.current_child
+        previous_was_higher_priority = False
         for child in self.children:
             for node in child.tick():
                 yield node
                 if node is child:
+                    if previous == child:
+                        previous_was_higher_priority = True
                     if node.status == Status.RUNNING or node.status == Status.SUCCESS:
                         self.current_child = child
                         self.status = node.status
-                        if (previous is not None) and (previous != self.current_child) and (previous.status == Status.RUNNING):
+                        # send out stop if this child interrupted a current child that was lower priority
+                        if (previous is not None) and (previous != self.current_child) and (previous.status != Status.INVALID) and not previous_was_higher_priority:
                             previous.stop(Status.INVALID)
                         yield self
                         return
@@ -300,3 +333,72 @@ class Sequence(Composite):
 @meta.oneshot
 class OneshotSequence(Sequence):
     pass
+
+##############################################################################
+# Paralllel
+##############################################################################
+
+
+class Parallel(Composite):
+    """
+    Ticks every child every time the parallel is run (a poor man's form of paralellism).
+
+    Will return :py:data:`~py_trees.common.Status.RUNNING` if any one of them is still
+    running, :py:data:`~py_trees.common.Status.SUCCESS` if they all succeed, or
+    :py:data:`~py_trees.common.Status.FAILURE` if any single one of them fails.
+    """
+    def __init__(self, name="Parallel", policy=common.ParallelPolicy.SUCCESS_ON_ALL, children=None, *args, **kwargs):
+        super(Parallel, self).__init__(name, children, *args, **kwargs)
+        self.logger = logging.get_logger(name)
+        self.policy = policy
+
+    def tick(self):
+        if self.status != Status.RUNNING:
+            # subclass (user) handling
+            self.initialise()
+        self.logger.debug("  %s [tick()]" % self.name)
+        # process them all first
+        for child in self.children:
+            for node in child.tick():
+                yield node
+        # new_status = Status.SUCCESS if self.policy == common.ParallelPolicy.SUCCESS_ON_ALL else Status.RUNNING
+        new_status = Status.RUNNING
+        if any([c.status == Status.FAILURE for c in self.children]):
+            new_status = Status.FAILURE
+        else:
+            if self.policy == common.ParallelPolicy.SUCCESS_ON_ALL:
+                if all([c.status == Status.SUCCESS for c in self.children]):
+                    new_status = Status.SUCCESS
+            elif self.policy == common.ParallelPolicy.SUCCESS_ON_ONE:
+                if any([c.status == Status.SUCCESS for c in self.children]):
+                    new_status = Status.SUCCESS
+        # special case composite - this parallel may have children that are still running
+        # so if the parallel itself has reached a final status, then these running children
+        # need to be made aware of it too
+        if new_status != Status.RUNNING:
+            for child in self.children:
+                if child.status == Status.RUNNING:
+                    # yes, INVALID is right, we are interrupting it. Couldn't use new_status
+                    # anyway, because composites only pass along stop to their children on
+                    # INVALID. That policy is so that we don't end up virallly failing behaviours
+                    # that already succeeded.
+                    child.stop(new_status)
+            self.stop(new_status)
+        self.status = new_status
+        yield self
+
+    @property
+    def current_child(self):
+        if self.status == Status.INVALID:
+            return None
+        if self.status == Status.FAILURE:
+            for child in self.children:
+                if child.status == Status.FAILURE:
+                    return child
+            # shouldn't get here
+        elif self.status == Status.SUCCESS and self.policy == common.ParallelPolicy.SUCCESS_ON_ONE:
+            for child in self.children:
+                if child.status == Status.SUCCESS:
+                    return child
+        else:
+            return self.children[-1]

@@ -18,9 +18,9 @@ simple, yet able to deliver surprisingly rich results.
 Ticking
 -------
 
-A key feature of behaviour trees is the way they 'tick'. To tick a behaviour is to execute some small chunk of
-code on that behaviour to arrive at a decision - success, failure, or still pending (running). To tick an entire
-tree is to start ticking behaviours from the root, using their decisions and the selector-sequence
+A key feature of behaviours and their trees is in the way they :term:`tick`. The execution is like a slice - some small chunk of
+code on a behaviour to arrive at a decision - success, failure, or pending (still running). To tick an entire
+tree of behaviours is to start ticking from the root, using their decisions and the selector-sequence
 logic to choose which behaviour should next be ticked. This results in traversing the tree (though not necessarily
 all of it) at the end of which the root of the tree will return a result.
 
@@ -62,9 +62,9 @@ scenery is still changing, this way you can more flexibly cater for your own nee
 Readings
 --------
 
-* `Youtube - Second Generation of Behaviour Trees`_ - in depth tutorial with game programming expert (on github).
-* `Behaviour trees for robotics`_ - blogged by pirobot, a very clear introduction on its usefulness for robots.
-* `A Curious Course on Coroutines and Concurrency`_ - very good presentation highlighting generators and coroutines in python.
+* `Youtube - Second Generation of Behaviour Trees`_ - by a gaming expert, in depth c++ tutorial (on github).
+* `Behaviour trees for robotics`_ - by pirobot, a clear intro on its usefulness for robots.
+* `A Curious Course on Coroutines and Concurrency`_ - highlighting generators and coroutines in python.
 
 .. _Owyl: https://github.com/eykd/owyl
 .. _Youtube - Second Generation of Behaviour Trees: https://www.youtube.com/watch?v=n4aREFb3SsU

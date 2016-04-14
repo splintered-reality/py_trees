@@ -31,20 +31,19 @@ def show_usage():
     s = "\n"
     s += console.white
     s += console.bold + "************************************************************************************\n" + console.reset
-    s += console.bold + "                                 Demo Initialisation\n" + console.reset
+    s += console.bold + "                                 Demo Elf\n" + console.reset
     s += console.bold + "************************************************************************************\n" + console.reset
     s += "\n"
     s += console.white
     s += console.bold + "    Generate Dot" + console.reset + "\n"
-    s += console.cyan + "        demo_initialisation" + console.yellow + " --render" + console.reset + "\n"
+    s += console.cyan + "        demo_elf" + console.yellow + " --render" + console.reset + "\n"
     s += "\n"
     s += console.bold + "    Execute" + console.reset + "\n"
-    s += console.cyan + "        demo_initialisation" + console.yellow + " [options]" + console.reset + "\n"
+    s += console.cyan + "        demo_elf" + console.yellow + " [options]" + console.reset + "\n"
     s += "\n"
     s += console.white
-    s += console.bold + "    Required Launchers" + console.reset + "\n"
-    s += console.cyan + "        + minimal.launch" + console.reset + "\n"
-    s += console.cyan + "        + fake_navigation.launch || dslam_navigation.launch" + console.reset + "\n"
+    s += console.bold + "    Launchers" + console.reset + "\n"
+    s += console.cyan + "        gopher_robot/apps_gocart.launch + 'DSlam Navigation'" + console.reset + "\n"
     s += "\n"
     return s
 
@@ -56,11 +55,26 @@ def parse_arguments(command_line_args):
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter
                                      )
     parser.add_argument('-r', '--render', action='store_true', help='render the graph to dot/png/svg.')
+    parser.add_argument('-v', '--visibility-level',
+                        action='store',
+                        default="detail",
+                        choices=py_trees.common.visibility_level_strings,
+                        help='visibility level for blackboxes when using -r'
+                        )
+    parser.add_argument('-e', '--elf',
+                        action='store',
+                        default="teleop",
+                        choices=["ar", "teleop"],
+                        help='type of elf to use for initialisation'
+                        )
     parser.add_argument('-d', '--debug', action='store_true', help='debug level tree logging.')
 
-    # parser.add_argument('-r', '--render-dot-tree', action='store', default=gopher.namespaces.semantics, help='namespace for the semantics parameters.')
+    gopher = gopher_configuration.configuration.Configuration(fallback_to_defaults=True)
+    parser.add_argument('-s', '--semantics', action='store', default=gopher.namespaces.semantics, help='namespace for the semantics parameters.')
 
     args = parser.parse_args(command_line_args)
+    args.visibility_level = py_trees.common.string_to_visibility_level(args.visibility_level)
+    args.elf = gopher_behaviours.elf.string_to_elf_initialisation_type[args.elf]
     return args
 
 
@@ -70,10 +84,37 @@ def parse_arguments(command_line_args):
 
 
 class Demo(object):
-    def __init__(self):
-        self.logger = py_trees.logging.get_logger("Demo Intialisation")
+    def __init__(self, ):
+        self.logger = py_trees.logging.get_logger("Demo Elf")
         self.gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
-        self.root = gopher_behaviours.navigation.ElfInitialisation("Demo Initialisation")
+
+        self.root = py_trees.composites.Parallel(
+            name="Demo Elf",
+            policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ALL
+        )
+
+        #################################
+        # Event Handler
+        #################################
+        event_handler = gopher_behaviours.interactions.create_button_event_handler()
+
+        #################################
+        # Elf
+        #################################
+        if args.elf == gopher_behaviours.elf.InitialisationType.TELEOP:
+            elf = gopher_behaviours.elf.TeleopInitialisation()
+        else:
+            elf = gopher_behaviours.elf.ARInitialisation()
+
+        #################################
+        # Graph
+        #################################
+        self.root.add_child(event_handler)
+        self.root.add_child(elf)
+
+        #################################
+        # Tree
+        #################################
         self.tree = py_trees.ROSBehaviourTree(self.root)
         rospy.on_shutdown(self.shutdown)
 
@@ -96,6 +137,7 @@ class Demo(object):
         self.logger.debug("")
 
     def shutdown(self):
+        print(console.bold + "\n******************** Shutdown ********************\n" + console.reset)
         self.tree.destroy()  # destroy the tree on shutdown to stop the behaviour
         self.tree.interrupt()
 
@@ -111,11 +153,10 @@ if __name__ == '__main__':
 
     demo = Demo()
     if args.render:
-        py_trees.display.print_ascii_tree(demo.root, 0)
-        py_trees.display.render_dot_tree(demo.root)
+        py_trees.display.render_dot_tree(demo.root, args.visibility_level)
         sys.exit()
 
     rospy.init_node("demo", log_level=rospy.INFO)
-    if not demo.tree.setup(5):
+    if not demo.tree.setup(15):
         sys.exit(console.red + "[ERROR] failed to setup required ros components." + console.reset)
     demo.tick_tock()

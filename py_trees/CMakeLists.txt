@@ -24,7 +24,8 @@ catkin_package()
 
 catkin_install_python(
     PROGRAMS
-        scripts/demo_subscribers
+        scripts/demo_behaviour
+        scripts/demo_dot_graphs
         scripts/demo_tree
     DESTINATION
         ${CATKIN_PACKAGE_BIN_DESTINATION}

@@ -36,23 +36,50 @@ import unique_id
 ##############################################################################
 
 
-def create_button_event_handler(name="Event Handler"):
+def create_button_event_handler(name="Button Events"):
+    """
+    A subtree designed to run *every* tick to check for button events and record
+    them on the blackboard.
+
+    Will always be in a RUNNING state so be sure to put this in a parallel
+    composite...OR use the running_is_failure  decorator and put it under a
+    selector at the highest priority level.
+
+    Blackboard Variables:
+
+     - event_go_button    (w) [bool] : true if at least one press, false otherwise
+     - event_stop_button  (w) [bool] : true if at least one press, false otherwise
+     - event_abort_button (w) [bool] : true if at least one press, false otherwise
+     - event_init_button  (w) [bool] : true if at least one press, false otherwise
+    """
     event_handler = py_trees.composites.Sequence(name)
+    event_handler.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
+
     gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
     go_button_events = MonitorButtonEvents(
-        name="Go Button Events",
+        name="Go",
         topic_name=gopher.buttons.go,
         variable_name="event_go_button"
     )
     stop_button_events = MonitorButtonEvents(
-        name="Stop Button Events",
+        name="Stop",
         topic_name=gopher.buttons.stop,
         variable_name="event_stop_button"
     )
-    let_it_go = py_trees.behaviours.Failure(name="Let it Go!")
+    abort_button_events = MonitorButtonEvents(
+        name="Abort",
+        topic_name=gopher.buttons.abort,
+        variable_name="event_abort_button"
+    )
+    init_button_events = MonitorButtonEvents(
+        name="Init",
+        topic_name=gopher.buttons.init,
+        variable_name="event_init_button"
+    )
     event_handler.add_child(go_button_events)
     event_handler.add_child(stop_button_events)
-    event_handler.add_child(let_it_go)
+    event_handler.add_child(abort_button_events)
+    event_handler.add_child(init_button_events)
     return event_handler
 
 
@@ -95,29 +122,6 @@ def create_check_for_go_button_press(name="Check for Go Button Press"):
     )
     return behaviour
 
-
-def create_check_for_stop_button_press(name="Check for Stop Button Press"):
-    """
-    Has there recently been a go button press anytime in the recent past?
-    This is more useful as a non-blocking decision element (as opposed to
-    the :py:func:`~gopher_behaviours.interactions.create_wait_for_go_button`
-    function.
-
-    Note that it will reset as soon as an event (i.e. SUCCESS) is detected.
-
-    :param str name: the behaviour name.
-    """
-    gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
-    behaviour = py_trees.meta.running_is_failure(
-        py_trees.subscribers.WaitForSubscriberData(
-            name=name,
-            topic_name=gopher.buttons.stop,
-            topic_type=std_msgs.Empty,
-            clearing_policy=py_trees.common.ClearingPolicy.ON_SUCCESS
-        )
-    )
-    return behaviour
-
 ##############################################################################
 # Behaviours
 ##############################################################################
@@ -125,10 +129,11 @@ def create_check_for_stop_button_press(name="Check for Stop Button Press"):
 
 class MonitorButtonEvents(py_trees.subscribers.SubscriberHandler):
     """
-    Monitor button events and write them to the blackboard. Ideally
-    you need this at the very highest part of the tree so that it gets triggered
-    every time - once this happens, then the rest of the behaviour tree can
-    utilise the variables.
+    This will catch a button event between every tick and write the result to
+    the blackboard (True for at least one button event, False otherwise).
+    Ideally you need this at the very highest part of the tree so that it
+    gets triggered every time - once this happens, then the rest of the behaviour
+    tree can utilise the variables.
     """
     def __init__(self,
                  name="Monitor Button Events",
@@ -161,7 +166,7 @@ class Articulate(py_trees.Behaviour):
     """
     Articulate a sound.
     """
-    def __init__(self, name, topic_name, volume=100):
+    def __init__(self, name, topic_name="/gopher/commands/sounds/yawn", volume=100):
         """
         He is a mere noodly appendage - don't expect him to check if the topic exists.
 
@@ -177,17 +182,13 @@ class Articulate(py_trees.Behaviour):
         return py_trees.Status.SUCCESS
 
 
-class SendNotification(py_trees.Sequence):
+class Notification(py_trees.Behaviour):
     """
-    This class runs as a sequence. Since led's turn off, you need a behaviour that is continuously
-    ticking while behaviours underneath are checking for some state to make the whole thing valid.
-    In many situations, this does not need to be a full sequence - often it will only be a single
-    child.
+    This class is ideally run as part of a parallels composite - you want to keep this running while
+    other jobs are running and turn it off as soon as one completes. The parallels composite should
+    use the SUCCESS_ON_ONE policy.
 
-    A simple example would be to run a WaitForButton or WaitForCharging behaviour beneath this one.
-
-    If not hooked up to the display notications, it will log an error, but quietly 'work' without
-    displaying LEDs.
+    A simple example would be to run a WaitForButton next to this one.
     """
     def __init__(self, name,
                  message,
@@ -199,19 +200,17 @@ class SendNotification(py_trees.Sequence):
                  duration=gopher_std_srvs.NotifyRequest.INDEFINITE
                  ):
         """
-        This behaviour is a mere noodly appendage - don't expect it to check if the topic exists for receiving
-        the notifications. A pastafarian at a higher level should take care of that before construction.
-
         :param str name: behaviour name
         :param str led_pattern: any one of the led pattern constants from gopher_std_msgs/Notification
         :param str message: a message for the status notifier to display.
+        :param str sound: usually prefer the :py:class:`~gopher_beahviours.interactions.Articulate` behaviour (until we have aliases working inside the status notifier)
         :param str led_pattern:
         :param str button_cancel:
         :param str button_confirm:
         :param bool cancel_on_stop: if true, stop the notification when the behaviour finishes, otherwise display until the notification timeout
         :param int duration: time in seconds for which to display this notification. Default is to display indefinitely. Useful to use with cancel_on_stop set to false.
         """
-        super(SendNotification, self).__init__(name)
+        super(Notification, self).__init__(name)
         self.gopher = gopher_configuration.Configuration()
         self.topic_name = self.gopher.services.notification
         self.service = rospy.ServiceProxy(self.topic_name, gopher_std_srvs.Notify)
@@ -240,12 +239,7 @@ class SendNotification(py_trees.Sequence):
         self.sent_notification = False
 
     def setup(self, timeout):
-        self.logger.debug("  %s [SendNotification::setup()]" % self.name)
-        # Delayed setup checks, can be done by something like the tree container
-        # First the kids
-        if not py_trees.Sequence.setup(self, timeout):
-            return False
-        # Then ourselves
+        self.logger.debug("  %s [Notification::setup()]" % self.name)
         try:
             rospy.wait_for_service(self.topic_name, timeout)
             return True
@@ -255,7 +249,7 @@ class SendNotification(py_trees.Sequence):
             return False
 
     def initialise(self):
-        self.logger.debug("  %s [SendNotification::initialise()]" % self.name)
+        self.logger.debug("  %s [Notification::initialise()]" % self.name)
         request = gopher_std_srvs.NotifyRequest()
         request.id = unique_id.toMsg(self.id)
         request.action = gopher_std_srvs.NotifyRequest.START
@@ -265,15 +259,27 @@ class SendNotification(py_trees.Sequence):
             unused_response = self.service(request)
             self.sent_notification = True
         except rospy.ServiceException as e:
-            rospy.logwarn("SendNotification : failed to process notification request [%s][%s]" % (self.message, str(e)))
+            rospy.logwarn("Behaviour [%s" % self.name + "]: failed to process notification request [%s][%s]" % (self.message, str(e)))
             self.service_failed = True
             self.stop(py_trees.Status.FAILURE)
         except rospy.exceptions.ROSInterruptException:
             # ros shutdown, close quietly
             return
 
+    def update(self):
+        """
+        Not in control of his own actions...must be terminated by a composite above!
+
+        Might be useful having a timer here if the notification is a timed one so that it returns
+        success when the notification is supposed to have stopped.
+        """
+        return py_trees.Status.RUNNING
+
     def terminate(self, new_status):
-        self.logger.debug("  %s [SendNotification::terminate()][%s->%s]" % (self.name, self.status, new_status))
+        """
+        Send a stop message to the status notifier if necessary.
+        """
+        self.logger.debug("  %s [Notification::terminate()][%s->%s]" % (self.name, self.status, new_status))
         if self.cancel_on_stop and not self.service_failed and self.sent_notification:
             request = gopher_std_srvs.NotifyRequest()
             request.id = unique_id.toMsg(self.id)
@@ -283,7 +289,7 @@ class SendNotification(py_trees.Sequence):
             try:
                 unused_response = self.service(request)
             except rospy.ServiceException as e:
-                rospy.logwarn("SendNotification : failed to process notification cancel request [%s][%s]" % (self.message, str(e)))
+                rospy.logwarn("Behaviour [%s" % self.name + "]: failed to process notification cancel request [%s][%s]" % (self.message, str(e)))
             except rospy.exceptions.ROSInterruptException:
                 # ros shutting down
                 pass

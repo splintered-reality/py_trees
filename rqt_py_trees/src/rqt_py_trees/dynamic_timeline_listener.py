@@ -23,11 +23,10 @@ class DynamicTimelineListener(MessageView):
     def message_viewed(self, msg_details):
         """Called whenever the message is updated. Updates the stored message and emits
         a signal.
-
         """
         self.msg = msg_details
-#        rospy.loginfo("got message {0} on topic {1}".format(msg_details.behaviours[0].name, self.topic))
+        # rospy.loginfo("got message {0} on topic {1}".format(msg_details.behaviours[0].name, self.topic))
         self.signal_viewed.emit()
-    
+
     def message_cleared(self):
         self.signal_cleared.emit()

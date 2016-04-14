@@ -1,0 +1,99 @@
+#!/usr/bin/env python
+#
+##############################################################################
+# Documentation
+##############################################################################
+"""
+Simple demo program illustrating the behaviour lifecycle.
+"""
+##############################################################################
+# Imports
+##############################################################################
+
+import argparse
+import py_trees
+import rocon_console.console as console
+import subprocess
+import sys
+
+##############################################################################
+# Classes
+##############################################################################
+
+
+def show_description():
+    s = "\n"
+    s += console.green + "Renders a dot graph for a simple tree, complete with blackboxes." + console.reset
+    s += "\n"
+    return s
+
+
+def show_usage():
+    s = "\n"
+    s += console.white
+    s += console.bold + "************************************************************************************\n" + console.reset
+    s += console.bold + "                                 Demo Dot Graph\n" + console.reset
+    s += console.bold + "************************************************************************************\n" + console.reset
+    s += "\n"
+    s += console.white
+    s += console.bold + "    Generate Full Dot Graph" + console.reset + "\n"
+    s += console.cyan + "        demo_dot_graphs" + console.reset + "\n"
+    s += "\n"
+    s += console.bold + "    Generate Dot Graph With Various Blackbox Collapsing Policies" + console.reset + "\n"
+    s += console.cyan + "        demo_dot_graphs" + console.yellow + " --level=all" + console.reset + "\n"
+    s += console.cyan + "        demo_dot_graphs" + console.yellow + " --level=detail" + console.reset + "\n"
+    s += console.cyan + "        demo_dot_graphs" + console.yellow + " --level=component" + console.reset + "\n"
+    s += console.cyan + "        demo_dot_graphs" + console.yellow + " --level=big_picture" + console.reset + "\n"
+    s += "\n"
+    return s
+
+
+def parse_arguments():
+    parser = argparse.ArgumentParser(description=show_description(),
+                                     usage=show_usage(),
+                                     epilog="And his noodly appendage reached forth to tickle the blessed...",
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter
+                                     )
+    parser.add_argument('-l',
+                        '--level',
+                        action='store',
+                        default='fine_detail',
+                        choices=['all', 'fine_detail', 'detail', 'component', 'big_picture'],
+                        help='visibility level')
+
+    args = parser.parse_args()
+    args.enum_level = py_trees.common.string_to_visibility_level(args.level)
+    return args
+
+##############################################################################
+# Main
+##############################################################################
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=show_description(), usage=show_usage())
+    args = parse_arguments()
+
+    root = py_trees.composites.Selector("Demo Dot Graphs %s" % args.level)
+    first_blackbox = py_trees.composites.Sequence("BlackBox 1")
+    first_blackbox.add_child(py_trees.behaviours.Running("Worker"))
+    first_blackbox.add_child(py_trees.behaviours.Running("Worker"))
+    first_blackbox.add_child(py_trees.behaviours.Running("Worker"))
+    first_blackbox.blackbox_level = py_trees.common.BlackBoxLevel.BIG_PICTURE
+    second_blackbox = py_trees.composites.Sequence("Blackbox 2")
+    second_blackbox.add_child(py_trees.behaviours.Running("Worker"))
+    second_blackbox.add_child(py_trees.behaviours.Running("Worker"))
+    second_blackbox.add_child(py_trees.behaviours.Running("Worker"))
+    second_blackbox.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
+    third_blackbox = py_trees.composites.Sequence("Blackbox 3")
+    third_blackbox.add_child(py_trees.behaviours.Running("Worker"))
+    third_blackbox.add_child(py_trees.behaviours.Running("Worker"))
+    third_blackbox.add_child(py_trees.behaviours.Running("Worker"))
+    third_blackbox.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
+    root.add_child(first_blackbox)
+    root.add_child(second_blackbox)
+    first_blackbox.add_child(third_blackbox)
+    py_trees.display.render_dot_tree(root, args.enum_level)
+    try:
+        subprocess.call(["xdot", "demo_dot_graphs_%s.dot" % args.level])
+    except KeyboardInterrupt:
+        pass

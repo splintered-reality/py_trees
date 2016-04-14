@@ -13,9 +13,6 @@
 
 Oh my spaghettified magnificence,
 Bless my noggin with a tickle from your noodly appendages!
-
-----
-
 """
 
 ##############################################################################
@@ -24,14 +21,54 @@ Bless my noggin with a tickle from your noodly appendages!
 
 import gopher_configuration
 import gopher_std_msgs.msg as gopher_std_msgs
+import gopher_std_msgs.srv as gopher_std_srvs
 import navigation
+import operator
 import numpy
 import py_trees
 
 from . import ar_markers
-from . import battery
 from . import docking
+from . import interactions
+from . import simple_motions
 from . import transform_utilities
+
+##############################################################################
+# Subtrees
+##############################################################################
+
+
+def create_repark_subtree():
+    """
+    Used when unparking/parking or anything inbetween fails. This ensures we
+    get the robot back into a good state for deliveries.
+    """
+    gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
+    telepark = py_trees.composites.Parallel(
+        name="Repark",
+        policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE
+    )
+    telepark.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
+    flash_notification = interactions.Notification(
+        name='Flash FixMe LEDs',
+        message='waiting for button press to continue',
+        led_pattern=gopher.led_patterns.humans_fix_me_i_am_broken,
+        button_confirm=gopher_std_msgs.Notification.BUTTON_ON,
+        button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
+        cancel_on_stop=True,
+        duration=gopher_std_srvs.NotifyRequest.INDEFINITE
+    )
+    # usually have the button event handler/blackboard combo and that is less expensive than the subscriber method
+    wait_for_go_button_press = py_trees.blackboard.WaitForBlackboardVariable(
+        name="Wait for Go Button",
+        variable_name="event_go_button",
+        expected_value=True,
+        comparison_operator=operator.eq,
+        clearing_policy=py_trees.common.ClearingPolicy.ON_INITIALISE
+    )
+    telepark.add_child(flash_notification)
+    telepark.add_child(wait_for_go_button_press)
+    return telepark
 
 ##############################################################################
 # Behaviours
@@ -49,49 +86,32 @@ class Park(py_trees.Sequence):
     def __init__(self, name="Park"):
         super(Park, self).__init__(name)
         self.gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
+        self.blackbox_level = py_trees.common.BlackBoxLevel.BIG_PICTURE
 
         ############################################
         # Behaviours
         ############################################
-        check_didnt_undock = py_trees.meta.inverter(py_trees.CheckBlackboardVariable(
+        check_didnt_undock = py_trees.meta.inverter(py_trees.CheckBlackboardVariable)(
             name='Didnt Undock',
             variable_name='undocked',
             expected_value=True
-        ))
+        )
         write_pose_park_start_rel_map = navigation.create_map_pose_to_blackboard_behaviour(
             name="Start Pose (Map)",
             blackboard_variables={"pose_park_start_rel_map": None}
         )
-        parking_motions = ParkingMotions()
+        parking_motions = Approach()
         todock_or_not_todock = py_trees.Selector(name="ToDock or Not ToDock")
-        docking_control = py_trees.Sequence(name="Automatic")
-        pre_dock_rotation = navigation.SimpleMotion(
+        docking_control = py_trees.Sequence(name="Dock")
+        docking_control.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
+        pre_dock_rotation = simple_motions.SimpleMotion(
             name="Pre-Rotation",
             motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
             motion_amount=3.14
         )
-        ar_tracker_on_long_range = ar_markers.ControlARMarkerTracker("Long-Range AR Tracker On",
-                                                                     self.gopher.topics.ar_tracker_long_range,
-                                                                     True)
-        ar_tracker_on_short_range = ar_markers.ControlARMarkerTracker("Short-Range AR Tracker On",
-                                                                      self.gopher.topics.ar_tracker_short_range,
-                                                                      True)
-        ar_tracker_off_long_range = ar_markers.ControlARMarkerTracker("Long-Range AR Tracker Off",
-                                                                      self.gopher.topics.ar_tracker_long_range,
-                                                                      False)
-        ar_tracker_off_short_range = ar_markers.ControlARMarkerTracker("Short-Range AR Tracker Off",
-                                                                       self.gopher.topics.ar_tracker_short_range,
-                                                                       False)
+        (ar_tracker_on, ar_tracker_off) = ar_markers.create_ar_tracker_pair_blackboxes()
         docking_controller = docking.DockingController(name="Docking Controller")
         clearing_flags = py_trees.blackboard.ClearBlackboardVariable(name="Clear Flags", variable_name="undocked")
-        wait_for_docking_contact = battery.create_wait_to_be_docked(name="Manual Recovery")
-        manual_divert = py_trees.composites.Sequence("Manual Divert")
-        is_cancel_activated = py_trees.CheckBlackboardVariable(
-            name='Is Cancelled?',
-            variable_name='event_stop_button',
-            expected_value=True
-        )
-        manual_dock = battery.create_wait_to_be_docked(name="Manual Dock")
 
         ############################################
         # Assembly
@@ -100,17 +120,11 @@ class Park(py_trees.Sequence):
         self.add_child(parking_motions)
         self.add_child(todock_or_not_todock)
         todock_or_not_todock.add_child(check_didnt_undock)
-        todock_or_not_todock.add_child(manual_divert)
-        manual_divert.add_child(is_cancel_activated)
-        manual_divert.add_child(manual_dock)
         todock_or_not_todock.add_child(docking_control)
         docking_control.add_child(pre_dock_rotation)
-        docking_control.add_child(ar_tracker_on_long_range)
-        docking_control.add_child(ar_tracker_on_short_range)
+        docking_control.add_child(ar_tracker_on)
         docking_control.add_child(docking_controller)
-        docking_control.add_child(ar_tracker_off_long_range)
-        docking_control.add_child(ar_tracker_off_short_range)
-        todock_or_not_todock.add_child(wait_for_docking_contact)
+        docking_control.add_child(ar_tracker_off)
         self.add_child(clearing_flags)
 
     @classmethod
@@ -169,7 +183,7 @@ def compute_parking_geometry(pose_park_start_rel_map, pose_park_rel_map, distanc
     return (distance_to_park, point_to_park_angle, orient_with_park_angle)
 
 
-class ParkingMotions(py_trees.Sequence):
+class Approach(py_trees.Sequence):
     """
     Dynamically stitches together some simple motions on the fly (on entry via
     the initialise method with data from the blackboard) and adds them as children.
@@ -181,25 +195,26 @@ class ParkingMotions(py_trees.Sequence):
      - pose_park_start_rel_map (w) [geometry_msgs.PoseWithCovarianceStamped]: transferred from /navi/pose when about to park
     """
 
-    def __init__(self, name="ParkingMotions"):
-        super(ParkingMotions, self).__init__(name)
+    def __init__(self, name="Approach"):
+        super(Approach, self).__init__(name)
+        self.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
 
         self.close_to_park_distance_threshold = 0.1
         self.blackboard = py_trees.Blackboard()
 
         # dummy children for dot graph rendering purposes
         # they will get cleaned up the first time this enters initialise
-        point_to_park = navigation.SimpleMotion(
+        point_to_park = simple_motions.SimpleMotion(
             name="Point to Park (?rad)",
             motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
             motion_amount=0.0,
         )
-        move_to_park = navigation.SimpleMotion(
+        move_to_park = simple_motions.SimpleMotion(
             name="Move to Park (?m)",
             motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_TRANSLATE,
             motion_amount=0.0,
         )
-        orient_with_park = navigation.SimpleMotion(
+        orient_with_park = simple_motions.SimpleMotion(
             name="Orient to Park (?rad)",
             motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
             motion_amount=0.0,
@@ -228,7 +243,7 @@ class ParkingMotions(py_trees.Sequence):
 
         epsilon = 0.01
         if abs(point_to_park_angle) > epsilon:
-            point_to_park = navigation.SimpleMotion(
+            point_to_park = simple_motions.SimpleMotion(
                 name="Point to Park %0.2f rad" % point_to_park_angle,
                 motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
                 motion_amount=point_to_park_angle,
@@ -236,7 +251,7 @@ class ParkingMotions(py_trees.Sequence):
             )
             self.add_child(point_to_park)
         if abs(distance_to_park) > epsilon:
-            move_to_park = navigation.SimpleMotion(
+            move_to_park = simple_motions.SimpleMotion(
                 name="Move to Park %0.2f m" % distance_to_park,
                 motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_TRANSLATE,
                 motion_amount=distance_to_park,
@@ -244,7 +259,7 @@ class ParkingMotions(py_trees.Sequence):
             )
             self.add_child(move_to_park)
         if abs(orient_with_park_angle) > epsilon:
-            orient_with_park = navigation.SimpleMotion(
+            orient_with_park = simple_motions.SimpleMotion(
                 name="Orient to Park %0.2f rad" % orient_with_park_angle,
                 motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
                 motion_amount=orient_with_park_angle,

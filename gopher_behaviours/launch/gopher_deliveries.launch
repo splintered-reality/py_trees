@@ -10,26 +10,22 @@
      - call on the dynamic reconfigure software to retune the delivery manager at launch time
      - call on rqt/create an interaction to retune the delivery manager at runtime
    -->
-  <arg name="express"       default="false" doc="dont wait at each location for the user to press the button."/>
-  <arg name="force_parking" default="false" doc="make sure all deliveries do parking/docking."/>
+  <arg name="express" default="false"  doc="dont wait at each location for the user to press the button."/>
+  <arg name="parking" default="false"  doc="make sure all deliveries do parking/docking."/>
+  <arg name="debug"   default="false"  doc="debug mode logging of behaviours."/>
+  <arg name="elf"     default="teleop" doc="specify the elf behaviour to run [teleop, ar])"/>
 
-  <group ns="gopher">
-    <node name="behaviours" type="gopher_deliveries" pkg="gopher_behaviours">
-      <param name="express"       value="$(arg express)"/>
-      <param name="force_parking" value="$(arg force_parking)"/>
-      <remap from="behaviours/battery"                            to="/gopher/status/battery_slow"/>
-      <remap from="behaviours/semantic_locations"                 to="/navi/semantic_locations"/>
-
-      <remap from="delivery/goal"                                 to="/rocon/delivery/goal"/>
-      <remap from="delivery/feedback"                             to="/rocon/delivery/feedback"/>
-      <remap from="delivery/cancel"                               to="/rocon/delivery/cancel"/>
-      <remap from="delivery/result"                               to="/rocon/delivery/result"/>
-
-      <remap from="behaviours/go"                                   to="/gopher/buttons/go"/>
-
-      <remap from="ar_pose_marker_short_range"                           to="/gopher/ar_pose_marker_short_range"/>
+  <group ns="behaviours">
+    <param name="deliveries/debug" value="$(arg debug)"/>
+    <node name="splintered_reality" type="splintered_reality.py" pkg="gopher_behaviours">
+      <param name="express"                       value="$(arg express)"/>
+      <param name="parking"                       value="$(arg parking)"/>
+      <param name="elf"                           value="$(arg elf)"/>
+      <remap from="delivery/goal"                 to="/rocon/delivery/goal"/>
+      <remap from="delivery/feedback"             to="/rocon/delivery/feedback"/>
+      <remap from="delivery/cancel"               to="/rocon/delivery/cancel"/>
+      <remap from="delivery/result"               to="/rocon/delivery/result"/>
     </node>
-
     <include file="$(find gopher_behaviours)/launch/custom_delivery_overseer.launch"/>
   </group>
 </launch>

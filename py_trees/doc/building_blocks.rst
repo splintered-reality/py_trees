@@ -15,13 +15,11 @@ either a check (am I hungry?), or an action (buy some chocolate cookies).
 When a tree is traversed, individual behaviours execute a small chunk of code
 relevant to the check, or action they are responsible for managing (triggering,
 monitoring, getting the result).  The result of that execution is a
-:py:class:`~py_trees.common.Status` value (success/fail/running/invalid) that is used
-to affect the continuing direction of traversal across the tree. This is the decision
-making part of the process.
+:py:class:`~py_trees.common.Status` value (``INVALID``/``RUNNING``/``SUCCESS``/``FAILURE``)
+that is used to affect the continuing direction of traversal across the tree.
+This is the decision making part of the process.
 
 Execution of a behaviour is referred to as :term:`ticking` the behaviour.
-
-**Style Guide**
 
 .. note:: Behaviours must be non-blocking.
 
@@ -37,6 +35,50 @@ to rotate pi/2 radians is not. Instead, prefer the following flow over multiple 
 3. Monitor the rotation's feedback -> ``RUNNING``
 4. Monitor the rotation's feedback -> ``RUNNING``
 5. Rotation stopped, get the result -> ``SUCCESS/FAILURE``
+
+At the risk of being confusing, a behaviour that takes several ticks to progress
+from ``RUNNING`` to ``SUCCESS/FAILURE`` as show above is referred to as a :term:`blocking`
+behaviour.
+
+**The LifeCycle**
+
+Easy to see via the ``demo_behavour`` program.
+
+.. literalinclude:: ../scripts/demo_behaviour
+   :language: python
+   :linenos:
+
+with output:
+
+.. code-block:: bash
+
+   [DEBUG] Demo Behaviours : Counter [Counter::__init__()]
+   [DEBUG] Demo Behaviours : Counter [Counter::setup()]
+   [DEBUG] Demo Behaviours : Counter [Behaviour.tick()]
+   [DEBUG] Demo Behaviours : Counter [Counter::initialise()]
+   [DEBUG] Demo Behaviours : Counter [Counter.update()][Status.INVALID->Status.RUNNING][count: 1]
+   [DEBUG] Demo Behaviours : Counter [Behaviour.tick()]
+   [DEBUG] Demo Behaviours : Counter [Counter.update()][Status.RUNNING->Status.RUNNING][count: 2]
+   [DEBUG] Demo Behaviours : Counter [Behaviour.tick()]
+   [DEBUG] Demo Behaviours : Counter [Counter.update()][Status.RUNNING->Status.SUCCESS][count: 3]
+   [DEBUG] Demo Behaviours : Counter [Behaviour.stop()]
+   [DEBUG] Demo Behaviours : Counter [Counter.terminate()][Status.RUNNING->Status.SUCCESS]
+   [DEBUG] Demo Behaviours : Counter [Behaviour.tick()]
+   [DEBUG] Demo Behaviours : Counter [Counter::initialise()]
+   [DEBUG] Demo Behaviours : Counter [Counter.update()][Status.SUCCESS->Status.RUNNING][count: 1]
+   [DEBUG] Demo Behaviours : Counter [Behaviour.tick()]
+   [DEBUG] Demo Behaviours : Counter [Counter.update()][Status.RUNNING->Status.RUNNING][count: 2]
+   [DEBUG] Demo Behaviours : Counter [Behaviour.tick()]
+   [DEBUG] Demo Behaviours : Counter [Counter.update()][Status.RUNNING->Status.SUCCESS][count: 3]
+   [DEBUG] Demo Behaviours : Counter [Behaviour.stop()]
+   [DEBUG] Demo Behaviours : Counter [Counter.terminate()][Status.RUNNING->Status.SUCCESS]
+   [DEBUG] Demo Behaviours : Counter [Behaviour.tick()]
+   [DEBUG] Demo Behaviours : Counter [Counter::initialise()]
+   [DEBUG] Demo Behaviours : Counter [Counter.update()][Status.SUCCESS->Status.RUNNING][count: 1]
+
+Above, the ``Behaviour.tick()`` and ``Behaviour.stop()`` are parent level methods that manage the
+running of the behaviour. All other methods are reserved for custom code specific to the
+behaviour.
 
 Sequences
 ---------

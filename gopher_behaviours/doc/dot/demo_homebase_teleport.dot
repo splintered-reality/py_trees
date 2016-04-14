@@ -1,0 +1,31 @@
+digraph demo_homebase_teleport {
+"Demo HomeBase Teleport" [fontcolor=black, shape=note, fontsize=11, style=filled, fillcolor=gold];
+"Button Events" [fontcolor=dodgerblue, shape=box, fontsize=11, style=filled, fillcolor=gray20];
+"Demo HomeBase Teleport" -> "Button Events";
+Go [fontcolor=black, shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+"Button Events" -> Go;
+Stop [fontcolor=black, shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+"Button Events" -> Stop;
+Abort [fontcolor=black, shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+"Button Events" -> Abort;
+Init [fontcolor=black, shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+"Button Events" -> Init;
+priorities [fontcolor=black, shape=octagon, fontsize=11, style=filled, fillcolor=cyan];
+"Demo HomeBase Teleport" -> priorities;
+"Homebase Initialisation" [fontcolor=black, shape=box, fontsize=11, style=filled, fillcolor=orange];
+priorities -> "Homebase Initialisation";
+"Is Inited?" [fontcolor=black, shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+"Homebase Initialisation" -> "Is Inited?";
+"Teleop & Teleport" [fontcolor=dodgerblue, shape=box, fontsize=11, style=filled, fillcolor=gray20];
+"Homebase Initialisation" -> "Teleop & Teleport";
+"Teleop to Homebase" [fontcolor=black, shape=note, fontsize=11, style=filled, fillcolor=gold];
+"Teleop & Teleport" -> "Teleop to Homebase";
+"Flash Help Me" [fontcolor=black, shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+"Teleop to Homebase" -> "Flash Help Me";
+"Wait for Go Button" [fontcolor=black, shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+"Teleop to Homebase" -> "Wait for Go Button";
+"Teleop & Teleport*" [fontcolor=black, shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+"Teleop & Teleport" -> "Teleop & Teleport*";
+"Hang Around" [fontcolor=black, shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+"Teleop & Teleport" -> "Hang Around";
+}

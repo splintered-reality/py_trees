@@ -18,7 +18,7 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0,0">
    <item>
-    <layout class="QHBoxLayout" name="top_bar_layout" stretch="0,0,0,0,0,0,0,0,0,0,0,0,0,0">
+    <layout class="QHBoxLayout" name="top_bar_layout" stretch="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0">
      <item>
       <widget class="QComboBox" name="topic_combo_box">
        <property name="sizePolicy">
@@ -93,6 +93,9 @@
         <string>Stop</string>
        </property>
       </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="visibility_level_combo_box"/>
      </item>
      <item>
       <spacer name="horizontalSpacer">

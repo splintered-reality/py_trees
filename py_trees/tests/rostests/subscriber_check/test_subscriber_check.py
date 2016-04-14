@@ -7,9 +7,7 @@
 # Documentation
 ##############################################################################
 """
-USE THE ROS LAUNCHER INSTEAD!!!
-
-gopher_behaviours/demo_subscriber_check.launch
+Test for CheckSubscriberVariable
 """
 ##############################################################################
 # Imports
@@ -20,6 +18,9 @@ import operator
 import py_trees
 # import rocon_console.console as console
 import rospy
+import unittest
+import rostest
+
 
 
 ##############################################################################
@@ -27,8 +28,12 @@ import rospy
 ##############################################################################
 
 
-class Demo(object):
-    def __init__(self):
+class TestSubscriberCheck(unittest.TestCase):
+    '''
+        Test for CheckSubscriberVariable
+    '''
+    def __init__(self, *args):
+        super(TestSubscriberCheck, self).__init__(*args)
         generate_failure = rospy.get_param("~failure", False)
         bad_topic = rospy.get_param("~bad_topic", False)
         topic_name = rospy.get_param("~topic_name", "chatter") if not bad_topic else "wrong_topic"
@@ -59,7 +64,7 @@ class Demo(object):
     # Tick Tock
     ##############################################################################
 
-    def tick_tock(self):
+    def test_tick_tock(self):
         self.tree.visitors.append(py_trees.trees.DebugVisitor())
         rate = rospy.Rate(10)
         while not rospy.is_shutdown():
@@ -67,6 +72,7 @@ class Demo(object):
             if self.root.status == py_trees.Status.SUCCESS or self.root.status == py_trees.Status.FAILURE:
                 break
             rate.sleep()
+        self.assertEquals(self.root.status, py_trees.Status.SUCCESS)
 
     def pre_tick_handler(self, behaviour_tree):
         self.logger.debug("")
@@ -83,7 +89,7 @@ class Demo(object):
 
 if __name__ == '__main__':
     py_trees.logging.level = py_trees.logging.Level.DEBUG
-    rospy.init_node("simple_motion", log_level=rospy.DEBUG)
-
-    demo = Demo()
-    demo.tick_tock()
+    rospy.init_node("test_subscriber_check", log_level=rospy.DEBUG)
+    rostest.rosrun('py_trees',
+                   'test_subscriber_check',
+                   TestSubscriberCheck)

@@ -126,7 +126,9 @@ class Timer(behaviour.Behaviour):
             self.feedback_message = "timer ran out (finished)"
             return common.Status.SUCCESS
         else:
-            self.feedback_message = "still running (%s)" % (self.finish_time - current_time)
+            # do not show the time, it causes the tree to be 'changed' every tick
+            # and we don't want to spam visualisations with almost meaningless updates
+            self.feedback_message = "still running"  # (%s)" % (self.finish_time - current_time)
             return common.Status.RUNNING
 
     def terminate(self, new_status):
@@ -134,22 +136,3 @@ class Timer(behaviour.Behaviour):
         # clear the time if finishing with SUCCESS or in the case of an interruption from INVALID
         if new_status == common.Status.SUCCESS or new_status == common.Status.INVALID:
             self.finish_time = None
-
-
-# def create_timeout_subtree(name, behaviour, timeout, timeout_behaviour=None):
-#     """
-#     :param Behaviour behaviour: behaviour to keep retrying until the timeout is reached.
-#     :param float timeout:
-#     """
-#     timeout_selector = composites.Selector(name)  # meta.inverter(composites.Selector(name))
-#     inverter = behaviours.Inverter("Flip Result", timeout_selector)
-#     timeout_sequence = composites.Sequence("Timeout")
-#     failing_timer = meta.running_is_failure(Timer("Timer", duration=timeout))
-#
-#     timeout_selector.add_child(timeout_sequence)
-#     timeout_sequence.add_child(failing_timer)
-#     if timeout_behaviour is not None:
-#         timeout_sequence.add_child(timeout_behaviour)
-#     behaviour_inverter = behaviours.Inverter(name="Inverter", child=behaviour)
-#     timeout_selector.add_child(behaviour_inverter)
-#     return inverter
