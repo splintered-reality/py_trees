@@ -101,7 +101,7 @@ class Demo(object):
         #################################
         # Elf
         #################################
-        if args.elf == gopher_behaviours.elf.ElfInitialisationType.TELEOP:
+        if args.elf == gopher_behaviours.elf.InitialisationType.TELEOP:
             elf = gopher_behaviours.elf.TeleopInitialisation()
         else:
             elf = gopher_behaviours.elf.ARInitialisation()
@@ -137,6 +137,7 @@ class Demo(object):
         self.logger.debug("")
 
     def shutdown(self):
+        print(console.bold + "\n******************** Shutdown ********************\n" + console.reset)
         self.tree.destroy()  # destroy the tree on shutdown to stop the behaviour
         self.tree.interrupt()
 
@@ -156,6 +157,6 @@ if __name__ == '__main__':
         sys.exit()
 
     rospy.init_node("demo", log_level=rospy.INFO)
-    if not demo.tree.setup(5):
+    if not demo.tree.setup(15):
         sys.exit(console.red + "[ERROR] failed to setup required ros components." + console.reset)
     demo.tick_tock()

@@ -24,6 +24,7 @@ import elf_msgs.msg as elf_msgs
 import gopher_configuration
 import gopher_std_msgs.msg as gopher_std_msgs
 import gopher_std_msgs.srv as gopher_std_srvs
+import math
 import operator
 import py_trees
 import rospy
@@ -40,7 +41,7 @@ from . import transform_utilities
 ##############################################################################
 
 
-class ElfInitialisationType(enum.IntEnum):
+class InitialisationType(enum.IntEnum):
     """ An enumerator representing the status of a behaviour """
 
     TELEOP = 0
@@ -50,8 +51,8 @@ class ElfInitialisationType(enum.IntEnum):
 
 
 string_to_elf_initialisation_type = {
-    "teleop": ElfInitialisationType.TELEOP,
-    "ar": ElfInitialisationType.AR
+    "teleop": InitialisationType.TELEOP,
+    "ar": InitialisationType.AR
 }
 
 ##############################################################################
@@ -155,7 +156,8 @@ def create_check_elf_status_subtree():
         sound="",
         message="intialised pose"
     )
-    take_time_to_celebreate = py_trees.timers.Timer("Take Time to Celebrate", 2.0)
+    # this lets the flashing led show for a good length of time to notify the user
+    take_time_to_celebreate = py_trees.timers.Timer("Take Time to Celebrate", 3.0)
     localised_yet.add_child(check_elf_status)
     localised_yet.add_child(notify_done)
     notify_done.add_child(flash_notify_done)
@@ -232,25 +234,31 @@ class ARInitialisation(py_trees.Sequence):
 
         scanning = py_trees.Selector("Scanning")
         localised_yet = create_check_elf_status_subtree()
-        # always succeed so we can go on to the timer
-        rotate_ad_nauseum = simple_motions.create_rotate_ad_nauseum(5.0)
-        timed_out = py_trees.composites.Sequence("Timed Out")
+        # TODO replace this with a rotate to 2*pi OR timeout, not rotate ad nauseum
+        rotate = simple_motions.SimpleMotion(
+            name="Rotate",
+            motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
+            motion_amount=(2.0 * math.pi),
+            keep_going=False,
+            fail_if_complete=True
+        )
+        scan_failure = py_trees.composites.Sequence("Scan Failure")
         write_auto_initialisation_failed = py_trees.blackboard.SetBlackboardVariable("Flag AutoInit Failed", "auto_init_failed", True)
 
         self.add_child(ar_markers_on)
         self.add_child(scanning)
         scanning.add_child(localised_yet)
-        scanning.add_child(rotate_ad_nauseum)
-        scanning.add_child(timed_out)
-        timed_out.add_child(write_auto_initialisation_failed)
-        timed_out.add_child(ar_markers_off_two)  # cleaning up, just make sure we send fail from here
+        scanning.add_child(rotate)
+        scanning.add_child(scan_failure)
+        scan_failure.add_child(write_auto_initialisation_failed)
+        scan_failure.add_child(ar_markers_off_two)  # cleaning up, just make sure we send fail from here
         self.add_child(ar_markers_off)
 
     def setup(self, timeout):
         # This publisher 'blips' like a radar while the initialising subtree is scanning.
         # Not useful on the robot except for debugging, but useful for podium simulations and tests
         self.fake_init_publisher = rospy.Publisher(self.gopher.topics.elf_fake_init, std_msgs.Empty, queue_size=1)
-        return True
+        return super(ARInitialisation, self).setup(timeout)
 
     def update(self):
         if self.status == py_trees.common.Status.RUNNING:

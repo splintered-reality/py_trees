@@ -138,7 +138,7 @@ class UnPark(py_trees.Sequence):
      - pose_park_rel_homebase      (w) [geometry_msgs/Pose]         : pose of the parking location relative to the homebase computed from start/finish poses
      - pose_park_rel_map           (w) [geometry_msgs/Pose]         : pose of the parking location relative to the homebase, computed from pose_park_rel_homebase and pose_homebase_rel_map
     """
-    def __init__(self, name="UnPark", elf_type=elf.ElfInitialisationType.TELEOP):
+    def __init__(self, name="UnPark", elf_type=elf.InitialisationType.TELEOP):
         super(UnPark, self).__init__(name)
         # fallback to defaults so we don't require the ros param server to do dot graphs, etc.
         self.gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
@@ -203,9 +203,9 @@ class UnPark(py_trees.Sequence):
         not_yet_localised_sequence = py_trees.Sequence("Initialisation")
         not_yet_localised_sequence.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
         # automatic_unpark = py_trees.Sequence("Automatic")
-        if elf_type == elf.ElfInitialisationType.TELEOP:
+        if elf_type == elf.InitialisationType.TELEOP:
             elf_initialisation = elf.TeleopInitialisation()
-        elif elf_type == elf.ElfInitialisationType.AR:
+        elif elf_type == elf.InitialisationType.AR:
             elf_initialisation = elf.ARInitialisation()
         # manual_or_auto = py_trees.Selector("Initialisation")
 

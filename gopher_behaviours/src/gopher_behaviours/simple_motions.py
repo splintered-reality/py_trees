@@ -42,10 +42,15 @@ def create_rotate_ad_nauseum(timeout):
     :param float timeout:
     :returns: subtree
     """
-    rotate_ad_nauseum = py_trees.meta.timeout(py_trees.composites.Sequence, timeout)(name="Rotate Ad Nauseum")
-    rotate = SimpleMotion(name="Rotate", motion_amount=(0.25 * math.pi))
+    rotate_ad_nauseum = py_trees.composites.Parallel(
+        name="Rotate Ad Nauseum",
+        policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ALL
+    )
+    rotate = py_trees.meta.success_is_running(SimpleMotion)(name="Rotate", motion_amount=(0.25 * math.pi))
+    timeout = py_trees.meta.inverter(py_trees.timers.Timer)(name="Timeout", duration=15.0)
     rotate_ad_nauseum.add_child(rotate)
-    rotate_ad_nauseum.add_child(py_trees.behaviours.Running("Keep Trying"))
+    rotate_ad_nauseum.add_child(timeout)
+    rotate_ad_nauseum.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
     return rotate_ad_nauseum
 
 

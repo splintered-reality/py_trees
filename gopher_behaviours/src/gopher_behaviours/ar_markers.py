@@ -94,6 +94,7 @@ class ControlARMarkerTracker(py_trees.Behaviour):
         """
         Try and connect to the dynamic reconfigure server.
         """
+        self.logger.debug("  %s [ARMarkers::setup()]" % self.name)
         if not self._dyn_reconf_client_ar_tracker:
             try:
                 self._dyn_reconf_client_ar_tracker = dynamic_reconfigure.client.Client(
@@ -111,13 +112,10 @@ class ControlARMarkerTracker(py_trees.Behaviour):
         Does the real work...
         """
         if self._dyn_reconf_client_ar_tracker:
-            if self.status != py_trees.Status.RUNNING:
-                self._ar_tracker_control(self._enable)
-                return py_trees.Status.RUNNING
-            else:
-                return py_trees.Status.SUCCESS
+            self._ar_tracker_control(self._enable)
+            return py_trees.Status.SUCCESS
         else:
-            rospy.logwarn("Behaviours [%s" % self.name + "]: failed to connect to dynamic reconfigure server")
+            rospy.logerr("Behaviours [%s" % self.name + "]: failed to connect to dynamic reconfigure server")
             return py_trees.Status.FAILURE
 
     def terminate(self, new_status):
