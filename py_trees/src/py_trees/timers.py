@@ -126,7 +126,9 @@ class Timer(behaviour.Behaviour):
             self.feedback_message = "timer ran out (finished)"
             return common.Status.SUCCESS
         else:
-            self.feedback_message = "still running (%s)" % (self.finish_time - current_time)
+            # do not show the time, it causes the tree to be 'changed' every tick
+            # and we don't want to spam visualisations with almost meaningless updates
+            self.feedback_message = "still running"  # (%s)" % (self.finish_time - current_time)
             return common.Status.RUNNING
 
     def terminate(self, new_status):
