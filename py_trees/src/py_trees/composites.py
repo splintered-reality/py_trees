@@ -232,14 +232,18 @@ class Selector(Composite):
         # run any work designated by a customised instance of this class
         self.update()
         previous = self.current_child
+        previous_was_higher_priority = False
         for child in self.children:
             for node in child.tick():
                 yield node
                 if node is child:
+                    if previous == child:
+                        previous_was_higher_priority = True
                     if node.status == Status.RUNNING or node.status == Status.SUCCESS:
                         self.current_child = child
                         self.status = node.status
-                        if (previous is not None) and (previous != self.current_child) and (previous.status != Status.INVALID):
+                        # send out stop if this child interrupted a current child that was lower priority
+                        if (previous is not None) and (previous != self.current_child) and (previous.status != Status.INVALID) and not previous_was_higher_priority:
                             previous.stop(Status.INVALID)
                         yield self
                         return
