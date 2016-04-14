@@ -19,23 +19,24 @@ Gopher delivery behaviours! Are they good for anything else?
 # Imports
 ##############################################################################
 
+import copy
 import dynamic_reconfigure.server
-import enum
 import gopher_configuration
 import gopher_delivery_msgs.msg as gopher_delivery_msgs
+import gopher_delivery_msgs.srv as gopher_delivery_srvs
 import gopher_semantics
 import gopher_semantic_msgs.msg as gopher_semantic_msgs
 import gopher_std_msgs.msg as gopher_std_msgs
 import gopher_std_msgs.srv as gopher_std_srvs
-import operator
 import py_trees
 import rocon_console.console as console
+import rocon_python_comms
 import rocon_python_utils
 import rospy
 import std_msgs.msg as std_msgs
+import threading
 import unique_id
 
-from . import cfg
 from . import elevators
 from . import elf
 from . import interactions
@@ -66,9 +67,9 @@ class Parameters(object):
         Initial parameters are create to be sufficient for starting up a 'dummy'
         tree and calling :py::meth:`~gopher_behaviours.delivery.QuirkyDeliveries.setup` on that tree.
         """
-        self.express = False
-        self.parking = True
         self.elf = elf.InitialisationType.TELEOP
+        self.express = False
+        self.parking = False
 
     def __str__(self):
         s = console.bold + "\nParameters:\n" + console.reset
@@ -76,29 +77,6 @@ class Parameters(object):
             s += console.cyan + "    %s: " % key + console.yellow + "%s\n" % (self.__dict__[key] if self.__dict__[key] is not None else '-')
         s += console.reset
         return s
-
-
-class State(enum.Enum):
-    """
-    An enumerator representing the status of a delivery behaviour. It reflects
-    what is currently in the delivery feedback message in a convenient enum
-    format.
-    """
-
-    """Ready to accept a goal."""
-    IDLE = "IDLE"
-    """Interrupted by a higher priority branch."""
-    INTERRUPTED = "INTERRUPTED"
-    """Unparking, signifies the start of a delivery"""
-    UNPARKING = "UNPARKING"
-    """On the delivery route"""
-    EN_ROUTE = "EN_ROUTE"
-    """Parking, signifying the end of a delivery run"""
-    PARKING = "PARKING"
-    """Cancelling, an automated run home upon request"""
-    CANCELLING = "CANCELLING"
-    """Reparking after a delivery has failed for whatever reason"""
-    RECOVERING = "RECOVERING"
 
 
 class Subtrees(object):
@@ -111,19 +89,6 @@ class Subtrees(object):
         self.en_route = None
 
 
-class PreTickResult(enum.IntEnum):
-    """ An enumerator representing the status of a delivery behaviour """
-
-    """Had an incoming goal and successfully setup a new delivery tree."""
-    NEW_DELIVERY_TREE = 0
-    """Had an incoming goal but failed to setup a new delivery tree."""
-    NEW_DELIVERY_TREE_WITHERED_AND_DIED = 1
-    """Delivery finished and delivery tree removed."""
-    TREE_FELLED = 2
-    """Nothing at all happened that is of interest."""
-    BORING_NOTHING = 3
-
-
 def create_delivery_subtree(world, locations, parameters=Parameters()):
     """
     Build a new delivery subtree.
@@ -132,7 +97,6 @@ def create_delivery_subtree(world, locations, parameters=Parameters()):
     :param [str] locations: semantic location string identifiers
     :param Parameters parameters: list of parameters to use for configuration of the tree
     """
-    gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
     subtrees = Subtrees()
 
     ########################
@@ -430,9 +394,17 @@ class GopherDeliveries(object):
         self.locations = []
         self.feedback_message = ""
         self.old_goal_id = None
-        self.express = False
         self.incoming_goal = None
+        self.current_world = None
         self.parameters = Parameters()
+
+        # this variable is used to record the latest state of the current/last finished job
+        self._response = gopher_delivery_srvs.DeliveryResultResponse()
+        self._response.result = gopher_delivery_msgs.DeliveryErrorCodes.RESULT_NONE
+        self._response.result_string = gopher_delivery_msgs.DeliveryErrorCodes.RESULT_NONE_STRING
+        self._response_lock = threading.Lock()
+
+        self.current_eta = gopher_delivery_msgs.DeliveryETA()  # connect to the planner to get ETA's
 
     def init(self):
         """
@@ -441,20 +413,29 @@ class GopherDeliveries(object):
         self.root = None
         self.subtrees = None
         self.init_blackboard_variables(traversed_locations=[], remaining_locations=[])
-        self.state = State.IDLE
+
+    @property
+    def response(self):
+        # Since the response is a thread protected variable...
+        with self._response_lock:
+            self._response.header.stamp = rospy.Time.now()
+            response = copy.copy(self._response)
+        return response
+
+    @property
+    def remaining_locations(self):
+        return self.blackboard.remaining_locations
+
+    @property
+    def traversed_locations(self):
+        return self.blackboard.traversed_locations
 
     @property
     def state(self):
-        """
-        Stored in the blackboard (for easy debugging).
-        """
         return self.blackboard.delivery_state
 
     @state.setter
     def state(self, new_state):
-        """
-        Nice way of reflecting the state into the blackboard for easy debugging.
-        """
         self.blackboard.delivery_state = new_state
 
     def setup(self, timeout):
@@ -464,6 +445,25 @@ class GopherDeliveries(object):
         """
         self.gopher = gopher_configuration.Configuration()
         self.semantics = gopher_semantics.Semantics(self.gopher.namespaces.semantics)
+
+        self.subscribers = rocon_python_comms.utils.Subscribers(
+            [
+                ('eta', self.gopher.topics.eta, gopher_delivery_msgs.DeliveryETA, self._eta_callback)
+            ]
+        )
+        self.services = rocon_python_comms.utils.Services(
+            [
+                ('delivery_result', self.gopher.services.delivery_result, gopher_delivery_srvs.DeliveryResult, self.get_last_goal_result),
+                ('delivery_goal', self.gopher.services.delivery_goal, gopher_delivery_srvs.DeliveryGoal, self.set_goal)
+            ]
+        )
+        self.subscribers = rocon_python_comms.utils.Subscribers(
+            [
+                ('current_world', self.gopher.topics.world, std_msgs.String, self.current_world_callback),
+                ('delivery_cancel', self.gopher.topics.delivery_cancel, std_msgs.Empty, self.cancel_goal),
+            ]
+        )
+
         self.dynamic_reconfigure_server = dynamic_reconfigure.server.Server(
             QuirkyDeliveriesConfig,
             self.dynamic_reconfigure_callback
@@ -485,52 +485,6 @@ class GopherDeliveries(object):
         self.blackboard.remaining_locations = remaining_locations
         self.blackboard.cancel_requested = False
 
-    #################################
-    # Goal Management
-    #################################
-
-    def set_goal(self, locations):
-        """
-        Callback for receipt of a new goal. This can be called while the tree is ticking,
-        so make sure you don't read/do anything with the blackboard here.
-
-        This makes alot of checks to see whether it is viable to insert a new goal on
-        the *next* tick. It doesn't actually do the insertion, yet.
-
-        :param [str] locations: semantic locations (try to match these against the system served Map Locations list via the unique_name)
-        :return: tuple of (gopher_delivery_msgs.DeliveryErrorCodes, string)
-        """
-        # don't need a lock: http://effbot.org/pyfaq/what-kinds-of-global-value-mutation-are-thread-safe.htm
-        if locations is None or not locations:
-            return (gopher_delivery_msgs.DeliveryErrorCodes.REJECT_GOAL_EMPTY_GOAL_NOTHING_TO_DO, "goal empty, nothing to do.")
-        if not self.ros_connected:
-            return (gopher_delivery_msgs.DeliveryErrorCodes.REJECT_GOAL_SYSTEM_NOT_READY, "underlying ros subsystem not properly connected")
-        if self.blackboard.battery_low_warning:  # TODO this probably needs to be smarter
-            return (gopher_delivery_msgs.DeliveryErrorCodes.REJECT_GOAL_NOT_ENOUGH_JUICE, "not enough juice")
-        if self.state == State.IDLE:
-            # make sure locations are valid before returning success
-            if all([location in self.semantics.locations for location in locations]):
-                self.incoming_goal = locations
-                return (gopher_delivery_msgs.DeliveryErrorCodes.SUCCESS, "assigned new goal")
-            else:
-                return (gopher_delivery_msgs.DeliveryErrorCodes.REJECT_GOAL_INVALID_LOCATION, "Received invalid locations")
-        elif self.state == State.WAITING:
-            self.incoming_goal = locations
-            return (gopher_delivery_msgs.DeliveryErrorCodes.SUCCESS, "pre-empting current goal")
-        elif self.state == State.BUSY:
-            return (gopher_delivery_msgs.DeliveryErrorCodes.REJECT_GOAL_ROBOT_IS_BUSY, "sorry, busy looking for a robot girl")
-        elif self.state == State.REINITIALISING:
-            return (gopher_delivery_msgs.DeliveryErrorCodes.REJECT_GOAL_ALREADY_ASSIGNED, "sorry, busy (re-initialising mid-goal)")
-        else:  # we're travelling between locations
-            return (gopher_delivery_msgs.DeliveryErrorCodes.REJECT_GOAL_ALREADY_ASSIGNED, "sorry, busy (already assigned a goal)")
-
-    def cancel_goal(self):
-        """
-        This will set a blackboard variable that will trigger a delivery to cleanup itself. Usually
-        this is triggered by a guard that implements a subtree recovery at a higher priority than the actual delivery.
-        """
-        self.blackboard.cancel_requested = True
-
     def dynamic_reconfigure_callback(self, config, level):
         self.parameters.express = config.express
         self.parameters.parking = config.parking
@@ -539,24 +493,114 @@ class GopherDeliveries(object):
             QuirkyDeliveriesConfig.QuirkyDeliveries_ar: elf.InitialisationType.AR,
         }
         self.parameters.elf = conversions[config.elf]
-        rospy.loginfo("Quirky Deliveries: reconfigured\n%s" % self.parameters)
+        rospy.loginfo("QuirkyDeliveries: reconfigured\n%s" % self.parameters)
         return config
+
+    #################################
+    # Goal Management
+    #################################
+
+    def set_goal(self, request):
+        """
+        Callback for receipt of a new goal. This can be called while the tree is ticking,
+        so make sure you don't read/do anything with the blackboard here.
+
+        This makes alot of checks to see whether it is viable to insert a new goal on
+        the *next* tick. It doesn't actually do the insertion, yet.
+
+         * check for empty goal
+         * check underlying ros system is ready
+         * check if there is enough battery
+         * check goal semantic locations are registered ones
+         * check the robot is not already busy/assigned
+
+        :param [str] locations: semantic locations (try to match these against the system served Map Locations list via the unique_name)
+        :return: True or False whether it was rejected or not
+        """
+        locations = request.semantic_locations
+        rospy.loginfo("QuirkyDeliveries: received a goal request for {0}".format(request.semantic_locations))
+        set_goal_response = gopher_delivery_srvs.DeliveryGoalResponse()
+        with self._response_lock:
+            # don't need a lock: http://effbot.org/pyfaq/what-kinds-of-global-value-mutation-are-thread-safe.htm
+            if locations is None or not locations:
+                set_goal_response.result = gopher_delivery_msgs.DeliveryErrorCodes.REJECT_GOAL_EMPTY_GOAL_NOTHING_TO_DO
+                set_goal_response.error_message = "goal empty, nothing to do"
+            elif not self.ros_connected:
+                set_goal_response.result = gopher_delivery_msgs.DeliveryErrorCodes.REJECT_GOAL_SYSTEM_NOT_READY
+                set_goal_response.error_message = "underlying ros subsystem not properly connected"
+            elif self.blackboard.battery_low_warning:  # TODO this probably needs to be smarter
+                set_goal_response.result = gopher_delivery_msgs.DeliveryErrorCodes.REJECT_GOAL_NOT_ENOUGH_JUICE
+                set_goal_response.error_message = "not enough juice"
+            elif self._response.result >= 0:
+                if self.root is None:
+                    # make sure locations are valid before returning success
+                    if all([location in self.semantics.locations for location in locations]):
+                        self.incoming_goal = locations
+                        set_goal_response.result = gopher_delivery_msgs.DeliveryErrorCodes.SUCCESS
+                        set_goal_response.error_message = "goal accepted"
+                        self._response.result = gopher_delivery_msgs.DeliveryErrorCodes.RESULT_PENDING
+                        self._response.result_string = gopher_delivery_msgs.DeliveryErrorCodes.RESULT_PENDING_STRING
+                        self._response.message = "pending"
+                    else:
+                        set_goal_response.result = gopher_delivery_msgs.DeliveryErrorCodes.REJECT_GOAL_INVALID_LOCATION
+                        set_goal_response.error_message = "received invalid locations"
+                else:
+                    set_goal_response.result = gopher_delivery_msgs.DeliveryErrorCodes.REJECT_GOAL_ROBOT_IS_BUSY
+                    set_goal_response.error_message = "sorry, busy looking for a robot girl"
+            elif self._response.result == gopher_delivery_msgs.DeliveryErrorCodes.RESULT_WAITING:
+                set_goal_response.result = gopher_delivery_msgs.DeliveryErrorCodes.REJECT_GOAL_ROBOT_IS_BUSY
+                set_goal_response.error_message = "pre-empting at waiting locations is not currently supported"
+            else:
+                set_goal_response.result = gopher_delivery_msgs.DeliveryErrorCodes.REJECT_GOAL_ALREADY_ASSIGNED
+                set_goal_response.error_message = "sorry, busy (already assigned a goal)"
+
+        if set_goal_response.result == gopher_delivery_msgs.DeliveryErrorCodes.SUCCESS:
+            rospy.loginfo("QuirkyDeliveries: accepted goal request [%s]" % set_goal_response.error_message)
+        else:
+            rospy.logwarn("QuirkyDeliveries: rejected goal request [%s]" % set_goal_response.error_message)
+        return set_goal_response
+
+    def get_last_goal_result(self, request):
+        """
+        Since this is a service, it can be continuously polled, even while the delivery is running
+        or after it has finished. This means it can indicate the result is still pending, or has
+        finished some time ago (and a new one hasn't arrived yet).
+
+        :param gopher_delivery_msgs.srv.DeliveryResultRequest request: last goal result details
+        """
+        return self.response  # note that callign this automatically activates the lock/copy
+
+    def cancel_goal(self):
+        """
+        This will set a blackboard variable that will trigger a delivery to cleanup itself. Usually
+        this is triggered by a guard that implements a subtree recovery at a higher priority than the actual delivery.
+        """
+        self.blackboard.cancel_requested = True
+
+    def current_world_callback(self, msg):
+        """
+        Catches what world we are currently on from marco_polo. This is the unique name that
+        should be found in the semantics worlds list. This is used to help the topological planner
+        initialise a new delivery route.
+
+        :param std_msgs.String msg:
+        """
+        self.current_world = msg.data
 
     #################################
     # Tick Tock
     #################################
 
-    def pre_tick_update(self, current_world):
+    def pre_tick_update(self):
         """
         Check if we have a new goal, then assemble the sub-behaviours required to
         complete that goal. Finally kick out the current root if the last delivery
         succeeded.
 
-        :param str current_world: update our knowledge of what the current world is.
-        :returns: what happened...
-        :rtype: PreTickResult
+        :returns: whether the tree needs to be inserted/deleted from above
+        :rtype: bool
         """
-        result = PreTickResult.BORING_NOTHING
+        result = False  # BORING_NOTHING
         if self.incoming_goal is not None and self.incoming_goal:
             # use the planner to initialise the behaviours that we are to follow
             # to get to the delivery location. If this is empty/None, then the
@@ -566,19 +610,21 @@ class GopherDeliveries(object):
                                            remaining_locations=self.incoming_goal
                                            )
             (self.root, self.subtrees) = create_delivery_subtree(
-                current_world,
+                self.current_world,
                 self.incoming_goal,
                 self.parameters
             )
 
             if self.root.setup(10):
                 self.locations = self.incoming_goal
-                result = PreTickResult.NEW_DELIVERY_TREE
+                result = True  # NEW_DELIVERY_TREE
             else:
                 rospy.logerr("Quirky Deliveries: failed to set up new delivery tree.")
                 if self.root is None:
                     rospy.logerr("Quirky Deliveries: shouldn't ever get here, but in case you do...'git clone Dan; git pull'")
-                result = PreTickResult.NEW_DELIVERY_TREE_WITHERED_AND_DIED
+                result = False  # NEW_DELIVERY_TREE_WITHERED_AND_DIED
+                self._response.result = gopher_delivery_msgs.DeliveryErrorCodes.RESULT_FAILED
+                self._response.result_string = "delivery couldn't create the required behaviours to execute"
                 self.init()
             self.incoming_goal = None
 
@@ -586,47 +632,56 @@ class GopherDeliveries(object):
             # last goal was achieved, failed, or interrupted and no new goal, so swap this current subtree out
             self.old_goal_id = self.root.id if self.root is not None else None
             self.init()
-            result = PreTickResult.TREE_FELLED
+            result = True  # TREE_FELLED
         return result
 
     def post_tock_update(self):
         """
         Save the state and set a feedback message that is useful for above.
         """
-        # state
-        if self.root is None or self.root.status == py_trees.common.Status.SUCCESS:
-            self.state = State.IDLE
-        elif self.subtrees.en_route.status == py_trees.common.Status.RUNNING:
-            self.state = State.EN_ROUTE
-        elif self.subtrees.cancelling.status == py_trees.common.Status.RUNNING:
-            self.state = State.CANCELLING
-        elif self.subtrees.unparking.status == py_trees.common.Status.RUNNING:
-            self.state = State.UNPARKING
-        elif self.subtrees.parking.status == py_trees.common.Status.RUNNING:
-            self.state = State.PARKING
-        elif self.subtrees.recovering.status == py_trees.common.Status.RUNNING:
-            self.state = State.RECOVERING
-        elif self.root.status == py_trees.common.Status.INVALID:
-            self.state = State.INTERRUPTED
-        else:
-            print(console.red + "ERROR : reached an invalid delivery tree state, please report." + console.reset)
-        # feedback message
-        if self.root is None or self.root.status == py_trees.common.Status.SUCCESS:
-            self.feedback_message = State.IDLE
-        elif self.subtrees.en_route.status == py_trees.common.Status.RUNNING:
-            tip = self.root.tip()
-            delivery_child = self.subtrees.en_route.current_child
-            if self.subtrees.en_route.status == py_trees.Status.RUNNING:
-                if any(map(lambda x: isinstance(delivery_child, x), [navigation.MoveIt, elevators.Elevators])):
-                    if self.blackboard.traversed_locations:
-                        self.feedback_message = "moving from '{0}' to '{1}'".format(self.blackboard.traversed_locations[-1], self.blackboard.remaining_locations[0])
+        # set the state - this is necessary so we have a variable outside the 'tick_tock' to handle
+        # incoming calls on set_goal (comes from a ros service)
+        if self.root is not None and self._response.result < 0:
+            with self._response_lock:
+                # just finished
+                if self.root.status == py_trees.Status.SUCCESS:
+                    self._response.result = gopher_delivery_msgs.DeliveryErrorCodes.SUCCESS
+                    self._response.result_string = gopher_delivery_msgs.DeliveryErrorCodes.SUCCESS_STRING
+                    self._response.message = "groot"
+                # just aborted (interrupted)
+                elif self.root.status == py_trees.Status.INVALID:
+                    self._response.result = gopher_delivery_msgs.DeliveryErrorCodes.RESULT_ABORTED
+                    self._response.result_string = gopher_delivery_msgs.DeliveryErrorCodes.RESULT_ABORTED_STRING
+                    self._response.message = "aborted, probably by Marcus"
+                elif self.subtrees.is_cancelled.status == py_trees.Status.SUCCESS:
+                    self._response.result = gopher_delivery_msgs.DeliveryErrorCodes.RESULT_CANCELLED
+                    self._response.result_string = gopher_delivery_msgs.DeliveryErrorCodes.RESULT_CANCELLED_STRING
+                    self._response.message = "cancelled by the user"  # todo distinguish between concert and button cancel
+                elif self.subtrees.deliveries.status == py_trees.Status.FAILURE:
+                    self._response.result = gopher_delivery_msgs.DeliveryErrorCodes.RESULT_FAILED
+                    self._response.result_string = gopher_delivery_msgs.DeliveryErrorCodes.RESULT_FAILED_STRING
+                    self._response.message = "delivery failed, robot probably needs tlc"  # todo more detail
+                elif self.subtrees.unparking.status == py_trees.common.Status.RUNNING:
+                    self._response.result = gopher_delivery_msgs.DeliveryErrorCodes.RESULT_UNPARKING
+                    self._response.result_string = gopher_delivery_msgs.DeliveryErrorCodes.RESULT_UNPARKING_STRING
+                    self._response.message = gopher_delivery_msgs.DeliveryErrorCodes.RESULT_UNPARKING_STRING
+                elif self.subtrees.en_route.status == py_trees.common.Status.RUNNING:
+                    tip = self.root.tip()
+                    if isinstance(tip, Waiting):
+                        self._response.result = gopher_delivery_msgs.DeliveryErrorCodes.RESULT_WAITING
+                        self._response.result_string = gopher_delivery_msgs.DeliveryErrorCodes.RESULT_WAITING_STRING
+                        self._response.message = tip.feedback_message
                     else:
-                        self.feedback_message = "moving to '{0}'".format(self.blackboard.remaining_locations[0])
-                elif isinstance(tip, Waiting):
-                    self.feedback_message = tip.feedback_message
-        else:
-            tip = self.root.tip()
-            self.feedback_message = tip.feedback_message if self.root.tip() is not None else "interrupted"  # str(self.state).title()
+                        self._response.result = gopher_delivery_msgs.DeliveryErrorCodes.RESULT_TRAVELLING
+                        self._response.result_string = gopher_delivery_msgs.DeliveryErrorCodes.RESULT_TRAVELLING_STRING
+                        if self.blackboard.traversed_locations:
+                            self._response.message = "moving from '{0}' to '{1}'".format(self.traversed_locations[-1], self.remaining_locations[0])
+                        else:
+                            self._response.message = "moving to '{0}'".format(self.remaining_locations[0])
+
+                self._response.traversed_locations = self.traversed_locations
+                self._response.remaining_locations = self.remaining_locations
+                self._response.eta = self.current_eta
 
     #################################
     # Introspection
@@ -640,30 +695,9 @@ class GopherDeliveries(object):
             return self.root.status == py_trees.Status.RUNNING
         return False
 
-    def is_interrupted(self):
-        return self.root is not None and self.root.status == py_trees.Status.INVALID
+    #################################
+    # Ros Callbacks
+    #################################
 
-    def is_finished(self):
-        """
-        Did the delivery tree finish on the last tick? Inbetween ticks this
-        will only fire once since the tree will immediately be deleted next
-        pre-tick.
-        """
-        if self.root is not None:
-            return self.root.status == py_trees.Status.SUCCESS
-        return False
-
-    def is_running_but_cancelled(self):
-        if self.root is not None and self.root.status != py_trees.Status.INVALID:
-            return self.subtrees.is_cancelled.status == py_trees.Status.SUCCESS
-        return False
-
-    def is_running_and_en_route(self):
-        if self.root is not None and self.en_route.status == py_trees.Status.RUNNING:
-            return self.subtrees.en_route.status != py_trees.Status.INVALID
-        return False
-
-    def is_running_but_failed(self):
-        if self.root is not None and self.root.status != py_trees.Status.INVALID:
-            return self.subtrees.deliveries.status == py_trees.Status.FAILURE
-        return False
+    def _eta_callback(self, msg):
+        self.current_eta = msg

@@ -22,7 +22,6 @@
       <param name="parking"                       value="$(arg parking)"/>
       <param name="elf"                           value="$(arg elf)"/>
       <remap from="delivery/goal"                 to="/rocon/delivery/goal"/>
-      <remap from="delivery/feedback"             to="/rocon/delivery/feedback"/>
       <remap from="delivery/cancel"               to="/rocon/delivery/cancel"/>
       <remap from="delivery/result"               to="/rocon/delivery/result"/>
     </node>
