@@ -15,9 +15,9 @@ gopher_behaviours/demo_flash_and_wait.launch
 # Imports
 ##############################################################################
 
-import argparse
 import gopher_configuration
 import gopher_behaviours
+import gopher_std_msgs.msg as gopher_std_msgs
 import py_trees
 import rocon_console.console as console
 import rospy
@@ -52,25 +52,13 @@ def show_usage():
     s += console.white
     s += console.bold + "    Launchers" + console.reset + "\n"
     s += console.cyan + "        gopher_robot/apps_gocart.launch + 'Fake Navigation'" + console.reset + "\n"
+    s += console.cyan + "        gopher_podium/apps_gocart.launch + 'Navigation'" + console.reset + " (tele-elf only)\n"
     s += "\n"
     return s
 
 
 def parse_arguments(command_line_args):
-    parser = argparse.ArgumentParser(description=show_description(),
-                                     usage=show_usage(),
-                                     epilog="And his noodly appendage reached forth to tickle the blessed...",
-                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter
-                                     )
-    parser.add_argument('-r', '--render', action='store_true', help='render the graph to dot/png/svg.')
-    parser.add_argument('-v', '--visibility-level',
-                        action='store',
-                        default="detail",
-                        choices=py_trees.common.visibility_level_strings,
-                        help='visibility level for blackboxes when using -r'
-                        )
-    parser.add_argument('-d', '--debug', action='store_true', help='debug level tree logging.')
-
+    parser = gopher_behaviours.scripts.demo.create_arg_parser(show_description, show_usage)
     args = parser.parse_args(command_line_args)
     args.visibility_level = py_trees.common.string_to_visibility_level(args.visibility_level)
     return args
@@ -80,63 +68,60 @@ def parse_arguments(command_line_args):
 ##############################################################################
 
 
-class FlashAndWait(object):
-    def __init__(self):
-        self.root = py_trees.Sequence("Demo Flash And Wait")
-        self.gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
-        self.logger = py_trees.logging.get_logger("FlashAndWait")
-        party = py_trees.composites.Parallel(
-            name="Party",
-            policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE
-        )
-        flash_leds_need_input = gopher_behaviours.interactions.Notification(
-            "Waiting for Input",
-            led_pattern=self.gopher.led_patterns.humans_give_me_input,
-            message="waiting for the user to hit the button"
-        )
-        wait_for_go_button_press = gopher_behaviours.interactions.create_wait_for_go_button("Wait for Go Button")
-        party.add_child(flash_leds_need_input)
-        party.add_child(wait_for_go_button_press)
+def create_root():
+    gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
+    root = py_trees.composites.Parallel(
+        name="Demo Parking",
+        policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ALL
+    )
+    jobs = py_trees.composites.Sequence("Jobs")
 
-        honk = gopher_behaviours.interactions.Articulate("Honk", self.gopher.sounds.honk)
-        pausing = py_trees.composites.Parallel(
-            name="Hangover",
-            policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE
-        )
-        flash_leds_pause = gopher_behaviours.interactions.Notification(
-            name="Waiting",
-            led_pattern=self.gopher.led_patterns.holding,
-            message="flashing while pausing...for a bit"
-        )
-        pausing.add_child(flash_leds_pause)
-        pausing.add_child(py_trees.timers.Timer("Pause 5s", duration=5.0))
+    #################################
+    # Event Handler
+    #################################
+    event_handler = gopher_behaviours.interactions.create_button_event_handler()
 
-        self.root.add_child(party)
-        self.root.add_child(honk)
-        self.root.add_child(pausing)
-        self.tree = py_trees.ROSBehaviourTree(self.root)
+    party = py_trees.composites.Parallel(
+        name="Party",
+        policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE
+    )
+    flash_leds_need_input = gopher_behaviours.interactions.Notification(
+        "Waiting for Input",
+        led_pattern=gopher.led_patterns.humans_give_me_input,
+        button_confirm=gopher_std_msgs.Notification.BUTTON_ON,
+        button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
+        message="waiting for the user to hit the button"
+    )
+    wait_for_go_button_press = py_trees.blackboard.WaitForBlackboardVariable(
+        name='Wait for Go Button',
+        variable_name='event_go_button',
+        expected_value=True
+    )
 
-        rospy.on_shutdown(self.shutdown)
+    party.add_child(flash_leds_need_input)
+    party.add_child(wait_for_go_button_press)
 
-        # py_trees.display.render_dot_tree(self.root)
-        py_trees.display.print_ascii_tree(self.root, 0)
+    honk = gopher_behaviours.interactions.Articulate("Honk", gopher.sounds.honk)
+    pausing = py_trees.composites.Parallel(
+        name="Hangover",
+        policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE
+    )
+    flash_leds_pause = gopher_behaviours.interactions.Notification(
+        name="Waiting",
+        led_pattern=gopher.led_patterns.holding,
+        button_confirm=gopher_std_msgs.Notification.BUTTON_ON,
+        button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
+        message="flashing while pausing...for a bit"
+    )
+    pausing.add_child(flash_leds_pause)
+    pausing.add_child(py_trees.timers.Timer("Pause 5s", duration=5.0))
 
-    ##############################################################################
-    # Tick Tock
-    ##############################################################################
-
-    def tick_tock(self):
-        self.tree.visitors.append(py_trees.trees.DebugVisitor())
-        self.tree.tick_tock(sleep_ms=500, number_of_iterations=py_trees.CONTINUOUS_TICK_TOCK, pre_tick_handler=self.pre_tick_handler)
-
-    def pre_tick_handler(self, behaviour_tree):
-        self.logger.debug("")
-        self.logger.debug("{:-^30}".format(" Run %s " % behaviour_tree.count))
-        self.logger.debug("")
-
-    def shutdown(self):
-        self.tree.destroy()  # destroy the tree on shutdown to stop the behaviour
-        self.tree.interrupt()
+    root.add_child(event_handler)
+    root.add_child(jobs)
+    jobs.add_child(party)
+    jobs.add_child(honk)
+    jobs.add_child(pausing)
+    return root
 
 ##############################################################################
 # Main
@@ -147,11 +132,14 @@ if __name__ == '__main__':
     args = parse_arguments(command_line_args)
     if args.debug:
         py_trees.logging.level = py_trees.logging.Level.DEBUG
-    demo = FlashAndWait()
+
+    demo = gopher_behaviours.scripts.demo.Demo(create_root(), loop=True)
+
     if args.render:
         py_trees.display.render_dot_tree(demo.root, args.visibility_level)
         sys.exit()
-    rospy.init_node("flash_and_wait", log_level=rospy.INFO)
+
+    rospy.init_node("demo", log_level=rospy.INFO)
     if not demo.tree.setup(15):
         sys.exit(console.red + "[ERROR] failed to setup required ros components." + console.reset)
     demo.tick_tock()

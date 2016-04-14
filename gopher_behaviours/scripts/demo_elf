@@ -6,7 +6,6 @@
 # Imports
 ##############################################################################
 
-import argparse
 import gopher_behaviours
 import gopher_configuration
 import py_trees
@@ -44,30 +43,19 @@ def show_usage():
     s += console.white
     s += console.bold + "    Launchers" + console.reset + "\n"
     s += console.cyan + "        gopher_robot/apps_gocart.launch + 'DSlam Navigation'" + console.reset + "\n"
+    s += console.cyan + "        gopher_podium/apps_gocart.launch + 'Navigation'" + console.reset + " (tele-elf only)\n"
     s += "\n"
     return s
 
 
 def parse_arguments(command_line_args):
-    parser = argparse.ArgumentParser(description=show_description(),
-                                     usage=show_usage(),
-                                     epilog="And his noodly appendage reached forth to tickle the blessed...",
-                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter
-                                     )
-    parser.add_argument('-r', '--render', action='store_true', help='render the graph to dot/png/svg.')
-    parser.add_argument('-v', '--visibility-level',
-                        action='store',
-                        default="detail",
-                        choices=py_trees.common.visibility_level_strings,
-                        help='visibility level for blackboxes when using -r'
-                        )
+    parser = gopher_behaviours.scripts.demo.create_arg_parser(show_description, show_usage)
     parser.add_argument('-e', '--elf',
                         action='store',
                         default="teleop",
                         choices=["ar", "teleop"],
                         help='type of elf to use for initialisation'
                         )
-    parser.add_argument('-d', '--debug', action='store_true', help='debug level tree logging.')
 
     gopher = gopher_configuration.configuration.Configuration(fallback_to_defaults=True)
     parser.add_argument('-s', '--semantics', action='store', default=gopher.namespaces.semantics, help='namespace for the semantics parameters.')
@@ -77,69 +65,37 @@ def parse_arguments(command_line_args):
     args.elf = gopher_behaviours.elf.string_to_elf_initialisation_type[args.elf]
     return args
 
-
 ##############################################################################
-# Demo
+# Root
 ##############################################################################
 
 
-class Demo(object):
-    def __init__(self, ):
-        self.logger = py_trees.logging.get_logger("Demo Elf")
-        self.gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
+def create_root():
+    root = py_trees.composites.Parallel(
+        name="Demo Elf",
+        policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ALL
+    )
 
-        self.root = py_trees.composites.Parallel(
-            name="Demo Elf",
-            policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ALL
-        )
+    #################################
+    # Event Handler
+    #################################
+    event_handler = gopher_behaviours.interactions.create_button_event_handler()
 
-        #################################
-        # Event Handler
-        #################################
-        event_handler = gopher_behaviours.interactions.create_button_event_handler()
+    #################################
+    # Elf
+    #################################
+    if args.elf == gopher_behaviours.elf.InitialisationType.TELEOP:
+        elf = gopher_behaviours.elf.TeleopInitialisation()
+    else:
+        elf = gopher_behaviours.elf.ARInitialisation()
 
-        #################################
-        # Elf
-        #################################
-        if args.elf == gopher_behaviours.elf.InitialisationType.TELEOP:
-            elf = gopher_behaviours.elf.TeleopInitialisation()
-        else:
-            elf = gopher_behaviours.elf.ARInitialisation()
+    #################################
+    # Graph
+    #################################
+    root.add_child(event_handler)
+    root.add_child(elf)
 
-        #################################
-        # Graph
-        #################################
-        self.root.add_child(event_handler)
-        self.root.add_child(elf)
-
-        #################################
-        # Tree
-        #################################
-        self.tree = py_trees.ROSBehaviourTree(self.root)
-        rospy.on_shutdown(self.shutdown)
-
-    ##############################################################################
-    # Tick Tock
-    ##############################################################################
-
-    def tick_tock(self):
-        loop_around = rospy.Rate(10)
-        self.tree.visitors.append(py_trees.trees.DebugVisitor())
-        while not self.root.status == py_trees.Status.SUCCESS\
-                and not self.root.status == py_trees.Status.FAILURE\
-                and not rospy.is_shutdown():
-            self.tree.tick(pre_tick_handler=self.pre_tick_handler)
-            loop_around.sleep()
-
-    def pre_tick_handler(self, behaviour_tree):
-        self.logger.debug("")
-        self.logger.debug("{:-^30}".format(" Run %s " % behaviour_tree.count))
-        self.logger.debug("")
-
-    def shutdown(self):
-        print(console.bold + "\n******************** Shutdown ********************\n" + console.reset)
-        self.tree.destroy()  # destroy the tree on shutdown to stop the behaviour
-        self.tree.interrupt()
+    return root
 
 ##############################################################################
 # Main
@@ -151,7 +107,8 @@ if __name__ == '__main__':
     if args.debug:
         py_trees.logging.level = py_trees.logging.Level.DEBUG
 
-    demo = Demo()
+    demo = gopher_behaviours.scripts.demo.Demo(create_root())
+
     if args.render:
         py_trees.display.render_dot_tree(demo.root, args.visibility_level)
         sys.exit()

@@ -1,15 +1,14 @@
 #!/usr/bin/env python
 #
-# License: BSD
-#   https://raw.github.com/yujinrobot/gopher_crazy_hospital/license/LICENSE
+# License: Yujin
 #
 ##############################################################################
 # Imports
 ##############################################################################
 
-import argparse
 import gopher_behaviours
 import gopher_configuration
+import gopher_std_msgs.msg as gopher_std_msgs
 import py_trees
 import rocon_console.console as console
 import rospy
@@ -51,25 +50,13 @@ def show_usage():
 
 
 def parse_arguments(command_line_args):
-    parser = argparse.ArgumentParser(description=show_description(),
-                                     usage=show_usage(),
-                                     epilog="And his noodly appendage reached forth to tickle the blessed...",
-                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter
-                                     )
-    parser.add_argument('-r', '--render', action='store_true', help='render the graph to dot/png/svg.')
-    parser.add_argument('-v', '--visibility-level',
-                        action='store',
-                        default="detail",
-                        choices=py_trees.common.visibility_level_strings,
-                        help='visibility level for blackboxes when using -r'
-                        )
+    parser = gopher_behaviours.scripts.demo.create_arg_parser(show_description, show_usage)
     parser.add_argument('-e', '--elf',
                         action='store',
                         default="teleop",
                         choices=["ar", "teleop"],
                         help='type of elf to use for initialisation'
                         )
-    parser.add_argument('-d', '--debug', action='store_true', help='debug level tree logging.')
 
     args = parser.parse_args(command_line_args)
     args.visibility_level = py_trees.common.string_to_visibility_level(args.visibility_level)
@@ -81,121 +68,98 @@ def parse_arguments(command_line_args):
 ##############################################################################
 
 
-class Demo(object):
-    def __init__(self):
-        self.gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
-        self.logger = py_trees.logging.get_logger("Demo Parking")
+def create_root():
+    gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
+    root = py_trees.composites.Parallel(
+        name="Demo Parking",
+        policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ALL
+    )
+    priorities = py_trees.composites.Selector("Priorities")
 
-        self.root = py_trees.composites.Parallel(
-            name="Demo Parking",
-            policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ALL
-        )
-        priorities = py_trees.composites.Selector("Priorities")
+    #################################
+    # Event Handler
+    #################################
+    event_handler = gopher_behaviours.interactions.create_button_event_handler()
 
-        #################################
-        # Event Handler
-        #################################
-        event_handler = gopher_behaviours.interactions.create_button_event_handler()
+    #################################
+    # Global Abort
+    #################################
+    global_abort = py_trees.composites.Sequence(name="Global Abort")
+    is_global_abort_activated = py_trees.CheckBlackboardVariable(
+        name='Is Aborted?',
+        variable_name='event_abort_button',
+        expected_value=True
+    )
+    global_abort_repark = gopher_behaviours.park.create_repark_subtree()
 
-        #################################
-        # Global Abort
-        #################################
-        global_abort = py_trees.composites.Sequence(name="Global Abort")
-        is_global_abort_activated = py_trees.CheckBlackboardVariable(
-            name='Is Aborted?',
-            variable_name='event_abort_button',
-            expected_value=True
-        )
-        global_abort_repark = gopher_behaviours.park.create_repark_subtree()
+    #################################
+    # Just Do It - Park/Unpark/Repark
+    #################################
+    just_do_it = py_trees.Sequence("Just Do It!")
+    unpark = gopher_behaviours.unpark.UnPark("UnPark")
+    park = gopher_behaviours.park.Park("Park")
+    repark = gopher_behaviours.park.create_repark_subtree()
 
-        #################################
-        # Just Do It - Park/Unpark/Repark
-        #################################
-        just_do_it = py_trees.Sequence("Just Do It!")
-        unpark = gopher_behaviours.unpark.UnPark("UnPark")
-        park = gopher_behaviours.park.Park("Park")
-        repark = gopher_behaviours.park.create_repark_subtree()
+    #################################
+    # Drive Around
+    #################################
+    drive_around_get_a_coffee = py_trees.composites.Parallel(
+        name='Drive Around, Get a Coffee', policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE)
+    drive_around_flash_leds = gopher_behaviours.interactions.Notification(
+        name='Flash Cool',
+        message='do a delivery, get a coffee',
+        led_pattern=gopher.led_patterns.im_doing_something_cool,
+        button_confirm=gopher_std_msgs.Notification.BUTTON_ON,
+        button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
+    )
+    wait_for_button = py_trees.subscribers.WaitForSubscriberData(
+        name="Wait for Go Button",
+        topic_name=gopher.buttons.go,
+        topic_type=std_msgs.String
+    )
 
-        #################################
-        # Drive Around
-        #################################
-        drive_around_get_a_coffee = py_trees.composites.Parallel(
-            name='Drive Around, Get a Coffee', policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE)
-        drive_around_flash_leds = gopher_behaviours.interactions.Notification(
-            name='Flash Cool',
-            message='do a delivery, get a coffee',
-            led_pattern=self.gopher.led_patterns.im_doing_something_cool
-        )
-        wait_for_button = py_trees.subscribers.WaitForSubscriberData(
-            name="Wait for Go Button",
-            topic_name=self.gopher.buttons.go,
-            topic_type=std_msgs.String
-        )
+    #################################
+    # Restart
+    #################################
+    restart_wait_for_go_button = py_trees.subscribers.WaitForSubscriberData(
+        name="Wait for Go Button",
+        topic_name=gopher.buttons.go,
+        topic_type=std_msgs.String
+    )
 
-        #################################
-        # Restart
-        #################################
-        restart_wait_for_go_button = py_trees.subscribers.WaitForSubscriberData(
-            name="Wait for Go Button",
-            topic_name=self.gopher.buttons.go,
-            topic_type=std_msgs.String
-        )
+    restart = py_trees.composites.Parallel(
+        name="Restart",
+        policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE
+    )
+    restart_flash_holding = gopher_behaviours.interactions.Notification(
+        name='Flash Holding',
+        message='reset and get ready to start again',
+        led_pattern=gopher.led_patterns.holding,
+        button_confirm=gopher_std_msgs.Notification.BUTTON_ON,
+        button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS
+    )
 
-        restart = py_trees.composites.Parallel(
-            name="Restart",
-            policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE
-        )
-        restart_flash_holding = gopher_behaviours.interactions.Notification(
-            name='Flash Holding',
-            message='reset and get ready to start again',
-            led_pattern=self.gopher.led_patterns.holding
-        )
+    #################################
+    # Graph
+    #################################
+    root.add_child(event_handler)
+    root.add_child(priorities)
+    priorities.add_child(global_abort)
+    global_abort.add_child(is_global_abort_activated)
+    global_abort.add_child(global_abort_repark)
+    priorities.add_child(just_do_it)
+    just_do_it.add_child(unpark)
+    just_do_it.add_child(drive_around_get_a_coffee)
+    drive_around_get_a_coffee.add_child(drive_around_flash_leds)
+    drive_around_get_a_coffee.add_child(wait_for_button)
+    just_do_it.add_child(park)
+    just_do_it.add_child(restart)
+    restart.add_child(restart_flash_holding)
+    restart.add_child(restart_wait_for_go_button)
+    priorities.add_child(repark)
 
-        #################################
-        # Graph
-        #################################
-        self.root.add_child(event_handler)
-        self.root.add_child(priorities)
-        priorities.add_child(global_abort)
-        global_abort.add_child(is_global_abort_activated)
-        global_abort.add_child(global_abort_repark)
-        priorities.add_child(just_do_it)
-        just_do_it.add_child(unpark)
-        just_do_it.add_child(drive_around_get_a_coffee)
-        drive_around_get_a_coffee.add_child(drive_around_flash_leds)
-        drive_around_get_a_coffee.add_child(wait_for_button)
-        just_do_it.add_child(park)
-        just_do_it.add_child(restart)
-        restart.add_child(restart_flash_holding)
-        restart.add_child(restart_wait_for_go_button)
-        priorities.add_child(repark)
-        self.tree = py_trees.ROSBehaviourTree(self.root)
-        rospy.on_shutdown(self.shutdown)
-        py_trees.display.print_ascii_tree(self.root, 0)
+    return root
 
-    ##############################################################################
-    # Tick Tock
-    ##############################################################################
-
-    def tick_tock(self):
-        self.tree.visitors.append(py_trees.trees.DebugVisitor())
-        rate = rospy.Rate(10)
-        while not rospy.is_shutdown():
-            self.tree.tick(pre_tick_handler=self.pre_tick_handler)
-            if self.root.status == py_trees.Status.FAILURE:
-                pass  # break
-            if self.root.status == py_trees.Status.SUCCESS:
-                pass  # break
-            rate.sleep()
-
-    def pre_tick_handler(self, behaviour_tree):
-        self.logger.debug("")
-        self.logger.debug("{:-^30}".format(" Run %s " % behaviour_tree.count))
-        self.logger.debug("")
-
-    def shutdown(self):
-        self.tree.destroy()  # destroy the tree on shutdown to stop the behaviour
-        self.tree.interrupt()
 
 ##############################################################################
 # Main
@@ -207,7 +171,7 @@ if __name__ == '__main__':
     if args.debug:
         py_trees.logging.level = py_trees.logging.Level.DEBUG
 
-    demo = Demo()
+    demo = gopher_behaviours.scripts.demo.Demo(create_root())
     if args.render:
         py_trees.display.render_dot_tree(demo.root, args.visibility_level)
         sys.exit()
