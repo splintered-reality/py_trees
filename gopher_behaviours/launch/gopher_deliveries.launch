@@ -21,9 +21,6 @@
       <param name="express"                       value="$(arg express)"/>
       <param name="parking"                       value="$(arg parking)"/>
       <param name="elf"                           value="$(arg elf)"/>
-      <remap from="delivery/goal"                 to="/rocon/delivery/goal"/>
-      <remap from="delivery/cancel"               to="/rocon/delivery/cancel"/>
-      <remap from="delivery/result"               to="/rocon/delivery/result"/>
     </node>
     <include file="$(find gopher_behaviours)/launch/custom_delivery_overseer.launch"/>
   </group>
