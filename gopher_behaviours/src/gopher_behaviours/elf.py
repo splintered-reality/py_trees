@@ -173,39 +173,12 @@ class TeleopInitialisation(py_trees.Selector):
     def __init__(self, name="Teleop Elf"):
         super(TeleopInitialisation, self).__init__(name)
         self.gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
-
         localised_yet = create_check_elf_status_subtree()
-        initialising = py_trees.composites.Sequence("Teleop & Teleport")
-        initialising.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
-        teleop_to_homebase = py_trees.composites.Parallel(
-            name="Teleop to Homebase",
-            policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE
-        )
-        flash_i_need_help = interactions.Notification(
-            name='Flash Help Me',
-            message='waiting for button press to continue',
-            led_pattern=self.gopher.led_patterns.humans_i_need_help,
-            button_confirm=gopher_std_msgs.Notification.BUTTON_ON,
-            button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
-            duration=gopher_std_srvs.NotifyRequest.INDEFINITE
-        )
-        # usually have the button event handler/blackboard combo and that is less expensive than the subscriber method
-        wait_for_go_button_press = py_trees.blackboard.WaitForBlackboardVariable(
-            name="Wait for Go Button",
-            variable_name="event_go_button",
-            expected_value=True,
-            comparison_operator=operator.eq,
-            clearing_policy=py_trees.common.ClearingPolicy.ON_INITIALISE
-        )
+        initialising = navigation.create_teleop_homebase_teleport_subtree()
+        # sit around waiting for the localised yet to kick in
         hang_around = py_trees.behaviours.Running("Hang Around")
-        teleport = navigation.create_homebase_teleport()
-
         self.add_child(localised_yet)
         self.add_child(initialising)
-        initialising.add_child(teleop_to_homebase)
-        teleop_to_homebase.add_child(flash_i_need_help)
-        teleop_to_homebase.add_child(wait_for_go_button_press)
-        initialising.add_child(teleport)
         initialising.add_child(hang_around)
 
 

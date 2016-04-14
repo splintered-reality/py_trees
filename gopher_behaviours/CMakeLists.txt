@@ -23,7 +23,7 @@ catkin_python_setup()
 
 generate_dynamic_reconfigure_options(
     dynamic_reconfigure/CustomDeliveries.cfg
-    dynamic_reconfigure/HiveMind.cfg
+    dynamic_reconfigure/QuirkyDeliveries.cfg
 )
 
 ##############################################################################
@@ -47,6 +47,7 @@ catkin_install_python(
         scripts/demo_flash_and_wait
         scripts/demo_move_base
         scripts/demo_parking
+        scripts/demo_homebase_teleport
         scripts/demo_simple_motions
         scripts/splintered_reality.py
         scripts/gopher_elevator_run

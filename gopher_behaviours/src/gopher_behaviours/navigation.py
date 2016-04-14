@@ -28,6 +28,7 @@ import gopher_navi_msgs.msg as gopher_navi_msgs
 import gopher_std_msgs.msg as gopher_std_msgs
 import gopher_std_msgs.srv as gopher_std_srvs
 import move_base_msgs.msg as move_base_msgs
+import operator
 import nav_msgs.msg as nav_msgs
 import py_trees
 import rospy
@@ -35,17 +36,55 @@ import tf
 import tf2_geometry_msgs
 import tf2_ros
 
+from . import interactions
+
 ##############################################################################
 # Behaviour Factories
 ##############################################################################
 
 
-def create_homebase_teleport(name="Homebase Teleport"):
-    behaviour = Teleport(
+def create_teleop_homebase_teleport_subtree(name="Teleop & Teleport"):
+    """
+    Simple teleop and teleport sequence. Usually you would like to
+    add another behaviour to the end of the sequence, e.g.
+    py_trees.behaviours.Running if you're waiting for an interrupt
+    at a higher priority or a timer to hang around and show the
+    teleport for a reasonable duration.
+    """
+    gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
+    teleop_and_teleport = py_trees.composites.Sequence(name)
+    teleop_and_teleport.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
+    teleop_to_homebase = py_trees.composites.Parallel(
+        name="Teleop to Homebase",
+        policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE
+    )
+    flash_i_need_help = interactions.Notification(
+        name='Flash Help Me',
+        message='waiting for button press to continue',
+        led_pattern=gopher.led_patterns.humans_i_need_help,
+        button_confirm=gopher_std_msgs.Notification.BUTTON_ON,
+        button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
+        cancel_on_stop=True,
+        duration=gopher_std_srvs.NotifyRequest.INDEFINITE
+    )
+    # usually have the button event handler/blackboard combo and that is less expensive than the subscriber method
+    wait_for_go_button_press = py_trees.blackboard.WaitForBlackboardVariable(
+        name="Wait for Go Button",
+        variable_name="event_go_button",
+        expected_value=True,
+        comparison_operator=operator.eq,
+        clearing_policy=py_trees.common.ClearingPolicy.ON_INITIALISE
+    )
+    teleport = Teleport(
         name=name,
         goal=gopher_navi_msgs.TeleportGoal(location="homebase", special_effects=True)
     )
-    return behaviour
+    teleop_to_homebase.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
+    teleop_and_teleport.add_child(teleop_to_homebase)
+    teleop_to_homebase.add_child(flash_i_need_help)
+    teleop_to_homebase.add_child(wait_for_go_button_press)
+    teleop_and_teleport.add_child(teleport)
+    return teleop_and_teleport
 
 
 def create_odom_pose_to_blackboard_behaviour(

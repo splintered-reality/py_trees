@@ -19,6 +19,7 @@ Gopher delivery behaviours! Are they good for anything else?
 # Imports
 ##############################################################################
 
+import dynamic_reconfigure.server
 import enum
 import gopher_configuration
 import gopher_delivery_msgs.msg as gopher_delivery_msgs
@@ -34,16 +35,47 @@ import rospy
 import std_msgs.msg as std_msgs
 import unique_id
 
+from . import cfg
 from . import elevators
+from . import elf
 from . import interactions
 from . import navigation
 from . import park
 from . import planner
 from . import unpark
 
+from gopher_behaviours.cfg import QuirkyDeliveriesConfig
+
+
 ##############################################################################
 # Machinery
 ##############################################################################
+
+
+class Parameters(object):
+    """
+    The variables of this class are default constructed from parameters on the
+    ros parameter server. Each parameter is nested in the private namespace of
+    the node which instantiates this class.
+
+    :ivar express: whether deliveries should stop and wait for a button press at each location (or not)
+    :vartype express: bool
+    """
+    def __init__(self):
+        """
+        Initial parameters are create to be sufficient for starting up a 'dummy'
+        tree and calling :py::meth:`~gopher_behaviours.delivery.QuirkyDeliveries.setup` on that tree.
+        """
+        self.express = False
+        self.parking = True
+        self.elf = elf.InitialisationType.TELEOP
+
+    def __str__(self):
+        s = console.bold + "\nParameters:\n" + console.reset
+        for key in sorted(self.__dict__):
+            s += console.cyan + "    %s: " % key + console.yellow + "%s\n" % (self.__dict__[key] if self.__dict__[key] is not None else '-')
+        s += console.reset
+        return s
 
 
 class State(enum.Enum):
@@ -92,13 +124,13 @@ class PreTickResult(enum.IntEnum):
     BORING_NOTHING = 3
 
 
-def create_delivery_subtree(world, locations, express=False):
+def create_delivery_subtree(world, locations, parameters=Parameters()):
     """
     Build a new delivery subtree.
 
     :param str world: start from our current world
     :param [str] locations: semantic location string identifiers
-    :param bool express: dont wait when waiting
+    :param Parameters parameters: list of parameters to use for configuration of the tree
     """
     gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
     subtrees = Subtrees()
@@ -118,33 +150,13 @@ def create_delivery_subtree(world, locations, express=False):
         variable_name="event_stop_button",
         expected_value=True
     )
-    teleop_to_homebase = py_trees.composites.Parallel(
-        name="Teleop to Homebase",
-        policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE
-    )
-    flash_i_need_help_cancelling = interactions.Notification(
-        name='Flash Help Me',
-        message='flashing for help while cancelling',
-        led_pattern=gopher.led_patterns.humans_i_need_help,
-        button_confirm=gopher_std_msgs.Notification.BUTTON_ON,
-        button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
-        cancel_on_stop=True,
-        duration=gopher_std_srvs.NotifyRequest.INDEFINITE
-    )
-    teleport = navigation.create_homebase_teleport()
-    wait_for_go_button_cancelling = py_trees.blackboard.WaitForBlackboardVariable(
-        name="Wait for Go Button",
-        variable_name="event_go_button",
-        expected_value=True,
-        comparison_operator=operator.eq,
-        clearing_policy=py_trees.common.ClearingPolicy.ON_INITIALISE
-    )
+    teleop_and_teleport = navigation.create_teleop_homebase_teleport_subtree()
 
     ########################
     # Moving Around
     ########################
     subtrees.en_route = py_trees.OneshotSequence(name="En Route")
-    movin_around_children = create_locations_subtree(world, locations, express)
+    movin_around_children = create_locations_subtree(world, locations, parameters.express)
 
     if not movin_around_children:
         # how to get a warning back? also need to handle this shit
@@ -153,7 +165,7 @@ def create_delivery_subtree(world, locations, express=False):
     ########################
     # Parking/Unparking
     ########################
-    subtrees.unparking = unpark.UnPark("UnPark")
+    subtrees.unparking = unpark.UnPark(name="UnPark", elf_type=parameters.elf)
     subtrees.parking = park.Park("Park")
     subtrees.recovering = py_trees.composites.Sequence(name="Recovering")
     repark = park.create_repark_subtree()
@@ -162,7 +174,7 @@ def create_delivery_subtree(world, locations, express=False):
     # Core
     ########################
     root = py_trees.composites.Selector(name="Deliver or Die")
-    subtrees.deliveries = py_trees.OneshotSequence(py_trees.Sequence("Deliveries"))
+    subtrees.deliveries = py_trees.OneshotSequence("Deliveries")
     todo_or_not = py_trees.composites.Selector(name="Do or be Cancelled?")
 
     ########################
@@ -172,7 +184,6 @@ def create_delivery_subtree(world, locations, express=False):
     subtrees.is_cancelled.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
     subtrees.recovering.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
     subtrees.cancelling.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
-    teleop_to_homebase.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
 
     ########################
     # Graph
@@ -184,10 +195,7 @@ def create_delivery_subtree(world, locations, express=False):
     subtrees.cancelling.add_child(subtrees.is_cancelled)
     subtrees.is_cancelled.add_child(cancelled_by_button)
     subtrees.is_cancelled.add_child(cancelled_by_cancel_request)
-    subtrees.cancelling.add_child(teleop_to_homebase)
-    teleop_to_homebase.add_child(flash_i_need_help_cancelling)
-    teleop_to_homebase.add_child(wait_for_go_button_cancelling)
-    subtrees.cancelling.add_child(teleport)
+    subtrees.cancelling.add_child(teleop_and_teleport)
 
     todo_or_not.add_child(subtrees.en_route)
     subtrees.en_route.add_children(movin_around_children)
@@ -409,7 +417,6 @@ class GopherDeliveries(object):
      * battery_low_warning (r)  [int]   : used to check if a goal should be accepted or not
      * traversed_locations (rw) [[str]] :
      * remaining_locations (rw) [[str]] :
-
     """
     #################################
     # Initialisation
@@ -425,6 +432,7 @@ class GopherDeliveries(object):
         self.old_goal_id = None
         self.express = False
         self.incoming_goal = None
+        self.parameters = Parameters()
 
     def init(self):
         """
@@ -456,17 +464,20 @@ class GopherDeliveries(object):
         """
         self.gopher = gopher_configuration.Configuration()
         self.semantics = gopher_semantics.Semantics(self.gopher.namespaces.semantics)
+        self.dynamic_reconfigure_server = dynamic_reconfigure.server.Server(
+            QuirkyDeliveriesConfig,
+            self.dynamic_reconfigure_callback
+        )
         if len(self.semantics.locations) > 1:
             (deliveries_root, unused_subtrees) = create_delivery_subtree(
                 world=self.semantics.worlds.default,
-                locations=self.semantics.locations.keys()[:2],
-                express=False
+                locations=self.semantics.locations.keys()[:2]
             )
             self.ros_connected = deliveries_root.setup(timeout)
             if not self.ros_connected:
-                rospy.logerr("Deliveries : failed to setup with the underlying ros subsystem")
+                rospy.logerr("Quirky Deliveries: failed to setup with the underlying ros subsystem")
         else:
-            rospy.logerr("Deliveries : not enough locations listed in the semantics to support deliveries.")
+            rospy.logerr("Quirky Deliveries: not enough locations listed in the semantics to support deliveries.")
             self.ros_connected = False
 
     def init_blackboard_variables(self, traversed_locations=[], remaining_locations=[]):
@@ -520,6 +531,17 @@ class GopherDeliveries(object):
         """
         self.blackboard.cancel_requested = True
 
+    def dynamic_reconfigure_callback(self, config, level):
+        self.parameters.express = config.express
+        self.parameters.parking = config.parking
+        conversions = {
+            QuirkyDeliveriesConfig.QuirkyDeliveries_teleop: elf.InitialisationType.TELEOP,
+            QuirkyDeliveriesConfig.QuirkyDeliveries_ar: elf.InitialisationType.AR,
+        }
+        self.parameters.elf = conversions[config.elf]
+        rospy.loginfo("Quirky Deliveries: reconfigured\n%s" % self.parameters)
+        return config
+
     #################################
     # Tick Tock
     #################################
@@ -546,16 +568,16 @@ class GopherDeliveries(object):
             (self.root, self.subtrees) = create_delivery_subtree(
                 current_world,
                 self.incoming_goal,
-                self.express
+                self.parameters
             )
 
             if self.root.setup(10):
                 self.locations = self.incoming_goal
                 result = PreTickResult.NEW_DELIVERY_TREE
             else:
-                rospy.logerr("Gopher Deliveries: failed to set up new delivery tree.")
+                rospy.logerr("Quirky Deliveries: failed to set up new delivery tree.")
                 if self.root is None:
-                    rospy.logerr("Gopher Deliveries: shouldn't ever get here, but in case you do...call Dan")
+                    rospy.logerr("Quirky Deliveries: shouldn't ever get here, but in case you do...'git clone Dan; git pull'")
                 result = PreTickResult.NEW_DELIVERY_TREE_WITHERED_AND_DIED
                 self.init()
             self.incoming_goal = None

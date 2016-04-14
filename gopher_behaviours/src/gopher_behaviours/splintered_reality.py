@@ -27,31 +27,6 @@ import rospy
 from . import battery
 
 ##############################################################################
-# Support
-##############################################################################
-
-
-class Parameters(object):
-    """
-    The variables of this class are default constructed from parameters on the
-    ros parameter server. Each parameter is nested in the private namespace of
-    the node which instantiates this class.
-
-    :ivar express: whether deliveries should stop and wait for a button press at each location (or not)
-    :vartype express: bool
-    """
-    def __init__(self):
-        self.express = rospy.get_param('~express', False)
-        self.parking = rospy.get_param('~parking', False)
-
-    def __str__(self):
-        s = console.bold + "\nParameters:\n" + console.reset
-        for key in sorted(self.__dict__):
-            s += console.cyan + "    %s: " % key + console.yellow + "%s\n" % (self.__dict__[key] if self.__dict__[key] is not None else '-')
-        s += console.reset
-        return s
-
-##############################################################################
 # Core Controller
 ##############################################################################
 
@@ -92,6 +67,18 @@ class SplinteredReality(object):
         global_abort_repark = gopher_behaviours.park.create_repark_subtree()
 
         #################################
+        # Init
+        #################################
+        low_priority_homebase_initialisation = py_trees.composites.Sequence(name="Homebase Initialisation")
+        is_init_activated = py_trees.CheckBlackboardVariable(
+            name='Is Inited?',
+            variable_name='event_init_button',
+            expected_value=True
+        )
+        teleop_and_teleport = gopher_behaviours.navigation.create_teleop_homebase_teleport_subtree()
+        hang_around = py_trees.timers.Timer(name="Hang Around", duration=2.0)
+
+        #################################
         # Idle
         #################################
         self.idle = py_trees.behaviours.Success("Idle")
@@ -100,6 +87,7 @@ class SplinteredReality(object):
         # Blackboxes
         #################################
         self.global_abort.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
+        self.low_priority_homebase_initialisation = py_trees.common.BlackBoxLevel.COMPONENT
 
         #################################
         # Graph
@@ -110,6 +98,10 @@ class SplinteredReality(object):
         self.priorities.add_child(self.global_abort)
         self.global_abort.add_child(is_global_abort_activated)
         self.global_abort.add_child(global_abort_repark)
+        self.priorities.add_child(low_priority_homebase_initialisation)
+        low_priority_homebase_initialisation.add_child(is_init_activated)
+        low_priority_homebase_initialisation.add_child(teleop_and_teleport)
+        low_priority_homebase_initialisation.add_child(hang_around)
         self.priorities.add_child(self.idle)
         self.tree = py_trees.ROSBehaviourTree(self.root)
 
@@ -120,8 +112,7 @@ class SplinteredReality(object):
         """
         (deliveries_root, unused_subtrees) = gopher_behaviours.delivery.create_delivery_subtree(
             world="earth",
-            locations=["beer_fridge", "ashokas_hell"],
-            express=False
+            locations=["beer_fridge", "ashokas_hell"]
         )
         self._init_tree()
         self.tree.insert_subtree(deliveries_root, self.priorities.id, 1)
@@ -139,9 +130,6 @@ class SplinteredReality(object):
         self._init_tree()
 
         rospy.on_shutdown(self.shutdown)
-        self.parameters = Parameters()
-        self.quirky_deliveries.express = self.parameters.express
-        self.quirky_deliveries.include_parking_behaviours = self.parameters.parking
         self.quirky_deliveries.setup(timeout)
         self.behaviour_status = gopher_delivery_msgs.BehaviourReport.BUSY
 

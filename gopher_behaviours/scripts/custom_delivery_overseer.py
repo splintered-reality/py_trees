@@ -36,8 +36,8 @@ class CustomDeliveryOverseer(object):
     """
     **Subscribers**
 
-     * **~delivery_manager_status** (*gopher_delivery_msgs.DeliveryManagerStatus*) - listens to the state (idle/delivering) of the deliver manager to know when it is busy/not.
-     * **/gopher/buttons/go** (*std_msgs.Empty*) - will initiate and execute a delivery when a joystick/button event comes in on this topic.
+     * **report** (*gopher_delivery_msgs.BehaviourReport*) - listens to the state (idle/delivering) of the splintered reality to know when it is busy/not.
+     * **trigger** (*std_msgs.Empty*) - will initiate and execute a delivery when a joystick/button event comes in on this topic.
 
     """
     def __init__(self):
@@ -53,7 +53,6 @@ class CustomDeliveryOverseer(object):
             [
                 ('report', self.gopher.topics.behaviour_report, gopher_delivery_msgs.BehaviourReport, self.behaviour_report_cb),
                 ('trigger', self.gopher.topics.delivery_custom, std_msgs.Empty, self.delivery_custom_trigger_cb),
-                # ('init_homebase', self.gopher.buttons.stop, std_msgs.Empty, self.stop_cb)
             ]
         )
 
