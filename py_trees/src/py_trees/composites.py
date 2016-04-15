@@ -232,19 +232,21 @@ class Selector(Composite):
         # run any work designated by a customised instance of this class
         self.update()
         previous = self.current_child
-        previous_was_higher_priority = False
         for child in self.children:
             for node in child.tick():
                 yield node
                 if node is child:
-                    if previous == child:
-                        previous_was_higher_priority = True
                     if node.status == Status.RUNNING or node.status == Status.SUCCESS:
                         self.current_child = child
                         self.status = node.status
-                        # send out stop if this child interrupted a current child that was lower priority
-                        if (previous is not None) and (previous != self.current_child) and (previous.status != Status.INVALID) and not previous_was_higher_priority:
-                            previous.stop(Status.INVALID)
+                        if previous is None or previous != self.current_child:
+                            # we interrupted, invalidate everything at a lower priority
+                            passed = False
+                            for child in self.children:
+                                if passed:
+                                    if child.status != Status.INVALID:
+                                        child.stop(Status.INVALID)
+                                passed = True if child == self.current_child else passed
                         yield self
                         return
         # all children failed, set failure ourselves and current child to the last bugger who failed us

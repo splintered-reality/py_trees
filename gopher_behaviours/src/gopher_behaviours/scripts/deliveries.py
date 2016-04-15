@@ -20,25 +20,21 @@ import sys
 
 
 class CustomDelivery(object):
-    def __init__(self, verbose_feedback=True):
+    def __init__(self):
         self.gopher = gopher_configuration.configuration.Configuration(fallback_to_defaults=True)
-        if verbose_feedback:
-            self.feedback_subscriber = rospy.Subscriber(self.gopher.topics.delivery_feedback, gopher_delivery_msgs.DeliveryFeedback, CustomDelivery.feedback)
 
-    def send(self, goal_locations, include_parking_behaviours):
+    def send(self, goal_locations):
         delivery_goal_request = gopher_delivery_srvs.DeliveryGoalRequest()
         delivery_goal_request.semantic_locations = goal_locations
-        delivery_goal_request.always_assume_initialised = not include_parking_behaviours
-        delivery_goal_request.cycle_door = False
-        rospy.loginfo("Express Deliveries : sending request %s" % delivery_goal_request.semantic_locations)
+        rospy.loginfo("CustomDelivery: sending request %s" % delivery_goal_request.semantic_locations)
         delivery_goal_service = rospy.ServiceProxy(self.gopher.services.delivery_goal, gopher_delivery_srvs.DeliveryGoal)
         try:
             unused_delivery_goal_response = delivery_goal_service(delivery_goal_request)
             if not unused_delivery_goal_response.result == 0:
-                print(console.red + "Delivery goal service call failed: %s" % unused_delivery_goal_response.message + console.reset)
+                print(console.red + "CustomDelivery: goal service call failed: %s" % unused_delivery_goal_response.message + console.reset)
                 sys.exit()
         except rospy.ServiceException, e:
-            print(console.red + "Delivery goal service call failed: %s" % e + console.reset)
+            print(console.red + "CustomDelivery: goal service call failed: %s" % e + console.reset)
             sys.exit()
         except rospy.exceptions.ROSInterruptException:
             sys.exit()  # ros shutting down
@@ -50,38 +46,28 @@ class CustomDelivery(object):
             try:
                 fetch_result = rospy.ServiceProxy(self.gopher.services.delivery_result, gopher_delivery_srvs.DeliveryResult)
                 response = fetch_result()
-                if response.result != gopher_delivery_msgs.DeliveryErrorCodes.RESULT_PENDING:
+                if response.result >= 0:
                     CustomDelivery.result(response)
                     break
                 rate.sleep()
             except rospy.ServiceException, e:
-                print(console.red + "Service call failed: %s" % e + console.reset)
+                print(console.red + "CustomDelivery: service call failed: %s" % e + console.reset)
                 break
             except rospy.exceptions.ROSInterruptException:  # ros shutting down
                 break
-
-    @staticmethod
-    def feedback(msg):
-        print("")
-        print(console.bold + "Delivery Feedback" + console.reset)
-        date_string = datetime.datetime.fromtimestamp(int(msg.header.stamp.to_sec())).strftime('%Y-%m-%d %H:%M:%S')
-        print(console.cyan + "  timestamp: " + console.yellow + "%s" % date_string + console.reset)
-        print(console.cyan + "  traversed: " + console.yellow + "%s" % msg.traversed_locations + console.reset)
-        print(console.cyan + "  remaining: " + console.yellow + "%s" % msg.remaining_locations + console.reset)
-        print(console.cyan + "  state    : " + console.yellow + "%s" % msg.state + console.reset)
-        print(console.cyan + "  message  : " + console.yellow + "%s" % msg.status_message + console.reset)
-        print("")
 
     @staticmethod
     def result(msg):
         print("")
         print(console.bold + "Delivery Result" + console.reset)
         date_string = datetime.datetime.fromtimestamp(int(msg.header.stamp.to_sec())).strftime('%Y-%m-%d %H:%M:%S')
-        print(console.cyan + "  timestamp: " + console.yellow + "%s" % date_string + console.reset)
-        print(console.cyan + "  traversed: " + console.yellow + "%s" % msg.traversed_locations + console.reset)
-        print(console.cyan + "  remaining: " + console.yellow + "%s" % msg.remaining_locations + console.reset)
-        print(console.cyan + "  result   : " + console.yellow + "%s" % msg.result + console.reset)
-        print(console.cyan + "  message  : " + console.yellow + "%s" % msg.message + console.reset)
+        print(console.cyan + "  timestamp    : " + console.yellow + "%s" % date_string + console.reset)
+        print(console.cyan + "  result       : " + console.yellow + "%s" % msg.result + console.reset)
+        print(console.cyan + "  result_string: " + console.yellow + "%s" % msg.result_string + console.reset)
+        print(console.cyan + "  message      : " + console.yellow + "%s" % msg.message + console.reset)
+        print(console.cyan + "  traversed    : " + console.yellow + "%s" % msg.traversed_locations + console.reset)
+        print(console.cyan + "  remaining    : " + console.yellow + "%s" % msg.remaining_locations + console.reset)
+        print(console.cyan + "  eta          : " + console.yellow + "%s" % msg.eta + console.reset)
         print("")
 
 ##############################################################################

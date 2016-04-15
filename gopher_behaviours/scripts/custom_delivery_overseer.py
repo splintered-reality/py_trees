@@ -48,7 +48,7 @@ class CustomDeliveryOverseer(object):
         self.locations = None
         self.dynamic_reconfigure_server =\
             dynamic_reconfigure.server.Server(CustomDeliveriesConfig, self.dynamic_reconfigure_cb)
-        self.express_delivery = gopher_behaviours.scripts.deliveries.CustomDelivery(verbose_feedback=False)
+        self.custom_delivery = gopher_behaviours.scripts.deliveries.CustomDelivery()
         self.subscribers = rocon_python_comms.utils.Subscribers(
             [
                 ('report', self.gopher.topics.behaviour_report, gopher_delivery_msgs.BehaviourReport, self.behaviour_report_cb),
@@ -61,14 +61,14 @@ class CustomDeliveryOverseer(object):
 
     def delivery_custom_trigger_cb(self, unused_msg):
         if not self.busy:
-            rospy.loginfo("Custom Delivery : custom delivery triggered via joystick and initiated.")
-            self.express_delivery.send(self.locations, include_parking_behaviours=False)
+            rospy.loginfo("CustomDeliveryOverseer: custom delivery triggered via joystick and initiated.")
+            self.custom_delivery.send(self.locations)
             # Small chance of race condition here since it now competes with the official
             # source of deliveries from the concert. The user should be aware of this and
             # make certain he is using one...or the other.
             self.custom_delivering = True
         else:
-            rospy.loginfo("Custom Delivery : rejecting request as the delivery manager is already busy.")
+            rospy.loginfo("CustomDeliveryOverseer: rejecting request as the delivery manager is already busy.")
 
     def dynamic_reconfigure_cb(self, config, level):
         """
@@ -86,17 +86,17 @@ class CustomDeliveryOverseer(object):
             if location in self.semantics.locations:
                 self.locations.append(location)
             else:
-                rospy.logerr("Custom Delivery: tried to reconfigure with an invalid location, dropping [%s]" % location)
-        rospy.loginfo("Custom Delivery: setup for [" + "->".join(self.locations) + "] deliveries.")
+                rospy.logerr("CustomDeliveryOverseer: tried to reconfigure with an invalid location, dropping [%s]" % location)
+        rospy.loginfo("CustomDeliveryOverseer: setup for [" + "->".join(self.locations) + "] deliveries.")
         return config
 
     def spin(self):
         rate = rospy.Rate(10)
         while not rospy.is_shutdown():
             if self.custom_delivering:
-                self.express_delivery.spin()  # blocking until the delivery is finished
+                self.custom_delivery.spin()  # blocking until the delivery is finished
                 self.custom_delivering = False
-                rospy.loginfo("Custom Delivery : finished a delivery.")
+                rospy.loginfo("CustomDeliveryOverseer: finished a delivery.")
             else:
                 try:
                     rate.sleep()

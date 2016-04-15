@@ -7,10 +7,10 @@
 
 """
 Helpers for gopher behaviour scripts (i.e. user side)
-
 """
 ##############################################################################
 # Imports
 ##############################################################################
 
 from . import deliveries
+from . import demo
