@@ -295,6 +295,10 @@ class Sequence(Composite):
         if self.status != Status.RUNNING:
             # sequence specific handling
             self.current_index = 0
+            for child in self.children:
+                # reset the children, this helps when introspecting the tree
+                if child.status != Status.INVALID:
+                    child.stop(Status.INVALID)
             # subclass (user) handling
             self.initialise()
         self.logger.debug("  %s [tick()]" % self.name)
