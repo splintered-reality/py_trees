@@ -28,26 +28,42 @@ import sys
 # Core Controller
 ##############################################################################
 
+def show_description():
+    s = "\n"
+    s += console.green + "This program executes unparking/init/parking in a loop for convenient testing." + console.reset
+    s += "\n"
+    return s
+
 
 def show_usage():
     s = "\n"
     s += console.white
+    s += console.bold + "************************************************************************************\n" + console.reset
+    s += console.bold + "                              Gopher Elevator Run\n" + console.reset
+    s += console.bold + "************************************************************************************\n" + console.reset
+    s += "\n"
+    s += console.white
+    s += console.bold + "    Generate Dot" + console.reset + "\n"
+    s += console.cyan + "        gopher_elevator_run" + console.yellow + " --render" + "[--visibility-level=all]" + console.reset + "\n"
+    s += "\n"
     s += console.bold + "    Introspection" + console.reset + "\n"
     s += console.cyan + "        gopher_elevator_run" + console.yellow + " [option]" + console.reset + "\n"
     s += "\n"
-    s += console.bold + "    Command" + console.reset + "\n"
+    s += console.bold + "    Execute" + console.reset + "\n"
     s += console.cyan + "        gopher_elevator_run" + console.yellow + " <origin> <elevator> <destination>" + console.reset + "\n"
+    s += "\n"
+    s += console.white
+    s += console.bold + "    Launchers" + console.reset + "\n"
+    s += console.cyan + "        gopher_robot/apps_gocart.launch + 'Fake Navigation'" + console.reset + "\n"
+    s += console.cyan + "        gopher_podium/apps_gocart.launch + 'Navigation'" + console.reset + " (tele-elf only)\n"
     s += "\n"
     return s
 
 
 def parse_arguments(command_line_args):
-    gopher = gopher_configuration.Configuration()
-    parser = argparse.ArgumentParser(description=console.green + 'Do an elevator run' + console.reset,
-                                     usage=show_usage(),
-                                     epilog="And his noodly appendage reached forth to tickle the blessed...",
-                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter
-                                     )
+    gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
+
+    parser = gopher_behaviours.scripts.demo.create_arg_parser(show_description, show_usage)
     parser.add_argument('-n', '--namespace', action='store', default=gopher.namespaces.semantics, help='namespace for the semantics parameters.')
 
     introspection_group = parser.add_mutually_exclusive_group()
@@ -62,6 +78,7 @@ def parse_arguments(command_line_args):
     args = parser.parse_args(command_line_args)
 
     semantics = gopher_semantics.Semantics(semantics_parameter_namespace=args.namespace)
+
     if args.worlds:
         print("%s" % semantics.worlds)
         sys.exit(0)
@@ -69,6 +86,19 @@ def parse_arguments(command_line_args):
         print("%s" % semantics.elevators)
         sys.exit(0)
 
+    # Rendering
+    if args.render:
+        # Just hope they have two worlds at least and one elevator and that the elevator connects them
+        if args.origin is None:
+            args.origin = semantics.worlds.keys()[0]
+        if args.elevator is None:
+            args.elevator = semantics.elevators.values()[0]
+        if args.destination is None:
+            args.destination = semantics.worlds.keys()[1]
+        args.visibility_level = py_trees.common.string_to_visibility_level(args.visibility_level)
+        return args
+
+    # Elevatoring
     if args.origin is None or args.elevator is None or args.destination is None:
         print(console.red + "\nERROR : requires all three command values (origin, elevator, destination)\n" + console.reset)
         parser.print_help()
@@ -93,9 +123,9 @@ def parse_arguments(command_line_args):
     return args
 
 
-class DoElevatorRun(object):
+class Demo(object):
     def __init__(self, origin, elevator, destination):
-        self.root = gopher_behaviours.elevators.HumanAssistedElevators("ElevatorRun", origin, elevator, destination)
+        self.root = gopher_behaviours.elevators.HumanAssistedElevators("Elevator Run", origin, elevator, destination)
         self.logger = py_trees.logging.get_logger("Elevators")
         self.tree = py_trees.ROSBehaviourTree(self.root)
         rospy.on_shutdown(self.shutdown)
@@ -127,10 +157,18 @@ class DoElevatorRun(object):
 ##############################################################################
 
 if __name__ == '__main__':
-    py_trees.logging.level = py_trees.logging.Level.DEBUG
-    rospy.init_node("gopher_elevator_run", log_level=rospy.DEBUG)
     command_line_args = rospy.myargv(argv=sys.argv)[1:]
     args = parse_arguments(command_line_args)
+    if args.debug:
+        py_trees.logging.level = py_trees.logging.Level.DEBUG
 
-    do_elevator_run = DoElevatorRun(args.origin, args.elevator, args.destination)
-    do_elevator_run.tick_tock()
+    demo = Demo(args.origin, args.elevator, args.destination)
+    if args.render:
+        py_trees.display.render_dot_tree(demo.root, args.visibility_level)
+        sys.exit()
+
+    rospy.init_node("gopher_elevator_run", log_level=rospy.INFO)
+    if not demo.tree.setup(15):
+        sys.exit(console.red + "[ERROR] failed to setup required ros components." + console.reset)
+    demo.tick_tock()
+
