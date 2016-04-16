@@ -83,45 +83,6 @@ def create_button_event_handler(name="Button Events"):
     return event_handler
 
 
-def create_wait_for_go_button(name="Wait For Go Button"):
-    """
-    Tune into the go button signal. Will be RUNNING until an event
-    is caught. This is useful to block at the start of a sequence.
-
-    :param str name: the behaviour name.
-    """
-    gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
-    behaviour = py_trees.subscribers.WaitForSubscriberData(
-        name=name,
-        topic_name=gopher.buttons.go,
-        topic_type=std_msgs.Empty,
-        clearing_policy=py_trees.common.ClearingPolicy.ON_INITIALISE
-    )
-    return behaviour
-
-
-def create_check_for_go_button_press(name="Check for Go Button Press"):
-    """
-    Has there recently been a go button press anytime in the recent past?
-    This is more useful as a non-blocking decision element (as opposed to
-    the :py:func:`~gopher_behaviours.interactions.create_wait_for_go_button`
-    function.
-
-    Note that it will reset as soon as an event (i.e. SUCCESS) is detected.
-
-    :param str name: the behaviour name.
-    """
-    gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
-    behaviour = py_trees.meta.running_is_failure(
-        py_trees.subscribers.WaitForSubscriberData(
-            name=name,
-            topic_name=gopher.buttons.go,
-            topic_type=std_msgs.Empty,
-            clearing_policy=py_trees.common.ClearingPolicy.ON_SUCCESS
-        )
-    )
-    return behaviour
-
 ##############################################################################
 # Behaviours
 ##############################################################################
