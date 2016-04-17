@@ -65,7 +65,7 @@ class Demo(object):
         :param bool loop: loop around, never quit.
         """
         self.root = root
-        self.logger = py_trees.logging.get_logger("RePark")
+        self.logger = py_trees.logging.get_logger(root.name)
         self.tree = py_trees.ROSBehaviourTree(self.root)
         self.loop = loop
 

@@ -148,5 +148,5 @@ if __name__ == '__main__':
 
     rospy.init_node("demo", log_level=rospy.INFO)
     if not demo.tree.setup(5):
-        sys.exit(console.red + "[ERROR] failed to setup required ros components." + console.reset)
+        sys.exit(console.red + "[ERROR] failed to setup required ROS components." + console.reset)
     demo.tick_tock()

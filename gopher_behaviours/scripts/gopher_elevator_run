@@ -30,7 +30,8 @@ import sys
 
 def show_description():
     s = "\n"
-    s += console.green + "This program executes unparking/init/parking in a loop for convenient testing." + console.reset
+    s += console.green + "This program executes unparking/init/parking in a loop for convenient testing." +\
+        console.reset
     s += "\n"
     return s
 
@@ -38,34 +39,57 @@ def show_description():
 def show_usage():
     s = "\n"
     s += console.white
-    s += console.bold + "************************************************************************************\n" + console.reset
+    s += console.bold + "************************************************************************************\n" +\
+        console.reset
     s += console.bold + "                              Gopher Elevator Run\n" + console.reset
-    s += console.bold + "************************************************************************************\n" + console.reset
+    s += console.bold + "************************************************************************************\n" +\
+        console.reset
     s += "\n"
     s += console.white
     s += console.bold + "    Generate Dot" + console.reset + "\n"
-    s += console.cyan + "        gopher_elevator_run" + console.yellow + " --render" + "[--visibility-level=all]" + console.reset + "\n"
+    s += console.cyan + "        gopher_elevator_run" + console.yellow + " --render" + "[--visibility-level=all]" +\
+        console.reset + "\n"
     s += "\n"
     s += console.bold + "    Introspection" + console.reset + "\n"
     s += console.cyan + "        gopher_elevator_run" + console.yellow + " [option]" + console.reset + "\n"
     s += "\n"
     s += console.bold + "    Execute" + console.reset + "\n"
-    s += console.cyan + "        gopher_elevator_run" + console.yellow + " <origin_world> <elevator> <destination_world>" + console.reset + "\n"
-    s += console.cyan + "        (e.g. gopher_elevator_run" + console.yellow + " heaven highway_to_hell hell" + console.reset + "\n"
+    s += console.cyan + "        gopher_elevator_run" + console.yellow +\
+        " <origin_world> <elevator> <destination_world>" + console.reset + "\n"
+    s += console.cyan + "        (e.g. gopher_elevator_run" + console.yellow + " heaven highway_to_hell hell" +\
+        console.reset + "\n"
     s += "\n"
     s += console.white
     s += console.bold + "    Launchers" + console.reset + "\n"
     s += console.cyan + "        gopher_robot/apps_gocart.launch + 'Fake Navigation'" + console.reset + "\n"
     s += console.cyan + "        gopher_podium/apps_gocart.launch + 'Navigation'" + console.reset + " (tele-elf only)\n"
+    s += console.white
+    s += console.bold + "    Generate Dot" + console.reset + "\n"
+    s += console.cyan + "        gopher_elevator_run" + console.yellow + " --render" + console.reset + "\n"
     s += "\n"
     return s
 
 
 def parse_arguments(command_line_args):
-    gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
+    config = gopher_configuration.Configuration(fallback_to_defaults=True)
 
     parser = gopher_behaviours.scripts.demo.create_arg_parser(show_description, show_usage)
-    parser.add_argument('-n', '--namespace', action='store', default=gopher.namespaces.semantics, help='namespace for the semantics parameters.')
+
+    parser.add_argument('-n', '--namespace', action='store', default=config.namespaces.semantics,
+                        help='namespace for the semantics parameters.')
+
+    parser.add_argument('--elf',
+                        action='store',
+                        default="ar",
+                        choices=["ar", "teleop"],
+                        help='type of elf to use for initialisation'
+                        )
+
+    type_group = parser.add_mutually_exclusive_group()
+    type_group.add_argument('-p', '--partial-assisted', action='store_true', default=False,
+                            help='system interacts with elevator')
+    type_group.add_argument('-a', '--autonomous', action='store_true', default=False,
+                            help='fully autonomous elevator ride')
 
     introspection_group = parser.add_mutually_exclusive_group()
     introspection_group.add_argument('-w', '--worlds', action='store_true', help='list available worlds')
@@ -76,12 +100,11 @@ def parse_arguments(command_line_args):
     command_group.add_argument('elevator', nargs='?', default=None, type=str, help='elevator to use.')
     command_group.add_argument('destination', nargs='?', default=None, type=str, help='world to shift to.')
 
-    parser.add_argument('--elf',
-                        action='store',
-                        default="ar",
-                        choices=["ar", "teleop"],
-                        help='type of elf to use for initialisation'
-                        )
+    debugging_group = parser.add_argument_group('Debugging')
+    debugging_group.add_argument('-r', '--render', action='store_true', default=False,
+                                 help='render the graph to dot/png/svg')
+    debugging_group.add_argument('-d', '--debug', action='store_true', default=False,
+                                 help='debug level tree logging')
 
     args = parser.parse_args(command_line_args)
 
@@ -110,22 +133,26 @@ def parse_arguments(command_line_args):
 
     # Elevatoring
     if args.origin is None or args.elevator is None or args.destination is None:
-        print(console.red + "\nERROR : requires all three command values (origin, elevator, destination)\n" + console.reset)
+        print(console.red + "\nERROR : requires all three command values (origin, elevator, destination)\n" +
+              console.reset)
         parser.print_help()
         sys.exit(1)
 
     if args.origin not in semantics.worlds.keys():
-        print(console.red + "\nERROR : origin '%s' is not in the semantic worlds list %s\n" % (args.origin, semantics.worlds.keys()) + console.reset)
+        print(console.red + "\nERROR : origin '%s' is not in the semantic worlds list %s\n"
+              % (args.origin, semantics.worlds.keys()) + console.reset)
         parser.print_help()
         sys.exit(1)
 
     if args.elevator not in semantics.elevators.keys():
-        print(console.red + "\nERROR : elevator '%s' is not in the semantic elevators list %s\n" % (args.elevator, semantics.elevators.keys()) + console.reset)
+        print(console.red + "\nERROR : elevator '%s' is not in the semantic elevators list %s\n"
+              % (args.elevator, semantics.elevators.keys()) + console.reset)
         parser.print_help()
         sys.exit(1)
 
     if args.destination not in semantics.worlds.keys():
-        print(console.red + "\nERROR : destination '%s' is not in the semantic worlds list %s\n" % (args.destination, semantics.worlds.keys()) + console.reset)
+        print(console.red + "\nERROR : destination '%s' is not in the semantic worlds list %s\n"
+              % (args.destination, semantics.worlds.keys()) + console.reset)
         parser.print_help()
         sys.exit(1)
 
@@ -136,20 +163,54 @@ def parse_arguments(command_line_args):
 ##############################################################################
 # Tree
 ##############################################################################
-
-def create_root(origin, elevator, destination):
+def create_root(origin, elevator, destination, partial_assisted=False, autonomous=False):
     root = py_trees.composites.Parallel("Elevator Run")
+
+    elevator_behaviour = None
+
+    if partial_assisted:
+        elevator_behaviour = gopher_behaviours.elevators.PartialAssistedElevators(name="Partial AssistedE levators",
+                                                                                  origin=origin,
+                                                                                  elevator=elevator,
+                                                                                  destination=destination,
+                                                                                  elf_initialisation_type=args.elf)
+    elif autonomous:
+        print ("[WARNING] autonomous elevator rides not supported yet!" +
+               " Will set up a partial-assisted ride.")
+        elevator_behaviour = gopher_behaviours.elevators.PartialAssistedElevators(name="Partial AssistedE levators",
+                                                                                  origin=origin,
+                                                                                  elevator=elevator,
+                                                                                  destination=destination,
+                                                                                  elf_initialisation_type=args.elf)
+    else:
+        elevator_behaviour = gopher_behaviours.elevators.HumanAssistedElevators(name="Human Assisted Elevators",
+                                                                                origin=origin,
+                                                                                elevator=elevator,
+                                                                                destination=destination,
+                                                                                elf_initialisation_type=args.elf)
     (button_event_handler, topics_to_blackboard) = gopher_behaviours.chalk_and_talk.create_gopher_handlers()
-    human_assisted_elevators = gopher_behaviours.elevators.HumanAssistedElevators(
-        name="Human Assisted Elevators",
-        origin=origin,
-        elevator=elevator,
-        destination=destination,
-        elf_initialisation_type=args.elf)
+
     root.add_child(button_event_handler)
     root.add_child(topics_to_blackboard)
-    root.add_child(human_assisted_elevators)
+    root.add_child(elevator_behaviour)
     return root
+
+    ##############################################################################
+    # Tick Tock
+    ##############################################################################
+
+    def tick_tock(self):
+        loop_around = rospy.Rate(10)
+        self.tree.visitors.append(py_trees.trees.DebugVisitor())
+        while self.root.status != py_trees.Status.SUCCESS and not rospy.is_shutdown():
+            self.tree.tick(pre_tick_handler=self.pre_tick_handler)
+            loop_around.sleep()
+
+    def pre_tick_handler(self, behaviour_tree):
+        self.logger.debug("")
+        self.logger.debug("{:-^30}".format(" Run %s " % behaviour_tree.count))
+        self.logger.debug("")
+
 
 ##############################################################################
 # Main
@@ -163,7 +224,8 @@ if __name__ == '__main__':
 
     if args.render:
         # todo be smarter about this...pull from the semantics directly
-        demo = gopher_behaviours.scripts.demo.Demo(root=create_root(args.origin, args.elevator, args.destination))
+        demo = gopher_behaviours.scripts.demo.Demo(root=create_root(args.origin, args.elevator, args.destination,
+                                                                    args.partial_assisted, args.autonomous))
         py_trees.display.render_dot_tree(demo.root, args.visibility_level)
         sys.exit()
 
@@ -171,9 +233,12 @@ if __name__ == '__main__':
     root = create_root(args.origin, args.elevator, args.destination)
     print("Root")
     py_trees.display.print_ascii_tree(root)
+
     demo = gopher_behaviours.scripts.demo.Demo(root)
 
     rospy.init_node("gopher_elevator_run", log_level=rospy.INFO)
+
     if not demo.tree.setup(15):
         sys.exit(console.red + "[ERROR] failed to setup required ros components." + console.reset)
+
     demo.tick_tock()
