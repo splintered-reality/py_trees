@@ -258,8 +258,17 @@ def create_locations_subtree(current_world, locations, express=False):
     # this can happen if none of the locations provided are in the semantic locations
     if not children:
         return None
-
-    children.append(interactions.Articulate("Groot 'Done'", gopher.sounds.done))
+    celebrate = py_trees.composites.Parallel(name="Celebrate", policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE)
+    celebrate.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
+    # celebrate.add_child(interactions.Articulate("Groot", gopher.sounds.done))
+    celebrate.add_child(interactions.Notification(
+        name="Froody",
+        led_pattern=gopher.led_patterns.im_doing_something_cool,
+        sound=gopher.sounds.done,
+        message="finished delivery")
+    )
+    celebrate.add_child(py_trees.timers.Timer("Pause", duration=2.0))
+    children.append(celebrate)
     return children
 
 ##############################################################################
@@ -688,8 +697,11 @@ class GopherDeliveries(object):
                     else:
                         self._response.result = gopher_delivery_msgs.DeliveryErrorCodes.RESULT_TRAVELLING
                         self._response.result_string = gopher_delivery_msgs.DeliveryErrorCodes.RESULT_TRAVELLING_STRING
-                        if self.blackboard.traversed_locations:
-                            self._response.message = "moving from '{0}' to '{1}'".format(self.traversed_locations[-1], self.remaining_locations[0])
+                        if self.traversed_locations:
+                            if self.remaining_locations:
+                                self._response.message = "moving from '{0}' to '{1}'".format(self.traversed_locations[-1], self.remaining_locations[0])
+                            else:
+                                self._response.message = "delivery finished at '{0}', celebrating".format(self.traversed_locations[-1])
                         else:
                             self._response.message = "moving to '{0}'".format(self.remaining_locations[0])
 

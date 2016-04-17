@@ -45,15 +45,18 @@ class CustomDelivery(object):
         rospy.wait_for_service(self.gopher.services.delivery_result)
 
     def spin(self):
-        rate = rospy.Rate(2)
+        rate = rospy.Rate(1)
+        counter = 0
         while not rospy.is_shutdown():
             try:
                 fetch_result = rospy.ServiceProxy(self.gopher.services.delivery_result, gopher_delivery_srvs.DeliveryResult)
                 response = fetch_result()
-                CustomDelivery.result(response)
+                if counter % 5 == 0:
+                    CustomDelivery.result(response)
                 if response.result >= 0:
                     break
                 rate.sleep()
+                ++counter
             except rospy.ServiceException, e:
                 print(console.red + "CustomDelivery: service call failed: %s" % e + console.reset)
                 break

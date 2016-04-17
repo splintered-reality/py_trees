@@ -176,7 +176,7 @@ class Notification(py_trees.Behaviour):
         self.topic_name = self.gopher.services.notification
         self.service = rospy.ServiceProxy(self.topic_name, gopher_std_srvs.Notify)
         self.timer = None
-        self.sound = sound
+        self.sound = sound.split('/')[-1]  # just in case its passed in as a gopher_configuration topic name
         self.service_failed = False
         self.message = message
 
