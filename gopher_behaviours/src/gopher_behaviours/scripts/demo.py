@@ -68,7 +68,10 @@ class Demo(object):
         self.logger = py_trees.logging.get_logger("RePark")
         self.tree = py_trees.ROSBehaviourTree(self.root)
         self.loop = loop
+
+    def setup(self, timeout):
         rospy.on_shutdown(self.shutdown)
+        return self.tree.setup(timeout)
 
     ##############################################################################
     # Tick Tock

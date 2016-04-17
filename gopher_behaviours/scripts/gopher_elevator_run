@@ -15,7 +15,6 @@ delivery pipeline.
 # Imports
 ##############################################################################
 
-import argparse
 import gopher_configuration
 import gopher_behaviours
 import gopher_semantics
@@ -27,6 +26,7 @@ import sys
 ##############################################################################
 # Core Controller
 ##############################################################################
+
 
 def show_description():
     s = "\n"
@@ -171,4 +171,3 @@ if __name__ == '__main__':
     if not demo.tree.setup(15):
         sys.exit(console.red + "[ERROR] failed to setup required ros components." + console.reset)
     demo.tick_tock()
-
