@@ -49,7 +49,6 @@ def parse_arguments(command_line_args):
                                      )
     parser.add_argument('-n', '--namespace', action='store', default=gopher.namespaces.semantics, help='namespace for the semantics parameters.')
     parser.add_argument('-l', '--locations', action='store_true', help='list available delivery locations')
-    parser.add_argument('-p', '--parking', action='store_true', help='include parking/unparking behaviours in the delivery run')
 
     parser.add_argument('delivery_locations', nargs='*', default=None, help='locations to deliver to.')
 
@@ -88,5 +87,5 @@ if __name__ == '__main__':
     args = parse_arguments(command_line_args)
 
     express_delivery = gopher_behaviours.scripts.deliveries.CustomDelivery()
-    express_delivery.send(args.delivery_locations, args.parking)
+    express_delivery.send(args.delivery_locations)
     express_delivery.spin()
