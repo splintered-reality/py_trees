@@ -20,6 +20,7 @@ Bless my noggin with a tickle from your noodly appendages!
 ##############################################################################
 
 import gopher_configuration
+import gopher_semantics
 import gopher_std_msgs.msg as gopher_std_msgs
 import gopher_std_msgs.srv as gopher_std_srvs
 import navigation
@@ -73,6 +74,30 @@ def create_repark_subtree():
 ##############################################################################
 # Behaviours
 ##############################################################################
+
+
+class ParkingLocation(py_trees.behaviour.Behaviour):
+    """
+    Guarding behaviour that checks if you need to park, or just skip the process.
+    This look up the semantics for the specified location and returns wether
+    it is classified as a parking location or not.
+
+    Use in combination with :py:class:`~gopher_behaviours.park.Park` underneath
+    a selector.
+    """
+    def __init__(self, name="Is Parking Location?", location="homebase"):
+        super(ParkingLocation, self).__init__(name)
+        self.location = location
+
+    def setup(self, timeout):
+        self.gopher = gopher_configuration.Configuration()
+        self.semantics = gopher_semantics.Semantics(self.gopher.namespaces.semantics)
+        return True
+
+    def update(self):
+        # perhaps reuse unpark.NearParkingLocation instead (like we do for unparking)
+        # which uses a euclidean distance to *any* parking location
+        return py_trees.common.Status.SUCCESS if self.semantics.locations[self.location].parking_location else py_trees.common.Status.FAILURE
 
 
 class Park(py_trees.Sequence):

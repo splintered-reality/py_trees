@@ -14,11 +14,12 @@ Node that acts as caretaker of the behaviour tree for gopher deliveries.
 # Imports
 ##############################################################################
 
+import geometry_msgs.msg as geometry_msgs
 import gopher_behaviours
 import gopher_configuration
 import gopher_delivery_msgs.srv as gopher_delivery_srvs
 import gopher_delivery_msgs.msg as gopher_delivery_msgs
-import std_msgs.msg as std_msgs
+import nav_msgs.msg as nav_msgs
 import py_trees
 import rocon_console.console as console
 import rocon_python_comms
@@ -51,7 +52,22 @@ class SplinteredReality(object):
         # Event Handling & Blackboard
         #################################
         event_handler = gopher_behaviours.interactions.create_button_event_handler()
+        topics_to_blackboard = py_trees.composites.Sequence(name="Topics2BB")
         battery_to_blackboard = battery.ToBlackboard(name="Battery2BB", topic_name=self.gopher.topics.battery)
+        odom_to_blackboard = py_trees.subscribers.ToBlackboard(
+            name="Odom2BB",
+            topic_name=self.gopher.topics.odom,
+            topic_type=nav_msgs.Odometry,
+            blackboard_variables={"odom": None},
+            clearing_policy=py_trees.common.ClearingPolicy.NEVER
+        )
+        pose_to_blackboard = py_trees.subscribers.ToBlackboard(
+            name="Pose2BB",
+            topic_name=self.gopher.topics.pose,
+            topic_type=geometry_msgs.PoseWithCovarianceStamped,
+            blackboard_variables={"pose": None},
+            clearing_policy=py_trees.common.ClearingPolicy.NEVER
+        )
 
         #################################
         # Global Abort
@@ -84,6 +100,7 @@ class SplinteredReality(object):
         #################################
         # Blackboxes
         #################################
+        topics_to_blackboard.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
         self.global_abort.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
         self.low_priority_homebase_initialisation = py_trees.common.BlackBoxLevel.COMPONENT
 
@@ -91,7 +108,10 @@ class SplinteredReality(object):
         # Graph
         #################################
         self.root.add_child(event_handler)
-        self.root.add_child(battery_to_blackboard)
+        self.root.add_child(topics_to_blackboard)
+        topics_to_blackboard.add_child(battery_to_blackboard)
+        topics_to_blackboard.add_child(odom_to_blackboard)
+        topics_to_blackboard.add_child(pose_to_blackboard)
         self.root.add_child(self.priorities)
         self.priorities.add_child(self.global_abort)
         self.global_abort.add_child(is_global_abort_activated)
