@@ -371,6 +371,7 @@ class GoalFinishing(py_trees.Behaviour):
         self._approach_timeout = rospy.Duration(0.7 * timeout)
         self._timeout = rospy.Duration(timeout)
         self._time_finishing_start = None
+        self.blackboard = py_trees.blackboard.Blackboard()
 
     def initialise(self):
         self.logger.debug("  %s [GoalFinishing::initialise()]" % self.name)
@@ -391,7 +392,7 @@ class GoalFinishing(py_trees.Behaviour):
         pose_stamped.pose.orientation.z = quaternion[2]
         pose_stamped.pose.orientation.w = quaternion[3]
         # convert goal pose from "map" into the "odom" frame, since this one is more reliable for short-distances
-        tf_buffer = tf2_ros.Buffer(rospy.Duration(10.0))
+        tf_buffer = tf2_ros.Buffer(cache_time=rospy.Duration(10.0))
         unused_tf_listener = tf2_ros.TransformListener(tf_buffer)
         try:
             # origin frame hard-coded since goal_pose is not stamped
@@ -407,6 +408,10 @@ class GoalFinishing(py_trees.Behaviour):
         pose_transformed = tf2_geometry_msgs.do_transform_pose(pose_stamped, transform_map_odom)
         self.goal.pose = pose_transformed
         self.goal.align_on_failure = False
+        print("Pose Stamped: %s" % pose_stamped.pose)
+        print("Pose Transformed: %s" % self.goal.pose)
+        print("Current Odom: %s" % self.blackboard.odom)
+        print("Current Pose: %s" % self.blackboard.pose)
 
         # should not have to wait as this will occur way after the teleport server is up
         connected = self.action_client.wait_for_server(rospy.Duration(0.5))

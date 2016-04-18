@@ -1,0 +1,107 @@
+#!/usr/bin/env python
+#
+# License: Yujin
+#
+##############################################################################
+# Documentation
+##############################################################################
+"""
+
+Program that moves the robot to the goal pose using the finishing behaviour
+
+"""
+##############################################################################
+# Imports
+##############################################################################
+
+import argparse
+import geometry_msgs.msg as geometry_msgs
+import gopher_behaviours
+import gopher_configuration
+import gopher_std_msgs.msg as gopher_std_msgs
+import py_trees
+import rocon_console.console as console
+import rospy
+import sys
+
+##############################################################################
+# Arguments
+##############################################################################
+
+
+def show_description():
+    s = "\n"
+    s += console.green + "This program executes a simple finishing behaviour." + console.reset
+    s += "\n"
+    return s
+
+
+def show_usage():
+    s = "\n"
+    s += console.white
+    s += console.bold + "************************************************************************************\n" + console.reset
+    s += console.bold + "                                 Finishing\n" + console.reset
+    s += console.bold + "************************************************************************************\n" + console.reset
+    s += "\n"
+    s += console.white
+    s += console.bold + "    Generate Dot" + console.reset + "\n"
+    s += console.cyan + "        demo_finishing" + console.yellow + " --render" + "[--visibility-level=all]" + console.reset + "\n"
+    s += "\n"
+    s += console.bold + "    Execute" + console.reset + "\n"
+    s += console.cyan + "        demo_finishing" + console.yellow + " <x> <y> <yaw>" + console.reset + "\n"
+    s += "\n"
+    s += console.white
+    s += console.bold + "    Launchers" + console.reset + "\n"
+    s += console.cyan + "        gopher_robot/apps_gocart.launch + 'Fake Navigation'" + console.reset + "\n"
+    s += "\n"
+    return s
+
+
+def parse_arguments(command_line_args):
+    parser = gopher_behaviours.scripts.demo.create_arg_parser(show_description, show_usage)
+    args = parser.parse_args(command_line_args)
+    args.visibility_level = py_trees.common.string_to_visibility_level(args.visibility_level)
+    command_group = parser.add_argument_group('Command')
+    command_group.add_argument('x', nargs='?', default=0.0, type=float, help='x-cooridnate of the goal pose')
+    command_group.add_argument('y', nargs='?', default=0.0, type=float, help='y-cooridnate of the goal pose')
+    command_group.add_argument('yaw', nargs='?', default=0.0, type=float, help='yaw of the goal pose')
+    args = parser.parse_args(command_line_args)
+    return args
+
+##############################################################################
+# Root
+##############################################################################
+
+
+def create_root(goal_pose):
+    root = py_trees.Sequence("Demo Finishing")
+    goal_finishing = gopher_behaviours.navigation.GoalFinishing("Goal Finishing", goal_pose)
+    root.add_child(goal_finishing)
+    root.add_child(gopher_behaviours.interactions.create_celebrate_behaviour())
+    return root
+
+
+##############################################################################
+# Main
+##############################################################################
+
+if __name__ == '__main__':
+    command_line_args = rospy.myargv(argv=sys.argv)[1:]
+    args = parse_arguments(command_line_args)
+    if args.debug:
+        py_trees.logging.level = py_trees.logging.Level.DEBUG
+
+    goal_pose = geometry_msgs.Pose2D()
+    goal_pose.pose.x = args.x
+    goal_pose.pose.y = args.y
+    goal_pose.pose.theta = args.yaw
+    demo = gopher_behaviours.scripts.demo.Demo(create_root(goal_pose))
+
+    if args.render:
+        py_trees.display.render_dot_tree(demo.root, args.visibility_level)
+        sys.exit()
+
+    rospy.init_node("demo", log_level=rospy.INFO)
+    if not demo.setup(15):
+        sys.exit(console.red + "[ERROR] failed to setup required ros components." + console.reset)
+    demo.tick_tock()
