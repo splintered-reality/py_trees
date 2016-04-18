@@ -4,7 +4,6 @@
 ##############################################################################
 # Description
 ##############################################################################
-from billiard.py2.connection import FAILURE
 
 """
 .. module:: interactions
@@ -83,6 +82,24 @@ def create_button_event_handler(name="Button Events"):
     return event_handler
 
 
+def create_celebrate_behaviour(name="Celebrate", duration=2.0):
+    """
+    A default setup for doing celebrations. This will emit a 'cool' led pattern
+    and a 'celebrate' sound.
+
+    :param str name: behaviour name
+    :param float duration: how long to spend running until turning into success
+    """
+    gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
+    celebrate = Notification(
+        name=name,
+        led_pattern=gopher.led_patterns.im_doing_something_cool,
+        sound=gopher.sounds.celebrate,
+        message="finished delivery",
+        duration=duration
+    )
+    return celebrate
+
 ##############################################################################
 # Behaviours
 ##############################################################################
@@ -157,7 +174,6 @@ class Notification(py_trees.Behaviour):
                  led_pattern=None,
                  button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
                  button_confirm=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
-                 cancel_on_stop=True,
                  duration=gopher_std_srvs.NotifyRequest.INDEFINITE
                  ):
         """
@@ -168,8 +184,7 @@ class Notification(py_trees.Behaviour):
         :param str led_pattern:
         :param str button_cancel:
         :param str button_confirm:
-        :param bool cancel_on_stop: if true, stop the notification when the behaviour finishes, otherwise display until the notification timeout
-        :param int duration: time in seconds for which to display this notification. Default is to display indefinitely. Useful to use with cancel_on_stop set to false.
+        :param float duration: time in seconds for which to display this notification, the behaviour will shutdown the signal on stop
         """
         super(Notification, self).__init__(name)
         self.gopher = gopher_configuration.Configuration()
@@ -185,6 +200,7 @@ class Notification(py_trees.Behaviour):
         self.button_cancel = button_cancel
         self.button_confirm = button_confirm
         self.duration = duration
+        self.start_time = None
 
         self.notification = gopher_std_msgs.Notification(
             sound_name=self.sound,
@@ -194,8 +210,6 @@ class Notification(py_trees.Behaviour):
             override_previous=True,  # DJS is this going to cause problems?
             message=self.message
         )
-
-        self.cancel_on_stop = cancel_on_stop
         # flag used to remember that we have a notification that needs cleaning up or not
         self.sent_notification = False
 
@@ -214,7 +228,7 @@ class Notification(py_trees.Behaviour):
         request = gopher_std_srvs.NotifyRequest()
         request.id = unique_id.toMsg(self.id)
         request.action = gopher_std_srvs.NotifyRequest.START
-        request.duration = self.duration
+        request.duration = gopher_std_srvs.NotifyRequest.INDEFINITE  # we manage this ourselves, self.duration
         request.notification = self.notification
         try:
             unused_response = self.service(request)
@@ -226,6 +240,7 @@ class Notification(py_trees.Behaviour):
         except rospy.exceptions.ROSInterruptException:
             # ros shutdown, close quietly
             return
+        self.start_time = rospy.get_time()
 
     def update(self):
         """
@@ -234,14 +249,17 @@ class Notification(py_trees.Behaviour):
         Might be useful having a timer here if the notification is a timed one so that it returns
         success when the notification is supposed to have stopped.
         """
-        return py_trees.Status.RUNNING
+        if self.duration == gopher_std_srvs.NotifyRequest.INDEFINITE or (rospy.get_time() - self.start_time < self.duration):
+            return py_trees.Status.RUNNING
+        else:
+            return py_trees.Status.SUCCESS
 
     def terminate(self, new_status):
         """
         Send a stop message to the status notifier if necessary.
         """
         self.logger.debug("  %s [Notification::terminate()][%s->%s]" % (self.name, self.status, new_status))
-        if self.cancel_on_stop and not self.service_failed and self.sent_notification:
+        if not self.service_failed and self.sent_notification:
             request = gopher_std_srvs.NotifyRequest()
             request.id = unique_id.toMsg(self.id)
             request.action = gopher_std_srvs.NotifyRequest.STOP

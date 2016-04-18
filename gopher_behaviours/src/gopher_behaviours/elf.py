@@ -145,23 +145,9 @@ def create_check_elf_status_subtree():
         fail_if_bad_comparison=True,
         clearing_policy=py_trees.common.ClearingPolicy.NEVER
     )
-    notify_done = py_trees.composites.Parallel(
-        name="Celebrate",
-        policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE
-    )
-
-    flash_notify_done = interactions.Notification(
-        "Celebrate",
-        led_pattern=gopher_std_msgs.LEDStrip.AROUND_RIGHT_GREEN,
-        sound="",
-        message="intialised pose"
-    )
-    # this lets the flashing led show for a good length of time to notify the user
-    take_time_to_celebreate = py_trees.timers.Timer("Take Time to Celebrate", 3.0)
+    celebrate = interactions.create_celebrate_behaviour()
     localised_yet.add_child(check_elf_status)
-    localised_yet.add_child(notify_done)
-    notify_done.add_child(flash_notify_done)
-    notify_done.add_child(take_time_to_celebreate)
+    localised_yet.add_child(celebrate)
     return localised_yet
 
 ##############################################################################

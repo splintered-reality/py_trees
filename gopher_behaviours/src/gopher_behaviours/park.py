@@ -56,7 +56,6 @@ def create_repark_subtree():
         led_pattern=gopher.led_patterns.humans_fix_me_i_am_broken,
         button_confirm=gopher_std_msgs.Notification.BUTTON_ON,
         button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
-        cancel_on_stop=True,
         duration=gopher_std_srvs.NotifyRequest.INDEFINITE
     )
     # usually have the button event handler/blackboard combo and that is less expensive than the subscriber method

@@ -90,7 +90,6 @@ def _generate_elevator_children(gopher_configuration, elevator_name, elevator_le
         led_pattern=gopher_configuration.led_patterns.humans_give_me_input,
         button_confirm=gopher_std_msgs.Notification.BUTTON_ON,
         button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
-        cancel_on_stop=True,
         message="Waiting for confirm button press in front of elevator")
     wait_for_go_button_travelling = py_trees.subscribers.WaitForSubscriberData(name="Wait for Button", topic_name=gopher_configuration.buttons.go, topic_type=std_msgs.Empty)
     flash_leds_teleporting = interactions.Notification("Flash Cool", led_pattern=gopher_configuration.led_patterns.im_doing_something_cool, message="teleporting from {0} to {1}".format(elevator_level_origin, elevator_level_destination))

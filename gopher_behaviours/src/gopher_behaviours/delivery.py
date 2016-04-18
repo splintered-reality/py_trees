@@ -258,16 +258,7 @@ def create_locations_subtree(current_world, locations, express=False):
     # this can happen if none of the locations provided are in the semantic locations
     if not children:
         return None
-    celebrate = py_trees.composites.Parallel(name="Celebrate", policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE)
-    celebrate.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
-    # celebrate.add_child(interactions.Articulate("Groot", gopher.sounds.done))
-    celebrate.add_child(interactions.Notification(
-        name="Froody",
-        led_pattern=gopher.led_patterns.im_doing_something_cool,
-        sound=gopher.sounds.done,
-        message="finished delivery")
-    )
-    celebrate.add_child(py_trees.timers.Timer("Pause", duration=2.0))
+    celebrate = interactions.create_celebrate_behaviour()
     children.append(celebrate)
     return children
 
