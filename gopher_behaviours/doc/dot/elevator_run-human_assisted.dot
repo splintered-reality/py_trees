@@ -1,0 +1,23 @@
+digraph elevator_run {
+"Elevator Run" [fontcolor=black, shape=box, fontsize=11, style=filled, fillcolor=orange];
+"To Elevator" [fontcolor=black, shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+"Elevator Run" -> "To Elevator";
+Honk [fontcolor=black, shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+"Elevator Run" -> Honk;
+Travelling [fontcolor=black, shape=note, fontsize=11, style=filled, fillcolor=gold];
+"Elevator Run" -> Travelling;
+"Flash for Input" [fontcolor=black, shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+Travelling -> "Flash for Input";
+"Wait for Button" [fontcolor=black, shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+Travelling -> "Wait for Button";
+Teleporting [fontcolor=black, shape=note, fontsize=11, style=filled, fillcolor=gold];
+"Elevator Run" -> Teleporting;
+"Flash Cool" [fontcolor=black, shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+Teleporting -> "Flash Cool";
+"Teleport Jobs" [fontcolor=black, shape=box, fontsize=11, style=filled, fillcolor=orange];
+Teleporting -> "Teleport Jobs";
+"Transporter sound" [fontcolor=black, shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+"Teleport Jobs" -> "Transporter sound";
+"Elevator Teleport" [fontcolor=black, shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+"Teleport Jobs" -> "Elevator Teleport";
+}

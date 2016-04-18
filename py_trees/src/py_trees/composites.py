@@ -295,6 +295,10 @@ class Sequence(Composite):
         if self.status != Status.RUNNING:
             # sequence specific handling
             self.current_index = 0
+            for child in self.children:
+                # reset the children, this helps when introspecting the tree
+                if child.status != Status.INVALID:
+                    child.stop(Status.INVALID)
             # subclass (user) handling
             self.initialise()
         self.logger.debug("  %s [tick()]" % self.name)
@@ -348,6 +352,11 @@ class Parallel(Composite):
     Will return :py:data:`~py_trees.common.Status.RUNNING` if any one of them is still
     running, :py:data:`~py_trees.common.Status.SUCCESS` if they all succeed, or
     :py:data:`~py_trees.common.Status.FAILURE` if any single one of them fails.
+
+    The behaviour can be modified to return :py:data:`~py_trees.common.Status.SUCCESS`
+    when just one returns :py:data:`~py_trees.common.Status.SUCCESS` and the others are
+    still :py:data:`~py_trees.common.Status.RUNNING` by changing the
+    policy.
     """
     def __init__(self, name="Parallel", policy=common.ParallelPolicy.SUCCESS_ON_ALL, children=None, *args, **kwargs):
         super(Parallel, self).__init__(name, children, *args, **kwargs)

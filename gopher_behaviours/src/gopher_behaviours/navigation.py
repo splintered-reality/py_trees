@@ -20,7 +20,6 @@ Bless my noggin with a tickle from your noodly appendages!
 
 import actionlib
 import actionlib_msgs.msg as actionlib_msgs
-import elf_msgs.msg as elf_msgs
 import functools
 import geometry_msgs.msg as geometry_msgs
 import gopher_configuration
@@ -64,7 +63,6 @@ def create_teleop_homebase_teleport_subtree(name="Teleop & Teleport"):
         led_pattern=gopher.led_patterns.humans_i_need_help,
         button_confirm=gopher_std_msgs.Notification.BUTTON_ON,
         button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
-        cancel_on_stop=True,
         duration=gopher_std_srvs.NotifyRequest.INDEFINITE
     )
     # usually have the button event handler/blackboard combo and that is less expensive than the subscriber method
@@ -404,7 +402,7 @@ class GoalFinishing(py_trees.Behaviour):
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
             self.goal = None
             self.action_client = None
-            rospy.logwarn("GoalFinishing : Could not convert the goal pose from the 'map' into 'odom' frame.")
+            rospy.logerr("GoalFinishing : Could not convert the goal pose from the 'map' into 'odom' frame.")
             return
         pose_transformed = tf2_geometry_msgs.do_transform_pose(pose_stamped, transform_map_odom)
         self.goal.pose = pose_transformed
@@ -440,10 +438,10 @@ class GoalFinishing(py_trees.Behaviour):
                 if (result.goal_distance > self._distance_threshold):
                     if (current_finishing_duration > self._approach_timeout) and\
                        (current_finishing_duration <= self._timeout):
-                        rospy.logwarn("GoalFinishing: Failed to approach goal in time. Will try to align at least.")
+                        rospy.logwarn("GoalFinishing: failed to approach goal in time. Will try to align at least.")
                         self.goal.align_on_failure = True
                     elif (current_finishing_duration > self._timeout):
-                        rospy.logwarn("GoalFinishing: Failed to align in time.")
+                        rospy.logwarn("GoalFinishing: failed to align in time.")
                         self.feedback_message = "failure, but ignoring"
                         return py_trees.Status.SUCCESS
                     else:
@@ -454,12 +452,12 @@ class GoalFinishing(py_trees.Behaviour):
                     return py_trees.Status.RUNNING
                 else:
                     if (current_finishing_duration > self._timeout):
-                        rospy.logwarn("GoalFinishing: Close enough, but failed to align in time.")
+                        rospy.logwarn("GoalFinishing: close enough, but failed to align in time.")
                         self.feedback_message = "failure, but ignoring"
                         return py_trees.Status.SUCCESS
                     else:
                         # try to align
-                        rospy.logwarn("GoalFinishing: Close enough. Will try to align.")
+                        rospy.logwarn("GoalFinishing: close enough, will try to align.")
                         self.goal.align_on_failure = True
                         self.action_client.send_goal(self.goal)
                         self.feedback_message = "waiting for goal finisher to finish us"

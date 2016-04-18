@@ -97,7 +97,6 @@ class RosBehaviourTreeDotcodeGenerator(object):
 
         self.graph = self.generate(behaviours, timestamp)
         self.dotcode = self.dotcode_factory.create_dot(self.graph)
-
         return self.dotcode
 
     def type_to_shape(self, behaviour_type):
@@ -121,18 +120,6 @@ class RosBehaviourTreeDotcodeGenerator(object):
             return '#ff9900'
         elif behaviour_type == py_trees_msgs.Behaviour.SELECTOR:
             return '#808080'
-        else:
-            return None
-
-    def status_to_colour(self, behaviour_status):
-        if behaviour_status == py_trees_msgs.Behaviour.INVALID:
-            return '#e4e4e4'
-        elif behaviour_status == py_trees_msgs.Behaviour.RUNNING:
-            return '#000000'
-        elif behaviour_status == py_trees_msgs.Behaviour.FAILURE:
-            return '#ff0000'
-        elif behaviour_status == py_trees_msgs.Behaviour.SUCCESS:
-            return '#00ff00'
         else:
             return None
 

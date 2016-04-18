@@ -623,7 +623,7 @@ class RosBehaviourTree(QObject):
     def _redraw_graph_view(self):
         key = str(self.get_current_message().header.stamp)
         if key in self._scene_cache:
-            self._scene = self._scene_cache[key]
+            new_scene = self._scene_cache[key]
         else:  # cache miss
             new_scene = QGraphicsScene()
             new_scene.setBackgroundBrush(Qt.white)
@@ -633,6 +633,7 @@ class RosBehaviourTree(QObject):
             else:
                 highlight_level = 1
 
+            # this function is very expensive
             (nodes, edges) = self.dot_to_qt.dotcode_to_qt_items(self._current_dotcode,
                                                                 highlight_level)
 
@@ -653,8 +654,8 @@ class RosBehaviourTree(QObject):
                 del self._scene_cache[oldest]
                 self._scene_cache_keys.remove(oldest)
 
-            # after construction, set the scene and fit to the view
-            self._scene = new_scene
+        # after construction, set the scene and fit to the view
+        self._scene = new_scene
 
         self._widget.graphics_view.setScene(self._scene)
         self._widget.message_label.setText(self._tip_message)

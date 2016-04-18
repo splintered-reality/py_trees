@@ -129,7 +129,16 @@ def create_delivery_subtree(world, locations, parameters=Parameters()):
     ########################
     # Parking/Unparking
     ########################
+    unparking_or_not = py_trees.composites.Selector(name="UnParking?")
+    skip_unparking = unpark.create_unparking_required_check_subtree(current_world=world)
     subtrees.unparking = unpark.UnPark(name="UnPark", elf_type=parameters.elf)
+    parking_or_not = py_trees.composites.Selector(name="Parking?")
+    far_from_a_parking_location = py_trees.meta.inverter(park.ParkingLocation)(name="Far from Home", location=locations[-1])
+    didnt_unpark = py_trees.meta.inverter(py_trees.blackboard.CheckBlackboardVariable)(
+        name="Never UnParked",
+        variable_name="pose_park_rel_map",
+        expected_value=None  # check for existence only
+    )
     subtrees.parking = park.Park("Park")
     subtrees.recovering = py_trees.composites.Sequence(name="Recovering")
     repark = park.create_repark_subtree()
@@ -153,7 +162,9 @@ def create_delivery_subtree(world, locations, parameters=Parameters()):
     # Graph
     ########################
     root.add_child(subtrees.deliveries)
-    subtrees.deliveries.add_child(subtrees.unparking)
+    subtrees.deliveries.add_child(unparking_or_not)
+    unparking_or_not.add_child(skip_unparking)
+    unparking_or_not.add_child(subtrees.unparking)
     subtrees.deliveries.add_child(todo_or_not)
     todo_or_not.add_child(subtrees.cancelling)
     subtrees.cancelling.add_child(subtrees.is_cancelled)
@@ -163,7 +174,10 @@ def create_delivery_subtree(world, locations, parameters=Parameters()):
 
     todo_or_not.add_child(subtrees.en_route)
     subtrees.en_route.add_children(movin_around_children)
-    subtrees.deliveries.add_child(subtrees.parking)
+    subtrees.deliveries.add_child(parking_or_not)
+    parking_or_not.add_child(didnt_unpark)
+    parking_or_not.add_child(far_from_a_parking_location)
+    parking_or_not.add_child(subtrees.parking)
     root.add_child(subtrees.recovering)
     subtrees.recovering.add_child(repark)
 
@@ -244,8 +258,8 @@ def create_locations_subtree(current_world, locations, express=False):
     # this can happen if none of the locations provided are in the semantic locations
     if not children:
         return None
-
-    children.append(interactions.Articulate("Groot 'Done'", gopher.sounds.done))
+    celebrate = interactions.create_celebrate_behaviour()
+    children.append(celebrate)
     return children
 
 ##############################################################################
@@ -674,8 +688,11 @@ class GopherDeliveries(object):
                     else:
                         self._response.result = gopher_delivery_msgs.DeliveryErrorCodes.RESULT_TRAVELLING
                         self._response.result_string = gopher_delivery_msgs.DeliveryErrorCodes.RESULT_TRAVELLING_STRING
-                        if self.blackboard.traversed_locations:
-                            self._response.message = "moving from '{0}' to '{1}'".format(self.traversed_locations[-1], self.remaining_locations[0])
+                        if self.traversed_locations:
+                            if self.remaining_locations:
+                                self._response.message = "moving from '{0}' to '{1}'".format(self.traversed_locations[-1], self.remaining_locations[0])
+                            else:
+                                self._response.message = "delivery finished at '{0}', celebrating".format(self.traversed_locations[-1])
                         else:
                             self._response.message = "moving to '{0}'".format(self.remaining_locations[0])
 

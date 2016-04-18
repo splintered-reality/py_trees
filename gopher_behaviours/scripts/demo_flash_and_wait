@@ -71,7 +71,7 @@ def parse_arguments(command_line_args):
 def create_root():
     gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
     root = py_trees.composites.Parallel(
-        name="Demo Parking",
+        name="Demo Flash And Wait",
         policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ALL
     )
     jobs = py_trees.composites.Sequence("Jobs")
@@ -85,6 +85,8 @@ def create_root():
         name="Party",
         policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE
     )
+#         led_pattern=gopher.led_patterns.humans_fix_me_i_am_broken,
+#         led_pattern=gopher.led_patterns.humans_be_careful,
     flash_leds_need_input = gopher_behaviours.interactions.Notification(
         "Waiting for Input",
         led_pattern=gopher.led_patterns.humans_give_me_input,
@@ -140,6 +142,6 @@ if __name__ == '__main__':
         sys.exit()
 
     rospy.init_node("demo", log_level=rospy.INFO)
-    if not demo.tree.setup(15):
+    if not demo.setup(15):
         sys.exit(console.red + "[ERROR] failed to setup required ros components." + console.reset)
     demo.tick_tock()

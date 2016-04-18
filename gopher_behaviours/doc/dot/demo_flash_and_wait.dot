@@ -1,17 +1,29 @@
 digraph demo_flash_and_wait {
-"Demo Flash And Wait" [fontcolor=black, shape=box, fontsize=11, style=filled, fillcolor=orange];
+"Demo Flash And Wait" [fontcolor=black, shape=note, fontsize=11, style=filled, fillcolor=gold];
+"Button Events" [fontcolor=dodgerblue, shape=box, fontsize=11, style=filled, fillcolor=gray20];
+"Demo Flash And Wait" -> "Button Events";
+Go [fontcolor=black, shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+"Button Events" -> Go;
+Stop [fontcolor=black, shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+"Button Events" -> Stop;
+Abort [fontcolor=black, shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+"Button Events" -> Abort;
+Init [fontcolor=black, shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+"Button Events" -> Init;
+Jobs [fontcolor=black, shape=box, fontsize=11, style=filled, fillcolor=orange];
+"Demo Flash And Wait" -> Jobs;
 Party [fontcolor=black, shape=note, fontsize=11, style=filled, fillcolor=gold];
-"Demo Flash And Wait" -> Party;
+Jobs -> Party;
 "Waiting for Input" [fontcolor=black, shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
 Party -> "Waiting for Input";
 "Wait for Go Button" [fontcolor=black, shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
 Party -> "Wait for Go Button";
 Honk [fontcolor=black, shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
-"Demo Flash And Wait" -> Honk;
-"Party*" [fontcolor=black, shape=note, fontsize=11, style=filled, fillcolor=gold];
-"Demo Flash And Wait" -> "Party*";
+Jobs -> Honk;
+Hangover [fontcolor=black, shape=note, fontsize=11, style=filled, fillcolor=gold];
+Jobs -> Hangover;
 Waiting [fontcolor=black, shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
-"Party*" -> Waiting;
+Hangover -> Waiting;
 "Pause 5s" [fontcolor=black, shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
-"Party*" -> "Pause 5s";
+Hangover -> "Pause 5s";
 }

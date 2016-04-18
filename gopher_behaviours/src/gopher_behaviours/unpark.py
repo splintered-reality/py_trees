@@ -12,9 +12,6 @@
 
 Oh my spaghettified magnificence,
 Bless my noggin with a tickle from your noodly appendages!
-
-----
-
 """
 
 ##############################################################################
@@ -26,6 +23,7 @@ from gopher_semantics.semantics import Semantics
 import geometry_msgs.msg as geometry_msgs
 import gopher_std_msgs.msg as gopher_std_msgs
 import gopher_configuration
+import gopher_semantics
 import py_trees
 import rospy
 import tf
@@ -41,6 +39,47 @@ from . import transform_utilities
 ##############################################################################
 # Helpers
 ##############################################################################
+
+
+def create_unparking_required_check_subtree(current_world):
+    """
+    Checks if unparking is necessary, i.e. if we are unlocalised or far from a
+    semantically defined parking location.
+    """
+    far_from_home = py_trees.composites.Sequence(name="Far From Home")
+    far_from_home.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
+    are_we_localised = py_trees.CheckBlackboardVariable(
+        name="Check ELF Status",
+        variable_name="elf_localisation_status",
+        expected_value=elf_msgs.ElfLocaliserStatus.STATUS_WORKING
+    )
+    no_parking_nearby = py_trees.meta.inverter(NearParkingLocation)(name="No Parking Nearby", current_world=current_world)
+
+    far_from_home.add_child(are_we_localised)
+    far_from_home.add_child(no_parking_nearby)
+
+    return far_from_home
+
+
+class NearParkingLocation(py_trees.Behaviour):
+    """
+    Checks to see if we are close to a semantically legitimate parking location.
+    """
+    def __init__(self, name="Near Parking Location", current_world="heaven"):
+        super(NearParkingLocation, self).__init__(name)
+
+    def setup(self, timeout):
+        self.gopher = gopher_configuration.Configuration()
+        self.semantics = gopher_semantics.Semantics(self.gopher.namespaces.semantics)
+        return True
+
+    def update(self):
+        result = py_trees.common.Status.SUCCESS
+        # TODO put a map_pose in the blackboard
+        # read the map pose
+        # update other map poses to use the blackboard instead of subscribers
+        # get the euclidean distance
+        return result
 
 
 class SaveParkingPoseManual(py_trees.Behaviour):
@@ -164,9 +203,10 @@ class UnPark(py_trees.Sequence):
             motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_TRANSLATE,
             motion_amount=0.8
         )
-        is_docked = battery.create_is_docked(name="Is Docked?")
-        is_discharging = battery.create_is_discharging(name="Is Discharging?")
-        unplug = py_trees.Selector(name="UnPlug")
+        was_docked = battery.create_was_docked()
+        was_jacked = battery.create_was_jacked()
+        was_discharging = battery.create_was_discharging()
+        unplug = py_trees.Sequence(name="UnPlug")
         unplug.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
 
         wait_to_be_unplugged = battery.create_wait_to_be_unplugged(name="Flash for Help")
@@ -202,12 +242,10 @@ class UnPark(py_trees.Sequence):
 
         not_yet_localised_sequence = py_trees.Sequence("Initialisation")
         not_yet_localised_sequence.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
-        # automatic_unpark = py_trees.Sequence("Automatic")
         if elf_type == elf.InitialisationType.TELEOP:
             elf_initialisation = elf.TeleopInitialisation()
         elif elf_type == elf.InitialisationType.AR:
             elf_initialisation = elf.ARInitialisation()
-        # manual_or_auto = py_trees.Selector("Initialisation")
 
         ##############################
         # Common
@@ -222,16 +260,17 @@ class UnPark(py_trees.Sequence):
 
         self.add_child(init_flags)
         self.add_child(unplug_undock)
+        unplug_undock.add_child(was_discharging)
+        unplug_undock.add_child(unplug)
+        unplug.add_child(was_jacked)
+        unplug.add_child(wait_to_be_unplugged)
         unplug_undock.add_child(undocking)
-        undocking.add_child(is_docked)
+        undocking.add_child(was_docked)
         undocking.add_child(ar_tracker_on)
         undocking.add_child(auto_undock)
         undocking.add_child(ar_tracker_off)
         undocking.add_child(break_out)
         undocking.add_child(set_docked_flag)
-        unplug_undock.add_child(unplug)
-        unplug.add_child(is_discharging)
-        unplug.add_child(wait_to_be_unplugged)
         self.add_child(write_localisation_status)
         self.add_child(path_chooser)
         path_chooser.add_child(already_localised_sequence)

@@ -24,14 +24,18 @@ class CustomDelivery(object):
         self.gopher = gopher_configuration.configuration.Configuration(fallback_to_defaults=True)
 
     def send(self, goal_locations):
+        """
+        :param str[] goal_locations: list of delivery waypoints
+        """
         delivery_goal_request = gopher_delivery_srvs.DeliveryGoalRequest()
         delivery_goal_request.semantic_locations = goal_locations
+        # automatically infer whether we need parking or not.
         rospy.loginfo("CustomDelivery: sending request %s" % delivery_goal_request.semantic_locations)
         delivery_goal_service = rospy.ServiceProxy(self.gopher.services.delivery_goal, gopher_delivery_srvs.DeliveryGoal)
         try:
             unused_delivery_goal_response = delivery_goal_service(delivery_goal_request)
             if not unused_delivery_goal_response.result == 0:
-                print(console.red + "CustomDelivery: goal service call failed: %s" % unused_delivery_goal_response.message + console.reset)
+                print(console.red + "CustomDelivery: goal service call failed: %s" % unused_delivery_goal_response.error_message + console.reset)
                 sys.exit()
         except rospy.ServiceException, e:
             print(console.red + "CustomDelivery: goal service call failed: %s" % e + console.reset)
@@ -41,15 +45,18 @@ class CustomDelivery(object):
         rospy.wait_for_service(self.gopher.services.delivery_result)
 
     def spin(self):
-        rate = rospy.Rate(2)
+        rate = rospy.Rate(1)
+        counter = 0
         while not rospy.is_shutdown():
             try:
                 fetch_result = rospy.ServiceProxy(self.gopher.services.delivery_result, gopher_delivery_srvs.DeliveryResult)
                 response = fetch_result()
-                if response.result >= 0:
+                if counter % 5 == 0:
                     CustomDelivery.result(response)
+                if response.result >= 0:
                     break
                 rate.sleep()
+                ++counter
             except rospy.ServiceException, e:
                 print(console.red + "CustomDelivery: service call failed: %s" % e + console.reset)
                 break
