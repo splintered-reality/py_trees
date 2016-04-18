@@ -22,6 +22,7 @@ Bless my noggin with a tickle from your noodly appendages!
 import geometry_msgs.msg as geometry_msgs
 import gopher_configuration
 import nav_msgs.msg as nav_msgs
+import std_msgs.msg as std_msgs
 import py_trees
 
 from . import battery
@@ -58,9 +59,17 @@ def create_gopher_handlers():
         blackboard_variables={"pose": None},
         clearing_policy=py_trees.common.ClearingPolicy.NEVER
     )
+    world_to_blackboard = py_trees.subscribers.ToBlackboard(
+        name="World2BB",
+        topic_name=gopher.topics.world,
+        topic_type=std_msgs.String,
+        blackboard_variables={"world": None},
+        clearing_policy=py_trees.common.ClearingPolicy.NEVER
+    )
 
     topics_to_blackboard.add_child(battery_to_blackboard)
     topics_to_blackboard.add_child(odom_to_blackboard)
     topics_to_blackboard.add_child(pose_to_blackboard)
+    topics_to_blackboard.add_child(world_to_blackboard)
 
     return (button_event_handler, topics_to_blackboard)

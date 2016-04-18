@@ -25,6 +25,7 @@ import gopher_configuration
 import gopher_navi_msgs.msg as gopher_navi_msgs
 import py_trees
 import gopher_std_msgs.msg as gopher_std_msgs
+import operator
 import rospy
 import std_msgs.msg as std_msgs
 
@@ -83,7 +84,7 @@ def _generate_elevator_children(
         elevator_level_origin,
         elevator_level_destination,
         elf_initialisation_type
-    ):
+        ):
     """
     :param gopher_configuration.Configuration gopher_configuration:
     :param str elevator_name: unique name of the elevator
@@ -106,7 +107,13 @@ def _generate_elevator_children(
         button_confirm=gopher_std_msgs.Notification.BUTTON_ON,
         button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
         message="Waiting for confirm button press in front of elevator")
-    wait_for_go_button_travelling = py_trees.subscribers.WaitForSubscriberData(name="Wait for Button", topic_name=gopher_configuration.buttons.go, topic_type=std_msgs.Empty)
+    wait_for_go_button_travelling = py_trees.blackboard.WaitForBlackboardVariable(
+        name="Wait for Button",
+        variable_name="event_go_button",
+        expected_value=True,
+        comparison_operator=operator.eq,
+        clearing_policy=py_trees.common.ClearingPolicy.ON_INITIALISE
+    )
 
     goal = gopher_navi_msgs.TeleportGoal()
     goal.elevator_location = gopher_navi_msgs.ElevatorLocation()

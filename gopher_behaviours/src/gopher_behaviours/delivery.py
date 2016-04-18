@@ -511,7 +511,7 @@ class GopherDeliveries(object):
             QuirkyDeliveriesConfig.QuirkyDeliveries_ar: elf.InitialisationType.AR,
         }
         self.parameters.elf = conversions[config.elf]
-        rospy.loginfo("QuirkyDeliveries: reconfigured\n%s" % self.parameters)
+        # rospy.loginfo("QuirkyDeliveries: reconfigured\n%s" % self.parameters)
         return config
 
     #################################

@@ -367,6 +367,7 @@ class GoalFinishing(py_trees.Behaviour):
         """
         super(GoalFinishing, self).__init__(name)
         self.action_client = None
+        self.sent_goal = False
         self.goal = None
         self.goal_pose = goal_pose
         self.connected = False
@@ -398,6 +399,8 @@ class GoalFinishing(py_trees.Behaviour):
 
     def initialise(self):
         self.logger.debug("  %s [GoalFinishing::initialise()]" % self.name)
+        self.sent_goal = False
+
         # prepare the goal
         self.goal = gopher_navi_msgs.GoalFinishingGoal()
         self.goal.pose = geometry_msgs.PoseStamped()
@@ -428,6 +431,7 @@ class GoalFinishing(py_trees.Behaviour):
             # we catch the failure in the first update() call
         else:
             self.action_client.send_goal(self.goal)
+            self.sent_goal = True
 
         self._time_finishing_start = rospy.Time.now()
         self._final_goal_sent = False
@@ -494,5 +498,8 @@ class GoalFinishing(py_trees.Behaviour):
     def terminate(self, new_status):
         # if we have an action client and the current goal has not already
         # succeeded, send a message to cancel the goal for this action client.
-        if self.action_client is not None and self.action_client.get_state() != actionlib_msgs.GoalStatus.SUCCEEDED:
-            self.action_client.cancel_goal()
+        if self.action_client is not None and self.sent_goal:
+            motion_state = self.action_client.get_state()
+            if (motion_state == actionlib_msgs.GoalStatus.PENDING) or (motion_state == actionlib_msgs.GoalStatus.ACTIVE):
+                self.action_client.cancel_goal()
+        self.sent_goal = False

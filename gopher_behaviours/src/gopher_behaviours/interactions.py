@@ -94,7 +94,7 @@ def create_celebrate_behaviour(name="Celebrate", duration=3.0):
     celebrate = Notification(
         name=name,
         led_pattern=gopher.led_patterns.im_doing_something_cool,
-        sound=gopher.sounds.celebrate,
+        sound=gopher.sounds.honk,
         message="finished delivery",
         duration=duration
     )
