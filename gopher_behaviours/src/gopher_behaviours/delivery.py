@@ -69,7 +69,6 @@ class Parameters(object):
         """
         self.elf = elf.InitialisationType.TELEOP
         self.express = False
-        self.parking = False
 
     def __str__(self):
         s = console.bold + "\nParameters:\n" + console.reset
@@ -120,7 +119,7 @@ def create_delivery_subtree(world, locations, parameters=Parameters()):
     # Moving Around
     ########################
     subtrees.en_route = py_trees.OneshotSequence(name="En Route")
-    movin_around_children = create_locations_subtree(world, locations, parameters.express)
+    movin_around_children = create_locations_subtree(world, locations, parameters)
 
     if not movin_around_children:
         # how to get a warning back? also need to handle this shit
@@ -184,7 +183,7 @@ def create_delivery_subtree(world, locations, parameters=Parameters()):
     return (root, subtrees)
 
 
-def create_locations_subtree(current_world, locations, express=False):
+def create_locations_subtree(current_world, locations, parameters):
     """
     Find the semantic locations corresponding to the incoming string location identifier and
     create the appropriate behaviours.
@@ -231,7 +230,7 @@ def create_locations_subtree(current_world, locations, express=False):
             if next_node is not None:
                 honk = interactions.Articulate("Honk", gopher.sounds.honk)
                 go_to.add_child(honk)
-                if not express:
+                if not parameters.express:
                     waiting = py_trees.composites.Parallel(
                         name="Waiting",
                         policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE
@@ -251,7 +250,13 @@ def create_locations_subtree(current_world, locations, express=False):
             last_location = current_node
         elif isinstance(current_node, gopher_semantic_msgs.Elevator):
             # topological path guarantees there is a next...
-            elevator_subtree = elevators.HumanAssistedElevators("Elevator to %s" % next_node.world, previous_world, current_node, next_node.world)
+            elevator_subtree = elevators.HumanAssistedElevators(
+                name="Elevator to %s" % next_node.world,
+                origin=previous_world,
+                elevator=current_node,
+                destination=next_node.world,
+                elf_initialisation_type=parameters.elf
+            )
             elevator_subtree.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
             children.append(elevator_subtree)
 
@@ -501,7 +506,6 @@ class GopherDeliveries(object):
 
     def dynamic_reconfigure_callback(self, config, level):
         self.parameters.express = config.express
-        self.parameters.parking = config.parking
         conversions = {
             QuirkyDeliveriesConfig.QuirkyDeliveries_teleop: elf.InitialisationType.TELEOP,
             QuirkyDeliveriesConfig.QuirkyDeliveries_ar: elf.InitialisationType.AR,
