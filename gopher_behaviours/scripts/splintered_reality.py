@@ -82,7 +82,7 @@ if __name__ == '__main__':
 
     # have to read debug param before initialising node, it's not possible to
     # change the log level after node is initialised.
-    debug_mode = rospy.get_param("/behaviours/deliveries/debug", False) or args.debug
+    debug_mode = rospy.get_param("/behaviours/debug", False) or args.debug
     if debug_mode:
         py_trees.logging.level = py_trees.logging.Level.DEBUG
     rospy.init_node("splintered_reality", log_level=rospy.INFO)
