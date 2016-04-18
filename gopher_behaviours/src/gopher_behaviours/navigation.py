@@ -30,12 +30,14 @@ import move_base_msgs.msg as move_base_msgs
 import operator
 import nav_msgs.msg as nav_msgs
 import py_trees
+import rocon_console.console as console
 import rospy
 import tf
 import tf2_geometry_msgs
 import tf2_ros
 
 from . import interactions
+from . import transform_utilities
 
 ##############################################################################
 # Behaviour Factories
@@ -346,9 +348,13 @@ class Teleport(py_trees.Behaviour):
 
 class GoalFinishing(py_trees.Behaviour):
     """
-    Simple goal finishing behaviour; just connects to the goal finishing action and runs that, nothing else.
+    Simple goal finishing behaviour, just connects to the goal finishing action
+    and runs that, nothing else.
 
-    :param geometry_msgs/Pose2D goal_pose  the goal pose (relative to the map frame) the robot shall finish at
+    Blackboard Variables:
+
+     - odom (r) [geometry_msgs/Pose] : current pose_base_rel_odom (from /gopher/odom)
+     - pose (r) [geometry_msgs/Pose] : current pose_base_rel_map (from /navi/pose)
     """
     def __init__(self, name, goal_pose, distance_threshold=0.1, timeout=50.0):
         """
@@ -357,13 +363,13 @@ class GoalFinishing(py_trees.Behaviour):
         just the help descriptions for the ``gopher_teleport` command line
         program for more information).
 
-        :param gopher_navi_msgs.TeleportGoal goal: a suitably configured goal message.
+        :param geometry_msgs/Pose2D goal_pose: the goal pose (relative to the map frame) the robot shall finish at
         """
         super(GoalFinishing, self).__init__(name)
         self.action_client = None
         self.goal = None
         self.goal_pose = goal_pose
-        self.config = gopher_configuration.Configuration()
+        self.connected = False
 
         # parameters for re-trying
         self._distance_threshold = distance_threshold
@@ -373,51 +379,52 @@ class GoalFinishing(py_trees.Behaviour):
         self._time_finishing_start = None
         self.blackboard = py_trees.blackboard.Blackboard()
 
-    def initialise(self):
-        self.logger.debug("  %s [GoalFinishing::initialise()]" % self.name)
-        self.action_client = actionlib.SimpleActionClient(self.config.actions.goal_finishing,
-                                                          gopher_navi_msgs.GoalFinishingAction)
-
-        # prepare the goal
-        self.goal = gopher_navi_msgs.GoalFinishingGoal()
-        pose_stamped = geometry_msgs.PoseStamped()
-        pose_stamped.header.stamp = rospy.Time.now()
-        pose_stamped.header.frame_id = "map"
-        pose_stamped.pose.position.x = self.goal_pose.x
-        pose_stamped.pose.position.y = self.goal_pose.y
-        pose_stamped.pose.position.z = 0.0
-        quaternion = tf.transformations.quaternion_from_euler(0.0, 0.0, self.goal_pose.theta)
-        pose_stamped.pose.orientation.x = quaternion[0]
-        pose_stamped.pose.orientation.y = quaternion[1]
-        pose_stamped.pose.orientation.z = quaternion[2]
-        pose_stamped.pose.orientation.w = quaternion[3]
-        # convert goal pose from "map" into the "odom" frame, since this one is more reliable for short-distances
-        tf_buffer = tf2_ros.Buffer(cache_time=rospy.Duration(10.0))
-        unused_tf_listener = tf2_ros.TransformListener(tf_buffer)
-        try:
-            # origin frame hard-coded since goal_pose is not stamped
-            transform_map_odom = tf_buffer.lookup_transform("odom",
-                                                            "map",
-                                                            rospy.Time(0),
-                                                            rospy.Duration(0.1))
-        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
-            self.goal = None
-            self.action_client = None
-            rospy.logerr("GoalFinishing : Could not convert the goal pose from the 'map' into 'odom' frame.")
-            return
-        pose_transformed = tf2_geometry_msgs.do_transform_pose(pose_stamped, transform_map_odom)
-        self.goal.pose = pose_transformed
-        self.goal.align_on_failure = False
-        print("Pose Stamped: %s" % pose_stamped.pose)
-        print("Pose Transformed: %s" % self.goal.pose)
-        print("Current Odom: %s" % self.blackboard.odom)
-        print("Current Pose: %s" % self.blackboard.pose)
-
+    def setup(self, timeout):
+        """
+        Ros specific configuration
+        """
+        self.config = gopher_configuration.Configuration()
+        self.action_client = actionlib.SimpleActionClient(
+            self.config.actions.goal_finishing,
+            gopher_navi_msgs.GoalFinishingAction
+        )
         # should not have to wait as this will occur way after the teleport server is up
-        connected = self.action_client.wait_for_server(rospy.Duration(0.5))
-        if not connected:
+        self.connected = self.action_client.wait_for_server(rospy.Duration(timeout))
+        if not self.connected:
             rospy.logwarn("GoalFinishing : behaviour could not connect with the goal finisher server.")
             self.action_client = None
+            return False
+        return True
+
+    def initialise(self):
+        self.logger.debug("  %s [GoalFinishing::initialise()]" % self.name)
+        # prepare the goal
+        self.goal = gopher_navi_msgs.GoalFinishingGoal()
+        self.goal.pose = geometry_msgs.PoseStamped()
+
+        pose_goal_rel_map = geometry_msgs.Pose()
+        pose_goal_rel_map.position.x = self.goal_pose.x
+        pose_goal_rel_map.position.y = self.goal_pose.y
+        pose_goal_rel_map.position.z = 0.0
+        quaternion = tf.transformations.quaternion_from_euler(0.0, 0.0, self.goal_pose.theta)
+        pose_goal_rel_map.orientation.x = quaternion[0]
+        pose_goal_rel_map.orientation.y = quaternion[1]
+        pose_goal_rel_map.orientation.z = quaternion[2]
+        pose_goal_rel_map.orientation.w = quaternion[3]
+
+        # convert goal pose from "map" into the "odom" frame, since this one is more reliable for short-distances
+        pose_base_rel_odom = self.blackboard.odom.pose.pose
+        pose_base_rel_map = self.blackboard.pose.pose.pose
+        pose_map_rel_base = transform_utilities.get_inverse_pose(pose_base_rel_map)
+        pose_map_rel_odom = transform_utilities.concatenate_poses(pose_map_rel_base, pose_base_rel_odom)
+        pose_goal_rel_odom = transform_utilities.concatenate_poses(pose_goal_rel_map, pose_map_rel_odom)
+        self.goal.pose.pose = pose_goal_rel_odom
+        self.goal.pose.header.stamp = rospy.get_rostime()
+        self.goal.pose.header.frame_id = self.blackboard.odom.header.frame_id
+        self.goal.align_on_failure = False
+
+        if not self.connected:
+            rospy.logwarn("GoalFinishing : behaviour could not connect with the goal finisher server.")
             # we catch the failure in the first update() call
         else:
             self.action_client.send_goal(self.goal)
@@ -489,4 +496,3 @@ class GoalFinishing(py_trees.Behaviour):
         # succeeded, send a message to cancel the goal for this action client.
         if self.action_client is not None and self.action_client.get_state() != actionlib_msgs.GoalStatus.SUCCEEDED:
             self.action_client.cancel_goal()
-
