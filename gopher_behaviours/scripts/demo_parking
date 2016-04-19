@@ -9,6 +9,7 @@
 import gopher_behaviours
 import gopher_configuration
 import gopher_std_msgs.msg as gopher_std_msgs
+import operator
 import py_trees
 import rocon_console.console as console
 import rospy
@@ -112,10 +113,12 @@ def create_root():
         button_confirm=gopher_std_msgs.Notification.BUTTON_ON,
         button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
     )
-    wait_for_button = py_trees.subscribers.WaitForSubscriberData(
+    wait_for_button = py_trees.blackboard.WaitForBlackboardVariable(
         name="Wait for Go Button",
-        topic_name=gopher.buttons.go,
-        topic_type=std_msgs.String
+        variable_name="event_go_button",
+        expected_value=True,
+        comparison_operator=operator.eq,
+        clearing_policy=py_trees.common.ClearingPolicy.ON_INITIALISE
     )
 
     #################################

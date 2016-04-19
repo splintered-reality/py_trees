@@ -43,7 +43,7 @@ catkin_install_python(
     PROGRAMS
         scripts/demo_docking
         scripts/demo_elf
-        scripts/demo_finish_him
+        scripts/demo_finishing
         scripts/demo_flash_and_wait
         scripts/demo_move_base
         scripts/demo_parking

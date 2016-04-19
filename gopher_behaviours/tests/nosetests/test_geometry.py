@@ -56,52 +56,70 @@ def print_geometry_poses(pose1, pose2):
 ##############################################################################
 
 
-def test_parking_geometry():
+#def test_parking_geometry():
+#     print(console.bold + "\n****************************************************************************************" + console.reset)
+#     print(console.bold + "* Parking Geometry " + console.reset)
+#     print(console.bold + "****************************************************************************************\n" + console.reset)
+#
+#     # 1
+#     pose_park_start_rel_map = geometry_msgs.Pose()
+#     pose_park_start_rel_map.position = geometry_msgs.Point(0, 0, 0)
+#     pose_park_start_rel_map.orientation = geometry_msgs.Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
+#     pose_park_rel_map = geometry_msgs.Pose()
+#     pose_park_rel_map.position = geometry_msgs.Point(0, 1, 0)
+#     pose_park_rel_map.orientation = geometry_msgs.Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
+#
+#     (distance_to_park, point_to_park_angle, orient_with_park_angle) = park.compute_parking_geometry(pose_park_start_rel_map, pose_park_rel_map)
+#     print_summary(pose_park_rel_map, pose_park_start_rel_map, distance_to_park, point_to_park_angle, orient_with_park_angle)
+#
+#     assert(distance_to_park == 1.0)
+#     assert_almost_equal(point_to_park_angle, 1.5707963279, 3)
+#     assert_almost_equal(orient_with_park_angle, -1.5707963279, 3)
+#
+#     # 2
+#     pose_park_start_rel_map = geometry_msgs.Pose()
+#     pose_park_start_rel_map.position = geometry_msgs.Point(0, 0, 0)
+#     pose_park_start_rel_map.orientation = geometry_msgs.Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
+#     pose_park_rel_map = geometry_msgs.Pose()
+#     pose_park_rel_map.position = geometry_msgs.Point(1, 1, 0)
+#     pose_park_rel_map.orientation = geometry_msgs.Quaternion(x=0.0, y=0.0, z=1.0, w=0.0)  # 180 degrees
+#
+#     (distance_to_park, point_to_park_angle, orient_with_park_angle) = park.compute_parking_geometry(pose_park_start_rel_map, pose_park_rel_map)
+#     print_summary(pose_park_rel_map, pose_park_start_rel_map, distance_to_park, point_to_park_angle, orient_with_park_angle)
+#
+#     assert_almost_equal(distance_to_park, math.sqrt(2), 3)
+#     assert_almost_equal(point_to_park_angle, 0.785398163397, 3)
+#     assert_almost_equal(orient_with_park_angle, 3.14159265359-0.785398163397)
+#
+#     # 2
+#     pose_park_start_rel_map = geometry_msgs.Pose()
+#     pose_park_start_rel_map.position = geometry_msgs.Point(1.0, 0, 0)
+#     pose_park_start_rel_map.orientation = geometry_msgs.Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
+#     pose_park_rel_map = geometry_msgs.Pose()
+#     pose_park_rel_map.position = geometry_msgs.Point(1.573153, -0.52934, 0.0)
+#     pose_park_rel_map.orientation = geometry_msgs.Quaternion(x=0.0, y=0.0, z=-0.370314263041, w=0.928906532751)
+#
+#     (distance_to_park, point_to_park_angle, orient_with_park_angle) = park.compute_parking_geometry(pose_park_start_rel_map, pose_park_rel_map)
+#     print_summary(pose_park_rel_map, pose_park_start_rel_map, distance_to_park, point_to_park_angle, orient_with_park_angle)
+#
+#     assert_almost_equal(distance_to_park, 0.780195614579, 3)
+#     assert_almost_equal(point_to_park_angle, -0.74567912866881458, 3)
+#     assert_almost_equal(orient_with_park_angle, -0.013015497172437551, 3)
+
+def test_concatenate_poses():
     print(console.bold + "\n****************************************************************************************" + console.reset)
-    print(console.bold + "* Parking Geometry " + console.reset)
+    print(console.bold + "* Concatenate Poses " + console.reset)
     print(console.bold + "****************************************************************************************\n" + console.reset)
 
-    # 1
-    pose_park_start_rel_map = geometry_msgs.Pose()
-    pose_park_start_rel_map.position = geometry_msgs.Point(0, 0, 0)
-    pose_park_start_rel_map.orientation = geometry_msgs.Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
-    pose_park_rel_map = geometry_msgs.Pose()
-    pose_park_rel_map.position = geometry_msgs.Point(0, 1, 0)
-    pose_park_rel_map.orientation = geometry_msgs.Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
+    pose_goal_rel_map = geometry_msgs.Pose()
+    pose_goal_rel_map.position = geometry_msgs.Point(0.5, 0, 0)
+    pose_goal_rel_map.orientation = geometry_msgs.Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
 
-    (distance_to_park, point_to_park_angle, orient_with_park_angle) = park.compute_parking_geometry(pose_park_start_rel_map, pose_park_rel_map)
-    print_summary(pose_park_rel_map, pose_park_start_rel_map, distance_to_park, point_to_park_angle, orient_with_park_angle)
+    pose_map_rel_odom = geometry_msgs.Pose()
+    pose_map_rel_odom.position = geometry_msgs.Point(-0.771929405738, -0.333180496296, 0)
+    pose_map_rel_odom.orientation = geometry_msgs.Quaternion(x=0.0, y=0.0, z=0.71485625728, w=0.699271429009)  # 90 degrees
 
-    assert(distance_to_park == 1.0)
-    assert_almost_equal(point_to_park_angle, 1.5707963279, 3)
-    assert_almost_equal(orient_with_park_angle, -1.5707963279, 3)
-
-    # 2
-    pose_park_start_rel_map = geometry_msgs.Pose()
-    pose_park_start_rel_map.position = geometry_msgs.Point(0, 0, 0)
-    pose_park_start_rel_map.orientation = geometry_msgs.Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
-    pose_park_rel_map = geometry_msgs.Pose()
-    pose_park_rel_map.position = geometry_msgs.Point(1, 1, 0)
-    pose_park_rel_map.orientation = geometry_msgs.Quaternion(x=0.0, y=0.0, z=1.0, w=0.0)  # 180 degrees
-
-    (distance_to_park, point_to_park_angle, orient_with_park_angle) = park.compute_parking_geometry(pose_park_start_rel_map, pose_park_rel_map)
-    print_summary(pose_park_rel_map, pose_park_start_rel_map, distance_to_park, point_to_park_angle, orient_with_park_angle)
-
-    assert_almost_equal(distance_to_park, math.sqrt(2), 3)
-    assert_almost_equal(point_to_park_angle, 0.785398163397, 3)
-    assert_almost_equal(orient_with_park_angle, 3.14159265359-0.785398163397)
-
-    # 2
-    pose_park_start_rel_map = geometry_msgs.Pose()
-    pose_park_start_rel_map.position = geometry_msgs.Point(1.0, 0, 0)
-    pose_park_start_rel_map.orientation = geometry_msgs.Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
-    pose_park_rel_map = geometry_msgs.Pose()
-    pose_park_rel_map.position = geometry_msgs.Point(1.573153, -0.52934, 0.0)
-    pose_park_rel_map.orientation = geometry_msgs.Quaternion(x=0.0, y=0.0, z=-0.370314263041, w=0.928906532751)
-
-    (distance_to_park, point_to_park_angle, orient_with_park_angle) = park.compute_parking_geometry(pose_park_start_rel_map, pose_park_rel_map)
-    print_summary(pose_park_rel_map, pose_park_start_rel_map, distance_to_park, point_to_park_angle, orient_with_park_angle)
-
-    assert_almost_equal(distance_to_park, 0.780195614579, 3)
-    assert_almost_equal(point_to_park_angle, -0.74567912866881458, 3)
-    assert_almost_equal(orient_with_park_angle, -0.013015497172437551, 3)
+    pose_goal_rel_odom = transform_utilities.concatenate_poses(pose_goal_rel_map, pose_map_rel_odom)
+    print("Goal Rel Map: %s" % pose_goal_rel_map)
+    print("Map Rel Odom: %s" % pose_map_rel_odom)
+    print("Goal Rel Odom: %s" % pose_goal_rel_odom)

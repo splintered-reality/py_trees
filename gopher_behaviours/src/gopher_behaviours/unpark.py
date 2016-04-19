@@ -53,7 +53,10 @@ def create_unparking_required_check_subtree(current_world):
         variable_name="elf_localisation_status",
         expected_value=elf_msgs.ElfLocaliserStatus.STATUS_WORKING
     )
-    no_parking_nearby = py_trees.meta.inverter(NearParkingLocation)(name="No Parking Nearby", current_world=current_world)
+    no_parking_nearby = py_trees.meta.inverter(NearParkingLocation)(
+        name="No Parking Nearby",
+        current_world=current_world
+    )
 
     far_from_home.add_child(are_we_localised)
     far_from_home.add_child(no_parking_nearby)
@@ -64,22 +67,36 @@ def create_unparking_required_check_subtree(current_world):
 class NearParkingLocation(py_trees.Behaviour):
     """
     Checks to see if we are close to a semantically legitimate parking location.
+
+    Blackboard Variables:
+
+     - pose  (r) [geometry_msgs/geometry_msgs/PoseWithCovarianceStamped] : pose of the robot relative to the map
+     - world (r) [std_msgs/String] : name of the current world
     """
-    def __init__(self, name="Near Parking Location", current_world="heaven"):
+    def __init__(self, name="Parking Nearby?", current_world="heaven"):
         super(NearParkingLocation, self).__init__(name)
+        self.parking_locations = []  # list of gopher_semantic_msgs.Location objects
+        self.blackboard = py_trees.blackboard.Blackboard()
 
     def setup(self, timeout):
-        self.gopher = gopher_configuration.Configuration()
-        self.semantics = gopher_semantics.Semantics(self.gopher.namespaces.semantics)
+        gopher = gopher_configuration.Configuration()
+        semantics = gopher_semantics.Semantics(gopher.namespaces.semantics)
+        for location in semantics.locations.values():
+            if location.parking_location:
+                self.parking_locations.append(location)
         return True
 
     def update(self):
-        result = py_trees.common.Status.SUCCESS
-        # TODO put a map_pose in the blackboard
-        # read the map pose
-        # update other map poses to use the blackboard instead of subscribers
-        # get the euclidean distance
-        return result
+        for location in self.parking_locations:
+            if self.blackboard.world == location.world:
+                px = location.pose.x
+                py = location.pose.y
+                rx = self.blackboard.pose.pose.pose.position.x
+                ry = self.blackboard.pose.pose.pose.position.y
+                distance_squared = (px - rx) * (px - rx) + (py - ry) * (py - ry)
+                if distance_squared < location.parking_radius * location.parking_radius:
+                    return py_trees.common.Status.SUCCESS
+        return py_trees.common.Status.FAILURE
 
 
 class SaveParkingPoseManual(py_trees.Behaviour):

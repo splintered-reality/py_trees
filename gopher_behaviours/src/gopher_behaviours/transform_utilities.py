@@ -13,9 +13,6 @@
 
 Oh my spaghettified magnificence,
 Bless my noggin with a tickle from your noodly appendages!
-
-----
-
 """
 
 ##############################################################################
@@ -106,6 +103,8 @@ def get_relative_pose(pose_b_rel_c, pose_a_rel_c):
 
     :param geometry_msgs/Pose pose_b_rel_c:
     :param geometry_msgs/Pose pose_a_rel_c:
+    :returns: pose_b_rel_a
+    :rtype: geometry_msgs/Pose
     """
     T_b_rel_c = transform_from_geometry_msgs_pose(pose_b_rel_c)
     T_a_rel_c = transform_from_geometry_msgs_pose(pose_a_rel_c)
@@ -120,6 +119,24 @@ def get_relative_pose(pose_b_rel_c, pose_a_rel_c):
     geometry_msgs_pose_b_rel_a.position = geometry_msgs.Point(translation[0], translation[1], translation[2])
     geometry_msgs_pose_b_rel_a.orientation = geometry_msgs.Quaternion(x=quaternion[0], y=quaternion[1], z=quaternion[2], w=quaternion[3])
 
+    return geometry_msgs_pose_b_rel_a
+
+
+def get_inverse_pose(pose_a_rel_b):
+    """
+    Computes the inverse pose and returns the geometry_msgs object.
+
+    :param geometry_msgs/Pose pose_a_rel_b:
+    :returns: pose_b_rel_a
+    :rtype: geometry_msgs/Pose
+    """
+    pose_b_rel_a = transform_from_geometry_msgs_pose(pose_a_rel_b)
+    # lists
+    quaternion = tf.transformations.quaternion_from_matrix(pose_b_rel_a)
+    translation = tf.transformations.translation_from_matrix(pose_b_rel_a)
+    geometry_msgs_pose_b_rel_a = geometry_msgs.Pose()
+    geometry_msgs_pose_b_rel_a.position = geometry_msgs.Point(translation[0], translation[1], translation[2])
+    geometry_msgs_pose_b_rel_a.orientation = geometry_msgs.Quaternion(x=quaternion[0], y=quaternion[1], z=quaternion[2], w=quaternion[3])
     return geometry_msgs_pose_b_rel_a
 
 

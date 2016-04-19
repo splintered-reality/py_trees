@@ -82,7 +82,7 @@ def create_button_event_handler(name="Button Events"):
     return event_handler
 
 
-def create_celebrate_behaviour(name="Celebrate", duration=2.0):
+def create_celebrate_behaviour(name="Celebrate", duration=3.0):
     """
     A default setup for doing celebrations. This will emit a 'cool' led pattern
     and a 'celebrate' sound.
@@ -94,7 +94,7 @@ def create_celebrate_behaviour(name="Celebrate", duration=2.0):
     celebrate = Notification(
         name=name,
         led_pattern=gopher.led_patterns.im_doing_something_cool,
-        sound=gopher.sounds.celebrate,
+        sound=gopher.sounds.honk,
         message="finished delivery",
         duration=duration
     )

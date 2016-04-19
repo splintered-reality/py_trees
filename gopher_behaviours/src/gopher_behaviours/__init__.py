@@ -16,6 +16,7 @@ Imports for the gopher_behaviours package.
 # behaviour collectives
 from . import ar_markers
 from . import battery
+from . import chalk_and_talk
 from . import docking
 from . import delivery
 from . import elevators

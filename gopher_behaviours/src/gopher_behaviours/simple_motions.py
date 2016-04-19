@@ -174,9 +174,12 @@ class SimpleMotion(py_trees.Behaviour):
         # if we have an action client and the current goal has not already
         # succeeded, send a message to cancel the goal for this action client.
         # if self.action_client is not None and self.action_client.get_state() != actionlib_msgs.GoalStatus.SUCCEEDED:
-        self.logger.debug("  %s [SimpleMotions.terminate()][%s->%s]" % (self.name, self.status, new_status))
+        self.logger.info("  %s [SimpleMotions.terminate()][%s->%s]" % (self.name, self.status, new_status))
         if self.action_client is not None and self.sent_goal:
+            print("Sent Goal %s" % self.sent_goal)
             motion_state = self.action_client.get_state()
             if (motion_state == actionlib_msgs.GoalStatus.PENDING) or (motion_state == actionlib_msgs.GoalStatus.ACTIVE):
+                print("Cancelling %s" % self.name)
                 self.action_client.cancel_goal()
+                print("Done Cancelling %s" % self.name)
         self.sent_goal = False

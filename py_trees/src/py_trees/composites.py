@@ -292,6 +292,7 @@ class Sequence(Composite):
         self.logger = logging.get_logger("Sequence ")
 
     def tick(self):
+        self.logger.debug("  %s [tick()]" % self.name)
         if self.status != Status.RUNNING:
             # sequence specific handling
             self.current_index = 0
@@ -301,7 +302,8 @@ class Sequence(Composite):
                     child.stop(Status.INVALID)
             # subclass (user) handling
             self.initialise()
-        self.logger.debug("  %s [tick()]" % self.name)
+        # run any work designated by a customised instance of this class
+        self.update()
         for child in itertools.islice(self.children, self.current_index, None):
             for node in child.tick():
                 yield node

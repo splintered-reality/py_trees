@@ -58,7 +58,6 @@ def create_repark_subtree():
         button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
         duration=gopher_std_srvs.NotifyRequest.INDEFINITE
     )
-    # usually have the button event handler/blackboard combo and that is less expensive than the subscriber method
     wait_for_go_button_press = py_trees.blackboard.WaitForBlackboardVariable(
         name="Wait for Go Button",
         variable_name="event_go_button",

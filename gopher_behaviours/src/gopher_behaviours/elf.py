@@ -23,9 +23,7 @@ import enum
 import elf_msgs.msg as elf_msgs
 import gopher_configuration
 import gopher_std_msgs.msg as gopher_std_msgs
-import gopher_std_msgs.srv as gopher_std_srvs
 import math
-import operator
 import py_trees
 import rospy
 import std_msgs.msg as std_msgs
@@ -155,7 +153,29 @@ def create_check_elf_status_subtree():
 ##############################################################################
 
 
-class TeleopInitialisation(py_trees.Selector):
+class Reset(py_trees.behaviour.Behaviour):
+    def __init__(self, name="Reset Elf"):
+        super(Reset, self).__init__(name)
+        self.publisher = None
+        self.start_time = None
+
+    def setup(self, timeout):
+        self.gopher = gopher_configuration.Configuration()
+        self.publisher = rospy.Publisher(self.gopher.topics.elf_reset, std_msgs.Empty, queue_size=1)
+        return True
+
+    def initialise(self):
+        self.publisher.publish(std_msgs.Empty())
+        self.start_time = rospy.get_time()
+
+    def update(self):
+        if (rospy.get_time() - self.start_time) < 0.5:
+            return py_trees.common.Status.RUNNING
+        else:
+            return py_trees.common.Status.SUCCESS
+
+
+class TeleopInitialisation(py_trees.composites.Selector):
     def __init__(self, name="Teleop Elf"):
         super(TeleopInitialisation, self).__init__(name)
         self.gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
@@ -195,7 +215,7 @@ class ARInitialisation(py_trees.Sequence):
         localised_yet = create_check_elf_status_subtree()
         # TODO replace this with a rotate to 2*pi OR timeout, not rotate ad nauseum
         rotate = simple_motions.SimpleMotion(
-            name="Rotate",
+            name="Elf Rotate",
             motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
             motion_amount=(2.0 * math.pi),
             keep_going=False,
