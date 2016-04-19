@@ -103,7 +103,7 @@ def _generate_elevator_children(
 
     flash_leds_travelling = interactions.Notification(
         name="Flash for Input",
-        led_pattern=gopher_configuration.led_patterns.humans_i_need_help,
+        led_pattern=gopher_configuration.led_patterns.humans_give_me_input,
         button_confirm=gopher_std_msgs.Notification.BUTTON_ON,
         button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
         message="Waiting for confirm button press in front of elevator")
