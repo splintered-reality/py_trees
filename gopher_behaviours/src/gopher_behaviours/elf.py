@@ -214,12 +214,10 @@ class ARInitialisation(py_trees.Sequence):
         scanning = py_trees.Selector("Scanning")
         localised_yet = create_check_elf_status_subtree()
         # TODO replace this with a rotate to 2*pi OR timeout, not rotate ad nauseum
-        rotate = simple_motions.SimpleMotion(
+        rotate = py_trees.meta.success_is_failure(simple_motions.SimpleMotion)(
             name="Elf Rotate",
             motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
-            motion_amount=(2.0 * math.pi),
-            keep_going=False,
-            fail_if_complete=True,
+            motion_amount=(0.5 * math.pi),
             keep_trying_timeout=10.0
         )
         scan_failure = py_trees.composites.Sequence("Scan Failure")

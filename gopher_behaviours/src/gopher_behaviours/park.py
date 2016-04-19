@@ -130,7 +130,8 @@ class Park(py_trees.Sequence):
         pre_dock_rotation = simple_motions.SimpleMotion(
             name="Pre-Rotation",
             motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
-            motion_amount=3.14
+            motion_amount=3.14,
+            keep_trying_timeout=10.0
         )
         (ar_tracker_on, ar_tracker_off) = ar_markers.create_ar_tracker_pair_blackboxes()
         docking_controller = docking.DockingController(name="Docking Controller")
@@ -231,16 +232,19 @@ class Approach(py_trees.Sequence):
             name="Point to Park (?rad)",
             motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
             motion_amount=0.0,
+            keep_trying_timeout=10.0
         )
         move_to_park = simple_motions.SimpleMotion(
             name="Move to Park (?m)",
             motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_TRANSLATE,
             motion_amount=0.0,
+            keep_trying_timeout=10.0
         )
         orient_with_park = simple_motions.SimpleMotion(
             name="Orient to Park (?rad)",
             motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
             motion_amount=0.0,
+            keep_trying_timeout=10.0
         )
         self.add_child(point_to_park)
         self.add_child(move_to_park)

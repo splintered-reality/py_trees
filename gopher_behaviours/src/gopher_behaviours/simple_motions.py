@@ -67,8 +67,6 @@ class SimpleMotion(py_trees.Behaviour):
                  motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
                  motion_amount=0,
                  unsafe=False,
-                 keep_going=True,
-                 fail_if_complete=False,
                  keep_trying_timeout=0.0
                  ):
         """
@@ -76,21 +74,11 @@ class SimpleMotion(py_trees.Behaviour):
         :param str motion_type: rotation or translation (from gopher_std_msgs.SimpleMotionGoal, MOTION_ROTATE or MOTION_TRANSLATE)
         :param double motion_amount: how far the rotation (radians) or translation (m) should be
         :param bool unsafe: flag if you want the motion to be unsafe, i.e. not use the sensors
-        :param bool keep_going: flag if you want the motion to return success in case the action aborts
-        :param bool fail_if_complete: flag if you want the motion to return failure in case the motion is completed
         :param bool keep_trying_timeout: keep trying rather than aborting (up to this timeout) if it detects obstacles
 
         The ``keep_trying_timeout`` is passed to the simple motion server. It is not a total timeout for the
         simple motion to take place, instead it is the duration between detecting an obstacle and the time it will give
         up. A value of 0.0 will give up immediately. A negative value will never give up.
-
-        The ``keep_going`` flag is useful if you are attempting to rotate the robot out of harms way, but don't mind
-        if it doesn't make the full specified rotation - this is oft used in navigation recovery style behaviours.
-
-        The ``fail_if_complete`` flag is useful if you are expecting something to happen before the rotation end, i.e.
-        if it gets to the end, it should be considered a failure - this could be used in a scanning rotation where it
-        is looking for a landmark in the environment. Note that this cannot be achieved by the py_trees invert decorator,
-        since that would also invert failed aborts.
         """
         super(SimpleMotion, self).__init__(name)
         self.gopher = None
@@ -101,8 +89,6 @@ class SimpleMotion(py_trees.Behaviour):
         self.goal.motion_amount = motion_amount
         self.goal.unsafe = unsafe
         self.goal.keep_trying_timeout = keep_trying_timeout
-        self.keep_going = keep_going
-        self.fail_if_complete = fail_if_complete
 
     def setup(self, timeout):
         """
@@ -148,19 +134,13 @@ class SimpleMotion(py_trees.Behaviour):
             self.feedback_message = "sent goal to the action server"
             return py_trees.Status.RUNNING
         if self.action_client.get_state() == actionlib_msgs.GoalStatus.ABORTED:
-            if self.keep_going:
-                self.feedback_message = "simple motion aborted, but we keep on marching forward"
-                return py_trees.Status.SUCCESS
-            else:
-                self.feedback_message = "simple motion aborted"
-                return py_trees.Status.FAILURE
+            print("Aborted")
+            self.feedback_message = "simple motion aborted"
+            return py_trees.Status.FAILURE
         result = self.action_client.get_result()
         if result:
             self.feedback_message = "goal reached"
-            if self.fail_if_complete:
-                return py_trees.Status.FAILURE
-            else:
-                return py_trees.Status.SUCCESS
+            return py_trees.Status.SUCCESS
         else:
             self.feedback_message = "moving"
             return py_trees.Status.RUNNING

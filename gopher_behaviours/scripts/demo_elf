@@ -52,7 +52,7 @@ def parse_arguments(command_line_args):
     parser = gopher_behaviours.scripts.demo.create_arg_parser(show_description, show_usage)
     parser.add_argument('-e', '--elf',
                         action='store',
-                        default="teleop",
+                        default="ar",
                         choices=["ar", "teleop"],
                         help='type of elf to use for initialisation'
                         )

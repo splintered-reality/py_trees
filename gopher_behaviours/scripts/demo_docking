@@ -84,12 +84,14 @@ class Demo(object):
         rotate_half_circle = gopher_behaviours.simple_motions.SimpleMotion(
             name="Rotate",
             motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
-            motion_amount=(math.pi)
+            motion_amount=(math.pi),
+            keep_trying_timeout=10.0
         )
         break_out = gopher_behaviours.simple_motions.SimpleMotion(
             name="Break Out",
             motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_TRANSLATE,
-            motion_amount=0.5
+            motion_amount=0.5,
+            keep_trying_timeout=10.0
         )
 
         self.root.add_child(wait_to_be_docked)

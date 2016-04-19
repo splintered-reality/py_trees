@@ -79,11 +79,13 @@ class Demo(object):
             "Rotate",
             motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
             motion_amount=rotation_angle,
+            keep_trying_timeout=10.0,
             unsafe=False)
         self.translate = gopher_behaviours.simple_motions.SimpleMotion(
             "Translate",
             motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_TRANSLATE,
             motion_amount=translation_distance,
+            keep_trying_timeout=10.0,
             unsafe=False)
 
         self.root.add_child(self.rotate)

@@ -215,10 +215,11 @@ class UnPark(py_trees.Sequence):
         (ar_tracker_on, ar_tracker_off) = ar_markers.create_ar_tracker_pair_blackboxes()
         undocking = py_trees.Sequence(name="UnDock")
         undocking.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
-        break_out = py_trees.meta.failure_is_success(simple_motions.SimpleMotion)(
+        break_out = simple_motions.SimpleMotion(
             name="Break Out",
             motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_TRANSLATE,
-            motion_amount=0.8
+            motion_amount=0.8,
+            keep_trying_timeout=10.0
         )
         was_docked = battery.create_was_docked()
         was_jacked = battery.create_was_jacked()
