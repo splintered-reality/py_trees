@@ -78,7 +78,7 @@ def parse_arguments(command_line_args):
 
     parser.add_argument('--elf',
                         action='store',
-                        default="teleop",
+                        default="ar",
                         choices=["ar", "teleop"],
                         help='type of elf to use for initialisation'
                         )
@@ -138,12 +138,17 @@ def parse_arguments(command_line_args):
 ##############################################################################
 
 def create_root(origin, elevator, destination):
-    root = gopher_behaviours.elevators.HumanAssistedElevators(
-        name="Elevator Run",
+    root = py_trees.composites.Parallel("Elevator Run")
+    (button_event_handler, topics_to_blackboard) = gopher_behaviours.chalk_and_talk.create_gopher_handlers()
+    human_assisted_elevators = gopher_behaviours.elevators.HumanAssistedElevators(
+        name="Human Assisted Elevators",
         origin=origin,
         elevator=elevator,
         destination=destination,
         elf_initialisation_type=args.elf)
+    root.add_child(button_event_handler)
+    root.add_child(topics_to_blackboard)
+    root.add_child(human_assisted_elevators)
     return root
 
 ##############################################################################

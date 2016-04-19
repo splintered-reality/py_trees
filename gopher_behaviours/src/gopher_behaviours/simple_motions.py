@@ -69,7 +69,8 @@ class SimpleMotion(py_trees.Behaviour):
                  unsafe=False,
                  keep_going=True,
                  fail_if_complete=False,
-                 live_dangerously=False
+                 live_dangerously=False,
+                 keep_trying_timeout=0.0
                  ):
         """
         :param str name: behaviour name
@@ -79,6 +80,11 @@ class SimpleMotion(py_trees.Behaviour):
         :param bool keep_going: flag if you want the motion to return success in case the action aborts
         :param bool fail_if_complete: flag if you want the motion to return failure in case the motion is completed
         :param bool live_dangeorusly: do not worry about checking the action client is connected
+        :param bool keep_trying_timeout: keep trying rather than aborting (up to this timeout) if it detects obstacles
+
+        The ``keep_trying_timeout`` is passed to the simple motion server. It is not a total timeout for the
+        simple motion to take place, instead it is the duration between detecting an obstacle and the time it will give
+        up. A value of 0.0 will give up immediately. A negative value will never give up.
 
         The ``keep_going`` flag is useful if you are attempting to rotate the robot out of harms way, but don't mind
         if it doesn't make the full specified rotation - this is oft used in navigation recovery style behaviours.
@@ -99,6 +105,7 @@ class SimpleMotion(py_trees.Behaviour):
         self.goal.motion_type = motion_type
         self.goal.motion_amount = motion_amount
         self.goal.unsafe = unsafe
+        self.goal.keep_trying_timeout = keep_trying_timeout
         self.keep_going = keep_going
         self.fail_if_complete = fail_if_complete
         self.live_dangerously = live_dangerously
@@ -174,12 +181,9 @@ class SimpleMotion(py_trees.Behaviour):
         # if we have an action client and the current goal has not already
         # succeeded, send a message to cancel the goal for this action client.
         # if self.action_client is not None and self.action_client.get_state() != actionlib_msgs.GoalStatus.SUCCEEDED:
-        self.logger.info("  %s [SimpleMotions.terminate()][%s->%s]" % (self.name, self.status, new_status))
+        self.logger.debug("  %s [SimpleMotions.terminate()][%s->%s]" % (self.name, self.status, new_status))
         if self.action_client is not None and self.sent_goal:
-            print("Sent Goal %s" % self.sent_goal)
             motion_state = self.action_client.get_state()
             if (motion_state == actionlib_msgs.GoalStatus.PENDING) or (motion_state == actionlib_msgs.GoalStatus.ACTIVE):
-                print("Cancelling %s" % self.name)
                 self.action_client.cancel_goal()
-                print("Done Cancelling %s" % self.name)
         self.sent_goal = False

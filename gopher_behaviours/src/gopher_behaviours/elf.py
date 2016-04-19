@@ -219,7 +219,8 @@ class ARInitialisation(py_trees.Sequence):
             motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
             motion_amount=(2.0 * math.pi),
             keep_going=False,
-            fail_if_complete=True
+            fail_if_complete=True,
+            keep_trying_timeout=10.0
         )
         scan_failure = py_trees.composites.Sequence("Scan Failure")
         write_auto_initialisation_failed = py_trees.blackboard.SetBlackboardVariable("Flag AutoInit Failed", "auto_init_failed", True)
