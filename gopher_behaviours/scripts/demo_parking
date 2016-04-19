@@ -80,7 +80,7 @@ def create_root():
     #################################
     # Event Handler
     #################################
-    event_handler = gopher_behaviours.interactions.create_button_event_handler()
+    (button_event_handler, topics_to_blackboard) = gopher_behaviours.chalk_and_talk.create_gopher_handlers()
 
     #################################
     # Global Abort
@@ -145,7 +145,8 @@ def create_root():
     #################################
     # Graph
     #################################
-    root.add_child(event_handler)
+    root.add_child(button_event_handler)
+    root.add_child(topics_to_blackboard)
     root.add_child(priorities)
     priorities.add_child(global_abort)
     global_abort.add_child(is_global_abort_activated)
