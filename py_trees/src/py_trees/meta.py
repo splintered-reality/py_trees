@@ -105,6 +105,8 @@ def imposter(cls):
             self.blackbox_level = self.original.blackbox_level
             self.children = self.original.children
             self.setup = self.original.setup
+            self.initialise = self.original.initialise
+            self.terminate = self.original.terminate
             # id is important to match for composites...the children must relate to the correct parent id
             self.id = self.original.id
 
