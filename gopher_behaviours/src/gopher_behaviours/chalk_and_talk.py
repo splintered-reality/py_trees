@@ -63,7 +63,7 @@ def create_gopher_handlers():
         name="World2BB",
         topic_name=gopher.topics.world,
         topic_type=std_msgs.String,
-        blackboard_variables={"world": None},
+        blackboard_variables={"world": "data"},
         clearing_policy=py_trees.common.ClearingPolicy.NEVER
     )
 
