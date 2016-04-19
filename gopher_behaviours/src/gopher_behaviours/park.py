@@ -269,23 +269,20 @@ class Approach(py_trees.Sequence):
             point_to_park = simple_motions.SimpleMotion(
                 name="Point to Park %0.2f rad" % point_to_park_angle,
                 motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
-                motion_amount=point_to_park_angle,
-                live_dangerously=True
+                motion_amount=point_to_park_angle
             )
             self.add_child(point_to_park)
         if abs(distance_to_park) > epsilon:
             move_to_park = simple_motions.SimpleMotion(
                 name="Move to Park %0.2f m" % distance_to_park,
                 motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_TRANSLATE,
-                motion_amount=distance_to_park,
-                live_dangerously=True
+                motion_amount=distance_to_park
             )
             self.add_child(move_to_park)
         if abs(orient_with_park_angle) > epsilon:
             orient_with_park = simple_motions.SimpleMotion(
                 name="Orient to Park %0.2f rad" % orient_with_park_angle,
                 motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
-                motion_amount=orient_with_park_angle,
-                live_dangerously=True
+                motion_amount=orient_with_park_angle
             )
             self.add_child(orient_with_park)
