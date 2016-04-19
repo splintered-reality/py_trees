@@ -252,7 +252,8 @@ class MoveIt(py_trees.Behaviour):
         """
         if self.action_client is not None and self.sent_goal:
             motion_state = self.action_client.get_state()
-            if (motion_state == actionlib_msgs.GoalStatus.PENDING) or (motion_state == actionlib_msgs.GoalStatus.ACTIVE):
+            if ((motion_state == actionlib_msgs.GoalStatus.PENDING) or (motion_state == actionlib_msgs.GoalStatus.ACTIVE) or
+               (motion_state == actionlib_msgs.GoalStatus.PREEMPTING) or (motion_state == actionlib_msgs.GoalStatus.RECALLING)):
                 self.action_client.cancel_goal()
         self.sent_goal = False
 
@@ -337,7 +338,8 @@ class Teleport(py_trees.Behaviour):
         self.logger.debug("  %s [Teleport.terminate()][%s->%s]" % (self.name, self.status, new_status))
         if self.action_client is not None and self.sent_goal:
             motion_state = self.action_client.get_state()
-            if (motion_state == actionlib_msgs.GoalStatus.PENDING) or (motion_state == actionlib_msgs.GoalStatus.ACTIVE):
+            if ((motion_state == actionlib_msgs.GoalStatus.PENDING) or (motion_state == actionlib_msgs.GoalStatus.ACTIVE) or
+               (motion_state == actionlib_msgs.GoalStatus.PREEMPTING) or (motion_state == actionlib_msgs.GoalStatus.RECALLING)):
                 self.action_client.cancel_goal()
         self.sent_goal = False
 
@@ -500,6 +502,7 @@ class GoalFinishing(py_trees.Behaviour):
         # succeeded, send a message to cancel the goal for this action client.
         if self.action_client is not None and self.sent_goal:
             motion_state = self.action_client.get_state()
-            if (motion_state == actionlib_msgs.GoalStatus.PENDING) or (motion_state == actionlib_msgs.GoalStatus.ACTIVE):
+            if ((motion_state == actionlib_msgs.GoalStatus.PENDING) or (motion_state == actionlib_msgs.GoalStatus.ACTIVE) or
+               (motion_state == actionlib_msgs.GoalStatus.PREEMPTING) or (motion_state == actionlib_msgs.GoalStatus.RECALLING)):
                 self.action_client.cancel_goal()
         self.sent_goal = False
