@@ -127,8 +127,10 @@ class SplinteredReality(object):
         self._init_tree()
 
         rospy.on_shutdown(self.shutdown)
-        self.quirky_deliveries.setup(timeout)
-        self.behaviour_status = gopher_delivery_msgs.BehaviourReport.BUSY
+        if not self.quirky_deliveries.setup(timeout):
+            self.behaviour_status = gopher_delivery_msgs.BehaviourReport.ERROR
+        else:
+            self.behaviour_status = gopher_delivery_msgs.BehaviourReport.BUSY
 
         latched = True
         queue_size_five = 5

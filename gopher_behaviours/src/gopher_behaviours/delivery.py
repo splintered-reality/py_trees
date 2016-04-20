@@ -122,7 +122,7 @@ def create_delivery_subtree(world, locations, parameters=Parameters()):
     movin_around_children = create_locations_subtree(world, locations, parameters)
 
     if not movin_around_children:
-        # how to get a warning back? also need to handle this shit
+        # already expressed a warning lower done, just need to handle it higher up
         return (None, None)
 
     ########################
@@ -202,8 +202,10 @@ def create_locations_subtree(current_world, locations, parameters):
     # Topological Path
     ########################################
     # TODO check all locations are in semantics, provide meaningful error message otherwise
-    topological_path = planner.find_topological_path(current_world, locations, semantics)
-    # TODO check its not empty, error message if so
+    (topological_path, error_this_world, error_that_world) = planner.find_topological_path(current_world, locations, semantics)
+    if not topological_path:
+        rospy.logerr("Quirky Deliveries: no topological path from '%s'->'%s'" % (error_this_world, error_that_world))
+        return None
 
     ########################################
     # Tree
@@ -488,13 +490,18 @@ class GopherDeliveries(object):
             self.dynamic_reconfigure_callback
         )
         if len(self.semantics.locations) > 1:
-            (deliveries_root, unused_subtrees) = create_delivery_subtree(
-                world=self.semantics.worlds.default,
-                locations=self.semantics.locations.keys()[:2]
-            )
-            self.ros_connected = deliveries_root.setup(timeout)
-            if not self.ros_connected:
-                rospy.logerr("Quirky Deliveries: failed to setup with the underlying ros subsystem")
+            result, from_world, to_world = gopher_semantics.semantics.is_connected_everywhere(self.semantics)
+            if result:
+                (deliveries_root, unused_subtrees) = create_delivery_subtree(
+                    world=self.semantics.worlds.default,
+                    locations=self.semantics.locations.keys()[:2]
+                )
+                self.ros_connected = deliveries_root.setup(timeout)
+                if not self.ros_connected:
+                    rospy.logerr("Quirky Deliveries: failed to setup with the underlying ros subsystem")
+            else:
+                rospy.logerr("Quirky Deliveries: semantics is invalid, not all locations are reachable from one another [could not connect %s->%s]" % (from_world, to_world))
+                self.ros_connected = False
         else:
             rospy.logerr("Quirky Deliveries: not enough locations listed in the semantics to support deliveries.")
             self.ros_connected = False

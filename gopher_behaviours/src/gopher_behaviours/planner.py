@@ -36,10 +36,10 @@ def find_topological_path(world, locations, semantics):
         if current.world != previous_world:
             connecting_elevators = semantics.elevators.find_connecting_elevators(previous_world, current.world)
             if not connecting_elevators:
-                return []
+                return ([], previous_world, current.world)
             # just choose the first.
             connecting_elevator = connecting_elevators[0]
             topological_path.append(connecting_elevator)
         topological_path.append(current)
         last = current
-    return topological_path
+    return (topological_path, None, None)
