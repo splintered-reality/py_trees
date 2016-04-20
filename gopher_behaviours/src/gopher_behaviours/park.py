@@ -228,29 +228,38 @@ class Approach(py_trees.Sequence):
 
         # dummy children for dot graph rendering purposes
         # they will get cleaned up the first time this enters initialise
-        point_to_park = simple_motions.SimpleMotion(
+        self.point_to_park = simple_motions.SimpleMotion(
             name="Point to Park (?rad)",
             motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
             motion_amount=0.0,
             keep_trying_timeout=10.0
         )
-        move_to_park = simple_motions.SimpleMotion(
+        self.move_to_park = simple_motions.SimpleMotion(
             name="Move to Park (?m)",
             motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_TRANSLATE,
             motion_amount=0.0,
             keep_trying_timeout=10.0
         )
-        orient_with_park = simple_motions.SimpleMotion(
+        self.orient_with_park = simple_motions.SimpleMotion(
             name="Orient to Park (?rad)",
             motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
             motion_amount=0.0,
             keep_trying_timeout=10.0
         )
-        self.add_child(point_to_park)
-        self.add_child(move_to_park)
-        self.add_child(orient_with_park)
+        self.add_child(self.point_to_park)
+        self.add_child(self.move_to_park)
+        self.add_child(self.orient_with_park)
 
     def initialise(self):
+        """
+        Compute the geometry for a 3-step simple motions approach. This used to create
+        children on the fly and repopulate every time. Now it cleans out the children
+        and repopulates with our existing (retargeted) children so we dont have to call setup
+        on them again. Another approach might be to
+        simply use the goal finishing here.
+        """
+        self.logger.debug("  %s [Approach::initialise()]" % self.name)
+
         # cleanup the old children
         self.remove_all_children()
 
@@ -270,23 +279,26 @@ class Approach(py_trees.Sequence):
 
         epsilon = 0.01
         if abs(point_to_park_angle) > epsilon:
-            point_to_park = simple_motions.SimpleMotion(
+            self.point_to_park.retarget(
                 name="Point to Park %0.2f rad" % point_to_park_angle,
                 motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
-                motion_amount=point_to_park_angle
+                motion_amount=point_to_park_angle,
+                keep_trying_timeout=10.0
             )
-            self.add_child(point_to_park)
+            self.add_child(self.point_to_park)
         if abs(distance_to_park) > epsilon:
-            move_to_park = simple_motions.SimpleMotion(
+            self.move_to_park.retarget(
                 name="Move to Park %0.2f m" % distance_to_park,
                 motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_TRANSLATE,
-                motion_amount=distance_to_park
+                motion_amount=distance_to_park,
+                keep_trying_timeout=10.0
             )
-            self.add_child(move_to_park)
+            self.add_child(self.move_to_park)
         if abs(orient_with_park_angle) > epsilon:
-            orient_with_park = simple_motions.SimpleMotion(
+            self.orient_with_park.retarget(
                 name="Orient to Park %0.2f rad" % orient_with_park_angle,
                 motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
-                motion_amount=orient_with_park_angle
+                motion_amount=orient_with_park_angle,
+                keep_trying_timeout=10.0
             )
-            self.add_child(orient_with_park)
+            self.add_child(self.orient_with_park)

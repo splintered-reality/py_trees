@@ -90,6 +90,28 @@ class SimpleMotion(py_trees.Behaviour):
         self.goal.unsafe = unsafe
         self.goal.keep_trying_timeout = keep_trying_timeout
 
+    def retarget(self,
+                 name,
+                 motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
+                 motion_amount=0,
+                 unsafe=False,
+                 keep_trying_timeout=0.0
+                 ):
+        """
+        Retarget the simple motion behaviour goal. Take care that this is done in between
+        completion of goals. The alternative is to create new children on the fly.
+
+        :param str motion_type: rotation or translation (from gopher_std_msgs.SimpleMotionGoal, MOTION_ROTATE or MOTION_TRANSLATE)
+        :param double motion_amount: how far the rotation (radians) or translation (m) should be
+        :param bool unsafe: flag if you want the motion to be unsafe, i.e. not use the sensors
+        :param bool keep_trying_timeout: keep trying rather than aborting (up to this timeout) if it detects obstacles
+        """
+        self.name = name
+        self.goal.motion_type = motion_type
+        self.goal.motion_amount = motion_amount
+        self.goal.unsafe = unsafe
+        self.goal.keep_trying_timeout = keep_trying_timeout
+
     def setup(self, timeout):
         """
         Wait for the action server to come up. Note that ordinarily you do not
@@ -134,8 +156,8 @@ class SimpleMotion(py_trees.Behaviour):
             self.feedback_message = "sent goal to the action server"
             return py_trees.Status.RUNNING
         if self.action_client.get_state() == actionlib_msgs.GoalStatus.ABORTED:
-            print("Aborted")
-            self.feedback_message = "simple motion aborted"
+            result = self.action_client.get_result()
+            self.feedback_message = result.message
             return py_trees.Status.FAILURE
         result = self.action_client.get_result()
         if result:
