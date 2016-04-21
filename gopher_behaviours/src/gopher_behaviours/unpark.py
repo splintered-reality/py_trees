@@ -93,8 +93,7 @@ class NearParkingLocation(py_trees.Behaviour):
                 py = location.pose.y
                 rx = self.blackboard.pose.pose.pose.position.x
                 ry = self.blackboard.pose.pose.pose.position.y
-                distance_squared = (px - rx) * (px - rx) + (py - ry) * (py - ry)
-                if distance_squared < location.parking_radius * location.parking_radius:
+                if abs(px - rx) < location.parking_radius and abs(py - ry) < location.parking_radius:
                     return py_trees.common.Status.SUCCESS
         return py_trees.common.Status.FAILURE
 
