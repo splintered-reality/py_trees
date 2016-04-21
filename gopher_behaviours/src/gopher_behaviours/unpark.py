@@ -41,29 +41,6 @@ from . import transform_utilities
 ##############################################################################
 
 
-def create_unparking_required_check_subtree(current_world):
-    """
-    Checks if unparking is necessary, i.e. if we are unlocalised or far from a
-    semantically defined parking location.
-    """
-    far_from_home = py_trees.composites.Sequence(name="Far From Home")
-    far_from_home.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
-    are_we_localised = py_trees.CheckBlackboardVariable(
-        name="Check ELF Status",
-        variable_name="elf_localisation_status",
-        expected_value=elf_msgs.ElfLocaliserStatus.STATUS_WORKING
-    )
-    no_parking_nearby = py_trees.meta.inverter(NearParkingLocation)(
-        name="No Parking Nearby",
-        current_world=current_world
-    )
-
-    far_from_home.add_child(are_we_localised)
-    far_from_home.add_child(no_parking_nearby)
-
-    return far_from_home
-
-
 class NearParkingLocation(py_trees.Behaviour):
     """
     Checks to see if we are close to a semantically legitimate parking location.
@@ -94,7 +71,9 @@ class NearParkingLocation(py_trees.Behaviour):
                 rx = self.blackboard.pose.pose.pose.position.x
                 ry = self.blackboard.pose.pose.pose.position.y
                 if abs(px - rx) < location.parking_radius and abs(py - ry) < location.parking_radius:
+                    self.feedback_message = "near a parking zone"
                     return py_trees.common.Status.SUCCESS
+        self.feedback_message = "far from a parking zone"
         return py_trees.common.Status.FAILURE
 
 
