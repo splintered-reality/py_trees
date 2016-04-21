@@ -669,7 +669,7 @@ class GopherDeliveries(object):
         if self.root is not None and self._response.result < 0:
             with self._response_lock:
                 # just finished
-                if self.root.status == py_trees.Status.SUCCESS:
+                if self.subtrees.en_route.status == py_trees.Status.SUCCESS:
                     self._response.result = gopher_delivery_msgs.DeliveryErrorCodes.SUCCESS
                     self._response.result_string = gopher_delivery_msgs.DeliveryErrorCodes.SUCCESS_STRING
                     self._response.message = "groot"
