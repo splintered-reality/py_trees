@@ -87,7 +87,6 @@ def create_localisation_to_blackboard_behaviour(
     """
     gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
 
-    print("Blackboard Variables: %s" % blackboard_variables)
     behaviour = py_trees.subscribers.ToBlackboard(
         name=name,
         topic_name=gopher.topics.elf_status,
