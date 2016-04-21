@@ -128,7 +128,7 @@ def create_delivery_subtree(world, locations, parameters=Parameters()):
     ########################
     # Parking/Unparking
     ########################
-    unparking_or_not = py_trees.composites.Selector(name="UnParking?")
+    unparking_or_not = py_trees.composites.Chooser(name="UnParking?")
     skip_unparking = unpark.create_unparking_required_check_subtree(current_world=world)
     subtrees.unparking = unpark.UnPark(name="UnPark", elf_type=parameters.elf)
     parking_or_not = py_trees.composites.Selector(name="Parking?")

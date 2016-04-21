@@ -23,7 +23,6 @@ import rocon_console.console as console
 import rocon_python_comms
 import rospy
 
-from . import battery
 from . import chalk_and_talk
 
 ##############################################################################
