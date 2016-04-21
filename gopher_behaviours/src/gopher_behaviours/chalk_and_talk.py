@@ -26,6 +26,7 @@ import std_msgs.msg as std_msgs
 import py_trees
 
 from . import battery
+from . import elf
 from . import interactions
 
 ##############################################################################
@@ -66,10 +67,12 @@ def create_gopher_handlers():
         blackboard_variables={"world": "data"},
         clearing_policy=py_trees.common.ClearingPolicy.NEVER
     )
+    elf_to_blackboard = elf.create_localisation_to_blackboard_behaviour()
 
     topics_to_blackboard.add_child(battery_to_blackboard)
     topics_to_blackboard.add_child(odom_to_blackboard)
     topics_to_blackboard.add_child(pose_to_blackboard)
     topics_to_blackboard.add_child(world_to_blackboard)
+    topics_to_blackboard.add_child(elf_to_blackboard)
 
     return (button_event_handler, topics_to_blackboard)

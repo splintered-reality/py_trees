@@ -544,15 +544,11 @@ class RosBehaviourTree(QObject):
         """
         if not self.initialized:
             return
-        self._update_graph_view(self._generate_dotcode())
+        self._update_graph_view(self._generate_dotcode(self.get_current_message()))
 
-    def _generate_dotcode(self):
-        """Generate dotcode from the current message
+    def _generate_dotcode(self, message):
         """
-        return self._get_dotcode(self.get_current_message())
-
-    def _get_dotcode(self, message):
-        """Get the dotcode for the given message, checking the cache for dotcode that
+        Get the dotcode for the given message, checking the cache for dotcode that
         was previously generated, and adding to the cache if it wasn't there.
         Cache replaces LRU.
 
