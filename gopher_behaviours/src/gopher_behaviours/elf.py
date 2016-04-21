@@ -217,7 +217,7 @@ class ARInitialisation(py_trees.Sequence):
         rotate = py_trees.meta.success_is_failure(simple_motions.SimpleMotion)(
             name="Elf Rotate",
             motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
-            motion_amount=(2.0 * math.pi),
+            motion_amount=(2.5 * math.pi),
             keep_trying_timeout=10.0
         )
         scan_failure = py_trees.composites.Sequence("Scan Failure")
