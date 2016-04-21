@@ -161,7 +161,7 @@ class UnPark(py_trees.Sequence):
     Blackboard Variables:
 
      - auto_init_failed            (r) [bool]                       : written by the auto-init program, use it to trigger a manual initialisation
-     - elf_localisation_status     (w) [elf_msgs/ElfLocaliserStatus]: the localisation status (gathered at the start of this behaviour)
+     - elf_localisation_status     (r) [elf_msgs/ElfLocaliserStatus]: the localisation status, somebody else needs to supply this to unparking
      - event_stop_button           (r) [bool]                       : written onto the blackboard by an event handler, catch it for cancelling purposes
      - homebase                    (w) [custom dict]                : semantic information about the homebase
      - pose_homebase_rel_map       (w) [geometry_msgs/Pose]         : pose of the homebase relative to the map, obtained from semantics
@@ -211,8 +211,7 @@ class UnPark(py_trees.Sequence):
         ################################################################
         # Unplug and Pre-Localising
         ################################################################
-        write_localisation_status = elf.create_localisation_to_blackboard_behaviour(name="Get Localisation Status", blackboard_variables={"elf_localisation_status": "status"})
-        path_chooser = py_trees.Selector("Localised?")
+        path_chooser = py_trees.composites.Chooser("Localised?")
 
         ################################################################
         # Already Localised Sequence Components
@@ -267,7 +266,6 @@ class UnPark(py_trees.Sequence):
         undocking.add_child(ar_tracker_off)
         undocking.add_child(break_out)
         undocking.add_child(set_docked_flag)
-        self.add_child(write_localisation_status)
         self.add_child(path_chooser)
         path_chooser.add_child(already_localised_sequence)
         already_localised_sequence.add_child(are_we_localised)
