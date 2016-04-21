@@ -110,6 +110,9 @@ class SaveParkingPoseManual(py_trees.Behaviour):
             self.blackboard.pose_park_rel_homebase,
             self.blackboard.pose_homebase_rel_map
         )
+        print("Start Rel Finish: %s" % pose_start_rel_finish)
+        print("Park Rel HB     : %s" % self.blackboard.pose_park_rel_homebase)
+        print("Park Rel Map    : %s" % self.blackboard.pose_park_rel_map)
         return py_trees.Status.SUCCESS
 
 
@@ -125,7 +128,6 @@ class SaveParkingPoseAuto(py_trees.Behaviour):
 
      - pose_homebase_rel_map       (r) [geometry_msgs/Pose]     : pose of the homebase relative to the map, obtained from semantics
      - pose_unpark_start_rel_odom  (r) [geometry_msgs/Pose]     : starting park location when not yet localised, transferred from /gopher/odom
-     - pose_unpark_finish_rel_map  (r) [geometry_msgs/Pose]     : finishing park location after having observed it is localised, transferred from /navi/pose
      - pose_park_rel_map           (w) [geometry_msgs/Pose]     : pose of the parking location relative to the homebase, computed from pose_park_rel_homebase and pose_homebase_rel_map
     """
     def __init__(self, name="Save Parking Pose"):
@@ -142,7 +144,7 @@ class SaveParkingPoseAuto(py_trees.Behaviour):
         )
         self.blackboard.pose_park_rel_map = transform_utilities.concatenate_poses(
             pose_start_rel_finish,
-            self.blackboard.pose_unpark_finish_rel_map  # pose_homebase_rel_map
+            self.blackboard.pose.pose.pose  # ridiculous!
         )
         # for completeness we could compute this from park_rel_map and homebase_rel_map, but do we need to?
         # self.blackboard.pose_park_rel_homebase =
@@ -239,15 +241,16 @@ class UnPark(py_trees.Sequence):
         not_yet_localised_sequence.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
         if elf_type == elf.InitialisationType.TELEOP:
             elf_initialisation = elf.TeleopInitialisation()
+            save_parking_pose = SaveParkingPoseManual("Save Park Pose")
         elif elf_type == elf.InitialisationType.AR:
             elf_initialisation = elf.ARInitialisation()
+            save_parking_pose = SaveParkingPoseAuto("Save Park Pose")
 
         ##############################
         # Common
         ##############################
         write_starting_pose_from_odom = navigation.create_odom_pose_to_blackboard_behaviour(name="Start Pose (Odom)", blackboard_variables={"pose_unpark_start_rel_odom": "pose.pose"})
         write_finishing_pose_from_odom = navigation.create_odom_pose_to_blackboard_behaviour(name="Final Pose (Odom)", blackboard_variables={"pose_unpark_finish_rel_odom": "pose.pose"})
-        save_parking_pose_from_odoms = SaveParkingPoseManual("Save Park Pose")
 
         ################################################################
         # All Together
@@ -275,7 +278,7 @@ class UnPark(py_trees.Sequence):
         not_yet_localised_sequence.add_child(write_starting_pose_from_odom)
         not_yet_localised_sequence.add_child(elf_initialisation)
         not_yet_localised_sequence.add_child(write_finishing_pose_from_odom)
-        not_yet_localised_sequence.add_child(save_parking_pose_from_odoms)
+        not_yet_localised_sequence.add_child(save_parking_pose)
 
     def setup(self, timeout):
         self.logger.debug("  %s [UnPark::setup()]" % self.name)
