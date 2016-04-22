@@ -62,7 +62,7 @@ def show_usage():
     s += console.white
     s += console.bold + "    Launchers" + console.reset + "\n"
     s += console.cyan + "        gopher_robot/apps_gocart.launch + 'Fake Navigation'" + console.reset + "\n"
-    s += console.cyan + "        gopher_podium/apps_gocart.launch + 'Navigation'" + console.reset + " (tele-elf only)\n"
+    s += console.cyan + "        gopher_podium/apps_gocart.launch + 'Navigation'" + console.reset + "\n"
     s += console.white
     s += console.bold + "    Generate Dot" + console.reset + "\n"
     s += console.cyan + "        gopher_elevator_run" + console.yellow + " --render" + console.reset + "\n"
@@ -71,14 +71,14 @@ def show_usage():
 
 
 def parse_arguments(command_line_args):
-    config = gopher_configuration.Configuration(fallback_to_defaults=True)
+    gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
 
     parser = gopher_behaviours.scripts.demo.create_arg_parser(show_description, show_usage)
 
-    parser.add_argument('-n', '--namespace', action='store', default=config.namespaces.semantics,
+    parser.add_argument('-n', '--namespace', action='store', default=gopher.namespaces.semantics,
                         help='namespace for the semantics parameters.')
 
-    parser.add_argument('--type',
+    parser.add_argument('-t', '--type',
                         action='store',
                         default="human-assisted",
                         choices=["human-assisted", "partial-assisted", "autonomous"],
@@ -100,12 +100,6 @@ def parse_arguments(command_line_args):
     command_group.add_argument('origin', nargs='?', default=None, help='world to shift from.')
     command_group.add_argument('elevator', nargs='?', default=None, type=str, help='elevator to use.')
     command_group.add_argument('destination', nargs='?', default=None, type=str, help='world to shift to.')
-
-    debugging_group = parser.add_argument_group('Debugging')
-    debugging_group.add_argument('-r', '--render', action='store_true', default=False,
-                                 help='render the graph to dot/png/svg')
-    debugging_group.add_argument('-d', '--debug', action='store_true', default=False,
-                                 help='debug level tree logging')
 
     args = parser.parse_args(command_line_args)
 
@@ -166,6 +160,8 @@ def parse_arguments(command_line_args):
 ##############################################################################
 # Tree
 ##############################################################################
+
+
 def create_root(origin, elevator, destination,
                 interaction_type=gopher_behaviours.elevators.InteractionType.HUMAN_ASSISTED,
                 elf_type=gopher_behaviours.elf.InitialisationType.AR):
@@ -174,19 +170,19 @@ def create_root(origin, elevator, destination,
     elevator_behaviour = None
 
     if interaction_type == gopher_behaviours.elevators.InteractionType.PARTIAL_ASSISTED:
-        elevator_behaviour = gopher_behaviours.elevators.PartialAssistedElevators(name="Partial AssistedE levators",
+        elevator_behaviour = gopher_behaviours.elevators.PartialAssistedElevators(name="Partial Assisted Elevators",
                                                                                   origin=origin,
                                                                                   elevator=elevator,
-                                                                                  destination=destination,
-                                                                                  elf_initialisation_type=elf_type)
+                                                                                  destination=destination
+                                                                                  )  # to be added somehow: elf_initialisation_type=elf_type)
     elif interaction_type == gopher_behaviours.elevators.InteractionType.AUTONOMOUS:
         print ("[WARNING] autonomous elevator rides not supported yet!" +
                " Will set up a partial-assisted ride.")
-        elevator_behaviour = gopher_behaviours.elevators.PartialAssistedElevators(name="Partial AssistedE levators",
+        elevator_behaviour = gopher_behaviours.elevators.PartialAssistedElevators(name="To Be Autonomous Elevators",
                                                                                   origin=origin,
                                                                                   elevator=elevator,
-                                                                                  destination=destination,
-                                                                                  elf_initialisation_type=elf_type)
+                                                                                  destination=destination
+                                                                                  )  # to be added somehow: elf_initialisation_type=elf_type)
     else:
         elevator_behaviour = gopher_behaviours.elevators.HumanAssistedElevators(name="Human Assisted Elevators",
                                                                                 origin=origin,
@@ -201,22 +197,6 @@ def create_root(origin, elevator, destination,
     root.add_child(elevator_behaviour)
 
     return root
-
-    ##############################################################################
-    # Tick Tock
-    ##############################################################################
-
-    def tick_tock(self):
-        loop_around = rospy.Rate(10)
-        self.tree.visitors.append(py_trees.trees.DebugVisitor())
-        while self.root.status != py_trees.Status.SUCCESS and not rospy.is_shutdown():
-            self.tree.tick(pre_tick_handler=self.pre_tick_handler)
-            loop_around.sleep()
-
-    def pre_tick_handler(self, behaviour_tree):
-        self.logger.debug("")
-        self.logger.debug("{:-^30}".format(" Run %s " % behaviour_tree.count))
-        self.logger.debug("")
 
 
 ##############################################################################

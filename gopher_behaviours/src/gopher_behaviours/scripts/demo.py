@@ -43,14 +43,16 @@ def create_arg_parser(show_description, show_usage):
                                      epilog="And his noodly appendage reached forth to tickle the blessed...",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter
                                      )
-    parser.add_argument('-r', '--render', action='store_true', help='render the graph to dot/png/svg.')
-    parser.add_argument('-v', '--visibility-level',
-                        action='store',
-                        default="detail",
-                        choices=py_trees.common.visibility_level_strings,
-                        help='visibility level for blackboxes when using -r'
-                        )
-    parser.add_argument('-d', '--debug', action='store_true', help='debug level tree logging.')
+
+    debugging_group = parser.add_argument_group('Debugging')
+    debugging_group.add_argument('-r', '--render', action='store_true', help='render the graph to dot/png/svg.')
+    debugging_group.add_argument('-v', '--visibility-level',
+                                 action='store',
+                                 default="detail",
+                                 choices=py_trees.common.visibility_level_strings,
+                                 help='visibility level for blackboxes when using -r'
+                                 )
+    debugging_group.add_argument('-d', '--debug', action='store_true', help='debug level tree logging.')
     return parser
 
 ##############################################################################

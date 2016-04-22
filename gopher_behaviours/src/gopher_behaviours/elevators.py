@@ -261,7 +261,6 @@ class PartialAssistedElevators(Elevators):
             led_pattern=gopher_configuration.led_patterns.holding,
             button_confirm=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
             button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
-            cancel_on_stop=True,
             message="Waiting for the elevator to pick me up.")
         wait_for_pickup.add_child(signal_wait_for_pickup)
         children.append(wait_for_pickup)
@@ -278,7 +277,6 @@ class PartialAssistedElevators(Elevators):
             led_pattern=gopher_configuration.led_patterns.humans_give_me_input,
             button_confirm=gopher_std_msgs.Notification.BUTTON_ON,
             button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
-            cancel_on_stop=True,
             message="Waiting for boarding confirmation from human.")
         boarding.add_children((wait_for_boarding_confirmation, signal_waiting_boarding))
         children.append(boarding)
@@ -303,7 +301,6 @@ class PartialAssistedElevators(Elevators):
             led_pattern=gopher_configuration.led_patterns.holding,
             button_confirm=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
             button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
-            cancel_on_stop=True,
             message="Waiting for the elevator to drop me off.")
         ride.add_child(signal_wait_for_dropoff)
         children.append(ride)
@@ -320,7 +317,6 @@ class PartialAssistedElevators(Elevators):
             led_pattern=gopher_configuration.led_patterns.humans_give_me_input,
             button_confirm=gopher_std_msgs.Notification.BUTTON_ON,
             button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
-            cancel_on_stop=True,
             message="Waiting for disembarkment confirmation from human.")
         disembarkment.add_children((wait_for_disembarkment_confirmation, signal_waiting_disembarkment))
         children.append(disembarkment)
@@ -341,7 +337,6 @@ class PartialAssistedElevators(Elevators):
             led_pattern=gopher_configuration.led_patterns.holding,
             button_confirm=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
             button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
-            cancel_on_stop=True,
             message="Releasing elevator.")
         release.add_child(signal_releasing_elevator)
         children.append(release)

@@ -20,20 +20,18 @@ Bless my noggin with a tickle from your noodly appendages!
 ##############################################################################
 # Imports
 ##############################################################################
+
 import elevator_interactions_msgs.msg as elevator_interactions_msgs
 import gopher_configuration
 import py_trees
 import rocon_python_comms
 import rospy
-import std_msgs.msg as std_msgs
 import uuid
-
-from . import interactions
-
 
 ##############################################################################
 # Helpers
 ##############################################################################
+
 
 def connect_to_service(name, service_name, service_type, connect_timeout):
     '''
@@ -52,7 +50,6 @@ def connect_to_service(name, service_name, service_type, connect_timeout):
         rospy.logerr("Behaviour [" + name + "]: ROS has been shut down while connecting to service server" +
                      " (" + str(exc) + ").")
         return None
-
 
 
 def call_service(name, service_client, request, call_timeout):
