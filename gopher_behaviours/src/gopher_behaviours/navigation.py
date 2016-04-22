@@ -456,42 +456,44 @@ class GoalFinishing(py_trees.Behaviour):
                 if (result.goal_distance > self._distance_threshold):
                     if (current_finishing_duration > self._approach_timeout) and\
                        (current_finishing_duration <= self._timeout):
-                        rospy.logwarn("GoalFinishing: failed to approach goal in time. Will try to align at least.")
-                        self.goal.align_on_failure = True
+                        if not self.goal.align_on_failure:
+                            self.feedback_message = "failed to approach goal, but will try to align at least."
+                            rospy.logwarn("GoalFinishing: %s" % self.feedback_message)
+                            self.goal.align_on_failure = True
                     elif (current_finishing_duration > self._timeout):
-                        rospy.logwarn("GoalFinishing: failed to align in time.")
-                        self.feedback_message = "failure, but ignoring"
+                        self.feedback_message = "failed to approach and align with goal in time, but moving on."
+                        rospy.logwarn("GoalFinishing: %s" % self.feedback_message)
                         return py_trees.Status.SUCCESS
                     else:
                         self.goal.align_on_failure = False
                     # re-try
                     self.action_client.send_goal(self.goal)
-                    self.feedback_message = "waiting for goal finisher to finish us"
+                    self.feedback_message = "waiting for the goal finisher to finish us"
                     return py_trees.Status.RUNNING
                 else:
                     if (current_finishing_duration > self._timeout):
-                        rospy.logwarn("GoalFinishing: close enough, but failed to align in time.")
-                        self.feedback_message = "failure, but ignoring"
+                        self.feedback_message = "approached, but failed to align with goal in time, but moving on."
+                        rospy.logwarn("GoalFinishing: %s" % self.feedback_message)
                         return py_trees.Status.SUCCESS
                     else:
                         # try to align
-                        rospy.logwarn("GoalFinishing: close enough, will try to align.")
                         self.goal.align_on_failure = True
                         self.action_client.send_goal(self.goal)
-                        self.feedback_message = "waiting for goal finisher to finish us"
+                        self.feedback_message = "approached, now aligning"
                         return py_trees.Status.RUNNING
         else:
             if (current_finishing_duration > self._approach_timeout) and\
                (current_finishing_duration <= self._timeout) and not self.goal.align_on_failure:
                 # send a new goal, what will preempt the last one
-                rospy.logwarn("GoalFinishing: Tried long enough to approach. Forcing the switch to trying to align.")
+                self.feedback_message = "failed to approach, switch priority to aligning with the goal"
+                rospy.logwarn("GoalFinishing: %s" % self.feedback_message)
                 self.goal.align_on_failure = True
                 self.action_client.send_goal(self.goal)
                 return py_trees.Status.RUNNING
             elif (current_finishing_duration > self._timeout):
-                rospy.logwarn("GoalFinishing: Time's up for aligning with the goal.")
+                self.feedback_message = "time's up for aligning with the goal, moving on"
+                rospy.logwarn("GoalFinishing: %s" % self.feedback_message)
                 self.action_client.cancel_goal()
-                self.feedback_message = "failure, but ignoring"
                 return py_trees.Status.SUCCESS
             else:
                 self.feedback_message = "waiting for goal finisher to finish us"
