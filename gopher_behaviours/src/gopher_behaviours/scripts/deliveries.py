@@ -20,8 +20,9 @@ import sys
 
 
 class CustomDelivery(object):
-    def __init__(self):
+    def __init__(self, verbose=False):
         self.gopher = gopher_configuration.configuration.Configuration(fallback_to_defaults=True)
+        self.verbose = verbose
 
     def send(self, goal_locations):
         """
@@ -46,17 +47,21 @@ class CustomDelivery(object):
 
     def spin(self):
         rate = rospy.Rate(1)
-        counter = 0
+        last_result_response = None
         while not rospy.is_shutdown():
             try:
                 fetch_result = rospy.ServiceProxy(self.gopher.services.delivery_result, gopher_delivery_srvs.DeliveryResult)
                 response = fetch_result()
-                if counter % 5 == 0:
+                if self.verbose or \
+                   last_result_response is None or \
+                   len(last_result_response.traversed_locations) != len(response.traversed_locations) or \
+                   len(last_result_response.remaining_locations) != len(response.remaining_locations) or \
+                   last_result_response.message != response.message:
                     CustomDelivery.result(response)
                 if response.result >= 0:
                     break
+                last_result_response = response
                 rate.sleep()
-                ++counter
             except rospy.ServiceException, e:
                 print(console.red + "CustomDelivery: service call failed: %s" % e + console.reset)
                 break
