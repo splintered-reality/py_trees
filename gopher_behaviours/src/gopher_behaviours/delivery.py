@@ -69,6 +69,7 @@ class Parameters(object):
         tree and calling :py::meth:`~gopher_behaviours.delivery.QuirkyDeliveries.setup` on that tree.
         """
         self.elf = elf.InitialisationType.TELEOP
+        self.elevator = elevators.InteractionType.HUMAN_ASSISTED
         self.express = False
 
     def __str__(self):
@@ -262,13 +263,31 @@ def create_locations_subtree(current_world, locations, parameters):
             last_location = current_node
         elif isinstance(current_node, gopher_semantic_msgs.Elevator):
             # topological path guarantees there is a next...
-            elevator_subtree = elevators.HumanAssistedElevators(
-                name="Elevator to %s" % next_node.world,
-                origin=previous_world,
-                elevator=current_node,
-                destination=next_node.world,
-                elf_initialisation_type=parameters.elf
-            )
+            if parameters.elevator == elevators.InteractionType.PARTIAL_ASSISTED:
+                elevator_subtree = elevators.PartialAssistedElevators(
+                    name="Elevator to %s" % next_node.world,
+                    origin=previous_world,
+                    elevator=current_node,
+                    destination=next_node.world
+                    # TODO: add elf init
+                )
+            elif parameters.elevator == elevators.InteractionType.AUTONOMOUS:
+                # TODO: replace with autonomous behaviour
+                elevator_subtree = elevators.PartialAssistedElevators(
+                    name="Elevator to %s" % next_node.world,
+                    origin=previous_world,
+                    elevator=current_node,
+                    destination=next_node.world
+                    # TODO: add elf init
+                )
+            else:
+                elevator_subtree = elevators.HumanAssistedElevators(
+                    name="Elevator to %s" % next_node.world,
+                    origin=previous_world,
+                    elevator=current_node,
+                    destination=next_node.world,
+                    elf_initialisation_type=parameters.elf
+                )
             elevator_subtree.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
             children.append(elevator_subtree)
 
@@ -528,6 +547,12 @@ class GopherDeliveries(object):
             QuirkyDeliveriesConfig.QuirkyDeliveries_ar: elf.InitialisationType.AR,
         }
         self.parameters.elf = conversions[config.elf]
+        conversions = {
+            QuirkyDeliveriesConfig.QuirkyDeliveries_human: elevators.InteractionType.HUMAN_ASSISTED,
+            QuirkyDeliveriesConfig.QuirkyDeliveries_partial: elevators.InteractionType.PARTIAL_ASSISTED,
+            QuirkyDeliveriesConfig.QuirkyDeliveries_autonomous: elevators.InteractionType.AUTONOMOUS
+        }
+        self.parameters.elevator = conversions[config.elevator]
         # rospy.loginfo("QuirkyDeliveries: reconfigured\n%s" % self.parameters)
         return config
 
