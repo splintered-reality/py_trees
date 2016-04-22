@@ -217,7 +217,7 @@ if __name__ == '__main__':
         sys.exit()
 
     print("Demo")
-    root = create_root(args.origin, args.elevator, args.destination)
+    root = create_root(args.origin, args.elevator, args.destination, args.type, args.elf)
     print("Root")
     py_trees.display.print_ascii_tree(root)
 
