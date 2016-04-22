@@ -78,18 +78,19 @@ def parse_arguments(command_line_args):
     parser.add_argument('-n', '--namespace', action='store', default=config.namespaces.semantics,
                         help='namespace for the semantics parameters.')
 
+    parser.add_argument('--type',
+                        action='store',
+                        default="human-assisted",
+                        choices=["human-assisted", "partial-assisted", "autonomous"],
+                        help='type of interaction with the elevator operator'
+                        )
+
     parser.add_argument('--elf',
                         action='store',
                         default="ar",
                         choices=["ar", "teleop"],
                         help='type of elf to use for initialisation'
                         )
-
-    type_group = parser.add_mutually_exclusive_group()
-    type_group.add_argument('-p', '--partial-assisted', action='store_true', default=False,
-                            help='system interacts with elevator')
-    type_group.add_argument('-a', '--autonomous', action='store_true', default=False,
-                            help='fully autonomous elevator ride')
 
     introspection_group = parser.add_mutually_exclusive_group()
     introspection_group.add_argument('-w', '--worlds', action='store_true', help='list available worlds')
@@ -107,6 +108,8 @@ def parse_arguments(command_line_args):
                                  help='debug level tree logging')
 
     args = parser.parse_args(command_line_args)
+
+    args.type = gopher_behaviours.elevators.string_to_interaction_type[args.type]
 
     args.elf = gopher_behaviours.elf.string_to_elf_initialisation_type[args.elf]
 
@@ -163,36 +166,40 @@ def parse_arguments(command_line_args):
 ##############################################################################
 # Tree
 ##############################################################################
-def create_root(origin, elevator, destination, partial_assisted=False, autonomous=False):
+def create_root(origin, elevator, destination,
+                interaction_type=gopher_behaviours.elevators.InteractionType.HUMAN_ASSISTED,
+                elf_type=gopher_behaviours.elf.InitialisationType.AR):
     root = py_trees.composites.Parallel("Elevator Run")
 
     elevator_behaviour = None
 
-    if partial_assisted:
+    if interaction_type == gopher_behaviours.elevators.InteractionType.PARTIAL_ASSISTED:
         elevator_behaviour = gopher_behaviours.elevators.PartialAssistedElevators(name="Partial AssistedE levators",
                                                                                   origin=origin,
                                                                                   elevator=elevator,
                                                                                   destination=destination,
-                                                                                  elf_initialisation_type=args.elf)
-    elif autonomous:
+                                                                                  elf_initialisation_type=elf_type)
+    elif interaction_type == gopher_behaviours.elevators.InteractionType.AUTONOMOUS:
         print ("[WARNING] autonomous elevator rides not supported yet!" +
                " Will set up a partial-assisted ride.")
         elevator_behaviour = gopher_behaviours.elevators.PartialAssistedElevators(name="Partial AssistedE levators",
                                                                                   origin=origin,
                                                                                   elevator=elevator,
                                                                                   destination=destination,
-                                                                                  elf_initialisation_type=args.elf)
+                                                                                  elf_initialisation_type=elf_type)
     else:
         elevator_behaviour = gopher_behaviours.elevators.HumanAssistedElevators(name="Human Assisted Elevators",
                                                                                 origin=origin,
                                                                                 elevator=elevator,
                                                                                 destination=destination,
-                                                                                elf_initialisation_type=args.elf)
+                                                                                elf_initialisation_type=elf_type)
+
     (button_event_handler, topics_to_blackboard) = gopher_behaviours.chalk_and_talk.create_gopher_handlers()
 
     root.add_child(button_event_handler)
     root.add_child(topics_to_blackboard)
     root.add_child(elevator_behaviour)
+
     return root
 
     ##############################################################################
@@ -225,7 +232,7 @@ if __name__ == '__main__':
     if args.render:
         # todo be smarter about this...pull from the semantics directly
         demo = gopher_behaviours.scripts.demo.Demo(root=create_root(args.origin, args.elevator, args.destination,
-                                                                    args.partial_assisted, args.autonomous))
+                                                                    args.type, args.elf))
         py_trees.display.render_dot_tree(demo.root, args.visibility_level)
         sys.exit()
 

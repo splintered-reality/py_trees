@@ -21,6 +21,7 @@ Bless my noggin with a tickle from your noodly appendages!
 # Imports
 ##############################################################################
 import elevator_interactions_msgs.msg as elevator_interactions_msgs
+import enum
 import gopher_configuration
 import gopher_navi_msgs.msg as gopher_navi_msgs
 import py_trees
@@ -45,6 +46,28 @@ def get_elevator_level(elevator, world):
         if level.world == world:
             return level
     return None
+
+##############################################################################
+# Enum
+##############################################################################
+
+
+class InteractionType(enum.IntEnum):
+    """ An enumerator representing the types of interaction with the elevator operator """
+
+    HUMAN_ASSISTED = 0
+    """Human in control; no interaction with the elevator operator """
+    PARTIAL_ASSISTED = 1
+    """Elevator operator controlling the elevator; human moving the robot in and out"""
+    AUTONOMOUS = 2
+    """Elevator operator and robot on their own"""
+
+
+string_to_interaction_type = {
+    "human-assisted": InteractionType.HUMAN_ASSISTED,
+    "partial-assisted": InteractionType.PARTIAL_ASSISTED,
+    "autonomous": InteractionType.AUTONOMOUS,
+}
 
 ##############################################################################
 # Behaviours
