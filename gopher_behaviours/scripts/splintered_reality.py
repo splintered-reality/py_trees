@@ -35,16 +35,9 @@ def show_usage():
     s += console.cyan + "        roslaunch gopher_behaviours gopher_deliveries.launch" + console.reset + "\n"
     s += "\n"
     s += console.white
-    s += console.bold + "    Requrired Launchers" + console.reset + "\n"
-    s += console.cyan + "        + gopher_robot/minimal.launch" + console.reset + "\n"
-    s += console.cyan + "        + ...(many - bring up instead with rapps)" + console.reset + "\n"
-    s += console.cyan + "        or" + console.reset
-    s += console.cyan + "        + gopher_desktop/gocart_sim.launch" + console.reset + "\n"
-    s += "\n"
-    s += console.white
-    s += console.bold + "    Rapps" + console.reset + "\n"
-    s += console.cyan + "        + gopher_robot/gocart_delivery" + console.reset + "\n"
-    s += console.cyan + "        + ...(many - bring up instead with rapps)" + console.reset + "\n"
+    s += console.bold + "    Launchers" + console.reset + "\n"
+    s += console.cyan + "        gopher_robot/apps_gocart.launch + 'Fake Navigation'" + console.reset + "\n"
+    s += console.cyan + "        gopher_podium/apps_gocart.launch + 'Navigation'" + console.reset + "\n"
     s += "\n"
     return s
 

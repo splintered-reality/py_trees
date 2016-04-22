@@ -25,6 +25,7 @@ import gopher_configuration
 import gopher_std_msgs.msg as gopher_std_msgs
 import math
 import py_trees
+import rocon_console.console as console
 import rospy
 
 ##############################################################################

@@ -125,6 +125,6 @@ class ControlARMarkerTracker(py_trees.Behaviour):
         The alternative requires you to put in complicated wiring - easier just to multiply disable
         to be sure.
         """
-        if new_status == py_trees.Status.INVALID:
+        if self.status != new_status and new_status == py_trees.Status.INVALID:
             if self._enable:
                 self._ar_tracker_control(False)

@@ -21,6 +21,7 @@ Gopher delivery behaviours! Are they good for anything else?
 
 import copy
 import dynamic_reconfigure.server
+import elf_msgs.msg as elf_msgs
 import gopher_configuration
 import gopher_delivery_msgs.msg as gopher_delivery_msgs
 import gopher_delivery_msgs.srv as gopher_delivery_srvs
@@ -128,11 +129,14 @@ def create_delivery_subtree(world, locations, parameters=Parameters()):
     ########################
     # Parking/Unparking
     ########################
-    unparking_or_not = py_trees.composites.Selector(name="UnParking?")
-    skip_unparking = unpark.create_unparking_required_check_subtree(current_world=world)
+    unparking_or_not = py_trees.composites.Chooser(name="UnParking?")
+    not_a_parking_zone = py_trees.meta.inverter(unpark.NearParkingLocation)(
+        name="Not a Parking Zone",
+        current_world=world
+    )
     subtrees.unparking = unpark.UnPark(name="UnPark", elf_type=parameters.elf)
     parking_or_not = py_trees.composites.Selector(name="Parking?")
-    far_from_a_parking_location = py_trees.meta.inverter(park.ParkingLocation)(name="Far from Home", location=locations[-1])
+    far_from_a_parking_location = py_trees.meta.inverter(unpark.NearParkingLocation)(name="Not a Parking Zone", current_world=world)
     didnt_unpark = py_trees.meta.inverter(py_trees.blackboard.CheckBlackboardVariable)(
         name="Never UnParked",
         variable_name="pose_park_rel_map",
@@ -147,6 +151,11 @@ def create_delivery_subtree(world, locations, parameters=Parameters()):
     ########################
     root = py_trees.composites.Selector(name="Deliver or Die")
     subtrees.deliveries = py_trees.OneshotSequence("Deliveries")
+    are_we_localised = py_trees.CheckBlackboardVariable(
+        name="Localised?",
+        variable_name="elf_localisation_status",
+        expected_value=elf_msgs.ElfLocaliserStatus.STATUS_WORKING
+    )
     todo_or_not = py_trees.composites.Selector(name="Do or be Cancelled?")
 
     ########################
@@ -162,8 +171,9 @@ def create_delivery_subtree(world, locations, parameters=Parameters()):
     ########################
     root.add_child(subtrees.deliveries)
     subtrees.deliveries.add_child(unparking_or_not)
-    unparking_or_not.add_child(skip_unparking)
+    unparking_or_not.add_child(not_a_parking_zone)
     unparking_or_not.add_child(subtrees.unparking)
+    subtrees.deliveries.add_child(are_we_localised)
     subtrees.deliveries.add_child(todo_or_not)
     todo_or_not.add_child(subtrees.cancelling)
     subtrees.cancelling.add_child(subtrees.is_cancelled)

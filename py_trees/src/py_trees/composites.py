@@ -217,9 +217,8 @@ class Selector(Composite):
 
         .. todo::
 
-           Need a strict policy about handling the return status.
-           Should it abort if that returns success or fail, should it be ignored,
-           should it be done before/after children, should it be open to configuration?
+           Should be calling stop() in here (like behaviours)?
+           Should update be called before/after children?
         """
         self.logger.debug("  %s [Selector.tick()]" % self.name)
         # Required behaviour for *all* behaviours and composites is
@@ -275,6 +274,71 @@ class Selector(Composite):
         s += "  Status  : %s\n" % self.status
         s += "  Current : %s\n" % (self.current_child.name if self.current_child is not None else "none")
         s += "  Children: %s\n" % [child.name for child in self.children]
+
+
+##############################################################################
+# Chooser
+##############################################################################
+
+
+class Chooser(Selector):
+    """
+    Runs all of its child behaviours in sequence until one succeeds.
+    If a node after than the one selected was previously running, then call
+    stop() on it.
+    """
+
+    def __init__(self, name="Chooser", children=None, *args, **kwargs):
+        super(Chooser, self).__init__(name, children, *args, **kwargs)
+        self.logger = logging.get_logger("Chooser ")
+
+    def tick(self):
+        """
+        Run the tick behaviour for this chooser. Note that the status
+        of the tick is (for now) always determined by its children, not
+        by the user customised update function.
+
+        For now, the update function just provides a place where classes
+        that inherit this one can do some work *before* running the children.
+        The return status is ignored.
+
+        .. todo::
+
+           Should be calling stop() in here (like behaviours)?
+           Should update be called before/after children?
+        """
+        self.logger.debug("  %s [Chooser.tick()]" % self.name)
+        # Required behaviour for *all* behaviours and composites is
+        # for tick() to check if it isn't running and initialise
+        if self.status != Status.RUNNING:
+            # chooser specific initialisation
+            # invalidate everything
+            for child in self.children:
+                child.stop(Status.INVALID)
+            self.current_child = None
+            # run subclass (user) initialisation
+            self.initialise()
+        # run any work designated by a customised instance of this class
+        self.update()
+        if self.current_child is not None:
+            # run our child, and invalidate anyone else who may have been ticked last run
+            # (bit wasteful always checking for the latter)
+            for child in self.children:
+                if child is self.current_child:
+                    for node in self.current_child.tick():
+                        yield node
+                elif child.status != Status.INVALID:
+                    child.stop(Status.INVALID)
+        else:
+            for child in self.children:
+                for node in child.tick():
+                    yield node
+                if child.status == Status.RUNNING or child.status == Status.SUCCESS:
+                    self.current_child = child
+                    break
+        new_status = self.current_child.status if self.current_child is not None else Status.FAILURE
+        self.stop(new_status)
+        yield self
 
 ##############################################################################
 # Sequence

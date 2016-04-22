@@ -78,8 +78,8 @@ def create_localisation_check_behaviour(name="Localised?"):
 
 
 def create_localisation_to_blackboard_behaviour(
-        name="ElfToBlackboard",
-        blackboard_variables={"elf_localisation_status", None}
+        name="Elf2BB",
+        blackboard_variables={"elf_localisation_status": "status"}
 ):
     """
     Hooks up a subscriber to the elf and transfers the status
