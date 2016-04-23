@@ -265,7 +265,7 @@ def create_locations_subtree(current_world, locations, parameters):
             # topological path guarantees there is a next...
             if parameters.elevator == elevators.InteractionType.PARTIAL_ASSISTED:
                 elevator_subtree = elevators.PartialAssistedElevators(
-                    name="Elevator to %s" % next_node.world,
+                    name="Elevator\n%s->%s" % (previous_world, next_node.world),
                     origin=previous_world,
                     elevator=current_node,
                     destination=next_node.world
@@ -274,7 +274,7 @@ def create_locations_subtree(current_world, locations, parameters):
             elif parameters.elevator == elevators.InteractionType.AUTONOMOUS:
                 # TODO: replace with autonomous behaviour
                 elevator_subtree = elevators.PartialAssistedElevators(
-                    name="Elevator to %s" % next_node.world,
+                    name="Elevator\n%s->%s" % (previous_world, next_node.world),
                     origin=previous_world,
                     elevator=current_node,
                     destination=next_node.world
@@ -282,7 +282,7 @@ def create_locations_subtree(current_world, locations, parameters):
                 )
             else:
                 elevator_subtree = elevators.HumanAssistedElevators(
-                    name="Elevator to %s" % next_node.world,
+                    name="Elevator\n%s->%s" % (previous_world, next_node.world),
                     origin=previous_world,
                     elevator=current_node,
                     destination=next_node.world,

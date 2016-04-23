@@ -155,12 +155,20 @@ def parse_arguments(command_line_args):
 def create_root(origin, elevator, destination,
                 interaction_type=gopher_behaviours.elevators.InteractionType.HUMAN_ASSISTED,
                 elf_type=gopher_behaviours.elf.InitialisationType.AR):
-    root = py_trees.composites.Parallel("Elevator Run")
+    # so a rendering script will create different dot files
+    if args.type == gopher_behaviours.elevators.InteractionType.HUMAN_ASSISTED:
+        root_name = "Human Assisted Elevators"
+    elif args.type == gopher_behaviours.elevators.InteractionType.PARTIAL_ASSISTED:
+        root_name = "Partial Assisted Elevators"
+    else:
+        root_name = "Elevator Run"
+    root = py_trees.composites.Parallel(root_name)
 
     elevator_behaviour = None
 
+    elevator_subtree_name = "Elevator\n%s->%s" % (origin.title(), destination.title())
     if interaction_type == gopher_behaviours.elevators.InteractionType.PARTIAL_ASSISTED:
-        elevator_behaviour = gopher_behaviours.elevators.PartialAssistedElevators(name="Partial Assisted Elevators",
+        elevator_behaviour = gopher_behaviours.elevators.PartialAssistedElevators(name=elevator_subtree_name,
                                                                                   origin=origin,
                                                                                   elevator=elevator,
                                                                                   destination=destination
@@ -168,13 +176,13 @@ def create_root(origin, elevator, destination,
     elif interaction_type == gopher_behaviours.elevators.InteractionType.AUTONOMOUS:
         print ("[WARNING] autonomous elevator rides not supported yet!" +
                " Will set up a partial-assisted ride.")
-        elevator_behaviour = gopher_behaviours.elevators.PartialAssistedElevators(name="To Be Autonomous Elevators",
+        elevator_behaviour = gopher_behaviours.elevators.PartialAssistedElevators(name=elevator_subtree_name,
                                                                                   origin=origin,
                                                                                   elevator=elevator,
                                                                                   destination=destination
                                                                                   )  # to be added somehow: elf_initialisation_type=elf_type)
     else:
-        elevator_behaviour = gopher_behaviours.elevators.HumanAssistedElevators(name="Human Assisted Elevators",
+        elevator_behaviour = gopher_behaviours.elevators.HumanAssistedElevators(name=elevator_subtree_name,
                                                                                 origin=origin,
                                                                                 elevator=elevator,
                                                                                 destination=destination,
