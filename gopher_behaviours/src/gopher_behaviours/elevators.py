@@ -167,24 +167,13 @@ class HumanAssistedElevators(Elevators):
         :param elf.InitialisationType elf_initialisation_type:
         """
 
-        ride = py_trees.composites.Parallel(
-            name="Ride",
-            policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE
-        )
         move_to_elevator = create_move_to_elevator_subtree(elevator_name, elevator_level_origin.entry)
 
-        flash_leds_travelling = interactions.Notification(
-            name="Flash for Input",
+        ride = interactions.flash_and_wait_for_go_button(
+            name="Ride",
+            notification_behaviour_name="Flash for Input",
             led_pattern=gopher_configuration.led_patterns.humans_give_me_input,
-            button_confirm=gopher_std_msgs.Notification.BUTTON_ON,
-            button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
-            message="Waiting for confirm button press in front of elevator")
-        wait_for_go_button_travelling = py_trees.blackboard.WaitForBlackboardVariable(
-            name="Wait for Go Button",
-            variable_name="event_go_button",
-            expected_value=True,
-            comparison_operator=operator.eq,
-            clearing_policy=py_trees.common.ClearingPolicy.ON_INITIALISE
+            message="Waiting for confirm button press in front of elevator"
         )
 
         goal = gopher_navi_msgs.TeleportGoal()
@@ -234,8 +223,6 @@ class HumanAssistedElevators(Elevators):
         children = []
         children.append(move_to_elevator)
         children.append(ride)
-        ride.add_child(flash_leds_travelling)
-        ride.add_child(wait_for_go_button_travelling)
         children.append(teleporting)
         if elf_initialisation is not None:
             children.append(elf_reset)
@@ -307,18 +294,12 @@ class PartialAssistedElevators(Elevators):
             message="Waiting for the elevator to pick me up.")
 
         # board elevator
-        board = py_trees.composites.Parallel(name="Board",
-                                             policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE)
-        wait_for_boarding_confirmation = \
-            py_trees.subscribers.WaitForSubscriberData(name="Wait for Go Button",
-                                                       topic_name=gopher_configuration.buttons.go,
-                                                       topic_type=std_msgs.Empty)
-        signal_waiting_boarding = interactions.Notification(
-            name="Flash for Input",
+        board = interactions.flash_and_wait_for_go_button(
+            name="Board",
+            notification_behaviour_name="Flash for Input",
             led_pattern=gopher_configuration.led_patterns.humans_give_me_input,
-            button_confirm=gopher_std_msgs.Notification.BUTTON_ON,
-            button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
-            message="Waiting for boarding confirmation from human.")
+            message="Waiting for boarding confirmation from human."
+        )
 
         # ride elevator
         ride = py_trees.composites.Parallel(name="Ride",
@@ -341,18 +322,12 @@ class PartialAssistedElevators(Elevators):
             message="Waiting for the elevator to drop me off.")
 
         # disembark elevator
-        disembarkment = py_trees.composites.Parallel(name="Disembark",
-                                                     policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE)
-        wait_for_disembarkment_confirmation = \
-            py_trees.subscribers.WaitForSubscriberData(name="Wait for Go Button",
-                                                       topic_name=gopher_configuration.buttons.go,
-                                                       topic_type=std_msgs.Empty)
-        signal_waiting_disembarkment = interactions.Notification(
-            name="Flash for Input",
+        disembarkment = interactions.flash_and_wait_for_go_button(
+            name="Board",
+            notification_behaviour_name="Flash for Input",
             led_pattern=gopher_configuration.led_patterns.humans_give_me_input,
-            button_confirm=gopher_std_msgs.Notification.BUTTON_ON,
-            button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
-            message="Waiting for disembarkment confirmation from human.")
+            message="Waiting for disembarkment confirmation from human."
+        )
 
         # release elevator
         release = py_trees.composites.Parallel(name="Release",
@@ -394,13 +369,11 @@ class PartialAssistedElevators(Elevators):
         call_elevator_to_floor.add_children((request_elevator_ride, wait_for_arrival_pickup, honk_pickup))
         pickup.add_child(signal_wait_for_pickup)
         children.append(board)
-        board.add_children((wait_for_boarding_confirmation, signal_waiting_boarding))
         children.append(ride)
         ride.add_child(enjoy_ride)
         enjoy_ride.add_children((confirm_boarding, wait_for_arrival_dropoff, honk_dropoff))
         ride.add_child(signal_wait_for_dropoff)
         children.append(disembarkment)
-        disembarkment.add_children((wait_for_disembarkment_confirmation, signal_waiting_disembarkment))
         children.append(release)
         release.add_child(release_elevator)
         release_elevator.add_children((confirm_disembarkment, honk_disembarkment))

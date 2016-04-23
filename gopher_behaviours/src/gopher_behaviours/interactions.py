@@ -24,6 +24,7 @@ Bless my noggin with a tickle from your noodly appendages!
 import gopher_configuration
 import gopher_std_msgs.msg as gopher_std_msgs
 import gopher_std_msgs.srv as gopher_std_srvs
+import operator
 import py_trees
 import rocon_console.console as console
 import rospy
@@ -99,6 +100,50 @@ def create_celebrate_behaviour(name="Celebrate", duration=3.0):
         duration=duration
     )
     return celebrate
+
+
+def flash_and_wait_for_go_button(
+        name="Flash and Wait",
+        notification_behaviour_name="Flash",
+        led_pattern=None,
+        sound="",
+        message="waiting for the party to start, so starting our own party"):
+    """
+    Parallels an led pattern (with optional sound) together with a wait for
+    the go button event on the blackboard.
+
+    Use with :py:function:`~gopher_behaviours.interactions.create_button_event_handler`.
+
+    Blackboard Variables:
+
+     - event_go_button    (w) [bool] : true if at least one press, false otherwise
+
+    :param str name: the parallel behaviour name
+    :param str notification_behaviour_name: the flashing notification behaviour name
+    :param led_pattern:
+    :param sound:
+    :param str message: message to attach to the notification (for debugging purposes)
+    """
+    flash_and_wait = py_trees.composites.Parallel(
+        name=name,
+        policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE
+    )
+    flash = Notification(
+        name=notification_behaviour_name,
+        led_pattern=led_pattern,
+        sound=sound,
+        button_confirm=gopher_std_msgs.Notification.BUTTON_ON,
+        button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
+        message=message)
+    wait = py_trees.blackboard.WaitForBlackboardVariable(
+        name="Wait for Go Button",
+        variable_name="event_go_button",
+        expected_value=True,
+        comparison_operator=operator.eq,
+        clearing_policy=py_trees.common.ClearingPolicy.ON_INITIALISE
+    )
+    flash_and_wait.add_children([flash, wait])
+    return flash_and_wait
 
 ##############################################################################
 # Behaviours
