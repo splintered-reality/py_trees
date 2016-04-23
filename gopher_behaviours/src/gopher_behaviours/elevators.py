@@ -146,7 +146,7 @@ class HumanAssistedElevators(Elevators):
         :param elf.InitialisationType elf_initialisation_type:
         """
 
-        travelling = py_trees.composites.Parallel(
+        ride = py_trees.composites.Parallel(
             name="Ride",
             policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE
         )
@@ -198,14 +198,23 @@ class HumanAssistedElevators(Elevators):
             return []
 
         #################################
+        # Blackboxes
+        #################################
+        move_to_elevator.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
+        ride.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
+        teleporting.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
+        if elf_initialisation is not None:
+            elf_initialisation.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
+
+        #################################
         # Graph
         #################################
 
         children = []
         children.append(move_to_elevator)
-        children.append(travelling)
-        travelling.add_child(flash_leds_travelling)
-        travelling.add_child(wait_for_go_button_travelling)
+        children.append(ride)
+        ride.add_child(flash_leds_travelling)
+        ride.add_child(wait_for_go_button_travelling)
         children.append(teleporting)
         if elf_initialisation is not None:
             children.append(elf_reset)
@@ -255,8 +264,8 @@ class PartialAssistedElevators(Elevators):
         move_to_elevator = create_move_to_elevator_subtree(elevator_name, elevator_level_origin.entry)
 
         # Wait for pick-up
-        wait_for_pickup = py_trees.composites.Parallel(name="Pickup",
-                                                       policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE)
+        pickup = py_trees.composites.Parallel(name="Pickup",
+                                              policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE)
         call_elevator_to_floor = py_trees.composites.Sequence("Call Elevator")
         request_elevator_ride = elevator_operator_client.RequestElevatorRide("Request Ride",
                                                                              self._ride_uuid,
@@ -275,7 +284,7 @@ class PartialAssistedElevators(Elevators):
             message="Waiting for the elevator to pick me up.")
 
         # board elevator
-        boarding = py_trees.composites.Parallel(name="Board",
+        board = py_trees.composites.Parallel(name="Board",
                                                 policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE)
         wait_for_boarding_confirmation = \
             py_trees.subscribers.WaitForSubscriberData(name="Wait for Go Button",
@@ -323,7 +332,7 @@ class PartialAssistedElevators(Elevators):
             message="Waiting for disembarkment confirmation from human.")
 
         # release elevator
-        release = py_trees.composites.Parallel(name="Finalise",
+        release = py_trees.composites.Parallel(name="Release",
                                                policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE)
         release_elevator = py_trees.composites.Sequence("Release Elevator")
         passenger_status_disembarked = elevator_interactions_msgs.PassengerStatus.DISEMBARKED
@@ -339,17 +348,30 @@ class PartialAssistedElevators(Elevators):
             message="Releasing elevator.")
 
         #################################
+        # Blackboxes
+        #################################
+        move_to_elevator.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
+        pickup.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
+        board.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
+        ride.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
+        disembarkment.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
+        release.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
+
+        # if elf_initialisation is not None:
+        #    elf_initialisation.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
+
+        #################################
         # Graph
         #################################
 
         children = []
         children.append(move_to_elevator)
-        children.append(wait_for_pickup)
-        wait_for_pickup.add_child(call_elevator_to_floor)
+        children.append(pickup)
+        pickup.add_child(call_elevator_to_floor)
         call_elevator_to_floor.add_children((request_elevator_ride, wait_for_arrival_pickup, honk_pickup))
-        wait_for_pickup.add_child(signal_wait_for_pickup)
-        children.append(boarding)
-        boarding.add_children((wait_for_boarding_confirmation, signal_waiting_boarding))
+        pickup.add_child(signal_wait_for_pickup)
+        children.append(board)
+        board.add_children((wait_for_boarding_confirmation, signal_waiting_boarding))
         children.append(ride)
         ride.add_child(enjoy_ride)
         enjoy_ride.add_children((confirm_boarding, wait_for_arrival_dropoff, honk_dropoff))

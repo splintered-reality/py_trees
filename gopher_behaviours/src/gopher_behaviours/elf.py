@@ -133,7 +133,6 @@ def create_check_elf_status_subtree():
     """
     gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
     localised_yet = py_trees.composites.Sequence(name="Localised Elf?")
-    localised_yet.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
     check_elf_status = py_trees.CheckSubscriberVariable(
         name="Check ELF Status",
         topic_name=gopher.topics.elf_status,
@@ -204,7 +203,6 @@ class ARInitialisation(py_trees.Sequence):
         """
         super(ARInitialisation, self).__init__(name)
         self.gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
-        self.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
 
         # Behaviours
         # only long range needed

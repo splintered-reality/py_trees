@@ -180,7 +180,6 @@ class UnPark(py_trees.Sequence):
         self.gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
         self.semantic_locations = None
         self.blackboard = py_trees.Blackboard()
-        self.blackbox_level = py_trees.common.BlackBoxLevel.BIG_PICTURE
 
         ################################################################
         # Flags
@@ -194,7 +193,6 @@ class UnPark(py_trees.Sequence):
         unplug_undock = py_trees.Selector(name="UnPlug/UnDock")
         (ar_tracker_on, ar_tracker_off) = ar_markers.create_ar_tracker_pair_blackboxes()
         undocking = py_trees.Sequence(name="UnDock")
-        undocking.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
         break_out = simple_motions.SimpleMotion(
             name="Break Out",
             motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_TRANSLATE,
@@ -205,7 +203,6 @@ class UnPark(py_trees.Sequence):
         was_jacked = battery.create_was_jacked()
         was_discharging = battery.create_was_discharging()
         unplug = py_trees.Sequence(name="UnPlug")
-        unplug.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
 
         wait_to_be_unplugged = battery.create_wait_to_be_unplugged(name="Flash for Help")
         auto_undock = docking.DockingController(name="Auto UnDock", undock=True)
@@ -221,7 +218,6 @@ class UnPark(py_trees.Sequence):
         # TODO : check if we significantly moved from the saved location
 
         already_localised_sequence = py_trees.Sequence("Already Localised")
-        already_localised_sequence.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
         are_we_localised = py_trees.CheckBlackboardVariable(
             name="Check ELF Status",
             variable_name="elf_localisation_status",
@@ -238,7 +234,6 @@ class UnPark(py_trees.Sequence):
         ################################################################
 
         not_yet_localised_sequence = py_trees.Sequence("Initialisation")
-        not_yet_localised_sequence.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
         if elf_type == elf.InitialisationType.TELEOP:
             elf_initialisation = elf.TeleopInitialisation()
             save_parking_pose = SaveParkingPoseManual("Save Park Pose")
@@ -251,6 +246,15 @@ class UnPark(py_trees.Sequence):
         ##############################
         write_starting_pose_from_odom = navigation.create_odom_pose_to_blackboard_behaviour(name="Start Pose (Odom)", blackboard_variables={"pose_unpark_start_rel_odom": "pose.pose"})
         write_finishing_pose_from_odom = navigation.create_odom_pose_to_blackboard_behaviour(name="Final Pose (Odom)", blackboard_variables={"pose_unpark_finish_rel_odom": "pose.pose"})
+
+        ##############################
+        # Blackboxes
+        ##############################
+        self.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
+        undocking.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
+        unplug.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
+        already_localised_sequence.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
+        not_yet_localised_sequence.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
 
         ################################################################
         # All Together

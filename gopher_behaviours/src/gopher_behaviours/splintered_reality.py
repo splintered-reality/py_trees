@@ -82,8 +82,10 @@ class SplinteredReality(object):
         #################################
         # Blackboxes
         #################################
-        self.global_abort.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
-        self.low_priority_homebase_initialisation = py_trees.common.BlackBoxLevel.COMPONENT
+        self.global_abort.blackbox_level = py_trees.common.BlackBoxLevel.BIG_PICTURE
+        global_abort_repark.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
+        low_priority_homebase_initialisation.blackbox_level = py_trees.common.BlackBoxLevel.BIG_PICTURE
+        teleop_and_teleport.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
 
         #################################
         # Graph

@@ -144,7 +144,7 @@ def create_delivery_subtree(world, locations, parameters=Parameters()):
         expected_value=None  # check for existence only
     )
     subtrees.parking = park.Park("Park")
-    subtrees.recovering = py_trees.composites.Sequence(name="Recovering")
+    subtrees.recovering = py_trees.composites.Sequence(name="Failure Recovery")
     repark = park.create_repark_subtree()
 
     ########################
@@ -162,10 +162,13 @@ def create_delivery_subtree(world, locations, parameters=Parameters()):
     ########################
     # Blackboxes
     ########################
-    todo_or_not.blackbox_level = py_trees.common.BlackBoxLevel.BIG_PICTURE
+    root.blackbox_level = py_trees.common.BlackBoxLevel.BIG_PICTURE
+    subtrees.unparking.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
+    subtrees.en_route.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
     subtrees.is_cancelled.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
     subtrees.recovering.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
     subtrees.cancelling.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
+    subtrees.parking.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
 
     ########################
     # Graph
