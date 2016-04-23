@@ -25,6 +25,7 @@ import enum
 import gopher_configuration
 import gopher_navi_msgs.msg as gopher_navi_msgs
 import py_trees
+import gopher_semantics
 import gopher_std_msgs.msg as gopher_std_msgs
 import operator
 import rospy
@@ -42,6 +43,23 @@ from gopher_behaviours.cfg import QuirkyDeliveriesConfig
 ##############################################################################
 # Helpers
 ##############################################################################
+
+
+def get_default_args_from_semantics():
+    """
+    For use with documentation generating tooling to provide default, usable args.
+    """
+    semantics = gopher_semantics.Semantics(fallback_to_defaults=True)
+    origin = semantics.worlds.default
+    for world in semantics.worlds:
+        if world != origin:
+            destination = world
+    for e in semantics.elevators.values():
+        for level in e.levels:
+            if level.world == origin:
+                elevator = e
+                break
+    return (origin, elevator, destination)
 
 
 def get_elevator_level(elevator, world):
@@ -101,20 +119,23 @@ class Elevators(py_trees.Sequence):
 
 class HumanAssistedElevators(Elevators):
 
-    def __init__(self, name, origin, elevator, destination, elf_initialisation_type=elf.InitialisationType.TELEOP):
+    def __init__(self, name="Human Assisted Elevators", origin=None, elevator=None, destination=None, elf_initialisation_type=elf.InitialisationType.TELEOP):
         """
         :param str name: behaviour name
         :param str origin: semantic world (unique_name) that it is coming from.
+        ;param gopher_semantic_msgs.Elevator
         :param str destination: semantic world (unique_name) that it is going to (another floor).
         :param gopher_semantic_msgs.Elevator elevator: the bridge between worlds
         """
         super(HumanAssistedElevators, self).__init__(name)
+        if not origin or not elevator or not destination:
+            (origin, elevator, destination) = get_default_args_from_semantics()
         self.origin = origin
         self.destination = destination
         self.elevator = elevator
         self.elevator_level_origin = get_elevator_level(elevator, origin)
         self.elevator_level_destination = get_elevator_level(elevator, destination)
-        self.gopher = gopher_configuration.Configuration()
+        self.gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
         self.elf_initialisation_type = elf_initialisation_type
 
         ###########################################
@@ -224,7 +245,7 @@ class HumanAssistedElevators(Elevators):
 
 class PartialAssistedElevators(Elevators):
 
-    def __init__(self, name, origin, elevator, destination):
+    def __init__(self, name="Partial Assisted Elevators", origin=None, elevator=None, destination=None, elf_initialisation_type=elf.InitialisationType.TELEOP):
         """
         :param str name: behaviour name
         :param str origin: semantic world (unique_name) that it is coming from.
@@ -232,12 +253,14 @@ class PartialAssistedElevators(Elevators):
         :param gopher_semantic_msgs.Elevator elevator: the bridge between worlds
         """
         super(PartialAssistedElevators, self).__init__(name)
+        if not origin or not elevator or not destination:
+            (origin, elevator, destination) = get_default_args_from_semantics()
         self._origin = origin
         self._destination = destination
         self._elevator = elevator
         self._elevator_level_origin = get_elevator_level(elevator, origin)
         self._elevator_level_destination = get_elevator_level(elevator, destination)
-        self._config = gopher_configuration.Configuration()
+        self._gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
         self._ride_uuid = uuid.uuid4().time_low
 
         ###########################################
@@ -245,7 +268,7 @@ class PartialAssistedElevators(Elevators):
         ###########################################
         # Assume all things here...as both semantics and planner should already validate everything.
         # use the add_child function to make sure that the parents are correctly initialised
-        map(self.add_child, self._generate_elevator_children(self._config,
+        map(self.add_child, self._generate_elevator_children(self._gopher,
                                                              self._elevator.unique_name,
                                                              self._elevator_level_origin,
                                                              self._elevator_level_destination))
@@ -285,7 +308,7 @@ class PartialAssistedElevators(Elevators):
 
         # board elevator
         board = py_trees.composites.Parallel(name="Board",
-                                                policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE)
+                                             policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE)
         wait_for_boarding_confirmation = \
             py_trees.subscribers.WaitForSubscriberData(name="Wait for Go Button",
                                                        topic_name=gopher_configuration.buttons.go,

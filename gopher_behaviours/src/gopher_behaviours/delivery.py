@@ -271,8 +271,8 @@ def create_locations_subtree(current_world, locations, parameters):
                     name="Elevator\n%s->%s" % (previous_world, next_node.world),
                     origin=previous_world,
                     elevator=current_node,
-                    destination=next_node.world
-                    # TODO: add elf init
+                    destination=next_node.world,
+                    elf_initialisation_type=parameters.elf
                 )
             elif parameters.elevator == elevators.InteractionType.AUTONOMOUS:
                 # TODO: replace with autonomous behaviour
@@ -280,8 +280,8 @@ def create_locations_subtree(current_world, locations, parameters):
                     name="Elevator\n%s->%s" % (previous_world, next_node.world),
                     origin=previous_world,
                     elevator=current_node,
-                    destination=next_node.world
-                    # TODO: add elf init
+                    destination=next_node.world,
+                    elf_initialisation_type=parameters.elf
                 )
             else:
                 elevator_subtree = elevators.HumanAssistedElevators(
