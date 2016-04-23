@@ -35,6 +35,7 @@ from . import elevator_operator_client
 from . import elf
 from . import interactions
 from . import navigation
+from . import utilities
 
 from gopher_behaviours.cfg import QuirkyDeliveriesConfig
 
@@ -70,6 +71,24 @@ string_to_interaction_type = {
     QuirkyDeliveriesConfig.QuirkyDeliveries_partial: InteractionType.PARTIAL_ASSISTED,
     QuirkyDeliveriesConfig.QuirkyDeliveries_autonomous: InteractionType.AUTONOMOUS,
 }
+
+##############################################################################
+# Subtrees
+##############################################################################
+
+
+def create_move_to_elevator_subtree(elevator_name, elevator_level_entry_pose):
+    """
+    :param str elevator_name: name of the elevator as defined in semantics
+    :param dict elevator_level_entry_pose: semantics style pose type for the move to/finishing goal ({x, y, theta})
+    """
+    gopher = gopher_configuration.configuration.Configuration(fallback_to_defaults=True)
+    move_to_elevator = py_trees.composites.Sequence(name="Move to Elevator")
+    move_to = navigation.MoveIt("Move To %s" % utilities.to_human_readable(elevator_name), elevator_level_entry_pose)
+    goal_finishing = navigation.GoalFinishing(name="Finish", goal_pose=elevator_level_entry_pose)
+    honk = interactions.Articulate("Honk", gopher.sounds.honk)
+    move_to_elevator.add_children([move_to, goal_finishing, honk])
+    return move_to_elevator
 
 ##############################################################################
 # Behaviours
@@ -126,14 +145,12 @@ class HumanAssistedElevators(Elevators):
         :param gopher_semantic_msgs.ElevatorLevel elevator_level_destination:
         :param elf.InitialisationType elf_initialisation_type:
         """
-        move_to_elevator = navigation.MoveIt("To '%s@%s'" % (elevator_name, elevator_level_origin.world), elevator_level_origin.entry)
-        goal_finishing = navigation.GoalFinishing(name="Finish '%s@%s'" % (elevator_name, elevator_level_origin.world), goal_pose=elevator_level_origin.entry)
-        honk = interactions.Articulate("Honk", gopher_configuration.sounds.honk)
 
         travelling = py_trees.composites.Parallel(
             name="Travelling",
             policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE
         )
+        move_to_elevator = create_move_to_elevator_subtree(elevator_name, elevator_level_origin.entry)
 
         flash_leds_travelling = interactions.Notification(
             name="Flash for Input",
@@ -155,9 +172,6 @@ class HumanAssistedElevators(Elevators):
         goal.elevator_location.world = elevator_level_destination.world
         goal.elevator_location.location = gopher_navi_msgs.ElevatorLocation.EXIT
         goal.special_effects = False  # we do our own special effects
-
-        travelling.add_child(flash_leds_travelling)
-        travelling.add_child(wait_for_go_button_travelling)
 
         teleporting = py_trees.composites.Parallel(
             name="Teleport to '%s'" % elevator_level_destination.world,
@@ -185,9 +199,9 @@ class HumanAssistedElevators(Elevators):
 
         children = []
         children.append(move_to_elevator)
-        children.append(goal_finishing)
-        children.append(honk)
         children.append(travelling)
+        travelling.add_child(flash_leds_travelling)
+        travelling.add_child(wait_for_go_button_travelling)
         children.append(teleporting)
         if elf_initialisation is not None:
             children.append(elf_reset)
@@ -236,11 +250,7 @@ class PartialAssistedElevators(Elevators):
         """
         children = []
 
-        # move to elevator
-        move_to_elevator = py_trees.composites.Sequence("Move to Elevator")
-        navigate_to_elevator = navigation.MoveIt("Navigate to Elevator", elevator_level_origin.entry)
-        honk_at_elevator = interactions.Articulate("Honk at Elevator", gopher_configuration.sounds.honk)
-        move_to_elevator.add_children((navigate_to_elevator, honk_at_elevator))
+        move_to_elevator = create_move_to_elevator_subtree(elevator_name, elevator_level_origin.entry)
         children.append(move_to_elevator)
 
         # Wait for pick-up

@@ -118,8 +118,7 @@ def parse_arguments(command_line_args):
     # Rendering
     if args.render:
         # TODO : make sure they have at least two worlds at least and one elevator and that the elevator connects them
-        if args.elevator is None:
-            args.elevator = semantics.elevators.values()[0]
+        args.elevator = semantics.elevators.values()[0] if args.elevator is None else semantics.elevators[args.elevator]
         if args.destination is None:
             args.destination = semantics.worlds.keys()[0]  # TODO : make sure this something other than the default world
         args.visibility_level = py_trees.common.string_to_visibility_level(args.visibility_level)
