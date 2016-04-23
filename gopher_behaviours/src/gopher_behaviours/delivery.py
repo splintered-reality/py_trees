@@ -542,18 +542,8 @@ class GopherDeliveries(object):
 
     def dynamic_reconfigure_callback(self, config, level):
         self.parameters.express = config.express
-        conversions = {
-            QuirkyDeliveriesConfig.QuirkyDeliveries_teleop: elf.InitialisationType.TELEOP,
-            QuirkyDeliveriesConfig.QuirkyDeliveries_ar: elf.InitialisationType.AR,
-        }
-        self.parameters.elf = conversions[config.elf]
-        conversions = {
-            QuirkyDeliveriesConfig.QuirkyDeliveries_human: elevators.InteractionType.HUMAN_ASSISTED,
-            QuirkyDeliveriesConfig.QuirkyDeliveries_partial: elevators.InteractionType.PARTIAL_ASSISTED,
-            QuirkyDeliveriesConfig.QuirkyDeliveries_autonomous: elevators.InteractionType.AUTONOMOUS
-        }
-        self.parameters.elevator = conversions[config.elevator]
-        # rospy.loginfo("QuirkyDeliveries: reconfigured\n%s" % self.parameters)
+        self.parameters.elf = elf.string_to_elf_initialisation_type[config.elf]
+        self.parameters.elevator = elevators.string_to_interaction_type[config.elevator]
         return config
 
     #################################

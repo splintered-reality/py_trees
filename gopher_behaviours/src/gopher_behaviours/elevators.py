@@ -36,10 +36,12 @@ from . import elf
 from . import interactions
 from . import navigation
 
+from gopher_behaviours.cfg import QuirkyDeliveriesConfig
 
 ##############################################################################
 # Helpers
 ##############################################################################
+
 
 def get_elevator_level(elevator, world):
     for level in elevator.levels:
@@ -64,9 +66,9 @@ class InteractionType(enum.IntEnum):
 
 
 string_to_interaction_type = {
-    "human-assisted": InteractionType.HUMAN_ASSISTED,
-    "partial-assisted": InteractionType.PARTIAL_ASSISTED,
-    "autonomous": InteractionType.AUTONOMOUS,
+    QuirkyDeliveriesConfig.QuirkyDeliveries_human: InteractionType.HUMAN_ASSISTED,
+    QuirkyDeliveriesConfig.QuirkyDeliveries_partial: InteractionType.PARTIAL_ASSISTED,
+    QuirkyDeliveriesConfig.QuirkyDeliveries_autonomous: InteractionType.AUTONOMOUS,
 }
 
 ##############################################################################

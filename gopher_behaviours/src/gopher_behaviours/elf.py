@@ -32,7 +32,8 @@ from . import ar_markers
 from . import interactions
 from . import navigation
 from . import simple_motions
-from . import transform_utilities
+
+from gopher_behaviours.cfg import QuirkyDeliveriesConfig
 
 ##############################################################################
 # Enum
@@ -49,8 +50,8 @@ class InitialisationType(enum.IntEnum):
 
 
 string_to_elf_initialisation_type = {
-    "teleop": InitialisationType.TELEOP,
-    "ar": InitialisationType.AR
+    QuirkyDeliveriesConfig.QuirkyDeliveries_teleop: InitialisationType.TELEOP,
+    QuirkyDeliveriesConfig.QuirkyDeliveries_ar: InitialisationType.AR
 }
 
 ##############################################################################
