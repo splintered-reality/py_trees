@@ -171,16 +171,18 @@ def create_root(origin, elevator, destination,
         elevator_behaviour = gopher_behaviours.elevators.PartialAssistedElevators(name=elevator_subtree_name,
                                                                                   origin=origin,
                                                                                   elevator=elevator,
-                                                                                  destination=destination
-                                                                                  )  # to be added somehow: elf_initialisation_type=elf_type)
+                                                                                  destination=destination,
+                                                                                  elf_initialisation_type=elf_type
+                                                                                  )
     elif interaction_type == gopher_behaviours.elevators.InteractionType.AUTONOMOUS:
         print ("[WARNING] autonomous elevator rides not supported yet!" +
                " Will set up a partial-assisted ride.")
         elevator_behaviour = gopher_behaviours.elevators.PartialAssistedElevators(name=elevator_subtree_name,
                                                                                   origin=origin,
                                                                                   elevator=elevator,
-                                                                                  destination=destination
-                                                                                  )  # to be added somehow: elf_initialisation_type=elf_type)
+                                                                                  destination=destination,
+                                                                                  elf_initialisation_type=elf_type
+                                                                                  )
     else:
         elevator_behaviour = gopher_behaviours.elevators.HumanAssistedElevators(name=elevator_subtree_name,
                                                                                 origin=origin,

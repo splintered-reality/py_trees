@@ -108,6 +108,69 @@ def create_move_to_elevator_subtree(elevator_name, elevator_level_entry_pose):
     move_to_elevator.add_children([move_to, goal_finishing, honk])
     return move_to_elevator
 
+
+def create_teleport_and_initialise_children(
+        elevator_name,
+        elevator_level_origin,
+        elevator_level_destination,
+        elf_initialisation_type):
+    """
+    Note that the teleop elf initialisation type is not necessary - the teleport directly does the same job, so
+    no teleelf is attached to the subtree.
+
+    :param elevator_level_origin:
+    :param elevator_level_destination:
+    :param elf.InitialisationType elf_initialisation_type: the kind of initialisation required at the other end
+
+    :returns: a list of behaviours to be added as children to a parent sequence
+
+    :raises ValueError: if elf initialisation type is incorrect
+    """
+    gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
+    goal = gopher_navi_msgs.TeleportGoal()
+    goal.elevator_location = gopher_navi_msgs.ElevatorLocation()
+    goal.elevator_location.elevator = elevator_name
+    goal.elevator_location.world = elevator_level_destination.world
+    goal.elevator_location.location = gopher_navi_msgs.ElevatorLocation.EXIT
+    goal.special_effects = False  # we do our own special effects
+
+    teleporting = py_trees.composites.Parallel(
+        name="Teleport",
+        policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE
+    )
+    # teleporting_jobs = py_trees.composites.Sequence("Teleport Jobs")
+    flash_leds_teleporting = interactions.Notification(
+        name="Flash Cool",
+        led_pattern=gopher.led_patterns.im_doing_something_cool,
+        sound=gopher.sounds.teleport,
+        message="teleporting from {0} to {1}".format(elevator_level_origin, elevator_level_destination)
+    )
+    teleport = navigation.Teleport("Teleport to %s" % utilities.to_human_readable(elevator_level_destination.world), goal)
+
+    if elf_initialisation_type == elf.InitialisationType.TELEOP:
+        elf_initialisation = None
+    elif elf_initialisation_type == elf.InitialisationType.AR:
+        print("AR initialisation")
+        elf_initialisation = elf.ARInitialisation()
+        elf_reset = elf.Reset()
+    else:
+        raise ValueError("Incorrect elf initialisation type")
+
+    #################################
+    # Blackboxes
+    #################################
+    teleporting.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
+    if elf_initialisation is not None:
+        elf_initialisation.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
+
+    #################################
+    # Children
+    #################################
+    teleporting.add_child(flash_leds_teleporting)
+    teleporting.add_child(teleport)
+    return [teleporting, elf_reset, elf_initialisation] if elf_initialisation else [teleporting]
+
+
 ##############################################################################
 # Behaviours
 ##############################################################################
@@ -176,45 +239,20 @@ class HumanAssistedElevators(Elevators):
             message="Waiting for confirm button press in front of elevator"
         )
 
-        goal = gopher_navi_msgs.TeleportGoal()
-        goal.elevator_location = gopher_navi_msgs.ElevatorLocation()
-        goal.elevator_location.elevator = elevator_name
-        goal.elevator_location.world = elevator_level_destination.world
-        goal.elevator_location.location = gopher_navi_msgs.ElevatorLocation.EXIT
-        goal.special_effects = False  # we do our own special effects
-
-        teleporting = py_trees.composites.Parallel(
-            name="Teleport",
-            policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE
-        )
-        # teleporting_jobs = py_trees.composites.Sequence("Teleport Jobs")
-        flash_leds_teleporting = interactions.Notification(
-            name="Flash Cool",
-            led_pattern=gopher_configuration.led_patterns.im_doing_something_cool,
-            sound=gopher_configuration.sounds.teleport,
-            message="teleporting from {0} to {1}".format(elevator_level_origin, elevator_level_destination)
-        )
-        elevator_teleport = navigation.Teleport("Teleport to %s" % utilities.to_human_readable(elevator_level_destination.world), goal)
-
-        teleporting.add_child(flash_leds_teleporting)
-        teleporting.add_child(elevator_teleport)
-
-        if elf_initialisation_type == elf.InitialisationType.TELEOP:
-            elf_initialisation = None
-        elif elf_initialisation_type == elf.InitialisationType.AR:
-            elf_initialisation = elf.ARInitialisation()
-            elf_reset = elf.Reset()
-        else:
-            return []
+        try:
+            teleport_and_initialise_children = create_teleport_and_initialise_children(
+                elevator_name=elevator_name,
+                elevator_level_origin=elevator_level_origin,
+                elevator_level_destination=elevator_level_destination,
+                elf_initialisation_type=elf_initialisation_type)
+        except ValueError as e:
+            raise e
 
         #################################
         # Blackboxes
         #################################
         move_to_elevator.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
         ride.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
-        teleporting.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
-        if elf_initialisation is not None:
-            elf_initialisation.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
 
         #################################
         # Graph
@@ -223,10 +261,7 @@ class HumanAssistedElevators(Elevators):
         children = []
         children.append(move_to_elevator)
         children.append(ride)
-        children.append(teleporting)
-        if elf_initialisation is not None:
-            children.append(elf_reset)
-            children.append(elf_initialisation)
+        children += teleport_and_initialise_children
         return children
 
 
@@ -247,6 +282,7 @@ class PartialAssistedElevators(Elevators):
         self._elevator = elevator
         self._elevator_level_origin = get_elevator_level(elevator, origin)
         self._elevator_level_destination = get_elevator_level(elevator, destination)
+        self._elf_initialisation_type = elf_initialisation_type
         self._gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
         self._ride_uuid = uuid.uuid4().time_low
 
@@ -258,13 +294,15 @@ class PartialAssistedElevators(Elevators):
         map(self.add_child, self._generate_elevator_children(self._gopher,
                                                              self._elevator.unique_name,
                                                              self._elevator_level_origin,
-                                                             self._elevator_level_destination))
+                                                             self._elevator_level_destination,
+                                                             self._elf_initialisation_type))
 
     def _generate_elevator_children(self,
                                     gopher_configuration,
                                     elevator_name,
                                     elevator_level_origin,
-                                    elevator_level_destination):
+                                    elevator_level_destination,
+                                    elf_initialisation_type):
         """
         :param gopher_configuration.Configuration gopher_configuration:
         :param str elevator_name: unique name of the elevator
@@ -273,7 +311,9 @@ class PartialAssistedElevators(Elevators):
         """
         move_to_elevator = create_move_to_elevator_subtree(elevator_name, elevator_level_origin.entry)
 
-        # Wait for pick-up
+        #################################
+        # Pickup and Board
+        #################################
         pickup = py_trees.composites.Parallel(name="Pickup",
                                               policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE)
         call_elevator_to_floor = py_trees.composites.Sequence("Call Elevator")
@@ -301,7 +341,9 @@ class PartialAssistedElevators(Elevators):
             message="Waiting for boarding confirmation from human."
         )
 
-        # ride elevator
+        #################################
+        # Ride
+        #################################
         ride = py_trees.composites.Parallel(name="Ride",
                                             policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE)
         enjoy_ride = py_trees.composites.Sequence("Transit")
@@ -321,15 +363,15 @@ class PartialAssistedElevators(Elevators):
             button_cancel=gopher_std_msgs.Notification.RETAIN_PREVIOUS,
             message="Waiting for the elevator to drop me off.")
 
-        # disembark elevator
+        #################################
+        # Disembark & Release
+        #################################
         disembarkment = interactions.flash_and_wait_for_go_button(
-            name="Board",
+            name="Disembark",
             notification_behaviour_name="Flash for Input",
             led_pattern=gopher_configuration.led_patterns.humans_give_me_input,
             message="Waiting for disembarkment confirmation from human."
         )
-
-        # release elevator
         release = py_trees.composites.Parallel(name="Release",
                                                policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE)
         release_elevator = py_trees.composites.Sequence("Release Elevator")
@@ -346,6 +388,18 @@ class PartialAssistedElevators(Elevators):
             message="Releasing elevator.")
 
         #################################
+        # Teleport and Initialise
+        #################################
+        try:
+            teleport_and_initialise_children = create_teleport_and_initialise_children(
+                elevator_name=elevator_name,
+                elevator_level_origin=elevator_level_origin,
+                elevator_level_destination=elevator_level_destination,
+                elf_initialisation_type=elf_initialisation_type)
+        except ValueError as e:
+            raise e
+
+        #################################
         # Blackboxes
         #################################
         move_to_elevator.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
@@ -354,9 +408,6 @@ class PartialAssistedElevators(Elevators):
         ride.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
         disembarkment.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
         release.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
-
-        # if elf_initialisation is not None:
-        #    elf_initialisation.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
 
         #################################
         # Graph
@@ -378,5 +429,6 @@ class PartialAssistedElevators(Elevators):
         release.add_child(release_elevator)
         release_elevator.add_children((confirm_disembarkment, honk_disembarkment))
         release.add_child(signal_releasing_elevator)
+        children += teleport_and_initialise_children
 
         return children
