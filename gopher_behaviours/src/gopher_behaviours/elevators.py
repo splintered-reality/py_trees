@@ -124,8 +124,8 @@ class HumanAssistedElevators(Elevators):
         :param gopher_semantic_msgs.ElevatorLevel elevator_level_destination:
         :param elf.InitialisationType elf_initialisation_type:
         """
-        move_to_elevator = navigation.MoveIt("To Elevator '%s'" % elevator_name, elevator_level_origin.entry)
-        goal_finishing = navigation.GoalFinishing(name="Finish '%s'" % elevator_name, goal_pose=elevator_level_origin.entry)
+        move_to_elevator = navigation.MoveIt("To '%s@%s'" % (elevator_name, elevator_level_origin.world), elevator_level_origin.entry)
+        goal_finishing = navigation.GoalFinishing(name="Finish '%s@%s'" % (elevator_name, elevator_level_origin.world), goal_pose=elevator_level_origin.entry)
         honk = interactions.Articulate("Honk", gopher_configuration.sounds.honk)
 
         travelling = py_trees.composites.Parallel(
