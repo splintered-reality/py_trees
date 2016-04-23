@@ -20,7 +20,9 @@ import gopher_behaviours
 import gopher_semantics
 import py_trees
 import rocon_console.console as console
+import rocon_python_comms
 import rospy
+import std_msgs.msg as std_msgs
 import sys
 
 ##############################################################################
@@ -30,13 +32,16 @@ import sys
 
 def show_description():
     s = "\n"
-    s += console.green + "This program executes unparking/init/parking in a loop for convenient testing." +\
+    s += console.green + "This program executes a gopher elevator run for convenient testing." +\
         console.reset
     s += "\n"
     return s
 
 
 def show_usage():
+    """
+    Follow this guideline: https://en.wikipedia.org/wiki/Usage_message
+    """
     s = "\n"
     s += console.white
     s += console.bold + "************************************************************************************\n" +\
@@ -55,17 +60,14 @@ def show_usage():
     s += "\n"
     s += console.bold + "    Execute" + console.reset + "\n"
     s += console.cyan + "        gopher_elevator_run" + console.yellow +\
-        " <origin_world> <elevator> <destination_world>" + console.reset + "\n"
-    s += console.cyan + "        (e.g. gopher_elevator_run" + console.yellow + " heaven highway_to_hell hell" +\
+        " <elevator> <destination_world>" + console.reset + "\n"
+    s += console.cyan + "        (e.g. gopher_elevator_run" + console.yellow + " highway_to_hell hell)" +\
         console.reset + "\n"
     s += "\n"
     s += console.white
     s += console.bold + "    Launchers" + console.reset + "\n"
     s += console.cyan + "        gopher_robot/apps_gocart.launch + 'Fake Navigation'" + console.reset + "\n"
     s += console.cyan + "        gopher_podium/apps_gocart.launch + 'Navigation'" + console.reset + "\n"
-    s += console.white
-    s += console.bold + "    Generate Dot" + console.reset + "\n"
-    s += console.cyan + "        gopher_elevator_run" + console.yellow + " --render" + console.reset + "\n"
     s += "\n"
     return s
 
@@ -97,14 +99,11 @@ def parse_arguments(command_line_args):
     introspection_group.add_argument('-e', '--elevators', action='store_true', help='list available elevators')
 
     command_group = parser.add_argument_group('Command')
-    command_group.add_argument('origin', nargs='?', default=None, help='world to shift from.')
     command_group.add_argument('elevator', nargs='?', default=None, type=str, help='elevator to use.')
     command_group.add_argument('destination', nargs='?', default=None, type=str, help='world to shift to.')
 
     args = parser.parse_args(command_line_args)
-
     args.type = gopher_behaviours.elevators.string_to_interaction_type[args.type]
-
     args.elf = gopher_behaviours.elf.string_to_elf_initialisation_type[args.elf]
 
     semantics = gopher_semantics.Semantics(semantics_parameter_namespace=args.namespace, fallback_to_defaults=True)
@@ -118,26 +117,18 @@ def parse_arguments(command_line_args):
 
     # Rendering
     if args.render:
-        # Just hope they have two worlds at least and one elevator and that the elevator connects them
-        if args.origin is None:
-            args.origin = semantics.worlds.keys()[0]
+        # TODO : make sure they have at least two worlds at least and one elevator and that the elevator connects them
         if args.elevator is None:
             args.elevator = semantics.elevators.values()[0]
         if args.destination is None:
-            args.destination = semantics.worlds.keys()[1]
+            args.destination = semantics.worlds.keys()[0]  # TODO : make sure this something other than the default world
         args.visibility_level = py_trees.common.string_to_visibility_level(args.visibility_level)
         return args
 
     # Elevatoring
-    if args.origin is None or args.elevator is None or args.destination is None:
-        print(console.red + "\nERROR : requires all three command values (origin, elevator, destination)\n" +
+    if args.elevator is None or args.destination is None:
+        print(console.red + "\nERROR : requires two command values (elevator, destination)\n" +
               console.reset)
-        parser.print_help()
-        sys.exit(1)
-
-    if args.origin not in semantics.worlds.keys():
-        print(console.red + "\nERROR : origin '%s' is not in the semantic worlds list %s\n"
-              % (args.origin, semantics.worlds.keys()) + console.reset)
         parser.print_help()
         sys.exit(1)
 
@@ -211,20 +202,28 @@ if __name__ == '__main__':
 
     if args.render:
         # todo be smarter about this...pull from the semantics directly
-        demo = gopher_behaviours.scripts.demo.Demo(root=create_root(args.origin, args.elevator, args.destination,
+        semantics = gopher_semantics.Semantics(semantics_parameter_namespace=args.namespace, fallback_to_defaults=True)
+        origin = semantics.worlds.default
+        demo = gopher_behaviours.scripts.demo.Demo(root=create_root(origin, args.elevator, args.destination,
                                                                     args.type, args.elf))
         py_trees.display.render_dot_tree(demo.root, args.visibility_level)
         sys.exit()
 
-    print("Demo")
-    root = create_root(args.origin, args.elevator, args.destination, args.type, args.elf)
-    print("Root")
+    rospy.init_node("gopher_elevator_run", log_level=rospy.INFO)
+
+    gopher = gopher_configuration.configuration.Configuration()
+    try:
+        msg = rocon_python_comms.SubscriberProxy(gopher.topics.world, std_msgs.String)(rospy.Duration(5.0))
+        if msg is None:
+            sys.exit(console.red + "[ERROR] failed to retrieve the current world from marco polo." + console.reset)
+        origin = msg.data
+    except rospy.exceptions.ROSInterruptException:  # make sure to handle a Ros shutdown
+        sys.exit(console.red + "[ERROR] ros shutdown." + console.reset)
+
+    root = create_root(origin, args.elevator, args.destination, args.type, args.elf)
     py_trees.display.print_ascii_tree(root)
 
     demo = gopher_behaviours.scripts.demo.Demo(root)
-
-    rospy.init_node("gopher_elevator_run", log_level=rospy.INFO)
-
     if not demo.tree.setup(15):
         sys.exit(console.red + "[ERROR] failed to setup required ros components." + console.reset)
 
