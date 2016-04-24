@@ -150,7 +150,6 @@ def create_teleport_and_initialise_children(
     if elf_initialisation_type == elf.InitialisationType.TELEOP:
         elf_initialisation = None
     elif elf_initialisation_type == elf.InitialisationType.AR:
-        print("AR initialisation")
         elf_initialisation = elf.ARInitialisation()
         elf_reset = elf.Reset()
     else:
