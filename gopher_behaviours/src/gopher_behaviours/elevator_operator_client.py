@@ -96,6 +96,8 @@ class RequestElevatorRide(py_trees.Behaviour):
         self._floor_dropoff = floor_dropoff
         self.config = None
         self._service_client = None
+        self._request_timeout = rospy.Duration(10.0)
+        self._start_time = rospy.Time(0.0)
 
     def setup(self, timeout):
         """
@@ -115,6 +117,7 @@ class RequestElevatorRide(py_trees.Behaviour):
 
     def initialise(self):
         self.logger.debug("  %s [RequestElevatorRide::initialise()]" % self.name)
+        self._start_time = rospy.Time.now()
 
     def update(self):
         self.logger.debug("  %s [RequestElevatorRide::update()]" % self.name)
@@ -124,9 +127,8 @@ class RequestElevatorRide(py_trees.Behaviour):
         request.ride_request.floor_pickup = self._floor_pickup
         request.ride_request.floor_dropoff = self._floor_dropoff
         request.ride_request.ride_uuid = self._ride_uuid
-        print(console.blue + "Calling service client pair with 5s timeout" + console.reset)
-        response = call_service(self.name, self._service_client, request, 5)
-        print(console.blue + "Response %s" % response + console.reset)
+        # todo - switch this to non-blocking
+        response = call_service(self.name, self._service_client, request, 0.25)
         if response:
             if response.ride_response.ride_uuid == self._ride_uuid:
                 if response.ride_response.ride_confirmation == elevator_interactions_msgs.RideResponse.ACCEPTED:
@@ -145,9 +147,12 @@ class RequestElevatorRide(py_trees.Behaviour):
                 rospy.logerr("Behaviour [" + self.name + "]: %s" % self.feedback_message)
                 return py_trees.Status.FAILURE
         else:
-            self.feedback_message = "did not receive a response from the server, will keep trying"
-            self.logger.debug("Behaviour [" + self.name + "]: %s" % self.feedback_message)
-            return py_trees.Status.RUNNING
+            if (rospy.Time.now() - self._start_time) > self._request_timeout:
+                self.feedback_message = "no response from the server for more than %ss, giving up" % self._request_timeout
+                return py_trees.Status.FAILURE
+            else:
+                self.feedback_message = "did not receive a response from the server, will keep trying"
+                return py_trees.Status.RUNNING
 
     def terminate(self, new_status):
         self.logger.debug("  %s [RequestElevatorRide::terminate()][%s->%s]" % (self.name, self.status,
@@ -170,6 +175,8 @@ class RequestElevatorStatusUpdate(py_trees.Behaviour):
         self._expected_result = expected_result
         self.config = None
         self._service_client = None
+        self._waiting_timeout = rospy.Duration(300.0)
+        self._start_time = rospy.Time.now()
 
     def setup(self, timeout):
         """
@@ -190,6 +197,7 @@ class RequestElevatorStatusUpdate(py_trees.Behaviour):
 
     def initialise(self):
         self.logger.debug("  %s [RequestElevatorStatusUpdate::initialise()]" % self.name)
+        self._start_time = rospy.Time.now()
 
     def update(self):
         self.logger.debug("  %s [RequestElevatorStatusUpdate::update()]" % self.name)
@@ -200,21 +208,26 @@ class RequestElevatorStatusUpdate(py_trees.Behaviour):
         if response:
             if response.elevator_operator_status.status == self._expected_result:
                 if response.elevator_operator_status.ride_uuid == self._ride_uuid:
-                        return py_trees.Status.SUCCESS
+                    self.feedback_message = "success"
+                    return py_trees.Status.SUCCESS
                 else:
-                    rospy.logerr("Behaviour [" + self.name + "]: Server is not processing our ride anymore (" +
-                                 "processing ride with ID " + str(response.elevator_operator_status.ride_uuid) + ").")
+                    self.feedback_message = "server is not processing our ride anymore (" +\
+                        "processing ride with ID " + str(response.elevator_operator_status.ride_uuid) + ")."
+                    rospy.logerr("Behaviour [" + self.name + "]: %s" % self.feedback_message)
                     return py_trees.Status.FAILURE
             else:
-                self.logger.debug("Behaviour [" + self.name + "]: Received a response from the server, " +
-                                  "but it's not what we are looking for (" +
-                                  str(response.elevator_operator_status.status) + " != " +
-                                  str(self._expected_result) + ").")
+                self.feedback_message = "Received a response from the server, " +\
+                    "but it's not what we are looking for (" +\
+                    str(response.elevator_operator_status.status) + " != " +\
+                    str(self._expected_result) + ")."
                 return py_trees.Status.RUNNING
         else:
-            self.logger.debug("Behaviour [" + self.name + "]: Did not receive a response from the server." +
-                              " Will keep trying.")
-            return py_trees.Status.RUNNING
+            if (rospy.Time.now() - self._start_time) > self._request_timeout:
+                self.feedback_message = "no response from the server for more than %ss, giving up" % self._request_timeout
+                return py_trees.Status.FAILURE
+            else:
+                self.feedback_message = "did not receive a response from the server, will keep trying"
+                return py_trees.Status.RUNNING
 
     def terminate(self, new_status):
         self.logger.debug("  %s [RequestElevatorStatusUpdate::terminate()][%s->%s]" % (self.name, self.status,
