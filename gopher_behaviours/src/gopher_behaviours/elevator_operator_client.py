@@ -24,6 +24,7 @@ Bless my noggin with a tickle from your noodly appendages!
 import elevator_interactions_msgs.msg as elevator_interactions_msgs
 import gopher_configuration
 import py_trees
+import rocon_console.console as console
 import rocon_python_comms
 import rospy
 import uuid
@@ -39,8 +40,10 @@ def connect_to_service(name, service_name, service_type, connect_timeout):
 
         returns None, if an exception occurs
     '''
-    service_client = rocon_python_comms.ServicePairClient(service_name,
-                                                          service_type)
+    service_client = rocon_python_comms.ServicePairClient(
+        service_name,
+        service_type
+    )
     try:
         if service_client.wait_for_service(rospy.Duration(connect_timeout)):
             return service_client
@@ -107,7 +110,7 @@ class RequestElevatorRide(py_trees.Behaviour):
         if self._service_client:
             return True
         else:
-            rospy.logerr("Behaviour [" + self.name + "]: Failed to set up ROS components.")
+            rospy.logerr("Behaviour [" + self.name + "]: failed to set up ROS components.")
             return False
 
     def initialise(self):
@@ -121,24 +124,29 @@ class RequestElevatorRide(py_trees.Behaviour):
         request.ride_request.floor_pickup = self._floor_pickup
         request.ride_request.floor_dropoff = self._floor_dropoff
         request.ride_request.ride_uuid = self._ride_uuid
-        response = call_service(self.name, self._service_client, request, 0.25)
+        print(console.blue + "Calling service client pair with 5s timeout" + console.reset)
+        response = call_service(self.name, self._service_client, request, 5)
+        print(console.blue + "Response %s" % response + console.reset)
         if response:
             if response.ride_response.ride_uuid == self._ride_uuid:
                 if response.ride_response.ride_confirmation == elevator_interactions_msgs.RideResponse.ACCEPTED:
-                    rospy.loginfo("Behaviour [" + self.name + "]: Server accepted our ride request. We are #" +
-                                  str(response.ride_response.waiting_line_position) + " in the queue.")
+                    self.feedback_message = "server accepted our ride request, we are #" +\
+                        str(response.ride_response.waiting_line_position) + " in the queue"
+                    rospy.loginfo("Behaviour [" + self.name + "]: %s" % self.feedback_message)
                     return py_trees.Status.SUCCESS
                 else:
-                    rospy.logerr("Behaviour [" + self.name + "]: Server declined our ride request (response: " +
-                                 str(response.ride_response.ride_confirmation) + ").")
+                    self.feedback_message = "server declined our ride request [response: " +\
+                        str(response.ride_response.ride_confirmation) + "]"
+                    rospy.logerr("Behaviour [" + self.name + "]: %s" % self.feedback_message)
                     return py_trees.Status.FAILURE
             else:
-                rospy.logerr("Behaviour [" + self.name + "]: Server is not processing our ride anymore (" +
-                             "processing ride with ID " + str(response.ride_response.ride_uuid) + ").")
+                self.feedback_message = "server is not processing our ride anymore [" +\
+                    "processing ride with ID " + str(response.ride_response.ride_uuid) + "]"
+                rospy.logerr("Behaviour [" + self.name + "]: %s" % self.feedback_message)
                 return py_trees.Status.FAILURE
         else:
-            self.logger.debug("Behaviour [" + self.name + "]: Did not receive a response from the server." +
-                              " Will keep trying.")
+            self.feedback_message = "did not receive a response from the server, will keep trying"
+            self.logger.debug("Behaviour [" + self.name + "]: %s" % self.feedback_message)
             return py_trees.Status.RUNNING
 
     def terminate(self, new_status):
