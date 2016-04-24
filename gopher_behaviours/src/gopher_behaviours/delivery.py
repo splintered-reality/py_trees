@@ -131,6 +131,12 @@ def create_delivery_subtree(world, locations, parameters=Parameters()):
     # Parking/Unparking
     ########################
     unparking_or_not = py_trees.composites.Chooser(name="UnParking?")
+    parking_not_necessary = py_trees.composites.Parallel(name="No UnPark", policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ALL)
+    are_we_localised = py_trees.CheckBlackboardVariable(
+        name="Localised?",
+        variable_name="elf_localisation_status",
+        expected_value=elf_msgs.ElfLocaliserStatus.STATUS_WORKING
+    )
     not_a_parking_zone = py_trees.meta.inverter(unpark.NearParkingLocation)(
         name="Not a Parking Zone",
         current_world=world
@@ -152,11 +158,6 @@ def create_delivery_subtree(world, locations, parameters=Parameters()):
     ########################
     root = py_trees.composites.Selector(name="Deliver or Die")
     subtrees.deliveries = py_trees.OneshotSequence("Deliveries")
-    are_we_localised = py_trees.CheckBlackboardVariable(
-        name="Localised?",
-        variable_name="elf_localisation_status",
-        expected_value=elf_msgs.ElfLocaliserStatus.STATUS_WORKING
-    )
     todo_or_not = py_trees.composites.Selector(name="Do or be Cancelled?")
 
     ########################
@@ -175,9 +176,10 @@ def create_delivery_subtree(world, locations, parameters=Parameters()):
     ########################
     root.add_child(subtrees.deliveries)
     subtrees.deliveries.add_child(unparking_or_not)
-    unparking_or_not.add_child(not_a_parking_zone)
+    unparking_or_not.add_child(parking_not_necessary)
+    parking_not_necessary.add_child(are_we_localised)
+    parking_not_necessary.add_child(not_a_parking_zone)
     unparking_or_not.add_child(subtrees.unparking)
-    subtrees.deliveries.add_child(are_we_localised)
     subtrees.deliveries.add_child(todo_or_not)
     todo_or_not.add_child(subtrees.cancelling)
     subtrees.cancelling.add_child(subtrees.is_cancelled)
