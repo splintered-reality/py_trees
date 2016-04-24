@@ -126,7 +126,6 @@ class Park(py_trees.Sequence):
         parking_motions = Approach()
         todock_or_not_todock = py_trees.Selector(name="ToDock or Not ToDock")
         docking_control = py_trees.Sequence(name="Dock")
-        docking_control.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
         pre_dock_rotation = simple_motions.SimpleMotion(
             name="Pre-Rotation",
             motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
@@ -138,7 +137,12 @@ class Park(py_trees.Sequence):
         clearing_flags = py_trees.blackboard.ClearBlackboardVariable(name="Clear Flags", variable_name="undocked")
 
         ############################################
-        # Assembly
+        # Blackboxes
+        ############################################
+        docking_control.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
+
+        ############################################
+        # Graph
         ############################################
         self.add_child(write_pose_park_start_rel_map)
         self.add_child(parking_motions)
@@ -221,7 +225,7 @@ class Approach(py_trees.Sequence):
 
     def __init__(self, name="Approach"):
         super(Approach, self).__init__(name)
-        self.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
+        self.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
 
         self.close_to_park_distance_threshold = 0.1
         self.blackboard = py_trees.Blackboard()

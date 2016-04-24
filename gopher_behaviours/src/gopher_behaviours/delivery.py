@@ -45,6 +45,7 @@ from . import navigation
 from . import park
 from . import planner
 from . import unpark
+from . import utilities
 
 from gopher_behaviours.cfg import QuirkyDeliveriesConfig
 
@@ -69,6 +70,7 @@ class Parameters(object):
         tree and calling :py::meth:`~gopher_behaviours.delivery.QuirkyDeliveries.setup` on that tree.
         """
         self.elf = elf.InitialisationType.TELEOP
+        self.elevator = elevators.InteractionType.HUMAN_ASSISTED
         self.express = False
 
     def __str__(self):
@@ -130,6 +132,12 @@ def create_delivery_subtree(world, locations, parameters=Parameters()):
     # Parking/Unparking
     ########################
     unparking_or_not = py_trees.composites.Chooser(name="UnParking?")
+    parking_not_necessary = py_trees.composites.Parallel(name="No UnPark", policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ALL)
+    are_we_localised = py_trees.CheckBlackboardVariable(
+        name="Localised?",
+        variable_name="elf_localisation_status",
+        expected_value=elf_msgs.ElfLocaliserStatus.STATUS_WORKING
+    )
     not_a_parking_zone = py_trees.meta.inverter(unpark.NearParkingLocation)(
         name="Not a Parking Zone",
         current_world=world
@@ -143,7 +151,7 @@ def create_delivery_subtree(world, locations, parameters=Parameters()):
         expected_value=None  # check for existence only
     )
     subtrees.parking = park.Park("Park")
-    subtrees.recovering = py_trees.composites.Sequence(name="Recovering")
+    subtrees.recovering = py_trees.composites.Sequence(name="Failure Recovery")
     repark = park.create_repark_subtree()
 
     ########################
@@ -151,29 +159,28 @@ def create_delivery_subtree(world, locations, parameters=Parameters()):
     ########################
     root = py_trees.composites.Selector(name="Deliver or Die")
     subtrees.deliveries = py_trees.OneshotSequence("Deliveries")
-    are_we_localised = py_trees.CheckBlackboardVariable(
-        name="Localised?",
-        variable_name="elf_localisation_status",
-        expected_value=elf_msgs.ElfLocaliserStatus.STATUS_WORKING
-    )
     todo_or_not = py_trees.composites.Selector(name="Do or be Cancelled?")
 
     ########################
     # Blackboxes
     ########################
-    todo_or_not.blackbox_level = py_trees.common.BlackBoxLevel.BIG_PICTURE
+    root.blackbox_level = py_trees.common.BlackBoxLevel.BIG_PICTURE
+    subtrees.unparking.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
+    subtrees.en_route.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
     subtrees.is_cancelled.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
     subtrees.recovering.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
     subtrees.cancelling.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
+    subtrees.parking.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
 
     ########################
     # Graph
     ########################
     root.add_child(subtrees.deliveries)
     subtrees.deliveries.add_child(unparking_or_not)
-    unparking_or_not.add_child(not_a_parking_zone)
+    unparking_or_not.add_child(parking_not_necessary)
+    parking_not_necessary.add_child(are_we_localised)
+    parking_not_necessary.add_child(not_a_parking_zone)
     unparking_or_not.add_child(subtrees.unparking)
-    subtrees.deliveries.add_child(are_we_localised)
     subtrees.deliveries.add_child(todo_or_not)
     todo_or_not.add_child(subtrees.cancelling)
     subtrees.cancelling.add_child(subtrees.is_cancelled)
@@ -262,13 +269,31 @@ def create_locations_subtree(current_world, locations, parameters):
             last_location = current_node
         elif isinstance(current_node, gopher_semantic_msgs.Elevator):
             # topological path guarantees there is a next...
-            elevator_subtree = elevators.HumanAssistedElevators(
-                name="Elevator to %s" % next_node.world,
-                origin=previous_world,
-                elevator=current_node,
-                destination=next_node.world,
-                elf_initialisation_type=parameters.elf
-            )
+            if parameters.elevator == elevators.InteractionType.PARTIAL_ASSISTED:
+                elevator_subtree = elevators.PartialAssistedElevators(
+                    name="Elevator\n%s->%s" % (utilities.to_human_readable(previous_world), utilities.to_human_readable(next_node.world)),
+                    origin=previous_world,
+                    elevator=current_node,
+                    destination=next_node.world,
+                    elf_initialisation_type=parameters.elf
+                )
+            elif parameters.elevator == elevators.InteractionType.AUTONOMOUS:
+                # TODO: replace with autonomous behaviour
+                elevator_subtree = elevators.PartialAssistedElevators(
+                    name="Elevator\n%s->%s" % (previous_world, next_node.world),
+                    origin=previous_world,
+                    elevator=current_node,
+                    destination=next_node.world,
+                    elf_initialisation_type=parameters.elf
+                )
+            else:
+                elevator_subtree = elevators.HumanAssistedElevators(
+                    name="Elevator\n%s->%s" % (previous_world, next_node.world),
+                    origin=previous_world,
+                    elevator=current_node,
+                    destination=next_node.world,
+                    elf_initialisation_type=parameters.elf
+                )
             elevator_subtree.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
             children.append(elevator_subtree)
 
@@ -523,12 +548,8 @@ class GopherDeliveries(object):
 
     def dynamic_reconfigure_callback(self, config, level):
         self.parameters.express = config.express
-        conversions = {
-            QuirkyDeliveriesConfig.QuirkyDeliveries_teleop: elf.InitialisationType.TELEOP,
-            QuirkyDeliveriesConfig.QuirkyDeliveries_ar: elf.InitialisationType.AR,
-        }
-        self.parameters.elf = conversions[config.elf]
-        # rospy.loginfo("QuirkyDeliveries: reconfigured\n%s" % self.parameters)
+        self.parameters.elf = elf.string_to_elf_initialisation_type[config.elf]
+        self.parameters.elevator = elevators.string_to_interaction_type[config.elevator]
         return config
 
     #################################
@@ -650,7 +671,7 @@ class GopherDeliveries(object):
                 self.parameters
             )
 
-            if self.root.setup(10):
+            if self.root.setup(60):  # needs to be > gateway period to enable flips to discover the concert connections
                 self.locations = self.incoming_goal
                 result = True  # NEW_DELIVERY_TREE
             else:

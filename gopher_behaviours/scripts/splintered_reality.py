@@ -81,5 +81,5 @@ if __name__ == '__main__':
     rospy.init_node("splintered_reality", log_level=rospy.INFO)
 
     splintered_reality = gopher_behaviours.splintered_reality.SplinteredReality()
-    splintered_reality.setup(30)
+    splintered_reality.setup(60)
     splintered_reality.tick_tock()

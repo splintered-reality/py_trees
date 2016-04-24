@@ -29,6 +29,18 @@ import rospkg
 ##############################################################################
 
 
+def to_human_readable(s):
+    """
+    Use to convert lowercase/underscore names to something human readable.
+
+    :param str s:
+    :returns: converted string
+    :rtype: str
+    """
+    human_readable_name = s.replace("_", " ")
+    return human_readable_name.title()
+
+
 def get_gopher_home():
     '''
       Retrieve the location of the gopher home directory.

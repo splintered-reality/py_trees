@@ -24,9 +24,8 @@ import rocon_console.console as console
 
 from . import common
 
-from .composites import Sequence, Selector, Parallel
+from .composites import Sequence, Selector, Parallel, Chooser
 from .common import Status
-
 
 ##############################################################################
 # Behaviour
@@ -124,7 +123,9 @@ def generate_pydot_graph(root, visibility_level):
                                  common.BlackBoxLevel.COMPONENT: "lawngreen",
                                  common.BlackBoxLevel.BIG_PICTURE: "white"
                                  }
-        if isinstance(node, Selector):
+        if isinstance(node, Chooser):
+            attributes = ('doubleoctagon', 'cyan', 'black')  # octagon
+        elif isinstance(node, Selector):
             attributes = ('octagon', 'cyan', 'black')  # octagon
         elif isinstance(node, Sequence):
             attributes = ('box', 'orange', 'black')
@@ -141,6 +142,10 @@ def generate_pydot_graph(root, visibility_level):
     fontsize = 11
     graph = pydot.Dot(graph_type='digraph')
     graph.set_name(root.name.lower().replace(" ", "_"))
+    # fonts: helvetica, times-bold, arial (times-roman is the default, but this helps some viewers, like kgraphviewer)
+    graph.set_graph_defaults(fontname='times-roman')
+    graph.set_node_defaults(fontname='times-roman')
+    graph.set_edge_defaults(fontname='times-roman')
     (node_shape, node_colour, node_font_colour) = get_node_attributes(root, visibility_level)
     node_root = pydot.Node(root.name, shape=node_shape, style="filled", fillcolor=node_colour, fontsize=fontsize, fontcolor=node_font_colour)
     graph.add_node(node_root)

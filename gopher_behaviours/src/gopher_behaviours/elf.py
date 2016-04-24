@@ -32,7 +32,8 @@ from . import ar_markers
 from . import interactions
 from . import navigation
 from . import simple_motions
-from . import transform_utilities
+
+from gopher_behaviours.cfg import QuirkyDeliveriesConfig
 
 ##############################################################################
 # Enum
@@ -49,8 +50,8 @@ class InitialisationType(enum.IntEnum):
 
 
 string_to_elf_initialisation_type = {
-    "teleop": InitialisationType.TELEOP,
-    "ar": InitialisationType.AR
+    QuirkyDeliveriesConfig.QuirkyDeliveries_teleop: InitialisationType.TELEOP,
+    QuirkyDeliveriesConfig.QuirkyDeliveries_ar: InitialisationType.AR
 }
 
 ##############################################################################
@@ -132,7 +133,6 @@ def create_check_elf_status_subtree():
     """
     gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
     localised_yet = py_trees.composites.Sequence(name="Localised Elf?")
-    localised_yet.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
     check_elf_status = py_trees.CheckSubscriberVariable(
         name="Check ELF Status",
         topic_name=gopher.topics.elf_status,
@@ -169,7 +169,7 @@ class Reset(py_trees.behaviour.Behaviour):
         self.start_time = rospy.get_time()
 
     def update(self):
-        if (rospy.get_time() - self.start_time) < 0.5:
+        if (rospy.get_time() - self.start_time) < 3:
             return py_trees.common.Status.RUNNING
         else:
             return py_trees.common.Status.SUCCESS
@@ -203,7 +203,6 @@ class ARInitialisation(py_trees.Sequence):
         """
         super(ARInitialisation, self).__init__(name)
         self.gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
-        self.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
 
         # Behaviours
         # only long range needed
