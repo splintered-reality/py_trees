@@ -45,6 +45,7 @@ from . import navigation
 from . import park
 from . import planner
 from . import unpark
+from . import utilities
 
 from gopher_behaviours.cfg import QuirkyDeliveriesConfig
 
@@ -270,7 +271,7 @@ def create_locations_subtree(current_world, locations, parameters):
             # topological path guarantees there is a next...
             if parameters.elevator == elevators.InteractionType.PARTIAL_ASSISTED:
                 elevator_subtree = elevators.PartialAssistedElevators(
-                    name="Elevator\n%s->%s" % (previous_world, next_node.world),
+                    name="Elevator\n%s->%s" % (utilities.to_human_readable(previous_world), utilities.to_human_readable(next_node.world)),
                     origin=previous_world,
                     elevator=current_node,
                     destination=next_node.world,
@@ -670,7 +671,7 @@ class GopherDeliveries(object):
                 self.parameters
             )
 
-            if self.root.setup(10):
+            if self.root.setup(60):  # needs to be > gateway period to enable flips to discover the concert connections
                 self.locations = self.incoming_goal
                 result = True  # NEW_DELIVERY_TREE
             else:

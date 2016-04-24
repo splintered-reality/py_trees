@@ -169,7 +169,7 @@ class Reset(py_trees.behaviour.Behaviour):
         self.start_time = rospy.get_time()
 
     def update(self):
-        if (rospy.get_time() - self.start_time) < 0.5:
+        if (rospy.get_time() - self.start_time) < 3:
             return py_trees.common.Status.RUNNING
         else:
             return py_trees.common.Status.SUCCESS

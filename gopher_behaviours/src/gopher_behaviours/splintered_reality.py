@@ -144,6 +144,7 @@ class SplinteredReality(object):
         self.publishers.report.publish(gopher_delivery_msgs.BehaviourReport(status=self.behaviour_status))
         self.tree.setup(timeout)
 
+
     ##############################################################################
     # Tick Tock
     ##############################################################################

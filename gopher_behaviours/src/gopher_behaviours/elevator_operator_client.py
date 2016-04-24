@@ -177,6 +177,10 @@ class RequestElevatorStatusUpdate(py_trees.Behaviour):
         self._service_client = None
         self._waiting_timeout = rospy.Duration(300.0)
         self._start_time = rospy.Time.now()
+        self._valid_moving_states = [
+            elevator_interactions_msgs.ElevatorOperatorStatus.MOVING_TO_PICKUP_FLOOR,
+            elevator_interactions_msgs.ElevatorOperatorStatus.MOVING_TO_DROPOFF_FLOOR
+        ]
 
     def setup(self, timeout):
         """
@@ -211,18 +215,25 @@ class RequestElevatorStatusUpdate(py_trees.Behaviour):
                     self.feedback_message = "success"
                     return py_trees.Status.SUCCESS
                 else:
+                    # TODO handle the case where somebody else is riding and being picked up or dropped off
+                    # AND we are still in the waiting queue, in that case....keep RUNNING!
                     self.feedback_message = "server is not processing our ride anymore (" +\
                         "processing ride with ID " + str(response.elevator_operator_status.ride_uuid) + ")."
                     rospy.logerr("Behaviour [" + self.name + "]: %s" % self.feedback_message)
                     return py_trees.Status.FAILURE
             else:
-                self.feedback_message = "Received a response from the server, " +\
-                    "but it's not what we are looking for (" +\
-                    str(response.elevator_operator_status.status) + " != " +\
-                    str(self._expected_result) + ")."
-                return py_trees.Status.RUNNING
+                # either we are moving...or we're in the waiting line
+                if response.elevator_operator_status.status in self._valid_moving_states or self._ride_uuid in response.elevator_operator_status.waiting_line:
+                    self.feedback_message = "received a response from the server, " +\
+                        "but it's not what we are looking for (" +\
+                        str(response.elevator_operator_status.status) + " != " +\
+                        str(self._expected_result) + ")."
+                    return py_trees.Status.RUNNING
+                else:
+                    self.feedback_message = "we are now no longer the elevator's overlord...[%s]" % response.elevator_operator_status.status
+                    return py_trees.Status.FAILURE
         else:
-            if (rospy.Time.now() - self._start_time) > self._request_timeout:
+            if (rospy.Time.now() - self._start_time) > self._waiting_timeout:
                 self.feedback_message = "no response from the server for more than %ss, giving up" % self._request_timeout
                 return py_trees.Status.FAILURE
             else:
