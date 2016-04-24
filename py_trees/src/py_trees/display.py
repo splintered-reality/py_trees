@@ -24,9 +24,8 @@ import rocon_console.console as console
 
 from . import common
 
-from .composites import Sequence, Selector, Parallel
+from .composites import Sequence, Selector, Parallel, Chooser
 from .common import Status
-
 
 ##############################################################################
 # Behaviour
@@ -124,7 +123,9 @@ def generate_pydot_graph(root, visibility_level):
                                  common.BlackBoxLevel.COMPONENT: "lawngreen",
                                  common.BlackBoxLevel.BIG_PICTURE: "white"
                                  }
-        if isinstance(node, Selector):
+        if isinstance(node, Chooser):
+            attributes = ('doubleoctagon', 'cyan', 'black')  # octagon
+        elif isinstance(node, Selector):
             attributes = ('octagon', 'cyan', 'black')  # octagon
         elif isinstance(node, Sequence):
             attributes = ('box', 'orange', 'black')
