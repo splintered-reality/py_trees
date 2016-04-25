@@ -76,9 +76,9 @@ class ElevatorTransfer(py_trees.Behaviour):
         )
         if not self.action_client.wait_for_server(rospy.Duration(timeout)):
             # replace with a py_trees exception!s
-            self.logger.error("  %s [ElevatorTransfer::setup()] could not connect to the elevator controller server"
+            self.logger.error("  %s [ElevatorTransfer::setup()] could not connect to the elevator transfer server"
                               % self.name)
-            rospy.logerr("Behaviour [%s" % self.name + "] could not connect to the simple motions action server [%s]"
+            rospy.logerr("Behaviour [%s" % self.name + "] could not connect to the elevator transfer action server [%s]"
                          % self.__class__.__name__)
             self.action_client = None
             return False

@@ -278,8 +278,7 @@ def create_locations_subtree(current_world, locations, parameters):
                     elf_initialisation_type=parameters.elf
                 )
             elif parameters.elevator == elevators.InteractionType.AUTONOMOUS:
-                # TODO: replace with autonomous behaviour
-                elevator_subtree = elevators.PartialAssistedElevators(
+                elevator_subtree = elevators.AutonomousElevators(
                     name="Elevator\n%s->%s" % (previous_world, next_node.world),
                     origin=previous_world,
                     elevator=current_node,
