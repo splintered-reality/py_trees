@@ -6,7 +6,7 @@
 ##############################################################################
 
 """
-.. module:: elevator_operatpr_client
+.. module:: elevator_operator_client
    :platform: Unix
    :synopsis: Elevator operator related behaviours
 
@@ -176,7 +176,7 @@ class RequestElevatorStatusUpdate(py_trees.Behaviour):
         self.config = None
         self._service_client = None
         self._waiting_timeout = rospy.Duration(300.0)
-        self._start_time = rospy.Time.now()
+        self._start_time = rospy.Time(0)
         self._valid_moving_states = [
             elevator_interactions_msgs.ElevatorOperatorStatus.MOVING_TO_PICKUP_FLOOR,
             elevator_interactions_msgs.ElevatorOperatorStatus.MOVING_TO_DROPOFF_FLOOR

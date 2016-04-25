@@ -25,6 +25,7 @@ import time
 
 from . import behaviour
 from . import common
+from . import meta
 
 ##############################################################################
 # Behaviours
@@ -136,3 +137,8 @@ class Timer(behaviour.Behaviour):
         # clear the time if finishing with SUCCESS or in the case of an interruption from INVALID
         if new_status == common.Status.SUCCESS or new_status == common.Status.INVALID:
             self.finish_time = None
+
+
+@meta.oneshot
+class OneshotTimer(Timer):
+    pass

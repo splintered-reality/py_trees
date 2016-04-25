@@ -175,20 +175,19 @@ def create_root(origin, elevator, destination,
                                                                                   elf_initialisation_type=elf_type
                                                                                   )
     elif interaction_type == gopher_behaviours.elevators.InteractionType.AUTONOMOUS:
-        print ("[WARNING] autonomous elevator rides not supported yet!" +
-               " Will set up a partial-assisted ride.")
-        elevator_behaviour = gopher_behaviours.elevators.PartialAssistedElevators(name=elevator_subtree_name,
-                                                                                  origin=origin,
-                                                                                  elevator=elevator,
-                                                                                  destination=destination,
-                                                                                  elf_initialisation_type=elf_type
-                                                                                  )
+        elevator_behaviour = gopher_behaviours.elevators.AutonomousElevators(name=elevator_subtree_name,
+                                                                             origin=origin,
+                                                                             elevator=elevator,
+                                                                             destination=destination,
+                                                                             elf_initialisation_type=elf_type
+                                                                             )
     else:
         elevator_behaviour = gopher_behaviours.elevators.HumanAssistedElevators(name=elevator_subtree_name,
                                                                                 origin=origin,
                                                                                 elevator=elevator,
                                                                                 destination=destination,
-                                                                                elf_initialisation_type=elf_type)
+                                                                                elf_initialisation_type=elf_type
+                                                                                )
 
     (button_event_handler, topics_to_blackboard) = gopher_behaviours.chalk_and_talk.create_gopher_handlers()
 
