@@ -73,6 +73,8 @@ class Composite(Behaviour):
                 # replace with py_trees exception!
                 self.logger.error("  %s [Composite.setup()]['%s'.setup() returned None (must be True||False)" % (self.name, child.name))
             result = result and new_result
+            if not result:
+                break
         return result
 
     def stop(self, new_status=Status.INVALID):
