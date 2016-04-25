@@ -151,6 +151,7 @@ def create_teleport_and_initialise_children(
         elf_initialisation = None
     elif elf_initialisation_type == elf.InitialisationType.AR:
         elf_initialisation = elf.ARInitialisation()
+        elf_pause = py_trees.timers.Timer(name="Pause", duration=1.0)
         elf_reset = elf.Reset()
     else:
         raise ValueError("Incorrect elf initialisation type")
@@ -167,7 +168,7 @@ def create_teleport_and_initialise_children(
     #################################
     teleporting.add_child(flash_leds_teleporting)
     teleporting.add_child(teleport)
-    return [teleporting, elf_reset, elf_initialisation] if elf_initialisation else [teleporting]
+    return [teleporting, elf_pause, elf_reset, elf_initialisation] if elf_initialisation else [teleporting]
 
 
 ##############################################################################

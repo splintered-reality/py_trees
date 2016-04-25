@@ -85,6 +85,11 @@ def create_localisation_to_blackboard_behaviour(
     """
     Hooks up a subscriber to the elf and transfers the status
     message to the blackboard.
+
+    Blackboard Variables:
+
+     - elf_localisation_status (w) [elf_msgs/ElfLocaliserStatus] : the localiser status
+
     """
     gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
 
@@ -104,6 +109,10 @@ def create_pose_to_blackboard_behaviour(
 ):
     """
     Hooks up a subscriber and transfers the elf pose to the blackboard.
+
+    Blackboard Variables:
+
+     - pose (w) [geometry_msgs/PoseWithCovarianceStamped] : typical pose from the robot localisation
 
     :param str name: behaviour name
     :param str blackboard_variable_name: name to write the message to
@@ -158,6 +167,7 @@ class Reset(py_trees.behaviour.Behaviour):
         super(Reset, self).__init__(name)
         self.publisher = None
         self.start_time = None
+        self.blackboard = py_trees.blackboard.Blackboard()
 
     def setup(self, timeout):
         self.gopher = gopher_configuration.Configuration()
@@ -169,7 +179,7 @@ class Reset(py_trees.behaviour.Behaviour):
         self.start_time = rospy.get_time()
 
     def update(self):
-        if (rospy.get_time() - self.start_time) < 3:
+        if self.blackboard.elf_localisation_status != elf_msgs.ElfLocaliserStatus.STATUS_WAITING_FOR_STRONG_HINT:
             return py_trees.common.Status.RUNNING
         else:
             return py_trees.common.Status.SUCCESS
