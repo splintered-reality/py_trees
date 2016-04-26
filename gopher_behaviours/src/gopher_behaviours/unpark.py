@@ -110,9 +110,7 @@ class SaveParkingPoseManual(py_trees.Behaviour):
             self.blackboard.pose_park_rel_homebase,
             self.blackboard.pose_homebase_rel_map
         )
-        print("Start Rel Finish: %s" % pose_start_rel_finish)
-        print("Park Rel HB     : %s" % self.blackboard.pose_park_rel_homebase)
-        print("Park Rel Map    : %s" % self.blackboard.pose_park_rel_map)
+        # todo : self.feedback_message = something
         return py_trees.Status.SUCCESS
 
 
@@ -149,6 +147,7 @@ class SaveParkingPoseAuto(py_trees.Behaviour):
         # for completeness we could compute this from park_rel_map and homebase_rel_map, but do we need to?
         # self.blackboard.pose_park_rel_homebase =
 
+        # todo : self.feedback_message = something
         return py_trees.Status.SUCCESS
 
 ##############################################################################
@@ -173,6 +172,7 @@ class UnPark(py_trees.Sequence):
      - pose_unpark_finish_rel_map  (w) [geometry_msgs/Pose]         : finishing park location after having observed it is localised, transferred from /navi/pose
      - pose_park_rel_homebase      (w) [geometry_msgs/Pose]         : pose of the parking location relative to the homebase computed from start/finish poses
      - pose_park_rel_map           (w) [geometry_msgs/Pose]         : pose of the parking location relative to the homebase, computed from pose_park_rel_homebase and pose_homebase_rel_map
+     - undocked                    (w) [bool]                       : whether the robot undocked or not
     """
     def __init__(self, name="UnPark", elf_type=elf.InitialisationType.TELEOP):
         super(UnPark, self).__init__(name)

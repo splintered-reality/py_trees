@@ -126,12 +126,6 @@ class Park(py_trees.Sequence):
         parking_motions = Approach()
         todock_or_not_todock = py_trees.Selector(name="ToDock or Not ToDock")
         docking_control = py_trees.Sequence(name="Dock")
-        pre_dock_rotation = simple_motions.SimpleMotion(
-            name="Pre-Rotation",
-            motion_type=gopher_std_msgs.SimpleMotionGoal.MOTION_ROTATE,
-            motion_amount=3.14,
-            keep_trying_timeout=10.0
-        )
         (ar_tracker_on, ar_tracker_off) = ar_markers.create_ar_tracker_pair_blackboxes()
         docking_controller = docking.DockingController(name="Docking Controller")
         clearing_flags = py_trees.blackboard.ClearBlackboardVariable(name="Clear Flags", variable_name="undocked")
@@ -149,7 +143,6 @@ class Park(py_trees.Sequence):
         self.add_child(todock_or_not_todock)
         todock_or_not_todock.add_child(check_didnt_undock)
         todock_or_not_todock.add_child(docking_control)
-        docking_control.add_child(pre_dock_rotation)
         docking_control.add_child(ar_tracker_on)
         docking_control.add_child(docking_controller)
         docking_control.add_child(ar_tracker_off)
@@ -221,6 +214,7 @@ class Approach(py_trees.Sequence):
 
      - pose_park_rel_map       (r) [geometry_msgs/Pose]                     : pose of the parking location relative to the homebase
      - pose_park_start_rel_map (w) [geometry_msgs.PoseWithCovarianceStamped]: transferred from /navi/pose when about to park
+     - undocked                (r) [bool]                                   : whether the robot undocked or not, we apply 'special' magic if it did
     """
 
     def __init__(self, name="Approach"):
@@ -276,6 +270,11 @@ class Approach(py_trees.Sequence):
             pose_park_rel_map,
             self.close_to_park_distance_threshold
         )
+
+        if self.blackboard.undocked:
+            orient_with_park_angle += 3.14
+            # wrap to -pi, pi
+            orient_with_park_angle = (orient_with_park_angle + numpy.pi) % (2 * numpy.pi) - numpy.pi
 
         self.blackboard.distance_to_park = distance_to_park
         self.blackboard.point_to_park_angle = point_to_park_angle

@@ -47,6 +47,7 @@ class Counter(py_trees.Behaviour):
         setup here.
         """
         self.logger.debug("  %s [Counter::setup()]" % self.name)
+        return True
 
     def initialise(self):
         """
