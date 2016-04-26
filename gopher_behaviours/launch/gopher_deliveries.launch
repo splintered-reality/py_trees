@@ -10,15 +10,18 @@
      - call on the dynamic reconfigure software to retune the delivery manager at launch time
      - call on rqt/create an interaction to retune the delivery manager at runtime
    -->
-  <arg name="express" default="false"  doc="dont wait at each location for the user to press the button."/>
-  <arg name="parking" default="false"  doc="make sure all deliveries do parking/docking."/>
-  <arg name="debug"   default="false"  doc="debug mode logging of behaviours."/>
+  <arg name="debug"    default="false"      doc="debug mode logging of behaviours."/>
+  <!-- dynamic reconfigure parameters (see dynamic_reconfigure/QuirkyDeliveries.cfg for values) -->
+  <arg name="express"  default="false"  doc="dont wait at each location for the user to press the button."/>
+  <arg name="elevator" default="autonomous" doc="initially configure with this elevator mode"/>
+  <arg name="elf"      default="ar"         doc="initially configure with this elf innitialisation mode"/>
 
   <group ns="behaviours">
     <param name="debug" value="$(arg debug)"/>
     <node name="splintered_reality" type="splintered_reality.py" pkg="gopher_behaviours">
       <param name="express" value="$(arg express)"/>
-      <param name="parking" value="$(arg parking)"/>
+      <param name="elf" value="$(arg elf)"/>
+      <param name="elevator" value="$(arg elevator)"/>
     </node>
     <include file="$(find gopher_behaviours)/launch/custom_delivery_overseer.launch"/>
   </group>
