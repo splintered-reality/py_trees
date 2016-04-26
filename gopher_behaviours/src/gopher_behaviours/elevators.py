@@ -307,10 +307,10 @@ class PartialAssistedElevators(Elevators):
                                     elevator_level_destination,
                                     elf_initialisation_type):
         """
-        :param gopher_configuration.Configuration gopher_configuration
-        :param str elevator_name: unique name of the elevator
-        :param gopher_semantic_msgs.ElevatorLevel elevator_level_origin:  semantic world (unique_name) that it is coming from
-        :param gopher_semantic_msgs.ElevatorLevel elevator_level_destination:  semantic world (unique_name) that it is go to
+        :param gopher_configuration.Configuration gopher_configuration:
+        :param str elevator_name: unique name of the elevator:
+        :param gopher_semantic_msgs.ElevatorLevel elevator_level_origin:  elevator entry with pose information
+        :param gopher_semantic_msgs.ElevatorLevel elevator_level_destination: elevator exit with pose information
         :param elf.InitialisationType elf_initialisation_type: defines the method for pose initialisation
         """
         move_to_elevator = create_move_to_elevator_subtree(elevator_name, elevator_level_origin.entry)
@@ -479,11 +479,11 @@ class AutonomousElevators(Elevators):
                                     elevator_level_destination,
                                     elf_initialisation_type):
         """
-        :param gopher_configuration.Configuration gopher_configuration
+        :param gopher_configuration.Configuration gopher_configuration:
         :param str elevator_name: unique name of the elevator
-        :param gopher_semantic_msgs.ElevatorLevel elevator_level_origin:  semantic world (unique_name) that it is coming from
-        :param gopher_semantic_msgs.ElevatorLevel elevator_level_destination:  semantic world (unique_name) that it is go to
-        :param elf.InitialisationType elf_initialisation_type: defines the method for pose initialisati
+        :param gopher_semantic_msgs.ElevatorLevel elevator_level_origin:  elevator entry with pose information
+        :param gopher_semantic_msgs.ElevatorLevel elevator_level_destination: elevator exit with pose information
+        :param elf.InitialisationType elf_initialisation_type: defines the method for pose initialisation
         """
         move_to_elevator = create_move_to_elevator_subtree(elevator_name, elevator_level_origin.entry)
 
