@@ -161,7 +161,16 @@ class RequestElevatorRide(py_trees.Behaviour):
 
 class RequestElevatorStatusUpdate(py_trees.Behaviour):
     """
-    Request a status update from the elevator
+    Wait for a certain expected status update from the elevator operator.
+
+    This will just run continuously until a match is found. If you do
+    wish to apply a timeout, use the timeout decorator. Note that it is
+    very difficult to determine an appropriate timeout given the fact that
+    the response time of the elevator is non-deterministic (bloody humans).
+
+    Better is to make sure that the robot has ways to cancel and notify the
+    system itself when the elevator operator has lost/destroyed/been unable
+    to fulfill the appropriate result.
     """
     def __init__(self,
                  name="Request Elevator Status Update",
@@ -175,8 +184,6 @@ class RequestElevatorStatusUpdate(py_trees.Behaviour):
         self._expected_result = expected_result
         self.config = None
         self._service_client = None
-        self._waiting_timeout = rospy.Duration(300.0)
-        self._start_time = rospy.Time(0)
         self._valid_moving_states = [
             elevator_interactions_msgs.ElevatorOperatorStatus.MOVING_TO_PICKUP_FLOOR,
             elevator_interactions_msgs.ElevatorOperatorStatus.MOVING_TO_DROPOFF_FLOOR
@@ -201,7 +208,6 @@ class RequestElevatorStatusUpdate(py_trees.Behaviour):
 
     def initialise(self):
         self.logger.debug("  %s [RequestElevatorStatusUpdate::initialise()]" % self.name)
-        self._start_time = rospy.Time.now()
 
     def update(self):
         self.logger.debug("  %s [RequestElevatorStatusUpdate::update()]" % self.name)
@@ -233,12 +239,8 @@ class RequestElevatorStatusUpdate(py_trees.Behaviour):
                     self.feedback_message = "we are now no longer the elevator's overlord...[%s]" % response.elevator_operator_status.status
                     return py_trees.Status.FAILURE
         else:
-            if (rospy.Time.now() - self._start_time) > self._waiting_timeout:
-                self.feedback_message = "no response from the server for more than %ss, giving up" % self._request_timeout
-                return py_trees.Status.FAILURE
-            else:
-                self.feedback_message = "did not receive a response from the server, will keep trying"
-                return py_trees.Status.RUNNING
+            self.feedback_message = "did not receive a response from the server, will keep trying"
+            return py_trees.Status.RUNNING
 
     def terminate(self, new_status):
         self.logger.debug("  %s [RequestElevatorStatusUpdate::terminate()][%s->%s]" % (self.name, self.status,
@@ -264,7 +266,7 @@ class PassengerStatusUpdate(py_trees.Behaviour):
 
     def setup(self, timeout):
         """
-
+        Connect to the elevator operator.
         """
         self.logger.debug("  %s [PassengerStatusUpdate::setup()]" % self.name)
         self.config = gopher_configuration.Configuration()
