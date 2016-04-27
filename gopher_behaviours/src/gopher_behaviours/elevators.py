@@ -512,7 +512,8 @@ class AutonomousElevators(Elevators):
         # board elevator
         board = py_trees.composites.Selector(name="Board")
 #         auto_board = py_trees.meta.success_is_failure(py_trees.timers.OneshotTimer)(name="Auto Board", duration=3.0)
-        auto_board = elevator_controller_client.ElevatorTransfer(name="Auto Board", boarding=True)
+        auto_board = py_trees.meta.oneshot(elevator_controller_client.ElevatorTransfer)(name="Auto Board",
+                                                                                        boarding=True)
         manual_board = interactions.flash_and_wait_for_go_button(
             name="Recovery\nManual Board",
             notification_behaviour_name="Flash for Input",
@@ -548,7 +549,8 @@ class AutonomousElevators(Elevators):
         disembarkment = py_trees.composites.Selector(name="Disembark")
 #         auto_disembarkment = py_trees.meta.success_is_failure(py_trees.timers.OneshotTimer)(name="Auto Disembark",
 #                                                                                             duration=3.0)
-        auto_disembarkment = elevator_controller_client.ElevatorTransfer(name="Auto Board", boarding=False)
+        auto_disembarkment = py_trees.meta.oneshot(elevator_controller_client.ElevatorTransfer)(name="Auto Disembark",
+                                                                                                boarding=False)
         manual_disembarkment = interactions.flash_and_wait_for_go_button(
             name="Recovery\nManual Disembark",
             notification_behaviour_name="Flash for Input",
