@@ -96,8 +96,6 @@ class RequestElevatorRide(py_trees.Behaviour):
         self._floor_dropoff = floor_dropoff
         self.config = None
         self._service_client = None
-        self._request_timeout = rospy.Duration(10.0)
-        self._start_time = rospy.Time(0.0)
 
     def setup(self, timeout):
         """
@@ -117,7 +115,6 @@ class RequestElevatorRide(py_trees.Behaviour):
 
     def initialise(self):
         self.logger.debug("  %s [RequestElevatorRide::initialise()]" % self.name)
-        self._start_time = rospy.Time.now()
 
     def update(self):
         self.logger.debug("  %s [RequestElevatorRide::update()]" % self.name)
@@ -147,12 +144,8 @@ class RequestElevatorRide(py_trees.Behaviour):
                 rospy.logerr("Behaviour [" + self.name + "]: %s" % self.feedback_message)
                 return py_trees.Status.FAILURE
         else:
-            if (rospy.Time.now() - self._start_time) > self._request_timeout:
-                self.feedback_message = "no response from the server for more than %ss, giving up" % self._request_timeout
-                return py_trees.Status.FAILURE
-            else:
-                self.feedback_message = "did not receive a response from the server, will keep trying"
-                return py_trees.Status.RUNNING
+            self.feedback_message = "did not receive a response from the server, will keep trying"
+            return py_trees.Status.RUNNING
 
     def terminate(self, new_status):
         self.logger.debug("  %s [RequestElevatorRide::terminate()][%s->%s]" % (self.name, self.status,
