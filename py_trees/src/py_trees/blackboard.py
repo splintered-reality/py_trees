@@ -24,7 +24,7 @@ from . import common
 from .behaviour import Behaviour
 import rocon_console.console as console
 import operator
-from cPickle import dumps, loads
+from cPickle import dumps
 
 ##############################################################################
 # Classes
