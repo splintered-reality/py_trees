@@ -24,6 +24,7 @@ from . import common
 from .behaviour import Behaviour
 import rocon_console.console as console
 import operator
+from cPickle import dumps, loads
 
 ##############################################################################
 # Classes
@@ -102,6 +103,42 @@ class Blackboard(object):
                     s += console.cyan + "  " + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ": " + console.yellow + "%s\n" % (value) + console.reset
         s += console.reset
         return s
+
+
+class ROSBlackboardMonitor(object):
+    """
+    Child of :py:class:`Blackboard <py_trees.blackboard.Blackboard>` class
+    with additional features
+    """
+    def __init__(self, blackboard):
+        self.blackboard = blackboard
+        self.cached_obj = {}
+
+    def is_changed(self):
+        # For simplicity, creating a reference; reference because its a borg
+        obj_dict = self.blackboard.__dict__
+
+        # This is tricky because the headers change with timestamp
+        # even though the msg does not change
+        # Flattening the headers in msg for comparison
+        header_dict = {}
+        for key in obj_dict:
+            if hasattr(obj_dict[key], "header"):
+                header_dict[key] = obj_dict[key].header
+                obj_dict[key].header = 0
+
+        # Compare the blackboard msgs here
+        current_pickle = dumps(obj_dict, -1)
+        changed = False
+        changed = current_pickle != self.cached_obj
+        self.cached_obj = current_pickle
+
+        # Filling original headers back up again
+        for key in obj_dict:
+            if hasattr(obj_dict[key], "header"):
+                obj_dict[key].header = header_dict[key]
+
+        return changed
 
 
 class ClearBlackboardVariable(behaviours.Success):
