@@ -118,25 +118,10 @@ class ROSBlackboardMonitor(object):
         # For simplicity, creating a reference; reference because its a borg
         obj_dict = self.blackboard.__dict__
 
-        # This is tricky because the headers change with timestamp
-        # even though the msg does not change
-        # Flattening the headers in msg for comparison
-        header_dict = {}
-        for key in obj_dict:
-            if hasattr(obj_dict[key], "header"):
-                header_dict[key] = obj_dict[key].header
-                obj_dict[key].header = 0
-
         # Compare the blackboard msgs here
         current_pickle = dumps(obj_dict, -1)
-        changed = False
         changed = current_pickle != self.cached_obj
         self.cached_obj = current_pickle
-
-        # Filling original headers back up again
-        for key in obj_dict:
-            if hasattr(obj_dict[key], "header"):
-                obj_dict[key].header = header_dict[key]
 
         return changed
 
