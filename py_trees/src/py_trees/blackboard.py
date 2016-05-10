@@ -107,23 +107,23 @@ class Blackboard(object):
 
 class ROSBlackboardMonitor(object):
     """
-    Child of :py:class:`Blackboard <py_trees.blackboard.Blackboard>` class
-    with additional features
+    Takes in :py:class:`Blackboard <py_trees.blackboard.Blackboard>` class
+    and logs if changes are made
     """
     def __init__(self, blackboard):
         self.blackboard = blackboard
-        self.cached_obj = {}
+        self.cached_blackboard_dict = {}
 
     def is_changed(self):
         # For simplicity, creating a reference; reference because its a borg
-        obj_dict = self.blackboard.__dict__
+        blackboard_dict = self.blackboard.__dict__
 
-        # Compare the blackboard msgs here
-        current_pickle = dumps(obj_dict, -1)
-        changed = current_pickle != self.cached_obj
-        self.cached_obj = current_pickle
+        # Compare the blackboard dicts here
+        current_pickle = dumps(blackboard_dict, -1)
+        blackboard_changed = current_pickle != self.cached_blackboard_dict
+        self.cached_blackboard_dict = current_pickle
 
-        return changed
+        return blackboard_changed
 
 
 class ClearBlackboardVariable(behaviours.Success):
