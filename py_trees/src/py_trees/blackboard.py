@@ -104,6 +104,59 @@ class Blackboard(object):
         return s
 
 
+class SubBlackboard(Behaviour):
+    """
+    Keeps a copy of blackboard comprising only of attributes provided
+    """
+    def __init__(self,
+                 name="SubBlackboard",
+                 attrs=[]
+                 ):
+        """
+        :param name: name of the behaviour
+        :param attr: attributes in blackboard to keep a copy of
+        """
+        super(SubBlackboard, self).__init__(name)
+        self.blackboard = Blackboard()
+        self.sub_blackboard = {}
+        if isinstance(attrs, list):
+            self.attrs = attrs
+        self.update()
+
+    def update(self):
+        self.logger.debug("  %s [SubBlackboard::update()]" % self.name)
+
+        # TODO: This should be able to retrieve nested attributes
+        self.sub_blackboard = {k: v
+                               for k, v in self.blackboard.__dict__.items()
+                               if k in self.attrs}
+
+        result = common.Status.RUNNING
+        return result
+
+    def __str__(self):
+        s = console.green + type(self).__name__ + "\n" + console.reset
+        max_length = 0
+        for k in self.sub_blackboard.keys():
+            max_length = len(k) if len(k) > max_length else max_length
+        keys = sorted(self.sub_blackboard)
+        for key in keys:
+            value = self.sub_blackboard[key]
+            if value is None:
+                value_string = "-"
+                s += console.cyan + "  " + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ": " + console.yellow + "%s\n" % (value_string) + console.reset
+            else:
+                lines = ("%s" % value).split('\n')
+                if len(lines) > 1:
+                    s += console.cyan + "  " + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ":\n"
+                    for line in lines:
+                        s += console.yellow + "    %s\n" % line + console.reset
+                else:
+                    s += console.cyan + "  " + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ": " + console.yellow + "%s\n" % (value) + console.reset
+        s += console.reset
+        return s
+
+
 class ClearBlackboardVariable(behaviours.Success):
     """
     Clear the specified value from the blackboard.
