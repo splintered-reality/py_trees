@@ -40,7 +40,7 @@ from . import composites
 from . import conversions
 from . import logging
 
-from .blackboard import Blackboard
+from .blackboard import Blackboard, ROSBlackboardMonitor
 from .behaviours import Behaviour
 
 CONTINUOUS_TICK_TOCK = -1
@@ -336,6 +336,7 @@ class ROSBehaviourTree(BehaviourTree):
         self.post_tick_handlers.append(self.publish_tree_snapshots)
         self.post_tick_handlers.append(self.publish_blackboard)
         self._bag_closed = False
+        self.blackboard_monitor = ROSBlackboardMonitor(self.blackboard)
 
         now = datetime.datetime.now()
         topdir = rospkg.get_ros_home() + '/behaviour_trees'
@@ -383,8 +384,9 @@ class ROSBehaviourTree(BehaviourTree):
         """
         if self.publishers is None:
             self.setup_publishers()
-        if self.publishers.blackboard.get_num_connections() > 0:
-            self.publishers.blackboard.publish("%s" % self.blackboard)
+        if self.blackboard_monitor.is_changed():    # updates the internal cache
+            if self.publishers.blackboard.get_num_connections() > 0:                
+                self.publishers.blackboard.publish("%s" % self.blackboard)
 
     def publish_tree_modifications(self, tree):
         """

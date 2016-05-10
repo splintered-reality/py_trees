@@ -24,6 +24,7 @@ from . import common
 from .behaviour import Behaviour
 import rocon_console.console as console
 import operator
+from cPickle import dumps
 
 ##############################################################################
 # Classes
@@ -102,6 +103,27 @@ class Blackboard(object):
                     s += console.cyan + "  " + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ": " + console.yellow + "%s\n" % (value) + console.reset
         s += console.reset
         return s
+
+
+class ROSBlackboardMonitor(object):
+    """
+    Takes in :py:class:`Blackboard <py_trees.blackboard.Blackboard>` class
+    and logs if changes are made
+    """
+    def __init__(self, blackboard):
+        self.blackboard = blackboard
+        self.cached_blackboard_dict = {}
+
+    def is_changed(self):
+        # For simplicity, creating a reference; reference because its a borg
+        blackboard_dict = self.blackboard.__dict__
+
+        # Compare the blackboard dicts here
+        current_pickle = dumps(blackboard_dict, -1)
+        blackboard_changed = current_pickle != self.cached_blackboard_dict
+        self.cached_blackboard_dict = current_pickle
+
+        return blackboard_changed
 
 
 class ClearBlackboardVariable(behaviours.Success):
