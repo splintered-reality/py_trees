@@ -24,6 +24,7 @@ from . import common
 from .behaviour import Behaviour
 import rocon_console.console as console
 import operator
+from cPickle import dumps
 
 ##############################################################################
 # Classes
@@ -104,6 +105,31 @@ class Blackboard(object):
         return s
 
 
+class BlackboardMonitor(object):
+    """
+    Takes in :py:class:`Blackboard <py_trees.blackboard.Blackboard>`
+    or :py:class:`Blackboard <py_trees.blackboard.SubBlackboard>` differentiated by `is_sub`
+    and provides method for checking if the blackboard has changed
+    """
+    def __init__(self, blackboard, is_sub=False):
+        self.blackboard = blackboard
+        self.cached_blackboard_dict = {}
+        self.is_sub = is_sub
+
+    def is_changed(self):
+        if self.is_sub:
+            blackboard_dict = self.blackboard.dict
+        else:
+            blackboard_dict = self.blackboard.__dict__
+
+        # Compare the blackboard dicts here
+        current_pickle = dumps(blackboard_dict, -1)
+        blackboard_changed = current_pickle != self.cached_blackboard_dict
+        self.cached_blackboard_dict = current_pickle
+
+        return blackboard_changed
+
+
 class SubBlackboard(Behaviour):
     """
     Keeps a copy of blackboard comprising only of attributes provided
@@ -118,7 +144,7 @@ class SubBlackboard(Behaviour):
         """
         super(SubBlackboard, self).__init__(name)
         self.blackboard = Blackboard()
-        self.sub_blackboard = {}
+        self.dict = {}
         if isinstance(attrs, list):
             self.attrs = attrs
         self.update()
@@ -127,9 +153,9 @@ class SubBlackboard(Behaviour):
         self.logger.debug("  %s [SubBlackboard::update()]" % self.name)
 
         # TODO: This should be able to retrieve nested attributes
-        self.sub_blackboard = {k: v
-                               for k, v in self.blackboard.__dict__.items()
-                               if k in self.attrs}
+        self.dict = {k: v
+                     for k, v in self.blackboard.__dict__.items()
+                     if k in self.attrs}
 
         result = common.Status.RUNNING
         return result
@@ -137,11 +163,11 @@ class SubBlackboard(Behaviour):
     def __str__(self):
         s = console.green + type(self).__name__ + "\n" + console.reset
         max_length = 0
-        for k in self.sub_blackboard.keys():
+        for k in self.dict.keys():
             max_length = len(k) if len(k) > max_length else max_length
-        keys = sorted(self.sub_blackboard)
+        keys = sorted(self.dict)
         for key in keys:
-            value = self.sub_blackboard[key]
+            value = self.dict[key]
             if value is None:
                 value_string = "-"
                 s += console.cyan + "  " + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ": " + console.yellow + "%s\n" % (value_string) + console.reset

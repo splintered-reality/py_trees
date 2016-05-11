@@ -30,7 +30,7 @@ from . import trees
 
 # conveniences
 from .behaviour import Behaviour
-from .blackboard import Blackboard, CheckBlackboardVariable
+from .blackboard import Blackboard, SubBlackboard, BlackboardMonitor, CheckBlackboardVariable
 from .common import Status
 from .composites import Composite, Selector, Sequence, OneshotSequence
 from .subscribers import CheckSubscriberVariable
