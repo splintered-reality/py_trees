@@ -1,0 +1,106 @@
+#!/usr/bin/env python
+#
+# License: Yujin
+#
+#
+##############################################################################
+# Documentation
+##############################################################################
+"""
+Simple utility to watch and display items from Blackboard
+"""
+##############################################################################
+# Imports
+##############################################################################
+
+from py_trees.blackboard import Blackboard, BlackboardMonitor
+
+import argparse
+import rospy
+import rocon_console.console as console
+import sys
+
+
+##############################################################################
+# Command Handler
+##############################################################################
+
+
+def show_usage():
+    s = "\n"
+    s += console.bold + "    Introspection" + console.reset + "\n"
+    s += console.cyan + "        gopher_blackboard" + console.yellow + " [option]" + console.reset + "\n"
+    s += "\n"
+    s += "        where the option is one of:\n"
+    s += console.cyan + "        --list_variables                       " + console.yellow + "list variables in the blackboard." + console.reset + "\n"
+    s += console.cyan + "        --list_watchers                        " + console.yellow + "list watchers attached to the blackboard." + console.reset + "\n"
+    s += "\n"
+    s += console.bold + "    Command" + console.reset + "\n"
+    s += console.cyan + "        gopher_blackboard" + console.yellow + " <command>" + console.blue + console.bold + " [<variables>]" + console.reset + "\n"
+    s += "\n"
+    s += "        where the command is one of:\n"
+    s += console.cyan + "        watch    " + console.blue + "<topic name> [<variables>]    " + console.yellow + "watch specified variables." + console.reset + "\n"
+    s += console.cyan + "        unwatch  " + console.blue + "<topic name>                  " + console.yellow + "release specified watcher." + console.reset + "\n"
+    s += "\n"
+    return s
+
+
+def show_description():
+    s = ""
+    s += console.green + "Watch and log the blackboard!" + console.reset
+    return s
+
+
+def parse_arguments(command_line_args):
+    parser = argparse.ArgumentParser(description=show_description(),
+                                     usage=show_usage(),
+                                     epilog="And his noodly appendage reached forth to tickle the blessed...",
+                                     formatter_class=argparse.RawTextHelpFormatter
+                                     )
+    parser.add_argument('-lv', '--list_variables', action='store_true', default=None, help='list variables in the blackboard.')
+    parser.add_argument('-lw', '--list_watchers', action='store_true', default=None, help='list watchers attached to the blackboard.')
+    parser.add_argument('command', nargs=argparse.REMAINDER, default=None, help='subcommand to run')
+
+    args = parser.parse_args(command_line_args)
+    return args
+
+
+class WatchBlackboard(object):
+    def __init__(self, command_line_args):
+        args = parse_arguments(command_line_args)
+        self.watchers = []
+        self.handle_args(args)
+
+    def handle_args(self, args):
+        if args.list_variables:
+            # Something wrong here FIXIT!
+            blackboard = Blackboard()
+            blackboard_monitor = BlackboardMonitor(blackboard)
+            while True:
+                if blackboard_monitor.is_changed():
+                    print(blackboard)
+
+        # TODO: Make the section better; this is here just for test for now
+        elif args.list_watchers:
+            print self.watchers
+
+        else:
+            if not args.command:
+                print(console.red + "\nError: no command provided" + console.reset)
+                print("%s" % show_usage())
+            else:
+                if args.command[0] == 'watch':
+                    print "watch"
+                elif args.command[0] == 'unwatch':
+                    print "unwatch"
+                else:
+                    print(console.red + "\nError: unrecognised command, aborting.\n" + console.reset)
+
+
+##############################################################################
+# Main
+##############################################################################
+
+if __name__ == '__main__':
+    command_line_args = rospy.myargv(argv=sys.argv)[1:]
+    WatchBlackboard(command_line_args)

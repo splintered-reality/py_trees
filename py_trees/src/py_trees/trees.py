@@ -338,7 +338,7 @@ class ROSBehaviourTree(BehaviourTree):
         self.post_tick_handlers.append(self.publish_sub_blackboard)
         self._bag_closed = False
         self.blackboard_monitor = BlackboardMonitor(self.blackboard)
-        self.sub_blackboard = SubBlackboard(attrs=["battery", "world"])
+        self.sub_blackboard = SubBlackboard(attrs=["battery", "world", "odom/pose/pose/position"])
         self.root.add_child(self.sub_blackboard)
         self.sub_blackboard_monitor = BlackboardMonitor(self.sub_blackboard, is_sub=True)
 

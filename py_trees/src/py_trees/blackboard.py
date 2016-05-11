@@ -152,10 +152,16 @@ class SubBlackboard(Behaviour):
     def update(self):
         self.logger.debug("  %s [SubBlackboard::update()]" % self.name)
 
-        # TODO: This should be able to retrieve nested attributes
-        self.dict = {k: v
-                     for k, v in self.blackboard.__dict__.items()
-                     if k in self.attrs}
+        for attr in self.attrs:
+            if '/' in attr:
+                check_attr = operator.attrgetter(".".join(attr.split('/')))
+            else:
+                check_attr = operator.attrgetter(attr)
+            try:
+                value = check_attr(self.blackboard)
+                self.dict[attr] = value
+            except AttributeError:
+                pass
 
         result = common.Status.RUNNING
         return result

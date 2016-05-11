@@ -27,6 +27,7 @@ catkin_install_python(
         scripts/demo_behaviour
         scripts/demo_dot_graphs
         scripts/demo_tree
+        scripts/gopher_blackboard
     DESTINATION
         ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
