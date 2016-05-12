@@ -13,7 +13,7 @@ Simple utility to watch and display items from Blackboard
 # Imports
 ##############################################################################
 
-from py_trees.blackboard import Blackboard, BlackboardMonitor
+from py_trees.blackboard import Blackboard, BlackboardMonitor, SubBlackboard
 
 import argparse
 import rospy
@@ -75,14 +75,19 @@ class WatchBlackboard(object):
         if args.list_variables:
             # Something wrong here FIXIT!
             blackboard = Blackboard()
+            print hex(id(blackboard.__dict__))
+            blackboard.foo = "Hello"
             blackboard_monitor = BlackboardMonitor(blackboard)
-            while True:
-                if blackboard_monitor.is_changed():
-                    print(blackboard)
+            try:
+                while True:
+                    if blackboard_monitor.is_changed():
+                        print(blackboard)
+            except:
+                pass
 
         # TODO: Make the section better; this is here just for test for now
         elif args.list_watchers:
-            print self.watchers
+            print self.watchers     # No use for now
 
         else:
             if not args.command:
@@ -90,7 +95,19 @@ class WatchBlackboard(object):
                 print("%s" % show_usage())
             else:
                 if args.command[0] == 'watch':
-                    print "watch"
+                    topic = args.command[1]
+                    self.watchers.append(topic)     # No use for now
+                    fields = args.command[2:]
+                    fields = [field.strip(',[]') for field in fields]
+                    sub_blackboard = SubBlackboard(attrs=fields)
+                    sub_blackboard_monitor = BlackboardMonitor(sub_blackboard, is_sub=True)
+                    try:
+                        while True:
+                            sub_blackboard.update()     # since no tree running, we update manually
+                            if sub_blackboard_monitor.is_changed():
+                                print(sub_blackboard)
+                    except:
+                        pass
                 elif args.command[0] == 'unwatch':
                     print "unwatch"
                 else:
