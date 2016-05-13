@@ -13,8 +13,7 @@ Simple utility to watch and display items from Blackboard
 # Imports
 ##############################################################################
 
-from py_trees.blackboard import Blackboard, BlackboardMonitor, SubBlackboard
-
+from py_trees_msgs.srv import BlackboardVariables, SubBlackboardWatch
 import argparse
 import rospy
 import rocon_console.console as console
@@ -71,19 +70,26 @@ class WatchBlackboard(object):
         self.watchers = []
         self.handle_args(args)
 
+    def pretty_print_variables(self, variables):
+        s = "\n"
+        s += console.bold + console.cyan + "Blackboard Variables:" + console.reset + console.yellow + "\n"
+        for variable in variables:
+            s += "    " + variable + "\n"
+        print "%s" % s
+
     def handle_args(self, args):
         if args.list_variables:
-            # Something wrong here FIXIT!
-            blackboard = Blackboard()
-            print hex(id(blackboard.__dict__))
-            blackboard.foo = "Hello"
-            blackboard_monitor = BlackboardMonitor(blackboard)
+            list_variable_service = '/behaviours/blackboard_list_variables'
             try:
-                while True:
-                    if blackboard_monitor.is_changed():
-                        print(blackboard)
-            except:
-                pass
+                rospy.wait_for_service(list_variable_service, timeout=2.0)
+                try:
+                    list_variables = rospy.ServiceProxy(list_variable_service, BlackboardVariables)
+                    recieved_variables = list_variables()
+                    self.pretty_print_variables(recieved_variables.variables)
+                except rospy.ServiceException, e:
+                    print "Service call failed: %s" % e
+            except rospy.exceptions.ROSException, e:
+                print "Error: ", e
 
         # TODO: Make the section better; this is here just for test for now
         elif args.list_watchers:
@@ -99,15 +105,19 @@ class WatchBlackboard(object):
                     self.watchers.append(topic)     # No use for now
                     fields = args.command[2:]
                     fields = [field.strip(',[]') for field in fields]
-                    sub_blackboard = SubBlackboard(attrs=fields)
-                    sub_blackboard_monitor = BlackboardMonitor(sub_blackboard, is_sub=True)
+
+                    sub_blackboard_watch_service = '/behaviours/sub_blackboard_watch'
                     try:
-                        while True:
-                            sub_blackboard.update()     # since no tree running, we update manually
-                            if sub_blackboard_monitor.is_changed():
-                                print(sub_blackboard)
-                    except:
-                        pass
+                        rospy.wait_for_service(sub_blackboard_watch_service, timeout=2.0)
+                        try:
+                            sub_blackboard_watch_service = rospy.ServiceProxy(sub_blackboard_watch_service, SubBlackboardWatch)
+                            recieved_topic = sub_blackboard_watch_service('foobar')
+                            print recieved_topic.topic
+                        except rospy.ServiceException, e:
+                            print "Service call failed: %s" % e
+                    except rospy.exceptions.ROSException, e:
+                        print "Error: ", e
+
                 elif args.command[0] == 'unwatch':
                     print "unwatch"
                 else:

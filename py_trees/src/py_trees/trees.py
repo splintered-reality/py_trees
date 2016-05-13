@@ -6,7 +6,6 @@
 ##############################################################################
 # Documentation
 ##############################################################################
-
 """
 .. module:: trees
    :platform: Unix
@@ -24,6 +23,7 @@ This module creates tools for managing your entire behaviour tree.
 
 import datetime
 import py_trees_msgs.msg as py_trees_msgs
+from py_trees_msgs.srv import BlackboardVariables, BlackboardVariablesResponse, SubBlackboardWatch, SubBlackboardWatchResponse
 import os
 import rocon_python_comms
 import rosbag
@@ -342,6 +342,9 @@ class ROSBehaviourTree(BehaviourTree):
         self.root.add_child(self.sub_blackboard)
         self.sub_blackboard_monitor = BlackboardMonitor(self.sub_blackboard, is_sub=True)
 
+        rospy.Service('blackboard_list_variables', BlackboardVariables, self.send_blackboard_variables)
+        rospy.Service('sub_blackboard_watch', SubBlackboardWatch, self.initialize_subblackboard_publisher)
+
         now = datetime.datetime.now()
         topdir = rospkg.get_ros_home() + '/behaviour_trees'
         subdir = topdir + '/' + now.strftime('%Y-%m-%d')
@@ -362,6 +365,14 @@ class ROSBehaviourTree(BehaviourTree):
 
         # cleanup must come last as it assumes the existence of the bag
         rospy.on_shutdown(self.cleanup)
+
+    def send_blackboard_variables(self, req):
+        return BlackboardVariablesResponse(self.blackboard.__dict__.keys())
+
+    def initialize_subblackboard_publisher(self, req):
+        # here I have to start a sub_blackboard, monitor and publisher
+        # and return topic name to the gopher_blackboard
+        return SubBlackboardWatchResponse(req.topic_name)   # just return what you get for now
 
     def setup_publishers(self):
         latched = True
