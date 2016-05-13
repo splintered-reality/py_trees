@@ -40,7 +40,7 @@ from . import composites
 from . import conversions
 from . import logging
 
-from .blackboard import Blackboard, SubBlackboard, BlackboardMonitor
+from .blackboard import Blackboard, ROSBlackboardMonitor, SubBlackboard
 from .behaviours import Behaviour
 
 CONTINUOUS_TICK_TOCK = -1
@@ -334,16 +334,12 @@ class ROSBehaviourTree(BehaviourTree):
         self.visitors.append(self.snapshot_visitor)
         self.visitors.append(self.logging_visitor)
         self.post_tick_handlers.append(self.publish_tree_snapshots)
-        self.post_tick_handlers.append(self.publish_blackboard)
-        self.post_tick_handlers.append(self.publish_sub_blackboard)
         self._bag_closed = False
-        self.blackboard_monitor = BlackboardMonitor(self.blackboard)
-        self.sub_blackboard = SubBlackboard(attrs=["battery", "world", "odom/pose/pose/position"])
-        self.root.add_child(self.sub_blackboard)
-        self.sub_blackboard_monitor = BlackboardMonitor(self.sub_blackboard, is_sub=True)
+        self.blackboard_monitor = ROSBlackboardMonitor(self.blackboard)
+        self.post_tick_handlers.append(self.blackboard_monitor.publish_blackboard)
 
         rospy.Service('blackboard_list_variables', BlackboardVariables, self.send_blackboard_variables)
-        rospy.Service('sub_blackboard_watch', SubBlackboardWatch, self.initialize_subblackboard_publisher)
+        rospy.Service('sub_blackboard_watch', SubBlackboardWatch, self.spin_sub_blackboard_publisher)
 
         now = datetime.datetime.now()
         topdir = rospkg.get_ros_home() + '/behaviour_trees'
@@ -369,22 +365,26 @@ class ROSBehaviourTree(BehaviourTree):
     def send_blackboard_variables(self, req):
         return BlackboardVariablesResponse(self.blackboard.__dict__.keys())
 
-    def initialize_subblackboard_publisher(self, req):
-        # here I have to start a sub_blackboard, monitor and publisher
+    def spin_sub_blackboard_publisher(self, req):
+        name = "SubBlackBoard: " + req.topic_name
+        sub_blackboard = SubBlackboard(name=name, attrs=req.variables)
+        self.root.add_child(sub_blackboard)
+        sub_blackboard_monitor = ROSBlackboardMonitor(sub_blackboard, is_sub=True, topic_name=req.topic_name)
+        self.post_tick_handlers.append(sub_blackboard_monitor.publish_blackboard)
+
         # and return topic name to the gopher_blackboard
-        return SubBlackboardWatchResponse(req.topic_name)   # just return what you get for now
+        absolute_topic_name = '/behaviours/splintered_reality/sub_blackboard/' + req.topic_name
+        return SubBlackboardWatchResponse(absolute_topic_name)
 
     def setup_publishers(self):
         latched = True
         self.publishers = rocon_python_comms.utils.Publishers(
             [
-                ("blackboard", "~blackboard", std_msgs.String, latched, 2),
                 ("ascii_tree", "~ascii/tree", std_msgs.String, latched, 2),
                 ("ascii_snapshot", "~ascii/snapshot", std_msgs.String, latched, 2),
                 ("dot_tree", "~dot/tree", std_msgs.String, latched, 2),
                 ("log_tree", "~log/tree", py_trees_msgs.BehaviourTree, latched, 2),
-                ("tip", "~tip", py_trees_msgs.Behaviour, latched, 2),
-                ("sub_blackboard", "~sub_blackboard", std_msgs.String, latched, 2)
+                ("tip", "~tip", py_trees_msgs.Behaviour, latched, 2)
             ]
         )
 
@@ -393,26 +393,6 @@ class ROSBehaviourTree(BehaviourTree):
         # set a handler to publish future modifiactions
         # tree_update_handler is in the base class, set this to the callback function here.
         self.tree_update_handler = self.publish_tree_modifications
-
-    def publish_blackboard(self, tree):
-        """
-        Publishes the blackboard. Should be called at the end of every tick.
-        """
-        if self.publishers is None:
-            self.setup_publishers()
-        if self.blackboard_monitor.is_changed():
-            if self.publishers.blackboard.get_num_connections() > 0:
-                self.publishers.blackboard.publish("%s" % self.blackboard)
-
-    def publish_sub_blackboard(self, tree):
-        """
-        Publishes the sub_blackboard. Should be called at the end of every tick.
-        """
-        if self.publishers is None:
-            self.setup_publishers()
-        if self.sub_blackboard_monitor.is_changed():
-            if self.publishers.sub_blackboard.get_num_connections() > 0:
-                self.publishers.sub_blackboard.publish("%s" % self.sub_blackboard)
 
     def publish_tree_modifications(self, tree):
         """

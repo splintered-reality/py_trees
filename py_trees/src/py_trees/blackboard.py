@@ -25,6 +25,8 @@ from .behaviour import Behaviour
 import rocon_console.console as console
 import operator
 from cPickle import dumps
+import rospy
+import std_msgs.msg as std_msgs
 
 ##############################################################################
 # Classes
@@ -105,16 +107,20 @@ class Blackboard(object):
         return s
 
 
-class BlackboardMonitor(object):
+class ROSBlackboardMonitor(object):
     """
     Takes in :py:class:`Blackboard <py_trees.blackboard.Blackboard>`
     or :py:class:`Blackboard <py_trees.blackboard.SubBlackboard>` differentiated by `is_sub`
     and provides method for checking if the blackboard has changed
     """
-    def __init__(self, blackboard, is_sub=False):
+    def __init__(self, blackboard, is_sub=False, topic_name=None):
         self.blackboard = blackboard
         self.cached_blackboard_dict = {}
         self.is_sub = is_sub
+        if self.is_sub:
+            self.publisher = rospy.Publisher("~sub_blackboard/" + topic_name, std_msgs.String, latch=True, queue_size=2)
+        else:
+            self.publisher = rospy.Publisher("~blackboard", std_msgs.String, latch=True, queue_size=2)
 
     def is_changed(self):
         if self.is_sub:
@@ -128,6 +134,14 @@ class BlackboardMonitor(object):
         self.cached_blackboard_dict = current_pickle
 
         return blackboard_changed
+
+    def publish_blackboard(self, tree):
+        """
+        Publishes the blackboard. Should be called at the end of every tick.
+        """
+        if self.is_changed():
+            if self.publisher.get_num_connections() > 0:
+                self.publisher.publish("%s" % self.blackboard)
 
 
 class SubBlackboard(Behaviour):
@@ -143,11 +157,11 @@ class SubBlackboard(Behaviour):
         :param attr: attributes in blackboard to keep a copy of
         """
         super(SubBlackboard, self).__init__(name)
+        self.name = name
         self.blackboard = Blackboard()
         self.dict = {}
         if isinstance(attrs, list):
             self.attrs = attrs
-        self.update()
 
     def update(self):
         self.logger.debug("  %s [SubBlackboard::update()]" % self.name)
@@ -167,7 +181,7 @@ class SubBlackboard(Behaviour):
         return result
 
     def __str__(self):
-        s = console.green + type(self).__name__ + "\n" + console.reset
+        s = console.green + self.name + "\n" + console.reset
         max_length = 0
         for k in self.dict.keys():
             max_length = len(k) if len(k) > max_length else max_length

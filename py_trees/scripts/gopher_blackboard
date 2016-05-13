@@ -18,6 +18,7 @@ import argparse
 import rospy
 import rocon_console.console as console
 import sys
+import std_msgs.msg as std_msgs
 
 
 ##############################################################################
@@ -77,11 +78,14 @@ class WatchBlackboard(object):
             s += "    " + variable + "\n"
         print "%s" % s
 
+    def echo_sub_blackboard(self, sub_blackboard):
+        print "%s" % sub_blackboard.data
+
     def handle_args(self, args):
         if args.list_variables:
             list_variable_service = '/behaviours/blackboard_list_variables'
             try:
-                rospy.wait_for_service(list_variable_service, timeout=2.0)
+                rospy.wait_for_service(list_variable_service, timeout=3.0)
                 try:
                     list_variables = rospy.ServiceProxy(list_variable_service, BlackboardVariables)
                     recieved_variables = list_variables()
@@ -101,23 +105,29 @@ class WatchBlackboard(object):
                 print("%s" % show_usage())
             else:
                 if args.command[0] == 'watch':
-                    topic = args.command[1]
-                    self.watchers.append(topic)     # No use for now
-                    fields = args.command[2:]
-                    fields = [field.strip(',[]') for field in fields]
+                    if len(args.command) < 3:
+                        print(console.red + "\nError: Incorrect number of arguments provided, aborting.\n" + console.reset)
+                    else:
+                        topic = args.command[1]
+                        self.watchers.append(topic)     # No use for now
+                        variables = args.command[2:]
+                        variables = [variable.strip(',[]') for variable in variables]
 
-                    sub_blackboard_watch_service = '/behaviours/sub_blackboard_watch'
-                    try:
-                        rospy.wait_for_service(sub_blackboard_watch_service, timeout=2.0)
+                        sub_blackboard_watch_service = '/behaviours/sub_blackboard_watch'
                         try:
-                            sub_blackboard_watch_service = rospy.ServiceProxy(sub_blackboard_watch_service, SubBlackboardWatch)
-                            recieved_topic = sub_blackboard_watch_service('foobar')
-                            print recieved_topic.topic
-                        except rospy.ServiceException, e:
-                            print "Service call failed: %s" % e
-                    except rospy.exceptions.ROSException, e:
-                        print "Error: ", e
+                            rospy.wait_for_service(sub_blackboard_watch_service, timeout=3.0)
+                            try:
+                                sub_blackboard_watch_service = rospy.ServiceProxy(sub_blackboard_watch_service, SubBlackboardWatch)
+                                recieved_topic = sub_blackboard_watch_service(topic, variables)
 
+                                rospy.init_node('sub_blackblack_' + topic)
+                                rospy.Subscriber(recieved_topic.topic, std_msgs.String, self.echo_sub_blackboard)
+                                print(console.blue + "..Echoing Subblackboard " + topic + " with variables " + str(variables) + "..\n" + console.reset)
+                                rospy.spin()
+                            except rospy.ServiceException, e:
+                                print "Service call failed: %s" % e
+                        except rospy.exceptions.ROSException, e:
+                            print "Error: ", e
                 elif args.command[0] == 'unwatch':
                     print "unwatch"
                 else:
