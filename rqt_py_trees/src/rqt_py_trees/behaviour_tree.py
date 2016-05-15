@@ -63,6 +63,7 @@ from python_qt_binding.QtCore import QFile, QIODevice, QObject, Qt, Signal, QEve
 from python_qt_binding.QtGui import QFileDialog, QGraphicsView, QGraphicsScene, QIcon, QImage, QPainter, QWidget, QShortcut, QKeySequence
 from python_qt_binding.QtSvg import QSvgGenerator
 
+from . import qt_dotgraph
 
 class RosBehaviourTree(QObject):
 
