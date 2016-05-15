@@ -7,22 +7,17 @@
 ##############################################################################
 
 """
-The rqt behaviour tree plugin.
+Repackages the qt_dotgraph_ ROS package. There are a few
+problems with both that and the underlying pydot/pygraphviz
+packages, so this has been brought in here for experimentation.
+
+.. _py_trees: http://wiki.ros.org/qt_dotgraph
+
 """
 ##############################################################################
 # Imports
 ##############################################################################
 
-from . import behaviour_tree
-from . import dotcode_behaviour
-from . import dynamic_timeline_frame
-from . import dynamic_timeline_listener
-from . import dynamic_timeline
-from . import message_loader_thread
-from . import timeline_listener
-from . import topic_helper
-from . import visibility
-
-# subpackages
-from . import plugins
-from . import qt_dotgraph
+from . import dot_to_qt
+from . import edge_item, node_item, graph_item
+from . import pydotfactory
