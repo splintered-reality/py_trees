@@ -112,7 +112,8 @@ class ROSBlackboardMonitor(object):
     """
     Takes in :py:class:`Blackboard <py_trees.blackboard.Blackboard>`
     or :py:class:`Blackboard <py_trees.blackboard.SubBlackboard>` differentiated by `is_sub`
-    and provides method for checking if the blackboard has changed
+    and provides method for checking if the Blackboard has changed. Also provides publisher
+    and unloading publisher if watcher for SubBlackboard is disconnected
     """
     def __init__(self, blackboard, is_sub=False, topic_name=None):
         self.blackboard = blackboard

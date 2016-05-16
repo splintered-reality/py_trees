@@ -33,14 +33,12 @@ def show_usage():
     s += "\n"
     s += "        where the option is one of:\n"
     s += console.cyan + "        --list_variables                       " + console.yellow + "list variables in the blackboard." + console.reset + "\n"
-    s += console.cyan + "        --list_watchers                        " + console.yellow + "list watchers attached to the blackboard." + console.reset + "\n"
     s += "\n"
     s += console.bold + "    Command" + console.reset + "\n"
     s += console.cyan + "        gopher_blackboard" + console.yellow + " <command>" + console.blue + console.bold + " [<variables>]" + console.reset + "\n"
     s += "\n"
     s += "        where the command is one of:\n"
     s += console.cyan + "        watch    " + console.blue + "<topic name> [<variables>]    " + console.yellow + "watch specified variables." + console.reset + "\n"
-    s += console.cyan + "        unwatch  " + console.blue + "<topic name>                  " + console.yellow + "release specified watcher." + console.reset + "\n"
     s += "\n"
     return s
 
@@ -58,7 +56,6 @@ def parse_arguments(command_line_args):
                                      formatter_class=argparse.RawTextHelpFormatter
                                      )
     parser.add_argument('-lv', '--list_variables', action='store_true', default=None, help='list variables in the blackboard.')
-    parser.add_argument('-lw', '--list_watchers', action='store_true', default=None, help='list watchers attached to the blackboard.')
     parser.add_argument('command', nargs=argparse.REMAINDER, default=None, help='subcommand to run')
 
     args = parser.parse_args(command_line_args)
@@ -68,7 +65,6 @@ def parse_arguments(command_line_args):
 class WatchBlackboard(object):
     def __init__(self, command_line_args):
         args = parse_arguments(command_line_args)
-        self.watchers = []
         self.handle_args(args)
 
     def pretty_print_variables(self, variables):
@@ -94,11 +90,6 @@ class WatchBlackboard(object):
                     print "Service call failed: %s" % e
             except rospy.exceptions.ROSException, e:
                 print "Error: ", e
-
-        # TODO: Make the section better; this is here just for test for now
-        elif args.list_watchers:
-            print self.watchers     # No use for now
-
         else:
             if not args.command:
                 print(console.red + "\nError: no command provided" + console.reset)
@@ -128,8 +119,6 @@ class WatchBlackboard(object):
                             rospy.spin()
                         except rospy.exceptions.ROSException, e:
                             print "Error: ", e
-                elif args.command[0] == 'unwatch':
-                    print "unwatch"
                 else:
                     print(console.red + "\nError: unrecognised command, aborting.\n" + console.reset)
 
