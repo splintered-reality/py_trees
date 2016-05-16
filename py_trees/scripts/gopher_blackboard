@@ -119,13 +119,13 @@ class WatchBlackboard(object):
                             try:
                                 sub_blackboard_watch_service = rospy.ServiceProxy(sub_blackboard_watch_service, SubBlackboardWatch)
                                 recieved_topic = sub_blackboard_watch_service(topic, variables)
-
-                                rospy.init_node('sub_blackblack_' + topic)
-                                rospy.Subscriber(recieved_topic.topic, std_msgs.String, self.echo_sub_blackboard)
-                                print(console.blue + "..Echoing Subblackboard " + topic + " with variables " + str(variables) + "..\n" + console.reset)
-                                rospy.spin()
                             except rospy.ServiceException, e:
                                 print "Service call failed: %s" % e
+
+                            rospy.init_node('sub_blackblack_' + topic)
+                            print(console.blue + "..Echoing Subblackboard " + topic + " with variables " + str(variables) + "..\n" + console.reset)
+                            rospy.Subscriber(recieved_topic.topic, std_msgs.String, self.echo_sub_blackboard)
+                            rospy.spin()
                         except rospy.exceptions.ROSException, e:
                             print "Error: ", e
                 elif args.command[0] == 'unwatch':

@@ -27,6 +27,7 @@ import operator
 from cPickle import dumps
 import rospy
 import std_msgs.msg as std_msgs
+import rosnode
 
 ##############################################################################
 # Classes
@@ -117,8 +118,9 @@ class ROSBlackboardMonitor(object):
         self.blackboard = blackboard
         self.cached_blackboard_dict = {}
         self.is_sub = is_sub
+        self.topic_name = topic_name
         if self.is_sub:
-            self.publisher = rospy.Publisher("~sub_blackboard/" + topic_name, std_msgs.String, latch=True, queue_size=2)
+            self.publisher = rospy.Publisher("~sub_blackboard/" + self.topic_name, std_msgs.String, latch=True, queue_size=2)
         else:
             self.publisher = rospy.Publisher("~blackboard", std_msgs.String, latch=True, queue_size=2)
 
@@ -139,9 +141,29 @@ class ROSBlackboardMonitor(object):
         """
         Publishes the blackboard. Should be called at the end of every tick.
         """
-        if self.is_changed():
-            if self.publisher.get_num_connections() > 0:
+        if self.publisher.get_num_connections() > 0:
+
+            if self.is_changed():
                 self.publisher.publish("%s" % self.blackboard)
+
+            if self.is_sub:
+                # although it should be done using get_num_connections()
+                # but the connection remains unremoved,  which is also reported here
+                # https://github.com/ros/ros_comm/issues/526
+                # which seems solved but issue is reproduced here
+                alive_node = rosnode.rosnode_ping('/sub_blackblack_' + self.topic_name, max_count=1)
+                if not alive_node:
+                    # remove behaviour from tree
+                    tree.prune_subtree(self.blackboard.id)
+
+                    # remove publisher from tree's post_tick_handler
+                    for handler in tree.post_tick_handlers:
+                        if self is handler.__self__:
+                            tree.post_tick_handlers.remove(handler)
+                            break
+
+                    # unregister publisher
+                    self.publisher.unregister()
 
 
 class SubBlackboard(Behaviour):
