@@ -335,6 +335,7 @@ class ROSBehaviourTree(BehaviourTree):
         self.visitors.append(self.logging_visitor)
         self.post_tick_handlers.append(self.publish_tree_snapshots)
         self._bag_closed = False
+        self.blackboard_monitor = ROSBlackboardMonitor(self.blackboard)
 
         self.blackboard = Blackboard()
         self.blackboard_monitor = ROSBlackboardMonitor(self.blackboard)

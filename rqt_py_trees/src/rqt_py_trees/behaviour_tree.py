@@ -54,6 +54,7 @@ from .dynamic_timeline_listener import DynamicTimelineListener
 from .timeline_listener import TimelineListener
 from qt_dotgraph.dot_to_qt import DotToQtGenerator
 from qt_dotgraph.pydotfactory import PydotFactory
+from qt_dotgraph.pygraphvizfactory import PygraphvizFactory
 from rqt_bag.bag_timeline import BagTimeline
 # from rqt_bag.bag_widget import BagGraphicsView
 from rqt_graph.interactive_graphics_view import InteractiveGraphicsView
@@ -62,6 +63,8 @@ from python_qt_binding import loadUi
 from python_qt_binding.QtCore import QFile, QIODevice, QObject, Qt, Signal, QEvent, Slot
 from python_qt_binding.QtGui import QFileDialog, QGraphicsView, QGraphicsScene, QIcon, QImage, QPainter, QWidget, QShortcut, QKeySequence
 from python_qt_binding.QtSvg import QSvgGenerator
+
+from . import qt_dotgraph
 
 
 class RosBehaviourTree(QObject):
@@ -123,7 +126,7 @@ class RosBehaviourTree(QObject):
         self._widget = QWidget()
 
         # factory builds generic dotcode items
-        self.dotcode_factory = PydotFactory()
+        self.dotcode_factory = PygraphvizFactory()  # PydotFactory()
         # self.dotcode_factory = PygraphvizFactory()
         # generator builds rosgraph
         self.dotcode_generator = RosBehaviourTreeDotcodeGenerator()
@@ -629,6 +632,8 @@ class RosBehaviourTree(QObject):
             else:
                 highlight_level = 1
 
+            # (nodes, edges) = self.dot_to_qt.graph_to_qt_items(self.dotcode_generator.graph,
+            #                                                  highlight_level)
             # this function is very expensive
             (nodes, edges) = self.dot_to_qt.dotcode_to_qt_items(self._current_dotcode,
                                                                 highlight_level)
