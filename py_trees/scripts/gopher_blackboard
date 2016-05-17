@@ -100,7 +100,6 @@ class WatchBlackboard(object):
                         print(console.red + "\nError: Incorrect number of arguments provided, aborting.\n" + console.reset)
                     else:
                         topic = args.command[1]
-                        self.watchers.append(topic)     # No use for now
                         variables = args.command[2:]
                         variables = [variable.strip(',[]') for variable in variables]
 
