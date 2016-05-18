@@ -336,11 +336,11 @@ class ROSBehaviourTree(BehaviourTree):
         self.post_tick_handlers.append(self.publish_tree_snapshots)
         self._bag_closed = False
 
-        self.blackboard = ROSBlackboard()
-        self.post_tick_handlers.append(self.blackboard.publish_blackboard)
+        self.ros_blackboard = ROSBlackboard()
+        self.post_tick_handlers.append(self.ros_blackboard.publish_blackboard)
 
         rospy.Service('blackboard_list_variables', BlackboardVariables, self.send_blackboard_variables)
-        rospy.Service('sub_blackboard_watch', SubBlackboardWatch, self.spawn_sub_blackboard_publisher)
+        rospy.Service('sub_blackboard_watch', SubBlackboardWatch, self.spawn_sub_blackboard)
 
         now = datetime.datetime.now()
         topdir = rospkg.get_ros_home() + '/behaviour_trees'
@@ -364,11 +364,10 @@ class ROSBehaviourTree(BehaviourTree):
         rospy.on_shutdown(self.cleanup)
 
     def send_blackboard_variables(self, req):
-        return BlackboardVariablesResponse(self.blackboard.blackboard.__dict__.keys())
+        return BlackboardVariablesResponse(self.ros_blackboard.blackboard.__dict__.keys())
 
-    def spawn_sub_blackboard_publisher(self, req):
-        sub_blackboard = ROSBlackboard(topic_name=req.topic_name, attrs=req.variables)
-        self.post_tick_handlers.append(sub_blackboard.publish_blackboard)
+    def spawn_sub_blackboard(self, req):
+        self.ros_blackboard.initialize_sub_blackboard(req.topic_name, req.variables)
 
         # and return topic name to the gopher_blackboard
         absolute_topic_name = rospy.get_name() + '/sub_blackboard/' + req.topic_name

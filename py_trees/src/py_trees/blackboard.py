@@ -111,50 +111,52 @@ class Blackboard(object):
 
 class ROSBlackboard(object):
     """
-    Takes in :py:class:`Blackboard <py_trees.blackboard.Blackboard>`
-    or :py:class:`Blackboard <py_trees.blackboard.SubBlackboard>` differentiated by `is_sub`
-    and provides method for checking if the Blackboard has changed. Also provides publisher
-    and unloading publisher if watcher for SubBlackboard is disconnected
+    Manages :py:class:`Blackboard <py_trees.blackboard.Blackboard>`.
+    Provides methods to initialize SubBlackboards to watch subset of Blackboard variables
+    And publishers for publishing when variables in Blackboards or SubBlackboards are changed
     """
-    def __init__(self, topic_name=None, attrs=[]):
+    def __init__(self):
         self.blackboard = Blackboard()
         self.cached_blackboard_dict = {}
-        self.is_sub = False
+
+        # repo of sub_blackboards
+        self.sub_blackboards = []
+        # this should be a list of dicts with name, attrs and sub_blackboard
+
+        self.publisher = rospy.Publisher("~blackboard", std_msgs.String, latch=True, queue_size=2)
+
+    def initialize_sub_blackboard(self, topic_name, attrs):
         if isinstance(attrs, list):
-            if len(attrs) > 0:
-                self.is_sub = True
-                self.topic_name = topic_name
-                self.sub_blackboard_dict = {}
-                self.attrs = attrs
+            publisher = rospy.Publisher("~sub_blackboard/" + topic_name, std_msgs.String, latch=True, queue_size=2)
+            self.sub_blackboards.append({"topic_name": topic_name,
+                                         "attrs": attrs,
+                                         "dict": {},
+                                         "cached_dict": {},
+                                         "publisher": publisher
+                                         })
 
-        if self.is_sub:
-            self.publisher = rospy.Publisher("~sub_blackboard/" + self.topic_name, std_msgs.String, latch=True, queue_size=2)
-        else:
-            self.publisher = rospy.Publisher("~blackboard", std_msgs.String, latch=True, queue_size=2)
-
-    def update(self):
-        for attr in self.attrs:
+    def update_sub_blackboard(self, sub_blackboard):
+        for attr in sub_blackboard["attrs"]:
             if '/' in attr:
                 check_attr = operator.attrgetter(".".join(attr.split('/')))
             else:
                 check_attr = operator.attrgetter(attr)
             try:
                 value = check_attr(self.blackboard)
-                self.sub_blackboard_dict[attr] = value
+                sub_blackboard["dict"][attr] = value
             except AttributeError:
                 pass
 
-    def is_changed(self):
-        if self.is_sub:
-            self.update()
-            blackboard_dict = self.sub_blackboard_dict
+    def is_changed(self, sub_blackboard=None):
+        if sub_blackboard:
+            self.update_sub_blackboard(sub_blackboard)
+            current_pickle = dumps(sub_blackboard["dict"], -1)
+            blackboard_changed = current_pickle != sub_blackboard["cached_dict"]
+            sub_blackboard["cached_dict"] = current_pickle
         else:
-            blackboard_dict = self.blackboard.__dict__
-
-        # Compare the blackboard dicts here
-        current_pickle = dumps(blackboard_dict, -1)
-        blackboard_changed = current_pickle != self.cached_blackboard_dict
-        self.cached_blackboard_dict = current_pickle
+            current_pickle = dumps(self.blackboard.__dict__, -1)
+            blackboard_changed = current_pickle != self.cached_blackboard_dict
+            self.cached_blackboard_dict = current_pickle
 
         return blackboard_changed
 
@@ -162,38 +164,46 @@ class ROSBlackboard(object):
         """
         Publishes the blackboard. Should be called at the end of every tick.
         """
+
+        # publish blackboard
         if self.publisher.get_num_connections() > 0:
-
             if self.is_changed():
-                if self.is_sub:
-                    self.publisher.publish("%s" % self)
-                else:
-                    self.publisher.publish("%s" % self.blackboard)
+                self.publisher.publish("%s" % self.blackboard)
 
-            if self.is_sub:
-                # although it should be done using get_num_connections()
-                # but the connection remains unremoved,  which is also reported here
-                # https://github.com/ros/ros_comm/issues/526
-                # which seems solved but issue is reproduced here
-                alive_node = rosnode.rosnode_ping('/sub_blackblack_' + self.topic_name, max_count=1)
-                if not alive_node:
-                    # remove publisher from tree's post_tick_handler
-                    for handler in tree.post_tick_handlers:
-                        if self is handler.__self__:
-                            tree.post_tick_handlers.remove(handler)
-                            break
+        if len(self.sub_blackboards) > 0:
+            # publish sub_blackboards
+            subs_to_remove = []
+            for (i, sub_blackboard) in enumerate(self.sub_blackboards):
+                if sub_blackboard["publisher"].get_num_connections() > 0:
+                    if self.is_changed(sub_blackboard):
+                        sub_blackboard["publisher"].publish("%s" % self.str_sub_blackboard(sub_blackboard))
 
-                    # unregister publisher
-                    self.publisher.unregister()
+                    # unload if node has died
+                    # although it should be done using get_num_connections()
+                    # but the connection remains unremoved,  which is also reported here
+                    # https://github.com/ros/ros_comm/issues/526
+                    # which seems solved but issue is reproduced here
+                    alive_node = rosnode.rosnode_ping('/sub_blackblack_' + sub_blackboard["topic_name"], max_count=1)
+                    if not alive_node:
+                        # unregister publisher
+                        sub_blackboard["publisher"].unregister()
 
-    def __str__(self):
-        s = console.green + self.topic_name + "\n" + console.reset
+                        # add this to removing list
+                        subs_to_remove.append(i)
+
+            # remove stale sub_blackboards
+            subs_to_remove = [(x - i) for (i, x) in enumerate(subs_to_remove)]
+            for sub_index in subs_to_remove:
+                self.sub_blackboards.pop(sub_index)
+
+    def str_sub_blackboard(self, sub_blackboard):
+        s = console.green + sub_blackboard["topic_name"] + "\n" + console.reset
         max_length = 0
-        for k in self.sub_blackboard_dict.keys():
+        for k in sub_blackboard["dict"].keys():
             max_length = len(k) if len(k) > max_length else max_length
-        keys = sorted(self.sub_blackboard_dict)
+        keys = sorted(sub_blackboard["dict"])
         for key in keys:
-            value = self.sub_blackboard_dict[key]
+            value = sub_blackboard["dict"][key]
             if value is None:
                 value_string = "-"
                 s += console.cyan + "  " + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ": " + console.yellow + "%s\n" % (value_string) + console.reset
