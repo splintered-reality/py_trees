@@ -109,26 +109,45 @@ class Blackboard(object):
         return s
 
 
-class ROSBlackboardMonitor(object):
+class ROSBlackboard(object):
     """
     Takes in :py:class:`Blackboard <py_trees.blackboard.Blackboard>`
     or :py:class:`Blackboard <py_trees.blackboard.SubBlackboard>` differentiated by `is_sub`
     and provides method for checking if the Blackboard has changed. Also provides publisher
     and unloading publisher if watcher for SubBlackboard is disconnected
     """
-    def __init__(self, blackboard, is_sub=False, topic_name=None):
-        self.blackboard = blackboard
+    def __init__(self, topic_name=None, attrs=[]):
+        self.blackboard = Blackboard()
         self.cached_blackboard_dict = {}
-        self.is_sub = is_sub
-        self.topic_name = topic_name
+        self.is_sub = False
+        if isinstance(attrs, list):
+            if len(attrs) > 0:
+                self.is_sub = True
+                self.topic_name = topic_name
+                self.sub_blackboard_dict = {}
+                self.attrs = attrs
+
         if self.is_sub:
             self.publisher = rospy.Publisher("~sub_blackboard/" + self.topic_name, std_msgs.String, latch=True, queue_size=2)
         else:
             self.publisher = rospy.Publisher("~blackboard", std_msgs.String, latch=True, queue_size=2)
 
+    def update(self):
+        for attr in self.attrs:
+            if '/' in attr:
+                check_attr = operator.attrgetter(".".join(attr.split('/')))
+            else:
+                check_attr = operator.attrgetter(attr)
+            try:
+                value = check_attr(self.blackboard)
+                self.sub_blackboard_dict[attr] = value
+            except AttributeError:
+                pass
+
     def is_changed(self):
         if self.is_sub:
-            blackboard_dict = self.blackboard.dict
+            self.update()
+            blackboard_dict = self.sub_blackboard_dict
         else:
             blackboard_dict = self.blackboard.__dict__
 
@@ -146,7 +165,10 @@ class ROSBlackboardMonitor(object):
         if self.publisher.get_num_connections() > 0:
 
             if self.is_changed():
-                self.publisher.publish("%s" % self.blackboard)
+                if self.is_sub:
+                    self.publisher.publish("%s" % self)
+                else:
+                    self.publisher.publish("%s" % self.blackboard)
 
             if self.is_sub:
                 # although it should be done using get_num_connections()
@@ -155,9 +177,6 @@ class ROSBlackboardMonitor(object):
                 # which seems solved but issue is reproduced here
                 alive_node = rosnode.rosnode_ping('/sub_blackblack_' + self.topic_name, max_count=1)
                 if not alive_node:
-                    # remove behaviour from tree
-                    tree.prune_subtree(self.blackboard.id)
-
                     # remove publisher from tree's post_tick_handler
                     for handler in tree.post_tick_handlers:
                         if self is handler.__self__:
@@ -167,51 +186,14 @@ class ROSBlackboardMonitor(object):
                     # unregister publisher
                     self.publisher.unregister()
 
-
-class SubBlackboard(Behaviour):
-    """
-    Keeps a copy of blackboard comprising only of attributes provided
-    """
-    def __init__(self,
-                 name="SubBlackboard",
-                 attrs=[]
-                 ):
-        """
-        :param name: name of the behaviour
-        :param attr: attributes in blackboard to keep a copy of
-        """
-        super(SubBlackboard, self).__init__(name)
-        self.name = name
-        self.blackboard = Blackboard()
-        self.dict = {}
-        if isinstance(attrs, list):
-            self.attrs = attrs
-
-    def update(self):
-        self.logger.debug("  %s [SubBlackboard::update()]" % self.name)
-
-        for attr in self.attrs:
-            if '/' in attr:
-                check_attr = operator.attrgetter(".".join(attr.split('/')))
-            else:
-                check_attr = operator.attrgetter(attr)
-            try:
-                value = check_attr(self.blackboard)
-                self.dict[attr] = value
-            except AttributeError:
-                pass
-
-        result = common.Status.RUNNING
-        return result
-
     def __str__(self):
-        s = console.green + self.name + "\n" + console.reset
+        s = console.green + self.topic_name + "\n" + console.reset
         max_length = 0
-        for k in self.dict.keys():
+        for k in self.sub_blackboard_dict.keys():
             max_length = len(k) if len(k) > max_length else max_length
-        keys = sorted(self.dict)
+        keys = sorted(self.sub_blackboard_dict)
         for key in keys:
-            value = self.dict[key]
+            value = self.sub_blackboard_dict[key]
             if value is None:
                 value_string = "-"
                 s += console.cyan + "  " + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ": " + console.yellow + "%s\n" % (value_string) + console.reset
