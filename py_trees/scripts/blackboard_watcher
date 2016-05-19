@@ -29,16 +29,16 @@ import std_msgs.msg as std_msgs
 def show_usage():
     s = "\n"
     s += console.bold + "    Introspection" + console.reset + "\n"
-    s += console.cyan + "        gopher_blackboard" + console.yellow + " [option]" + console.reset + "\n"
+    s += console.cyan + "        blackboard_watcher" + console.yellow + " [option]" + console.reset + "\n"
     s += "\n"
     s += "        where the option is one of:\n"
-    s += console.cyan + "        --list_variables                       " + console.yellow + "list variables in the blackboard." + console.reset + "\n"
+    s += console.cyan + "        --list_variables         " + console.yellow + "list variables in the blackboard." + console.reset + "\n"
     s += "\n"
     s += console.bold + "    Command" + console.reset + "\n"
-    s += console.cyan + "        gopher_blackboard" + console.yellow + " <command>" + console.blue + console.bold + " [<variables>]" + console.reset + "\n"
+    s += console.cyan + "        blackboard_watcher" + console.blue + console.bold + " [<variables>]" + console.reset + "\n"
     s += "\n"
     s += "        where the command is one of:\n"
-    s += console.cyan + "        watch    " + console.blue + "<topic name> [<variables>]    " + console.yellow + "watch specified variables." + console.reset + "\n"
+    s += console.blue + console.bold + "        [<variables>]            " + console.reset + console.yellow + "watch specified variables." + console.reset + "\n"
     s += "\n"
     return s
 
@@ -95,31 +95,30 @@ class WatchBlackboard(object):
                 print(console.red + "\nError: no command provided" + console.reset)
                 print("%s" % show_usage())
             else:
-                if args.command[0] == 'watch':
-                    if len(args.command) < 3:
-                        print(console.red + "\nError: Incorrect number of arguments provided, aborting.\n" + console.reset)
-                    else:
-                        topic = args.command[1]
-                        variables = args.command[2:]
-                        variables = [variable.strip(',[]') for variable in variables]
+                if len(args.command) < 1:
+                    print(console.red + "\nError: Incorrect number of arguments provided, aborting.\n" + console.reset)
+                else:
+                    variables = args.command[0:]
+                    variables = [variable.strip(',[]') for variable in variables]
 
-                        sub_blackboard_watch_service = '/behaviours/sub_blackboard_watch'
+                    sub_blackboard_watch_service = '/behaviours/sub_blackboard_watch'
+                    try:
+                        rospy.wait_for_service(sub_blackboard_watch_service, timeout=3.0)
                         try:
-                            rospy.wait_for_service(sub_blackboard_watch_service, timeout=3.0)
-                            try:
-                                sub_blackboard_watch_service = rospy.ServiceProxy(sub_blackboard_watch_service, SubBlackboardWatch)
-                                recieved_topic = sub_blackboard_watch_service(topic, variables)
-                            except rospy.ServiceException, e:
-                                print "Service call failed: %s" % e
+                            sub_blackboard_watch_service = rospy.ServiceProxy(sub_blackboard_watch_service, SubBlackboardWatch)
+                            recieved_topic = sub_blackboard_watch_service(variables)
+                        except rospy.ServiceException, e:
+                            print "Service call failed: %s" % e
 
-                            rospy.init_node('sub_blackblack_' + topic)
-                            print(console.blue + "..Echoing Subblackboard " + topic + " with variables " + str(variables) + "..\n" + console.reset)
+                        if recieved_topic is not None:
+                            rospy.init_node(recieved_topic.topic.split('/')[-1])
+                            print(console.blue + ".. Echoing Subblackboard with variables: " + str(variables) + " ..\n" + console.reset)
                             rospy.Subscriber(recieved_topic.topic, std_msgs.String, self.echo_sub_blackboard)
                             rospy.spin()
-                        except rospy.exceptions.ROSException, e:
-                            print "Error: ", e
-                else:
-                    print(console.red + "\nError: unrecognised command, aborting.\n" + console.reset)
+                        else:
+                            print(console.red + "\nError: Subscribing to topic failed\n" + console.reset)
+                    except rospy.exceptions.ROSException, e:
+                        print "Error: ", e
 
 
 ##############################################################################

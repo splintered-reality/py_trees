@@ -121,19 +121,23 @@ class ROSBlackboard(object):
 
         # repo of sub_blackboards
         self.sub_blackboards = []
-        # this should be a list of dicts with name, attrs and sub_blackboard
+        # this is a list of dicts with topic_name, attrs and dict, and cached_dict
 
         self.publisher = rospy.Publisher("~blackboard", std_msgs.String, latch=True, queue_size=2)
 
-    def initialize_sub_blackboard(self, topic_name, attrs):
+    def initialize_sub_blackboard(self, attrs):
+        topic_name = None
         if isinstance(attrs, list):
-            publisher = rospy.Publisher("~sub_blackboard/" + topic_name, std_msgs.String, latch=True, queue_size=2)
+            topic_name = "sub_blackboard_" + str(len(self.sub_blackboards))
+            publisher = rospy.Publisher("~" + topic_name, std_msgs.String, latch=True, queue_size=2)
             self.sub_blackboards.append({"topic_name": topic_name,
                                          "attrs": attrs,
                                          "dict": {},
                                          "cached_dict": {},
                                          "publisher": publisher
                                          })
+
+        return topic_name
 
     def update_sub_blackboard(self, sub_blackboard):
         for attr in sub_blackboard["attrs"]:
@@ -183,7 +187,7 @@ class ROSBlackboard(object):
                     # but the connection remains unremoved,  which is also reported here
                     # https://github.com/ros/ros_comm/issues/526
                     # which seems solved but issue is reproduced here
-                    alive_node = rosnode.rosnode_ping('/sub_blackblack_' + sub_blackboard["topic_name"], max_count=1)
+                    alive_node = rosnode.rosnode_ping(sub_blackboard["topic_name"], max_count=1)
                     if not alive_node:
                         # unregister publisher
                         sub_blackboard["publisher"].unregister()
@@ -197,7 +201,7 @@ class ROSBlackboard(object):
                 self.sub_blackboards.pop(sub_index)
 
     def str_sub_blackboard(self, sub_blackboard):
-        s = console.green + sub_blackboard["topic_name"] + "\n" + console.reset
+        s = "\n"
         max_length = 0
         for k in sub_blackboard["dict"].keys():
             max_length = len(k) if len(k) > max_length else max_length

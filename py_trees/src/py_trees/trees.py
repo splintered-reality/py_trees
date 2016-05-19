@@ -367,10 +367,12 @@ class ROSBehaviourTree(BehaviourTree):
         return BlackboardVariablesResponse(self.ros_blackboard.blackboard.__dict__.keys())
 
     def spawn_sub_blackboard(self, req):
-        self.ros_blackboard.initialize_sub_blackboard(req.topic_name, req.variables)
+        topic_name = self.ros_blackboard.initialize_sub_blackboard(req.variables)
 
-        # and return topic name to the gopher_blackboard
-        absolute_topic_name = rospy.get_name() + '/sub_blackboard/' + req.topic_name
+        if topic_name:
+            absolute_topic_name = rospy.get_name() + "/" + topic_name
+        else:
+            absolute_topic_name = None
         return SubBlackboardWatchResponse(absolute_topic_name)
 
     def setup_publishers(self):
