@@ -530,12 +530,20 @@ class RosBehaviourTree(QObject):
             instance_settings.set_value('combo_box_subscribed_topic', combo_text)
 
     def restore_settings(self, plugin_settings, instance_settings):
-        self._widget.auto_fit_graph_check_box.setChecked(
-            instance_settings.value('auto_fit_graph_check_box_state', True) in [True, 'true'])
-        self._widget.highlight_connections_check_box.setChecked(
-            instance_settings.value('highlight_connections_check_box_state', True) in [True, 'true'])
-        self._saved_settings_topic = instance_settings.value('combo_box_subscribed_topic', None)
-        saved_visibility_level = instance_settings.value('visibility_level', 1)
+        try:
+            self._widget.auto_fit_graph_check_box.setChecked(
+                instance_settings.value('auto_fit_graph_check_box_state', True) in [True, 'true'])
+            self._widget.highlight_connections_check_box.setChecked(
+                instance_settings.value('highlight_connections_check_box_state', True) in [True, 'true'])
+            self._saved_settings_topic = instance_settings.value('combo_box_subscribed_topic', None)
+            saved_visibility_level = instance_settings.value('visibility_level', 1)
+        except TypeError as e:
+            self._widget.auto_fit_graph_check_box.setChecked(True)
+            self._widget.highlight_connections_check_box.setChecked(True)
+            self._saved_settings_topic = None
+            saved_visibility_level = 1
+            rospy.logerr("Rqt PyTrees: incompatible qt app configuration found, try removing ~/.config/ros.org/rqt_gui.ini")
+            rospy.logerr("Rqt PyTrees: %s" % e)
         self._widget.visibility_level_combo_box.setCurrentIndex(visibility.saved_setting_to_combo_index[saved_visibility_level])
         self.initialized = True
         self._update_combo_topics()
