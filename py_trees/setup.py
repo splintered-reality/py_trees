@@ -7,7 +7,6 @@ d = generate_distutils_setup(
     packages=['py_trees'],
     package_dir={'': 'src'},
     #package_data = {'rocon_uri': ['rules/rules.yaml']},
-    scripts=['scripts/gopher_blackboard'],
     #scripts=['scripts/rocon_uri'],
 )
 

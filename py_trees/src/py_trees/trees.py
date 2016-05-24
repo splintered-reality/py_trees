@@ -41,7 +41,7 @@ from . import composites
 from . import conversions
 from . import logging
 
-from .blackboard import Blackboard, ROSBlackboardMonitor, SubBlackboard
+from .blackboard import ROSBlackboard
 from .behaviours import Behaviour
 
 CONTINUOUS_TICK_TOCK = -1
@@ -336,12 +336,11 @@ class ROSBehaviourTree(BehaviourTree):
         self.post_tick_handlers.append(self.publish_tree_snapshots)
         self._bag_closed = False
 
-        self.blackboard = Blackboard()
-        self.blackboard_monitor = ROSBlackboardMonitor(self.blackboard)
-        self.post_tick_handlers.append(self.blackboard_monitor.publish_blackboard)
+        self.ros_blackboard = ROSBlackboard()
+        self.post_tick_handlers.append(self.ros_blackboard.publish_blackboard)
 
         rospy.Service('blackboard_list_variables', BlackboardVariables, self.send_blackboard_variables)
-        rospy.Service('sub_blackboard_watch', SubBlackboardWatch, self.spawn_sub_blackboard_publisher)
+        rospy.Service('sub_blackboard_watch', SubBlackboardWatch, self.spawn_sub_blackboard)
 
         now = datetime.datetime.now()
         topdir = rospkg.get_ros_home() + '/behaviour_trees'
@@ -365,17 +364,15 @@ class ROSBehaviourTree(BehaviourTree):
         rospy.on_shutdown(self.cleanup)
 
     def send_blackboard_variables(self, req):
-        return BlackboardVariablesResponse(self.blackboard.__dict__.keys())
+        return BlackboardVariablesResponse(self.ros_blackboard.blackboard.__dict__.keys())
 
-    def spawn_sub_blackboard_publisher(self, req):
-        name = "SubBlackBoard: " + req.topic_name
-        sub_blackboard = SubBlackboard(name=name, attrs=req.variables)
-        self.root.add_child(sub_blackboard)
-        sub_blackboard_monitor = ROSBlackboardMonitor(sub_blackboard, is_sub=True, topic_name=req.topic_name)
-        self.post_tick_handlers.append(sub_blackboard_monitor.publish_blackboard)
+    def spawn_sub_blackboard(self, req):
+        topic_name = self.ros_blackboard.initialize_sub_blackboard(req.variables)
 
-        # and return topic name to the gopher_blackboard
-        absolute_topic_name = rospy.get_name() + '/sub_blackboard/' + req.topic_name
+        if topic_name:
+            absolute_topic_name = rospy.get_name() + "/" + topic_name
+        else:
+            absolute_topic_name = None
         return SubBlackboardWatchResponse(absolute_topic_name)
 
     def setup_publishers(self):
