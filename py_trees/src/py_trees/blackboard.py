@@ -24,7 +24,7 @@ from . import common
 from .behaviour import Behaviour
 import rocon_console.console as console
 import operator
-from cPickle import dumps
+from cPickle import dumps, loads
 import rospy
 import std_msgs.msg as std_msgs
 import rosnode
@@ -134,7 +134,8 @@ class ROSBlackboard(object):
                                          "attrs": attrs,
                                          "dict": {},
                                          "cached_dict": {},
-                                         "publisher": publisher
+                                         "publisher": publisher,
+                                         "connection_established": False
                                          })
 
         return topic_name
@@ -155,8 +156,8 @@ class ROSBlackboard(object):
         if sub_blackboard:
             self.update_sub_blackboard(sub_blackboard)
             current_pickle = dumps(sub_blackboard["dict"], -1)
-            blackboard_changed = current_pickle != sub_blackboard["cached_dict"]
-            sub_blackboard["cached_dict"] = current_pickle
+            blackboard_changed = current_pickle != dumps(sub_blackboard["cached_dict"], -1)
+            sub_blackboard["cached_dict"] = loads(current_pickle)
         else:
             current_pickle = dumps(self.blackboard.__dict__, -1)
             blackboard_changed = current_pickle != self.cached_blackboard_dict
@@ -182,13 +183,10 @@ class ROSBlackboard(object):
                     if self.is_changed(sub_blackboard):
                         sub_blackboard["publisher"].publish("%s" % self.str_sub_blackboard(sub_blackboard))
 
-                    # unload if node has died
-                    # although it should be done using get_num_connections()
-                    # but the connection remains unremoved,  which is also reported here
-                    # https://github.com/ros/ros_comm/issues/526
-                    # which seems solved but issue is reproduced here
-                    alive_node = rosnode.rosnode_ping(sub_blackboard["topic_name"], max_count=1)
-                    if not alive_node:
+                    if not sub_blackboard["connection_established"]:
+                        sub_blackboard["connection_established"] = True
+                else:
+                    if sub_blackboard["connection_established"]:
                         # unregister publisher
                         sub_blackboard["publisher"].unregister()
 
