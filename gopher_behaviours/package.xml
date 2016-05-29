@@ -28,6 +28,7 @@
   <run_depend>geometry_msgs</run_depend>
   <run_depend>goal_finisher</run_depend>
   <run_depend>gopher_configuration</run_depend>
+  <run_depend>gopher_core_msgs</run_depend>
   <run_depend>gopher_semantics</run_depend>
   <run_depend>gopher_std_msgs</run_depend>
   <run_depend>nav_msgs</run_depend>
@@ -38,7 +39,6 @@
   <run_depend>rocon_python_comms</run_depend>
   <run_depend>rocon_python_utils</run_depend>
   <run_depend>rospy</run_depend>
-  <run_depend>somanet_msgs</run_depend>
   <run_depend>std_msgs</run_depend>
   <run_depend>tf</run_depend>
   <run_depend>tf2_geometry_msgs</run_depend>
