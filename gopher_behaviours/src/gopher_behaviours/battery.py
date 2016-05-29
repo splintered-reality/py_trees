@@ -24,7 +24,7 @@ import gopher_std_msgs.srv as gopher_std_srvs
 import operator
 import py_trees
 import rospy
-import somanet_msgs.msg as somanet_msgs
+import gopher_core_msgs.msg as gopher_core_msgs
 
 from . import interactions
 
@@ -42,10 +42,10 @@ class CheckChargeState(py_trees.Behaviour):
         super(CheckChargeState, self).__init__(name)
         self.expected_state = expected_state
         self.charge_state = None
-        self._battery_subscriber = rospy.Subscriber("~battery", somanet_msgs.SmartBatteryStatus, self.battery_callback)
+        self._battery_subscriber = rospy.Subscriber("~battery", gopher_core_msgs.BatteryState, self.battery_callback)
 
     def battery_callback(self, msg):
-        self.charge_state = msg.charge_state
+        self.charge_state = msg.sensor_state.power_supply_status
 
     def update(self):
         if self.charge_state is None:
@@ -59,23 +59,22 @@ class CheckChargeState(py_trees.Behaviour):
             return py_trees.Status.FAILURE
 
 
-def create_check_charging_source(
-        name="Is Docked?",
-        charging_source=somanet_msgs.SmartBatteryStatus.CHARGING_SOURCE_DOCK,
-        clear_every_time=True
-        ):
+def create_check_charging_source(name="Is Docked?",
+                                 charging_source=gopher_core_msgs.ChargingSource.DOCK,
+                                 clear_every_time=True
+                                 ):
     """
     Checks the blackboard to see what the charging source is.
 
     :param str name: behaviour name
-    :param somanet_msgs.ChargingSource charging_source: source type to check for (docked, jacked, none)
+    :param gopher_core_msgs.ChargingSource charging_source: source type to check for (docked, jacked, none)
     :param bool clear_every_time: clear the result every time it runs
     :returns: the behaviour
     :rtype: subscribers.CheckSubscriberVariable
     """
     check_source = py_trees.CheckBlackboardVariable(
         name=name,
-        variable_name="battery.charging_source",
+        variable_name="battery.charging_source.source",
         expected_value=charging_source,
         comparison_operator=operator.eq,
         clearing_policy=py_trees.common.ClearingPolicy.ON_INITIALISE if clear_every_time else py_trees.common.ClearingPolicy.NEVER
@@ -85,32 +84,32 @@ def create_check_charging_source(
 
 def create_is_docked():
     """ Check the recorded (blackboard) battery state to see if it is docked. """
-    return create_check_charging_source(name="Is Docked?", charging_source=somanet_msgs.SmartBatteryStatus.CHARGING_SOURCE_DOCK, clear_every_time=True)
+    return create_check_charging_source(name="Is Docked?", charging_source=gopher_core_msgs.ChargingSource.DOCK, clear_every_time=True)
 
 
 def create_is_jacked():
     """Check the recorded (blackboard) battery state to see if it is jacked."""
-    return create_check_charging_source(name="Is Jacked?", charging_source=somanet_msgs.SmartBatteryStatus.CHARGING_SOURCE_JACK, clear_every_time=True)
+    return create_check_charging_source(name="Is Jacked?", charging_source=gopher_core_msgs.ChargingSource.JACK, clear_every_time=True)
 
 
 def create_is_discharging():
     """ Check the recorded (blackboard) battery state to see if it is discharging."""
-    return create_check_charging_source(name="Is Discharging?", charging_source=somanet_msgs.SmartBatteryStatus.CHARGING_SOURCE_NONE, clear_every_time=True)
+    return create_check_charging_source(name="Is Discharging?", charging_source=gopher_core_msgs.ChargingSource.NONE, clear_every_time=True)
 
 
 def create_was_docked():
     """ Check the recorded (blackboard) battery state to see if it was docked. """
-    return create_check_charging_source(name="Was Docked?", charging_source=somanet_msgs.SmartBatteryStatus.CHARGING_SOURCE_DOCK, clear_every_time=False)
+    return create_check_charging_source(name="Was Docked?", charging_source=gopher_core_msgs.ChargingSource.DOCK, clear_every_time=False)
 
 
 def create_was_jacked():
     """Check the recorded (blackboard) battery state to see if it was jacked."""
-    return create_check_charging_source(name="Was Jacked?", charging_source=somanet_msgs.SmartBatteryStatus.CHARGING_SOURCE_JACK, clear_every_time=False)
+    return create_check_charging_source(name="Was Jacked?", charging_source=gopher_core_msgs.ChargingSource.JACK, clear_every_time=False)
 
 
 def create_was_discharging():
     """ Check the recorded (blackboard) battery state to see if it was discharging."""
-    return create_check_charging_source(name="Was Discharging?", charging_source=somanet_msgs.SmartBatteryStatus.CHARGING_SOURCE_NONE, clear_every_time=False)
+    return create_check_charging_source(name="Was Discharging?", charging_source=gopher_core_msgs.ChargingSource.NONE, clear_every_time=False)
 
 
 def create_wait_to_be_unplugged(name="Unplug Me"):
@@ -121,7 +120,7 @@ def create_wait_to_be_unplugged(name="Unplug Me"):
     :param str name: subtree root name
     :returns: the subtree
     """
-    gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
+    gopher = gopher_configuration.configuration.Configuration(fallback_to_defaults=True)
 
     wait_to_be_unplugged = py_trees.composites.Parallel(
         name="Wait to be Unplugged",
@@ -137,9 +136,9 @@ def create_wait_to_be_unplugged(name="Unplug Me"):
     check_if_discharging = py_trees.CheckSubscriberVariable(
         name="Check if Discharging",
         topic_name=gopher.topics.battery,
-        topic_type=somanet_msgs.SmartBatteryStatus,
-        variable_name="charging_source",
-        expected_value=somanet_msgs.SmartBatteryStatus.CHARGING_SOURCE_NONE,
+        topic_type=gopher_core_msgs.BatteryState,
+        variable_name="charging_source.source",
+        expected_value=gopher_core_msgs.ChargingSource.NONE,
         fail_if_no_data=False,
         fail_if_bad_comparison=False,
         clearing_policy=py_trees.common.ClearingPolicy.NEVER
@@ -165,13 +164,13 @@ class ToBlackboard(py_trees.subscribers.ToBlackboard):
     def __init__(self, name, topic_name):
         super(ToBlackboard, self).__init__(name=name,
                                            topic_name=topic_name,
-                                           topic_type=somanet_msgs.SmartBatteryStatus,
+                                           topic_type=gopher_core_msgs.BatteryState,
                                            blackboard_variables={"battery": None},
                                            clearing_policy=py_trees.common.ClearingPolicy.NEVER
                                            )
         self.successes = 0
         self.blackboard = py_trees.blackboard.Blackboard()
-        self.blackboard.battery = somanet_msgs.SmartBatteryStatus()
+        self.blackboard.battery = gopher_core_msgs.BatteryState()
         self.blackboard.battery_low_warning = False   # decision making
         self.gopher = gopher_configuration.configuration.Configuration(fallback_to_defaults=True)
 
@@ -180,7 +179,7 @@ class ToBlackboard(py_trees.subscribers.ToBlackboard):
         status = super(ToBlackboard, self).update()
         if status != py_trees.common.Status.RUNNING:
             # we got something
-            if self.blackboard.battery.percentage < self.gopher.battery.low:
+            if self.blackboard.battery.sensor_state.percentage < self.gopher.battery.low:
                 if self.successes % 10 == 0:  # throttling, just in case we have an up/down battery percentage incoming
                     self.blackboard.battery_low_warning = True
                     rospy.logwarn("Behaviours [%s]: battery level is low!" % self.name)
