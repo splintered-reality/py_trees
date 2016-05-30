@@ -125,10 +125,10 @@ class ROSBlackboard(object):
 
         self.publisher = rospy.Publisher("~blackboard", std_msgs.String, latch=True, queue_size=2)
 
-    def initialize_sub_blackboard(self, attrs):
-        topic_name = None
+    def initialize_sub_blackboard(self, attrs, topic_name=None):
         if isinstance(attrs, list):
-            topic_name = "sub_blackboard_" + str(len(self.sub_blackboards))
+            if not topic_name:
+                topic_name = "sub_blackboard_" + str(len(self.sub_blackboards))
             publisher = rospy.Publisher("~" + topic_name, std_msgs.String, latch=True, queue_size=2)
             self.sub_blackboards.append({"topic_name": topic_name,
                                          "attrs": attrs,

@@ -19,6 +19,7 @@ import rospy
 import rocon_console.console as console
 import sys
 import std_msgs.msg as std_msgs
+from rosservice import rosservice_find
 
 
 ##############################################################################
@@ -32,7 +33,7 @@ def show_usage():
     s += console.cyan + "        blackboard_watcher" + console.yellow + " [option]" + console.reset + "\n"
     s += "\n"
     s += "        where the option is one of:\n"
-    s += console.cyan + "        --list_variables         " + console.yellow + "list variables in the blackboard." + console.reset + "\n"
+    s += console.cyan + "        -l, --list_variables         " + console.yellow + "list variables in the blackboard." + console.reset + "\n"
     s += "\n"
     s += console.bold + "    Command" + console.reset + "\n"
     s += console.cyan + "        blackboard_watcher" + console.blue + console.bold + " [<variables>]" + console.reset + "\n"
@@ -55,70 +56,80 @@ def parse_arguments(command_line_args):
                                      epilog="And his noodly appendage reached forth to tickle the blessed...",
                                      formatter_class=argparse.RawTextHelpFormatter
                                      )
-    parser.add_argument('-lv', '--list_variables', action='store_true', default=None, help='list variables in the blackboard.')
+    parser.add_argument('-l', '--list_variables', action='store_true', default=None, help='list variables in the blackboard.')
     parser.add_argument('command', nargs=argparse.REMAINDER, default=None, help='subcommand to run')
 
     args = parser.parse_args(command_line_args)
     return args
 
 
-class WatchBlackboard(object):
-    def __init__(self, command_line_args):
-        args = parse_arguments(command_line_args)
-        self.handle_args(args)
+def pretty_print_variables(variables):
+    s = "\n"
+    s += console.bold + console.cyan + "Blackboard Variables:" + console.reset + console.yellow + "\n"
+    for variable in variables:
+        s += "    " + variable + "\n"
+    print "%s" % s
 
-    def pretty_print_variables(self, variables):
-        s = "\n"
-        s += console.bold + console.cyan + "Blackboard Variables:" + console.reset + console.yellow + "\n"
-        for variable in variables:
-            s += "    " + variable + "\n"
-        print "%s" % s
 
-    def echo_sub_blackboard(self, sub_blackboard):
-        print "%s" % sub_blackboard.data
+def echo_sub_blackboard(sub_blackboard):
+    print "%s" % sub_blackboard.data
 
-    def handle_args(self, args):
-        if args.list_variables:
-            list_variable_service = '/behaviours/blackboard_list_variables'
+
+def spin_ros_node(received_topic):
+    rospy.init_node(received_topic.topic.split('/')[-1])
+    rospy.Subscriber(received_topic.topic, std_msgs.String, echo_sub_blackboard)
+    rospy.spin()
+
+
+def handle_args(args):
+    if args.list_variables:
+        list_variables_service = rosservice_find('py_trees_msgs/BlackboardVariables')
+        if list_variables_service > 0:
+            list_variables_service = list_variables_service[0]
             try:
-                rospy.wait_for_service(list_variable_service, timeout=3.0)
+                rospy.wait_for_service(list_variables_service, timeout=3.0)
                 try:
-                    list_variables = rospy.ServiceProxy(list_variable_service, BlackboardVariables)
+                    list_variables = rospy.ServiceProxy(list_variables_service, BlackboardVariables)
                     recieved_variables = list_variables()
-                    self.pretty_print_variables(recieved_variables.variables)
+                    pretty_print_variables(recieved_variables.variables)
                 except rospy.ServiceException, e:
                     print "Service call failed: %s" % e
             except rospy.exceptions.ROSException, e:
                 print "Error: ", e
         else:
-            if not args.command:
-                print(console.red + "\nError: no command provided" + console.reset)
-                print("%s" % show_usage())
+            print "BlackboardVariables service not found"
+    else:
+        if not args.command:
+            print(console.red + "\nError: no command provided" + console.reset)
+            print("%s" % show_usage())
+        else:
+            if len(args.command) < 1:
+                print(console.red + "\nError: Incorrect number of arguments provided, aborting.\n" + console.reset)
             else:
-                if len(args.command) < 1:
-                    print(console.red + "\nError: Incorrect number of arguments provided, aborting.\n" + console.reset)
-                else:
-                    variables = args.command[0:]
-                    variables = [variable.strip(',[]') for variable in variables]
+                variables = args.command[0:]
+                variables = [variable.strip(',[]') for variable in variables]
 
-                    sub_blackboard_watch_service = '/behaviours/sub_blackboard_watch'
+                sub_blackboard_watch_service = rosservice_find('py_trees_msgs/SubBlackboardWatch')
+                if sub_blackboard_watch_service > 0:
+                    sub_blackboard_watch_service = sub_blackboard_watch_service[0]
                     try:
                         rospy.wait_for_service(sub_blackboard_watch_service, timeout=3.0)
                         try:
                             sub_blackboard_watch_service = rospy.ServiceProxy(sub_blackboard_watch_service, SubBlackboardWatch)
-                            recieved_topic = sub_blackboard_watch_service(variables)
+                            received_topic = sub_blackboard_watch_service(variables)
                         except rospy.ServiceException, e:
                             print "Service call failed: %s" % e
 
-                        if recieved_topic is not None:
-                            rospy.init_node(recieved_topic.topic.split('/')[-1])
+                        if received_topic is not None:
                             print(console.blue + ".. Echoing Subblackboard with variables: " + str(variables) + " ..\n" + console.reset)
-                            rospy.Subscriber(recieved_topic.topic, std_msgs.String, self.echo_sub_blackboard)
-                            rospy.spin()
+                            spin_ros_node(received_topic)
+
                         else:
                             print(console.red + "\nError: Subscribing to topic failed\n" + console.reset)
                     except rospy.exceptions.ROSException, e:
                         print "Error: ", e
+                else:
+                    print "SubBlackboard Watch service not found"
 
 
 ##############################################################################
@@ -127,4 +138,5 @@ class WatchBlackboard(object):
 
 if __name__ == '__main__':
     command_line_args = rospy.myargv(argv=sys.argv)[1:]
-    WatchBlackboard(command_line_args)
+    args = parse_arguments(command_line_args)
+    handle_args(args)
