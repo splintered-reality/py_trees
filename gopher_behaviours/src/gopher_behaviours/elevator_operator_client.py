@@ -110,7 +110,7 @@ class RequestElevatorRide(py_trees.Behaviour):
         if self._service_client:
             return True
         else:
-            rospy.logerr("Behaviour [" + self.name + "]: failed to set up ROS components.")
+            rospy.logerr("Behaviour [" + self.name + "]: failed to set up ROS components [could not connect to %s]" % self.config.services.elevator_operator)
             return False
 
     def initialise(self):
