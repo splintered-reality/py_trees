@@ -62,11 +62,13 @@ scenery is still changing, this way you can more flexibly cater for your own nee
 Readings
 --------
 
+* `AI GameDev - Behaviour Trees`_ - by another gaming expert, good big picture view on behaviour trees.
 * `Youtube - Second Generation of Behaviour Trees`_ - by a gaming expert, in depth c++ tutorial (on github).
 * `Behaviour trees for robotics`_ - by pirobot, a clear intro on its usefulness for robots.
 * `A Curious Course on Coroutines and Concurrency`_ - highlighting generators and coroutines in python.
 
 .. _Owyl: https://github.com/eykd/owyl
+.. _AI GameDev - Behaviour Trees: http://aigamedev.com/insider/presentation/behavior-trees/
 .. _Youtube - Second Generation of Behaviour Trees: https://www.youtube.com/watch?v=n4aREFb3SsU
 .. _Behaviour trees for robotics: http://www.pirobot.org/blog/0030/
 .. _A Curious Course on Coroutines and Concurrency: http://www.dabeaz.com/coroutines/Coroutines.pdf
