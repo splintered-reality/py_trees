@@ -163,7 +163,7 @@ def compute_parking_geometry(pose_park_start_rel_map, pose_park_rel_map, distanc
     parking pose (both relative to map).
 
     :param geometry_msgs.Pose pose_park_start_rel_map: starting pose for the maneuvre
-    :param geometry_msgs.Pose pose_park_rel_map      : saved parking location
+    :param geometry_msgs.Pose pose_park_rel_map: saved parking location
     :param float distance_threshold: 'close enough' parameter with respect to translations
 
     :returns: 3-tuple of distance_to_park, point_to_park_angle, orient_with_park_angle

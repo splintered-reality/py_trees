@@ -112,7 +112,7 @@ def flash_and_wait_for_go_button(
     Parallels an led pattern (with optional sound) together with a wait for
     the go button event on the blackboard.
 
-    Use with :py:function:`~gopher_behaviours.interactions.create_button_event_handler`.
+    Use with :func:`~gopher_behaviours.interactions.create_button_event_handler`.
 
     Blackboard Variables:
 
@@ -122,7 +122,7 @@ def flash_and_wait_for_go_button(
     :param str notification_behaviour_name: the flashing notification behaviour name
     :param led_pattern:
     :param sound:
-    :param str message: message to attach to the notification (for debugging purposes)
+    :param str message: message to attach to the notification (for debugging purposes
     """
     flash_and_wait = py_trees.composites.Parallel(
         name=name,

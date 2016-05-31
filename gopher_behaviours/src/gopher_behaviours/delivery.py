@@ -57,12 +57,15 @@ from gopher_behaviours.cfg import QuirkyDeliveriesConfig
 
 class Parameters(object):
     """
-    The variables of this class are default constructed from parameters on the
-    ros parameter server. Each parameter is nested in the private namespace of
-    the node which instantiates this class.
+    The variables of this class are default constructed from parameters served by a
+    dynamic reconfigure server.
 
     :ivar express: whether deliveries should stop and wait for a button press at each location (or not)
     :vartype express: bool
+    :ivar elf: type of initialisation to use
+    :vartype elf: :class:`elf.InitialisationType <gopher_behaviours.elf.InitialisationType>`
+    :ivar elevator: elevator mode of control
+    :vartype elevator: :class:`elevators.InteractionType <gopher_behaviours.elevators.InteractionType>`
     """
     def __init__(self):
         """
