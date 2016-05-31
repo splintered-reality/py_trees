@@ -115,15 +115,69 @@ class ROSBlackboard(object):
     Provides methods to initialize SubBlackboards to watch subset of Blackboard variables
     And publishers for publishing when variables in Blackboards or SubBlackboards are changed
     """
+    class SubBlackboard(object):
+        """
+        Container class for a Subblackboard
+        Keeps track of variables from Blackboard
+        """
+        def __init__(self, topic_name, attrs):
+            self.blackboard = Blackboard()
+            self.topic_name = topic_name
+            self.attrs = attrs
+            self.dict = {}
+            self.cached_dict = {}
+            self.publisher = rospy.Publisher("~" + topic_name, std_msgs.String, latch=True, queue_size=2)
+            self.connection_established = False
+
+        def update_sub_blackboard(self):
+            for attr in self.attrs:
+                if '/' in attr:
+                    check_attr = operator.attrgetter(".".join(attr.split('/')))
+                else:
+                    check_attr = operator.attrgetter(attr)
+                try:
+                    value = check_attr(self.blackboard)
+                    self.dict[attr] = value
+                except AttributeError:
+                    pass
+
+        def is_changed(self):
+            self.update_sub_blackboard()
+            current_pickle = dumps(self.dict, -1)
+            blackboard_changed = current_pickle != dumps(self.cached_dict, -1)
+            self.cached_dict = loads(current_pickle)
+
+            return blackboard_changed
+
+        def __str__(self):
+            s = "\n"
+            max_length = 0
+            for k in self.dict.keys():
+                max_length = len(k) if len(k) > max_length else max_length
+            keys = sorted(self.dict)
+            for key in keys:
+                value = self.dict[key]
+                if value is None:
+                    value_string = "-"
+                    s += console.cyan + "  " + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ": " + console.yellow + "%s\n" % (value_string) + console.reset
+                else:
+                    lines = ("%s" % value).split('\n')
+                    if len(lines) > 1:
+                        s += console.cyan + "  " + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ":\n"
+                        for line in lines:
+                            s += console.yellow + "    %s\n" % line + console.reset
+                    else:
+                        s += console.cyan + "  " + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ": " + console.yellow + "%s\n" % (value) + console.reset
+            s += console.reset
+            return s
+
     def __init__(self):
         self.blackboard = Blackboard()
         self.cached_blackboard_dict = {}
+        self.publisher = rospy.Publisher("~blackboard", std_msgs.String, latch=True, queue_size=2)
 
         # repo of sub_blackboards
         self.sub_blackboards = []
-        # this is a list of dicts with topic_name, attrs and dict, and cached_dict
-
-        self.publisher = rospy.Publisher("~blackboard", std_msgs.String, latch=True, queue_size=2)
 
     def get_nested_keys(self):
         variables = []
@@ -148,39 +202,16 @@ class ROSBlackboard(object):
         if isinstance(attrs, list):
             if not topic_name:
                 topic_name = "sub_blackboard_" + str(len(self.sub_blackboards))
-            publisher = rospy.Publisher("~" + topic_name, std_msgs.String, latch=True, queue_size=2)
-            self.sub_blackboards.append({"topic_name": topic_name,
-                                         "attrs": attrs,
-                                         "dict": {},
-                                         "cached_dict": {},
-                                         "publisher": publisher,
-                                         "connection_established": False
-                                         })
+
+            sub_blackboard = ROSBlackboard.SubBlackboard(topic_name, attrs)
+            self.sub_blackboards.append(sub_blackboard)
 
         return topic_name
 
-    def update_sub_blackboard(self, sub_blackboard):
-        for attr in sub_blackboard["attrs"]:
-            if '/' in attr:
-                check_attr = operator.attrgetter(".".join(attr.split('/')))
-            else:
-                check_attr = operator.attrgetter(attr)
-            try:
-                value = check_attr(self.blackboard)
-                sub_blackboard["dict"][attr] = value
-            except AttributeError:
-                pass
-
-    def is_changed(self, sub_blackboard=None):
-        if sub_blackboard:
-            self.update_sub_blackboard(sub_blackboard)
-            current_pickle = dumps(sub_blackboard["dict"], -1)
-            blackboard_changed = current_pickle != dumps(sub_blackboard["cached_dict"], -1)
-            sub_blackboard["cached_dict"] = loads(current_pickle)
-        else:
-            current_pickle = dumps(self.blackboard.__dict__, -1)
-            blackboard_changed = current_pickle != self.cached_blackboard_dict
-            self.cached_blackboard_dict = current_pickle
+    def is_changed(self):
+        current_pickle = dumps(self.blackboard.__dict__, -1)
+        blackboard_changed = current_pickle != self.cached_blackboard_dict
+        self.cached_blackboard_dict = current_pickle
 
         return blackboard_changed
 
@@ -194,50 +225,27 @@ class ROSBlackboard(object):
             if self.is_changed():
                 self.publisher.publish("%s" % self.blackboard)
 
-        if len(self.sub_blackboards) > 0:
-            # publish sub_blackboards
-            subs_to_remove = []
-            for (i, sub_blackboard) in enumerate(self.sub_blackboards):
-                if sub_blackboard["publisher"].get_num_connections() > 0:
-                    if self.is_changed(sub_blackboard):
-                        sub_blackboard["publisher"].publish("%s" % self.str_sub_blackboard(sub_blackboard))
+        # publish sub_blackboards
+        subs_to_remove = []
+        for (i, sub_blackboard) in enumerate(self.sub_blackboards):
+            if sub_blackboard.publisher.get_num_connections() > 0:
+                if sub_blackboard.is_changed():
+                    sub_blackboard.publisher.publish("%s" % sub_blackboard)
 
-                    if not sub_blackboard["connection_established"]:
-                        sub_blackboard["connection_established"] = True
-                else:
-                    if sub_blackboard["connection_established"]:
-                        # unregister publisher
-                        sub_blackboard["publisher"].unregister()
-
-                        # add this to removing list
-                        subs_to_remove.append(i)
-
-            # remove stale sub_blackboards
-            subs_to_remove = [(x - i) for (i, x) in enumerate(subs_to_remove)]
-            for sub_index in subs_to_remove:
-                self.sub_blackboards.pop(sub_index)
-
-    def str_sub_blackboard(self, sub_blackboard):
-        s = "\n"
-        max_length = 0
-        for k in sub_blackboard["dict"].keys():
-            max_length = len(k) if len(k) > max_length else max_length
-        keys = sorted(sub_blackboard["dict"])
-        for key in keys:
-            value = sub_blackboard["dict"][key]
-            if value is None:
-                value_string = "-"
-                s += console.cyan + "  " + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ": " + console.yellow + "%s\n" % (value_string) + console.reset
+                if not sub_blackboard.connection_established:
+                    sub_blackboard.connection_established = True
             else:
-                lines = ("%s" % value).split('\n')
-                if len(lines) > 1:
-                    s += console.cyan + "  " + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ":\n"
-                    for line in lines:
-                        s += console.yellow + "    %s\n" % line + console.reset
-                else:
-                    s += console.cyan + "  " + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ": " + console.yellow + "%s\n" % (value) + console.reset
-        s += console.reset
-        return s
+                if sub_blackboard.connection_established:
+                    # unregister publisher
+                    sub_blackboard.publisher.unregister()
+
+                    # add this to removing list
+                    subs_to_remove.append(i)
+
+        # remove stale sub_blackboards
+        subs_to_remove = [(x - i) for (i, x) in enumerate(subs_to_remove)]
+        for sub_index in subs_to_remove:
+            self.sub_blackboards.pop(sub_index)
 
 
 class ClearBlackboardVariable(behaviours.Success):
