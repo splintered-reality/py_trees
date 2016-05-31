@@ -216,7 +216,7 @@ def create_locations_subtree(current_world, locations, parameters):
 
        Clean up the key error handling
     """
-    gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
+    gopher = gopher_configuration.configuration.Configuration(fallback_to_defaults=True)
     semantics = gopher_semantics.Semantics(gopher.namespaces.semantics, fallback_to_defaults=True)
     ########################################
     # Topological Path
@@ -353,7 +353,7 @@ class Waiting(py_trees.Behaviour):
         :param str location: unique name of the location
         """
         super(Waiting, self).__init__(name)
-        self.config = gopher_configuration.Configuration()
+        self.config = gopher_configuration.configuration.Configuration()
         self.location = location
         self.blackboard = py_trees.blackboard.Blackboard()
         self.go_requested = False
@@ -501,7 +501,7 @@ class GopherDeliveries(object):
         Delayed ROS Setup, creates an example tree and tries to set that up. If this fails
         the delivery tree is considered dysfunctional.
         """
-        self.gopher = gopher_configuration.Configuration()
+        self.gopher = gopher_configuration.configuration.Configuration()
         self.semantics = gopher_semantics.Semantics(self.gopher.namespaces.semantics)
 
         self.subscribers = rocon_python_comms.utils.Subscribers(

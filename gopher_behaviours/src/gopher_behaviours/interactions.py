@@ -26,7 +26,7 @@ import gopher_std_msgs.msg as gopher_std_msgs
 import gopher_std_msgs.srv as gopher_std_srvs
 import operator
 import py_trees
-import rocon_console.console as console
+# import rocon_console.console as console
 import rospy
 import std_msgs.msg as std_msgs
 import unique_id
@@ -55,7 +55,7 @@ def create_button_event_handler(name="Button Events"):
     event_handler = py_trees.composites.Sequence(name)
     event_handler.blackbox_level = py_trees.common.BlackBoxLevel.DETAIL
 
-    gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
+    gopher = gopher_configuration.configuration.Configuration(fallback_to_defaults=True)
     go_button_events = MonitorButtonEvents(
         name="Go",
         topic_name=gopher.buttons.go,
@@ -91,7 +91,7 @@ def create_celebrate_behaviour(name="Celebrate", duration=3.0):
     :param str name: behaviour name
     :param float duration: how long to spend running until turning into success
     """
-    gopher = gopher_configuration.Configuration(fallback_to_defaults=True)
+    gopher = gopher_configuration.configuration.Configuration(fallback_to_defaults=True)
     celebrate = Notification(
         name=name,
         led_pattern=gopher.led_patterns.im_doing_something_cool,
@@ -232,7 +232,7 @@ class Notification(py_trees.Behaviour):
         :param float duration: time in seconds for which to display this notification, the behaviour will shutdown the signal on stop
         """
         super(Notification, self).__init__(name)
-        self.gopher = gopher_configuration.Configuration()
+        self.gopher = gopher_configuration.configuration.Configuration()
         self.topic_name = self.gopher.services.notification
         self.service = rospy.ServiceProxy(self.topic_name, gopher_std_srvs.Notify)
         self.timer = None
