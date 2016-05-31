@@ -364,7 +364,8 @@ class ROSBehaviourTree(BehaviourTree):
         rospy.on_shutdown(self.cleanup)
 
     def send_blackboard_variables(self, req):
-        return BlackboardVariablesResponse(self.ros_blackboard.blackboard.__dict__.keys())
+        nested_keys = self.ros_blackboard.get_nested_keys()
+        return BlackboardVariablesResponse(nested_keys)
 
     def spawn_sub_blackboard(self, req):
         topic_name = self.ros_blackboard.initialize_sub_blackboard(req.variables)

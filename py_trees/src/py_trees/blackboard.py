@@ -125,6 +125,25 @@ class ROSBlackboard(object):
 
         self.publisher = rospy.Publisher("~blackboard", std_msgs.String, latch=True, queue_size=2)
 
+    def get_nested_keys(self):
+        variables = []
+
+        def inner(v, k):
+            for attr in dir(type(v)):
+                if not isinstance(v, (bool, list, str, int, float)):
+                        if not attr.startswith("_"):
+                            value = getattr(v, attr)
+                            if not callable(value):
+                                if not attr.isupper():
+                                    variables.append(k + "/" + attr)
+                                    inner(value, k + "/" + attr)
+
+        for k, v in self.blackboard.__dict__.items():
+            variables.append(k)
+            inner(v, k)
+
+        return variables
+
     def initialize_sub_blackboard(self, attrs, topic_name=None):
         if isinstance(attrs, list):
             if not topic_name:
