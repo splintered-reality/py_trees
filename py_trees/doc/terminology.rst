@@ -6,6 +6,10 @@ Terminology
    tick
    ticks
    ticking
+      A key feature of behaviours and their trees is in the way they *tick*. A tick
+      is merely an execution slice, similar to calling a function once, or executing
+      a loop in a control program once.
+
       When a **behaviour** ticks, it is executing a small, non-blocking chunk of code
       that checks a variable or triggers/monitors/returns the result of an external action.
 

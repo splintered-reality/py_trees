@@ -4,51 +4,26 @@ Background
 Introduction
 ------------
 
-Patrick Goebel wrote a very good introduction on his block about `Behaviour trees for robotics`_.
-Rather than regurgitating alot of good information, go read that first.
-
-The Simplicity of Three
------------------------
-
-While it is possible to arbitrarily compose/extend any kind of logical building block for a behaviour tree,
-it is surprising just how much can be done with just three - the **Behaviour**, **Selector** and **Sequence**.
-Behaviours are a single entity, whilst selectors and sequences are compositions of behaviours. This trio is
-simple, yet able to deliver surprisingly rich results.
-
-Ticking
--------
-
-A key feature of behaviours and their trees is in the way they :term:`tick`. The execution is like a slice - some small chunk of
-code on a behaviour to arrive at a decision - success, failure, or pending (still running). To tick an entire
-tree of behaviours is to start ticking from the root, using their decisions and the selector-sequence
-logic to choose which behaviour should next be ticked. This results in traversing the tree (though not necessarily
-all of it) at the end of which the root of the tree will return a result.
-
-The emphasis is on any execution being light and quick. At no point does the traversal of the tree get mired in
-execution - it's just in and out and then stop for a coffee. Let everyone else do the real work. Typical behaviours
-tend to monitor and/or trigger an external process, or do a quick status check.
-
-Ticking over a tree brings very useful advantages. No need for locking/threads. You can analyse the data
-from a tree between ticks at your leisure. This results in much less programming
-and programming complexity and lets you concentrate on the decision logic alone.
-
-Trees vs State Machines
------------------------
-
-The main differences lie in *priority handling* and *ticking* (or avoiding locking/threading).
-Enabling either of these in state machines is a nightmare for anything sufficiently complicated.
-The best example is to consider a large state machine for a robot
-that has one necessary check - is my battery low?, and one action - go to homebase and recharge. In addition, this
-must be checked no matter what state you are in. At this point you have to start thinking about concurrency,
-or doing an incredibly large amount of wiring just to handle this one extra addition to your state machine.
-
-*Small features should require a proportionally small amount of effort to integrate them.*
+Patrick Goebel wrote an introduction on his block about `Behaviour trees for robotics`_.
+Rather than regurgitating alot of good information, go read that first. To follow that
+up, sign up (its free) and watch `AI GameDev - Behaviour Trees`_ which is a much more
+thorough analysis of behaviour trees from a gaming expert. It also includes a great
+big picture overview of behaviour trees and where it fits in alongside other techniques.
 
 Why Py Trees?
 -------------
 
 We needed a way to model the overall behaviour of a robot and didn't find anything that really fit till
-we tried behaviour trees. This is a python implementation that uses all the whizbang tricks (generators, decorators)
+we tried behaviour trees. For us a few standout points include:
+
+* **Ticking** - the ability to :term:`tick` allows us to work between executions without having to manage multi-threading
+* **Higher Priority Handling** - interrupting the current state is dead simple, no complicated wiring needed
+* **Simplicity** - there are very few fundamental components, making it easy for designers and devs to work with it
+
+It's worth noting that we did try smach, but it couldn't scale up to handle the problems we were trying
+to solve.
+
+This is a python implementation that uses all the whizbang tricks (generators, decorators)
 that python has to offer. It doesn't have the speed of c++, however most of our robot scenarios do not need an
 implementation that can handle thousands of behaviours at once. If we do, then we'll make that c++ implementation :)
 
