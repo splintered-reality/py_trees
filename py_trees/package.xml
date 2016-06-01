@@ -1,15 +1,15 @@
 <package>
   <name>py_trees</name>
-  <version>0.1.2</version>
+  <version>0.2.0</version>
   <description>
-    Behaviour trees, initially from experiments by Patrick Goebel from PiRobot.
+    Behaviour trees in python.
   </description>
   <maintainer email="d.stonier@gmail.com">Daniel Stonier</maintainer>
   <license>BSD</license>
   <url type="website">http://ros.org/wiki/py_trees</url>
-  <url type="repository">https://github.com/robotics-in-concert/gopher_crazy_hospital</url>
-  <url type="bugtracker">https://github.com/robotics-in-concert/gopher_crazy_hospital/issues</url>
-  <author email="d.stonier@gmail.com">Daniel Stonier</author>
+  <url type="repository">https://github.com/stonier/py_trees_suite</url>
+  <url type="bugtracker">https://github.com/stonier/py_trees_suite/issues</url>
+  <author>Daniel Stonier</author>
 
   <buildtool_depend>catkin</buildtool_depend>
 
