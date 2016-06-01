@@ -45,7 +45,7 @@ def angle_between(vector_one, vector_two, normal=[0.0, 0.0, 1.0]):
 
     :param [] vector_one: list of float length three
     :param [] vector_two: list of float length three
-    :param [] normal : should be one of the two unit normals pointing away from the plane of the two vectors
+    :param [] normal: should be one of the two unit normals pointing away from the plane of the two vectors
 
     .. todo:: checks that make sure the normal really is a normal of the two vectors
     """

@@ -25,7 +25,7 @@ Demo Simple Motions
 Elevator Run - Human Asisted
 ----------------------------
 
-.. graphviz:: dot/elevator_run-human-assisted.dot
+.. graphviz:: dot/elevator_run-human_assisted.dot
 
 Splintered Reality
 ------------------
