@@ -24,6 +24,7 @@ This module creates tools for managing your entire behaviour tree.
 
 import datetime
 import py_trees_msgs.msg as py_trees_msgs
+from py_trees_msgs.srv import BlackboardVariables, BlackboardVariablesResponse, SubBlackboardWatch, SubBlackboardWatchResponse
 import os
 import rocon_python_comms
 import rosbag
@@ -40,7 +41,7 @@ from . import composites
 from . import conversions
 from . import logging
 
-from .blackboard import Blackboard, ROSBlackboardMonitor
+from .blackboard import ROSBlackboard
 from .behaviours import Behaviour
 
 CONTINUOUS_TICK_TOCK = -1
@@ -328,15 +329,18 @@ class ROSBehaviourTree(BehaviourTree):
         :raises AssertionError: if incoming root variable is not the correct type.
         """
         super(ROSBehaviourTree, self).__init__(root)
-        self.blackboard = Blackboard()
         self.snapshot_visitor = ROSBehaviourTree.SnapshotVisitor()
         self.logging_visitor = ROSBehaviourTree.LoggingVisitor()
         self.visitors.append(self.snapshot_visitor)
         self.visitors.append(self.logging_visitor)
         self.post_tick_handlers.append(self.publish_tree_snapshots)
-        self.post_tick_handlers.append(self.publish_blackboard)
         self._bag_closed = False
-        self.blackboard_monitor = ROSBlackboardMonitor(self.blackboard)
+
+        self.ros_blackboard = ROSBlackboard()
+        self.post_tick_handlers.append(self.ros_blackboard.publish_blackboard)
+
+        rospy.Service('blackboard_list_variables', BlackboardVariables, self.send_blackboard_variables)
+        rospy.Service('sub_blackboard_watch', SubBlackboardWatch, self.spawn_sub_blackboard)
 
         now = datetime.datetime.now()
         topdir = rospkg.get_ros_home() + '/behaviour_trees'
@@ -359,11 +363,23 @@ class ROSBehaviourTree(BehaviourTree):
         # cleanup must come last as it assumes the existence of the bag
         rospy.on_shutdown(self.cleanup)
 
+    def send_blackboard_variables(self, req):
+        nested_keys = self.ros_blackboard.get_nested_keys()
+        return BlackboardVariablesResponse(nested_keys)
+
+    def spawn_sub_blackboard(self, req):
+        topic_name = self.ros_blackboard.initialize_sub_blackboard(req.variables)
+
+        if topic_name:
+            absolute_topic_name = rospy.get_name() + "/" + topic_name
+        else:
+            absolute_topic_name = None
+        return SubBlackboardWatchResponse(absolute_topic_name)
+
     def setup_publishers(self):
         latched = True
         self.publishers = rocon_python_comms.utils.Publishers(
             [
-                ("blackboard", "~blackboard", std_msgs.String, latched, 2),
                 ("ascii_tree", "~ascii/tree", std_msgs.String, latched, 2),
                 ("ascii_snapshot", "~ascii/snapshot", std_msgs.String, latched, 2),
                 ("dot_tree", "~dot/tree", std_msgs.String, latched, 2),
@@ -377,16 +393,6 @@ class ROSBehaviourTree(BehaviourTree):
         # set a handler to publish future modifiactions
         # tree_update_handler is in the base class, set this to the callback function here.
         self.tree_update_handler = self.publish_tree_modifications
-
-    def publish_blackboard(self, tree):
-        """
-        Publishes the blackboard. Should be called at the end of every tick.
-        """
-        if self.publishers is None:
-            self.setup_publishers()
-        if self.blackboard_monitor.is_changed():    # updates the internal cache
-            if self.publishers.blackboard.get_num_connections() > 0:                
-                self.publishers.blackboard.publish("%s" % self.blackboard)
 
     def publish_tree_modifications(self, tree):
         """
