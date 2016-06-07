@@ -94,6 +94,8 @@ class Blackboard(object):
                 value_string = "-"
                 s += console.cyan + "  " + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ": " + console.yellow + "%s\n" % (value_string) + console.reset
             else:
+                if type(value) is tuple:
+                    value = (value,)
                 lines = ("%s" % value).split('\n')
                 if len(lines) > 1:
                     s += console.cyan + "  " + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ":\n"
