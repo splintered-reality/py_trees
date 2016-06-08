@@ -13,7 +13,7 @@
   <url type="repository">https://github.com/stonier/py_trees_suite</url>
   <url type="bugtracker">https://github.com/stonier/py_trees_suite/issues</url>
 
-  <license>MIT</license>
+  <license>BSD</license>
 
   <author>Daniel Stonier</author>
   <author>Michal Staniaszek</author>
