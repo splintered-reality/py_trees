@@ -5,11 +5,19 @@
   <description>
     Behaviour trees, in python, especially tailored for robots.
   </description>
+
+  <maintainer email="stonier@yujinrobot.com">Daniel Stonier</maintainer>
+  <maintainer email="m.staniaszek@gmail.com">Michal Staniaszek</maintainer>
+  <maintainer email="naveedhd@gmail.com">Naveed Usmani</maintainer>
+
   <url type="repository">https://github.com/stonier/py_trees_suite</url>
   <url type="bugtracker">https://github.com/stonier/py_trees_suite/issues</url>
+
   <license>BSD</license>
-  <maintainer email="stonier@yujinrobot.com">Daniel Stonier</maintainer>
+
   <author>Daniel Stonier</author>
+  <author>Michal Staniaszek</author>
+  <author>Naveed Usmani</author>
 
   <buildtool_depend>catkin</buildtool_depend>
 
