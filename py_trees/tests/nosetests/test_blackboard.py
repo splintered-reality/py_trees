@@ -30,9 +30,21 @@ import operator
 # Helpers
 ##############################################################################
 
+class FooBar(object):
+
+    def __init__(self):
+        pass
+
 def create_blackboard():
+    """
+    Fill with as many different types as we need to get full coverage on
+    pretty printing blackboard tests.
+    """
     blackboard = Blackboard()
     blackboard.foo = "bar"
+    blackboard.some_tuple = (1, "bar")
+    blackboard.foobar = FooBar()
+    blackboard.nothing = None
     return blackboard
 
 ##############################################################################
@@ -44,7 +56,7 @@ def test_print_blackboard():
     print(console.bold + "* Blackboard" + console.reset)
     print(console.bold + "****************************************************************************************\n" + console.reset)
     blackboard = create_blackboard()
-    print("%s" % blackboard)
+    print('{0}'.format(blackboard))
 
 
 def test_variable_exists():
@@ -75,7 +87,7 @@ def test_expected_value():
     for b, unused in tuples:
         b.tick_once()
     for b, asserted_result in tuples:
-        print("%s: %s [%s]" % (b.name, b.status, asserted_result))
+        print("{0}: {1} [{2}]".format(b.name, b.status, asserted_result))
         assert(b.status == asserted_result)
 
 def test_expected_value_inverted():

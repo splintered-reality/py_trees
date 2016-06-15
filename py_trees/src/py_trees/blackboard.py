@@ -92,17 +92,15 @@ class Blackboard(object):
             value = self.__dict__[key]
             if value is None:
                 value_string = "-"
-                s += console.cyan + "  " + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ": " + console.yellow + "%s\n" % (value_string) + console.reset
+                s += console.cyan + "  " + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ": " + console.yellow + "{0}\n".format(value_string) + console.reset
             else:
-                if type(value) is tuple:
-                    value = (value,)
-                lines = ("%s" % value).split('\n')
+                lines = ('{0}'.format(value)).split('\n')
                 if len(lines) > 1:
                     s += console.cyan + "  " + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ":\n"
                     for line in lines:
-                        s += console.yellow + "    %s\n" % line + console.reset
+                        s += console.yellow + "    {0}\n".format(line) + console.reset
                 else:
-                    s += console.cyan + "  " + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ": " + console.yellow + "%s\n" % (value) + console.reset
+                    s += console.cyan + "  " + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ": " + console.yellow + '{0}\n'.format(value) + console.reset
         s += console.reset
         return s
 
