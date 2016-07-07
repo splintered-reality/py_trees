@@ -382,6 +382,43 @@ def failure_is_success(cls):
     return FailureIsSuccess
 
 #############################
+# FailureIsRunning
+#############################
+
+
+def failure_is_running(cls):
+    """
+    Be positive, always succeed.
+
+    .. code-block:: python
+
+       @failure_is_success
+       class MustGoOnRegardless(ActedLikeAGoon)
+           pass
+
+    or
+
+    .. code-block:: python
+
+       must_go_on_regardless = failure_is_running(ActedLikeAGoon("Goon"))
+    """
+    def _update(func):
+        @functools.wraps(func)
+        def wrapped(self):
+            self.original.tick_once()
+            if self.original.status == common.Status.FAILURE:
+                self.feedback_message = "failure is running [%s]" % self.original.feedback_message
+                return common.Status.RUNNING
+            else:
+                self.feedback_message = self.original.feedback_message
+                return self.original.status
+        return wrapped
+
+    FailureIsRunning = imposter(cls)
+    setattr(FailureIsRunning, "update", _update(FailureIsRunning.update))
+    return FailureIsRunning
+
+#############################
 # SuccessIsFailure
 #############################
 
