@@ -1,0 +1,12 @@
+digraph naive_context_switching {
+graph [fontname="times-roman"];
+node [fontname="times-roman"];
+edge [fontname="times-roman"];
+"Sequence" [fontcolor=black, shape=box, fontsize=11, style=filled, fillcolor=orange];
+"B1" [fontcolor=black, shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+"Sequence" -> "B1";
+"B2" [fontcolor=black, shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+"Sequence" -> "B2";
+"B3" [fontcolor=black, shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+"Sequence" -> "B3";
+}

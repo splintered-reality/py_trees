@@ -80,42 +80,22 @@ Above, the ``Behaviour.tick()`` and ``Behaviour.stop()`` are parent level method
 running of the behaviour. All other methods are reserved for custom code specific to the
 behaviour.
 
-Sequences
----------
+Composites
+----------
 
-**Sequences are the factory lines of Behaviour Trees**
+.. graphviz:: dot/composites.dot
 
-A :py:class:`~py_trees.composites.Sequence` is the first of the two fundamental
-composite behaviours. They are themseleves a behaviour, but are also responsible
-for a family of behaviour children. A sequence will progressively tick over each
-of its children so long as each child returns ``SUCCESS``. If any child returns
-FAILURE or RUNNING the sequence will halt and the parent will adopt the result of this child.
-If it reaches the last child, it returns with that result regardless.
+Composites are the branches of the tree. This is where the factories and the decision making happens.
+The composites provided by this library are shown above - you should rarely ever need to subclass
+any of these and even less so, create a new composite from scratch. Most patterns can be achieved
+with the combination of the above. Composite behaviours typically manage children and apply
+some logic to the way they execute and return a result, but generally don't do any work themselves.
+Do the work you need to do in the behaviours.
 
-.. note::
-
-   The sequence halts once it sees a child is RUNNING and then returns the result -> *it does
-   not get stuck in the running behaviour*.
-
-Selectors
----------
-
-**Selectors are the Decision Makers**
-
-A :py:class:`~py_trees.composites.Selector` is the second of the two fundamental composite
-behaviours. A selector executes each of its child behaviours in turn until one of them
-succeeds (at which point it itself returns ``SUCCESS``) or it runs out of children
-(at which point it itself returns ``FAILURE``). We usually refer to selecting children as a
-means of *choosing between priorities*. Each child and its subtree represent a lower or
-higher priority path.
-
-.. todo:: image representing priorities from high to low (left to right)
-
-.. note::
-
-   Switching from a low -> high priority branch causes a `stop(INVALID)` signal to be sent to the previously
-   executing low priority branch. This signal will percolate down that child's own subtree. Behaviours
-   should make sure that they catch this and ‘destruct’ appropriately.
+* :py:class:`~py_trees.composites.Sequence`: execute children sequentially
+* :py:class:`~py_trees.composites.Selector`: select a path through the tree (these are the decision makers)
+* :py:class:`~py_trees.composites.Chooser`: a decision maker with commitment to a pre-selected path
+* :py:class:`~py_trees.composites.Parallel`: manage children concurrently
 
 Data Sharing
 ------------

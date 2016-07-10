@@ -1,6 +1,10 @@
 Changelog
 =========
 
+Forthcoming
+-----------
+* ``failure_is_running decorator`` (meta).
+
 0.2.0 (2016-06-01)
 ------------------
 * do terminate properly amongst relevant classes
