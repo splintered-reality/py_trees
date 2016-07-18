@@ -1,7 +1,0 @@
-digraph demo_simple_motions {
-"Demo Simple Motions" [shape=box, fontsize=11, style=filled, fillcolor=orange];
-Rotate [shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
-"Demo Simple Motions" -> Rotate;
-Translate [shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
-"Demo Simple Motions" -> Translate;
-}

@@ -1,6 +1,18 @@
 Changelog
 =========
 
+0.2.0 (2016-06-01)
+------------------
+* do terminate properly amongst relevant classes
+* blackboxes
+* chooser variant of selectors
+* bugfix the decorators
+* blackboard updates on change only
+* improved dot graph creation
+* many bugfixes to composites
+* subscriber behaviours
+* timer behaviours
+
 0.1.2 (2015-11-16)
 ------------------
 * one shot sequences
