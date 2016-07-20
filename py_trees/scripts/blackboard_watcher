@@ -20,6 +20,7 @@ import rocon_console.console as console
 import sys
 import std_msgs.msg as std_msgs
 from rosservice import rosservice_find
+from bondpy import bondpy
 
 
 ##############################################################################
@@ -73,6 +74,7 @@ def pretty_print_variables(variables):
         else:
             sep = ""
         s += "    " * len(variable) + sep + variable[-1] + "\n"
+    s += console.reset
     print "%s" % s
 
 
@@ -82,14 +84,25 @@ def echo_sub_blackboard(sub_blackboard):
 
 def spin_ros_node(received_topic):
     rospy.init_node(received_topic.topic.split('/')[-1])
+    bond = bondpy.Bond(received_topic.topic + "_bond", received_topic.topic.split('/')[-1])
+    bond.start()
+    if not bond.wait_until_formed(rospy.Duration(3.0)):
+       raise Exception('Bond could not be formed')
+
+    def break_bond():
+        bond.break_bond()
+
     rospy.Subscriber(received_topic.topic, std_msgs.String, echo_sub_blackboard)
-    rospy.spin()
+    rospy.on_shutdown(break_bond)
+
+    while not rospy.is_shutdown():
+        rospy.spin()
 
 
 def handle_args(args):
     if args.list_variables:
         list_variables_service = rosservice_find('py_trees_msgs/BlackboardVariables')
-        if list_variables_service > 0:
+        if len(list_variables_service) > 0:
             list_variables_service = list_variables_service[0]
             try:
                 rospy.wait_for_service(list_variables_service, timeout=3.0)
@@ -102,7 +115,7 @@ def handle_args(args):
             except rospy.exceptions.ROSException, e:
                 print "Error: ", e
         else:
-            print "BlackboardVariables service not found"
+            print "Blackboard Variables service not found"
     else:
         if not args.command:
             print(console.red + "\nError: no command provided" + console.reset)
@@ -115,7 +128,7 @@ def handle_args(args):
                 variables = [variable.strip(',[]') for variable in variables]
 
                 sub_blackboard_watch_service = rosservice_find('py_trees_msgs/SubBlackboardWatch')
-                if sub_blackboard_watch_service > 0:
+                if len(sub_blackboard_watch_service) > 0:
                     sub_blackboard_watch_service = sub_blackboard_watch_service[0]
                     try:
                         rospy.wait_for_service(sub_blackboard_watch_service, timeout=3.0)

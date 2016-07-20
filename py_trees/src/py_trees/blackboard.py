@@ -24,10 +24,10 @@ from . import common
 from .behaviour import Behaviour
 import rocon_console.console as console
 import operator
-from cPickle import dumps, loads
+from cPickle import dumps
 import rospy
 import std_msgs.msg as std_msgs
-import rosnode
+from bondpy import bondpy
 
 
 ##############################################################################
@@ -127,7 +127,12 @@ class ROSBlackboard(object):
             self.dict = {}
             self.cached_dict = {}
             self.publisher = rospy.Publisher("~" + topic_name, std_msgs.String, latch=True, queue_size=2)
-            self.connection_established = False
+            self.bond = bondpy.Bond(rospy.get_name() + "/" + topic_name + "_bond", topic_name, on_broken=self.bond_break)
+            self.bond.start()
+            self.bond_broken = False
+
+        def bond_break(self):
+            self.bond_broken = True
 
         def update_sub_blackboard(self):
             for attr in self.attrs:
@@ -144,8 +149,8 @@ class ROSBlackboard(object):
         def is_changed(self):
             self.update_sub_blackboard()
             current_pickle = dumps(self.dict, -1)
-            blackboard_changed = current_pickle != dumps(self.cached_dict, -1)
-            self.cached_dict = loads(current_pickle)
+            blackboard_changed = current_pickle != self.cached_dict
+            self.cached_dict = current_pickle
 
             return blackboard_changed
 
@@ -174,7 +179,13 @@ class ROSBlackboard(object):
     def __init__(self):
         self.blackboard = Blackboard()
         self.cached_blackboard_dict = {}
-        self.publisher = rospy.Publisher("~blackboard", std_msgs.String, latch=True, queue_size=2)
+
+        if rospy.core.is_initialized():
+            self.publisher = rospy.Publisher("~blackboard", std_msgs.String, latch=True, queue_size=2)
+        else:
+            # this is for cases blackboard is called by scripts
+            # such as `demo_move_base`
+            self.publisher = rospy.Publisher("blackboard", std_msgs.String, latch=True, queue_size=2)
 
         # repo of sub_blackboards
         self.sub_blackboards = []
@@ -226,26 +237,27 @@ class ROSBlackboard(object):
                 self.publisher.publish("%s" % self.blackboard)
 
         # publish sub_blackboards
-        subs_to_remove = []
-        for (i, sub_blackboard) in enumerate(self.sub_blackboards):
-            if sub_blackboard.publisher.get_num_connections() > 0:
-                if sub_blackboard.is_changed():
-                    sub_blackboard.publisher.publish("%s" % sub_blackboard)
+        if len(self.sub_blackboards) > 0:
+            subs_to_remove = []
+            for (i, sub_blackboard) in enumerate(self.sub_blackboards):
+                if sub_blackboard.publisher.get_num_connections() > 0:
+                    if sub_blackboard.is_changed():
+                        sub_blackboard.publisher.publish("%s" % sub_blackboard)
 
-                if not sub_blackboard.connection_established:
-                    sub_blackboard.connection_established = True
-            else:
-                if sub_blackboard.connection_established:
+                if sub_blackboard.bond_broken:
+                    # delete bond
+                    sub_blackboard.bond.shutdown()
+
                     # unregister publisher
                     sub_blackboard.publisher.unregister()
 
                     # add this to removing list
                     subs_to_remove.append(i)
 
-        # remove stale sub_blackboards
-        subs_to_remove = [(x - i) for (i, x) in enumerate(subs_to_remove)]
-        for sub_index in subs_to_remove:
-            self.sub_blackboards.pop(sub_index)
+            # remove stale sub_blackboards
+            subs_to_remove = [(x - i) for (i, x) in enumerate(subs_to_remove)]
+            for sub_index in subs_to_remove:
+                self.sub_blackboards.pop(sub_index)
 
 
 class ClearBlackboardVariable(behaviours.Success):
