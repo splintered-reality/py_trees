@@ -35,6 +35,7 @@ py_trees.composites
 
 .. automodule:: py_trees.composites
     :members:
+    :special-members:
     :show-inheritance:
 
 py_trees.display

@@ -197,12 +197,34 @@ class Composite(Behaviour):
 
 class Selector(Composite):
     """
-    Runs all of its child behaviours in sequence until one succeeds.
-    If a node after than the one selected was previously running, then call
-    stop() on it.
+    **Selectors are the Decision Makers**
+
+    .. graphviz:: dot/selector.dot
+
+    A selector executes each of its child behaviours in turn until one of them
+    succeeds (at which point it itself returns ``RUNNING`` or ``SUCCESS``,
+    or it runs out of children at which point it itself returns ``FAILURE``.
+    We usually refer to selecting children as a means of *choosing between priorities*.
+    Each child and its subtree represent a decreasingly lower priority path.
+
+    .. note::
+
+       Switching from a low -> high priority branch causes a `stop(INVALID)` signal to be sent to the previously
+       executing low priority branch. This signal will percolate down that child's own subtree. Behaviours
+       should make sure that they catch this and *destruct* appropriately.
+
     """
 
     def __init__(self, name="Selector", children=None, *args, **kwargs):
+        """
+        Initialise the sequence with a name and (optionally) some children.
+        The children can always be appended later via the
+        :py:func:`~py_trees.composites.Composite.add_child` and
+        :py:func:`~py_trees.composites.Composite.add_children`
+
+        :param str name: name to give to the sequence
+        :param [] children: list of children (:py:class:`~py_trees.behaviour.Behaviour`) to append to the sequence
+        """
         super(Selector, self).__init__(name, children, *args, **kwargs)
         self.current_child = None
         self.logger = logging.get_logger("Selector ")
@@ -285,12 +307,30 @@ class Selector(Composite):
 
 class Chooser(Selector):
     """
-    Runs all of its child behaviours in sequence until one succeeds.
-    If a node after than the one selected was previously running, then call
-    stop() on it.
+    **Choosers are Selectors with Commitment**
+
+    .. graphviz:: dot/chooser.dot
+
+    A variant of the selector class. Once a child is selected, it
+    cannot be interrupted by higher priority siblings. As soon as the chosen child
+    itself has finished it frees the chooser for an alternative selection.
+
+    .. note::
+
+       The child may not be interrupted but nothing prevents the **selector** itself from being interrupted by
+       higher level behaviours.
     """
 
     def __init__(self, name="Chooser", children=None, *args, **kwargs):
+        """
+        Initialise the sequence with a name and (optionally) some children.
+        The children can always be appended later via the
+        :py:func:`~py_trees.composites.Composite.add_child` and
+        :py:func:`~py_trees.composites.Composite.add_children`
+
+        :param str name: name to give to the sequence
+        :param [] children: list of children (:py:class:`~py_trees.behaviour.Behaviour`) to append to the sequence
+        """
         super(Chooser, self).__init__(name, children, *args, **kwargs)
         self.logger = logging.get_logger("Chooser ")
 
@@ -349,10 +389,31 @@ class Chooser(Selector):
 
 class Sequence(Composite):
     """
-    Runs all of its children in sequence until all succeed
-    """
+    **Sequences are the factory lines of Behaviour Trees**
 
+    .. graphviz:: dot/sequence.dot
+
+    A sequence will progressively tick over each of its children so long as
+    each child returns ``SUCCESS``. If any child returns
+    ``FAILURE`` or ``RUNNING`` the sequence will halt and the parent will adopt
+    the result of this child. If it reaches the last child, it returns with
+    that result regardless.
+
+    .. note::
+
+       The sequence halts once it sees a child is RUNNING and then returns
+       the result -> *it does not get stuck in the running behaviour*.
+    """
     def __init__(self, name="Sequence", children=None, *args, **kwargs):
+        """
+        Initialise the sequence with a name and (optionally) some children.
+        The children can always be appended later via the
+        :py:func:`~py_trees.composites.Composite.add_child` and
+        :py:func:`~py_trees.composites.Composite.add_children`.
+
+        :param str name: name to give to the sequence
+        :param [] children: list of children (:py:class:`~py_trees.behaviour.Behaviour`) to append to the sequence
+        """
         super(Sequence, self).__init__(name, children, *args, **kwargs)
         self.current_index = -1  # -1 indicates uninitialised
         self.logger = logging.get_logger("Sequence ")
@@ -415,18 +476,27 @@ class OneshotSequence(Sequence):
 
 class Parallel(Composite):
     """
+    **Parallels enable a kind of concurrency**
+
+    .. graphviz:: dot/parallel.dot
+
     Ticks every child every time the parallel is run (a poor man's form of paralellism).
 
-    Will return :py:data:`~py_trees.common.Status.RUNNING` if any one of them is still
-    running, :py:data:`~py_trees.common.Status.SUCCESS` if they all succeed, or
-    :py:data:`~py_trees.common.Status.FAILURE` if any single one of them fails.
+    * Parallels will return :py:data:`~py_trees.common.Status.FAILURE` if any child returns :py:data:`~py_trees.common.Status.FAILURE`
+    * Parallels with policy :py:data:`~py_trees.common.ParallelPolicy.SUCCESS_ON_ONE` return :py:data:`~py_trees.common.Status.SUCCESS` if **at least one** child returns :py:data:`~py_trees.common.Status.SUCCESS` and others are :py:data:`~py_trees.common.Status.RUNNING`.
+    * Parallels with policy :py:data:`~py_trees.common.ParallelPolicy.SUCCESS_ON_ALL` only returns :py:data:`~py_trees.common.Status.SUCCESS` if **all** children return :py:data:`~py_trees.common.Status.SUCCESS`
 
-    The behaviour can be modified to return :py:data:`~py_trees.common.Status.SUCCESS`
-    when just one returns :py:data:`~py_trees.common.Status.SUCCESS` and the others are
-    still :py:data:`~py_trees.common.Status.RUNNING` by changing the
-    policy.
     """
     def __init__(self, name="Parallel", policy=common.ParallelPolicy.SUCCESS_ON_ALL, children=None, *args, **kwargs):
+        """
+        Initialise the sequence with a name and (optionally) some children.
+        The children can always be appended later via the
+        :py:func:`~py_trees.composites.Composite.add_child` and
+        :py:func:`~py_trees.composites.Composite.add_children`
+
+        :param str name: name to give to the sequence
+        :param [] children: list of children (:py:class:`~py_trees.behaviour.Behaviour`) to append to the sequence
+        """
         super(Parallel, self).__init__(name, children, *args, **kwargs)
         self.logger = logging.get_logger(name)
         self.policy = policy
@@ -457,10 +527,6 @@ class Parallel(Composite):
         if new_status != Status.RUNNING:
             for child in self.children:
                 if child.status == Status.RUNNING:
-                    # yes, INVALID is right, we are interrupting it. Couldn't use new_status
-                    # anyway, because composites only pass along stop to their children on
-                    # INVALID. That policy is so that we don't end up virallly failing behaviours
-                    # that already succeeded.
                     child.stop(new_status)
             self.stop(new_status)
         self.status = new_status

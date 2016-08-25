@@ -15,6 +15,7 @@ Contents:
 
    background
    building_blocks
+   patterns
    examples
    terminology
    modules

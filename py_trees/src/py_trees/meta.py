@@ -40,6 +40,7 @@ def create_behaviour_from_function(func):
     :type func: any function with just one argument for 'self', must return Status
     """
     class_name = func.__name__.capitalize()
+
     # globals()[class_name] = type(class_name, (Behaviour,), dict(update=func))
     return type(class_name, (behaviour.Behaviour,), dict(update=func))
 
@@ -380,6 +381,43 @@ def failure_is_success(cls):
     FailureIsSuccess = imposter(cls)
     setattr(FailureIsSuccess, "update", _update(FailureIsSuccess.update))
     return FailureIsSuccess
+
+#############################
+# FailureIsRunning
+#############################
+
+
+def failure_is_running(cls):
+    """
+    Dont stop running.
+
+    .. code-block:: python
+
+       @failure_is_running
+       class MustGoOnRegardless(ActedLikeAGoon)
+           pass
+
+    or
+
+    .. code-block:: python
+
+       must_go_on_regardless = failure_is_running(ActedLikeAGoon("Goon"))
+    """
+    def _update(func):
+        @functools.wraps(func)
+        def wrapped(self):
+            self.original.tick_once()
+            if self.original.status == common.Status.FAILURE:
+                self.feedback_message = "failure is running [%s]" % self.original.feedback_message
+                return common.Status.RUNNING
+            else:
+                self.feedback_message = self.original.feedback_message
+                return self.original.status
+        return wrapped
+
+    FailureIsRunning = imposter(cls)
+    setattr(FailureIsRunning, "update", _update(FailureIsRunning.update))
+    return FailureIsRunning
 
 #############################
 # SuccessIsFailure
