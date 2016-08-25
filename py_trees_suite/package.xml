@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>py_trees_suite</name>
-  <version>0.2.0</version>
+  <version>0.3.0</version>
   <description>
     Behaviour trees, in python, especially tailored for robots.
   </description>
