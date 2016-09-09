@@ -146,6 +146,35 @@ class Behaviour(object):
     ############################################
     # Workers
     ############################################
+    def has_parent_with_name(self, name):
+        """
+        Moves up through this behaviour's parents looking for
+        a behaviour with the same name as that specified.
+
+        :param str name: name of the parent to match
+        :returns: true or false depending on whether such a parent was found
+        """
+        b = self
+        while b.parent is not None:
+            if b.parent.name == name:
+                return True
+            b = b.parent
+        return False
+
+    def has_parent_with_instance_type(self, instance_type):
+        """
+        Moves up through this behaviour's parents looking for
+        a behaviour with the same instance type as that specified.
+
+        :param str instance_type: instance type of the parent to match
+        :returns: true or false depending on whether such a parent was found
+        """
+        b = self
+        while b.parent is not None:
+            if isinstance(b.parent, instance_type):
+                return True
+            b = b.parent
+        return False
 
     def tip(self):
         """
