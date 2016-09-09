@@ -20,6 +20,7 @@
 # Imports
 ##############################################################################
 
+import re
 import unique_id
 
 from . import logging
@@ -151,12 +152,13 @@ class Behaviour(object):
         Moves up through this behaviour's parents looking for
         a behaviour with the same name as that specified.
 
-        :param str name: name of the parent to match
+        :param str name: name of the parent to match, can be a regular expression
         :returns: true or false depending on whether such a parent was found
         """
+        pattern = re.compile(name)
         b = self
         while b.parent is not None:
-            if b.parent.name == name:
+            if pattern.match(b.parent.name) is not None:
                 return True
             b = b.parent
         return False
