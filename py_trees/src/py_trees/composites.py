@@ -141,9 +141,9 @@ class Composite(Behaviour):
         """
         if child.status == Status.RUNNING:
             child.stop(Status.INVALID)
-        index = self.children.index(child)
+        child_index = self.children.index(child)
         self.children.remove(child)
-        return index
+        return child_index
 
     def remove_all_children(self):
         """
@@ -167,9 +167,9 @@ class Composite(Behaviour):
         """
         if child.status == Status.RUNNING:
             child.stop(Status.INVALID)
-        index = self.children.index(child)
+        child_index = self.children.index(child)
         self.logger.debug("  %s [replace_child()][%s->%s]" % (self.name, child.name, replacement.name))
-        self.children[index] = replacement
+        self.children[child_index] = replacement
 
     def remove_child_by_id(self, child_id):
         child = next((c for c in self.children if c.id == child_id), None)
