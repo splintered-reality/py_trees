@@ -93,8 +93,12 @@ class SubscriberHandler(behaviour.Behaviour):
         self.subscriber = None
         self.data_guard = threading.Lock()
         self.clearing_policy = clearing_policy
-        # ros doesn't care if it is init'd or not for subscriber construction
+
+    def setup(self, timeout):
+        # ros doesn't care if it is init'd or not for subscriber construction, but
+        # good to have here anyway so initialisation can occur before the callback is connected
         self.subscriber = rospy.Subscriber(self.topic_name, self.topic_type, self._callback, queue_size=5)
+        return True
 
     def initialise(self):
         """
@@ -285,6 +289,7 @@ class ToBlackboard(SubscriberHandler):
                  topic_name="chatter",
                  topic_type=None,
                  blackboard_variables={"chatter": None},
+                 initialise_variables={},
                  clearing_policy=common.ClearingPolicy.ON_INITIALISE
                  ):
         """
@@ -311,11 +316,25 @@ class ToBlackboard(SubscriberHandler):
         self.blackboard = blackboard.Blackboard()
         if isinstance(blackboard_variables, basestring):
             self.blackboard_variable_mapping = {blackboard_variables: None}
+            if not isinstance(initialise_variables, dict):
+                self.blackboard_initial_variable_mapping = {blackboard_variables: initialise_variables}
+            else:
+                self.blackboard_initial_variable_mapping = initialise_variables
         elif not isinstance(blackboard_variables, dict):
             self.logger.error("blackboard_variables is not a dict, please rectify")
             self.blackboard_variable_mapping = {}
+            self.blackboard_initial_variable_mapping = {}
         else:
             self.blackboard_variable_mapping = blackboard_variables
+            self.blackboard_initial_variable_mapping = initialise_variables
+        # initialise the variables
+        for name, value in self.blackboard_initial_variable_mapping.iteritems():
+            if not self.blackboard.set(name, value):
+                # do we actually want to log an error?
+                self.logger.error("tried to initialise an already initialised blackboard variable '{0}', check that you do not have a conflict with another behaviour [{1}]".format(name, self.name))
+
+    def setup(self, timeout):
+        return super(ToBlackboard, self).setup(timeout)
 
     def update(self):
         """
