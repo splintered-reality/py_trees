@@ -1,6 +1,6 @@
 <package>
   <name>py_trees</name>
-  <version>0.2.0</version>
+  <version>0.3.0</version>
   <description>
     Behaviour trees in python.
   </description>

@@ -1,0 +1,12 @@
+digraph chooser {
+graph [fontname="times-roman"];
+node [fontname="times-roman"];
+edge [fontname="times-roman"];
+Chooser [fontcolor=black, shape=doubleoctagon, fontsize=11, style=filled, fillcolor=cyan];
+"High Priority" [fontcolor=black, shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+Chooser -> "High Priority";
+"Med Priority" [fontcolor=black, shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+Chooser -> "Med Priority";
+"Low Priority" [fontcolor=black, shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+Chooser -> "Low Priority";
+}

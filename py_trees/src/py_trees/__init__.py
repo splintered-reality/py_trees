@@ -1,6 +1,6 @@
 #
 # License: BSD
-#   https://raw.github.com/yujinrobot/gopher_crazy_hospital/license/LICENSE
+#   https://raw.github.com/stonier/py_trees_suite/license/LICENSE
 #
 ##############################################################################
 # Documentation

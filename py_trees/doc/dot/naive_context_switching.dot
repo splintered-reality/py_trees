@@ -1,0 +1,12 @@
+digraph naive_context_switching {
+graph [fontname="times-roman"];
+node [fontname="times-roman"];
+edge [fontname="times-roman"];
+"Naive Context Switching" [fontcolor=black, shape=box, fontsize=11, style=filled, fillcolor=orange];
+"Switch Navi Context" [fontcolor=black, shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+"Naive Context Switching" -> "Switch Navi Context";
+"Move It" [fontcolor=black, shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+"Naive Context Switching" -> "Move It";
+"Restore Navi Context" [fontcolor=black, shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+"Naive Context Switching" -> "Restore Navi Context";
+}
