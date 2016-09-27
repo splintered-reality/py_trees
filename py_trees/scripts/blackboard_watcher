@@ -35,6 +35,7 @@ def show_usage():
     s += "\n"
     s += "        where the option is one of:\n"
     s += console.cyan + "        -l, --list_variables         " + console.yellow + "list variables in the blackboard." + console.reset + "\n"
+    s += console.cyan + "        -n, --namespace              " + console.yellow + "namespace of blackboard services." + console.reset + "\n"
     s += "\n"
     s += console.bold + "    Command" + console.reset + "\n"
     s += console.cyan + "        blackboard_watcher" + console.blue + console.bold + " [<variables>]" + console.reset + "\n"
@@ -58,6 +59,7 @@ def parse_arguments(command_line_args):
                                      formatter_class=argparse.RawTextHelpFormatter
                                      )
     parser.add_argument('-l', '--list_variables', action='store_true', default=None, help='list variables in the blackboard.')
+    parser.add_argument('-n', '--namespace', nargs='?', default=None, help='namespace of blackboard services.')
     parser.add_argument('command', nargs=argparse.REMAINDER, default=None, help='subcommand to run')
 
     args = parser.parse_args(command_line_args)
@@ -103,7 +105,20 @@ def handle_args(args):
     if args.list_variables:
         list_variables_service = rosservice_find('py_trees_msgs/BlackboardVariables')
         if len(list_variables_service) > 0:
-            list_variables_service = list_variables_service[0]
+            if len(list_variables_service) == 1:
+                list_variables_service = list_variables_service[0]
+            elif args.namespace is not None:
+                for service in list_variables_service:
+                    if args.namespace in service:
+                        list_variables_service = service
+                        break
+                if type(list_variables_service) is list:
+                    print "Services found:", list_variables_service
+                    sys.exit("No services with namespace '{0}' found; Exiting! ".format(args.namespace))
+            else:
+                print "Services found:", list_variables_service
+                sys.exit("More than one service found, identify using --namespace argument; Exiting!")
+
             try:
                 rospy.wait_for_service(list_variables_service, timeout=3.0)
                 try:
@@ -129,7 +144,20 @@ def handle_args(args):
 
                 sub_blackboard_watch_service = rosservice_find('py_trees_msgs/SubBlackboardWatch')
                 if len(sub_blackboard_watch_service) > 0:
-                    sub_blackboard_watch_service = sub_blackboard_watch_service[0]
+                    if len(sub_blackboard_watch_service) == 1:
+                        sub_blackboard_watch_service = sub_blackboard_watch_service[0]
+                    elif args.namespace is not None:
+                        for service in sub_blackboard_watch_service:
+                            if args.namespace in service:
+                                sub_blackboard_watch_service = service
+                                break
+                        if type(sub_blackboard_watch_service) is list:
+                            print "Services found:", sub_blackboard_watch_service
+                            sys.exit("No services with namespace '{0}' found; Exiting! ".format(args.namespace))
+                    else:
+                        print "Services found:", sub_blackboard_watch_service
+                        sys.exit("More than one service found, identify using --namespace argument; Exiting!")
+
                     try:
                         rospy.wait_for_service(sub_blackboard_watch_service, timeout=3.0)
                         try:
