@@ -27,7 +27,6 @@ import operator
 from cPickle import dumps
 import rospy
 import std_msgs.msg as std_msgs
-from bondpy import bondpy
 
 
 ##############################################################################
@@ -127,12 +126,6 @@ class ROSBlackboard(object):
             self.dict = {}
             self.cached_dict = {}
             self.publisher = rospy.Publisher("~" + topic_name, std_msgs.String, latch=True, queue_size=2)
-            self.bond = bondpy.Bond(rospy.get_name() + "/" + topic_name + "_bond", topic_name, on_broken=self.bond_break)
-            self.bond.start()
-            self.bond_broken = False
-
-        def bond_break(self):
-            self.bond_broken = True
 
         def update_sub_blackboard(self):
             for attr in self.attrs:
@@ -219,6 +212,14 @@ class ROSBlackboard(object):
 
         return topic_name
 
+    def shutdown_sub_blackboard(self, req):
+        for (i, sub_blackboard) in enumerate(self.sub_blackboards):
+            if sub_blackboard.topic_name == req.topic_name:
+                sub_blackboard.publisher.unregister()
+                del self.sub_blackboards[i]
+                return True
+        return False
+
     def is_changed(self):
         current_pickle = dumps(self.blackboard.__dict__, -1)
         blackboard_changed = current_pickle != self.cached_blackboard_dict
@@ -238,26 +239,10 @@ class ROSBlackboard(object):
 
         # publish sub_blackboards
         if len(self.sub_blackboards) > 0:
-            subs_to_remove = []
             for (i, sub_blackboard) in enumerate(self.sub_blackboards):
                 if sub_blackboard.publisher.get_num_connections() > 0:
                     if sub_blackboard.is_changed():
                         sub_blackboard.publisher.publish("%s" % sub_blackboard)
-
-                if sub_blackboard.bond_broken:
-                    # delete bond
-                    sub_blackboard.bond.shutdown()
-
-                    # unregister publisher
-                    sub_blackboard.publisher.unregister()
-
-                    # add this to removing list
-                    subs_to_remove.append(i)
-
-            # remove stale sub_blackboards
-            subs_to_remove = [(x - i) for (i, x) in enumerate(subs_to_remove)]
-            for sub_index in subs_to_remove:
-                self.sub_blackboards.pop(sub_index)
 
 
 class ClearBlackboardVariable(behaviours.Success):

@@ -13,14 +13,13 @@ Simple utility to watch and display items from Blackboard
 # Imports
 ##############################################################################
 
-from py_trees_msgs.srv import BlackboardVariables, SubBlackboardWatch
+from py_trees_msgs.srv import BlackboardVariables, SubBlackboardWatch, SubBlackboardShutdown
 import argparse
 import rospy
 import rocon_console.console as console
 import sys
 import std_msgs.msg as std_msgs
 from rosservice import rosservice_find
-from bondpy import bondpy
 
 
 ##############################################################################
@@ -84,18 +83,24 @@ def echo_sub_blackboard(sub_blackboard):
     print "%s" % sub_blackboard.data
 
 
-def spin_ros_node(received_topic):
+def spin_ros_node(received_topic, service_name):
+    shutdown_service = service_name.replace('watch', 'shutdown')
     rospy.init_node(received_topic.topic.split('/')[-1])
-    bond = bondpy.Bond(received_topic.topic + "_bond", received_topic.topic.split('/')[-1])
-    bond.start()
-    if not bond.wait_until_formed(rospy.Duration(3.0)):
-       raise Exception('Bond could not be formed')
 
-    def break_bond():
-        bond.break_bond()
+    def send_shutdown():
+        try:
+            rospy.wait_for_service(shutdown_service, timeout=3.0)
+            try:
+                shutdown_sub_blackboard = rospy.ServiceProxy(shutdown_service, SubBlackboardShutdown)
+                result = shutdown_sub_blackboard(received_topic.topic.split('/')[-1])
+                # could check if result returned success
+            except rospy.ServiceException, e:
+                print "Service call failed: %s" % e
+        except rospy.exceptions.ROSException, e:
+            print "Error: ", e
 
     rospy.Subscriber(received_topic.topic, std_msgs.String, echo_sub_blackboard)
-    rospy.on_shutdown(break_bond)
+    rospy.on_shutdown(send_shutdown)
 
     while not rospy.is_shutdown():
         rospy.spin()
@@ -161,14 +166,14 @@ def handle_args(args):
                     try:
                         rospy.wait_for_service(sub_blackboard_watch_service, timeout=3.0)
                         try:
-                            sub_blackboard_watch_service = rospy.ServiceProxy(sub_blackboard_watch_service, SubBlackboardWatch)
-                            received_topic = sub_blackboard_watch_service(variables)
+                            sub_blackboard_watch_service_call = rospy.ServiceProxy(sub_blackboard_watch_service, SubBlackboardWatch)
+                            received_topic = sub_blackboard_watch_service_call(variables)
                         except rospy.ServiceException, e:
                             print "Service call failed: %s" % e
 
                         if received_topic is not None:
                             print(console.blue + ".. Echoing Subblackboard with variables: " + str(variables) + " ..\n" + console.reset)
-                            spin_ros_node(received_topic)
+                            spin_ros_node(received_topic, sub_blackboard_watch_service)
 
                         else:
                             print(console.red + "\nError: Subscribing to topic failed\n" + console.reset)

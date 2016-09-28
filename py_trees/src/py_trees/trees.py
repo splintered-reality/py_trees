@@ -24,7 +24,7 @@ This module creates tools for managing your entire behaviour tree.
 
 import datetime
 import py_trees_msgs.msg as py_trees_msgs
-from py_trees_msgs.srv import BlackboardVariables, BlackboardVariablesResponse, SubBlackboardWatch, SubBlackboardWatchResponse
+from py_trees_msgs.srv import BlackboardVariables, BlackboardVariablesResponse, SubBlackboardWatch, SubBlackboardWatchResponse, SubBlackboardShutdown
 import os
 import rocon_python_comms
 import rosbag
@@ -341,6 +341,7 @@ class ROSBehaviourTree(BehaviourTree):
 
         rospy.Service('blackboard_list_variables', BlackboardVariables, self.send_blackboard_variables)
         rospy.Service('sub_blackboard_watch', SubBlackboardWatch, self.spawn_sub_blackboard)
+        rospy.Service('sub_blackboard_shutdown', SubBlackboardShutdown, self.shutdown_sub_blackboard)
 
         now = datetime.datetime.now()
         topdir = rospkg.get_ros_home() + '/behaviour_trees'
@@ -362,6 +363,10 @@ class ROSBehaviourTree(BehaviourTree):
 
         # cleanup must come last as it assumes the existence of the bag
         rospy.on_shutdown(self.cleanup)
+
+    def shutdown_sub_blackboard(self, req):
+        result = self.ros_blackboard.shutdown_sub_blackboard(req)
+        return result
 
     def send_blackboard_variables(self, req):
         nested_keys = self.ros_blackboard.get_nested_keys()
