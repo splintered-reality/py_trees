@@ -12,19 +12,19 @@
    :platform: Unix
    :synopsis: Shared data storage for py_trees behaviours.
 
+Oh my spaghettified magnificence,
+Bless my noggin with a tickle from your noodly appendages!
 """
 
 ##############################################################################
 # Imports
 ##############################################################################
 
-from . import behaviours
-
-from . import common
-from .behaviour import Behaviour
-import rocon_console.console as console
 import operator
-from cPickle import dumps
+import rocon_console.console as console
+
+from . import behaviours
+from . import common
 
 ##############################################################################
 # Classes
@@ -105,27 +105,6 @@ class Blackboard(object):
         return s
 
 
-class ROSBlackboardMonitor(object):
-    """
-    Takes in :py:class:`Blackboard <py_trees.blackboard.Blackboard>` class
-    and logs if changes are made
-    """
-    def __init__(self, blackboard):
-        self.blackboard = blackboard
-        self.cached_blackboard_dict = {}
-
-    def is_changed(self):
-        # For simplicity, creating a reference; reference because its a borg
-        blackboard_dict = self.blackboard.__dict__
-
-        # Compare the blackboard dicts here
-        current_pickle = dumps(blackboard_dict, -1)
-        blackboard_changed = current_pickle != self.cached_blackboard_dict
-        self.cached_blackboard_dict = current_pickle
-
-        return blackboard_changed
-
-
 class ClearBlackboardVariable(behaviours.Success):
     """
     Clear the specified value from the blackboard.
@@ -177,7 +156,7 @@ class SetBlackboardVariable(behaviours.Success):
         self.blackboard.set(self.variable_name, self.variable_value, overwrite=True)
 
 
-class CheckBlackboardVariable(Behaviour):
+class CheckBlackboardVariable(behaviours.Behaviour):
     """
     Check the blackboard to see if it has a specific variable
     and optionally whether that variable has a specific value.
@@ -258,7 +237,7 @@ class CheckBlackboardVariable(Behaviour):
             self.matching_result = None
 
 
-class WaitForBlackboardVariable(Behaviour):
+class WaitForBlackboardVariable(behaviours.Behaviour):
     """
     Check the blackboard to see if it has a specific variable
     and optionally whether that variable has a specific value.

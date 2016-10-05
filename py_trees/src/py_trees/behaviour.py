@@ -73,7 +73,7 @@ class Behaviour(object):
     def setup(self, timeout):
         """
         :param double timeout: time to wait (0.0 is blocking forever)
-        :returns: whether it timed out waiting for the server or not.
+        :returns: whether it timed out trying to setup
         :rtype: boolean
 
         **User Customisable Callback**

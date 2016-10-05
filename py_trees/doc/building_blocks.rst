@@ -110,7 +110,7 @@ The :py:class:`~py_trees.trees.BehaviourTree` handles logging, insertions, tick_
 
 .. todo:: Example Code - maybe put this in the class docs itself.
 
-The :py:class:`~py_trees.trees.ROSBehaviourTree` subclasses the BehaviourTree and additionally
+The :py:class:`~py_trees.trees.ros.BehaviourTree` subclasses the BehaviourTree and additionally
 takes care of all the handles that go out to the rqt monitoring program program.
 
 Tree Management
