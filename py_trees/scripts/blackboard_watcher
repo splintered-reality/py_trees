@@ -86,7 +86,7 @@ def echo_sub_blackboard(sub_blackboard):
 
 
 def spin_ros_node(received_topic, service_name):
-    shutdown_service = service_name.replace('watch', 'shutdown')
+    shutdown_service = service_name.replace('spawn', 'destroy')
     rospy.init_node(received_topic.topic.split('/')[-1])
 
     def send_shutdown():

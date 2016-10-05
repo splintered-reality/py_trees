@@ -18,16 +18,16 @@
 # Imports
 ##############################################################################
 
-from . import behaviours
-
-from . import common
-from .behaviour import Behaviour
-import rocon_console.console as console
 import operator
-from cPickle import dumps
+import py_trees_msgs.srv as py_trees_srvs
 import rospy
+import rocon_console.console as console
 import std_msgs.msg as std_msgs
 
+from cPickle import dumps
+
+from . import behaviours
+from . import common
 
 ##############################################################################
 # Classes
@@ -184,6 +184,9 @@ class ROSBlackboard(object):
         :rtype: boolean
         """
         self.publisher = rospy.Publisher("~blackboard", std_msgs.String, latch=True, queue_size=2)
+        rospy.Service('~list_blackboard_variables', py_trees_srvs.BlackboardVariables, self.list_blackboard_variables_service)
+        rospy.Service('~spawn_blackboard_watcher', py_trees_srvs.SubBlackboardWatch, self.spawn_blackboard_watcher_service)
+        rospy.Service('~destroy_blackboard_watcher', py_trees_srvs.SubBlackboardShutdown, self.destroy_blackboard_watcher_service)
         return True
 
     def get_nested_keys(self):
@@ -227,7 +230,6 @@ class ROSBlackboard(object):
         current_pickle = dumps(self.blackboard.__dict__, -1)
         blackboard_changed = current_pickle != self.cached_blackboard_dict
         self.cached_blackboard_dict = current_pickle
-
         return blackboard_changed
 
     def publish_blackboard(self, tree):
@@ -242,10 +244,26 @@ class ROSBlackboard(object):
 
         # publish sub_blackboards
         if len(self.sub_blackboards) > 0:
-            for (i, sub_blackboard) in enumerate(self.sub_blackboards):
+            for (unused_i, sub_blackboard) in enumerate(self.sub_blackboards):
                 if sub_blackboard.publisher.get_num_connections() > 0:
                     if sub_blackboard.is_changed():
                         sub_blackboard.publisher.publish("%s" % sub_blackboard)
+
+    def destroy_blackboard_watcher_service(self, req):
+        result = self.shutdown_sub_blackboard(req)
+        return result
+
+    def list_blackboard_variables_service(self, req):
+        nested_keys = self.get_nested_keys()
+        return py_trees_srvs.BlackboardVariablesResponse(nested_keys)
+
+    def spawn_blackboard_watcher_service(self, req):
+        topic_name = self.initialize_sub_blackboard(req.variables)
+        if topic_name:
+            absolute_topic_name = rospy.get_name() + "/" + topic_name
+        else:
+            absolute_topic_name = None
+        return py_trees_srvs.SubBlackboardWatchResponse(absolute_topic_name)
 
 
 class ClearBlackboardVariable(behaviours.Success):
@@ -299,7 +317,7 @@ class SetBlackboardVariable(behaviours.Success):
         self.blackboard.set(self.variable_name, self.variable_value, overwrite=True)
 
 
-class CheckBlackboardVariable(Behaviour):
+class CheckBlackboardVariable(behaviours.Behaviour):
     """
     Check the blackboard to see if it has a specific variable
     and optionally whether that variable has a specific value.
@@ -380,7 +398,7 @@ class CheckBlackboardVariable(Behaviour):
             self.matching_result = None
 
 
-class WaitForBlackboardVariable(Behaviour):
+class WaitForBlackboardVariable(behaviours.Behaviour):
     """
     Check the blackboard to see if it has a specific variable
     and optionally whether that variable has a specific value.
