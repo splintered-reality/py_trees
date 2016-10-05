@@ -196,9 +196,9 @@ class ROSBlackboard(object):
                                     variables.append(k + "/" + attr)
                                     inner(value, k + "/" + attr)
 
-        for k, v in self.blackboard.__dict__.items():
-            variables.append(k)
-            inner(v, k)
+        for key in sorted(self.blackboard.__dict__):
+            variables.append(key)
+            inner(self.blackboard.__dict__[key], key)
 
         return variables
 
