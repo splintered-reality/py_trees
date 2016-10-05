@@ -55,7 +55,7 @@ class TestSubscriberCheck(unittest.TestCase):
         )
         self.root.add_child(check_subscriber_variable)
         self.root.add_child(wait_for_subscriber)
-        self.tree = py_trees.ROSBehaviourTree(self.root)
+        self.tree = py_trees.ros.BehaviourTree(self.root)
         rospy.on_shutdown(self.shutdown)
         # py_trees.display.render_dot_tree(self.root)
         py_trees.display.print_ascii_tree(self.root, 0)

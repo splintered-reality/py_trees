@@ -24,14 +24,14 @@ from . import common
 from . import composites
 from . import display
 from . import meta
+from . import ros
 from . import timers
 from . import subscribers
 from . import trees
 
 # conveniences
 from .behaviour import Behaviour
-from .blackboard import Blackboard, ROSBlackboard, CheckBlackboardVariable
 from .common import Status
 from .composites import Composite, Selector, Sequence, OneshotSequence
 from .subscribers import CheckSubscriberVariable
-from .trees import BehaviourTree, ROSBehaviourTree, CONTINUOUS_TICK_TOCK, VisitorBase
+from .trees import BehaviourTree, CONTINUOUS_TICK_TOCK, VisitorBase
