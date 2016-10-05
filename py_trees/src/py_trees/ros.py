@@ -124,8 +124,8 @@ class Blackboard(object):
         """
         self.publisher = rospy.Publisher("~blackboard", std_msgs.String, latch=True, queue_size=2)
         rospy.Service('~list_blackboard_variables', py_trees_srvs.BlackboardVariables, self.list_blackboard_variables_service)
-        rospy.Service('~spawn_blackboard_watcher', py_trees_srvs.SubBlackboardWatch, self.spawn_blackboard_watcher_service)
-        rospy.Service('~destroy_blackboard_watcher', py_trees_srvs.SubBlackboardShutdown, self.destroy_blackboard_watcher_service)
+        rospy.Service('~spawn_blackboard_watcher', py_trees_srvs.SpawnBlackboardWatcher, self.spawn_blackboard_watcher_service)
+        rospy.Service('~destroy_blackboard_watcher', py_trees_srvs.DestroyBlackboardWatcher, self.destroy_blackboard_watcher_service)
         return True
 
     def get_nested_keys(self):
@@ -202,7 +202,7 @@ class Blackboard(object):
             absolute_topic_name = rospy.get_name() + "/" + topic_name
         else:
             absolute_topic_name = None
-        return py_trees_srvs.SubBlackboardWatchResponse(absolute_topic_name)
+        return py_trees_srvs.SpawnBlackboardWatcherResponse(absolute_topic_name)
 
 
 ##############################################################################
