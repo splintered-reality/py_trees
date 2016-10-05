@@ -29,9 +29,9 @@ from . import timers
 from . import subscribers
 from . import trees
 
-# conveniences
+# really core conveniences (only the core ones please)
 from .behaviour import Behaviour
+from .blackboard import Blackboard
 from .common import Status
 from .composites import Composite, Selector, Sequence, OneshotSequence
-from .subscribers import CheckSubscriberVariable
-from .trees import BehaviourTree, CONTINUOUS_TICK_TOCK, VisitorBase
+from .trees import BehaviourTree, CONTINUOUS_TICK_TOCK
