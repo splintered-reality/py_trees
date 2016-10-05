@@ -364,6 +364,19 @@ class ROSBehaviourTree(BehaviourTree):
         # cleanup must come last as it assumes the existence of the bag
         rospy.on_shutdown(self.cleanup)
 
+    def setup(self, timeout):
+        """
+        This gives control over the ros initialisation to the user...do all your ros stuff here!
+
+        :param double timeout: time to wait (0.0 is blocking forever)
+        :returns: whether it timed out trying to setup
+        :rtype: boolean
+        """
+        self.setup_publishers()
+        if not self.ros_blackboard.setup(timeout):
+            return False
+        return super(ROSBehaviourTree, self).setup(timeout)
+
     def shutdown_sub_blackboard(self, req):
         result = self.ros_blackboard.shutdown_sub_blackboard(req)
         return result
@@ -407,7 +420,8 @@ class ROSBehaviourTree(BehaviourTree):
         when there has been a change.
         """
         if self.publishers is None:
-            self.setup_publishers()
+            rospy.logerr("ROSBehaviourTree: call setup() on this tree to initialise the ros components")
+            return
         self.publishers.ascii_tree.publish(std_msgs.String(display.ascii_tree(self.root)))
         self.publishers.dot_tree.publish(std_msgs.String(display.stringify_dot_tree(self.root)))
 
@@ -420,7 +434,8 @@ class ROSBehaviourTree(BehaviourTree):
         :type tree: :py:class:`BehaviourTree <py_trees.trees.BehaviourTree>`
         """
         if self.publishers is None:
-            self.setup_publishers()
+            rospy.logerr("ROSBehaviourTree: call setup() on this tree to initialise the ros components")
+            return
         snapshot = "\n\n%s" % display.ascii_tree(self.root, snapshot_information=self.snapshot_visitor)
         self.publishers.ascii_snapshot.publish(std_msgs.String(snapshot))
 

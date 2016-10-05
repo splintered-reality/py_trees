@@ -172,16 +172,19 @@ class ROSBlackboard(object):
     def __init__(self):
         self.blackboard = Blackboard()
         self.cached_blackboard_dict = {}
-
-        if rospy.core.is_initialized():
-            self.publisher = rospy.Publisher("~blackboard", std_msgs.String, latch=True, queue_size=2)
-        else:
-            # this is for cases blackboard is called by scripts
-            # such as `demo_move_base`
-            self.publisher = rospy.Publisher("blackboard", std_msgs.String, latch=True, queue_size=2)
-
-        # repo of sub_blackboards
         self.sub_blackboards = []
+
+    def setup(self, timeout):
+        """
+        Typical py_trees setup function so the user can control when they want to do the
+        ros setup. Do all of the ros initialisation in here.
+
+        :param double timeout: time to wait (0.0 is blocking forever)
+        :returns: whether it timed out trying to setup
+        :rtype: boolean
+        """
+        self.publisher = rospy.Publisher("~blackboard", std_msgs.String, latch=True, queue_size=2)
+        return True
 
     def get_nested_keys(self):
         variables = []
