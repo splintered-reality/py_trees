@@ -119,12 +119,13 @@ class Timer(behaviour.Behaviour):
         self.logger.debug("  %s [Timer::initialise()]" % self.name)
         if self.finish_time is None:
             self.finish_time = time.time() + self.duration
+        self.feedback_message = "configured to fire in '{0}' seconds".format(self.duration)
 
     def update(self):
         self.logger.debug("  %s [Timer::update()]" % self.name)
         current_time = time.time()
         if current_time > self.finish_time:
-            self.feedback_message = "timer ran out (finished)"
+            self.feedback_message = "timer ran out [{0}]".format(self.duration)
             return common.Status.SUCCESS
         else:
             # do not show the time, it causes the tree to be 'changed' every tick
