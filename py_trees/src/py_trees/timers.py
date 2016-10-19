@@ -114,6 +114,7 @@ class Timer(behaviour.Behaviour):
         super(Timer, self).__init__(name)
         self.duration = duration
         self.finish_time = None
+        self.feedback_message = "duration set to '{0}'s".format(self.duration)
 
     def initialise(self):
         self.logger.debug("  %s [Timer::initialise()]" % self.name)
