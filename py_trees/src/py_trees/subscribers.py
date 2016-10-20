@@ -357,6 +357,8 @@ class ToBlackboard(SubscriberHandler):
                             value = getattr(value, field)
                             self.blackboard.set(k, value, overwrite=True)
                 self.feedback_message = "saved incoming message"
+                if self.clearing_policy == common.ClearingPolicy.ON_SUCCESS:
+                    self.msg = None
                 return common.Status.SUCCESS
 
 
