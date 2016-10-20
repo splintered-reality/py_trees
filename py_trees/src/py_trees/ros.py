@@ -87,7 +87,7 @@ class Blackboard(object):
             return blackboard_changed
 
         def __str__(self):
-            s = "\n"
+            s = ""
             max_length = 0
             for k in self.dict.keys():
                 max_length = len(k) if len(k) > max_length else max_length
@@ -106,7 +106,7 @@ class Blackboard(object):
                     else:
                         s += console.cyan + "  " + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ": " + console.yellow + "%s\n" % (value) + console.reset
             s += console.reset
-            return s
+            return s.rstrip()  # get rid of the trailing newline...print will take care of adding a new line
 
     def __init__(self):
         self.blackboard = blackboard.Blackboard()
