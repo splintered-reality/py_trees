@@ -96,16 +96,15 @@ class Blackboard(object):
                 value = self.dict[key]
                 if value is None:
                     value_string = "-"
-                    s += console.cyan + "  " + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ": " + console.yellow + "%s\n" % (value_string) + console.reset
+                    s += console.cyan + "  " + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ": " + console.yellow + "%s" % (value_string) + console.reset + "\n"
                 else:
                     lines = ("%s" % value).split('\n')
                     if len(lines) > 1:
                         s += console.cyan + "  " + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ":\n"
                         for line in lines:
-                            s += console.yellow + "    %s\n" % line + console.reset
+                            s += console.yellow + "    %s" % line + console.reset + "\n"
                     else:
-                        s += console.cyan + "  " + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ": " + console.yellow + "%s\n" % (value) + console.reset
-            s += console.reset
+                        s += console.cyan + "  " + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ": " + console.yellow + "%s" % (value) + console.reset + "\n"
             return s.rstrip()  # get rid of the trailing newline...print will take care of adding a new line
 
     def __init__(self):
