@@ -12,3 +12,7 @@
 ## About
 
 Expecting your robot to behave? You are probably in the wrong place.
+
+This is a python implementation of behaviour trees. The core classes are pure python, along with various wrapper classes and custom behaviours for ROS.
+
+Coming soon...a full set of tutorials and documentation.
