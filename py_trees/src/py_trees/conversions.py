@@ -34,8 +34,12 @@ def convert_type(behaviour):
     # problems with decorators?
     if isinstance(behaviour, composites.Sequence):
         return py_trees_msgs.Behaviour.SEQUENCE
+    elif isinstance(behaviour, composites.Chooser):
+        return py_trees_msgs.Behaviour.CHOOSER
     elif isinstance(behaviour, composites.Selector):
         return py_trees_msgs.Behaviour.SELECTOR
+    elif isinstance(behaviour, composites.Parallel):
+        return py_trees_msgs.Behaviour.PARALLEL
     elif isinstance(behaviour, Behaviour):
         return py_trees_msgs.Behaviour.BEHAVIOUR
     else:
