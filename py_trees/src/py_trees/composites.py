@@ -283,7 +283,7 @@ class Selector(Composite):
     def stop(self, new_status=Status.INVALID):
         """
         Stopping a selector requires setting the current child to none. Note that it
-        is important to implement this here intead of terminate, so users are free
+        is important to implement this here instead of terminate, so users are free
         to subclass this easily with their own terminate and not have to remember
         that they need to call this function manually.
         """

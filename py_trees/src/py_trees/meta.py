@@ -108,6 +108,7 @@ def imposter(cls):
             self.setup = self.original.setup
             self.initialise = self.original.initialise
             self.terminate = self.original.terminate
+            self.stop = self.original.stop
             # id is important to match for composites...the children must relate to the correct parent id
             self.id = self.original.id
 
