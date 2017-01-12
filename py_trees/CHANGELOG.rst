@@ -1,6 +1,15 @@
 Changelog
 =========
 
+0.4.0 (2017-01-13)
+------------------
+* [trees] add pre/post handlers after setup, just in case setup fails
+* [introspection] do parent lookups so you can crawl back up a tree
+* [blackboard] permit init of subscriber2blackboard behaviours
+* [blackboard] watchers
+* [timers] better feedback messages
+* [imposter] ensure stop() directly calls the composited behaviour
+
 0.3.0 (2016-08-25)
 ------------------
 * ``failure_is_running decorator`` (meta).
