@@ -111,6 +111,7 @@ class Blackboard(object):
         self.blackboard = blackboard.Blackboard()
         self.cached_blackboard_dict = {}
         self.sub_blackboards = []
+        self.publisher = None
 
     def setup(self, timeout):
         """
@@ -174,6 +175,9 @@ class Blackboard(object):
         """
         Publishes the blackboard. Should be called at the end of every tick.
         """
+        if self.publisher is None:
+            rospy.logerr("Blacboard: call setup() on blackboard to initialise the ros components")
+            return
 
         # publish blackboard
         if self.publisher.get_num_connections() > 0:
