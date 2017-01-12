@@ -419,7 +419,7 @@ class Sequence(Composite):
         self.logger = logging.get_logger("Sequence ")
 
     def tick(self):
-        self.logger.debug("  %s [tick()]" % self.name)
+        self.logger.debug("  %s [Sequence.tick()]" % self.name)
         if self.status != Status.RUNNING:
             # sequence specific handling
             self.current_index = 0
@@ -457,7 +457,6 @@ class Sequence(Composite):
         to subclass this easily with their own terminate and not have to remember
         that they need to call this function manually.
         """
-        self.logger.debug("  %s [stop()][%s->%s]" % (self.name, self.status, new_status))
         # retain information about the last running child if the new status is
         # SUCCESS or FAILURE
         if new_status == Status.INVALID:
@@ -505,7 +504,7 @@ class Parallel(Composite):
         if self.status != Status.RUNNING:
             # subclass (user) handling
             self.initialise()
-        self.logger.debug("  %s [tick()]" % self.name)
+        self.logger.debug("  %s [Parallel.tick()]" % self.name)
         # process them all first
         for child in self.children:
             for node in child.tick():

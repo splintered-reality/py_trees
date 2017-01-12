@@ -97,7 +97,7 @@ class Behaviour(object):
         of variables when when preparing to enter a behaviour. By entry, this means every time
         the behaviour switches from a non-running state (is :py:data:`~py_trees.common.Status.INVALID`,
         or previously had :py:data:`~py_trees.common.Status.FAILURE`||:py:data:`~py_trees.common.Status.SUCCESS`),
-        so expect to to run more than once!
+        so expect to run more than once!
         """
         pass  # user function, no need to report on any activity here - user should do that in his class
 
