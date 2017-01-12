@@ -274,11 +274,9 @@ class BehaviourTree(trees.BehaviourTree):
         self.logging_visitor = BehaviourTree.LoggingVisitor()
         self.visitors.append(self.snapshot_visitor)
         self.visitors.append(self.logging_visitor)
-        self.post_tick_handlers.append(self.publish_tree_snapshots)
         self._bag_closed = False
 
         self.ros_blackboard = Blackboard()
-        self.post_tick_handlers.append(self.ros_blackboard.publish_blackboard)
 
         now = datetime.datetime.now()
         topdir = rospkg.get_ros_home() + '/behaviour_trees'
@@ -312,6 +310,8 @@ class BehaviourTree(trees.BehaviourTree):
         self.setup_publishers()
         if not self.ros_blackboard.setup(timeout):
             return False
+        self.post_tick_handlers.append(self.publish_tree_snapshots)
+        self.post_tick_handlers.append(self.ros_blackboard.publish_blackboard)
         return super(BehaviourTree, self).setup(timeout)
 
     def setup_publishers(self):
