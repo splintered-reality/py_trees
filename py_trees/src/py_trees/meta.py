@@ -112,6 +112,25 @@ def imposter(cls):
             # id is important to match for composites...the children must relate to the correct parent id
             self.id = self.original.id
 
+        def tick(self):
+            """
+            This function overrides Behaviour.tick() and work the same way
+            except it would not call initialise and stop methods on original
+            and let the original's update handle it's state.
+
+            :return py_trees.Behaviour: a reference to itself
+            """
+            self.logger.debug("  %s [Imposter.tick()]" % self.name)
+
+            # initialise() and terminate() for the original behaviour
+            # will be called from inside the update()
+            new_status = self.update()
+            if new_status not in list(common.Status):
+                self.logger.error("A behaviour returned an invalid status, setting to INVALID [%s][%s]" % (new_status, self.name))
+                new_status = common.Status.INVALID
+            self.status = new_status
+            yield self
+
         def update(self):
             """
             This is the usual method where extra functionality
@@ -306,6 +325,7 @@ def running_is_failure(cls):
         return wrapped
 
     RunningIsFailure = imposter(cls)
+    setattr(RunningIsFailure, "__name__", running_is_failure.__name__)
     setattr(RunningIsFailure, "update", _update(RunningIsFailure.update))
     return RunningIsFailure
 
@@ -343,6 +363,7 @@ def running_is_success(cls):
         return wrapped
 
     RunningIsSuccess = imposter(cls)
+    setattr(RunningIsSuccess, "__name__", running_is_success.__name__)
     setattr(RunningIsSuccess, "update", _update(RunningIsSuccess.update))
     return RunningIsSuccess
 
@@ -380,6 +401,7 @@ def failure_is_success(cls):
         return wrapped
 
     FailureIsSuccess = imposter(cls)
+    setattr(FailureIsSuccess, "__name__", failure_is_success.__name__)
     setattr(FailureIsSuccess, "update", _update(FailureIsSuccess.update))
     return FailureIsSuccess
 
@@ -417,6 +439,7 @@ def failure_is_running(cls):
         return wrapped
 
     FailureIsRunning = imposter(cls)
+    setattr(FailureIsRunning, "__name__", failure_is_running.__name__)
     setattr(FailureIsRunning, "update", _update(FailureIsRunning.update))
     return FailureIsRunning
 
@@ -454,6 +477,7 @@ def success_is_failure(cls):
         return wrapped
 
     SuccessIsFailure = imposter(cls)
+    setattr(SuccessIsFailure, "__name__", success_is_failure.__name__)
     setattr(SuccessIsFailure, "update", _update(SuccessIsFailure.update))
     return SuccessIsFailure
 
@@ -491,5 +515,6 @@ def success_is_running(cls):
         return wrapped
 
     SuccessIsRunning = imposter(cls)
+    setattr(SuccessIsRunning, "__name__", success_is_running.__name__)
     setattr(SuccessIsRunning, "update", _update(SuccessIsRunning.update))
     return SuccessIsRunning
