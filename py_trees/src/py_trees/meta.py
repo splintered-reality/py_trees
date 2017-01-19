@@ -92,10 +92,17 @@ def imposter(cls):
             not linked in the usual fashion.
             """
             if 'name' in kwargs:
+                kwargs['name'] = str(kwargs['name'])
                 name = kwargs['name']
+                kwargs['name'] = "_" + kwargs['name']
                 new_args = args
             else:
-                new_args = list(args)
+                # if the list is empty, give it a placeholder name
+                if not args:
+                    new_args = ["Imposter"]
+                else:
+                    new_args = list(args)
+                    new_args[0] = str(new_args[0])
                 name = new_args[0]
                 new_args[0] = "_" + name
                 new_args = tuple(new_args)
@@ -120,7 +127,7 @@ def imposter(cls):
 
             :return py_trees.Behaviour: a reference to itself
             """
-            self.logger.debug("  %s [Imposter.tick()]" % self.name)
+            self.logger.debug("  %s [%s.tick()]" % (self.name, self.__class__.__name__))
 
             # initialise() and terminate() for the original behaviour
             # will be called from inside the update()
