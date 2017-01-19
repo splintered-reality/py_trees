@@ -124,6 +124,10 @@ def imposter(cls):
             This function overrides Behaviour.tick() and work the same way
             except it would not call initialise and stop methods on original
             and let the original's update handle it's state.
+            
+            There is some analysis explaining the need for this override in
+            
+                https://github.com/stonier/py_trees_suite/issues/32
 
             :return py_trees.Behaviour: a reference to itself
             """
