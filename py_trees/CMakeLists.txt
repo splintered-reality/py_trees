@@ -26,7 +26,6 @@ catkin_install_python(
     PROGRAMS
         scripts/demo_behaviour
         scripts/demo_dot_graphs
-        scripts/demo_imposter
         scripts/demo_tree
         scripts/blackboard_watcher
     DESTINATION
