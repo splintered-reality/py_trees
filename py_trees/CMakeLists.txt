@@ -41,4 +41,3 @@ install(DIRECTORY launch DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 if (CATKIN_ENABLE_TESTING)
   add_subdirectory(tests)
 endif()
-

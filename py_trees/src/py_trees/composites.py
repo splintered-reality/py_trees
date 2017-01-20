@@ -84,7 +84,7 @@ class Composite(Behaviour):
         it to truly stop (INVALID). We only really want to update everything below if we are in
         the second use case. The first use case will subehaviours will have already handled themselves.
         """
-        self.logger.debug("  %s [Composite.stop()][%s->%s]" % (self.name, self.status, new_status))
+        self.logger.debug("  %s [%s.stop()][%s->%s]" % (self.name, self.__class__.__name__, self.status, new_status))
         if new_status == Status.INVALID:
             for child in self.children:
                 child.stop(new_status)
