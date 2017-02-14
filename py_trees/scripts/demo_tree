@@ -125,6 +125,7 @@ if __name__ == '__main__':
         rospy.init_node("demo_tree")
         # rebuild the tree as a ros behaviour tree
         tree = py_trees.ros.BehaviourTree(root)
+        tree.setup(15)
 
     tree.visitors.append(Visitor())
     tree.tick_tock(sleep_ms=500, number_of_iterations=py_trees.CONTINUOUS_TICK_TOCK, pre_tick_handler=pre_tick_handler)
