@@ -1,0 +1,53 @@
+<package>
+  <name>py_trees_ros</name>
+  <version>0.4.0</version>
+  <description>
+    Ros extensions and behaviours for py_trees.
+  </description>
+
+  <maintainer email="stonier@yujinrobot.com">Daniel Stonier</maintainer>
+  <maintainer email="m.staniaszek@gmail.com">Michal Staniaszek</maintainer>
+  <maintainer email="naveedhd@gmail.com">Naveed Usmani</maintainer>
+
+  <license>BSD</license>
+
+  <url type="website">http://ros.org/wiki/py_trees</url>
+  <url type="repository">https://github.com/stonier/py_trees_suite</url>
+  <url type="bugtracker">https://github.com/stonier/py_trees_suite/issues</url>
+
+  <author>Daniel Stonier</author>
+  <author>Michal Staniaszek</author>
+  <author>Naveed Usmani</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <!-- for documentation -->
+  <build_depend>python-catkin-pkg</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>uuid_msgs</build_depend>
+  <build_depend>unique_id</build_depend>
+  <build_depend>python-sphinx-rtd-theme</build_depend>
+  <build_depend>py_trees_msgs</build_depend>
+  <build_depend>rocon_python_comms</build_depend>
+  <build_depend>rostest</build_depend>
+
+  <run_depend>message_runtime</run_depend>
+  <run_depend>python-enum34</run_depend>
+  <run_depend>python-pydot</run_depend>
+  <run_depend>python-termcolor</run_depend>
+  <run_depend>py_trees_msgs</run_depend>
+  <run_depend>rocon_console</run_depend>
+  <run_depend>rocon_python_comms</run_depend>
+  <run_depend>rospy</run_depend>
+  <run_depend>rospy_tutorials</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>unique_id</run_depend>
+  <run_depend>uuid_msgs</run_depend>
+
+  <test_depend>rosunit</test_depend>
+  <test_depend>geometry_msgs</test_depend>
+
+  <export>
+    <rosdoc config="rosdoc.yaml"/>
+  </export>
+</package>

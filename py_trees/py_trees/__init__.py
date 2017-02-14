@@ -23,10 +23,9 @@ from . import blackboard
 from . import common
 from . import composites
 from . import display
+from . import logging
 from . import meta
-from . import ros
 from . import timers
-from . import subscribers
 from . import trees
 
 # really core conveniences (only the core ones please)

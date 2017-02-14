@@ -36,17 +36,18 @@ import operator
 import rospy
 import threading
 
-from . import behaviour
-from . import blackboard
-from . import common
-from . import logging
+import py_trees.behaviour
+import py_trees.blackboard
+import py_trees.common
+import py_trees.logging
+import py_trees.trees
 
 ##############################################################################
 # Behaviours
 ##############################################################################
 
 
-class SubscriberHandler(behaviour.Behaviour):
+class SubscriberHandler(py_trees.behaviour.Behaviour):
     """
     Not intended for direct use, as this just absorbs the mechanics of setting up
     a subscriber for inheritance by user-defined behaviour classes. There are several
@@ -78,7 +79,7 @@ class SubscriberHandler(behaviour.Behaviour):
                  name="Subscriber Handler",
                  topic_name="/foo",
                  topic_type=None,
-                 clearing_policy=common.ClearingPolicy.ON_INITIALISE
+                 clearing_policy=py_trees.common.ClearingPolicy.ON_INITIALISE
                  ):
         """
         :param str name: name of the behaviour
@@ -107,7 +108,7 @@ class SubscriberHandler(behaviour.Behaviour):
         """
         self.logger.debug("  %s [SubscriberHandler::initialise()]" % self.name)
         with self.data_guard:
-            if self.clearing_policy == common.ClearingPolicy.ON_INITIALISE:
+            if self.clearing_policy == py_trees.common.ClearingPolicy.ON_INITIALISE:
                 self.msg = None
 
     def _callback(self, msg):
@@ -145,7 +146,7 @@ class CheckSubscriberVariable(SubscriberHandler):
                  fail_if_no_data=False,
                  fail_if_bad_comparison=False,
                  comparison_operator=operator.eq,
-                 clearing_policy=common.ClearingPolicy.ON_INITIALISE
+                 clearing_policy=py_trees.common.ClearingPolicy.ON_INITIALISE
                  ):
         """
         :param str name: name of the behaviour
@@ -183,7 +184,7 @@ class CheckSubscriberVariable(SubscriberHandler):
             msg = copy.copy(self.msg)
         if msg is None:
             self.feedback_message = "have not yet received any messages"
-            return common.Status.FAILURE if self.fail_if_no_data else common.Status.RUNNING
+            return py_trees.common.Status.FAILURE if self.fail_if_no_data else py_trees.common.Status.RUNNING
 
         check_attr = operator.attrgetter(self.variable_name)
         try:
@@ -193,19 +194,19 @@ class CheckSubscriberVariable(SubscriberHandler):
             print("%s" % msg)
             with self.data_guard:
                 self.feedback_message = "variable name not found [%s]" % self.variable_name
-                return common.Status.FAILURE
+                return py_trees.common.Status.FAILURE
 
         success = self.comparison_operator(value, self.expected_value)
 
         if success:
             self.feedback_message = "'%s' comparison succeeded [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
-            if self.clearing_policy == common.ClearingPolicy.ON_SUCCESS:
+            if self.clearing_policy == py_trees.common.ClearingPolicy.ON_SUCCESS:
                 with self.data_guard:
                     self.msg = None
-            return common.Status.SUCCESS
+            return py_trees.common.Status.SUCCESS
         else:
             self.feedback_message = "'%s' comparison failed [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
-            return common.Status.FAILURE if self.fail_if_bad_comparison else common.Status.RUNNING
+            return py_trees.common.Status.FAILURE if self.fail_if_bad_comparison else py_trees.common.Status.RUNNING
 
 
 class WaitForSubscriberData(SubscriberHandler):
@@ -244,7 +245,7 @@ class WaitForSubscriberData(SubscriberHandler):
                  name="Wait For Subscriber",
                  topic_name="chatter",
                  topic_type=None,
-                 clearing_policy=common.ClearingPolicy.ON_INITIALISE
+                 clearing_policy=py_trees.common.ClearingPolicy.ON_INITIALISE
                  ):
         """
         :param str name: name of the behaviour
@@ -267,12 +268,12 @@ class WaitForSubscriberData(SubscriberHandler):
         with self.data_guard:
             if self.msg is None:
                 self.feedback_message = "no message received yet"
-                return common.Status.RUNNING
+                return py_trees.common.Status.RUNNING
             else:
                 self.feedback_message = "got incoming"
-                if self.clearing_policy == common.ClearingPolicy.ON_SUCCESS:
+                if self.clearing_policy == py_trees.common.ClearingPolicy.ON_SUCCESS:
                     self.msg = None
-                return common.Status.SUCCESS
+                return py_trees.common.Status.SUCCESS
 
 
 class ToBlackboard(SubscriberHandler):
@@ -290,7 +291,7 @@ class ToBlackboard(SubscriberHandler):
                  topic_type=None,
                  blackboard_variables={"chatter": None},
                  initialise_variables={},
-                 clearing_policy=common.ClearingPolicy.ON_INITIALISE
+                 clearing_policy=py_trees.common.ClearingPolicy.ON_INITIALISE
                  ):
         """
         :param str name: name of the behaviour
@@ -312,8 +313,8 @@ class ToBlackboard(SubscriberHandler):
             topic_type=topic_type,
             clearing_policy=clearing_policy
         )
-        self.logger = logging.get_logger("%s" % self.name)
-        self.blackboard = blackboard.Blackboard()
+        self.logger = py_trees.logging.get_logger("%s" % self.name)
+        self.blackboard = py_trees.blackboard.Blackboard()
         if isinstance(blackboard_variables, basestring):
             self.blackboard_variable_mapping = {blackboard_variables: None}
             if not isinstance(initialise_variables, dict):
@@ -345,7 +346,7 @@ class ToBlackboard(SubscriberHandler):
         with self.data_guard:
             if self.msg is None:
                 self.feedback_message = "no message received yet"
-                return common.Status.RUNNING
+                return py_trees.common.Status.RUNNING
             else:
                 for k, v in self.blackboard_variable_mapping.iteritems():
                     if v is None:
@@ -359,6 +360,6 @@ class ToBlackboard(SubscriberHandler):
                 self.feedback_message = "saved incoming message"
                 # this is of dubious worth, since the default setting of ClearingPolicy.ON_INITIALISE
                 # covers every use case that we can think of.
-                if self.clearing_policy == common.ClearingPolicy.ON_SUCCESS:
+                if self.clearing_policy == py_trees.common.ClearingPolicy.ON_SUCCESS:
                     self.msg = None
-                return common.Status.SUCCESS
+                return py_trees.common.Status.SUCCESS
