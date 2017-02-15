@@ -103,7 +103,14 @@ class SuccessEveryN(Behaviour):
 
 
 class Count(Behaviour):
-    def __init__(self, name="Count", fail_until=3, running_until=5, success_until=6, *args, **kwargs):
+    def __init__(self, name="Count", fail_until=3, running_until=5, success_until=6, reset=True, *args, **kwargs):
+        """
+        :param str name:
+        :param int fail_until:
+        :param int running_until:
+        :param int success_until:
+        :param bool reset: reset whenever invalidated (usually by a sequence reinitialising, or higher priority selection knocking it out)
+        """
         super(Count, self).__init__(name, *args, **kwargs)
         self.count = 0
         self.fail_until = fail_until
@@ -112,11 +119,12 @@ class Count(Behaviour):
         self.number_count_resets = 0
         self.number_updated = 0
         self.logger = logging.get_logger("Count")
+        self.reset = reset
 
     def terminate(self, new_status):
-        self.logger.debug("  %s [terminate()]" % self.name)
+        self.logger.debug("  %s [terminate(%s->%s)]" % (self.name, self.status, new_status))
         # reset only if udpate got us into an invalid state
-        if new_status == Status.INVALID:
+        if new_status == Status.INVALID and self.reset:
             self.count = 0
             self.number_count_resets += 1
 

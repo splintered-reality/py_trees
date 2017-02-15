@@ -102,10 +102,14 @@ def test_sequence_composite():
     py_trees.tests.tick_tree(tree, visitor, 11, 13)
     py_trees.tests.print_summary(nodes=[a, b, c])
     print("--------- Assertions ---------\n")
-    print("a.status == py_trees.Status.FAILURE")
-    assert(a.status == py_trees.Status.FAILURE)
-    print("tree.status == py_trees.Status.FAILURE")
-    assert(tree.status == py_trees.Status.FAILURE)
+    print("a.status == py_trees.Status.RUNNING")
+    assert(a.status == py_trees.Status.RUNNING)
+    print("b.status == py_trees.Status.INVALID")
+    assert(b.status == py_trees.Status.INVALID)
+    print("c.status == py_trees.Status.INVALID")
+    assert(c.status == py_trees.Status.INVALID)
+    print("tree.status == py_trees.Status.RUNNING")
+    assert(tree.status == py_trees.Status.RUNNING)
 
 
 def test_mixed_tree():
@@ -114,21 +118,22 @@ def test_mixed_tree():
     print(console.bold + "****************************************************************************************" + console.reset)
     visitor = py_trees.trees.DebugVisitor()
 
-    a = py_trees.behaviours.Count(name="A", fail_until=3, running_until=5, success_until=7)
+    a = py_trees.behaviours.Count(name="A", fail_until=3, running_until=5, success_until=7, reset=False)
 
     sequence = py_trees.Sequence(name="Sequence")
-    b = py_trees.behaviours.Count(name="B", fail_until=0, running_until=3, success_until=5)
-    c = py_trees.behaviours.Count(name="C", fail_until=0, running_until=3, success_until=5)
+    b = py_trees.behaviours.Count(name="B", fail_until=0, running_until=3, success_until=5, reset=False)
+    c = py_trees.behaviours.Count(name="C", fail_until=0, running_until=3, success_until=5, reset=False)
     sequence.add_child(b)
     sequence.add_child(c)
 
     d = py_trees.behaviours.Count(name="D", fail_until=0, running_until=3, success_until=15)
 
-    root = py_trees.Selector(name="Root")
-    print("Root.children: %s " % [child.name for child in root.children])
+    root = py_trees.Selector(name="Selector")
     root.add_child(a)
     root.add_child(sequence)
     root.add_child(d)
+
+    py_trees.display.print_ascii_tree(root)
 
     py_trees.tests.tick_tree(root, visitor, 1, 2)
     py_trees.tests.print_summary(nodes=[a, b, c, d])
@@ -142,7 +147,7 @@ def test_mixed_tree():
     print("root.status == py_trees.Status.RUNNING")
     assert(root.status == py_trees.Status.RUNNING)
 
-    py_trees.tests.tick_tree(root, visitor, 3, 11)
+    py_trees.tests.tick_tree(root, visitor, 3, 9)
     py_trees.tests.print_summary(nodes=[a, b, c, d])
     print("--------- Assertions ---------\n")
     print("a.status == py_trees.Status.FAILURE")
@@ -154,7 +159,7 @@ def test_mixed_tree():
     print("root.status == py_trees.Status.RUNNING")
     assert(root.status == py_trees.Status.RUNNING)
 
-    py_trees.tests.tick_tree(root, visitor, 12, 14)
+    py_trees.tests.tick_tree(root, visitor, 10, 11)
     py_trees.tests.print_summary(nodes=[a, b, c, d])
     print("--------- Assertions ---------\n")
     print("a.status == py_trees.Status.FAILURE")
@@ -166,7 +171,7 @@ def test_mixed_tree():
     print("root.status == py_trees.Status.SUCCESS")
     assert(root.status == py_trees.Status.SUCCESS)
 
-    py_trees.tests.tick_tree(root, visitor, 15, 16)
+    py_trees.tests.tick_tree(root, visitor, 12, 13)
     py_trees.tests.print_summary(nodes=[a, b, c, d])
     print("--------- Assertions ---------\n")
     print("a.status == py_trees.Status.FAILURE")
@@ -325,7 +330,7 @@ def test_success_failure_tree():
     print(console.bold + "****************************************************************************************\n" + console.reset)
     root = py_trees.Selector("Root")
     failure = py_trees.behaviours.Failure("Failure")
-    failure2 = py_trees.meta.inverter(py_trees.behaviours.Success("Failure2"))
+    failure2 = py_trees.meta.inverter(py_trees.behaviours.Success)("Failure2")
     success = py_trees.behaviours.Success("Success")
     root.add_child(failure)
     root.add_child(failure2)
@@ -416,7 +421,7 @@ def test_tip_complex():
 
     # selector left branch fails the two times, so seq2 behaviours run. The
     # third time it is running, stopping seq2
-    a = py_trees.behaviours.Count(name="A", fail_until=1, running_until=0, success_until=10)
+    a = py_trees.behaviours.Count(name="A", fail_until=1, running_until=0, success_until=10, reset=False)
     b = py_trees.behaviours.Count(name="B", fail_until=0, running_until=1, success_until=10)
     c = py_trees.behaviours.Count(name="C", fail_until=0, running_until=2, success_until=10)
     d = py_trees.behaviours.Count(name="D", fail_until=0, running_until=1, success_until=10)
@@ -437,10 +442,15 @@ def test_tip_complex():
     tree.tick()
 
     print("\n--------- Assertions ---------\n")
+    print("a.status == py_trees.Status.FAILURE")
     assert(a.status == py_trees.Status.FAILURE)
+    print("b.status == py_trees.Status.INVALID")
     assert(b.status == py_trees.Status.INVALID)
+    print("c.status == py_trees.Status.RUNNING")
     assert(c.status == py_trees.Status.RUNNING)
+    print("d.status == py_trees.Status.INVALID")
     assert(d.status == py_trees.Status.INVALID)
+    print("")
 
     # the root of sequence and tree should be the currently running node
     assert(seq1.tip() == a)
@@ -449,16 +459,19 @@ def test_tip_complex():
 
     tree.tick()
     print("\n--------- Assertions ---------\n")
+    print("a.status == py_trees.Status.SUCCESS")
     assert(a.status == py_trees.Status.SUCCESS)
+    print("b.status == py_trees.Status.RUNNING")
     assert(b.status == py_trees.Status.RUNNING)
+    print("c.status == py_trees.Status.INVALID")
     assert(c.status == py_trees.Status.INVALID)
+    print("d.status == py_trees.Status.INVALID")
     assert(d.status == py_trees.Status.INVALID)
+    print("")
 
     assert(seq1.tip() == b)
     assert(seq2.tip() == None)
     assert(tree.root.tip() == b)
-
-    tree.tick()
 
 
 def test_condition():
