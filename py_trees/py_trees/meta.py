@@ -113,7 +113,6 @@ def imposter(cls):
             self.blackbox_level = self.original.blackbox_level
             self.children = self.original.children
             self.setup = self.original.setup
-            self.initialise = self.original.initialise
             self.terminate = self.original.terminate
             self.stop = self.original.stop
             # id is important to match for composites...the children must relate to the correct parent id
@@ -124,9 +123,9 @@ def imposter(cls):
             This function overrides Behaviour.tick() and work the same way
             except it would not call initialise and stop methods on original
             and let the original's update handle it's state.
-            
+
             There is some analysis explaining the need for this override in
-            
+
                 https://github.com/stonier/py_trees_suite/issues/32
 
             :return py_trees.Behaviour: a reference to itself
@@ -184,20 +183,23 @@ def timeout(cls, duration):
             self.finish_time = None
         return wrapped
 
-    def _timeout_initialise(func):
-        @functools.wraps(func)
-        def wrapped(self, *args, **kwargs):
-            if self.finish_time is None:
-                self.finish_time = time.time() + self.duration
-        return wrapped
+    def _timeout_initialise(self):
+        if self.finish_time is None:
+            self.finish_time = time.time() + self.duration
 
     def _timeout_update(func):
         @functools.wraps(func)
         def wrapped(self, *args, **kwargs):
+            # make sure this class initialises time related functions
+            # when the underlying original will initialise itself
+            if self.original.status != common.Status.RUNNING:
+                self.initialise()
             self.original.tick_once()
             current_time = time.time()
             if current_time > self.finish_time:
                 self.feedback_message = "timed out"
+                # invalidate the original (i.e. cancel it)
+                self.original.stop(common.Status.INVALID)
                 return common.Status.FAILURE
             else:
                 self.feedback_message = self.original.feedback_message + " [time left: %s]" % (self.finish_time - current_time)
@@ -213,7 +215,7 @@ def timeout(cls, duration):
 
     Timeout = imposter(cls)
     setattr(Timeout, "__init__", _timeout_init(Timeout.__init__, duration))
-    setattr(Timeout, "initialise", _timeout_initialise(Timeout.initialise))
+    setattr(Timeout, "initialise", _timeout_initialise)
     setattr(Timeout, "update", _timeout_update(Timeout.update))
     setattr(Timeout, "terminate", _timeout_terminate(Timeout.terminate))
     return Timeout
