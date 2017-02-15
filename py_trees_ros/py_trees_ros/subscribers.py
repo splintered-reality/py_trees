@@ -313,7 +313,7 @@ class ToBlackboard(SubscriberHandler):
             topic_type=topic_type,
             clearing_policy=clearing_policy
         )
-        self.logger = py_trees.logging.get_logger("%s" % self.name)
+        self.logger = py_trees.logging.Logger("%s" % self.name)
         self.blackboard = py_trees.blackboard.Blackboard()
         if isinstance(blackboard_variables, basestring):
             self.blackboard_variable_mapping = {blackboard_variables: None}

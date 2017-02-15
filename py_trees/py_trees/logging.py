@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # License: BSD
-#   https://raw.github.com/stonier/py_trees_suite/license/LICENSE
+#   https://raw.githubusercontent.com/stonier/py_trees_suite/devel/LICENSE
 #
 ##############################################################################
 # Documentation
@@ -9,13 +9,10 @@
 
 """
 .. module:: loggers
-   :platform: Unix
    :synopsis: Logging facilities in py_trees.
 
-Set the py_tree loggers and provide an override option.
-
-----
-
+Oh my spaghettified magnificence,
+Bless my noggin with a tickle from your noodly appendages!
 """
 
 ##############################################################################
@@ -23,7 +20,8 @@ Set the py_tree loggers and provide an override option.
 ##############################################################################
 
 from enum import IntEnum
-import rocon_console.console as console
+
+from . import console
 
 ##############################################################################
 # Logging
@@ -64,47 +62,9 @@ class Level(IntEnum):
 level = Level.INFO
 
 ##############################################################################
-# Underlying Loggers
-##############################################################################
-
-
-def logdebug(msg):
-    global level
-    if level < Level.INFO:
-        print(console.green + "[DEBUG] " + str(msg) + console.reset)
-
-
-def loginfo(msg):
-    global level
-    if level < Level.WARN:
-        print("[ INFO] " + str(msg))
-
-
-def logwarn(msg):
-    global level
-    if level < Level.ERROR:
-        print("console.yellow + [ WARN] " + str(msg) + console.reset)
-
-
-def logerror(msg):
-    print(console.red + "[ERROR] " + str(msg) + console.reset)
-
-
-def set_loggers(info, warn, debug, error):
-    """
-      Override the py_tree logging functions.
-      Note that the logging level will also be overridden (usually
-      the external functions have their own trick to set this).
-    """
-    loginfo = info
-    logwarn = warn
-    logdebug = debug
-    logerror = error
-
-
-##############################################################################
 # Logger Class
 ##############################################################################
+
 
 class Logger(object):
     """
@@ -116,17 +76,19 @@ class Logger(object):
         self.prefix = '{:<12}'.format(name) + " : " if name else ""
 
     def debug(self, msg):
-        logdebug(self.prefix + msg)
+        global level
+        if level < Level.INFO:
+            console.logdebug(self.prefix + msg)
 
     def info(self, msg):
-        loginfo(self.prefix + msg)
+        global level
+        if level < Level.WARN:
+            console.loginfo(self.prefix + msg)
 
     def warning(self, msg):
-        logwarn(self.prefix + msg)
+        global level
+        if level < Level.ERROR:
+            console.logwarn(self.prefix + msg)
 
     def error(self, msg):
-        logerror(self.prefix + msg)
-
-
-def get_logger(name=None):
-    return Logger(name)
+        console.logerror(self.prefix + msg)

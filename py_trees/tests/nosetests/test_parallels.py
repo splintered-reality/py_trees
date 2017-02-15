@@ -20,7 +20,7 @@ import rocon_console.console as console
 ##############################################################################
 
 py_trees.logging.level = py_trees.logging.Level.DEBUG
-logger = py_trees.logging.get_logger("Nosetest")
+logger = py_trees.logging.Logger("Nosetest")
 
 ##############################################################################
 # Tests
@@ -37,7 +37,7 @@ def test_parallel_failure():
     root.add_child(failure)
     root.add_child(success)
     py_trees.display.print_ascii_tree(root)
-    visitor = py_trees.trees.DebugVisitor()
+    visitor = py_trees.visitors.DebugVisitor()
     py_trees.tests.tick_tree(root, visitor, 1, 1)
 
     print("\n--------- Assertions ---------\n")
@@ -59,7 +59,7 @@ def test_parallel_success():
     root.add_child(success1)
     root.add_child(success2)
     py_trees.display.print_ascii_tree(root)
-    visitor = py_trees.trees.DebugVisitor()
+    visitor = py_trees.visitors.DebugVisitor()
     py_trees.tests.tick_tree(root, visitor, 1, 1)
 
     print("\n--------- Assertions ---------\n")
@@ -84,7 +84,7 @@ def test_parallel_running():
     root.add_child(running)
     root.add_child(success_every_other)
     py_trees.display.print_ascii_tree(root)
-    visitor = py_trees.trees.DebugVisitor()
+    visitor = py_trees.visitors.DebugVisitor()
     py_trees.tests.tick_tree(root, visitor, 1, 1)
 
     print("\n--------- Assertions ---------\n")
@@ -123,7 +123,7 @@ def test_parallel_success_on_one():
     root.add_child(success)
     root.add_child(running2)
     py_trees.display.print_ascii_tree(root)
-    visitor = py_trees.trees.DebugVisitor()
+    visitor = py_trees.visitors.DebugVisitor()
     py_trees.tests.tick_tree(root, visitor, 1, 1)
 
     print("\n--------- Assertions ---------\n")

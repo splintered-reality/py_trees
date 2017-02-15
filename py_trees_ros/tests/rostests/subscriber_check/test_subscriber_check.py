@@ -38,7 +38,7 @@ class TestSubscriberCheck(unittest.TestCase):
         bad_topic = rospy.get_param("~bad_topic", False)
         topic_name = rospy.get_param("~topic_name", "chatter") if not bad_topic else "wrong_topic"
         expected_string = "Hello Dude" if not generate_failure else "Wrong String"
-        self.logger = py_trees.logging.get_logger("Subscriber Check")
+        self.logger = py_trees.logging.Logger("Subscriber Check")
         self.root = py_trees.Sequence(name="Demo Subscribers")
         check_subscriber_variable = py_trees.subscribers.CheckSubscriberVariable(
             "Check",
@@ -65,7 +65,7 @@ class TestSubscriberCheck(unittest.TestCase):
     ##############################################################################
 
     def test_tick_tock(self):
-        self.tree.visitors.append(py_trees.trees.DebugVisitor())
+        self.tree.visitors.append(py_trees.visitors.DebugVisitor())
         rate = rospy.Rate(10)
         while not rospy.is_shutdown():
             self.tree.tick(pre_tick_handler=self.pre_tick_handler)

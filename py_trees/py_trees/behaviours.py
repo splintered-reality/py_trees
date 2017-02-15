@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # License: BSD
-#   https://raw.github.com/stonier/py_trees_suite/license/LICENSE
+#   https://raw.githubusercontent.com/stonier/py_trees_suite/devel/LICENSE
 #
 ##############################################################################
 # Documentation
@@ -63,6 +63,9 @@ Running = meta.create_behaviour_from_function(running)
 class Periodic(Behaviour):
     """
     Return running for N ticks, success for N ticks, failure for N ticks...
+
+    Note, it does not reset the count when initialising. No special reason
+    for this, just the way it was first implemented.
     """
     def __init__(self, name, n):
         super(Periodic, self).__init__(name)
@@ -74,12 +77,17 @@ class Periodic(Behaviour):
         self.count += 1
         if self.count > self.period:
             if self.response == Status.FAILURE:
+                self.feedback_message = "flip to running"
                 self.response = Status.RUNNING
             elif self.response == Status.RUNNING:
+                self.feedback_message = "flip to success"
                 self.response = Status.SUCCESS
             else:
+                self.feedback_message = "flip to failure"
                 self.response = Status.FAILURE
             self.count = 0
+        else:
+            self.feedback_message = "constant"
         return self.response
 
 
@@ -96,9 +104,10 @@ class SuccessEveryN(Behaviour):
         self.count += 1
         self.logger.debug("  %s [SuccessEveryN::update()][%s]" % (self.name, self.count))
         if self.count % self.every_n == 0:
+            self.feedback_message = "now"
             return Status.SUCCESS
-            self.count = 0
         else:
+            self.feedback_message = "not yet"
             return Status.FAILURE
 
 
@@ -118,7 +127,7 @@ class Count(Behaviour):
         self.success_until = success_until
         self.number_count_resets = 0
         self.number_updated = 0
-        self.logger = logging.get_logger("Count")
+        self.logger = logging.Logger("Count")
         self.reset = reset
 
     def terminate(self, new_status):

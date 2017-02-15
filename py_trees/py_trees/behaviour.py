@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # License: BSD
-#   https://raw.github.com/stonier/py_trees_suite/license/LICENSE
+#   https://raw.githubusercontent.com/stonier/py_trees_suite/devel/LICENSE
 #
 ##############################################################################
 # Documentation
@@ -62,7 +62,7 @@ class Behaviour(object):
         self.iterator = self.tick()
         self.parent = None  # will get set if a behaviour is added to a composite
         self.children = []  # only set by composite behaviours
-        self.logger = logging.get_logger("Behaviour")
+        self.logger = logging.Logger("Behaviour")
         self.feedback_message = ""  # useful for debugging, or human readable updates, but not necessary to implement
         self.blackbox_level = common.BlackBoxLevel.NOT_A_BLACKBOX
 
@@ -260,7 +260,7 @@ class Behaviour(object):
 
         .. warning:: Do not override this method, use :py:meth:`terminate` instead.
         """
-        self.logger.debug("  %s [%s.stop()][%s->%s]" % (self.name, self.__class__.__name__, self.status, new_status))
+        self.logger.debug("  %s [%s.stop()][%s]" % (self.name, self.__class__.__name__, "%s->%s" % (self.status, new_status) if self.status != new_status else "%s" % new_status))
         self.terminate(new_status)
         self.status = new_status
         self.iterator = self.tick()

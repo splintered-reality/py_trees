@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # License: BSD
-#   https://raw.github.com/stonier/py_trees_suite/license/LICENSE
+#   https://raw.githubusercontent.com/stonier/py_trees_suite/devel/LICENSE
 #
 ##############################################################################
 # Documentation
@@ -25,45 +25,10 @@ This module creates tools for managing your entire behaviour tree.
 import time
 
 from . import composites
-from . import logging
 
 from .behaviours import Behaviour
 
 CONTINUOUS_TICK_TOCK = -1
-
-##############################################################################
-# Visitors
-##############################################################################
-
-
-class VisitorBase(object):
-    """Base object for visitors.
-    """
-    def __init__(self, full=False):
-        """Initialises the base object for the visitor.
-
-        :param bool full: if true, this visitor will visit all nodes in the tree
-            every tick. If false, it only visits nodes that are parents of nodes
-            that are running, as well as those running nodes.
-
-        """
-        self.full = full
-
-
-class DebugVisitor(VisitorBase):
-    def __init__(self):
-        super(DebugVisitor, self).__init__(full=False)
-        self.logger = logging.get_logger("Visitor")
-
-    def initialise(self):
-        pass
-
-    def run(self, behaviour):
-        if behaviour.feedback_message:
-            self.logger.debug("  %s [visited][%s][%s]" % (behaviour.name, behaviour.status, behaviour.feedback_message))
-        else:
-            self.logger.debug("  %s [visited][%s]" % (behaviour.name, behaviour.status))
-
 
 ##############################################################################
 # Trees

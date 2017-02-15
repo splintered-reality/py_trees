@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # License: BSD
-#   https://raw.github.com/stonier/py_trees_suite/license/LICENSE
+#   https://raw.githubusercontent.com/stonier/py_trees_suite/devel/LICENSE
 #
 ##############################################################################
 # Documentation
@@ -46,7 +46,7 @@ class Composite(Behaviour):
             map(self.add_child, children)
         else:
             self.children = []
-        self.logger = logging.get_logger("Composite")
+        self.logger = logging.Logger("Composite")
 
     ############################################
     # Worker Overrides
@@ -84,7 +84,7 @@ class Composite(Behaviour):
         it to truly stop (INVALID). We only really want to update everything below if we are in
         the second use case. The first use case will subehaviours will have already handled themselves.
         """
-        self.logger.debug("  %s [%s.stop()][%s->%s]" % (self.name, self.__class__.__name__, self.status, new_status))
+        self.logger.debug("  %s [%s.stop()][%s]" % (self.name, self.__class__.__name__, "%s->%s" % (self.status, new_status) if self.status != new_status else "%s" % new_status))
         if new_status == Status.INVALID:
             for child in self.children:
                 child.stop(new_status)
@@ -227,7 +227,7 @@ class Selector(Composite):
         """
         super(Selector, self).__init__(name, children, *args, **kwargs)
         self.current_child = None
-        self.logger = logging.get_logger("Selector ")
+        self.logger = logging.Logger("Selector ")
 
     def tick(self):
         """
@@ -332,7 +332,7 @@ class Chooser(Selector):
         :param [] children: list of children (:py:class:`~py_trees.behaviour.Behaviour`) to append to the sequence
         """
         super(Chooser, self).__init__(name, children, *args, **kwargs)
-        self.logger = logging.get_logger("Chooser ")
+        self.logger = logging.Logger("Chooser ")
 
     def tick(self):
         """
@@ -416,7 +416,7 @@ class Sequence(Composite):
         """
         super(Sequence, self).__init__(name, children, *args, **kwargs)
         self.current_index = -1  # -1 indicates uninitialised
-        self.logger = logging.get_logger("Sequence ")
+        self.logger = logging.Logger("Sequence ")
 
     def tick(self):
         self.logger.debug("  %s [Sequence.tick()]" % self.name)
@@ -497,7 +497,7 @@ class Parallel(Composite):
         :param [] children: list of children (:py:class:`~py_trees.behaviour.Behaviour`) to append to the sequence
         """
         super(Parallel, self).__init__(name, children, *args, **kwargs)
-        self.logger = logging.get_logger(name)
+        self.logger = logging.Logger(name)
         self.policy = policy
 
     def tick(self):

@@ -24,7 +24,7 @@ import operator
 ##############################################################################
 
 # py_trees.logging.level = py_trees.logging.Level.DEBUG
-# logger = py_trees.logging.get_logger("Nosetest")
+# logger = py_trees.logging.Logger("Nosetest")
 
 ##############################################################################
 # Helpers

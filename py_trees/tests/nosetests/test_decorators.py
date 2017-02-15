@@ -21,7 +21,7 @@ import time
 ##############################################################################
 
 py_trees.logging.level = py_trees.logging.Level.DEBUG
-logger = py_trees.logging.get_logger("Nosetest")
+logger = py_trees.logging.Logger("Nosetest")
 
 ##############################################################################
 # Classes
@@ -47,7 +47,7 @@ def test_failure_is_success_tree():
     root.add_child(failure)
     root.add_child(goon)
     py_trees.display.print_ascii_tree(root)
-    visitor = py_trees.trees.DebugVisitor()
+    visitor = py_trees.visitors.DebugVisitor()
     py_trees.tests.tick_tree(root, visitor, 1, 1)
 
     print("\n--------- Assertions ---------\n")
@@ -69,7 +69,7 @@ def test_success_is_failure_tree():
     root.add_child(failure)
     root.add_child(going_down)
     py_trees.display.print_ascii_tree(root)
-    visitor = py_trees.trees.DebugVisitor()
+    visitor = py_trees.visitors.DebugVisitor()
     py_trees.tests.tick_tree(root, visitor, 1, 1)
 
     print("\n--------- Assertions ---------\n")
@@ -97,7 +97,7 @@ def test_inverter_tree():
     root.add_child(selector)
     root.add_child(success2)
     py_trees.display.print_ascii_tree(root)
-    visitor = py_trees.trees.DebugVisitor()
+    visitor = py_trees.visitors.DebugVisitor()
     py_trees.tests.tick_tree(root, visitor, 1, 1)
 
     print("\n--------- Assertions ---------\n")
@@ -125,7 +125,7 @@ def test_running_is_failure_tree():
     root.add_child(failure)
     root.add_child(success)
     py_trees.display.print_ascii_tree(root)
-    visitor = py_trees.trees.DebugVisitor()
+    visitor = py_trees.visitors.DebugVisitor()
     py_trees.tests.tick_tree(root, visitor, 1, 1)
 
     print("\n--------- Assertions ---------\n")
@@ -153,7 +153,7 @@ def test_inverter_sequence():
     root.add_child(selector)
     root.add_child(success2)
     py_trees.display.print_ascii_tree(root)
-    visitor = py_trees.trees.DebugVisitor()
+    visitor = py_trees.visitors.DebugVisitor()
     py_trees.tests.tick_tree(root, visitor, 1, 1)
 
     print("\n--------- Assertions ---------\n")
@@ -175,7 +175,7 @@ def test_timeout():
     print(console.bold + "****************************************************************************************\n" + console.reset)
     root = py_trees.meta.timeout(py_trees.behaviours.Running, 0.2)("Success w/ Timeout")
     py_trees.display.print_ascii_tree(root)
-    visitor = py_trees.trees.DebugVisitor()
+    visitor = py_trees.visitors.DebugVisitor()
     py_trees.tests.tick_tree(root, visitor, 1, 1)
 
     print("\n--------- Assertions ---------\n")

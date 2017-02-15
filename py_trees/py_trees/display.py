@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # License: BSD
-#   https://raw.github.com/stonier/py_trees_suite/license/LICENSE
+#   https://raw.githubusercontent.com/stonier/py_trees_suite/devel/LICENSE
 #
 ##############################################################################
 # Documentation
@@ -19,6 +19,7 @@ Various graph drawing tools.
 # Imports
 ##############################################################################
 
+import argparse
 import pydot
 import rocon_console.console as console
 
@@ -33,9 +34,9 @@ from .common import Status
 
 # hide from public exposure
 _behaviour_status_to_ascii = {
-    Status.SUCCESS: console.green + "*" + console.reset,
-    Status.FAILURE: console.yellow + "x" + console.reset,
-    Status.INVALID: console.yellow + "*" + console.reset,
+    Status.SUCCESS: console.green + u'\u2713' + console.reset,
+    Status.FAILURE: console.red + "x" + console.reset,
+    Status.INVALID: console.yellow + "-" + console.reset,
     Status.RUNNING: console.blue + "*" + console.reset
 }
 
@@ -57,7 +58,7 @@ def _generate_ascii_tree(tree, indent=0, snapshot_information=None):
         if tree.id in nodes:
             yield "%s [%s]" % (tree.name, _behaviour_status_to_ascii[nodes[tree.id]])
         elif tree.id in previously_running_nodes and tree.id not in running_nodes:
-            yield "%s" % tree.name + " [" + console.red + "x" + console.reset + "]"
+            yield "%s" % tree.name + " [" + console.yellow + "-" + console.reset + "]"
         else:
             yield "%s" % tree.name
     for child in tree.children:
@@ -72,7 +73,7 @@ def _generate_ascii_tree(tree, indent=0, snapshot_information=None):
             message = "" if not child.feedback_message else " -- " + child.feedback_message
             yield "    " * indent + bullet + child.name + " [%s]" % _behaviour_status_to_ascii[nodes[child.id]] + message
         elif child.id in previously_running_nodes and child.id not in running_nodes:
-            yield "    " * indent + bullet + child.name + " [" + console.red + "x" + console.reset + "]"
+            yield "    " * indent + bullet + child.name + " [" + console.yellow + "-" + console.reset + "]"
         else:
             yield "    " * indent + bullet + child.name
         if child.children != []:
@@ -196,3 +197,10 @@ def render_dot_tree(root, visibility_level=common.VisibilityLevel.DETAIL):
     graph.write(name + '.dot')
     graph.write_png(name + '.png')
     graph.write_svg(name + '.svg')
+
+
+def add_render_argument(parser):
+    """
+    Furnish a parser with an argument to render.
+    """
+    parser.add_argument('-r', '--render', action='store_true', help='render dot tree to file')
