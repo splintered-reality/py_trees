@@ -12,7 +12,7 @@
 # (unicode_literals not compatible with python2 uuid module)
 from __future__ import absolute_import, print_function
 
-from nose.tools import assert_raises
+# from nose.tools import assert_raises
 import py_trees
 import rocon_console.console as console
 
@@ -23,29 +23,11 @@ import rocon_console.console as console
 py_trees.logging.level = py_trees.logging.Level.DEBUG
 logger = py_trees.logging.get_logger("Nosetest")
 
-##############################################################################
-# Classes
-##############################################################################
-
-def pre_tick_visitor(behaviour_tree):
-    print("\n--------- Run %s ---------\n" % behaviour_tree.count)
-
-
-def tick_tree(tree, visitor, from_iteration, to_iteration):
-    print("\n================== Iteration %s-%s ==================\n" % (from_iteration, to_iteration))
-    for i in range(from_iteration, to_iteration + 1):
-        print("\n--------- Run %s ---------\n" % i)
-        for node in tree.tick():
-            node.visit(visitor)
-
-def print_summary(nodes):
-    print("\n--------- Summary ---------\n")
-    for node in nodes:
-        print("%s" % node)
 
 ##############################################################################
 # Tests
 ##############################################################################
+
 
 def test_selector_composite():
     print(console.bold + "\n****************************************************************************************" + console.reset)
@@ -60,8 +42,8 @@ def test_selector_composite():
     tree.add_child(b)
     tree.add_child(c)
     py_trees.display.print_ascii_tree(tree, 0)
-    tick_tree(tree, visitor, 1, 3)
-    print_summary(nodes=[a, b, c])
+    py_trees.tests.tick_tree(tree, visitor, 1, 3)
+    py_trees.tests.print_summary(nodes=[a, b, c])
     print("--------- Assertions ---------\n")
     print("a.count == 3")
     assert(a.count == 3)
@@ -71,8 +53,8 @@ def test_selector_composite():
     assert(c.status == py_trees.Status.RUNNING)
     print("c.number_count_resets == 0")
     assert(c.number_count_resets == 0)
-    tick_tree(tree, visitor, 4, 4)
-    print_summary(nodes=[a, b, c])
+    py_trees.tests.tick_tree(tree, visitor, 4, 4)
+    py_trees.tests.print_summary(nodes=[a, b, c])
     print("--------- Assertions ---------\n")
     print("a.status == py_trees.Status.RUNNING")
     assert(a.status == py_trees.Status.RUNNING)
@@ -80,9 +62,10 @@ def test_selector_composite():
     assert(c.number_count_resets == 1)
     print("c.status == py_trees.Status.INVALID")
     assert(c.status == py_trees.Status.INVALID)
-    tick_tree(tree, visitor, 5, 8)
-    print_summary(nodes=[a, b, c])
+    py_trees.tests.tick_tree(tree, visitor, 5, 8)
+    py_trees.tests.print_summary(nodes=[a, b, c])
     print("Done")
+
 
 def test_sequence_composite():
     print(console.bold + "\n****************************************************************************************" + console.reset)
@@ -96,8 +79,8 @@ def test_sequence_composite():
     tree.add_child(a)
     tree.add_child(b)
     tree.add_child(c)
-    tick_tree(tree, visitor, 1, 5)
-    print_summary(nodes=[a, b, c])
+    py_trees.tests.tick_tree(tree, visitor, 1, 5)
+    py_trees.tests.print_summary(nodes=[a, b, c])
     print("--------- Assertions ---------\n")
     print("a.status == py_trees.Status.SUCCESS")
     assert(a.status == py_trees.Status.SUCCESS)
@@ -105,8 +88,8 @@ def test_sequence_composite():
     assert(b.status == py_trees.Status.RUNNING)
     print("tree.status == py_trees.Status.RUNNING")
     assert(tree.status == py_trees.Status.RUNNING)
-    tick_tree(tree, visitor, 6, 10)
-    print_summary(nodes=[a, b, c])
+    py_trees.tests.tick_tree(tree, visitor, 6, 10)
+    py_trees.tests.print_summary(nodes=[a, b, c])
     print("--------- Assertions ---------\n")
     print("a.status == py_trees.Status.SUCCESS")
     assert(a.status == py_trees.Status.SUCCESS)
@@ -116,13 +99,14 @@ def test_sequence_composite():
     assert(c.status == py_trees.Status.SUCCESS)
     print("tree.status == py_trees.Status.SUCCESS")
     assert(tree.status == py_trees.Status.SUCCESS)
-    tick_tree(tree, visitor, 11, 13)
-    print_summary(nodes=[a, b, c])
+    py_trees.tests.tick_tree(tree, visitor, 11, 13)
+    py_trees.tests.print_summary(nodes=[a, b, c])
     print("--------- Assertions ---------\n")
     print("a.status == py_trees.Status.FAILURE")
     assert(a.status == py_trees.Status.FAILURE)
     print("tree.status == py_trees.Status.FAILURE")
     assert(tree.status == py_trees.Status.FAILURE)
+
 
 def test_mixed_tree():
     print(console.bold + "\n****************************************************************************************" + console.reset)
@@ -146,8 +130,8 @@ def test_mixed_tree():
     root.add_child(sequence)
     root.add_child(d)
 
-    tick_tree(root, visitor, 1, 2)
-    print_summary(nodes=[a, b, c, d])
+    py_trees.tests.tick_tree(root, visitor, 1, 2)
+    py_trees.tests.print_summary(nodes=[a, b, c, d])
     print("--------- Assertions ---------\n")
     print("a.status == py_trees.Status.FAILURE")
     assert(a.status == py_trees.Status.FAILURE)
@@ -158,8 +142,8 @@ def test_mixed_tree():
     print("root.status == py_trees.Status.RUNNING")
     assert(root.status == py_trees.Status.RUNNING)
 
-    tick_tree(root, visitor, 3, 11)
-    print_summary(nodes=[a, b, c, d])
+    py_trees.tests.tick_tree(root, visitor, 3, 11)
+    py_trees.tests.print_summary(nodes=[a, b, c, d])
     print("--------- Assertions ---------\n")
     print("a.status == py_trees.Status.FAILURE")
     assert(a.status == py_trees.Status.FAILURE)
@@ -170,8 +154,8 @@ def test_mixed_tree():
     print("root.status == py_trees.Status.RUNNING")
     assert(root.status == py_trees.Status.RUNNING)
 
-    tick_tree(root, visitor, 12, 14)
-    print_summary(nodes=[a, b, c, d])
+    py_trees.tests.tick_tree(root, visitor, 12, 14)
+    py_trees.tests.print_summary(nodes=[a, b, c, d])
     print("--------- Assertions ---------\n")
     print("a.status == py_trees.Status.FAILURE")
     assert(a.status == py_trees.Status.FAILURE)
@@ -182,8 +166,8 @@ def test_mixed_tree():
     print("root.status == py_trees.Status.SUCCESS")
     assert(root.status == py_trees.Status.SUCCESS)
 
-    tick_tree(root, visitor, 15, 16)
-    print_summary(nodes=[a, b, c, d])
+    py_trees.tests.tick_tree(root, visitor, 15, 16)
+    py_trees.tests.print_summary(nodes=[a, b, c, d])
     print("--------- Assertions ---------\n")
     print("a.status == py_trees.Status.FAILURE")
     assert(a.status == py_trees.Status.FAILURE)
@@ -195,6 +179,7 @@ def test_mixed_tree():
     assert(d.status == py_trees.Status.RUNNING)
     print("root.status == py_trees.Status.RUNNING")
     assert(root.status == py_trees.Status.RUNNING)
+
 
 def test_display():
     print(console.bold + "\n****************************************************************************************" + console.reset)
@@ -216,6 +201,7 @@ def test_display():
     py_trees.display.print_ascii_tree(root)
 
     assert(True)
+
 
 def test_full_iteration():
     print(console.bold + "\n****************************************************************************************" + console.reset)
@@ -240,6 +226,7 @@ def test_full_iteration():
         visitations += 1
         child.visit(visitor)
     assert(visitations == 6)
+
 
 def test_prune_behaviour_tree():
     print(console.bold + "\n****************************************************************************************" + console.reset)
@@ -267,6 +254,7 @@ def test_prune_behaviour_tree():
     tree.prune_subtree(sequence.id)
     py_trees.display.print_ascii_tree(tree.root)
     assert(len(root.children) == 2)
+
 
 def test_replace_behaviour_tree():
     print(console.bold + "\n****************************************************************************************" + console.reset)
@@ -301,6 +289,7 @@ def test_replace_behaviour_tree():
     py_trees.display.print_ascii_tree(tree.root)
     assert(len(sequence2.children) == 3)
 
+
 def test_tick_tock_behaviour_tree():
     print(console.bold + "\n****************************************************************************************" + console.reset)
     print(console.bold + "* Tick Tock Behaviour Tree" + console.reset)
@@ -323,11 +312,12 @@ def test_tick_tock_behaviour_tree():
 
     visitor = py_trees.trees.DebugVisitor()
     tree.visitors.append(visitor)
-    tree.tick_tock(100, 5, pre_tick_handler=pre_tick_visitor)
+    tree.tick_tock(100, 5, pre_tick_handler=py_trees.tests.pre_tick_visitor)
 
     print("\n--------- Assertions ---------\n")
     print("a.status == py_trees.Status.RUNNING")
     assert(a.status == py_trees.Status.RUNNING)
+
 
 def test_success_failure_tree():
     print(console.bold + "\n****************************************************************************************" + console.reset)
@@ -342,7 +332,7 @@ def test_success_failure_tree():
     root.add_child(success)
     py_trees.display.print_ascii_tree(root)
     visitor = py_trees.trees.DebugVisitor()
-    tick_tree(root, visitor, 1, 1)
+    py_trees.tests.tick_tree(root, visitor, 1, 1)
 
     print("\n--------- Assertions ---------\n")
     print("success.status == py_trees.Status.SUCCESS")
@@ -353,6 +343,7 @@ def test_success_failure_tree():
     assert(failure.status == py_trees.Status.FAILURE)
     print("failure2.status == py_trees.Status.FAILURE")
     assert(failure2.status == py_trees.Status.FAILURE)
+
 
 def test_tip_simple():
     print(console.bold + "\n****************************************************************************************" + console.reset)
@@ -412,6 +403,7 @@ def test_tip_simple():
     assert(a.tip() == a)
     assert(b.tip() == b)
 
+
 def test_tip_complex():
     print(console.bold + "\n****************************************************************************************" + console.reset)
     print(console.bold + "* Tip Complex" + console.reset)
@@ -462,12 +454,12 @@ def test_tip_complex():
     assert(c.status == py_trees.Status.INVALID)
     assert(d.status == py_trees.Status.INVALID)
 
-
     assert(seq1.tip() == b)
     assert(seq2.tip() == None)
     assert(tree.root.tip() == b)
 
     tree.tick()
+
 
 def test_condition():
     print(console.bold + "\n****************************************************************************************" + console.reset)
@@ -501,6 +493,7 @@ def test_condition():
     print("\n--------- Assertions ---------\n")
     assert(condition.status == py_trees.Status.SUCCESS)
     assert(d.status == py_trees.Status.SUCCESS)
+
 
 def test_failed_tree():
     print(console.bold + "\n****************************************************************************************" + console.reset)

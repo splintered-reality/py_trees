@@ -25,6 +25,7 @@ from . import composites
 from . import display
 from . import logging
 from . import meta
+from . import tests
 from . import timers
 from . import trees
 

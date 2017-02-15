@@ -12,7 +12,6 @@
 # (unicode_literals not compatible with python2 uuid module)
 from __future__ import absolute_import, print_function
 
-from nose.tools import assert_raises
 import py_trees
 import rocon_console.console as console
 
@@ -24,29 +23,9 @@ py_trees.logging.level = py_trees.logging.Level.DEBUG
 logger = py_trees.logging.get_logger("Nosetest")
 
 ##############################################################################
-# Classes
-##############################################################################
-
-
-def pre_tick_visitor(behaviour_tree):
-    print("\n--------- Run %s ---------\n" % behaviour_tree.count)
-
-
-def tick_tree(tree, visitor, from_iteration, to_iteration):
-    print("\n================== Iteration %s-%s ==================\n" % (from_iteration, to_iteration))
-    for i in range(from_iteration, to_iteration + 1):
-        print("\n--------- Run %s ---------\n" % i)
-        for node in tree.tick():
-            node.visit(visitor)
-
-def print_summary(nodes):
-    print("\n--------- Summary ---------\n")
-    for node in nodes:
-        print("%s" % node)
-
-##############################################################################
 # Tests
 ##############################################################################
+
 
 def test_parallel_failure():
     print(console.bold + "\n****************************************************************************************" + console.reset)
@@ -59,7 +38,7 @@ def test_parallel_failure():
     root.add_child(success)
     py_trees.display.print_ascii_tree(root)
     visitor = py_trees.trees.DebugVisitor()
-    tick_tree(root, visitor, 1, 1)
+    py_trees.tests.tick_tree(root, visitor, 1, 1)
 
     print("\n--------- Assertions ---------\n")
     print("root.status == py_trees.Status.FAILURE")
@@ -68,6 +47,7 @@ def test_parallel_failure():
     assert(failure.status == py_trees.Status.FAILURE)
     print("success.status == py_trees.Status.SUCCESS")
     assert(success.status == py_trees.Status.SUCCESS)
+
 
 def test_parallel_success():
     print(console.bold + "\n****************************************************************************************" + console.reset)
@@ -80,7 +60,7 @@ def test_parallel_success():
     root.add_child(success2)
     py_trees.display.print_ascii_tree(root)
     visitor = py_trees.trees.DebugVisitor()
-    tick_tree(root, visitor, 1, 1)
+    py_trees.tests.tick_tree(root, visitor, 1, 1)
 
     print("\n--------- Assertions ---------\n")
     print("root.status == py_trees.Status.SUCCESS")
@@ -89,6 +69,7 @@ def test_parallel_success():
     assert(success1.status == py_trees.Status.SUCCESS)
     print("success2.status == py_trees.Status.SUCCESS")
     assert(success2.status == py_trees.Status.SUCCESS)
+
 
 def test_parallel_running():
     print(console.bold + "\n****************************************************************************************" + console.reset)
@@ -104,7 +85,7 @@ def test_parallel_running():
     root.add_child(success_every_other)
     py_trees.display.print_ascii_tree(root)
     visitor = py_trees.trees.DebugVisitor()
-    tick_tree(root, visitor, 1, 1)
+    py_trees.tests.tick_tree(root, visitor, 1, 1)
 
     print("\n--------- Assertions ---------\n")
     print("root.status == py_trees.Status.FAILURE")
@@ -116,7 +97,7 @@ def test_parallel_running():
     print("success_every_other.status == py_trees.Status.FAILURE")
     assert(success_every_other.status == py_trees.Status.FAILURE)
 
-    tick_tree(root, visitor, 2, 2)
+    py_trees.tests.tick_tree(root, visitor, 2, 2)
 
     print("\n--------- Assertions ---------\n")
     print("root.status == py_trees.Status.RUNNING")
@@ -127,6 +108,7 @@ def test_parallel_running():
     assert(running.status == py_trees.Status.RUNNING)
     print("success_every_other.status == py_trees.Status.SUCCESS")
     assert(success_every_other.status == py_trees.Status.SUCCESS)
+
 
 def test_parallel_success_on_one():
     print(console.bold + "\n****************************************************************************************" + console.reset)
@@ -142,7 +124,7 @@ def test_parallel_success_on_one():
     root.add_child(running2)
     py_trees.display.print_ascii_tree(root)
     visitor = py_trees.trees.DebugVisitor()
-    tick_tree(root, visitor, 1, 1)
+    py_trees.tests.tick_tree(root, visitor, 1, 1)
 
     print("\n--------- Assertions ---------\n")
     print("All children get switched to success if one goes to success.")

@@ -12,7 +12,6 @@
 # (unicode_literals not compatible with python2 uuid module)
 from __future__ import absolute_import, print_function
 
-from nose.tools import assert_raises
 import py_trees
 import rocon_console.console as console
 import time
@@ -28,11 +27,8 @@ logger = py_trees.logging.get_logger("Nosetest")
 # Classes
 ##############################################################################
 
-def pre_tick_visitor(behaviour_tree):
-    print("\n--------- Run %s ---------\n" % behaviour_tree.count)
 
-
-def tick_tree(tree, visitor, from_iteration, to_iteration, sleep_period):
+def ttick_tree(tree, visitor, from_iteration, to_iteration, sleep_period):
     print("\n================== Iteration %s-%s ==================\n" % (from_iteration, to_iteration))
     for i in range(from_iteration, to_iteration + 1):
         print("\n--------- Run %s ---------\n" % i)
@@ -40,14 +36,10 @@ def tick_tree(tree, visitor, from_iteration, to_iteration, sleep_period):
             node.visit(visitor)
         time.sleep(sleep_period)
 
-def print_summary(nodes):
-    print("\n--------- Summary ---------\n")
-    for node in nodes:
-        print("%s" % node)
-
 ##############################################################################
 # Tests
 ##############################################################################
+
 
 def test_timeout_subtree():
     print(console.bold + "\n****************************************************************************************" + console.reset)
@@ -61,7 +53,7 @@ def test_timeout_subtree():
 
     py_trees.display.print_ascii_tree(root)
     visitor = py_trees.trees.DebugVisitor()
-    tick_tree(root, visitor, 1, 3, 0.5)
+    py_trees.tests.tick_tree(root, visitor, 1, 3, 0.5)
 
     print("\n--------- Assertions ---------\n")
     print("Root status %s" % root.status)
@@ -84,7 +76,7 @@ def test_timeout_subtree():
 #
 #     py_trees.display.print_ascii_tree(root)
 #     visitor = py_trees.trees.DebugVisitor()
-#     tick_tree(root, visitor, 1, 4, 0.25)
+#     py_trees.tests.tick_tree(root, visitor, 1, 4, 0.25)
 #
 #     print("\n--------- Assertions ---------\n")
 #     print("Root status %s" % root.status)
