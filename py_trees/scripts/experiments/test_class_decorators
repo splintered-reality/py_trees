@@ -69,4 +69,3 @@ if __name__ == '__main__':
     print("FooComplement: %s" % inverted_foo.status)
     inverted_foo.angry()
     print("FooComplement: %s" % inverted_foo.status)
-

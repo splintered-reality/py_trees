@@ -19,6 +19,7 @@ Contents:
    examples
    terminology
    modules
+   programs
    changelog
 
 

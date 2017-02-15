@@ -11,7 +11,6 @@ Simple demo program illustrating the behaviour lifecycle.
 ##############################################################################
 
 import argparse
-import os
 import py_trees
 import py_trees.console as console
 import subprocess
@@ -66,30 +65,6 @@ def parse_arguments():
     return args
 
 
-def which(program):
-    '''
-      Wrapper around the command line 'which' program.
-
-      :returns: path to the program or None if it doesnt exist.
-      :rtype: str or None
-    '''
-    def is_exe(fpath):
-        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
-
-    fpath, unused_fname = os.path.split(program)
-    if fpath:
-        if is_exe(program):
-            return program
-    else:
-        for path in os.environ["PATH"].split(os.pathsep):
-            path = path.strip('"')
-            exe_file = os.path.join(path, program)
-            if is_exe(exe_file):
-                return exe_file
-
-    return None
-
-
 ##############################################################################
 # Main
 ##############################################################################
@@ -118,7 +93,7 @@ if __name__ == '__main__':
     root.add_child(second_blackbox)
     first_blackbox.add_child(third_blackbox)
     py_trees.display.render_dot_tree(root, args.enum_level)
-    if which("xdot"):
+    if py_trees.utilities.which("xdot"):
         try:
             subprocess.call(["xdot", "demo_dot_graphs_%s.dot" % args.level])
         except KeyboardInterrupt:

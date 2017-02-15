@@ -9,18 +9,29 @@
 # Documentation
 ##############################################################################
 """
-Simple demo program for py trees
+Creates a simple tree, runs some visitors to do visualisation
+and gives the option to do interactive tick tock on it.
 """
 ##############################################################################
 # Imports
 ##############################################################################
 
-import functools
+import argparse
 import py_trees
+import sys
+import time
 
 ##############################################################################
 # Classes
 ##############################################################################
+
+
+def pre_tick_handler(behaviour_tree):
+    """
+    This prints a banner will run immediately before every tick of the tree.
+    :param behaviour_tree: the root of the behaviour tree
+    """
+    print("\n--------- Run %s ---------\n" % behaviour_tree.count)
 
 
 def show_usage(root):
@@ -49,8 +60,15 @@ def show_usage(root):
 ##############################################################################
 
 if __name__ == '__main__':
-    every_n_success = py_trees.behaviours.SuccessEveryN("EveryN", 5)
+    ####################
+    # Logging
+    ####################
+    py_trees.logging.level = py_trees.logging.Level.DEBUG
 
+    ####################
+    # Root
+    ####################
+    every_n_success = py_trees.behaviours.SuccessEveryN("EveryN", 5)
     sequence = py_trees.Sequence(name="Sequence")
     guard = py_trees.behaviours.Success("Guard")
     periodic_success = py_trees.behaviours.Periodic("Periodic", 3)
@@ -59,12 +77,49 @@ if __name__ == '__main__':
     sequence.add_child(periodic_success)
     sequence.add_child(finisher)
     sequence.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
-
     idle = py_trees.behaviours.Success("Idle")
-
     root = py_trees.Selector(name="Demo Tree")
     root.add_child(every_n_success)
     root.add_child(sequence)
     root.add_child(idle)
 
-    py_trees.demos.main(root, functools.partial(show_usage, root))
+    ####################
+    # Arg Parsing
+    ####################
+    show_usage(root)
+    parser = argparse.ArgumentParser(description='Demo the behaviour trees', usage=show_usage(root))
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('-r', '--render', action='store_true', help='render dot tree to file')
+    group.add_argument('-i', '--interactive', action='store_true', help='pause and wait for keypress at each tick')
+
+    args = parser.parse_args(args=sys.argv[1:])
+
+    ####################
+    # Rendering
+    ####################
+    if args.render:
+        py_trees.display.render_dot_tree(root)
+        sys.exit()
+
+    ####################
+    # Tree
+    ####################
+    tree = py_trees.trees.BehaviourTree(root)
+    tree.visitors.append(py_trees.visitors.DebugVisitor())
+    snapshot_visitor = py_trees.visitors.SnapshotVisitor()
+    tree.visitors.append(snapshot_visitor)
+
+    ####################
+    # Tick Tock
+    ####################
+    while True:
+        try:
+            tree.tick(pre_tick_handler=pre_tick_handler)
+            print("\n" + py_trees.display.ascii_tree(tree.root, snapshot_information=snapshot_visitor))
+            if args.interactive:
+                unused_result = py_trees.console.read_single_keypress()
+            else:
+                time.sleep(0.5)
+        except KeyboardInterrupt:
+            break
+    # tree.tick_tock(sleep_ms=500, number_of_iterations=py_trees.CONTINUOUS_TICK_TOCK, pre_tick_handler=pre_tick_handler)

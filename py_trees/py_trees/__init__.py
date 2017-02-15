@@ -23,7 +23,6 @@ from . import blackboard
 from . import common
 from . import composites
 from . import console
-from . import demos
 from . import display
 from . import logging
 from . import meta
@@ -31,6 +30,7 @@ from . import syntax_highlighting
 from . import tests
 from . import timers
 from . import trees
+from . import utilities
 from . import visitors
 
 # really core conveniences (only the core ones please)

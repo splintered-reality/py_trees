@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Forthcoming
+-----------
+* [ros] components moved to py_trees_ros
+* [timeout] bugfix to ensure timeout decorator initialises properly
+
 0.4.0 (2017-01-13)
 ------------------
 * [trees] add pre/post handlers after setup, just in case setup fails
