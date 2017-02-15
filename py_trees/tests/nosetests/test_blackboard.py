@@ -16,7 +16,7 @@ from __future__ import absolute_import, print_function
 
 import py_trees
 from py_trees import Blackboard, Status
-import rocon_console.console as console
+import py_trees.console as console
 import operator
 
 ##############################################################################

@@ -37,7 +37,7 @@ class Counter(py_trees.Behaviour):
 
     def __init__(self, name="Counter"):
         super(Counter, self).__init__(name)
-        self.logger = py_trees.logging.get_logger("Demo Behaviours")
+        self.logger = py_trees.logging.Logger("Demo Behaviours")
         self.logger.debug("  %s [Counter::__init__()]" % self.name)
         self.counter = 0
 
@@ -87,6 +87,10 @@ if __name__ == '__main__':
 
     counter = Counter()
     counter.setup()
-    for i in range(0, 7):
-        counter.tick_once()
-        time.sleep(0.5)
+    try:
+        for i in range(0, 7):
+            counter.tick_once()
+            time.sleep(0.5)
+    except KeyboardInterrupt:
+        print("")
+        pass

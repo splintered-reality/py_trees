@@ -17,13 +17,6 @@ Simple demo program for py trees
 
 import functools
 import py_trees
-import sys
-
-##############################################################################
-# Logging Level
-##############################################################################
-
-py_trees.logging.level = py_trees.logging.Level.DEBUG
 
 ##############################################################################
 # Classes

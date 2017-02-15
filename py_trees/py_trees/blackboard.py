@@ -21,10 +21,10 @@ Bless my noggin with a tickle from your noodly appendages!
 ##############################################################################
 
 import operator
-import rocon_console.console as console
 
 from . import behaviours
 from . import common
+from . import console
 
 ##############################################################################
 # Classes

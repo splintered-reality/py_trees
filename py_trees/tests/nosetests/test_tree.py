@@ -14,7 +14,7 @@ from __future__ import absolute_import, print_function
 
 # from nose.tools import assert_raises
 import py_trees
-import rocon_console.console as console
+import py_trees.console as console
 
 ##############################################################################
 # Logging Level

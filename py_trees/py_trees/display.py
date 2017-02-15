@@ -19,11 +19,10 @@ Various graph drawing tools.
 # Imports
 ##############################################################################
 
-import argparse
 import pydot
-import rocon_console.console as console
 
 from . import common
+from . import console
 
 from .composites import Sequence, Selector, Parallel, Chooser
 from .common import Status
@@ -197,10 +196,3 @@ def render_dot_tree(root, visibility_level=common.VisibilityLevel.DETAIL):
     graph.write(name + '.dot')
     graph.write_png(name + '.png')
     graph.write_svg(name + '.svg')
-
-
-def add_render_argument(parser):
-    """
-    Furnish a parser with an argument to render.
-    """
-    parser.add_argument('-r', '--render', action='store_true', help='render dot tree to file')
