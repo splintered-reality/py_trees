@@ -35,16 +35,16 @@ catkin_package = catkin_pkg.package.parse_package(os.path.join(catkin_dir, catki
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.coverage',
     'sphinx.ext.doctest',
     'sphinx.ext.graphviz',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.todo',
-    'sphinx.ext.coverage',
-    'sphinx.ext.mathjax',
     'sphinx.ext.ifconfig',
+    'sphinx.ext.intersphinx',
+    'sphinx.ext.mathjax',
+    'sphinx.ext.napoleon',
+    'sphinx.ext.todo',
     'sphinx.ext.viewcode',
     'sphinxarg.ext',
-#    'sphinxcontrib.napoleon'
 ]
 
 # If you don't add this, todos don't appear

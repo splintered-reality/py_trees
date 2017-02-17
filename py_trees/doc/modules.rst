@@ -7,7 +7,7 @@ py_trees
 --------
 
 .. automodule:: py_trees
-   :synopsis: look after your misbehaving robot with py_trees
+   :synopsis: look after your misbehaving decision making with py_trees
 
 py_trees.behaviour
 ------------------
@@ -53,14 +53,6 @@ py_trees.meta
     :special-members:
     :show-inheritance:
 
-py_trees.subscribers
---------------------
-
-.. automodule:: py_trees.subscribers
-    :members:
-    :special-members:
-    :show-inheritance:
-
 py_trees.timers
 ---------------
 
@@ -76,3 +68,12 @@ py_trees.trees
     :members:
     :special-members:
     :show-inheritance:
+
+py_trees.demos.lifecycle
+------------------------
+
+.. automodule:: py_trees.demos.lifecycle
+    :members:
+    :special-members:
+    :show-inheritance:
+

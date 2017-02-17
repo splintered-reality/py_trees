@@ -42,11 +42,6 @@ behaviour.
 
 **The LifeCycle**
 
-Easy to see via the ``demo_behavour`` program.
-
-.. literalinclude:: ../scripts/demo_behaviour
-   :language: python
-   :linenos:
 
 with output:
 

@@ -39,10 +39,11 @@ class Behaviour(object):
     When implementing (subclassing) your own behaviour, there are four methods you should
     consider implementing. All are optional.
 
-    * :py:meth:`setup` : do any delayed (e.g. ros) initialisation here.
+    * :py:meth:`__init__` : minimal one-time initialisation relevant for rendering this behaviour in a tree offline
+    * :py:meth:`setup` : delayed one-time initialisation for things like hardware sensors or connection to drivers that would interfere with rendering this behaviour in a tree offline
     * :py:meth:`initialise` : init/clear/reset variables ready for a new run of the behaviour
     * :py:meth:`update` : where the :term:`tick` happens (i.e. work), computes the new behaviour status
-    * :py:meth:`terminate` : cleanup required after the behaviour has finished running or been interrupted
+    * :py:meth:`terminate` : cleanup required after the behaviour has finished running (:py:data:`~py_trees.common.Status.SUCCESS`/:py:data:`~py_trees.common.Status.FAILURE`) or been interrupted (:py:data:`~py_trees.common.Status.INVALID`)
 
     :ivar str name: the behaviour name
     :ivar Status status: the behaviour status (:py:data:`~py_trees.common.Status.INVALID`, :py:data:`~py_trees.common.Status.RUNNING`, :py:data:`~py_trees.common.Status.FAILURE`, :py:data:`~py_trees.common.Status.SUCCESS`)
@@ -62,7 +63,7 @@ class Behaviour(object):
         self.iterator = self.tick()
         self.parent = None  # will get set if a behaviour is added to a composite
         self.children = []  # only set by composite behaviours
-        self.logger = logging.Logger("Behaviour")
+        self.logger = logging.Logger(name)
         self.feedback_message = ""  # useful for debugging, or human readable updates, but not necessary to implement
         self.blackbox_level = common.BlackBoxLevel.NOT_A_BLACKBOX
 
@@ -129,7 +130,7 @@ class Behaviour(object):
 
         :return: the behaviour's current :py:class:`Status <py_trees.common.Status>`
         """
-        self.logger.debug("  %s [%s.update()]" % (self.name, self.__class__.__name__))
+        self.logger.debug("%s [%s.update()]" % (self.name, self.__class__.__name__))
         return Status.INVALID
 
     ############################################
@@ -141,6 +142,7 @@ class Behaviour(object):
         A direct means of calling tick on this object without using the generator
         mechanism.
         """
+        # no logger necessary here...it directly relays to tick
         for unused in self.tick():
             pass
 
@@ -224,7 +226,7 @@ class Behaviour(object):
 
         :return py_trees.Behaviour: a reference to itself
         """
-        self.logger.debug("  %s [%s.tick()]" % (self.name, self.__class__.__name__))
+        self.logger.debug("%s [%s.tick()]" % (self.name, self.__class__.__name__))
         if self.status != Status.RUNNING:
             self.initialise()
         # don't set self.status yet, terminate() may need to check what the current state is first

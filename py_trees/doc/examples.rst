@@ -7,10 +7,8 @@ A Skeleton Behaviour
 .. literalinclude:: examples/skeleton_behaviour.py
    :language: python
    :linenos:
-
-# sphinx 1.3 options
-#   :caption: py_trees/doc/examples/skeleton_behaviour.py
-#   :name: skeleton_behaviour
+   :caption: examples/skeleton_behaviour.py
+   :name: skeleton_behaviour
 
 
 A Skeleton Sequence
@@ -24,7 +22,7 @@ A Demo Tree
 
 .. graphviz:: dot/demo_tree.dot
 
-.. literalinclude:: ../scripts/demo_tree
+.. literalinclude:: ../scripts/py-trees-demo-dot-graphs
    :language: python
    :emphasize-lines: 12,15-18
    :linenos:

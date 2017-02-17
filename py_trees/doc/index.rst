@@ -14,10 +14,13 @@ Contents:
    :maxdepth: 2
 
    background
-   building_blocks
+   behaviours
+   composites
+   blackboards
+   trees
    patterns
-   examples
    terminology
+   examples
    modules
    programs
    changelog

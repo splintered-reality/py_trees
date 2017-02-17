@@ -2,9 +2,10 @@
 
 import py_trees
 
+
 class NaviContext(py_trees.behaviour.Behaviour):
     def __init(self, name):
-        super(SwitchContext, self).__init__(name)
+        super(NaviContext, self).__init__(name)
 
     def initialise(self):
         # save the original context and switch the navi context here
@@ -25,4 +26,3 @@ if __name__ == '__main__':
     move = py_trees.behaviours.Count(name="Move It", fail_until=0, running_until=3)
     root.add_children([context, move])
     py_trees.display.render_dot_tree(root, py_trees.common.string_to_visibility_level("all"))
-

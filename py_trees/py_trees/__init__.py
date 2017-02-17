@@ -23,6 +23,7 @@ from . import blackboard
 from . import common
 from . import composites
 from . import console
+from . import demos
 from . import display
 from . import logging
 from . import meta
