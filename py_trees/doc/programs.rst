@@ -13,6 +13,11 @@ py-trees-demo-action-behaviour
     :special-members:
     :show-inheritance:
 
+.. literalinclude:: ../py_trees/demos/action.py
+   :language: python
+   :linenos:
+   :caption: py_trees/demos/action.py
+
 .. _py-trees-demo-context-switching-program:
 
 py-trees-demo-context-switching
@@ -22,6 +27,11 @@ py-trees-demo-context-switching
     :members:
     :special-members:
     :show-inheritance:
+
+.. literalinclude:: ../py_trees/demos/contex_switching.py
+   :language: python
+   :linenos:
+   :caption: py_trees/demos/contex_switching.py
 
 .. _py-trees-demo-behaviour-lifecycle-program:
 
@@ -33,6 +43,11 @@ py-trees-demo-behaviour-lifecycle
     :special-members:
     :show-inheritance:
 
+.. literalinclude:: ../py_trees/demos/lifecycle.py
+   :language: python
+   :linenos:
+   :caption: py_trees/demos/lifecycle.py
+
 .. _py-trees-demo-selector-program:
 
 py-trees-demo-selector
@@ -42,6 +57,11 @@ py-trees-demo-selector
     :members:
     :special-members:
     :show-inheritance:
+
+.. literalinclude:: ../py_trees/demos/selector.py
+   :language: python
+   :linenos:
+   :caption: py_trees/demos/selector.py
 
 .. _py-trees-demo-sequence-program:
 
@@ -53,4 +73,8 @@ py-trees-demo-sequence
     :special-members:
     :show-inheritance:
 
+.. literalinclude:: ../py_trees/demos/sequence.py
+   :language: python
+   :linenos:
+   :caption: py_trees/demos/sequence.py
 
