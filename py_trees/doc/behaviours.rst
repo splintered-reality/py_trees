@@ -21,7 +21,8 @@ Lifecycle
 ---------
 
 Getting a feel for how this works in action can be seen by running
-the :ref:`py-trees-demo-behaviour-lifecycle-label` program (click the link to browse the source):
+the :ref:`py-trees-demo-behaviour-lifecycle-label` program (click the link
+for more detail and access to the sources):
 
 .. image:: images/lifecycle.gif
 
@@ -114,32 +115,31 @@ Avoid updating it with a feedback message at every tick with updated plan
 details. Instead, update the message whenever a significant change
 occurs - e.g. when the previous plan is re-planned or pre-empted.
 
+Loggers
+-------
+
+These are used throughout the demo programs. They are not intended to be
+for anything heavier than debugging simple examples. This kind of logging
+tends to get rather heavy and requires alot of filtering to determine the
+key points (c.f. comments about the feedback messages above).
+
 Complex Example
 ---------------
 
-Here we present a more complicated example that illustrates a few
+The :ref:`py-trees-demo-action-behaviour-program` program demonstrates
+a more complicated behaviour that illustrates a few
 concepts discussed above, but not present in the very simple lifecycle
-:class:`~py_trees.demos.lifecycle.Counter` behavour.
+:class:`~py_trees.demos.lifecycle.Counter` behaviour.
 
-* Connects to an external process in the ``setup`` method
-* Requests a new goal to start with the external process in the ``initialise`` method
-* Monitors the goal status in the ``update`` method
-* Determines ``RUNNING``/``SUCCESS`` pending the percentage completed feedback from the external process
+* Mocks an external process and connects to it in the ``setup`` method
+* Kickstarts new goals with the external process in the ``initialise`` method
+* Monitors the ongoing goal status in the ``update`` method
+* Determines ``RUNNING``/``SUCCESS`` pending feedback from the external process
 
 .. note:: A behaviour's ``update()`` method never blocks, at most it just monitors the
     progress and holds up any decision making required by a tree that is ticking the
     behaviour by setting it's status to ``RUNNING``. At the risk of being confusing, this
     is what is generally referred to as a :term:`blocking` behaviour.
 
-Running the :ref:`py-trees-demo-action-behaviour-program` program (click the link to browse the source):
-
 .. image:: images/action.gif
-
-Cheat Sheet
------------
-
-* Keep the constructor minimal
-* Hardware or other runtime specific initialisation in ``setup``
-* Update feedback messages for **significant events** only
-* A behaviour's ``update()`` method must be light and non-blocking
 

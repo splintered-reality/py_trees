@@ -23,32 +23,22 @@ Perform the checks or actions you need to do in the non-composite behaviours.
 * :class:`~py_trees.composites.Chooser`: like a selector, but commits to a path once started until it finishes
 * :class:`~py_trees.composites.Parallel`: manage children concurrently
 
+The subsections below introduce each composite briefly. For a full listing of each
+composite's methods, visit the :ref:`py-trees-composites-module` module api documentation.
+
+.. tip:: First time through, make sure to follow the link through to relevant demo programs.
+
 Sequence
 --------
 
 .. autoclass:: py_trees.composites.Sequence
     :noindex:
 
-----
-
-The :ref:`py-trees-demo-sequence-program` (click to browse the source) program populates a sequence with 2-tick jobs that runs through to completion.
-
-.. image:: images/sequence.gif
-
 Selector
 --------
 
 .. autoclass:: py_trees.composites.Selector
     :noindex:
-
-----
-
-The :ref:`py-trees-demo-selector-program` program (click to browse the source) demonstrates the effects of
-higher priority switching/interruption. In this example the higher priority child is setup to fail initially,
-falling back to the continually running second child. On the third
-tick, the first child succeeds and cancels the hitherto running child.
-
-.. image:: images/selector.gif
 
 Chooser
 -------
@@ -61,22 +51,3 @@ Parallel
 
 .. autoclass:: py_trees.composites.Parallel
     :noindex:
-
-----
-
-The :ref:`py-trees-demo-context-switching-program` program (click to browse the source) illustrates a parallel
-used to enable context switching before and after a work sequence has run. This is done by backing up and
-setting the new context in the ``initialise()`` function and restoring the original context in the ``terminate()``
-function.
-
-.. image:: images/context_switching.gif
-
-----
-
-.. graphviz:: dot/naive_context_switching.dot
-
-.. attention:: Using separate set and reset behaviours at the front and back of a sequence will not suffice. In the case
-    that one of the work behaviours in the sequence fails, the final reset context switch will never trigger. As a
-    parallel behaviour, it will trigger whether the sequence fails or succeeds.
-
-

@@ -212,6 +212,8 @@ class Selector(Composite):
        should make sure that they catch this and *destruct* appropriately.
 
     Make sure you do your appropriate cleanup in the ``terminate()`` methods! e.g. cancelling a running goal, or restoring a context.
+
+    .. seealso:: The :ref:`py-trees-demo-selector-program` program demos higher priority switching under a selector.
     """
 
     def __init__(self, name="Selector", children=None, *args, **kwargs):
@@ -320,8 +322,9 @@ class Chooser(Selector):
        higher level behaviours.
 
     This is the only composite in py_trees that is not a core composite in most behaviour tree implementations.
-    Nonetheless, this is useful in fields like robotics, where you have to ensure that your arm doesn't drop it's payload mid-motion as soon as a
-    higher interrupt arrives. Use this composite only if you can't find another way to easily create an elegant tree composition for your task.
+    Nonetheless, this is useful in fields like robotics, where you have to ensure that your manipulator doesn't
+    drop it's payload mid-motion as soon as a higher interrupt arrives. Use this composite
+    sparingly and only if you can't find another way to easily create an elegant tree composition for your task.
     """
 
     def __init__(self, name="Chooser", children=None, *args, **kwargs):
@@ -345,11 +348,6 @@ class Chooser(Selector):
         For now, the update function just provides a place where classes
         that inherit this one can do some work *before* running the children.
         The return status is ignored.
-
-        .. todo::
-
-           Should be calling stop() in here (like behaviours)?
-           Should update be called before/after children?
         """
         self.logger.debug("%s.tick()" % self.__class__.__name__)
         # Required behaviour for *all* behaviours and composites is
@@ -404,7 +402,9 @@ class Sequence(Composite):
     .. note::
 
        The sequence halts once it sees a child is RUNNING and then returns
-       the result -> *it does not get stuck in the running behaviour*.
+       the result. *It does not get stuck in the running behaviour*.
+
+    .. seealso:: The :ref:`py-trees-demo-sequence-program` program demos a simple sequence in action.
     """
     def __init__(self, name="Sequence", children=None, *args, **kwargs):
         """
@@ -487,6 +487,7 @@ class Parallel(Composite):
     * Parallels with policy :data:`~py_trees.common.ParallelPolicy.SUCCESS_ON_ONE` return :py:data:`~py_trees.common.Status.SUCCESS` if **at least one** child returns :py:data:`~py_trees.common.Status.SUCCESS` and others are :py:data:`~py_trees.common.Status.RUNNING`.
     * Parallels with policy :data:`~py_trees.common.ParallelPolicy.SUCCESS_ON_ALL` only returns :py:data:`~py_trees.common.Status.SUCCESS` if **all** children return :py:data:`~py_trees.common.Status.SUCCESS`
 
+    .. seealso:: The :ref:`py-trees-demo-context-switching-program` program demos a parallel used to assist in a context switching scenario.
     """
     def __init__(self, name="Parallel", policy=common.ParallelPolicy.SUCCESS_ON_ALL, children=None, *args, **kwargs):
         """

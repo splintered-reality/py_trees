@@ -30,6 +30,9 @@ py_trees.common
     :members:
     :show-inheritance:
 
+
+.. _py-trees-composites-module:
+
 py_trees.composites
 -------------------
 
@@ -65,14 +68,6 @@ py_trees.trees
 --------------
 
 .. automodule:: py_trees.trees
-    :members:
-    :special-members:
-    :show-inheritance:
-
-py_trees.demos.lifecycle
-------------------------
-
-.. automodule:: py_trees.demos.lifecycle
     :members:
     :special-members:
     :show-inheritance:

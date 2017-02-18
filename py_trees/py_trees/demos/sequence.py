@@ -8,8 +8,14 @@
 ##############################################################################
 
 """
-Code for the sequence demo program.
----
+.. argparse::
+   :module: py_trees.demos.sequence
+   :func: command_line_argument_parser
+   :prog: py-trees-demo-sequence
+
+.. graphviz:: dot/demo-sequence.dot
+
+.. image:: images/sequence.gif
 """
 
 ##############################################################################
@@ -29,7 +35,10 @@ import py_trees.console as console
 
 
 def description():
-    content = "Demonstrates sequences in action\n"
+    content = "Demonstrates sequences in action.\n\n"
+    content += "A sequence is populated with 2-tick jobs that are allowed to run through to\n"
+    content += "completion.\n"
+
     if py_trees.console.has_colours:
         banner_line = console.green + "*" * 79 + "\n" + console.reset
         s = "\n"
@@ -45,9 +54,16 @@ def description():
     return s
 
 
+def epilog():
+    if py_trees.console.has_colours:
+        return console.cyan + "And his noodly appendage reached forth to tickle the blessed...\n" + console.reset
+    else:
+        return None
+
+
 def command_line_argument_parser():
     parser = argparse.ArgumentParser(description=description(),
-                                     epilog=console.cyan + "And his noodly appendage reached forth to tickle the blessed...\n" + console.reset,
+                                     epilog=epilog(),
                                      formatter_class=argparse.RawDescriptionHelpFormatter,
                                      )
     parser.add_argument('-r', '--render', action='store_true', help='render dot tree to file')
@@ -71,7 +87,7 @@ def create_tree():
 
 def main():
     """
-    Entry point for the demo behaviours lifecycle script.
+    Entry point for the demo script.
     """
     args = command_line_argument_parser().parse_args()
     print(description())

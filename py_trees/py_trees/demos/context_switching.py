@@ -8,8 +8,14 @@
 ##############################################################################
 
 """
-Code for the context switching demo program.
----
+.. argparse::
+   :module: py_trees.demos.context_switching
+   :func: command_line_argument_parser
+   :prog: py-trees-demo-context-switching
+
+.. graphviz:: dot/demo-context_switching.dot
+
+.. image:: images/context_switching.gif
 """
 
 ##############################################################################
@@ -29,7 +35,15 @@ import py_trees.console as console
 
 
 def description():
-    content = "Demonstrates context switching with parallels and sequences\n"
+    content = "Demonstrates context switching with parallels and sequences.\n"
+    content += "\n"
+    content += "A context switching behaviour is run in parallel with a work sequence.\n"
+    content += "Switching the context occurs in the initialise() and terminate() methods\n"
+    content += "of the context switching behaviour. Note that whether the sequence results\n"
+    content += "in failure or success, the context switch behaviour will always call the\n"
+    content += "terminate() method to restore the context. It will also call terminate()\n"
+    content += "to restore the context in the event of a higher priority parent cancelling\n"
+    content += "this parallel subtree.\n"
     if py_trees.console.has_colours:
         banner_line = console.green + "*" * 79 + "\n" + console.reset
         s = "\n"
@@ -45,9 +59,16 @@ def description():
     return s
 
 
+def epilog():
+    if py_trees.console.has_colours:
+        return console.cyan + "And his noodly appendage reached forth to tickle the blessed...\n" + console.reset
+    else:
+        return None
+
+
 def command_line_argument_parser():
     parser = argparse.ArgumentParser(description=description(),
-                                     epilog=console.cyan + "And his noodly appendage reached forth to tickle the blessed...\n" + console.reset,
+                                     epilog=epilog(),
                                      formatter_class=argparse.RawDescriptionHelpFormatter,
                                      )
     parser.add_argument('-r', '--render', action='store_true', help='render dot tree to file')
@@ -56,12 +77,15 @@ def command_line_argument_parser():
 
 class ContextSwitch(py_trees.behaviour.Behaviour):
     """
-    An example of a context switching class that sets *and* resets a context.
-    Use in parallel with a subtree that does the work while in this context.
+    An example of a context switching class that sets (in ``initialise()``)
+    and restores a context (in ``terminate()``. Use in parallel with a
+    sequence/subtree that does the work while in this context.
 
-    Note that simply setting a pair of behaviours (set and reset context) on
-    either end of a work sequence does not suffice. If the sequence is interrupted
-    by a higher priority activity midstream, it will not reset the context.
+    .. attention:: Simply setting a pair of behaviours (set and reset context) on
+        either end of a sequence will not suffice for context switching. In the case
+        that one of the work behaviours in the sequence fails, the final reset context
+        switch will never trigger.
+
     """
     def __init__(self, name="ContextSwitch"):
         super(ContextSwitch, self).__init__(name)
@@ -110,7 +134,7 @@ def create_tree():
 
 def main():
     """
-    Entry point for the demo context switching script.
+    Entry point for the demo script.
     """
     args = command_line_argument_parser().parse_args()
     print(description())

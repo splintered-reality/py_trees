@@ -8,8 +8,12 @@
 ##############################################################################
 
 """
-Code for the behaviour lifecycle demo program.
----
+.. argparse::
+   :module: py_trees.demos.lifecycle
+   :func: command_line_argument_parser
+   :prog: py-trees-demo-behaviour-lifecycle
+
+.. image:: images/lifecycle.gif
 """
 
 ##############################################################################
@@ -28,8 +32,10 @@ import py_trees.console as console
 
 
 def description():
-    content = "Demonstrates the lifecycle for a behaviour that counts to 1, 2, 3 and then\n"
-    content += "resets, repeats.\n"
+    content = "Demonstrates a typical day in the life of a behaviour.\n\n"
+    content += "This behaviour will count from 1 to 3 and then reset and repeat. As it does\n"
+    content += "so, it logs and displays the methods as they are called - construction, setup,\n"
+    content += "initialisation, ticking and termination.\n"
     if py_trees.console.has_colours:
         banner_line = console.green + "*" * 79 + "\n" + console.reset
         s = "\n"
@@ -45,9 +51,16 @@ def description():
     return s
 
 
+def epilog():
+    if py_trees.console.has_colours:
+        return console.cyan + "And his noodly appendage reached forth to tickle the blessed...\n" + console.reset
+    else:
+        return None
+
+
 def command_line_argument_parser():
     return argparse.ArgumentParser(description=description(),
-                                   epilog=console.cyan + "And his noodly appendage reached forth to tickle the blessed...\n" + console.reset,
+                                   epilog=epilog(),
                                    formatter_class=argparse.RawDescriptionHelpFormatter,
                                    )
 
@@ -108,7 +121,7 @@ class Counter(py_trees.behaviour.Behaviour):
 
 def main():
     """
-    Entry point for the demo behaviours lifecycle script.
+    Entry point for the demo script.
     """
     command_line_argument_parser().parse_args()
 

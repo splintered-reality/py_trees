@@ -18,10 +18,10 @@ Contents:
    composites
    blackboards
    trees
+   the_crazy_hospital
    terminology
-   examples
-   modules
    programs
+   modules
    changelog
 
 

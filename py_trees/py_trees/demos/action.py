@@ -8,8 +8,12 @@
 ##############################################################################
 
 """
-Code for the behaviour lifecycle demo program.
----
+.. argparse::
+   :module: py_trees.demos.action
+   :func: command_line_argument_parser
+   :prog: py-trees-demo-action-behaviour
+
+.. image:: images/action.gif
 """
 
 ##############################################################################
@@ -31,6 +35,12 @@ import py_trees.console as console
 
 def description():
     content = "Demonstrates the characteristics of a typical 'action' behaviour.\n"
+    content += "\n"
+    content += "* Mocks an external process and connects to it in the setup() method\n"
+    content += "* Kickstarts new goals with the external process in the initialise() method\n"
+    content += "* Monitors the ongoing goal status in the update() method\n"
+    content += "* Determines RUNNING/SUCCESS pending feedback from the external process\n"
+
     if py_trees.console.has_colours:
         banner_line = console.green + "*" * 79 + "\n" + console.reset
         s = "\n"
@@ -46,9 +56,16 @@ def description():
     return s
 
 
+def epilog():
+    if py_trees.console.has_colours:
+        return console.cyan + "And his noodly appendage reached forth to tickle the blessed...\n" + console.reset
+    else:
+        return None
+
+
 def command_line_argument_parser():
     return argparse.ArgumentParser(description=description(),
-                                   epilog=console.cyan + "And his noodly appendage reached forth to tickle the blessed...\n" + console.reset,
+                                   epilog=epilog(),
                                    formatter_class=argparse.RawDescriptionHelpFormatter,
                                    )
 
@@ -93,13 +110,13 @@ class Action(py_trees.behaviour.Behaviour):
         Default construction.
         """
         super(Action, self).__init__(name)
-        self.logger.debug("%s [%s.__init__()]" % (self.name, self.__class__.__name__))
+        self.logger.debug("%s.__init__()" % (self.__class__.__name__))
 
     def setup(self, unused_timeout=15):
         """
         No delayed initialisation required for this example.
         """
-        self.logger.debug("%s [%s.setup()->connections to an external process]" % (self.name, self.__class__.__name__))
+        self.logger.debug("%s.setup()->connections to an external process" % (self.__class__.__name__))
         self.parent_connection, self.child_connection = multiprocessing.Pipe()
         self.planning = multiprocessing.Process(target=planning, args=(self.child_connection,))
         atexit.register(self.planning.terminate)
@@ -110,7 +127,7 @@ class Action(py_trees.behaviour.Behaviour):
         """
         Reset a counter variable.
         """
-        self.logger.debug("  %s [%s.initialise()->sending new goal]" % (self.name, self.__class__.__name__))
+        self.logger.debug("%s.initialise()->sending new goal" % (self.__class__.__name__))
         self.parent_connection.send(['new goal'])
         self.percentage_completion = 0
 
@@ -125,17 +142,17 @@ class Action(py_trees.behaviour.Behaviour):
                 new_status = py_trees.Status.SUCCESS
         if new_status == py_trees.Status.SUCCESS:
             self.feedback_message = "Processing finished"
-            self.logger.debug("  %s [%s.update()][%s->%s][%s]" % (self.name, self.__class__.__name__, self.status, new_status, self.feedback_message))
+            self.logger.debug("%s.update()[%s->%s][%s]" % (self.__class__.__name__, self.status, new_status, self.feedback_message))
         else:
             self.feedback_message = "{0}%".format(self.percentage_completion)
-            self.logger.debug("  %s [%s.update()][%s][%s]" % (self.name, self.__class__.__name__, self.status, self.feedback_message))
+            self.logger.debug("%s.update()[%s][%s]" % (self.__class__.__name__, self.status, self.feedback_message))
         return new_status
 
     def terminate(self, new_status):
         """
         Nothing to clean up in this example.
         """
-        self.logger.debug("    %s [%s.terminate()][%s->%s]" % (self.name, self.__class__.__name__, self.status, new_status))
+        self.logger.debug("%s.terminate()[%s->%s]" % (self.__class__.__name__, self.status, new_status))
 
 
 ##############################################################################
@@ -144,7 +161,7 @@ class Action(py_trees.behaviour.Behaviour):
 
 def main():
     """
-    Entry point for the demo behaviours lifecycle script.
+    Entry point for the demo script.
     """
     command_line_argument_parser().parse_args()
 

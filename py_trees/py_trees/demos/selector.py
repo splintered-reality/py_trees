@@ -8,10 +8,16 @@
 ##############################################################################
 
 """
-Code for the selector demo program.
----
-"""
+.. argparse::
+   :module: py_trees.demos.selector
+   :func: command_line_argument_parser
+   :prog: py-trees-demo-selector
 
+.. graphviz:: dot/demo-selector.dot
+
+.. image:: images/selector.gif
+
+"""
 ##############################################################################
 # Imports
 ##############################################################################
@@ -29,7 +35,11 @@ import py_trees.console as console
 
 
 def description():
-    content = "Demonstrates priority switching with selectors\n"
+    content = "Higher priority switching and interruption in the children of a selector.\n"
+    content += "\n"
+    content += "In this example the higher priority child is setup to fail initially,\n"
+    content += "falling back to the continually running second child. On the third\n"
+    content += "tick, the first child succeeds and cancels the hitherto running child.\n"
     if py_trees.console.has_colours:
         banner_line = console.green + "*" * 79 + "\n" + console.reset
         s = "\n"
@@ -45,9 +55,16 @@ def description():
     return s
 
 
+def epilog():
+    if py_trees.console.has_colours:
+        return console.cyan + "And his noodly appendage reached forth to tickle the blessed...\n" + console.reset
+    else:
+        return None
+
+
 def command_line_argument_parser():
     parser = argparse.ArgumentParser(description=description(),
-                                     epilog=console.cyan + "And his noodly appendage reached forth to tickle the blessed...\n" + console.reset,
+                                     epilog=epilog(),
                                      formatter_class=argparse.RawDescriptionHelpFormatter,
                                      )
     parser.add_argument('-r', '--render', action='store_true', help='render dot tree to file')
@@ -71,7 +88,7 @@ def create_tree():
 
 def main():
     """
-    Entry point for the demo behaviours lifecycle script.
+    Entry point for the demo script.
     """
     args = command_line_argument_parser().parse_args()
     print(description())
