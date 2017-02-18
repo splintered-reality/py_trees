@@ -89,7 +89,6 @@ def ascii_tree(tree, indent=0, snapshot_information=None):
     :param indent: the number of characters to indent the tree
     :param snapshot_information: a visitor recording information about the tree runtime (e.g. BehaviourTree.SnapshotVisitor)
     :return: ascii_tree as a string
-
     """
     s = ""
     for line in _generate_ascii_tree(tree, indent, snapshot_information):
@@ -111,11 +110,9 @@ def print_ascii_tree(tree, indent=0, show_status=False):
             self.nodes = {}
             self.previously_running_nodes = []
             self.running_nodes = []
-            self.nodes[tree.id] = tree.status
-            self.running_nodes.append(tree.id)
-            for child in tree.children:
-                self.nodes[child.id] = child.status
-                self.running_nodes.append(child.id)
+            for node in tree.iterate():
+                self.nodes[node.id] = node.status
+                self.running_nodes.append(node.id)
             self.previously_running_nodes = self.running_nodes
     snapshot_information = InstantSnapshot(tree) if show_status else None
     for line in _generate_ascii_tree(tree, indent, snapshot_information):

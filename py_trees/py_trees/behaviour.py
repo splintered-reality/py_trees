@@ -130,7 +130,6 @@ class Behaviour(object):
 
         :return: the behaviour's current :py:class:`Status <py_trees.common.Status>`
         """
-        self.logger.debug("%s [%s.update()]" % (self.name, self.__class__.__name__))
         return Status.INVALID
 
     ############################################
@@ -226,7 +225,7 @@ class Behaviour(object):
 
         :return py_trees.Behaviour: a reference to itself
         """
-        self.logger.debug("%s [%s.tick()]" % (self.name, self.__class__.__name__))
+        self.logger.debug("%s.tick()" % (self.__class__.__name__))
         if self.status != Status.RUNNING:
             self.initialise()
         # don't set self.status yet, terminate() may need to check what the current state is first
@@ -262,7 +261,7 @@ class Behaviour(object):
 
         .. warning:: Do not override this method, use :py:meth:`terminate` instead.
         """
-        self.logger.debug("  %s [%s.stop()][%s]" % (self.name, self.__class__.__name__, "%s->%s" % (self.status, new_status) if self.status != new_status else "%s" % new_status))
+        self.logger.debug("%s.stop()[%s]" % (self.__class__.__name__, "%s->%s" % (self.status, new_status) if self.status != new_status else "%s" % new_status))
         self.terminate(new_status)
         self.status = new_status
         self.iterator = self.tick()

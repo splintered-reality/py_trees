@@ -18,7 +18,6 @@ Contents:
    composites
    blackboards
    trees
-   patterns
    terminology
    examples
    modules

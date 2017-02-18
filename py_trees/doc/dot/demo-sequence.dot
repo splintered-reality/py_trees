@@ -1,0 +1,12 @@
+digraph sequence {
+graph [fontname="times-roman"];
+node [fontname="times-roman"];
+edge [fontname="times-roman"];
+Sequence [fillcolor=orange, fontcolor=black, fontsize=11, shape=box, style=filled];
+"Job 1" [fillcolor=gray, fontcolor=black, fontsize=11, shape=ellipse, style=filled];
+Sequence -> "Job 1";
+"Job 2" [fillcolor=gray, fontcolor=black, fontsize=11, shape=ellipse, style=filled];
+Sequence -> "Job 2";
+"Job 3" [fillcolor=gray, fontcolor=black, fontsize=11, shape=ellipse, style=filled];
+Sequence -> "Job 3";
+}

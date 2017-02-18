@@ -26,9 +26,57 @@ Perform the checks or actions you need to do in the non-composite behaviours.
 Sequence
 --------
 
+.. autoclass:: py_trees.composites.Sequence
+    :noindex:
+
+----
+
+The :ref:`py-trees-demo-sequence-program` (click to browse the source) program populates a sequence with 2-tick jobs that runs through to completion.
+
+.. image:: images/sequence.gif
+
 Selector
 --------
 
-.. graphviz:: dot/selector.dot
+.. autoclass:: py_trees.composites.Selector
+    :noindex:
 
-Selectors are the decision makers of a behaviour tree.
+----
+
+The :ref:`py-trees-demo-selector-program` program (click to browse the source) demonstrates the effects of
+higher priority switching/interruption. In this example the higher priority child is setup to fail initially,
+falling back to the continually running second child. On the third
+tick, the first child succeeds and cancels the hitherto running child.
+
+.. image:: images/selector.gif
+
+Chooser
+-------
+
+.. autoclass:: py_trees.composites.Chooser
+    :noindex:
+
+Parallel
+--------
+
+.. autoclass:: py_trees.composites.Parallel
+    :noindex:
+
+----
+
+The :ref:`py-trees-demo-context-switching-program` program (click to browse the source) illustrates a parallel
+used to enable context switching before and after a work sequence has run. This is done by backing up and
+setting the new context in the ``initialise()`` function and restoring the original context in the ``terminate()``
+function.
+
+.. image:: images/context_switching.gif
+
+----
+
+.. graphviz:: dot/naive_context_switching.dot
+
+.. attention:: Using separate set and reset behaviours at the front and back of a sequence will not suffice. In the case
+    that one of the work behaviours in the sequence fails, the final reset context switch will never trigger. As a
+    parallel behaviour, it will trigger whether the sequence fails or succeeds.
+
+

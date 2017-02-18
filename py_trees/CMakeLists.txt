@@ -26,8 +26,10 @@ catkin_install_python(
     PROGRAMS
         scripts/py-trees-demo-action-behaviour
         scripts/py-trees-demo-behaviour-lifecycle
+        scripts/py-trees-demo-context-switching
         scripts/py-trees-demo-dot-graphs
         scripts/py-trees-demo-selector
+        scripts/py-trees-demo-sequence
         scripts/py-trees-demo-tree
     DESTINATION
         ${CATKIN_PACKAGE_BIN_DESTINATION}

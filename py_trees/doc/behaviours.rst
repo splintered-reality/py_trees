@@ -97,22 +97,22 @@ in the ``update()`` method.
 
 .. tip:: Alter a feedback message when **significant events** occur.
 
-Other techniques will be introduced later if you wish to store monitoring data
-at every tick and these allow you to store it in structures more versatile than
-a string. The feedback message is instead used to assist in
-understanding where significant changes to a behaviour tree happen. These
-can occur in the change of status of behaviours in the tree OR they can
-occur at critical points in a ``RUNNING`` behaviour (where the status of
-the tree is otherwise static). The feedback
-message variable should be used to expressed when the latter occurs and can be
-useful for tree monitoring visualisations, or to decide when to log the
-state of a tree.
+The feedback message is designed to assist in notifying humans when a
+significant event happens or for deciding when to log the state of
+a tree. If you notify or log every tick, then you end up with alot of
+noise sorting through an abundance of data in which nothing much is
+happening to find the one point where something significant occurred
+that led to surprising or catostrophic behaviour.
 
-Example - a behaviour responsible for a planner that takes several minutes
-to plan and execute a plan. In this time, the behaviour is in the ``RUNNING``
-state. Avoid updating it with a feedback message at very tick with an updated ETA.
-Instead, update the message whenever significant events occur - e.g. when
-re-planning occurs on the fly.
+Setting the feedback message is usually important when something
+significant happens in the ``RUNNING`` state or to provide information
+associated with the result (e.g. failure reason).
+
+Example - a behaviour responsible for planning motions of a
+character is in the ``RUNNING`` state for a long period of time.
+Avoid updating it with a feedback message at every tick with updated plan
+details. Instead, update the message whenever a significant change
+occurs - e.g. when the previous plan is re-planned or pre-empted.
 
 Complex Example
 ---------------

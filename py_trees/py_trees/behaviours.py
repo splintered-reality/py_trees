@@ -34,19 +34,19 @@ from . import meta
 
 
 def success(self):
-    self.logger.debug("  %s [Success::update()]" % self.name)
+    self.logger.debug("%s [Success::update()]" % self.name)
     self.feedback_message = "success"
     return Status.SUCCESS
 
 
 def failure(self):
-    self.logger.debug("  %s [Failure::update()]" % self.name)
+    self.logger.debug("%s [Failure::update()]" % self.name)
     self.feedback_message = "failure"
     return Status.FAILURE
 
 
 def running(self):
-    self.logger.debug("  %s [Running::update()]" % self.name)
+    self.logger.debug("%s [Running::update()]" % self.name)
     self.feedback_message = "running"
     return Status.RUNNING
 
@@ -102,7 +102,7 @@ class SuccessEveryN(Behaviour):
 
     def update(self):
         self.count += 1
-        self.logger.debug("  %s [SuccessEveryN::update()][%s]" % (self.name, self.count))
+        self.logger.debug("%s [SuccessEveryN::update()][%s]" % (self.name, self.count))
         if self.count % self.every_n == 0:
             self.feedback_message = "now"
             return Status.SUCCESS
@@ -127,33 +127,33 @@ class Count(Behaviour):
         self.success_until = success_until
         self.number_count_resets = 0
         self.number_updated = 0
-        self.logger = logging.Logger("Count")
         self.reset = reset
 
     def terminate(self, new_status):
-        self.logger.debug("  %s [terminate(%s->%s)]" % (self.name, self.status, new_status))
+        self.logger.debug("%s.terminate(%s->%s)" % (self.__class__.__name__, self.status, new_status))
         # reset only if udpate got us into an invalid state
         if new_status == Status.INVALID and self.reset:
             self.count = 0
             self.number_count_resets += 1
+        self.feedback_message = ""
 
     def update(self):
         self.number_updated += 1
         self.count += 1
         if self.count <= self.fail_until:
-            self.logger.debug("  %s [update()][%s -> FAILURE]" % (self.name, self.count))
+            self.logger.debug("%s.update()[%s: failure]" % (self.__class__.__name__, self.count))
             self.feedback_message = "failing"
             return Status.FAILURE
         elif self.count <= self.running_until:
-            self.logger.debug("  %s [update()][%s -> RUNNING]" % (self.name, self.count))
+            self.logger.debug("%s.update()[%s: running]" % (self.__class__.__name__, self.count))
             self.feedback_message = "running"
             return Status.RUNNING
         elif self.count <= self.success_until:
-            self.logger.debug("  %s [update()][%s -> SUCCESS]" % (self.name, self.count))
+            self.logger.debug("%s.update()[%s: success]" % (self.__class__.__name__, self.count))
             self.feedback_message = "success"
             return Status.SUCCESS
         else:
-            self.logger.debug("  %s [update()][%s -> FAILURE]" % (self.name, self.count))
+            self.logger.debug("%s.update()[%s: failure]" % (self.__class__.__name__, self.count))
             self.feedback_message = "failing forever more"
             return Status.FAILURE
 

@@ -28,7 +28,6 @@ from __future__ import absolute_import
 import itertools
 
 from . import common
-from . import logging
 from .behaviour import Behaviour
 from .common import Status
 from . import meta
@@ -46,7 +45,6 @@ class Composite(Behaviour):
             map(self.add_child, children)
         else:
             self.children = []
-        self.logger = logging.Logger("Composite")
 
     ############################################
     # Worker Overrides
@@ -65,13 +63,13 @@ class Composite(Behaviour):
         :returns: whether it timed out waiting for the server or not.
         :rtype: boolean
         """
-        self.logger.debug("  %s [Composite.setup()])" % (self.name))
+        self.logger.debug("%s.setup()" % (self.__class__.__name__))
         result = True
         for child in self.children:
             new_result = child.setup(timeout)
             if new_result is None:
                 # replace with py_trees exception!
-                self.logger.error("  %s [Composite.setup()]['%s'.setup() returned None (must be True||False)" % (self.name, child.name))
+                self.logger.error("%s [Composite.setup()]['%s'.setup() returned None (must be True||False)" % (self.name, child.name))
             result = result and new_result
             if not result:
                 break
@@ -80,11 +78,11 @@ class Composite(Behaviour):
     def stop(self, new_status=Status.INVALID):
         """
         This updates all the children. We generally have two use cases here - whenever the composite has
-        gone to a recognised state (i.e. FAILURE or SUCCESS), or when a higher level parent calls on
+        gone to a recognised state (i.e. :data:`~py_trees.common.Status.FAILURE` or SUCCESS), or when a higher level parent calls on
         it to truly stop (INVALID). We only really want to update everything below if we are in
         the second use case. The first use case will subehaviours will have already handled themselves.
         """
-        self.logger.debug("  %s [%s.stop()][%s]" % (self.name, self.__class__.__name__, "%s->%s" % (self.status, new_status) if self.status != new_status else "%s" % new_status))
+        self.logger.debug("%s.stop()[%s]" % (self.__class__.__name__, "%s->%s" % (self.status, new_status) if self.status != new_status else "%s" % new_status))
         if new_status == Status.INVALID:
             for child in self.children:
                 child.stop(new_status)
@@ -168,7 +166,7 @@ class Composite(Behaviour):
         if child.status == Status.RUNNING:
             child.stop(Status.INVALID)
         child_index = self.children.index(child)
-        self.logger.debug("  %s [replace_child()][%s->%s]" % (self.name, child.name, replacement.name))
+        self.logger.debug("%s [replace_child()][%s->%s]" % (self.name, child.name, replacement.name))
         self.children[child_index] = replacement
 
     def remove_child_by_id(self, child_id):
@@ -197,13 +195,13 @@ class Composite(Behaviour):
 
 class Selector(Composite):
     """
-    **Selectors are the Decision Makers**
+    Selectors are the Decision Makers
 
     .. graphviz:: dot/selector.dot
 
     A selector executes each of its child behaviours in turn until one of them
-    succeeds (at which point it itself returns ``RUNNING`` or ``SUCCESS``,
-    or it runs out of children at which point it itself returns ``FAILURE``.
+    succeeds (at which point it itself returns :data:`~py_trees.common.Status.RUNNING` or :data:`~py_trees.common.Status.SUCCESS`,
+    or it runs out of children at which point it itself returns :data:`~py_trees.common.Status.FAILURE`.
     We usually refer to selecting children as a means of *choosing between priorities*.
     Each child and its subtree represent a decreasingly lower priority path.
 
@@ -213,6 +211,7 @@ class Selector(Composite):
        executing low priority branch. This signal will percolate down that child's own subtree. Behaviours
        should make sure that they catch this and *destruct* appropriately.
 
+    Make sure you do your appropriate cleanup in the ``terminate()`` methods! e.g. cancelling a running goal, or restoring a context.
     """
 
     def __init__(self, name="Selector", children=None, *args, **kwargs):
@@ -227,7 +226,6 @@ class Selector(Composite):
         """
         super(Selector, self).__init__(name, children, *args, **kwargs)
         self.current_child = None
-        self.logger = logging.Logger("Selector ")
 
     def tick(self):
         """
@@ -244,7 +242,7 @@ class Selector(Composite):
            Should be calling stop() in here (like behaviours)?
            Should update be called before/after children?
         """
-        self.logger.debug("  %s [Selector.tick()]" % self.name)
+        self.logger.debug("%s.tick()" % self.__class__.__name__)
         # Required behaviour for *all* behaviours and composites is
         # for tick() to check if it isn't running and initialise
         if self.status != Status.RUNNING:
@@ -307,18 +305,23 @@ class Selector(Composite):
 
 class Chooser(Selector):
     """
-    **Choosers are Selectors with Commitment**
+    Choosers are Selectors with Commitment
 
     .. graphviz:: dot/chooser.dot
 
     A variant of the selector class. Once a child is selected, it
     cannot be interrupted by higher priority siblings. As soon as the chosen child
-    itself has finished it frees the chooser for an alternative selection.
+    itself has finished it frees the chooser for an alternative selection. i.e. priorities
+    only come into effect if the chooser wasn't running in the previous tick.
 
     .. note::
 
        The child may not be interrupted but nothing prevents the **selector** itself from being interrupted by
        higher level behaviours.
+
+    This is the only composite in py_trees that is not a core composite in most behaviour tree implementations.
+    Nonetheless, this is useful in fields like robotics, where you have to ensure that your arm doesn't drop it's payload mid-motion as soon as a
+    higher interrupt arrives. Use this composite only if you can't find another way to easily create an elegant tree composition for your task.
     """
 
     def __init__(self, name="Chooser", children=None, *args, **kwargs):
@@ -332,7 +335,6 @@ class Chooser(Selector):
         :param [] children: list of children (:py:class:`~py_trees.behaviour.Behaviour`) to append to the sequence
         """
         super(Chooser, self).__init__(name, children, *args, **kwargs)
-        self.logger = logging.Logger("Chooser ")
 
     def tick(self):
         """
@@ -349,7 +351,7 @@ class Chooser(Selector):
            Should be calling stop() in here (like behaviours)?
            Should update be called before/after children?
         """
-        self.logger.debug("  %s [Chooser.tick()]" % self.name)
+        self.logger.debug("%s.tick()" % self.__class__.__name__)
         # Required behaviour for *all* behaviours and composites is
         # for tick() to check if it isn't running and initialise
         if self.status != Status.RUNNING:
@@ -389,13 +391,13 @@ class Chooser(Selector):
 
 class Sequence(Composite):
     """
-    **Sequences are the factory lines of Behaviour Trees**
+    Sequences are the factory lines of Behaviour Trees
 
     .. graphviz:: dot/sequence.dot
 
     A sequence will progressively tick over each of its children so long as
-    each child returns ``SUCCESS``. If any child returns
-    ``FAILURE`` or ``RUNNING`` the sequence will halt and the parent will adopt
+    each child returns :data:`~py_trees.common.Status.SUCCESS`. If any child returns
+    :data:`~py_trees.common.Status.FAILURE` or :data:`~py_trees.common.Status.RUNNING` the sequence will halt and the parent will adopt
     the result of this child. If it reaches the last child, it returns with
     that result regardless.
 
@@ -416,11 +418,11 @@ class Sequence(Composite):
         """
         super(Sequence, self).__init__(name, children, *args, **kwargs)
         self.current_index = -1  # -1 indicates uninitialised
-        self.logger = logging.Logger("Sequence ")
 
     def tick(self):
-        self.logger.debug("  %s [Sequence.tick()]" % self.name)
+        self.logger.debug("%s.tick()" % self.__class__.__name__)
         if self.status != Status.RUNNING:
+            self.logger.debug("%s.tick() [resetting]" % self.__class__.__name__)
             # sequence specific handling
             self.current_index = 0
             for child in self.children:
@@ -475,15 +477,15 @@ class OneshotSequence(Sequence):
 
 class Parallel(Composite):
     """
-    **Parallels enable a kind of concurrency**
+    Parallels enable a kind of concurrency
 
     .. graphviz:: dot/parallel.dot
 
     Ticks every child every time the parallel is run (a poor man's form of paralellism).
 
-    * Parallels will return :py:data:`~py_trees.common.Status.FAILURE` if any child returns :py:data:`~py_trees.common.Status.FAILURE`
-    * Parallels with policy :py:data:`~py_trees.common.ParallelPolicy.SUCCESS_ON_ONE` return :py:data:`~py_trees.common.Status.SUCCESS` if **at least one** child returns :py:data:`~py_trees.common.Status.SUCCESS` and others are :py:data:`~py_trees.common.Status.RUNNING`.
-    * Parallels with policy :py:data:`~py_trees.common.ParallelPolicy.SUCCESS_ON_ALL` only returns :py:data:`~py_trees.common.Status.SUCCESS` if **all** children return :py:data:`~py_trees.common.Status.SUCCESS`
+    * Parallels will return :data:`~py_trees.common.Status.FAILURE` if any child returns :py:data:`~py_trees.common.Status.FAILURE`
+    * Parallels with policy :data:`~py_trees.common.ParallelPolicy.SUCCESS_ON_ONE` return :py:data:`~py_trees.common.Status.SUCCESS` if **at least one** child returns :py:data:`~py_trees.common.Status.SUCCESS` and others are :py:data:`~py_trees.common.Status.RUNNING`.
+    * Parallels with policy :data:`~py_trees.common.ParallelPolicy.SUCCESS_ON_ALL` only returns :py:data:`~py_trees.common.Status.SUCCESS` if **all** children return :py:data:`~py_trees.common.Status.SUCCESS`
 
     """
     def __init__(self, name="Parallel", policy=common.ParallelPolicy.SUCCESS_ON_ALL, children=None, *args, **kwargs):
@@ -497,14 +499,13 @@ class Parallel(Composite):
         :param [] children: list of children (:py:class:`~py_trees.behaviour.Behaviour`) to append to the sequence
         """
         super(Parallel, self).__init__(name, children, *args, **kwargs)
-        self.logger = logging.Logger(name)
         self.policy = policy
 
     def tick(self):
         if self.status != Status.RUNNING:
             # subclass (user) handling
             self.initialise()
-        self.logger.debug("  %s [Parallel.tick()]" % self.name)
+        self.logger.debug("%s.tick()" % self.__class__.__name__)
         # process them all first
         for child in self.children:
             for node in child.tick():

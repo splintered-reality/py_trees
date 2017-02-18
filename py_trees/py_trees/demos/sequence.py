@@ -8,7 +8,7 @@
 ##############################################################################
 
 """
-Code for the selector demo program.
+Code for the sequence demo program.
 ---
 """
 
@@ -29,12 +29,12 @@ import py_trees.console as console
 
 
 def description():
-    content = "Demonstrates priority switching with selectors\n"
+    content = "Demonstrates sequences in action\n"
     if py_trees.console.has_colours:
         banner_line = console.green + "*" * 79 + "\n" + console.reset
         s = "\n"
         s += banner_line
-        s += console.bold_white + "Selectors".center(79) + "\n" + console.reset
+        s += console.bold_white + "Sequences".center(79) + "\n" + console.reset
         s += banner_line
         s += "\n"
         s += content
@@ -55,13 +55,13 @@ def command_line_argument_parser():
 
 
 def create_tree():
-    root = py_trees.composites.Selector("Selector")
-    success_after_two = py_trees.behaviours.Count(name="After Two",
-                                                  fail_until=2,
-                                                  running_until=2,
-                                                  success_until=10)
-    always_running = py_trees.behaviours.Running(name="Running")
-    root.add_children([success_after_two, always_running])
+    root = py_trees.composites.Sequence("Sequence")
+    for job in ["Job 1", "Job 2", "Job 3"]:
+        success_after_two = py_trees.behaviours.Count(name=job,
+                                                      fail_until=0,
+                                                      running_until=1,
+                                                      success_until=10)
+        root.add_child(success_after_two)
     return root
 
 
@@ -90,7 +90,7 @@ def main():
     # Execute
     ####################
     tree.setup(timeout=15)
-    for i in range(1, 4):
+    for i in range(1, 6):
         try:
             print("\n--------- Tick {0} ---------\n".format(i))
             tree.tick_once()

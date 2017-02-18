@@ -66,20 +66,20 @@ class Counter(py_trees.behaviour.Behaviour):
         Default construction.
         """
         super(Counter, self).__init__(name)
-        self.logger.debug("%s [%s.__init__()]" % (self.name, self.__class__.__name__))
+        self.logger.debug("%s.__init__()" % (self.__class__.__name__))
 
     def setup(self, unused_timeout=15):
         """
         No delayed initialisation required for this example.
         """
-        self.logger.debug("%s [%s.setup()]" % (self.name, self.__class__.__name__))
+        self.logger.debug("%s.setup()" % (self.__class__.__name__))
         return True
 
     def initialise(self):
         """
         Reset a counter variable.
         """
-        self.logger.debug("  %s [%s.initialise()]" % (self.name, self.__class__.__name__))
+        self.logger.debug("%s.initialise()]" % (self.__class__.__name__))
         self.counter = 0
 
     def update(self):
@@ -92,14 +92,14 @@ class Counter(py_trees.behaviour.Behaviour):
             self.feedback_message = "counting...{0} - phew, thats enough for today".format(self.counter)
         else:
             self.feedback_message = "still counting"
-        self.logger.debug("  %s [%s.update()][%s->%s][%s]" % (self.name, self.__class__.__name__, self.status, new_status, self.feedback_message))
+        self.logger.debug("%s.update()[%s->%s][%s]" % (self.__class__.__name__, self.status, new_status, self.feedback_message))
         return new_status
 
     def terminate(self, new_status):
         """
         Nothing to clean up in this example.
         """
-        self.logger.debug("    %s [%s.terminate()][%s->%s]" % (self.name, self.__class__.__name__, self.status, new_status))
+        self.logger.debug("%s.terminate()[%s->%s]" % (self.__class__.__name__, self.status, new_status))
 
 
 ##############################################################################

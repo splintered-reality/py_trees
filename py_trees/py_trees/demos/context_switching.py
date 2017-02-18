@@ -8,7 +8,7 @@
 ##############################################################################
 
 """
-Code for the selector demo program.
+Code for the context switching demo program.
 ---
 """
 
@@ -29,12 +29,12 @@ import py_trees.console as console
 
 
 def description():
-    content = "Demonstrates priority switching with selectors\n"
+    content = "Demonstrates context switching with parallels and sequences\n"
     if py_trees.console.has_colours:
         banner_line = console.green + "*" * 79 + "\n" + console.reset
         s = "\n"
         s += banner_line
-        s += console.bold_white + "Selectors".center(79) + "\n" + console.reset
+        s += console.bold_white + "Context Switching".center(79) + "\n" + console.reset
         s += banner_line
         s += "\n"
         s += content
@@ -54,14 +54,53 @@ def command_line_argument_parser():
     return parser
 
 
+class ContextSwitch(py_trees.behaviour.Behaviour):
+    """
+    An example of a context switching class that sets *and* resets a context.
+    Use in parallel with a subtree that does the work while in this context.
+
+    Note that simply setting a pair of behaviours (set and reset context) on
+    either end of a work sequence does not suffice. If the sequence is interrupted
+    by a higher priority activity midstream, it will not reset the context.
+    """
+    def __init__(self, name="ContextSwitch"):
+        super(ContextSwitch, self).__init__(name)
+        self.feedback_message = "old context"
+
+    def initialise(self):
+        """
+        Backup and set a new context.
+        """
+        self.logger.debug("%s.initialise()[switch context]" % (self.__class__.__name__))
+        self.feedback_message = "new context"
+
+    def update(self):
+        """
+        Just returns RUNNING while it waits for other activities to finish.
+        """
+        self.logger.debug("%s.update()[RUNNING][%s]" % (self.__class__.__name__, self.feedback_message))
+        return py_trees.Status.RUNNING
+
+    def terminate(self, new_status):
+        """
+        Restore the context with the previously backed up context.
+        """
+        self.logger.debug("%s.terminate()[%s->%s][restore context]" % (self.__class__.__name__, self.status, new_status))
+        self.feedback_message = "old context"
+
+
 def create_tree():
-    root = py_trees.composites.Selector("Selector")
-    success_after_two = py_trees.behaviours.Count(name="After Two",
-                                                  fail_until=2,
-                                                  running_until=2,
-                                                  success_until=10)
-    always_running = py_trees.behaviours.Running(name="Running")
-    root.add_children([success_after_two, always_running])
+    root = py_trees.composites.Parallel(name="Parallel", policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE)
+    context_switch = ContextSwitch(name="Context")
+    sequence = py_trees.composites.Sequence(name="Sequence")
+    for job in ["Action 1", "Action 2"]:
+        success_after_two = py_trees.behaviours.Count(name=job,
+                                                      fail_until=0,
+                                                      running_until=2,
+                                                      success_until=10)
+        sequence.add_child(success_after_two)
+    root.add_child(context_switch)
+    root.add_child(sequence)
     return root
 
 
@@ -71,7 +110,7 @@ def create_tree():
 
 def main():
     """
-    Entry point for the demo behaviours lifecycle script.
+    Entry point for the demo context switching script.
     """
     args = command_line_argument_parser().parse_args()
     print(description())
@@ -90,7 +129,7 @@ def main():
     # Execute
     ####################
     tree.setup(timeout=15)
-    for i in range(1, 4):
+    for i in range(1, 6):
         try:
             print("\n--------- Tick {0} ---------\n".format(i))
             tree.tick_once()
