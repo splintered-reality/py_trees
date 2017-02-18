@@ -7,11 +7,7 @@
 ##############################################################################
 
 """
-This is the top-level namespace of the py_trees_ ROS
-package. It provides ...
-
-.. _py_trees: http://wiki.ros.org/py_trees
-
+This is the top-level namespace of the py_trees package.
 """
 ##############################################################################
 # Imports

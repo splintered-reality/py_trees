@@ -35,27 +35,33 @@ from .common import Status
 
 class Behaviour(object):
     """
-    A node in a behavior tree that uses coroutines in its tick function.
-    When implementing (subclassing) your own behaviour, there are four methods you should
-    consider implementing. All are optional.
+    Defines the basic properties and methods required of a node in a
+    behaviour tree.
 
-    * :py:meth:`__init__` : minimal one-time initialisation relevant for rendering this behaviour in a tree offline
-    * :py:meth:`setup` : delayed one-time initialisation for things like hardware sensors or connection to drivers that would interfere with rendering this behaviour in a tree offline
-    * :py:meth:`initialise` : init/clear/reset variables ready for a new run of the behaviour
-    * :py:meth:`update` : where the :term:`tick` happens (i.e. work), computes the new behaviour status
-    * :py:meth:`terminate` : cleanup required after the behaviour has finished running (:py:data:`~py_trees.common.Status.SUCCESS`/:py:data:`~py_trees.common.Status.FAILURE`) or been interrupted (:py:data:`~py_trees.common.Status.INVALID`)
+    Uses all the whizbang tricks from coroutines and generators to do this
+    as optimally as you may in python. When implementing your own behaviour,
+    subclass this class.
 
-    :ivar str name: the behaviour name
-    :ivar Status status: the behaviour status (:py:data:`~py_trees.common.Status.INVALID`, :py:data:`~py_trees.common.Status.RUNNING`, :py:data:`~py_trees.common.Status.FAILURE`, :py:data:`~py_trees.common.Status.SUCCESS`)
-    :ivar Behaviour parent: None of it is the root otherwise usually a :py:class:`~py_trees.composites.Composite`
-    :ivar [] children: a :py:class:`Behaviour` list, empty for standalones, but popuated by composites.
-    :ivar str feedback_message: a simple message usually set in the :py:meth:`update`.
-    :ivar BlackBoxLevel blackbox_level: helper variable for dot graphs and runtime gui's to collapse/explode entire subtrees dependent upon the blackbox level.
+    Args:
+        name (:obj:`str`): the behaviour name
+        *args: variable length argument list.
+        **kwargs: arbitrary keyword arguments.
+
+    Attributes:
+        name (:obj:`str`): the behaviour name
+        status (:class:`~py_trees.common.Status`): the behaviour status (:py:data:`~py_trees.common.Status.INVALID`, :py:data:`~py_trees.common.Status.RUNNING`, :py:data:`~py_trees.common.Status.FAILURE`, :py:data:`~py_trees.common.Status.SUCCESS`)
+        parent (:class:`~py_trees.behaviour.Behaviour`): a :class:`~py_trees.composites.Composite` instance if nested in a tree, otherwise None
+        children ([:class:`~py_trees.behaviour.Behaviour`]): empty for regular behaviours, populated for composites
+        feedback_message(:obj:`str`): a simple message used to notify of significant happenings
+        blackbox_level (:class:`~py_trees.common.BlackBoxLevel`): a helper variable for dot graphs and runtime gui's to collapse/explode entire subtrees dependent upon the blackbox level.
+
+    .. seealso::
+       * :ref:`Skeleton Behaviour Template <skeleton-behaviour-include>`
+       * :ref:`The Lifecycle Demo <py-trees-demo-behaviour-lifecycle-program>`
+       * :ref:`The Action Behaviour Demo <py-trees-demo-action-behaviour-program>`
+
     """
     def __init__(self, name="", *args, **kwargs):
-        """
-        :param str name: the behaviour name (doesn't have to be unique and can include capitals and spaces)
-        """
         assert isinstance(name, basestring), "a behaviour name should be a string, but you passed in %s" % type(name)
         self.id = unique_id.fromRandom()  # used to uniquely identify this node (helps with removing children from a tree)
         self.name = name
@@ -73,62 +79,70 @@ class Behaviour(object):
 
     def setup(self, timeout):
         """
-        :param double timeout: time to wait (0.0 is blocking forever)
-        :returns: whether it timed out trying to setup
-        :rtype: boolean
+        Args:
+            timeout (:obj:`float`): time to wait (0.0 is blocking forever)
 
-        **User Customisable Callback**
+        Returns:
+            bool: whether it timed out trying to setup
 
-        Subclasses may implement this method to do any delayed construction that
+        .. note:: User Customisable Callback
+
+        Subclasses may override this method to do any one-time delayed construction that
         is necessary for runtime. This is best done here rather than in the constructor
         so that trees can be instantiated on the fly without any severe runtime requirements
-        (e.g. a ros master) to produce visualisations such as dot graphs.
-
-        A good example of its use include any of the ros wait_for methods which
-        will block while looking for a ros master/topics/services.
+        (e.g. a hardware sensor) on any pc to produce visualisations such as dot graphs.
         """
-        # user function, no need to report on any activity here - user should do that in his class
         return True
 
     def initialise(self):
         """
-        **User Customisable Callback**
+        .. note:: User Customisable Callback
 
-        Subclasses may implement this method to perform any necessary initialising/clearing/resetting
-        of variables when when preparing to enter a behaviour. By entry, this means every time
-        the behaviour switches from a non-running state (is :py:data:`~py_trees.common.Status.INVALID`,
-        or previously had :py:data:`~py_trees.common.Status.FAILURE`||:py:data:`~py_trees.common.Status.SUCCESS`),
-        so expect to run more than once!
+        Subclasses may override this method to perform any necessary initialising/clearing/resetting
+        of variables when when preparing to enter this behaviour if it was not previously
+        :data:`~py_trees.common.Status.RUNNING`. i.e. Expect this to trigger more than once!
         """
-        pass  # user function, no need to report on any activity here - user should do that in his class
+        pass
 
     def terminate(self, new_status):
         """
-        :param :py:class:`~py_trees.common.Status` new_status: compare with current status for decision logic.
+        Args:
+            new_status (:class:`~py_trees.common.Status`): the behaviour is transitioning to this new status
 
-        **User Customisable Callback**
+        .. note:: User Customisable Callback
 
-        Subclasses may implement this method to be triggered when a behaviour either finishes
-        execution (switching from :py:data:`~py_trees.common.Status.RUNNING` to
-        :py:data:`~py_trees.common.Status.FAILURE` || :py:data:`~py_trees.common.Status.SUCCESS`)
+        Subclasses may override this method to clean up. It will be triggered when a behaviour either
+        finishes execution (switching from :data:`~py_trees.common.Status.RUNNING`
+        to :data:`~py_trees.common.Status.FAILURE` || :data:`~py_trees.common.Status.SUCCESS`)
         or it got interrupted by a higher priority branch (switching to
-        :py:data:`~py_trees.common.Status.INVALID`). Remember that the :py:meth:`initialise` method
-        will handle any resetting of variables before re-entry, so this method is more about cancelling
-        and disabling anything that you do not wish to continue running while waiting for the next
-        chance to run the behaviour. e.g.
+        :data:`~py_trees.common.Status.INVALID`). Remember that the :meth:`~py_trees.behaviour.Behaviour.initialise` method
+        will handle resetting of variables before re-entry, so this method is about
+        disabling resources until this behaviour's next tick. This could be a indeterminably
+        long time. e.g.
 
         * cancel an external action that got started
         * shut down any tempoarary communication handles
+
+        .. warning:: Do not set `self.status = new_status` here, that is automatically handled
+           by the :meth:`~py_trees.behaviour.Behaviour.stop` method. Use the argument purely for introspection purposes (e.g.
+           comparing the current state in `self.status` with the state it will transition to in
+           `new_status`.
         """
-        pass  # user function, no need to report on any activity here - user should do that in his class
+        pass
 
     def update(self):
         """
-        **User Customisable Callback**
+        .. note:: User Customisable Callback
 
-        User customisable update function called on by the :py:meth:`tick() <py_trees.behaviours.Behaviour.tick>` method.
+        Returns:
+            :class:`~py_trees.common.Status`: the behaviour's new status :class:`~py_trees.common.Status`
 
-        :return: the behaviour's current :py:class:`Status <py_trees.common.Status>`
+        Subclasses may override this method to perform any logic required to
+        arrive at a decision on the behaviour's new status. It is the primary worker function called on
+        by the :meth:`~py_trees.behaviour.Behaviour.tick` mechanism.
+
+        .. tip:: This method should be almost instantaneous and non-blocking
+
         """
         return Status.INVALID
 
@@ -138,8 +152,8 @@ class Behaviour(object):
 
     def tick_once(self):
         """
-        A direct means of calling tick on this object without using the generator
-        mechanism.
+        A direct means of calling tick on this object without
+        using the generator mechanism.
         """
         # no logger necessary here...it directly relays to tick
         for unused in self.tick():
@@ -150,11 +164,14 @@ class Behaviour(object):
     ############################################
     def has_parent_with_name(self, name):
         """
-        Moves up through this behaviour's parents looking for
+        Searches through this behaviour's parents, and their parents, looking for
         a behaviour with the same name as that specified.
 
-        :param str name: name of the parent to match, can be a regular expression
-        :returns: true or false depending on whether such a parent was found
+        Args:
+            name (:obj:`str`): name of the parent to match, can be a regular expression
+
+        Returns:
+            bool: whether a parent was found or not
         """
         pattern = re.compile(name)
         b = self
@@ -169,8 +186,11 @@ class Behaviour(object):
         Moves up through this behaviour's parents looking for
         a behaviour with the same instance type as that specified.
 
-        :param str instance_type: instance type of the parent to match
-        :returns: true or false depending on whether such a parent was found
+        Args:
+            instance_type (:obj:`str`): instance type of the parent to match
+
+        Returns:
+            bool: whether a parent was found or not
         """
         b = self
         while b.parent is not None:
@@ -181,49 +201,48 @@ class Behaviour(object):
 
     def tip(self):
         """
-        Get the "tip" of this behaviour's subtree (if it has one).
-        This corresponds to the the deepest node that was running before the
+        Get the *tip* of this behaviour's subtree (if it has one) after it's last
+        tick. This corresponds to the the deepest node that was running before the
         subtree traversal reversed direction and headed back to this node.
 
-        In the case of a standalone behaviour with no children, it
-        returns itself if it is not invalid, otherwise None.
+        Returns:
+            :class:`~py_trees.behaviour.Behaviour` or :obj:`None`: child behaviour, itself or :obj:`None` if its status is :data:`~py_trees.common.Status.INVALID`
         """
         return self if self.status != Status.INVALID else None
 
     def visit(self, visitor):
         """
-        This is functionality permitting
-        visitors to run over the running part of
-        a behaviour tree.
-        :param visitor: the visiting class, must have a run(Behaviour) method.
+        This is functionality that enables external introspection into the behaviour. It gets used
+        by the tree manager classes to collect information as ticking traverses a tree.
+
+        Args:
+            visitor (:obj:`object`): the visiting class, must have a run(:class:`~py_trees.behaviour.Behaviour`) method.
         """
         visitor.run(self)
 
     def tick(self):
         """
         This function is a generator that can be used by an iterator on
-        an entire behaviour tree. It handles the logic for initialisation and return
-        state, but the actual work should go into the implementation of the update() function.
-        Once it's worked out the logic, it will then yield itself (generator
-        mechanism) so that it can be used as part of an iterator for the
-        entire tree.
-
-        .. warning::
-
-           This is a generator function, you must use this with *yield*. If you need a direct call,
-           prefer :py:meth:`tick_once` instead.
-
-        Calling ``my_behaviour.tick()`` will not actually do anything.
-        It has to be used as part of an iterator, e.g.
+        an entire behaviour tree. It handles the logic for deciding when to
+        call the user's :meth:`~py_trees.behaviour.Behaviour.initialise` and :meth:`~py_trees.behaviour.Behaviour.terminate` methods as well as making the
+        actual call to the user's :meth:`~py_trees.behaviour.Behaviour.update` method that determines the
+        behaviour's new status once the tick has finished. Once done, it will
+        then yield itself (generator mechanism) so that it can be used as part of
+        an iterator for the entire tree.
 
         .. code-block:: python
 
            for node in my_behaviour.tick():
                print("Do something")
 
-        Prefer instead :py:function::`tick_once` method for making a direct call.
+        .. note::
 
-        :return py_trees.Behaviour: a reference to itself
+           This is a generator function, you must use this with *yield*. If you need a direct call,
+           prefer :meth:`~py_trees.behaviour.Behaviour.tick_once` instead.
+
+        Yields:
+            :class:`~py_trees.behaviour.Behaviour`: a reference to itself
+
         """
         self.logger.debug("%s.tick()" % (self.__class__.__name__))
         if self.status != Status.RUNNING:
@@ -241,6 +260,18 @@ class Behaviour(object):
     def iterate(self, direct_descendants=False):
         """
         Generator that provides iteration over this behaviour and all its children.
+        To traverse the entire tree:
+
+        .. code-block:: python
+
+           for node in my_behaviour.iterate():
+               print("Name: {0}".format(node.name))
+
+        Args:
+            direct_descendants (:obj:`bool`): only yield children one step away from this behaviour.
+
+        Yields:
+            :class:`~py_trees.behaviour.Behaviour`: one of it's children
         """
         for child in self.children:
             if not direct_descendants:
@@ -252,14 +283,14 @@ class Behaviour(object):
 
     def stop(self, new_status=Status.INVALID):
         """
-        :param Status new_status: set the status to this once done.
+        Args:
+            new_status (:class:`~py_trees.common.Status`): the behaviour is transitioning to this new status
 
-        This calls the user defined terminate() method and also resets the
-        generator. The specified status can be used to compare with the
-        current status field for decision making within the terminate function
-        itself.
+        This calls the user defined :meth:`~py_trees.behaviour.Behaviour.terminate` method and also resets the
+        generator. It will finally set the new status once the user's :meth:`~py_trees.behaviour.Behaviour.terminate`
+        function has been called.
 
-        .. warning:: Do not override this method, use :py:meth:`terminate` instead.
+        .. warning:: Do not use this method, override :meth:`~py_trees.behaviour.Behaviour.terminate` instead.
         """
         self.logger.debug("%s.stop()[%s]" % (self.__class__.__name__, "%s->%s" % (self.status, new_status) if self.status != new_status else "%s" % new_status))
         self.terminate(new_status)

@@ -5,23 +5,24 @@ A :py:class:`~py_trees.behaviour.Behaviour` is the smallest element in a
 behaviour tree, i.e. it is the *leaf*. Behaviours are usually representative of
 either a check (am I hungry?), or an action (buy some chocolate cookies).
 
+.. _skeleton-behaviour-include:
+
 Skeleton
 --------
 
 Behaviours in py_trees are created by subclassing the
-:class:`~py_trees.behaviour.Behaviour` class. A skeleton example with
-informative comments is in :ref:`skeleton_behaviour`, shown below.
+:class:`~py_trees.behaviour.Behaviour` class. A skeleton
+with informative comments is shown below.
 
 .. literalinclude:: examples/skeleton_behaviour.py
    :language: python
    :linenos:
-   :name: skeleton_behaviour
 
 Lifecycle
 ---------
 
 Getting a feel for how this works in action can be seen by running
-the :ref:`py-trees-demo-behaviour-lifecycle-label` program (click the link
+the :ref:`py-trees-demo-behaviour-lifecycle-program` program (click the link
 for more detail and access to the sources):
 
 .. image:: images/lifecycle.gif

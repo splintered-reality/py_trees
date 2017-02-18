@@ -46,9 +46,23 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinxarg.ext',
 ]
+##############################################################################
+# Napolean
+##############################################################################
+
+# True to use the :ivar: role for instance variables. False to use the .. attribute:: directive instead.
+napoleon_use_ivar = True
+
+##############################################################################
+# Todo
+##############################################################################
 
 # If you don't add this, todos don't appear
 todo_include_todos = True
+
+##############################################################################
+# Default Sphinx
+##############################################################################
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['.templates']

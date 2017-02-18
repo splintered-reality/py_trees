@@ -10,7 +10,7 @@ of the padded room.
     :align: center
 
 Behaviours
-==========
+----------
 
 * Keep the constructor minimal
 * Hardware or other runtime specific initialisation in ``setup``

@@ -23,7 +23,7 @@ py-trees-demo-context-switching
     :special-members:
     :show-inheritance:
 
-.. _py-trees-demo-behaviour-lifecycle-label:
+.. _py-trees-demo-behaviour-lifecycle-program:
 
 py-trees-demo-behaviour-lifecycle
 ---------------------------------
