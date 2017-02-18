@@ -1,18 +1,14 @@
+#!/usr/bin/env python
 #
-# License: BSD
-#   https://raw.githubusercontent.com/stonier/py_trees_suite/devel/LICENSE
-#
-##############################################################################
-# Documentation
-##############################################################################
-
-"""
-This package contains py_trees demo script code.
-"""
 ##############################################################################
 # Imports
 ##############################################################################
 
-from . import action
-from . import lifecycle
-from . import selector
+import py_trees
+
+##############################################################################
+# Main
+##############################################################################
+
+if __name__ == '__main__':
+    py_trees.demos.selector.main()

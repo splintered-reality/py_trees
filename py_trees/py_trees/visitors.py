@@ -79,7 +79,6 @@ class DebugVisitor(VisitorBase):
 #         else:
 #             print(syntax_highlighting.status_colour_code(behaviour.status) + "[VISIT] " + self.prefix + "  %s [%s]" % (behaviour.name, str(behaviour.status)) + console.reset)
 
-
 class SnapshotVisitor(VisitorBase):
     """
     Visits the tree in tick-tock, recording runtime information for publishing

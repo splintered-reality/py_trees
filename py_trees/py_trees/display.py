@@ -97,15 +97,28 @@ def ascii_tree(tree, indent=0, snapshot_information=None):
     return s
 
 
-def print_ascii_tree(tree, indent=0):
+def print_ascii_tree(tree, indent=0, show_status=False):
     """
     Print the ASCII representation of a behaviour tree.
 
     :param tree: the root of the tree, or subtree you want to show
     :param indent: the number of characters to indent the tree
+    :param show_status: show the status of every element at this instant
     :return: nothing
     """
-    for line in _generate_ascii_tree(tree, indent):
+    class InstantSnapshot(object):
+        def __init__(self, tree):
+            self.nodes = {}
+            self.previously_running_nodes = []
+            self.running_nodes = []
+            self.nodes[tree.id] = tree.status
+            self.running_nodes.append(tree.id)
+            for child in tree.children:
+                self.nodes[child.id] = child.status
+                self.running_nodes.append(child.id)
+            self.previously_running_nodes = self.running_nodes
+    snapshot_information = InstantSnapshot(tree) if show_status else None
+    for line in _generate_ascii_tree(tree, indent, snapshot_information):
         print("%s" % line)
 
 

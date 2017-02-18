@@ -142,15 +142,19 @@ class Count(Behaviour):
         self.count += 1
         if self.count <= self.fail_until:
             self.logger.debug("  %s [update()][%s -> FAILURE]" % (self.name, self.count))
+            self.feedback_message = "failing"
             return Status.FAILURE
         elif self.count <= self.running_until:
             self.logger.debug("  %s [update()][%s -> RUNNING]" % (self.name, self.count))
+            self.feedback_message = "running"
             return Status.RUNNING
         elif self.count <= self.success_until:
             self.logger.debug("  %s [update()][%s -> SUCCESS]" % (self.name, self.count))
+            self.feedback_message = "success"
             return Status.SUCCESS
         else:
             self.logger.debug("  %s [update()][%s -> FAILURE]" % (self.name, self.count))
+            self.feedback_message = "failing forever more"
             return Status.FAILURE
 
     def __repr__(self):
