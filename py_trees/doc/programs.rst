@@ -12,6 +12,7 @@ py-trees-demo-action-behaviour
     :members:
     :special-members:
     :show-inheritance:
+    :synopsis: demo a complex action style behaviour
 
 .. literalinclude:: ../py_trees/demos/action.py
    :language: python
@@ -27,6 +28,7 @@ py-trees-demo-behaviour-lifecycle
     :members:
     :special-members:
     :show-inheritance:
+    :synopsis: demo the lifecycle of a behaviour
 
 .. literalinclude:: ../py_trees/demos/lifecycle.py
    :language: python
@@ -42,6 +44,7 @@ py-trees-demo-blackboard
     :members:
     :special-members:
     :show-inheritance:
+    :synopsis: demo blackboard set/get and related behaviours
 
 .. literalinclude:: ../py_trees/demos/blackboard.py
    :language: python
@@ -57,6 +60,7 @@ py-trees-demo-context-switching
     :members:
     :special-members:
     :show-inheritance:
+    :synopsis: demo context switching use case with parallels
 
 .. literalinclude:: ../py_trees/demos/context_switching.py
    :language: python
@@ -72,6 +76,7 @@ py-trees-demo-selector
     :members:
     :special-members:
     :show-inheritance:
+    :synopsis: demo priority switching in selectors
 
 .. literalinclude:: ../py_trees/demos/selector.py
    :language: python
@@ -87,6 +92,7 @@ py-trees-demo-sequence
     :members:
     :special-members:
     :show-inheritance:
+    :synopsis: demo sequences in action
 
 .. literalinclude:: ../py_trees/demos/sequence.py
    :language: python
