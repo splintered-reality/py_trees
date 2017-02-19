@@ -8,22 +8,14 @@
 ##############################################################################
 
 """
-.. module:: behaviours
-   :platform: Unix
-   :synopsis: Behaviour templates for use in behaviour trees.
-
-This module defines the interface for behaviours to be used in py_trees.
-
-----
-
+A library of fundamental behaviours for use.
 """
 
 ##############################################################################
 # Imports
 ##############################################################################
 
-import rospy
-from . import logging
+import rospy  # TODO Kill this!
 from .common import Status
 from .behaviour import Behaviour
 from . import meta
@@ -34,26 +26,37 @@ from . import meta
 
 
 def success(self):
-    self.logger.debug("%s [Success::update()]" % self.name)
+    self.logger.debug("%s.update()" % self.__class__.__name__)
     self.feedback_message = "success"
     return Status.SUCCESS
 
 
 def failure(self):
-    self.logger.debug("%s [Failure::update()]" % self.name)
+    self.logger.debug("%s.update()" % self.__class__.__name__)
     self.feedback_message = "failure"
     return Status.FAILURE
 
 
 def running(self):
-    self.logger.debug("%s [Running::update()]" % self.name)
+    self.logger.debug("%s.update()" % self.__class__.__name__)
     self.feedback_message = "running"
     return Status.RUNNING
 
 
 Success = meta.create_behaviour_from_function(success)
+"""
+Do nothing but tick over with :data:`~py_trees.common.Status.SUCCESS`.
+"""
+
 Failure = meta.create_behaviour_from_function(failure)
+"""
+Do nothing but tick over with :data:`~py_trees.common.Status.FAILURE`.
+"""
+
 Running = meta.create_behaviour_from_function(running)
+"""
+Do nothing but tick over with :data:`~py_trees.common.Status.RUNNING`.
+"""
 
 ##############################################################################
 # Other Behaviours
@@ -62,10 +65,18 @@ Running = meta.create_behaviour_from_function(running)
 
 class Periodic(Behaviour):
     """
-    Return running for N ticks, success for N ticks, failure for N ticks...
+    Simply periodically rotates it's status over the
+    :data:`~py_trees.common.Status.RUNNING`, :data:`~py_trees.common.Status.SUCCESS`,
+    :data:`~py_trees.common.Status.FAILURE` states.
+    That is, :data:`~py_trees.common.Status.RUNNING` for N ticks,
+    :data:`~py_trees.common.Status.SUCCESS` for N ticks,
+    :data:`~py_trees.common.Status.FAILURE` for N ticks...
 
-    Note, it does not reset the count when initialising. No special reason
-    for this, just the way it was first implemented.
+    Args:
+        name (:obj:`str`): name of the behaviour
+        n (:obj:`int`): period value (in ticks)
+
+    .. note:: It does not reset the count when initialising.
     """
     def __init__(self, name, n):
         super(Periodic, self).__init__(name)
@@ -93,7 +104,16 @@ class Periodic(Behaviour):
 
 class SuccessEveryN(Behaviour):
     """
-    Return success once every N ticks, failure otherwise.
+    This behaviour updates it's status with :data:`~py_trees.common.Status.SUCCESS`
+    once every N ticks, :data:`~py_trees.common.Status.FAILURE` otherwise.
+
+    Args:
+        name (:obj:`str`): name of the behaviour
+        n (:obj:`int`): trigger success on every n'th tick
+
+    .. tip::
+       Use with decorators to change the status value as desired, e.g.
+       :meth:`py_trees.meta.failure_is_running`
     """
     def __init__(self, name, n):
         super(SuccessEveryN, self).__init__(name)
@@ -102,7 +122,7 @@ class SuccessEveryN(Behaviour):
 
     def update(self):
         self.count += 1
-        self.logger.debug("%s [SuccessEveryN::update()][%s]" % (self.name, self.count))
+        self.logger.debug("%s.update()][%s]" % (self.__class__.__name__, self.count))
         if self.count % self.every_n == 0:
             self.feedback_message = "now"
             return Status.SUCCESS
@@ -112,14 +132,25 @@ class SuccessEveryN(Behaviour):
 
 
 class Count(Behaviour):
+    """
+    A counting behaviour that updates its status at each tick depending on
+    the value of the counter. The status will move through the states in order -
+    :data:`~py_trees.common.Status.FAILURE`, :data:`~py_trees.common.Status.RUNNING`,
+    :data:`~py_trees.common.Status.SUCCESS`.
+
+    This behaviour is useful for simple testing and demo scenarios.
+
+    Args:
+        name (:obj:`str`): name of the behaviour
+        fail_until (:obj:`int`): set status to :data:`~py_trees.common.Status.FAILURE` until the counter reaches this value
+        running_until (:obj:`int`): set status to :data:`~py_trees.common.Status.RUNNING` until the counter reaches this value
+        success_until (:obj:`int`): set status to :data:`~py_trees.common.Status.SUCCESS` until the counter reaches this value
+        reset (:obj:`bool`): whenever invalidated (usually by a sequence reinitialising, or higher priority interrupting)
+
+    Attributes:
+        count (:obj:`int`): a simple counter which increments every tick
+    """
     def __init__(self, name="Count", fail_until=3, running_until=5, success_until=6, reset=True, *args, **kwargs):
-        """
-        :param str name:
-        :param int fail_until:
-        :param int running_until:
-        :param int success_until:
-        :param bool reset: reset whenever invalidated (usually by a sequence reinitialising, or higher priority selection knocking it out)
-        """
         super(Count, self).__init__(name, *args, **kwargs)
         self.count = 0
         self.fail_until = fail_until
@@ -164,57 +195,3 @@ class Count(Behaviour):
         s += "  Resets : %s\n" % self.number_count_resets
         s += "  Updates: %s\n" % self.number_updated
         return s
-
-
-class Condition(Behaviour):
-    """
-    This behaviour will block (i.e. maintain a RUNNING status) until its child behaviour
-    returns the specified status. This behaviour can be used as a sort of loop on a
-    specific behaviour. For example, we implement a behaviour which checks the battery
-    level and returns success or failure depending on the threshold specified.
-    Somewhere else, we want to wait until the battery level reaches a specific
-    level. To do this, we could create a separate wait behaviour for the battery
-    level, which would be running until the battery level reaches a specific
-    level, perhaps with a timeout. That behaviour would look almost identical to
-    the check behaviour. Instead, we put the check behaviour as the child of
-    this behaviour, and it will do the waiting without requiring an additional
-    behaviour.
-
-    :param child: the child behaviour to run
-    :param succeed_status: the status that the child needs to have in order for
-        this behaviour to return success
-    :param timeout: if the behaviour is not in the succeed_status by this number
-        of seconds after this behaviour starts, the behaviour fails
-
-    """
-    def __init__(self, name, child, succeed_status, timeout=None):
-        super(Condition, self).__init__(name)
-        self.duration = rospy.Duration(timeout) if timeout else None
-        self.timeout = None
-        self.children = [child]
-        self.succeed_status = succeed_status
-
-    def initialise(self):
-        self.timeout = rospy.Time.now() + self.duration if self.duration else None
-
-    def update(self):
-        return Status.RUNNING
-
-    def tick(self):
-        for unused_t in super(Condition, self).tick():
-            pass
-
-        if self.timeout and self.timeout < rospy.Time.now():
-            self.feedback_message = 'timed out'
-            self.stop(Status.FAILURE)
-            yield self
-
-        # tick the child to run it and its children, if any
-        for node in self.children[0].tick():
-            yield node
-            # if the child status is the status we were waiting for, succeed
-            if node is self.children[0] and node.status == self.succeed_status:
-                self.feedback_message = 'child node entered the desired state'
-                self.stop(Status.SUCCESS)
-                break
-        yield self

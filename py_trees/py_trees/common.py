@@ -8,12 +8,7 @@
 ##############################################################################
 
 """
-.. module:: common
-   :platform: Unix
-   :synopsis: Common variables and methods used by all elements in py_trees.
-
-----
-
+Common definitions, methods and variables used by the py_trees library.
 """
 
 ##############################################################################
@@ -50,6 +45,14 @@ class ParallelPolicy(enum.Enum):
     """:py:data:`~py_trees.common.Status.SUCCESS` only when each and every child returns :py:data:`~py_trees.common.Status.SUCCESS`."""
     SUCCESS_ON_ONE = "SUCCESS_ON_ONE"
     """:py:data:`~py_trees.common.Status.SUCCESS` so long as at least one child has :py:data:`~py_trees.common.Status.SUCCESS` and the remainder are :py:data:`~py_trees.common.Status.RUNNING`"""
+
+
+class Foo(enum.IntEnum):
+    """
+    Foo
+    """
+    MORE_FOO = 1
+    """More Foo"""
 
 
 class ClearingPolicy(enum.IntEnum):
@@ -112,8 +115,11 @@ def string_to_visibility_level(level):
     Will convert a string to a visibility level. Note that it will quietly return ALL if
     the string is not matched to any visibility level string identifier.
 
-    :param str level: visibility level as a string
-    :returns: :py:class:`~py_trees.common.VisibilityLevel` visibility level enum
+    Args:
+        level (str): visibility level as a string
+
+    Returns:
+        :class:`~py_trees.common.VisibilityLevel`: visibility level enum
     """
     if level == "detail":
         return VisibilityLevel.DETAIL

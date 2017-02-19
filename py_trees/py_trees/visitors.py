@@ -21,7 +21,6 @@ Bless my noggin with a tickle from your noodly appendages!
 
 from . import common
 # from . import console
-from . import logging
 # from . import syntax_highlighting
 
 ##############################################################################
@@ -49,35 +48,16 @@ class DebugVisitor(VisitorBase):
     """
     def __init__(self):
         super(DebugVisitor, self).__init__(full=False)
-        self.logger = logging.Logger("Visitor")
 
     def initialise(self):
         pass
 
     def run(self, behaviour):
         if behaviour.feedback_message:
-            self.logger.debug("  %s [%s][%s]" % (behaviour.name, behaviour.feedback_message, behaviour.status))
+            behaviour.logger.debug("%s.run() [%s][%s]" % (self.__class__.__name__, behaviour.feedback_message, behaviour.status))
         else:
-            self.logger.debug("  %s [%s]" % (behaviour.name, behaviour.status))
+            behaviour.logger.debug("%s.run() [%s]" % (self.__class__.__name__, behaviour.status))
 
-
-# class StatusVisitor(VisitorBase):
-#     """
-#     Display status, feedback message of visited behaviours in luvly syntax highlighted colours.
-#     """
-#     def __init__(self):
-#         super(StatusVisitor, self).__init__(full=False)
-#         self.name = "Visitor"
-#         self.prefix = '{:<12}'.format(self.name) + " : "
-#
-#     def initialise(self):
-#         pass
-#
-#     def run(self, behaviour):
-#         if behaviour.feedback_message:
-#             print(syntax_highlighting.status_colour_code(behaviour.status) + "[VISIT] " + self.prefix + "  %s [%s][%s]" % (behaviour.name, behaviour.feedback_message, str(behaviour.status)) + console.reset)
-#         else:
-#             print(syntax_highlighting.status_colour_code(behaviour.status) + "[VISIT] " + self.prefix + "  %s [%s]" % (behaviour.name, str(behaviour.status)) + console.reset)
 
 class SnapshotVisitor(VisitorBase):
     """

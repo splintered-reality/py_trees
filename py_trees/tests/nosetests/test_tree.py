@@ -474,40 +474,6 @@ def test_tip_complex():
     assert(tree.root.tip() == b)
 
 
-def test_condition():
-    print(console.bold + "\n****************************************************************************************" + console.reset)
-    print(console.bold + "* Condition" + console.reset)
-    print(console.bold + "****************************************************************************************\n" + console.reset)
-
-    # behaviours will be running the first time they are seen, then success for subsequent ticks
-
-    d = py_trees.behaviours.Count(name="D", fail_until=2, running_until=2, success_until=10)
-    condition = py_trees.behaviours.Condition('condition', d, py_trees.Status.SUCCESS)
-
-    tree = py_trees.BehaviourTree(condition)
-    py_trees.display.print_ascii_tree(tree.root)
-
-    visitor = py_trees.visitors.DebugVisitor()
-    tree.visitors.append(visitor)
-    tree.tick()
-
-    print("\n--------- Assertions ---------\n")
-    assert(condition.status == py_trees.Status.RUNNING)
-    assert(d.status == py_trees.Status.FAILURE)
-
-    tree.tick()
-
-    print("\n--------- Assertions ---------\n")
-    assert(condition.status == py_trees.Status.RUNNING)
-    assert(d.status == py_trees.Status.FAILURE)
-
-    tree.tick()
-
-    print("\n--------- Assertions ---------\n")
-    assert(condition.status == py_trees.Status.SUCCESS)
-    assert(d.status == py_trees.Status.SUCCESS)
-
-
 def test_failed_tree():
     print(console.bold + "\n****************************************************************************************" + console.reset)
     print(console.bold + "* Failed Tree" + console.reset)

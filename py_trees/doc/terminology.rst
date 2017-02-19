@@ -3,6 +3,24 @@ Terminology
 
 .. glossary::
 
+
+   blocking
+      A behaviour is sometimes referred to as a 'blocking' behaviour. Technically, the execution
+      of a behaviour should be non-blocking (i.e. the tick part), however when it's progress from
+      'RUNNING' to 'FAILURE/SUCCESS' takes more than one tick, we say that the behaviour itself
+      is blocking. In short, `blocking == RUNNING`.
+
+   fsm
+   flying spaghetti monster
+      Whilst a serious religous entity in his own right (see `pastafarianism`_), it's also
+      very easy to imagine your code become a spiritual flying spaghetti monster if left
+      unchecked::
+
+               _  _(o)_(o)_  _
+             ._\`:_ F S M _:' \_,
+                 / (`---'\ `-.
+              ,-`  _)    (_,
+
    tick
    ticks
    ticking
@@ -32,8 +50,4 @@ Terminology
 
       Add an image of a ticking tree here.
 
-   blocking
-      A behaviour is sometimes referred to as a 'blocking' behaviour. Technically, the execution
-      of a behaviour should be non-blocking (i.e. the tick part), however when it's progress from
-      'RUNNING' to 'FAILURE/SUCCESS' takes more than one tick, we say that the behaviour itself
-      is blocking. In short, `blocking == RUNNING`.
+.. _pastafarianism: http://www.venganza.org/

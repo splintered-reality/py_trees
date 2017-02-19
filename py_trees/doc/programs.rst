@@ -28,7 +28,7 @@ py-trees-demo-context-switching
     :special-members:
     :show-inheritance:
 
-.. literalinclude:: ../py_trees/demos/contex_switching.py
+.. literalinclude:: ../py_trees/demos/context_switching.py
    :language: python
    :linenos:
    :caption: py_trees/demos/contex_switching.py

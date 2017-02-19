@@ -121,8 +121,9 @@ Loggers
 
 These are used throughout the demo programs. They are not intended to be
 for anything heavier than debugging simple examples. This kind of logging
-tends to get rather heavy and requires alot of filtering to determine the
-key points (c.f. comments about the feedback messages above).
+tends to get rather heavy and requires alot of filtering to find the points
+of change that you are interested in (see comments about the feedback
+messages above).
 
 Complex Example
 ---------------
@@ -143,4 +144,11 @@ concepts discussed above, but not present in the very simple lifecycle
     is what is generally referred to as a :term:`blocking` behaviour.
 
 .. image:: images/action.gif
+
+Meta Behaviours
+---------------
+
+.. automodule:: py_trees.meta
+    :noindex:
+
 

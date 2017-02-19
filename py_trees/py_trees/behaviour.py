@@ -49,7 +49,7 @@ class Behaviour(object):
 
     Attributes:
         name (:obj:`str`): the behaviour name
-        status (:class:`~py_trees.common.Status`): the behaviour status (:py:data:`~py_trees.common.Status.INVALID`, :py:data:`~py_trees.common.Status.RUNNING`, :py:data:`~py_trees.common.Status.FAILURE`, :py:data:`~py_trees.common.Status.SUCCESS`)
+        status (:class:`~py_trees.common.Status`): the behaviour status (:data:`~py_trees.common.Status.INVALID`, :data:`~py_trees.common.Status.RUNNING`, :data:`~py_trees.common.Status.FAILURE`, :data:`~py_trees.common.Status.SUCCESS`)
         parent (:class:`~py_trees.behaviour.Behaviour`): a :class:`~py_trees.composites.Composite` instance if nested in a tree, otherwise None
         children ([:class:`~py_trees.behaviour.Behaviour`]): empty for regular behaviours, populated for composites
         feedback_message(:obj:`str`): a simple message used to notify of significant happenings
@@ -292,7 +292,7 @@ class Behaviour(object):
 
         .. warning:: Do not use this method, override :meth:`~py_trees.behaviour.Behaviour.terminate` instead.
         """
-        self.logger.debug("%s.stop()[%s]" % (self.__class__.__name__, "%s->%s" % (self.status, new_status) if self.status != new_status else "%s" % new_status))
+        self.logger.debug("%s.stop(%s)" % (self.__class__.__name__, "%s->%s" % (self.status, new_status) if self.status != new_status else "%s" % new_status))
         self.terminate(new_status)
         self.status = new_status
         self.iterator = self.tick()

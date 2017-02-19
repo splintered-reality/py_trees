@@ -23,13 +23,33 @@ py_trees.behaviours
     :members:
     :show-inheritance:
 
+
 py_trees.common
 ---------------
 
 .. automodule:: py_trees.common
-    :members:
+
+.. autoclass:: py_trees.common.BlackBoxLevel
+    :members: BIG_PICTURE, COMPONENT, DETAIL, NOT_A_BLACKBOX
     :show-inheritance:
 
+.. autoclass:: py_trees.common.ClearingPolicy
+    :members: ON_INITIALISE, ON_SUCCESS, NEVER
+    :show-inheritance:
+
+.. autoclass:: py_trees.common.ParallelPolicy
+    :members: SUCCESS_ON_ALL, SUCCESS_ON_ONE
+    :show-inheritance:
+
+.. autoclass:: py_trees.common.Status
+    :members: SUCCESS, FAILURE, RUNNING, INVALID
+    :show-inheritance:
+
+.. autoclass:: py_trees.common.VisibilityLevel
+    :members: ALL, DETAIL, COMPONENT, BIG_PICTURE
+    :show-inheritance:
+
+.. automethod:: py_trees.common.string_to_visibility_level
 
 .. _py-trees-composites-module:
 

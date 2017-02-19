@@ -8,12 +8,41 @@
 ##############################################################################
 
 """
-.. module:: meta
-   :platform: Unix
-   :synopsis: Behaviour creation utilities.
+.. attention::
+    This module is the least likely to remain stable in this package. It has
+    only received cursory attention so far and a more thoughtful design for handling
+    behaviour 'hats' might be needful at some point in the future.
 
-Usually in the form of factory-like functions or decorators.
+Meta behaviours are created by utilising various programming techniques
+pulled from a magic bag of tricks. Some of these minimise the effort to generate
+a new behaviour while others provide mechanisms that greatly expand your
+library of usable behaviours without having to increase the number of explicit
+behaviours contained therein. The latter is achieved by providing a means for
+behaviours to wear different 'hats' via python decorators.
 
+.. image:: images/many-hats.png
+   :width: 40px
+   :align: center
+
+Each function or decorator listed below includes its own example code
+demonstrating its use.
+
+**Factories**
+
+* :func:`py_trees.meta.create_behaviour_from_function`
+* :func:`py_trees.meta.create_imposter`
+
+**Decorators (Hats)**
+
+* :func:`py_trees.meta.inverter`
+* :func:`py_trees.meta.failure_is_running`
+* :func:`py_trees.meta.failure_is_success`
+* :func:`py_trees.meta.oneshot`
+* :func:`py_trees.meta.running_is_failure`
+* :func:`py_trees.meta.running_is_success`
+* :func:`py_trees.meta.success_is_failure`
+* :func:`py_trees.meta.success_is_running`
+* :func:`py_trees.meta.timeout`
 """
 
 ##############################################################################
@@ -33,11 +62,15 @@ from . import common
 
 def create_behaviour_from_function(func):
     """
-    Create a behaviour from the specified function, swapping it in place of
-    the default update function.
+    Create a behaviour from the specified function, dropping it in for
+    the Behaviour :meth:`~py_trees.behaviour.Behaviour.update` method.
+    Ths function must include the `self`
+    argument and return a :class:`~py_trees.behaviours.common.Status` value.
+    It also automatically provides a drop-in for the :meth:`~py_trees.behaviour.Behaviour.terminate`
+    method that clears the feedback message. Other methods are left untouched.
 
-    :param func: function to be used in place of the default :py:meth:`Behaviour.update() <py_trees.behaviours.Behaviour.update>` function.
-    :type func: any function with just one argument for 'self', must return Status
+    Args:
+        func (:obj:`function`):  a drop-in for the :meth:`~py_trees.behaviour.Behaviour.update` method
     """
     class_name = func.__name__.capitalize()
 
@@ -53,40 +86,56 @@ def create_behaviour_from_function(func):
 # Some Machinery
 ##############################################################################
 
-def imposter(cls):
+def create_imposter(cls):
     """
-    A decorator that creates a generic behaviour impersonating
-    (encapsulating) another behaviour. This gets used in turn
-    by many of the other behaviour decorators, but is also useful in itself.
+    Creates a new behaviour type impersonating (encapsulating) another
+    behaviour type.
 
-    Use it by replacing any of its internals, or inherit and overload from
-    the created class
+    This is primarily used to develop
+    other decorators but can also be useful in itself. It takes care of
+    the handles responsible for making the encapsulation work and
+    leaves you with just the task of replacing the relevant modifications
+    (usually to the :meth:`~py_trees.behaviour.Behaviour.update` method).
+    The modifications can be made by direct replacement of methods or
+    by inheriting and overriding them. See the examples below.
 
-    .. code-block:: python
+    Args:
+        cls (:class:`~py_trees.behaviour.Behaviour`): an existing behaviour class type
 
-        def _update(self):
-            self.original.tick_once()
-            if self.original.status == common.Status.FAILURE:
-                return common.Status.SUCCESS
-            else:
-                return self.original.status
+    Returns:
+        :class:`~py_trees.behaviour.Behaviour`: the new encapsulated behaviour class
 
-        FailureIsSuccess = imposter(py_trees.behaviours.Failure)
-        setattr(FailureIsSuccess, "update", _update)
+    Examples:
 
-    .. code-block:: python
+        Replacing methods:
 
-        class FailureIsSuccess(imposter(py_trees.behaviours.Failure)):
+        .. code-block:: python
 
-            def __init__(self, *args, **kwargs):
-                super(FailureIsSuccess, self).__init__(*args, **kwargs)
-
-            def update(self):
+            def _update(self):
                 self.original.tick_once()
                 if self.original.status == common.Status.FAILURE:
                     return common.Status.SUCCESS
                 else:
                     return self.original.status
+
+            FailureIsSuccess = create_imposter(py_trees.behaviours.Failure)
+            setattr(FailureIsSuccess, "update", _update)
+
+        Subclassing and overriding:
+
+        .. code-block:: python
+
+            class FailureIsSuccess(create_imposter(py_trees.behaviours.Failure)):
+
+                def __init__(self, *args, **kwargs):
+                    super(FailureIsSuccess, self).__init__(*args, **kwargs)
+
+                def update(self):
+                    self.original.tick_once()
+                    if self.original.status == common.Status.FAILURE:
+                        return common.Status.SUCCESS
+                    else:
+                        return self.original.status
     """
     class Imposter(behaviour.Behaviour):
         def __init__(self, *args, **kwargs):
@@ -134,7 +183,7 @@ def imposter(cls):
 
             :return py_trees.Behaviour: a reference to itself
             """
-            self.logger.debug("  %s [%s.tick()]" % (self.name, self.__class__.__name__))
+            self.logger.debug("%s.tick()" % (self.__class__.__name__))
 
             # initialise() and terminate() for the original behaviour
             # will be called from inside the update()
@@ -169,12 +218,31 @@ def imposter(cls):
 def timeout(cls, duration):
     """
     A decorator that applies a timeout pattern to an existing behaviour.
+    If the timeout is reached, the encapsulated behaviour's :meth:`~py_trees.behaviour.Behaviour.stop`
+    method is called with status :data:`~py_trees.common.Status.FAILURE` otherwise it will
+    simply directly tick and return with the same status
+    as that of it's encapsulated behaviour.
 
-    .. code-block:: python
+    Args:
+        cls (:class:`~py_trees.behaviour.Behaviour`): an existing behaviour class type
+        duration (:obj:`float`): timeout length in seconds
 
-        work_with_timeout = py_trees.meta.Timeout(WorkBehaviour, 10.0)(name="Work")
+    Returns:
+        :class:`~py_trees.behaviour.Behaviour`: the modified behaviour class with timeout
+
+    Examples:
+
+        .. code-block:: python
+
+           @py_trees.meta.timeout(10)
+           class WorkBehaviour(py_trees.behaviour.Behaviour)
+
+        or
+
+        .. code-block:: python
+
+            work_with_timeout = py_trees.meta.timeout(WorkBehaviour, 10.0)(name="Work")
     """
-
     def _timeout_init(func, duration):
         """
         Replace the default tick with one which runs the original function only if
@@ -217,7 +285,7 @@ def timeout(cls, duration):
                 self.finish_time = None
         return wrapped
 
-    Timeout = imposter(cls)
+    Timeout = create_imposter(cls)
     setattr(Timeout, "__init__", _timeout_init(Timeout.__init__, duration))
     setattr(Timeout, "initialise", _timeout_initialise)
     setattr(Timeout, "update", _timeout_update(Timeout.update))
@@ -232,19 +300,26 @@ def timeout(cls, duration):
 
 def inverter(cls):
     """
-    Inverts the result of a class's update function.
+    A decorator that inverts the result of a class's update function.
 
-    .. code-block:: python
+    Args:
+        cls (:class:`~py_trees.behaviour.Behaviour`): an existing behaviour class type
 
-       @inverter
-       class Failure(Success)
-           pass
+    Returns:
+        :class:`~py_trees.behaviour.Behaviour`: the modified behaviour class
 
-    or
+    Examples:
+        .. code-block:: python
 
-    .. code-block:: python
+           @inverter
+           class Failure(Success)
+               pass
 
-       failure = inverter(Success)("Failure")
+        or
+
+        .. code-block:: python
+
+           failure = inverter(Success)("Failure")
 
     """
     def _update(func):
@@ -262,7 +337,7 @@ def inverter(cls):
                 return self.original.status
         return wrapped
 
-    Inverter = imposter(cls)
+    Inverter = create_imposter(cls)
     setattr(Inverter, "update", _update(Inverter.update))
     return Inverter
 
@@ -290,20 +365,28 @@ def _oneshot_tick(func):
 
 def oneshot(cls):
     """
-    Makes the given behaviour run only until it returns success or failure,
-    retaining that state for all subsequent updates.
+    A decorator that ensures the given behaviour run only until it returns
+    success or failure. For all subsequent re-entries to the behaviour, it
+    will continue returning the same status.
 
-    .. code-block:: python
+    Args:
+        cls (:class:`~py_trees.behaviour.Behaviour`): an existing behaviour class type
 
-       @oneshot
-       class DoOrDie(GimmeASecondChance)
-           pass
+    Returns:
+        :class:`~py_trees.behaviour.Behaviour`: the modified behaviour class
 
-    or
+    Examples:
+        .. code-block:: python
 
-    .. code-block:: python
+           @oneshot
+           class DoOrDie(GimmeASecondChance)
+               pass
 
-       do_or_die = gimme_a_second_chance(GimmeASecondChance)("Do or Die")
+        or
+
+        .. code-block:: python
+
+           do_or_die = gimme_a_second_chance(GimmeASecondChance)("Do or Die")
     """
     setattr(cls, "tick", _oneshot_tick(cls.tick))
     return cls
@@ -317,17 +400,24 @@ def running_is_failure(cls):
     """
     Got to be snappy! We want results...yesterday!
 
-    .. code-block:: python
+    Args:
+        cls (:class:`~py_trees.behaviour.Behaviour`): an existing behaviour class type
 
-       @running_is_failure
-       class NeedResultsNow(Pontificating)
-           pass
+    Returns:
+        :class:`~py_trees.behaviour.Behaviour`: the modified behaviour class
 
-    or
+    Examples:
+        .. code-block:: python
 
-    .. code-block:: python
+           @running_is_failure
+           class NeedResultsNow(Pontificating)
+               pass
 
-       need_results_now = running_is_failure(Pontificating)("Greek Philosopher")
+        or
+
+        .. code-block:: python
+
+           need_results_now = running_is_failure(Pontificating)("Greek Philosopher")
     """
     def _update(func):
         @functools.wraps(func)
@@ -341,7 +431,7 @@ def running_is_failure(cls):
                 return self.original.status
         return wrapped
 
-    RunningIsFailure = imposter(cls)
+    RunningIsFailure = create_imposter(cls)
     setattr(RunningIsFailure, "__name__", running_is_failure.__name__)
     setattr(RunningIsFailure, "update", _update(RunningIsFailure.update))
     return RunningIsFailure
@@ -355,17 +445,24 @@ def running_is_success(cls):
     """
     Don't hang around...
 
-    .. code-block:: python
+    Args:
+        cls (:class:`~py_trees.behaviour.Behaviour`): an existing behaviour class type
 
-       @running_is_success
-       class DontHangAround(Pontificating)
-           pass
+    Returns:
+        :class:`~py_trees.behaviour.Behaviour`: the modified behaviour class
 
-    or
+    Examples:
+        .. code-block:: python
 
-    .. code-block:: python
+           @running_is_success
+           class DontHangAround(Pontificating)
+               pass
 
-       dont_hang_around = running_is_success(Pontificating)("Greek Philosopher")
+        or
+
+        .. code-block:: python
+
+           dont_hang_around = running_is_success(Pontificating)("Greek Philosopher")
     """
     def _update(func):
         @functools.wraps(func)
@@ -379,7 +476,7 @@ def running_is_success(cls):
                 return self.original.status
         return wrapped
 
-    RunningIsSuccess = imposter(cls)
+    RunningIsSuccess = create_imposter(cls)
     setattr(RunningIsSuccess, "__name__", running_is_success.__name__)
     setattr(RunningIsSuccess, "update", _update(RunningIsSuccess.update))
     return RunningIsSuccess
@@ -393,17 +490,24 @@ def failure_is_success(cls):
     """
     Be positive, always succeed.
 
-    .. code-block:: python
+    Args:
+        cls (:class:`~py_trees.behaviour.Behaviour`): an existing behaviour class type
 
-       @failure_is_success
-       class MustGoOnRegardless(ActingLikeAGoon)
-           pass
+    Returns:
+        :class:`~py_trees.behaviour.Behaviour`: the modified behaviour class
 
-    or
+    Examples:
+        .. code-block:: python
 
-    .. code-block:: python
+           @failure_is_success
+           class MustGoOnRegardless(ActedLikeAGoon)
+               pass
 
-       must_go_on_regardless = failure_is_success(ActingLikeAGoon("Goon"))
+        or
+
+        .. code-block:: python
+
+           must_go_on_regardless = failure_is_success(ActedLikeAGoon)(name="Goon")
     """
     def _update(func):
         @functools.wraps(func)
@@ -417,7 +521,7 @@ def failure_is_success(cls):
                 return self.original.status
         return wrapped
 
-    FailureIsSuccess = imposter(cls)
+    FailureIsSuccess = create_imposter(cls)
     setattr(FailureIsSuccess, "__name__", failure_is_success.__name__)
     setattr(FailureIsSuccess, "update", _update(FailureIsSuccess.update))
     return FailureIsSuccess
@@ -431,17 +535,24 @@ def failure_is_running(cls):
     """
     Dont stop running.
 
-    .. code-block:: python
+    Args:
+        cls (:class:`~py_trees.behaviour.Behaviour`): an existing behaviour class type
 
-       @failure_is_running
-       class MustGoOnRegardless(ActedLikeAGoon)
-           pass
+    Returns:
+        :class:`~py_trees.behaviour.Behaviour`: the modified behaviour class
 
-    or
+    Examples:
+        .. code-block:: python
 
-    .. code-block:: python
+           @failure_is_running
+           class MustGoOnRegardless(ActingLikeAGoon)
+               pass
 
-       must_go_on_regardless = failure_is_running(ActedLikeAGoon("Goon"))
+        or
+
+        .. code-block:: python
+
+           must_go_on_regardless = failure_is_running(ActingLikeAGoon)(name="Goon")
     """
     def _update(func):
         @functools.wraps(func)
@@ -455,7 +566,7 @@ def failure_is_running(cls):
                 return self.original.status
         return wrapped
 
-    FailureIsRunning = imposter(cls)
+    FailureIsRunning = create_imposter(cls)
     setattr(FailureIsRunning, "__name__", failure_is_running.__name__)
     setattr(FailureIsRunning, "update", _update(FailureIsRunning.update))
     return FailureIsRunning
@@ -469,17 +580,24 @@ def success_is_failure(cls):
     """
     Be depressed, always fail.
 
-    .. code-block:: python
+    Args:
+        cls (:class:`~py_trees.behaviour.Behaviour`): an existing behaviour class type
 
-       @success_is_failure
-       class TheEndIsNigh(ActingLikeAGoon)
-           pass
+    Returns:
+        :class:`~py_trees.behaviour.Behaviour`: the modified behaviour class
 
-    or
+    Examples:
+        .. code-block:: python
 
-    .. code-block:: python
+           @success_is_failure
+           class TheEndIsNigh(ActingLikeAGoon)
+               pass
 
-       the_end_is_night = success_is_failure(ActingLikeAGoon("Goon"))
+        or
+
+        .. code-block:: python
+
+           the_end_is_nigh = success_is_failure(ActingLikeAGoon)(name="Goon")
     """
     def _update(func):
         @functools.wraps(func)
@@ -493,7 +611,7 @@ def success_is_failure(cls):
                 return self.original.status
         return wrapped
 
-    SuccessIsFailure = imposter(cls)
+    SuccessIsFailure = create_imposter(cls)
     setattr(SuccessIsFailure, "__name__", success_is_failure.__name__)
     setattr(SuccessIsFailure, "update", _update(SuccessIsFailure.update))
     return SuccessIsFailure
@@ -505,19 +623,26 @@ def success_is_failure(cls):
 
 def success_is_running(cls):
     """
-    Be depressed, always fail.
+    It never ends...
 
-    .. code-block:: python
+    Args:
+        cls (:class:`~py_trees.behaviour.Behaviour`): an existing behaviour class type
 
-       @success_is_running
-       class TheEndIsSillNotNigh(ActingLikeAGoon)
-           pass
+    Returns:
+        :class:`~py_trees.behaviour.Behaviour`: the modified behaviour class
 
-    or
+    Examples:
+        .. code-block:: python
 
-    .. code-block:: python
+           @success_is_running
+           class TheEndIsSillNotNigh(ActingLikeAGoon)
+               pass
 
-       the_end_is_still_not_night = success_is_running(ActingLikeAGoon("Goon"))
+        or
+
+        .. code-block:: python
+
+           the_end_is_still_not_nigh = success_is_running(ActingLikeAGoon)(name="Goon")
     """
     def _update(func):
         @functools.wraps(func)
@@ -531,7 +656,70 @@ def success_is_running(cls):
                 return self.original.status
         return wrapped
 
-    SuccessIsRunning = imposter(cls)
+    SuccessIsRunning = create_imposter(cls)
     setattr(SuccessIsRunning, "__name__", success_is_running.__name__)
     setattr(SuccessIsRunning, "update", _update(SuccessIsRunning.update))
     return SuccessIsRunning
+
+#############################
+# Condition
+#############################
+
+
+def condition(cls, status):
+    """
+    Encapsulates a behaviour and wait for it's status to flip to the
+    desired state. This behaviour will tick with
+    :data:`~py_trees.common.Status.RUNNING` while waiting and
+    :data:`~py_trees.common.Status.SUCCESS` when the flip occurs.
+
+    Args:
+        cls (:class:`~py_trees.behaviour.Behaviour`): an existing behaviour class type
+        status (:class:`~py_trees.common.Status`): the desired status to watch for
+
+    Returns:
+        :class:`~py_trees.behaviour.Behaviour`: the modified behaviour class
+
+    Examples:
+        .. code-block:: python
+
+           @condition(py_trees.common.Status.RUNNING)
+           class HangingAbout(WillStartSoon)
+               pass
+
+        or
+
+        .. code-block:: python
+
+           hanging_about = condition(WillStartSoon, py_trees.common.Status.RUNNING)(name="Hanging About")
+    """
+    def _init(func, status):
+        """
+        Replace the default init with one which also accepts the desired status
+        to watch for.
+        """
+        @functools.wraps(func)
+        def wrapped(self, *args, **kwargs):
+            func(self, *args, **kwargs)
+            self.succeed_status = status
+        return wrapped
+
+    def _update(func):
+        @functools.wraps(func)
+        def wrapped(self):
+            self.logger.debug("%s.update()" % self.__class__.__name__)
+            self.original.tick_once()
+            self.feedback_message = "'{0}' has status {1}, waiting for {2}".format(self.original.name, self.original.status, self.succeed_status)
+            if self.original.status == self.succeed_status:
+                if self.original.status == common.Status.RUNNING:
+                    self.original.stop()
+                return common.Status.SUCCESS
+            else:
+                return common.Status.RUNNING
+        return wrapped
+
+    Condition = create_imposter(cls)
+    setattr(Condition, "__name__", "Condition<{0}>".format(cls.__name__))
+    setattr(Condition, "__init__", _init(Condition.__init__, status))
+    setattr(Condition, "update", _update(Condition.update))
+    return Condition

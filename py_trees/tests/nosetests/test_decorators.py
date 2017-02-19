@@ -189,3 +189,37 @@ def test_timeout():
     print("\n--------- Assertions ---------\n")
     print("root.status == py_trees.Status.FAILURE")
     assert(root.status == py_trees.Status.FAILURE)
+
+
+def test_condition():
+    print(console.bold + "\n****************************************************************************************" + console.reset)
+    print(console.bold + "* Condition" + console.reset)
+    print(console.bold + "****************************************************************************************\n" + console.reset)
+
+    Conditional = py_trees.meta.condition(py_trees.behaviours.Count, py_trees.Status.SUCCESS)
+    condition = Conditional(name="D", fail_until=2, running_until=2, success_until=10, reset=False)
+
+    visitor = py_trees.visitors.DebugVisitor()
+    py_trees.tests.tick_tree(condition, visitor, 1, 1)
+
+    print("\n--------- Assertions ---------\n")
+    print("condition.original.status == py_trees.Status.FAILURE")
+    assert(condition.original.status == py_trees.Status.FAILURE)
+    print("condition.status == py_trees.Status.RUNNING")
+    assert(condition.status == py_trees.Status.RUNNING)
+
+    py_trees.tests.tick_tree(condition, visitor, 2, 2)
+
+    print("\n--------- Assertions ---------\n")
+    print("condition.original.status == py_trees.Status.FAILURE")
+    assert(condition.original.status == py_trees.Status.FAILURE)
+    print("condition.status == py_trees.Status.RUNNING")
+    assert(condition.status == py_trees.Status.RUNNING)
+
+    py_trees.tests.tick_tree(condition, visitor, 3, 3)
+
+    print("\n--------- Assertions ---------\n")
+    print("condition.original.status == py_trees.Status.SUCCESS")
+    assert(condition.original.status == py_trees.Status.SUCCESS)
+    print("condition.status == py_trees.Status.SUCCESS")
+    assert(condition.status == py_trees.Status.SUCCESS)
