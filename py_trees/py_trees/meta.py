@@ -54,6 +54,7 @@ import time
 
 from . import behaviour
 from . import common
+from . import composites
 
 ##############################################################################
 # Utility Methods
@@ -170,6 +171,21 @@ def create_imposter(cls):
             self.stop = self.original.stop
             # id is important to match for composites...the children must relate to the correct parent id
             self.id = self.original.id
+
+        def tip(self):
+            """
+            This function overrides :meth:`~py_trees.behaviour.Behaviour.tick`
+            and provides a fused capability depending on whether the original
+            behaviour is a composite or not. If it is composite, it relies on
+            the composite's return value, else it uses it's own.
+
+            Important not to use the original itself since it doesn't officially
+            exist in a tree.
+            """
+            if isinstance(self.original, composites.Composite):
+                return self.original.tip()
+            else:
+                return super(Imposter, self).tip()
 
         def tick(self):
             """
