@@ -19,5 +19,6 @@ robotics specific behaviour tree development.
 ##############################################################################
 
 from . import blackboard
+from . import conversions
 from . import subscribers
 from . import trees
