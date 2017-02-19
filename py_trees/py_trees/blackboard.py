@@ -8,12 +8,28 @@
 ##############################################################################
 
 """
-.. module:: common
-   :platform: Unix
-   :synopsis: Shared data storage for py_trees behaviours.
+Blackboards are not a necessary component, but are a fairly standard feature
+in most behaviour tree implementations. See, for example, the `design notes`_
+for blackboards in Unreal Engine.
 
-Oh my spaghettified magnificence,
-Bless my noggin with a tickle from your noodly appendages!
+.. image:: images/blackboard.jpg
+   :width: 300px
+   :align: center
+
+Implementations however, tend to vary quite a bit depending on the needs of
+the framework using them. Some of the usual considerations include scope
+and sharing of blackboards across multiple tree instances.
+
+For this package, we've decided to keep blackboards extremely simple to fit
+with the same 'rapid development for small scale systems' principles
+that this library is designed for.
+
+* No sharing between tree instances
+* No locking for reading/writing
+* Global scope, i.e. any behaviour can access any variable
+* No external communications (e.g. to a database)
+
+.. include:: weblinks.rst
 """
 
 ##############################################################################
@@ -33,25 +49,48 @@ from . import console
 
 class Blackboard(object):
     """
-      Borg style data store for sharing amongst behaviours.
+    `Borg`_ style key-value store for sharing amongst behaviours.
 
-      http://code.activestate.com/recipes/66531-singleton-we-dont-need-no-stinkin-singleton-the-bo/
+    .. _Borg: http://code.activestate.com/recipes/66531-singleton-we-dont-need-no-stinkin-singleton-the-bo/
 
-      To register new variables on the blackboard, just promiscuously do so from instantiations of
-      the borg. e.g.
+    Examples:
+        You can instantiate the blackboard from anywhere in your program. Even
+        disconnected calls will get access to the same data store. For example:
 
-      @code
-        blackboard = Blackboard()
-        blackboard.foo = "bar"
-      @endcode
+        .. code-block:: python
 
-      This has the problem that it could collide with an existing key that is being used by another
-      behaviour (independently). If we wanted to safeguard against these collisions, we should
-      think some more. Perhaps overriding __setattr__ to do the check for us could work, but it means
-      it will trigger the check even when you are setting the variable. Probably we want a much
-      more complex base borg object to enable this kind of rigour.
+            def check_foo():
+                blackboard = Blackboard()
+                assert(blackboard.foo, "bar")
 
-      Convenience or Rigour?
+            if __name__ == '__main__':
+                blackboard = Blackboard()
+                blackboard.foo = "bar"
+                check_foo()
+
+        If the key value you are interested in is only known at runtime, then
+        you can set/get from the blackboard without the convenient variable style
+        access:
+
+        .. code-block:: python
+
+            blackboard = Blackboard()
+            result = blackboard.set("foo", "bar")
+            foo = blackboard.get("foo")
+
+        The blackboard can also be converted and printed (with highlighting)
+        as a string. This is useful for logging and debugging.
+
+        .. code-block:: python
+
+            print(Blackboard())
+
+
+    .. warning::
+
+       Be careful of key collisions. This implementation leaves this management up to the user.
+
+    .. seealso:: The :ref:`py-trees-demo-blackboard-program` program demos use of the blackboard along with a couple of the blackboard behaviours.
     """
     __shared_state = {}
 
@@ -62,6 +101,14 @@ class Blackboard(object):
         """
         For when you only have strings to identify and access the blackboard variables, this
         provides a convenient setter.
+
+        Args:
+            name (:obj:`str`): name of the variable to set
+            value (:obj:`any`): any variable type
+            overwrite(:obj:`bool`): whether to abort if the value is already present
+
+        Returns:
+            :obj:`bool`: always True unless overwrite was set to False and a variable already exists
         """
         if not overwrite:
             try:
@@ -76,6 +123,9 @@ class Blackboard(object):
         """
         For when you only have strings to identify and access the blackboard variables,
         this provides a convenient accessor.
+
+        Args:
+            name (:obj:`str`): name of the variable to set
         """
         try:
             return getattr(self, name)
@@ -83,6 +133,12 @@ class Blackboard(object):
             return None
 
     def __str__(self):
+        """
+        Express the blackboard contents as a string. Useful for debugging.
+
+        Returns:
+            :obj:`str`: blackboard contents
+        """
         s = console.green + type(self).__name__ + "\n" + console.reset
         max_length = 0
         for k in self.__dict__.keys():
@@ -108,19 +164,22 @@ class Blackboard(object):
 class ClearBlackboardVariable(behaviours.Success):
     """
     Clear the specified value from the blackboard.
+
+    Args:
+        name (:obj:`str`): name of the behaviour
+        variable_name (:obj:`str`): name of the variable to clear
     """
     def __init__(self,
                  name="Clear Blackboard Variable",
                  variable_name="dummy",
                  ):
-        """
-        :param name: name of the behaviour
-        :param variable_name: name of the variable to clear
-        """
         super(ClearBlackboardVariable, self).__init__(name)
         self.variable_name = variable_name
 
     def initialise(self):
+        """
+        Delete the variable from the blackboard.
+        """
         self.blackboard = Blackboard()
         try:
             delattr(self.blackboard, self.variable_name)
@@ -134,6 +193,11 @@ class SetBlackboardVariable(behaviours.Success):
     Usually we set variables from inside other behaviours, but can
     be convenient to set them from a behaviour of their own sometimes so you
     don't get blackboard logic mixed up with more atomic behaviours.
+
+    Args:
+        name (:obj:`str`): name of the behaviour
+        variable_name (:obj:`str`): name of the variable to set
+        variable_value (:obj:`any`): value of the variable to set
 
     .. todo:: overwrite option, leading to possible failure/success logic.
     """
@@ -159,7 +223,27 @@ class SetBlackboardVariable(behaviours.Success):
 class CheckBlackboardVariable(behaviours.Behaviour):
     """
     Check the blackboard to see if it has a specific variable
-    and optionally whether that variable has a specific value.
+    and optionally whether that variable has an expected value.
+    It is a binary behaviour, always updating it's status
+    with either :data:`~py_trees.common.Status.SUCCESS` or
+    :data:`~py_trees.common.Status.FAILURE` at each tick.
+
+    Args:
+        name (:obj:`str`): name of the behaviour
+        variable_name (:obj:`str`): name of the variable to set
+        expected_value (:obj:`any`): expected value to find (if `None`, check for existence only)
+        comparison_operator (:obj:`func`): one from the python `operator module`_
+        clearing_policy (:obj:`any`): when to clear the match result, see :py:class:`~py_trees.common.ClearingPolicy`
+
+    .. tip::
+        If just checking for existence, use the default argument `expected_value=None`.
+
+    .. tip::
+        There are times when you want to get the expected match once and then save
+        that result thereafter. For example, to flag once a system has reached a
+        subgoal. Use the :data:`~py_trees.common.ClearingPolicy.NEVER` flag to do this.
+
+    .. include:: weblinks.rst
     """
     def __init__(self,
                  name,
@@ -168,13 +252,6 @@ class CheckBlackboardVariable(behaviours.Behaviour):
                  comparison_operator=operator.eq,
                  clearing_policy=common.ClearingPolicy.ON_INITIALISE
                  ):
-        """
-        :param name: name of the behaviour
-        :param variable_name: name of the variable to check
-        :param expected_value: expected value of the variable, if None it will only check for existence
-        :param function comparison_operator: one from the python `operator module`_
-        :param clearing_policy: when to clear the data, see :py:class:`~py_trees.common.ClearingPolicy`
-        """
         super(CheckBlackboardVariable, self).__init__(name)
         self.blackboard = Blackboard()
         self.variable_name = variable_name
@@ -193,6 +270,12 @@ class CheckBlackboardVariable(behaviours.Behaviour):
             self.matching_result = None
 
     def update(self):
+        """
+        Check for existence, or the appropriate match on the expected value.
+
+        Returns:
+             :class:`~py_trees.common.Status`: :data:`~py_trees.common.Status.FAILURE` if not matched, :data:`~py_trees.common.Status.SUCCESS` otherwise.
+        """
         self.logger.debug("  %s [CheckBlackboardVariable::update()]" % self.name)
         if self.matching_result is not None:
             return self.matching_result
@@ -230,7 +313,8 @@ class CheckBlackboardVariable(behaviours.Behaviour):
 
     def terminate(self, new_status):
         """
-        Always reset the variable if it was invalidated.
+        Always discard the matching result if it was invalidated by a parent or
+        higher priority interrupt.
         """
         self.logger.debug("  %s [WaitForBlackboardVariable::terminate()][%s->%s]" % (self.name, self.status, new_status))
         if new_status == common.Status.INVALID:
@@ -242,8 +326,19 @@ class WaitForBlackboardVariable(behaviours.Behaviour):
     Check the blackboard to see if it has a specific variable
     and optionally whether that variable has a specific value.
     Unlike :py:class:`~py_trees.blackboard.CheckBlackboardVariable`
-    this class will be in a running state until the variable appears
+    this class will be in a :data:`~py_trees.common.Status.SUCCESS` state until the variable appears
     and (optionally) is matched.
+
+    Args:
+        name (:obj:`str`): name of the behaviour
+        variable_name (:obj:`str`): name of the variable to set
+        expected_value (:obj:`any`): expected value to find (if `None`, check for existence only)
+        comparison_operator (:obj:`func`): one from the python `operator module`_
+        clearing_policy (:obj:`any`): when to clear the match result, see :py:class:`~py_trees.common.ClearingPolicy`
+
+    .. seealso:: :class:`~py_trees.blackboard.CheckBlackboardVariable`
+
+    .. include:: weblinks.rst
     """
     def __init__(self,
                  name,
@@ -252,13 +347,6 @@ class WaitForBlackboardVariable(behaviours.Behaviour):
                  comparison_operator=operator.eq,
                  clearing_policy=common.ClearingPolicy.ON_INITIALISE
                  ):
-        """
-        :param name: name of the behaviour
-        :param variable_name: name of the variable to check
-        :param expected_value: expected value of the variable, if None it will only check for existence
-        :param function comparison_operator: one from the python `operator module`_
-        :param clearing_policy: when to clear the data, see :py:class:`~py_trees.common.ClearingPolicy`
-        """
         super(WaitForBlackboardVariable, self).__init__(name)
         self.blackboard = Blackboard()
         self.variable_name = variable_name
@@ -277,6 +365,12 @@ class WaitForBlackboardVariable(behaviours.Behaviour):
             self.matching_result = None
 
     def update(self):
+        """
+        Check for existence, or the appropriate match on the expected value.
+
+        Returns:
+             :class:`~py_trees.common.Status`: :data:`~py_trees.common.Status.FAILURE` if not matched, :data:`~py_trees.common.Status.SUCCESS` otherwise.
+        """
         self.logger.debug("  %s [WaitForBlackboardVariable::update()]" % self.name)
         if self.matching_result is not None:
             return self.matching_result
@@ -311,7 +405,8 @@ class WaitForBlackboardVariable(behaviours.Behaviour):
 
     def terminate(self, new_status):
         """
-        Always reset the variable if it was invalidated.
+        Always discard the matching result if it was invalidated by a parent or
+        higher priority interrupt.
         """
         self.logger.debug("  %s [WaitForBlackboardVariable::terminate()][%s->%s]" % (self.name, self.status, new_status))
         if new_status == common.Status.INVALID:

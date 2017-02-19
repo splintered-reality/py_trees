@@ -6,12 +6,8 @@
 Py Trees
 ========
 
-Behaviour trees for ros in python.
-
-Contents:
-
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    background
    behaviours
@@ -23,7 +19,6 @@ Contents:
    programs
    modules
    changelog
-
 
 Indices and tables
 ==================

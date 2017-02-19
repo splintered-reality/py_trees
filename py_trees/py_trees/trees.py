@@ -8,14 +8,7 @@
 ##############################################################################
 
 """
-.. module:: trees
-   :platform: Unix
-   :synopsis: Managing a behaviour tree.
-
-This module creates tools for managing your entire behaviour tree.
-
-----
-
+Tree managers - they make your life easier!
 """
 
 ##############################################################################

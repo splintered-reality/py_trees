@@ -8,9 +8,6 @@
 ##############################################################################
 
 """
-.. module:: console
-   :synopsis: Tools for colourising the console.
-
 Simple colour definitions and syntax highlighting for the console.
 
 ----
@@ -60,8 +57,11 @@ def read_single_keypress():
     then read the single keystroke then revert stdin back after reading the
     keystroke.
 
-    :returns: the character of the key that was pressed and raises KeyboardInterrupt
-    if CTRL-C was pressed (keycode 0x03)
+    Returns:
+        :obj:`int`: the character of the key that was pressed
+
+    Raises:
+        KeyboardInterrupt: if CTRL-C was pressed (keycode 0x03)
     """
     fd = sys.stdin.fileno()
     # save old state
@@ -104,7 +104,8 @@ def console_has_colours(stream):
     """
     Detects if the specified stream has colourising capability.
 
-    :param stream: stream to check (typically sys.stdout)
+    Args:
+        stream (:obj:`stream`): stream to check (typically sys.stdout)
     """
     if not hasattr(stream, "isatty"):
         return False
@@ -119,6 +120,8 @@ def console_has_colours(stream):
         return False
 
 has_colours = console_has_colours(sys.stdout)
+""" Whether the loading program has access to colours or not."""
+
 if has_colours:
     # reset = "\x1b[0;0m"
     reset = "\x1b[0m"
@@ -135,6 +138,7 @@ colours = [bold,
            black, red, green, yellow, blue, magenta, cyan, white,
            bold_black, bold_red, bold_green, bold_yellow, bold_blue, bold_magenta, bold_cyan, bold_white
            ]
+"""List of all available colours."""
 
 
 def pretty_print(msg, colour=white):
@@ -177,45 +181,50 @@ def error(msg):
 
 def logdebug(message):
     '''
-    Prefixes '[debug]' and colours the message green.
+    Prefixes ``[DEBUG]`` and colours the message green.
 
-    :param message str: message to log.
+    Args:
+        message (:obj:`str`): message to log.
     '''
     print(green + "[DEBUG] " + message + reset)
 
 
 def loginfo(message):
     '''
-    Prefixes '[ INFO]' to the message.
+    Prefixes ``[ INFO]`` to the message.
 
-    :param message str: message to log.
+    Args:
+        message (:obj:`str`): message to log.
     '''
     print("[ INFO] " + message)
 
 
 def logwarn(message):
     '''
-    Prefixes '[ WARN]' and colours the message yellow.
+    Prefixes ``[ WARN]`` and colours the message yellow.
 
-    :param message str: message to log.
+    Args:
+        message (:obj:`str`): message to log.
     '''
     print(yellow + "[ WARN] " + message + reset)
 
 
 def logerror(message):
     '''
-    Prefixes '[ERROR]' and colours the message red.
+    Prefixes ``[ERROR]`` and colours the message red.
 
-    :param message str: message to log.
+    Args:
+        message (:obj:`str`): message to log.
     '''
     print(red + "[ERROR] " + message + reset)
 
 
 def logfatal(message):
     '''
-    Prefixes '[FATAL]' and colours the message bold red.
+    Prefixes ``[FATAL]`` and colours the message bold red.
 
-    :param message str: message to log.
+    Args:
+        message (:obj:`str`): message to log.
     '''
     print(bold_red + "[FATAL] " + message + reset)
 

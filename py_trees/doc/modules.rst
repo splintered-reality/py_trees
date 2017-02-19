@@ -7,7 +7,7 @@ py_trees
 --------
 
 .. automodule:: py_trees
-   :synopsis: look after your misbehaving decision making with py_trees
+   :synopsis: Look after your misbehaving decision making with py_trees
 
 py_trees.behaviour
 ------------------
@@ -23,6 +23,12 @@ py_trees.behaviours
     :members:
     :show-inheritance:
 
+py_trees.blackboard
+-------------------
+
+.. automodule:: py_trees.blackboard
+    :members:
+    :show-inheritance:
 
 py_trees.common
 ---------------
@@ -60,6 +66,12 @@ py_trees.composites
     :members:
     :special-members:
     :show-inheritance:
+
+py_trees.console
+----------------
+
+.. automodule:: py_trees.console
+    :members:
 
 py_trees.display
 ----------------

@@ -6,15 +6,7 @@
 ##############################################################################
 
 """
-.. module:: time
-   :platform: Unix
-   :synopsis: Time related behaviours.
-
-Oh my spaghettified magnificence,
-Bless my noggin with a tickle from your noodly appendages!
-
-----
-
+Time related behaviours.
 """
 
 ##############################################################################
@@ -67,63 +59,46 @@ from . import meta
 class Timer(behaviour.Behaviour):
     """
     Simple timer class that is :py:data:`~py_trees.common.Status.RUNNING` until the timer
-    runs out, at which point it is :py:data:`~py_trees.common.Status.SUCCESS`.
+    runs out, at which point it is :data:`~py_trees.common.Status.SUCCESS`.
 
-    Use the :py:func:`~py_trees.meta.running_is_failure` if you want it to return
-    :py:data:`~py_trees.common.Status.FAILURE` until the timer runs out.
-
-    The timer gets reset either upon entry (:py:meth:`~py_trees.behaviour.Behaviour.initialise`)
+    The timer gets reset either upon entry (:meth:`~py_trees.behaviour.Behaviour.initialise`)
     if it hasn't already been set and gets cleared when it either runs out, or the behaviour is
-    interrupted (i.e. switches to :py:data:`~py_trees.common.Status.SUCCESS` or
-    :py:data:`~py_trees.common.Status.INVALID`).
+    interrupted by a higher priority or parent cancelling it.
 
-    **Usage Patterns**
+    Args:
+        name (:obj:`str`): name of the behaviour
+        duration (:obj:`int`): length of time to run (in seconds)
 
-    *TimeOut*
+    .. note::
+        This succeeds the first time the behaviour is ticked **after** the expected
+        finishing time.
 
-    Typical use case is at the highest priority branch of a selector. As soon
-    as the timeout activates, then all other branches are invalidated.
+    .. tip::
+        Use the :func:`~py_trees.meta.running_is_failure` decorator if you need
+        :data:`~py_trees.common.Status.FAILURE` until the timer finishes.
 
-    This does mean however, that the selector should
-    return :py:data:`~py_trees.common.Status.FAILURE` to signify that the actual
-    non-timeout branches succeeded. A typical code block would look like:
-
-    .. code-block:: python
-
-       root = py_trees.meta.inverter(py_trees.composites.Selector("Foo"))
-       timeout = py_trees.meta.running_is_failure(py_trees.timers.Timeout("Timeout", 10.0))
-       work = py_trees.meta.inverter(py_trees.composites.Sequence("Work"))
-       work_behaviour_one = my.work.behaviours.One("One")
-       work_behaviour_two = my.work.behaviours.Two("Two")
-
-       root.add_child(timeout)
-       root.add_child(work)
-       work.add_child(work_behaviour_one)
-       work.add_child(work_behaviour_two)
-
-    This will return:
-
-    * `~py_trees.common.Status.RUNNING` if no timeout and the sequence is not yet finished
-    * `~py_trees.common.Status.FAILURE` if timeout has been exceeded
-    * `~py_trees.common.Status.SUCCESS` if the sequence has finished successfully.
     """
     def __init__(self, name="Timer", duration=5.0):
-        """
-        :param float duration:
-        """
         super(Timer, self).__init__(name)
         self.duration = duration
         self.finish_time = None
         self.feedback_message = "duration set to '{0}'s".format(self.duration)
 
     def initialise(self):
-        self.logger.debug("  %s [Timer::initialise()]" % self.name)
+        """
+        Store the expected finishing time.
+        """
+        self.logger.debug("%s.initialise()" % self.__class__.__name__)
         if self.finish_time is None:
             self.finish_time = time.time() + self.duration
         self.feedback_message = "configured to fire in '{0}' seconds".format(self.duration)
 
     def update(self):
-        self.logger.debug("  %s [Timer::update()]" % self.name)
+        """
+        Check current time against the expected finishing time. If it is in excess, flip to
+        :data:`~py_trees.common.Status.SUCCESS`.
+        """
+        self.logger.debug("%s.update()" % self.__class__.__name__)
         current_time = time.time()
         if current_time > self.finish_time:
             self.feedback_message = "timer ran out [{0}]".format(self.duration)
@@ -135,7 +110,10 @@ class Timer(behaviour.Behaviour):
             return common.Status.RUNNING
 
     def terminate(self, new_status):
-        self.logger.debug("  %s [Timer::terminate()][%s->%s]" % (self.name, self.status, new_status))
+        """
+        Clear the expected finishing time.
+        """
+        self.logger.debug("%s.terminate(%s)" % (self.__class__.__name__, "%s->%s" % (self.status, new_status) if self.status != new_status else "%s" % new_status))
         # clear the time if finishing with SUCCESS or in the case of an interruption from INVALID
         if new_status == common.Status.SUCCESS or new_status == common.Status.INVALID:
             self.finish_time = None

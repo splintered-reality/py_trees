@@ -18,21 +18,6 @@ py-trees-demo-action-behaviour
    :linenos:
    :caption: py_trees/demos/action.py
 
-.. _py-trees-demo-context-switching-program:
-
-py-trees-demo-context-switching
--------------------------------
-
-.. automodule:: py_trees.demos.context_switching
-    :members:
-    :special-members:
-    :show-inheritance:
-
-.. literalinclude:: ../py_trees/demos/context_switching.py
-   :language: python
-   :linenos:
-   :caption: py_trees/demos/contex_switching.py
-
 .. _py-trees-demo-behaviour-lifecycle-program:
 
 py-trees-demo-behaviour-lifecycle
@@ -47,6 +32,36 @@ py-trees-demo-behaviour-lifecycle
    :language: python
    :linenos:
    :caption: py_trees/demos/lifecycle.py
+
+.. _py-trees-demo-blackboard-program:
+
+py-trees-demo-blackboard
+------------------------
+
+.. automodule:: py_trees.demos.blackboard
+    :members:
+    :special-members:
+    :show-inheritance:
+
+.. literalinclude:: ../py_trees/demos/blackboard.py
+   :language: python
+   :linenos:
+   :caption: py_trees/demos/blackboard.py
+
+.. _py-trees-demo-context-switching-program:
+
+py-trees-demo-context-switching
+-------------------------------
+
+.. automodule:: py_trees.demos.context_switching
+    :members:
+    :special-members:
+    :show-inheritance:
+
+.. literalinclude:: ../py_trees/demos/context_switching.py
+   :language: python
+   :linenos:
+   :caption: py_trees/demos/contex_switching.py
 
 .. _py-trees-demo-selector-program:
 

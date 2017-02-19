@@ -78,7 +78,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'py_trees'
-copyright = u'2015, Daniel Stonier'
+copyright = u'2017, Daniel Stonier'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -101,7 +101,7 @@ release = catkin_package.version
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ['.build']
+exclude_patterns = ['.build', 'weblinks.rst']
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.

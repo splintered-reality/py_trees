@@ -8,11 +8,8 @@
 ##############################################################################
 
 """
-.. module:: display
-   :platform: Unix
-   :synopsis: Render and write the behaviour tree visually to file or stdout.
-
-Various graph drawing tools.
+Render and write a behaviour tree visually to various simple output formats.
+Currently this includes dot graphs, strings or stdout.
 """
 
 ##############################################################################

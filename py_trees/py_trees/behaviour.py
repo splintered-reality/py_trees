@@ -8,12 +8,8 @@
 ##############################################################################
 
 """
-.. module:: behaviour
-   :platform: Unix
-   :synopsis: The core behaviour template.
-
-----
-
+The core behaviour template. All behaviours, standalone and composite, inherit
+from this class.
 """
 
 ##############################################################################
@@ -83,7 +79,7 @@ class Behaviour(object):
             timeout (:obj:`float`): time to wait (0.0 is blocking forever)
 
         Returns:
-            bool: whether it timed out trying to setup
+            :obj:`bool`: whether it timed out trying to setup
 
         .. note:: User Customisable Callback
 
