@@ -15,9 +15,9 @@ A library of fundamental behaviours for use.
 # Imports
 ##############################################################################
 
-import rospy  # TODO Kill this!
 from .common import Status
 from .behaviour import Behaviour
+from . import composites
 from . import meta
 
 ##############################################################################
@@ -59,7 +59,7 @@ Do nothing but tick over with :data:`~py_trees.common.Status.RUNNING`.
 """
 
 ##############################################################################
-# Other Behaviours
+# Standalone Behaviours
 ##############################################################################
 
 
@@ -195,3 +195,15 @@ class Count(Behaviour):
         s += "  Resets : %s\n" % self.number_count_resets
         s += "  Updates: %s\n" % self.number_updated
         return s
+
+
+##############################################################################
+# Composite Behaviours
+##############################################################################
+
+@meta.oneshot
+class OneshotSequence(composites.Sequence):
+    """
+    A sequence with a oneshot decorator applied to it.
+    """
+    pass

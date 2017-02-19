@@ -34,6 +34,7 @@ demonstrating its use.
 
 **Decorators (Hats)**
 
+* :func:`py_trees.meta.condition`
 * :func:`py_trees.meta.inverter`
 * :func:`py_trees.meta.failure_is_running`
 * :func:`py_trees.meta.failure_is_success`

@@ -34,5 +34,5 @@ from . import visitors
 from .behaviour import Behaviour
 from .blackboard import Blackboard
 from .common import Status
-from .composites import Composite, Selector, Sequence, OneshotSequence
+from .composites import Composite, Selector, Sequence
 from .trees import BehaviourTree, CONTINUOUS_TICK_TOCK
