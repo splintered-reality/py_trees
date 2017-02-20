@@ -21,3 +21,9 @@ Composites
 ----------
 
 * Avoid creating new composites, that path leads to the :term:`flying spaghetti monster`
+
+Trees
+-----
+
+* Make sure your pre/post tick handlers and visitors are all very light.
+* A good tick-tock rate for higher level decision making is around 500ms.

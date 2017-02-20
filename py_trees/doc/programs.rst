@@ -67,6 +67,22 @@ py-trees-demo-context-switching
    :linenos:
    :caption: py_trees/demos/contex_switching.py
 
+.. _py-trees-demo-dot-graphs-program:
+
+py-trees-demo-dot-graphs
+------------------------
+
+.. automodule:: py_trees.demos.dot_graphs
+    :members:
+    :special-members:
+    :show-inheritance:
+    :synopsis: demo dot graphs with varying visibility levels
+
+.. literalinclude:: ../py_trees/demos/dot_graphs.py
+   :language: python
+   :linenos:
+   :caption: py_trees/demos/dot_graphs.py
+
 .. _py-trees-demo-selector-program:
 
 py-trees-demo-selector

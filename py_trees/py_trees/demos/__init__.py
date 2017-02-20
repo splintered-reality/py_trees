@@ -16,6 +16,7 @@ This package contains py_trees demo script code.
 from . import action
 from . import blackboard
 from . import context_switching
+from . import dot_graphs
 from . import lifecycle
 from . import selector
 from . import sequence
