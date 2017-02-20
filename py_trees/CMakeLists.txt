@@ -31,7 +31,7 @@ catkin_install_python(
         scripts/py-trees-demo-dot-graphs
         scripts/py-trees-demo-selector
         scripts/py-trees-demo-sequence
-        scripts/py-trees-demo-tree
+        scripts/py-trees-demo-tree-stewardship
     DESTINATION
         ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

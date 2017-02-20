@@ -99,3 +99,19 @@ py-trees-demo-sequence
    :linenos:
    :caption: py_trees/demos/sequence.py
 
+.. _py-trees-demo-tree-stewardship-program:
+
+py-trees-demo-tree-stewardship
+------------------------------
+
+.. automodule:: py_trees.demos.stewardship
+    :members:
+    :special-members:
+    :show-inheritance:
+    :synopsis: demo tree stewardship
+
+.. literalinclude:: ../py_trees/demos/stewardship.py
+   :language: python
+   :linenos:
+   :caption: py_trees/demos/stewardship.py
+

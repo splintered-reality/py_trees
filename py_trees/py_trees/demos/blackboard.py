@@ -25,7 +25,6 @@
 import argparse
 import py_trees
 import sys
-import time
 
 import py_trees.console as console
 

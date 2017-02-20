@@ -8,14 +8,12 @@
 ##############################################################################
 
 """
-Various implementations of entities that visit
-behaviour trees as they traverse through an executing tick.
-Visitors must all possess two member methods:
+Various implementations of entities that visit nodes in a behaviour
+tree. Visitors can either visit the behaviours as they traverse through
+an executing tick or they can simply be flagged (setting the :data:`full`
+property) to visit the entire tree.
 
-* :meth:`initialise()`
-* :meth:`run(behaviour)`
-
-where behaviour is an instance of :class:`~py_trees.behaviour.Behaviour`
+.. seealso:: :class:`~py_trees.trees.BehaviourTree`
 """
 
 ##############################################################################
@@ -31,15 +29,45 @@ from . import common
 ##############################################################################
 
 
-class DebugVisitor(object):
+class VisitorBase(object):
     """
-    Picks up and logs status and feedback message (if set).
+    Parent template for visitor types.
+
+    Args:
+        full (:obj:`bool`): flag to indicate whether it should be used to visit only traversed nodes or the entire tree
+
+    Attributes:
+        full (:obj:`bool`): flag to indicate whether it should be used to visit only traversed nodes or the entire tree
+    """
+    def __init__(self, full=False):
+        self.full = full
+
+    def initialise(self):
+        """
+        Override this method if any resetting of variables needs to be
+        performed between ticks (i.e. visitations).
+        """
+        pass
+
+    def run(self, behaviour):
+        """
+        This method gets run as each behaviour is ticked. Override it to
+        perform some activity - e.g. introspect the behaviour
+        to store/process logging data for visualisations.
+
+        Args:
+            behaviour (:class:`~py_trees.behaviour.Behaviour`): behaviour that is ticking
+        """
+        pass
+
+
+class DebugVisitor(VisitorBase):
+    """
+    Picks up and logs feedback messages and the behaviour's status. Logging is done with
+    the behaviour's logger.
     """
     def __init__(self):
         super(DebugVisitor, self).__init__(full=False)
-
-    def initialise(self):
-        pass
 
     def run(self, behaviour):
         if behaviour.feedback_message:
@@ -48,11 +76,14 @@ class DebugVisitor(object):
             behaviour.logger.debug("%s.run() [%s]" % (self.__class__.__name__, behaviour.status))
 
 
-class SnapshotVisitor(object):
+class SnapshotVisitor(VisitorBase):
     """
     Visits the tree in tick-tock, recording runtime information for publishing
     the information as a snapshot view of the tree after the iteration has
     finished.
+
+    Args:
+        full (:obj:`bool`): flag to indicate whether it should be used to visit only traversed nodes or the entire tree
 
     Attributes:
         nodes (dict): dictionary of behaviour id (uuid.UUID) and status (:class:`~py_trees.common.Status`) pairs
@@ -64,8 +95,8 @@ class SnapshotVisitor(object):
         This visitor should be used with the :class:`~py_trees.trees.BehaviourTree` class to collect
         information and :func:`~py_trees.display.ascii_tree` to display information.
     """
-    def __init__(self):
-        super(SnapshotVisitor, self).__init__()
+    def __init__(self, full=False):
+        super(SnapshotVisitor, self).__init__(full=full)
         self.nodes = {}
         self.running_nodes = []
         self.previously_running_nodes = []

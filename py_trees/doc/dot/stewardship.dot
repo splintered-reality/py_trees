@@ -1,0 +1,18 @@
+digraph demo_tree {
+graph [fontname="times-roman"];
+node [fontname="times-roman"];
+edge [fontname="times-roman"];
+"Demo Tree" [fillcolor=cyan, fontcolor=black, fontsize=11, shape=octagon, style=filled];
+EveryN [fillcolor=gray, fontcolor=black, fontsize=11, shape=ellipse, style=filled];
+"Demo Tree" -> EveryN;
+Sequence [fillcolor=gray20, fontcolor=lawngreen, fontsize=11, shape=box, style=filled];
+"Demo Tree" -> Sequence;
+Guard [fillcolor=gray, fontcolor=black, fontsize=11, shape=ellipse, style=filled];
+Sequence -> Guard;
+Periodic [fillcolor=gray, fontcolor=black, fontsize=11, shape=ellipse, style=filled];
+Sequence -> Periodic;
+Finisher [fillcolor=gray, fontcolor=black, fontsize=11, shape=ellipse, style=filled];
+Sequence -> Finisher;
+Idle [fillcolor=gray, fontcolor=black, fontsize=11, shape=ellipse, style=filled];
+"Demo Tree" -> Idle;
+}

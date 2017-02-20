@@ -1,52 +1,26 @@
 Trees
 =====
 
-Tree Containers
----------------
+While a graph of connected behaviours and composites form a tree in their own right
+(i.e. it can be initialised and ticked), it is usually convenient to wrap your tree
+in another class to take care of alot of the housework and provide some extra bells
+and whistles that make your tree flourish.
 
-You stuff an assembled tree into these containers - the container takes care of alot of tree handling for you.
-The :py:class:`~py_trees.trees.BehaviourTree` handles logging, insertions, tick_tock.
+This library provides a default reference implementation that is directly usable, but
+can also be easily used as inspiration for your own tree custodian.
 
-.. todo:: Example Code - maybe put this in the class docs itself.
+The Behaviour Tree
+------------------
 
-The :py:class:`~py_trees.trees.ros.BehaviourTree` subclasses the BehaviourTree and additionally
-takes care of all the handles that go out to the rqt monitoring program program.
+.. autoclass:: py_trees.trees.BehaviourTree
+    :noindex:
 
-Tree Management
----------------
+Pre/Post Tick Handlers
+----------------------
 
-.. todo:: Visitors and Pre/Post Tick Handlers
+.. todo:: Pre/Post Tick Handlers
 
-Visualisations
---------------
+Visitors
+--------
 
-Dot Graphs
-^^^^^^^^^^
-
-You can render trees into dot/png/svg files simply by calling the :py:func:`~py_trees.display.render_dot_tree`
-function. There is also an ascii version.
-
-.. code-block:: python
-
-   root = py_trees.Sequence(name="Sequence")
-   guard = py_trees.behaviours.Success("Guard")
-   periodic_success = py_trees.behaviours.Periodic("Periodic", 3)
-   finisher = py_trees.behaviours.Success("Finisher")
-   root.add_child(guard)
-   root.add_child(periodic_success)
-   root.add_child(finisher)
-   py_trees.display.render_dot_tree(root)
-
-To enable quick generation of dotgraphs for your *subtrees*, use a class method inside your root class, e.g.
-
-.. code-block:: python
-
-   @classmethod
-   def render_dot_tree(cls):
-       root = cls()
-       py_trees.display.render_dot_tree(root)
-
-Online/Offline Monitoring
-^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. todo:: RQT Py Trees program
+.. todo:: Visitors

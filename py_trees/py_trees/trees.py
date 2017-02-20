@@ -29,7 +29,16 @@ CONTINUOUS_TICK_TOCK = -1
 
 class BehaviourTree(object):
     """
-    Grow, water, prune your behaviour tree.
+    Grow, water, prune your behaviour tree with this, the default reference
+    implementation. It features a few enhancements to provide richer logging,
+    introspection and dynamic management of the tree itself:
+
+    * Pre and post tick handlers to execute code automatically before and after a tick
+    * Visitor access to the parts of the tree that were traversed in a tick
+    * Subtree pruning and insertion operations
+    * Continuous tick-tock support
+
+    .. seealso:: The :ref:`py-trees-demo-tree-stewardship-program` program demonstrates the above features.
 
     Args:
         root (:class:`~py_trees.behaviour.Behaviour`): root node of the tree
