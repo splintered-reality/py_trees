@@ -17,9 +17,8 @@ Tree managers - they make your life easier!
 
 import time
 
+from . import behaviour
 from . import composites
-
-from .behaviours import Behaviour
 
 CONTINUOUS_TICK_TOCK = -1
 
@@ -32,29 +31,23 @@ class BehaviourTree(object):
     """
     Grow, water, prune your behaviour tree.
 
-    :ivar int count: number of times the tree has been ticked.
-    :ivar root: root node of the tree.
-    :vartype root: instance or descendant of :class:`Behaviour <py_trees.behaviours.Behaviour>`
-    :ivar visitors: list of entities that visit the iterated parts of the tree when it ticks.
-    :vartype visitors: list of classes that implement an initialise() and run(py_trees.Behaviour) method.
-    :ivar pre_tick_handlers: methods that run before the entire tree is ticked
-    :vartype pre_tick_handlers: list of methods that take this instance as an arg
-    :ivar post_tick_handlers: methods that run after the entire tree is ticked
-    :vartype post_tick_handlers: list of methods that take this instance as an arg
-    :ivar interrupt_tick_tocking: interrupt tick-tock if it is a tick-tocking.
-    :vartype interrupt_tick_tocking: bool
+    Args:
+        root (:class:`~py_trees.behaviour.Behaviour`): root node of the tree
+
+    Attributes:
+        count (:obj:`int`): number of times the tree has been ticked.
+        root (:class:`~py_trees.behaviour.Behaviour`): root node of the tree
+        visitors ([:mod:`~py_trees.visitors`]): entities that visit traversed parts of the tree when it ticks
+        pre_tick_handlers ([:obj:`func`]): functions that run before the entire tree is ticked
+        post_tick_handlers ([:obj:`func`]): functions that run after the entire tree is ticked
+
+    Raises:
+        AssertionError: if incoming root variable is not the correct type
     """
     def __init__(self, root):
-        """
-        Initialise the tree with a root.
-
-        :param root: root node of the tree.
-        :type root: instance or descendant of :class:`Behaviour <py_trees.behaviours.Behaviour>`
-        :raises AssertionError: if incoming root variable is not the correct type.
-        """
         self.count = 0
         assert root is not None, "root node must not be 'None'"
-        assert isinstance(root, Behaviour), "root node must be an instance of or descendant of pytrees.Behaviour"
+        assert isinstance(root, behaviour.Behaviour), "root node must be an instance of or descendant of pytrees.behaviour.Behaviour"
         self.root = root
         self.visitors = []
         self.pre_tick_handlers = []
@@ -63,17 +56,49 @@ class BehaviourTree(object):
         self.tree_update_handler = None  # child classes can utilise this one
 
     def add_pre_tick_handler(self, handler):
+        """
+        Add a function to execute before the tree is ticked. The function must have
+        a single argument of type :class:`~py_trees.trees.BehaviourTree`.
+
+        Some ideas that are often used:
+
+        * logging (to file or stdout)
+        * modifications on the tree itself (e.g. starting a new plan)
+
+        Args:
+            handler (:obj:`func`): function
+        """
         self.pre_tick_handlers.append(handler)
 
     def add_post_tick_handler(self, handler):
+        """
+        Add a function to execute after the tree has ticked. The function must have
+        a single argument of type :class:`~py_trees.trees.BehaviourTree`.
+
+        Some ideas that are often used:
+
+        * logging
+        * modifications on the tree itself (e.g. closing down a plan)
+        * sending data to visualisation tools
+        * introspect the state of the tree to make and send reports
+
+        Args:
+            handler (:obj:`func`): function
+        """
         self.post_tick_handlers.append(handler)
 
     def prune_subtree(self, unique_id):
         """
-        :param uuid.UUID unique_id: unique id of the subtree root
-        :raises AssertionError: if unique id is the behaviour tree's root node id
-        :return: success or failure of the pruning
-        :rtype: bool
+        Prune a subtree given the unique id of the root of the subtree.
+
+        Args:
+            unique_id (uuid.UUID): unique id of the subtree root
+
+        Returns:
+            :obj:`bool`: success or failure of the operation
+
+        Raises:
+            AssertionError: if unique id is the behaviour tree's root node id
         """
         assert self.root.id != unique_id, "may not prune the root node"
         for child in self.root.iterate():
@@ -88,19 +113,26 @@ class BehaviourTree(object):
 
     def insert_subtree(self, child, unique_id, index):
         """
-        Insert subtree as a child of the specified parent.
+        Insert a subtree as a child of the specified parent. If the parent
+        is found, this directly calls the parent's
+        :meth:`~py_trees.composites.Composite.insert_child`
+        method using the child and index arguments.
 
-        :param uuid.UUID unique_id: id of the parent container (usually Selector or Sequence)
-        :param int index: insert the child at this index, pushing all children after it back one.
-        :return: False if parent node was not found, True if inserted
+        Args:
+            unique_id (uuid.UUID): unique id of the parent
+            index (:obj:`int`): insert the child at this index, pushing all children after it back one.
+
+        Returns:
+            :obj:`bool`: suceess or failure (parent not found) of the operation
+
+        Raises:
+            AssertionError: if the parent is not a :class:`~py_trees.composites.Composite`
 
         .. todo::
 
            Could use better, more informative error handling here. Especially if the insertion
-           has its own error handling (e.g. index out of range).
-
-           Could also use a different api that relies on the id
-           of the sibling node it should be inserted before/after.
+           has its own error handling (e.g. index out of range). Could also use a different api
+           that relies on the id of the sibling node it should be inserted before/after.
         """
         for node in self.root.iterate():
             if node.id == unique_id:
@@ -114,15 +146,17 @@ class BehaviourTree(object):
     def replace_subtree(self, unique_id, subtree):
         """
         Replace the subtree with the specified id for the new subtree.
-
         This is a common pattern where we'd like to swap out a whole sub-behaviour for another one.
 
-        :param uuid.UUID unique_id: unique id of the subtree root
-        :param subtree: incoming subtree to replace the old one
-        :type subtree: instance or descendant of :class:`Behaviour <py_trees.behaviours.Behaviour>`
-        :raises AssertionError: if unique id is the behaviour tree's root node id
-        :return: success or failure of the replacement
-        :rtype: bool
+        Args:
+            unique_id (uuid.UUID): unique id of the parent
+            subtree (:class:`~py_trees.behaviour.Behaviour`): root behaviour of the subtree
+
+        Raises
+            AssertionError: if unique id is the behaviour tree's root node id
+
+        Returns:
+            :obj:`bool`: suceess or failure of the operation
         """
         assert self.root.id != unique_id, "may not replace the root node"
         for child in self.root.iterate():
@@ -137,21 +171,30 @@ class BehaviourTree(object):
 
     def setup(self, timeout):
         """
-        Calls setup on the root of the tree. This should then percolate down into the tree itself
-        via the :py:meth:`~py_trees.composites.Composite.setup` function in each composited behaviour.
+         Relays to calling the :meth:`~py_trees.behaviour.Behaviuor.setup` method
+         on the root behaviour. This in turn should get recursively called down through
+         the entire tree.
 
-        :returns: success or failure of the setup operation
+        Args:
+             timeout (:obj:`float`): time to wait (0.0 is blocking forever)
+
+        Return:
+            :obj:`bool`: suceess or failure of the operation
         """
         return self.root.setup(timeout)
 
     def tick(self, pre_tick_handler=None, post_tick_handler=None):
         """
-        Tick over the tree just once.
+        Tick the tree just once and run any handlers before and after the tick.
+        This optionally accepts some one-shot handlers (c.f. those added by
+        :meth:`~py_trees.trees.BehaviourTree.add_pre_tick_handler` and :meth:`~py_trees.trees.BehaviourTree.add_post_tick_handler`
+        which will be automatically run every time).
 
-        :param pre_tick_visitor: visitor that runs on this class instance before the tick
-        :type pre_tick_visitor: any class with a run(py_trees.BehaviourTree) method
-        :param post_tick_visitor: visitor that runs on this class instance before the tick
-        :type post_tick_visitor: any class with a run(py_trees.BehaviourTree) method
+        The handler functions must have a single argument of type :class:`~py_trees.trees.BehaviourTree`.
+
+        Args:
+            pre_tick_handler (:obj:`func`): function to execute before ticking
+            post_tick_handler (:obj:`func`): function to execute after ticking
         """
         # pre
         for handler in self.pre_tick_handlers:
@@ -178,14 +221,18 @@ class BehaviourTree(object):
 
     def tick_tock(self, sleep_ms, number_of_iterations=CONTINUOUS_TICK_TOCK, pre_tick_handler=None, post_tick_handler=None):
         """
-        Tick continuously with a sleep interval as specified.
+        Tick continuously with a sleep interval as specified. This optionally accepts some handlers that will
+        be used for the duration of this tick tock (c.f. those added by
+        :meth:`~py_trees.trees.BehaviourTree.add_pre_tick_handler` and :meth:`~py_trees.trees.BehaviourTree.add_post_tick_handler`
+        which will be automatically run every time).
 
-        :param float sleep_ms: sleep this much between ticks.
-        :param int number_of_iterations: number of tick-tocks (-1 for infinite)
-        :param pre_tick_handler: visitor that runs on this class instance before the tick
-        :type pre_tick_handler: any function or class with a __call__ method taking a py_trees.BehaviourTree arg
-        :param post_tick_handler: visitor that runs on this class instance before the tick
-        :type post_tick_handler: any function or class with a __call__ method taking a py_trees.BehaviourTree arg
+        The handler functions must have a single argument of type :class:`~py_trees.trees.BehaviourTree`.
+
+        Args:
+            sleep_ms (:obj:`float`): sleep this much between ticks (seconds)
+            number_of_iterations (:obj:`int`): number of iterations to tick-tock
+            pre_tick_handler (:obj:`func`): function to execute before ticking
+            post_tick_handler (:obj:`func`): function to execute after ticking
         """
         tick_tocks = 0
         while not self.interrupt_tick_tocking and (tick_tocks < number_of_iterations or number_of_iterations == CONTINUOUS_TICK_TOCK):
@@ -199,12 +246,13 @@ class BehaviourTree(object):
 
     def interrupt(self):
         """
-        Interrupt tick-tock if it is tick-tocking.
+        Interrupt tick-tock if it is tick-tocking. Note that this will permit a currently
+        executing tick to finish before interrupting the tick-tock.
         """
         self.interrupt_tick_tocking = True
 
     def destroy(self):
         """
-        Destroy the tree by stopping the root node
+        Destroy the tree by stopping the root node.
         """
         self.root.stop()

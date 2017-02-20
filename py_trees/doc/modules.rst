@@ -110,7 +110,23 @@ py_trees.trees
 
 .. automodule:: py_trees.trees
     :members:
-    :special-members:
     :show-inheritance:
     :synopsis: tree managers - they make your life easier!
+
+py_trees.utilities
+------------------
+
+.. automodule:: py_trees.utilities
+    :members:
+    :show-inheritance:
+    :synopsis: assorted utility functions
+
+py_trees.visitors
+-----------------
+
+.. automodule:: py_trees.visitors
+    :members:
+    :show-inheritance:
+    :synopsis: entities that visit behaviours as a tree is traversed
+
 

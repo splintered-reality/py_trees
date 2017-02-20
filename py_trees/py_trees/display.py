@@ -41,10 +41,13 @@ def _generate_ascii_tree(tree, indent=0, snapshot_information=None):
     """
     Generator for spinning out the ascii tree.
 
-    :param tree: the root of the tree, or subtree you want to show
-    :param indent: the number of characters to indent the tree
-    :param snapshot_information: a visitor recording information about the tree runtime (e.g. BehaviourTree.SnapshotVisitor)
-    :return: a generator that yields ascii representations of nodes one by one
+    Args:
+        tree (:class:`~py_trees.behaviour.Behaviour`): the root of the tree, or subtree you want to show
+        indent (:obj:`int`): the number of characters to indent the tree
+        snapshot_information (:mod:`~py_trees.visitors`): a visitor that recorded information about a traversed tree (e.g. :class:`~py_trees.visitors.SnapshotVisitor`)
+
+    Yields:
+        :obj:`str`: a string with information about a single behaviour in the tree
     """
     nodes = {} if snapshot_information is None else snapshot_information.nodes
     previously_running_nodes = [] if snapshot_information is None else snapshot_information.previously_running_nodes
@@ -79,13 +82,18 @@ def _generate_ascii_tree(tree, indent=0, snapshot_information=None):
 
 def ascii_tree(tree, indent=0, snapshot_information=None):
     """
-    Build the ascii tree representation as a string for redirecting
-    to elsewhere other than stdout (e.g. ros publisher)
+    Build an ascii tree representation as a string for redirecting
+    to elsewhere other than stdout. This can be the entire tree, or
+    a recorded snapshot of the tree (i.e. just the part that was traversed).
 
-    :param tree: the root of the tree, or subtree you want to show
-    :param indent: the number of characters to indent the tree
-    :param snapshot_information: a visitor recording information about the tree runtime (e.g. BehaviourTree.SnapshotVisitor)
-    :return: ascii_tree as a string
+    Args:
+        tree (:class:`~py_trees.behaviour.Behaviour`): the root of the tree, or subtree you want to show
+        indent (:obj:`int`): the number of characters to indent the tree
+        snapshot_information (:mod:`~py_trees.visitors`): a visitor that recorded information about a traversed tree (e.g. :class:`~py_trees.visitors.SnapshotVisitor`)
+        snapshot_information (:mod:`~py_trees.visitors`): a visitor that recorded information about a traversed tree (e.g. :class:`~py_trees.visitors.SnapshotVisitor`)
+
+    Returns:
+        :obj:`str`: an ascii tree (i.e. in string form)
     """
     s = ""
     for line in _generate_ascii_tree(tree, indent, snapshot_information):
@@ -95,12 +103,12 @@ def ascii_tree(tree, indent=0, snapshot_information=None):
 
 def print_ascii_tree(tree, indent=0, show_status=False):
     """
-    Print the ASCII representation of a behaviour tree.
+    Print the ASCII representation of an entire behaviour tree.
 
-    :param tree: the root of the tree, or subtree you want to show
-    :param indent: the number of characters to indent the tree
-    :param show_status: show the status of every element at this instant
-    :return: nothing
+    Args:
+        tree (:class:`~py_trees.behaviour.Behaviour`): the root of the tree, or subtree you want to show
+        indent (:obj:`int`): the number of characters to indent the tree
+        show_status (:obj:`bool`): additionally show feedback message and status of every element
     """
     class InstantSnapshot(object):
         def __init__(self, tree):
@@ -121,9 +129,12 @@ def generate_pydot_graph(root, visibility_level):
     Generate the pydot graph - this is usually the first step in
     rendering the tree to file. See also :py:func:`render_dot_tree`.
 
-    :param root: the root of the tree, or subtree you want to generate
-    :param common.BlackBoxLevel blackbox_level: collapse subtrees at or under this level
-    :return: the dot graph as a pydot.Dot graph
+    Args:
+        root (:class:`~py_trees.behaviour.Behaviour`): the root of a tree, or subtree
+        visibility_level (:class`~py_trees.common.VisibilityLevel`): collapse subtrees at or under this level
+
+    Returns:
+        pydot.Dot: graph
     """
     def get_node_attributes(node, visibility_level):
         blackbox_font_colours = {common.BlackBoxLevel.DETAIL: "dodgerblue",
@@ -182,8 +193,11 @@ def stringify_dot_tree(root):
     Generate dot tree graphs and return a string representation
     of the dot graph.
 
-    :param root: the root of the tree, or subtree you want to show
-    :return: dot graph as a string
+    Args:
+        root (:class:`~py_trees.behaviour.Behaviour`): the root of a tree, or subtree
+
+    Returns:
+        :obj:`str`: dot graph as a string
     """
     graph = generate_pydot_graph(root, visibility_level=common.VisibilityLevel.DETAIL)
     return graph.to_string()
@@ -194,8 +208,9 @@ def render_dot_tree(root, visibility_level=common.VisibilityLevel.DETAIL):
     Render the dot tree to .dot, .svg, .png. files in the current
     working directory. These will be named with the root behaviour name.
 
-    :param Behaviour root: the root of the tree, or subtree you want to show
-    :param int depth: the number of blackbox levels to descend into (-1 shows full tree)
+    Args:
+        root (:class:`~py_trees.behaviour.Behaviour`): the root of a tree, or subtree
+        visibility_level (:class`~py_trees.common.VisibilityLevel`): collapse subtrees at or under this level
     """
     graph = generate_pydot_graph(root, visibility_level)
     name = root.name.lower().replace(" ", "_")

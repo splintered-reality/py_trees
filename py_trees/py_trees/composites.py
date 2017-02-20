@@ -49,7 +49,16 @@ from .common import Status
 
 
 class Composite(Behaviour):
-    """ A node in a behavior tree that composites behaviours """
+    """
+    The parent class to all composite behaviours, i.e. those that
+    have children.
+
+    Args:
+        name (:obj:`str`): the composite behaviour name
+        children ([:class:`~py_trees.behaviour.Behaviour`]): list of children to add
+        *args: variable length argument list
+        **kwargs: arbitrary keyword arguments
+    """
     def __init__(self, name="", children=None, *args, **kwargs):
         super(Composite, self).__init__(name, *args, **kwargs)
         if children is not None:
@@ -62,17 +71,13 @@ class Composite(Behaviour):
     ############################################
     def setup(self, timeout):
         """
-        Override this function to do any post-constructor setup that is necessary
-        for a runtime. A good example are any of the ros wait_for methods which
-        will block while looking for a ros master/topics/services.
+        Relays to each child's :meth:`~py_trees.behaviour.Behaviuor.setup` method in turn.
 
-        This is best done here rather than in the constructor so that trees can
-        be instantiated on the fly without any runtime requirements to produce
-        visualisations such as dot graphs.
+        Args:
+             timeout (:obj:`float`): time to wait (0.0 is blocking forever)
 
-        :param double timeout: time to wait (0.0 is blocking forever)
-        :returns: whether it timed out waiting for the server or not.
-        :rtype: boolean
+        Return:
+            :obj:`bool`: suceess or failure of the operation
         """
         self.logger.debug("%s.setup()" % (self.__class__.__name__))
         result = True
@@ -80,7 +85,7 @@ class Composite(Behaviour):
             new_result = child.setup(timeout)
             if new_result is None:
                 # replace with py_trees exception!
-                self.logger.error("%s [Composite.setup()]['%s'.setup() returned None (must be True||False)" % (self.name, child.name))
+                self.logger.error("%s.setup()['%s'.setup() returned None (must be True||False)]" % (self.__class__.__name__, child.name))
             result = result and new_result
             if not result:
                 break
@@ -88,10 +93,16 @@ class Composite(Behaviour):
 
     def stop(self, new_status=Status.INVALID):
         """
-        This updates all the children. We generally have two use cases here - whenever the composite has
-        gone to a recognised state (i.e. :data:`~py_trees.common.Status.FAILURE` or SUCCESS), or when a higher level parent calls on
-        it to truly stop (INVALID). We only really want to update everything below if we are in
-        the second use case. The first use case will subehaviours will have already handled themselves.
+        There is generally two use cases that must be supported here.
+
+        1) Whenever the composite has gone to a recognised state (i.e. :data:`~py_trees.common.Status.FAILURE` or SUCCESS),
+        or 2) when a higher level parent calls on it to truly stop (INVALID).
+
+        In only the latter case will children need to be forcibly stopped as well. In the first case, they will
+        have stopped themselves appropriately already.
+
+        Args:
+            new_status (:class:`~py_trees.common.Status`): behaviour will transition to this new status
         """
         self.logger.debug("%s.stop()[%s]" % (self.__class__.__name__, "%s->%s" % (self.status, new_status) if self.status != new_status else "%s" % new_status))
         if new_status == Status.INVALID:
@@ -105,9 +116,10 @@ class Composite(Behaviour):
 
     def tip(self):
         """
-        Recursive function to extract the last running node of the tree. Returns the
-        tip function of the current child of this composite.
+        Recursive function to extract the last running node of the tree.
 
+        Returns:
+            :class::`~py_trees.behaviour.Behaviour`: the tip function of the current child of this composite or None
         """
         return self.current_child.tip() if self.current_child is not None else None
 
@@ -119,9 +131,11 @@ class Composite(Behaviour):
         """
         Adds a child.
 
-        :param child: child to add to the tree
-        :type child: instance or descendant of :class:`Behaviour <py_trees.behaviours.Behaviour>`
-        :return: a unique id for this child (store and use to form remove requests)
+        Args:
+            child (:class:`~py_trees.behaviour.Behaviour`): child to delete
+
+        Returns:
+            uuid.UUID: unique id of the child
         """
         assert isinstance(child, Behaviour), "children must be behaviours, but you passed in %s" % type(child)
         self.children.append(child)
@@ -130,9 +144,10 @@ class Composite(Behaviour):
 
     def add_children(self, children):
         """
-        Adds a child.
+        Append a list of children to the current list.
 
-        :param Behaviour[] children: children to append to the composite.
+        Args:
+            children ([:class:`~py_trees.behaviour.Behaviour`]): list of children to add
         """
         for child in children:
             assert isinstance(child, Behaviour), "children must be behaviours, but you passed in %s" % type(child)
@@ -143,10 +158,13 @@ class Composite(Behaviour):
         """
         Remove the child behaviour from this composite.
 
-        :param child: child to remove from the tree
-        :type child: instance or descendant of :class:`Behaviour <py_trees.behaviours.Behaviour>`
+        Args:
+            child (:class:`~py_trees.behaviour.Behaviour`): child to delete
 
-        .. todo:: error handling for when child is not in this list (what error is thrown?)
+        Returns:
+            :obj:`int`: index of the child that was removed
+
+        .. todo:: Error handling for when child is not in this list
         """
         if child.status == Status.RUNNING:
             child.stop(Status.INVALID)
@@ -167,20 +185,28 @@ class Composite(Behaviour):
 
     def replace_child(self, child, replacement):
         """
-        Replace the child behaviour.
+        Replace the child behaviour with another.
 
-        :param child: child to remove from the tree
-        :type child: instance or descendant of :class:`Behaviour <py_trees.behaviours.Behaviour>`
-        :param replacement: child to insert
-        :type replacement: instance or descendant of :class:`Behaviour <py_trees.behaviours.Behaviour>`
+        Args:
+            child (:class:`~py_trees.behaviour.Behaviour`): child to delete
+            replacement (:class:`~py_trees.behaviour.Behaviour`): child to insert
         """
         if child.status == Status.RUNNING:
             child.stop(Status.INVALID)
         child_index = self.children.index(child)
-        self.logger.debug("%s [replace_child()][%s->%s]" % (self.name, child.name, replacement.name))
+        self.logger.debug("%s.replace_child()[%s->%s]" % (self.__class__.__name__, child.name, replacement.name))
         self.children[child_index] = replacement
 
     def remove_child_by_id(self, child_id):
+        """
+        Remove the child with the specified id.
+
+        Args:
+            child_id (uuid.UUID): unique id of the child
+
+        Raises:
+            IndexError: if the child was not found
+        """
         child = next((c for c in self.children if c.id == child_id), None)
         if child is not None:
             if child.status == Status.RUNNING:
@@ -190,11 +216,31 @@ class Composite(Behaviour):
             raise IndexError('child was not found with the specified id [%s]' % child_id)
 
     def prepend_child(self, child):
+        """
+        Prepend the child before all other children.
+
+        Args:
+            child (:class:`~py_trees.behaviour.Behaviour`): child to insert
+
+        Returns:
+            uuid.UUID: unique id of the child
+        """
         self.children.insert(0, child)
         child.parent = self
         return child.id
 
     def insert_child(self, child, index):
+        """
+        Insert child at the specified index. This simply directly calls
+        the python list's :obj:`insert` method using the child and index arguments.
+
+        Args:
+            child (:class:`~py_trees.behaviour.Behaviour`): child to insert
+            index (:obj:`int`): index to insert it at
+
+        Returns:
+            uuid.UUID: unique id of the child
+        """
         self.children.insert(index, child)
         child.parent = self
         return child.id
@@ -222,38 +268,29 @@ class Selector(Composite):
        executing low priority branch. This signal will percolate down that child's own subtree. Behaviours
        should make sure that they catch this and *destruct* appropriately.
 
-    Make sure you do your appropriate cleanup in the ``terminate()`` methods! e.g. cancelling a running goal, or restoring a context.
+    Make sure you do your appropriate cleanup in the :meth:`terminate()` methods! e.g. cancelling a running goal, or restoring a context.
 
     .. seealso:: The :ref:`py-trees-demo-selector-program` program demos higher priority switching under a selector.
+
+    Args:
+        name (:obj:`str`): the composite behaviour name
+        children ([:class:`~py_trees.behaviour.Behaviour`]): list of children to add
+        *args: variable length argument list
+        **kwargs: arbitrary keyword arguments
     """
 
     def __init__(self, name="Selector", children=None, *args, **kwargs):
-        """
-        Initialise the sequence with a name and (optionally) some children.
-        The children can always be appended later via the
-        :py:func:`~py_trees.composites.Composite.add_child` and
-        :py:func:`~py_trees.composites.Composite.add_children`
-
-        :param str name: name to give to the sequence
-        :param [] children: list of children (:py:class:`~py_trees.behaviour.Behaviour`) to append to the sequence
-        """
         super(Selector, self).__init__(name, children, *args, **kwargs)
         self.current_child = None
 
     def tick(self):
         """
         Run the tick behaviour for this selector. Note that the status
-        of the tick is (for now) always determined by its children, not
+        of the tick is always determined by its children, not
         by the user customised update function.
 
-        For now, the update function just provides a place where classes
-        that inherit this one can do some work *before* running the children.
-        The return status is ignored.
-
-        .. todo::
-
-           Should be calling stop() in here (like behaviours)?
-           Should update be called before/after children?
+        Yields:
+            :class:`~py_trees.behaviour.Behaviour`: a reference to itself or one of its children
         """
         self.logger.debug("%s.tick()" % self.__class__.__name__)
         # Required behaviour for *all* behaviours and composites is
@@ -297,6 +334,9 @@ class Selector(Composite):
         is important to implement this here instead of terminate, so users are free
         to subclass this easily with their own terminate and not have to remember
         that they need to call this function manually.
+
+        Args:
+            new_status (:class:`~py_trees.common.Status`): the composite is transitioning to this new status
         """
         # retain information about the last running child if the new status is
         # SUCCESS or FAILURE
@@ -305,10 +345,17 @@ class Selector(Composite):
         Composite.stop(self, new_status)
 
     def __repr__(self):
+        """
+        Simple string representation of the object.
+
+        Returns:
+            :obj:`str`: string representation
+        """
         s = "Name       : %s\n" % self.name
         s += "  Status  : %s\n" % self.status
         s += "  Current : %s\n" % (self.current_child.name if self.current_child is not None else "none")
         s += "  Children: %s\n" % [child.name for child in self.children]
+        return s
 
 
 ##############################################################################
@@ -328,26 +375,20 @@ class Chooser(Selector):
     only come into effect if the chooser wasn't running in the previous tick.
 
     .. note::
+        This is the only composite in py_trees that is not a core composite in most behaviour tree implementations.
+        Nonetheless, this is useful in fields like robotics, where you have to ensure that your manipulator doesn't
+        drop it's payload mid-motion as soon as a higher interrupt arrives. Use this composite
+        sparingly and only if you can't find another way to easily create an elegant tree composition for your task.
 
-       The child may not be interrupted but nothing prevents the **selector** itself from being interrupted by
-       higher level behaviours.
+    Args:
+        name (:obj:`str`): the composite behaviour name
+        children ([:class:`~py_trees.behaviour.Behaviour`]): list of children to add
+        *args: variable length argument list
+        **kwargs: arbitrary keyword arguments
 
-    This is the only composite in py_trees that is not a core composite in most behaviour tree implementations.
-    Nonetheless, this is useful in fields like robotics, where you have to ensure that your manipulator doesn't
-    drop it's payload mid-motion as soon as a higher interrupt arrives. Use this composite
-    sparingly and only if you can't find another way to easily create an elegant tree composition for your task.
     """
 
     def __init__(self, name="Chooser", children=None, *args, **kwargs):
-        """
-        Initialise the sequence with a name and (optionally) some children.
-        The children can always be appended later via the
-        :py:func:`~py_trees.composites.Composite.add_child` and
-        :py:func:`~py_trees.composites.Composite.add_children`
-
-        :param str name: name to give to the sequence
-        :param [] children: list of children (:py:class:`~py_trees.behaviour.Behaviour`) to append to the sequence
-        """
         super(Chooser, self).__init__(name, children, *args, **kwargs)
 
     def tick(self):
@@ -356,9 +397,8 @@ class Chooser(Selector):
         of the tick is (for now) always determined by its children, not
         by the user customised update function.
 
-        For now, the update function just provides a place where classes
-        that inherit this one can do some work *before* running the children.
-        The return status is ignored.
+        Yields:
+            :class:`~py_trees.behaviour.Behaviour`: a reference to itself or one of its children
         """
         self.logger.debug("%s.tick()" % self.__class__.__name__)
         # Required behaviour for *all* behaviours and composites is
@@ -416,21 +456,25 @@ class Sequence(Composite):
        the result. *It does not get stuck in the running behaviour*.
 
     .. seealso:: The :ref:`py-trees-demo-sequence-program` program demos a simple sequence in action.
+
+    Args:
+        name (:obj:`str`): the composite behaviour name
+        children ([:class:`~py_trees.behaviour.Behaviour`]): list of children to add
+        *args: variable length argument list
+        **kwargs: arbitrary keyword arguments
+
     """
     def __init__(self, name="Sequence", children=None, *args, **kwargs):
-        """
-        Initialise the sequence with a name and (optionally) some children.
-        The children can always be appended later via the
-        :py:func:`~py_trees.composites.Composite.add_child` and
-        :py:func:`~py_trees.composites.Composite.add_children`.
-
-        :param str name: name to give to the sequence
-        :param [] children: list of children (:py:class:`~py_trees.behaviour.Behaviour`) to append to the sequence
-        """
         super(Sequence, self).__init__(name, children, *args, **kwargs)
         self.current_index = -1  # -1 indicates uninitialised
 
     def tick(self):
+        """
+        Tick over the children.
+
+        Yields:
+            :class:`~py_trees.behaviour.Behaviour`: a reference to itself or one of its children
+        """
         self.logger.debug("%s.tick()" % self.__class__.__name__)
         if self.status != Status.RUNNING:
             self.logger.debug("%s.tick() [resetting]" % self.__class__.__name__)
@@ -459,6 +503,12 @@ class Sequence(Composite):
 
     @property
     def current_child(self):
+        """
+        Have to check if there's anything actually running first.
+
+        Returns:
+            :class:`~py_trees.behaviour.Behaviour`: the child that is currently running, or None
+        """
         if self.current_index == -1:
             return None
         return self.children[self.current_index] if self.children else None
@@ -469,6 +519,9 @@ class Sequence(Composite):
         is important to implement this here intead of terminate, so users are free
         to subclass this easily with their own terminate and not have to remember
         that they need to call this function manually.
+
+        Args:
+            new_status (:class:`~py_trees.common.Status`): the composite is transitioning to this new status
         """
         # retain information about the last running child if the new status is
         # SUCCESS or FAILURE
@@ -495,21 +548,25 @@ class Parallel(Composite):
     * Parallels with policy :data:`~py_trees.common.ParallelPolicy.SUCCESS_ON_ALL` only returns :py:data:`~py_trees.common.Status.SUCCESS` if **all** children return :py:data:`~py_trees.common.Status.SUCCESS`
 
     .. seealso:: The :ref:`py-trees-demo-context-switching-program` program demos a parallel used to assist in a context switching scenario.
+
+    Args:
+        name (:obj:`str`): the composite behaviour name
+        policy (:class:`~py_trees.common.ParallelPolicy`): policy to use for deciding success or otherwise
+        children ([:class:`~py_trees.behaviour.Behaviour`]): list of children to add
+        *args: variable length argument list
+        **kwargs: arbitrary keyword arguments
     """
     def __init__(self, name="Parallel", policy=common.ParallelPolicy.SUCCESS_ON_ALL, children=None, *args, **kwargs):
-        """
-        Initialise the sequence with a name and (optionally) some children.
-        The children can always be appended later via the
-        :py:func:`~py_trees.composites.Composite.add_child` and
-        :py:func:`~py_trees.composites.Composite.add_children`
-
-        :param str name: name to give to the sequence
-        :param [] children: list of children (:py:class:`~py_trees.behaviour.Behaviour`) to append to the sequence
-        """
         super(Parallel, self).__init__(name, children, *args, **kwargs)
         self.policy = policy
 
     def tick(self):
+        """
+        Tick over the children.
+
+        Yields:
+            :class:`~py_trees.behaviour.Behaviour`: a reference to itself or one of its children
+        """
         if self.status != Status.RUNNING:
             # subclass (user) handling
             self.initialise()
@@ -542,6 +599,12 @@ class Parallel(Composite):
 
     @property
     def current_child(self):
+        """
+        Have to check if there's anything actually running first.
+
+        Returns:
+            :class:`~py_trees.behaviour.Behaviour`: the child that is currently running, or None
+        """
         if self.status == Status.INVALID:
             return None
         if self.status == Status.FAILURE:

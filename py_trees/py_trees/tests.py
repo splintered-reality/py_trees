@@ -8,8 +8,7 @@
 ##############################################################################
 
 """
-.. module:: tests
-   :synopsis: Methods supporting tests
+Library of common methods for the tests.
 
 Oh my spaghettified magnificence,
 Bless my noggin with a tickle from your noodly appendages!

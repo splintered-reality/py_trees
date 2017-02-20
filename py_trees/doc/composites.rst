@@ -1,7 +1,7 @@
 Composites
 ==========
 
-.. automodule:: py_trees.blackboard
+.. automodule:: py_trees.composites
     :noindex:
 
 The subsections below introduce each composite briefly. For a full listing of each

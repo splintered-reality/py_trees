@@ -238,7 +238,6 @@ class Behaviour(object):
 
         Yields:
             :class:`~py_trees.behaviour.Behaviour`: a reference to itself
-
         """
         self.logger.debug("%s.tick()" % (self.__class__.__name__))
         if self.status != Status.RUNNING:

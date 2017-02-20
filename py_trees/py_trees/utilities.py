@@ -8,11 +8,7 @@
 ##############################################################################
 
 """
-.. module:: utilities
-   :synopsis: Assorted utility functions
-
-Oh my spaghettified magnificence,
-Bless my noggin with a tickle from your noodly appendages!
+Assorted utility functions.
 """
 
 ##############################################################################
@@ -28,10 +24,13 @@ import os
 
 def which(program):
     '''
-      Wrapper around the command line 'which' program.
+    Wrapper around the command line 'which' program.
 
-      :returns: path to the program or None if it doesnt exist.
-      :rtype: str or None
+    Args:
+        program (:obj:`str`): name of the program to find.
+
+    Returns:
+        :obj:`str`: path to the program or None if it doesnt exist.
     '''
     def is_exe(fpath):
         return os.path.isfile(fpath) and os.access(fpath, os.X_OK)

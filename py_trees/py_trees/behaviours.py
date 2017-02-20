@@ -189,6 +189,12 @@ class Count(Behaviour):
             return Status.FAILURE
 
     def __repr__(self):
+        """
+        Simple string representation of the object.
+
+        Returns:
+            :obj:`str`: string representation
+        """
         s = "%s\n" % self.name
         s += "  Status : %s\n" % self.status
         s += "  Count  : %s\n" % self.count
