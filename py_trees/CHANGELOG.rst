@@ -1,8 +1,8 @@
 Changelog
 =========
 
-Forthcoming
------------
+0.5.0 (2017-02-21)
+------------------
 * [ros] components moved to py_trees_ros
 * [timeout] bugfix to ensure timeout decorator initialises properly
 * [docs] rolled over with napolean style
