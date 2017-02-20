@@ -13,8 +13,8 @@ Py Trees
    behaviours
    composites
    blackboards
-   visualisation
    trees
+   visualisation
    the_crazy_hospital
    terminology
    programs

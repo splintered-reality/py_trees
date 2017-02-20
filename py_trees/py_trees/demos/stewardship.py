@@ -23,6 +23,7 @@
 ##############################################################################
 
 import argparse
+import functools
 import py_trees
 import sys
 import time
@@ -91,6 +92,14 @@ def pre_tick_handler(behaviour_tree):
     print("\n--------- Run %s ---------\n" % behaviour_tree.count)
 
 
+def post_tick_handler(snapshot_visitor, behaviour_tree):
+    """
+    Prints an ascii tree with the current snapshot status.
+    """
+    print("\n" + py_trees.display.ascii_tree(behaviour_tree.root,
+                                             snapshot_information=snapshot_visitor))
+
+
 def create_tree():
     every_n_success = py_trees.behaviours.SuccessEveryN("EveryN", 5)
     sequence = py_trees.Sequence(name="Sequence")
@@ -136,6 +145,7 @@ def main():
     behaviour_tree.add_pre_tick_handler(pre_tick_handler)
     behaviour_tree.visitors.append(py_trees.visitors.DebugVisitor())
     snapshot_visitor = py_trees.visitors.SnapshotVisitor()
+    behaviour_tree.add_post_tick_handler(functools.partial(post_tick_handler, snapshot_visitor))
     behaviour_tree.visitors.append(snapshot_visitor)
     behaviour_tree.setup(timeout=15)
 
@@ -147,7 +157,6 @@ def main():
     while True:
         try:
             behaviour_tree.tick()
-            print("\n" + py_trees.display.ascii_tree(behaviour_tree.root, snapshot_information=snapshot_visitor))
             if args.interactive:
                 unused_result = py_trees.console.read_single_keypress()
             else:

@@ -72,8 +72,8 @@ def command_line_argument_parser():
 
 def create_tree():
     root = py_trees.composites.Sequence("Sequence")
-    for job in ["Job 1", "Job 2", "Job 3"]:
-        success_after_two = py_trees.behaviours.Count(name=job,
+    for action in ["Action 1", "Action 2", "Action 3"]:
+        success_after_two = py_trees.behaviours.Count(name=action,
                                                       fail_until=0,
                                                       running_until=1,
                                                       success_until=10)

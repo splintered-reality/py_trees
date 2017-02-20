@@ -8,8 +8,10 @@
 ##############################################################################
 
 """
-Render and write a behaviour tree visually to various simple output formats.
-Currently this includes dot graphs, strings or stdout.
+Behaviour trees are significantly easier to design, monitor and debug
+with visualisations. Py Trees does provide minimal assistance to render
+trees to various simple output formats. Currently this includes dot graphs,
+strings or stdout.
 """
 
 ##############################################################################
@@ -94,6 +96,40 @@ def ascii_tree(tree, indent=0, snapshot_information=None):
 
     Returns:
         :obj:`str`: an ascii tree (i.e. in string form)
+
+    Examples:
+
+        Use the :class:`~py_trees.visitors.SnapshotVisitor`
+        and :class:`~py_trees.trees.BehaviourTree`
+        to generate snapshot information at each tick and feed that to
+        a post tick handler that will print the traversed ascii tree
+        complete with status and feedback messages.
+
+        .. image:: images/ascii_tree.png
+            :width: 200px
+            :align: right
+
+        .. code-block:: python
+
+            def post_tick_handler(snapshot_visitor, behaviour_tree):
+                print(py_trees.display.ascii_tree(behaviour_tree.root,
+                      snapshot_information=snapshot_visitor))
+
+            root = py_trees.composites.Sequence("Sequence")
+            for action in ["Action 1", "Action 2", "Action 3"]:
+                b = py_trees.behaviours.Count(
+                        name=action,
+                        fail_until=0,
+                        running_until=1,
+                        success_until=10)
+                root.add_child(b)
+            behaviour_tree = py_trees.trees.BehaviourTree(root)
+            snapshot_visitor = py_trees.visitors.SnapshotVisitor()
+            behaviour_tree.add_post_tick_handler(
+                functools.partial(post_tick_handler,
+                                  snapshot_visitor))
+            behaviour_tree.visitors.append(snapshot_visitor)
+
     """
     s = ""
     for line in _generate_ascii_tree(tree, indent, snapshot_information):
@@ -101,14 +137,39 @@ def ascii_tree(tree, indent=0, snapshot_information=None):
     return s
 
 
-def print_ascii_tree(tree, indent=0, show_status=False):
+def print_ascii_tree(root, indent=0, show_status=False):
     """
     Print the ASCII representation of an entire behaviour tree.
 
     Args:
-        tree (:class:`~py_trees.behaviour.Behaviour`): the root of the tree, or subtree you want to show
+        root (:class:`~py_trees.behaviour.Behaviour`): the root of the tree, or subtree you want to show
         indent (:obj:`int`): the number of characters to indent the tree
         show_status (:obj:`bool`): additionally show feedback message and status of every element
+
+    Examples:
+
+        Render a simple tree in ascii format to stdout.
+
+        .. image:: images/ascii_tree_simple.png
+            :width: 100px
+            :align: right
+
+        .. code-block:: python
+
+            root = py_trees.composites.Sequence("Sequence")
+            for action in ["Action 1", "Action 2", "Action 3"]:
+                b = py_trees.behaviours.Count(
+                        name=action,
+                        fail_until=0,
+                        running_until=1,
+                        success_until=10)
+                root.add_child(b)
+            py_trees.display.print_ascii_tree(root)
+
+    .. tip::
+
+        To additionally display status and feedbback message from every behaviour in the tree,
+        simply set the :obj:`show_status` flag to True.
     """
     class InstantSnapshot(object):
         def __init__(self, tree):
@@ -119,8 +180,8 @@ def print_ascii_tree(tree, indent=0, show_status=False):
                 self.nodes[node.id] = node.status
                 self.running_nodes.append(node.id)
             self.previously_running_nodes = self.running_nodes
-    snapshot_information = InstantSnapshot(tree) if show_status else None
-    for line in _generate_ascii_tree(tree, indent, snapshot_information):
+    snapshot_information = InstantSnapshot(root) if show_status else None
+    for line in _generate_ascii_tree(root, indent, snapshot_information):
         print("%s" % line)
 
 
@@ -211,6 +272,28 @@ def render_dot_tree(root, visibility_level=common.VisibilityLevel.DETAIL):
     Args:
         root (:class:`~py_trees.behaviour.Behaviour`): the root of a tree, or subtree
         visibility_level (:class`~py_trees.common.VisibilityLevel`): collapse subtrees at or under this level
+
+    Example:
+
+        Render a simple tree to dot/svg/png file:
+
+        .. graphviz:: dot/sequence.dot
+
+        .. code-block:: python
+
+            root = py_trees.composites.Sequence("Sequence")
+            for job in ["Action 1", "Action 2", "Action 3"]:
+                success_after_two = py_trees.behaviours.Count(name=job,
+                                                              fail_until=0,
+                                                              running_until=1,
+                                                              success_until=10)
+                root.add_child(success_after_two)
+            py_trees.display.render_dot_tree(root)
+
+    .. tip::
+
+        A good practice is to provide a command line argument for optional rendering of a program so users
+        can quickly visualise what tree the program will execute.
     """
     graph = generate_pydot_graph(root, visibility_level)
     name = root.name.lower().replace(" ", "_")

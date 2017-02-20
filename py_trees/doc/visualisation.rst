@@ -1,28 +1,35 @@
 Visualisation
 =============
 
+.. automodule:: py_trees.display
+    :noindex:
+
+Ascii Trees
+-----------
+
+You can get a very simple ascii representation of the tree on stdout with :func:`~py_trees.display.print_ascii_tree`:
+
+.. autofunction:: py_trees.display.print_ascii_tree
+    :noindex:
+
+Ascii Trees (Runtime)
+---------------------
+
+When a tree is ticking, it is important to be able to catch the status and feedback message from each behaviour that
+has been traversed. You can do this by using the :class:`~py_trees.visitors.SnapshotVisitor` in conjunction
+with the :func:`~py_trees.display.ascii_tree` function:
+
+.. autofunction:: py_trees.display.ascii_tree
+    :noindex:
+
 Dot Graphs
 ----------
 
-You can render trees into dot/png/svg files simply by calling the :py:func:`~py_trees.display.render_dot_tree`
-function. There is also an ascii version.
+You can render trees into dot/png/svg files simply by calling the :func:`~py_trees.display.render_dot_tree`
+function.
 
-.. code-block:: python
+.. autofunction:: py_trees.display.render_dot_tree
+    :noindex:
 
-   root = py_trees.Sequence(name="Sequence")
-   guard = py_trees.behaviours.Success("Guard")
-   periodic_success = py_trees.behaviours.Periodic("Periodic", 3)
-   finisher = py_trees.behaviours.Success("Finisher")
-   root.add_child(guard)
-   root.add_child(periodic_success)
-   root.add_child(finisher)
-   py_trees.display.render_dot_tree(root)
-
-To enable quick generation of dotgraphs for your *subtrees*, use a class method inside your root class, e.g.
-
-.. code-block:: python
-
-   @classmethod
-   def render_dot_tree(cls):
-       root = cls()
-       py_trees.display.render_dot_tree(root)
+They can also be converted to the dot graph format for export to other programs using the
+:func:`~py_trees.display.generate_pydot_graph` method.
