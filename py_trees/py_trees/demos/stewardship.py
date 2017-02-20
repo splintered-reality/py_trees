@@ -133,6 +133,7 @@ def main():
     # Tree Stewardship
     ####################
     behaviour_tree = py_trees.trees.BehaviourTree(tree)
+    behaviour_tree.add_pre_tick_handler(pre_tick_handler)
     behaviour_tree.visitors.append(py_trees.visitors.DebugVisitor())
     snapshot_visitor = py_trees.visitors.SnapshotVisitor()
     behaviour_tree.visitors.append(snapshot_visitor)
@@ -145,7 +146,7 @@ def main():
         unused_result = py_trees.console.read_single_keypress()
     while True:
         try:
-            behaviour_tree.tick(pre_tick_handler=pre_tick_handler)
+            behaviour_tree.tick()
             print("\n" + py_trees.display.ascii_tree(behaviour_tree.root, snapshot_information=snapshot_visitor))
             if args.interactive:
                 unused_result = py_trees.console.read_single_keypress()

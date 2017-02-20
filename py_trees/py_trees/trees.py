@@ -8,7 +8,17 @@
 ##############################################################################
 
 """
-Tree managers - they make your life easier!
+While a graph of connected behaviours and composites form a tree in their own right
+(i.e. it can be initialised and ticked), it is usually convenient to wrap your tree
+in another class to take care of alot of the housework and provide some extra bells
+and whistles that make your tree flourish.
+
+.. image:: images/yggdrasil.jpg
+   :width: 200px
+   :align: center
+
+This package provides a default reference implementation that is directly usable, but
+can also be easily used as inspiration for your own tree custodians.
 """
 
 ##############################################################################
@@ -238,7 +248,7 @@ class BehaviourTree(object):
         The handler functions must have a single argument of type :class:`~py_trees.trees.BehaviourTree`.
 
         Args:
-            sleep_ms (:obj:`float`): sleep this much between ticks (seconds)
+            sleep_ms (:obj:`float`): sleep this much between ticks (milliseconds)
             number_of_iterations (:obj:`int`): number of iterations to tick-tock
             pre_tick_handler (:obj:`func`): function to execute before ticking
             post_tick_handler (:obj:`func`): function to execute after ticking

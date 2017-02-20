@@ -8,12 +8,13 @@
 ##############################################################################
 
 """
-Various implementations of entities that visit nodes in a behaviour
-tree. Visitors can either visit the behaviours as they traverse through
-an executing tick or they can simply be flagged (setting the :data:`full`
-property) to visit the entire tree.
+Visitors are entities that can be passed to a tree implementation
+(e.g. :class:`~py_trees.trees.BehaviourTree`) and used to either visit
+each and every behaviour in the tree, or visit behaviours as the tree is
+traversed in an executing tick. At each behaviour, the visitor
+runs its own method on the behaviour to do as it wishes - logging, introspecting).
 
-.. seealso:: :class:`~py_trees.trees.BehaviourTree`
+.. note:: Visitors should not modify the behaviours they visit.
 """
 
 ##############################################################################
@@ -32,6 +33,9 @@ from . import common
 class VisitorBase(object):
     """
     Parent template for visitor types.
+
+    Visitors are primarily designed to work with :class:`~py_trees.trees.BehaviourTree`
+    but they can be used in the same way for other tree custodian implementations.
 
     Args:
         full (:obj:`bool`): flag to indicate whether it should be used to visit only traversed nodes or the entire tree
