@@ -1,0 +1,14 @@
+digraph parallel {
+graph [fontname="times-roman"];
+node [fontname="times-roman"];
+edge [fontname="times-roman"];
+Parallel [fillcolor=gold, fontcolor=black, fontsize=11, shape=note, style=filled];
+Context [fillcolor=gray, fontcolor=black, fontsize=11, shape=ellipse, style=filled];
+Parallel -> Context;
+Sequence [fillcolor=orange, fontcolor=black, fontsize=11, shape=box, style=filled];
+Parallel -> Sequence;
+"Action 1" [fillcolor=gray, fontcolor=black, fontsize=11, shape=ellipse, style=filled];
+Sequence -> "Action 1";
+"Action 2" [fillcolor=gray, fontcolor=black, fontsize=11, shape=ellipse, style=filled];
+Sequence -> "Action 2";
+}

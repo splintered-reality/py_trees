@@ -12,11 +12,11 @@
 # (unicode_literals not compatible with python2 uuid module)
 from __future__ import absolute_import, print_function
 
-from nose.tools import assert_raises
+# from nose.tools import assert_raises
 
 import py_trees
 from py_trees import Blackboard, Status
-import rocon_console.console as console
+import py_trees.console as console
 import operator
 
 ##############################################################################
@@ -24,16 +24,18 @@ import operator
 ##############################################################################
 
 # py_trees.logging.level = py_trees.logging.Level.DEBUG
-# logger = py_trees.logging.get_logger("Nosetest")
+# logger = py_trees.logging.Logger("Nosetest")
 
 ##############################################################################
 # Helpers
 ##############################################################################
 
+
 class FooBar(object):
 
     def __init__(self):
         pass
+
 
 def create_blackboard():
     """
@@ -51,6 +53,7 @@ def create_blackboard():
 # Tests
 ##############################################################################
 
+
 def test_print_blackboard():
     print(console.bold + "\n****************************************************************************************" + console.reset)
     print(console.bold + "* Blackboard" + console.reset)
@@ -63,7 +66,7 @@ def test_variable_exists():
     print(console.bold + "\n****************************************************************************************" + console.reset)
     print(console.bold + "* Check Existence of Variable" + console.reset)
     print(console.bold + "****************************************************************************************\n" + console.reset)
-    blackboard = create_blackboard()
+    unused_blackboard = create_blackboard()
     tuples = []
     tuples.append((py_trees.blackboard.CheckBlackboardVariable(name="check_foo_exists", variable_name="foo"), Status.SUCCESS))
     tuples.append((py_trees.blackboard.CheckBlackboardVariable(name="check_bar_exists", variable_name="bar"), Status.FAILURE))
@@ -78,7 +81,7 @@ def test_expected_value():
     print(console.bold + "\n****************************************************************************************" + console.reset)
     print(console.bold + "* Check Expected Value" + console.reset)
     print(console.bold + "****************************************************************************************\n" + console.reset)
-    blackboard = create_blackboard()
+    unused_blackboard = create_blackboard()
     tuples = []
     tuples.append((py_trees.blackboard.CheckBlackboardVariable(name="check_foo_equals_bar", variable_name="foo", expected_value="bar"), Status.SUCCESS))
     tuples.append((py_trees.blackboard.CheckBlackboardVariable(name="check_foo_equals_foo", variable_name="foo", expected_value="foo"), Status.FAILURE))
@@ -90,11 +93,12 @@ def test_expected_value():
         print("{0}: {1} [{2}]".format(b.name, b.status, asserted_result))
         assert(b.status == asserted_result)
 
+
 def test_expected_value_inverted():
     print(console.bold + "\n****************************************************************************************" + console.reset)
     print(console.bold + "* Check Not Expected Value" + console.reset)
     print(console.bold + "****************************************************************************************\n" + console.reset)
-    blackboard = create_blackboard()
+    unused_blackboard = create_blackboard()
 
     tuples = []
     tuples.append((py_trees.blackboard.CheckBlackboardVariable(name="check_foo_equals_bar", variable_name="foo", expected_value="bar", comparison_operator=operator.ne), Status.FAILURE))
@@ -106,6 +110,7 @@ def test_expected_value_inverted():
     for b, asserted_result in tuples:
         print("%s: %s [%s]" % (b.name, b.status, asserted_result))
         assert(b.status == asserted_result)
+
 
 def test_clear_blackboard_variable():
     print(console.bold + "\n****************************************************************************************" + console.reset)
@@ -126,6 +131,7 @@ def test_clear_blackboard_variable():
     clear_bar.tick_once()
     print(" - Asserting nothing wierd happened")
     assert(not hasattr(blackboard, "foo"))
+
 
 def test_set_blackboard_variable():
     print(console.bold + "\n****************************************************************************************" + console.reset)

@@ -12,41 +12,20 @@
 # (unicode_literals not compatible with python2 uuid module)
 from __future__ import absolute_import, print_function
 
-from nose.tools import assert_raises
 import py_trees
-import rocon_console.console as console
+import py_trees.console as console
 
 ##############################################################################
 # Logging Level
 ##############################################################################
 
 py_trees.logging.level = py_trees.logging.Level.DEBUG
-logger = py_trees.logging.get_logger("Nosetest")
-
-##############################################################################
-# Classes
-##############################################################################
-
-
-def pre_tick_visitor(behaviour_tree):
-    print("\n--------- Run %s ---------\n" % behaviour_tree.count)
-
-
-def tick_tree(tree, visitor, from_iteration, to_iteration):
-    print("\n================== Iteration %s-%s ==================\n" % (from_iteration, to_iteration))
-    for i in range(from_iteration, to_iteration + 1):
-        print("\n--------- Run %s ---------\n" % i)
-        for node in tree.tick():
-            node.visit(visitor)
-
-def print_summary(nodes):
-    print("\n--------- Summary ---------\n")
-    for node in nodes:
-        print("%s" % node)
+logger = py_trees.logging.Logger("Nosetest")
 
 ##############################################################################
 # Tests
 ##############################################################################
+
 
 def test_low_priority_runner():
     print(console.bold + "\n****************************************************************************************" + console.reset)
@@ -58,8 +37,8 @@ def test_low_priority_runner():
     root.add_child(failure)
     root.add_child(running)
     py_trees.display.print_ascii_tree(root)
-    visitor = py_trees.trees.DebugVisitor()
-    tick_tree(root, visitor, 1, 1)
+    visitor = py_trees.visitors.DebugVisitor()
+    py_trees.tests.tick_tree(root, visitor, 1, 1)
 
     print("\n--------- Assertions ---------\n")
     print("root.status == py_trees.Status.RUNNING")
@@ -69,7 +48,7 @@ def test_low_priority_runner():
     print("running.status == py_trees.Status.RUNNING")
     assert(running.status == py_trees.Status.RUNNING)
 
-    tick_tree(root, visitor, 2, 2)
+    py_trees.tests.tick_tree(root, visitor, 2, 2)
 
     print("\n--------- Assertions ---------\n")
     print("root.status == py_trees.Status.RUNNING")
@@ -78,6 +57,7 @@ def test_low_priority_runner():
     assert(failure.status == py_trees.Status.INVALID)
     print("running.status == py_trees.Status.RUNNING")
     assert(running.status == py_trees.Status.RUNNING)
+
 
 def test_low_priority_success():
     print(console.bold + "\n****************************************************************************************" + console.reset)
@@ -89,8 +69,8 @@ def test_low_priority_success():
     root.add_child(failure)
     root.add_child(success)
     py_trees.display.print_ascii_tree(root)
-    visitor = py_trees.trees.DebugVisitor()
-    tick_tree(root, visitor, 1, 1)
+    visitor = py_trees.visitors.DebugVisitor()
+    py_trees.tests.tick_tree(root, visitor, 1, 1)
 
     print("\n--------- Assertions ---------\n")
     print("root.status == py_trees.Status.SUCCESS")
@@ -100,7 +80,7 @@ def test_low_priority_success():
     print("success.status == py_trees.Status.SUCCESS")
     assert(success.status == py_trees.Status.SUCCESS)
 
-    tick_tree(root, visitor, 2, 2)
+    py_trees.tests.tick_tree(root, visitor, 2, 2)
 
     # make sure both children are ticked again (different to above)
     print("\n--------- Assertions ---------\n")
@@ -110,6 +90,7 @@ def test_low_priority_success():
     assert(failure.status == py_trees.Status.FAILURE)
     print("success.status == py_trees.Status.SUCCESS")
     assert(success.status == py_trees.Status.SUCCESS)
+
 
 def test_higher_priority_ignore():
     print(console.bold + "\n****************************************************************************************" + console.reset)
@@ -121,8 +102,8 @@ def test_higher_priority_ignore():
     root.add_child(ping_pong)
     root.add_child(running)
     py_trees.display.print_ascii_tree(root)
-    visitor = py_trees.trees.DebugVisitor()
-    tick_tree(root, visitor, 1, 1)
+    visitor = py_trees.visitors.DebugVisitor()
+    py_trees.tests.tick_tree(root, visitor, 1, 1)
 
     print("\n--------- Assertions ---------\n")
     print("root.status == py_trees.Status.RUNNING")
@@ -132,7 +113,7 @@ def test_higher_priority_ignore():
     print("running.status == py_trees.Status.RUNNING")
     assert(running.status == py_trees.Status.RUNNING)
 
-    tick_tree(root, visitor, 2, 2)
+    py_trees.tests.tick_tree(root, visitor, 2, 2)
 
     print("\n--------- Assertions ---------\n")
     print("root.status == py_trees.Status.RUNNING")

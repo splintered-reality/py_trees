@@ -6,21 +6,20 @@
 Py Trees
 ========
 
-Behaviour trees for ros in python.
-
-Contents:
-
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    background
-   building_blocks
-   patterns
-   examples
+   behaviours
+   composites
+   blackboards
+   trees
+   visualisation
+   the_crazy_hospital
    terminology
+   programs
    modules
    changelog
-
 
 Indices and tables
 ==================

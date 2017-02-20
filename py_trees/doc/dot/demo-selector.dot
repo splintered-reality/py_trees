@@ -1,0 +1,10 @@
+digraph selector {
+graph [fontname="times-roman"];
+node [fontname="times-roman"];
+edge [fontname="times-roman"];
+Selector [fillcolor=cyan, fontcolor=black, fontsize=11, shape=octagon, style=filled];
+"After Two" [fillcolor=gray, fontcolor=black, fontsize=11, shape=ellipse, style=filled];
+Selector -> "After Two";
+Running [fillcolor=gray, fontcolor=black, fontsize=11, shape=ellipse, style=filled];
+Selector -> Running;
+}

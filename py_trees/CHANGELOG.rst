@@ -1,6 +1,15 @@
 Changelog
 =========
 
+0.5.0 (2017-02-21)
+------------------
+* [ros] components moved to py_trees_ros
+* [timeout] bugfix to ensure timeout decorator initialises properly
+* [docs] rolled over with napolean style
+* [docs] sphinx documentation updated
+* [imposter] make sure tip() drills down into composites
+* [demos] re-organised into modules
+
 0.4.0 (2017-01-13)
 ------------------
 * [trees] add pre/post handlers after setup, just in case setup fails

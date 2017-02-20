@@ -1,0 +1,119 @@
+#!/usr/bin/env python
+#
+# scripts/demo_tree
+#
+# License: BSD
+#   https://raw.github.com/stonier/py_trees_suite/license/LICENSE
+#
+##############################################################################
+# Documentation
+##############################################################################
+"""
+Simple demo program for py trees
+"""
+##############################################################################
+# Imports
+##############################################################################
+
+import argparse
+import py_trees
+import py_trees.common
+import py_trees.composites
+import py_trees.behaviours
+import py_trees.display
+import py_trees.logging
+import py_trees_ros.trees
+import py_trees.trees
+import rospy
+import sys
+
+##############################################################################
+# Logging Level
+##############################################################################
+
+py_trees.logging.level = py_trees.logging.Level.DEBUG
+
+##############################################################################
+# Classes
+##############################################################################
+
+
+def pre_tick_handler(behaviour_tree):
+    print("\n--------- Run %s ---------\n" % behaviour_tree.count)
+
+
+def tick_tree(tree, visitor, from_iteration, to_iteration):
+    print("\n================== Iteration %s-%s ==================\n" % (from_iteration, to_iteration))
+    for i in range(from_iteration, to_iteration + 1):
+        print("\n--------- Run %s ---------\n" % i)
+        for node in tree.tick():
+            node.visit(visitor)
+
+
+def show_usage(root):
+    print("")
+    print("************************************************************************************")
+    print("                                 Babo Demo")
+    print("************************************************************************************")
+    print("")
+    print("TREE")
+    print("")
+    py_trees.display.print_ascii_tree(root)
+    print("")
+    print("EVENTS")
+    print("")
+    print(" - 3 : sequence switches from running to success")
+    print(" - 4 : selector's first child flicks to success once only")
+    print(" - 8 : the fallback idler kicks in as everything else fails")
+    print(" -14 : the first child kicks in again, aborting a running sequence behind it")
+    print("")
+    print("************************************************************************************")
+    print("")
+
+
+def render(root):
+    print("Rendering the behaviour tree")
+    py_trees.display.render_dot_tree(root)
+
+##############################################################################
+# Main
+##############################################################################
+
+if __name__ == '__main__':
+    every_n_success = py_trees.behaviours.SuccessEveryN("EveryN", 5)
+
+    sequence = py_trees.composites.Sequence(name="Sequence")
+    guard = py_trees.behaviours.Success("Guard")
+    periodic_success = py_trees.behaviours.Periodic("Periodic", 3)
+    finisher = py_trees.behaviours.Success("Finisher")
+    sequence.add_child(guard)
+    sequence.add_child(periodic_success)
+    sequence.add_child(finisher)
+    sequence.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
+
+    idle = py_trees.behaviours.Success("Idle")
+
+    root = py_trees.composites.Selector(name="Demo Tree")
+    root.add_child(every_n_success)
+    root.add_child(sequence)
+    root.add_child(idle)
+
+    parser = argparse.ArgumentParser(description='Demo the behaviour trees', usage=show_usage(root))
+    parser.add_argument('-r', '--render', action='store_true', help='render dot tree to file.')
+
+    myargs = rospy.myargv(argv=sys.argv)
+
+    args = parser.parse_args(args=myargs[1:])
+
+    if args.render:
+        render(root)
+        sys.exit()
+
+    # we've already imported rospy above, assume that we've got it
+    rospy.init_node("demo_tree")
+    # rebuild the tree as a ros behaviour tree
+    tree = py_trees_ros.trees.BehaviourTree(root)
+    tree.setup(15)
+
+    tree.visitors.append(py_trees.trees.DebugVisitor())
+    tree.tick_tock(sleep_ms=500, number_of_iterations=py_trees.trees.CONTINUOUS_TICK_TOCK, pre_tick_handler=pre_tick_handler)

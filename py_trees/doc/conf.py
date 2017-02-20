@@ -35,19 +35,34 @@ catkin_package = catkin_pkg.package.parse_package(os.path.join(catkin_dir, catki
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.coverage',
     'sphinx.ext.doctest',
     'sphinx.ext.graphviz',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.todo',
-    'sphinx.ext.coverage',
-    'sphinx.ext.mathjax',
     'sphinx.ext.ifconfig',
-    'sphinx.ext.viewcode'
-#    'sphinxcontrib.napoleon'
+    'sphinx.ext.intersphinx',
+    'sphinx.ext.mathjax',
+    'sphinx.ext.napoleon',
+    'sphinx.ext.todo',
+    'sphinx.ext.viewcode',
+    'sphinxarg.ext',
 ]
+##############################################################################
+# Napolean
+##############################################################################
+
+# True to use the :ivar: role for instance variables. False to use the .. attribute:: directive instead.
+napoleon_use_ivar = True
+
+##############################################################################
+# Todo
+##############################################################################
 
 # If you don't add this, todos don't appear
 todo_include_todos = True
+
+##############################################################################
+# Default Sphinx
+##############################################################################
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['.templates']
@@ -63,7 +78,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'py_trees'
-copyright = u'2015, Daniel Stonier'
+copyright = u'2017, Daniel Stonier'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -86,7 +101,7 @@ release = catkin_package.version
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ['.build']
+exclude_patterns = ['.build', 'weblinks.rst']
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
@@ -188,9 +203,11 @@ html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
 # If true, "Created using Sphinx" is shown in the HTML footer. Default is True.
 #html_show_sphinx = True
+html_show_sphinx = False
 
 # If true, "(C) Copyright ..." is shown in the HTML footer. Default is True.
 #html_show_copyright = True
+html_show_copyright = False
 
 # If true, an OpenSearch description file will be output, and all pages will
 # contain a <link> tag referring to it.  The value of this option must be the
@@ -284,4 +301,4 @@ texinfo_documents = [
 
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'http://docs.python.org/': None}
+#intersphinx_mapping = {'http://docs.python.org/': None}

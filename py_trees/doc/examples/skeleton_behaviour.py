@@ -7,25 +7,34 @@ import random
 class Foo(py_trees.Behaviour):
     def __init__(self, name):
         """
-        Basic variable construction here
-        leave any ros init_node dependent setup to the setup()
-        function so we can generate dot graphs offline
+        Minimal one-time initialisation. A good rule of thumb is
+        to only include the initialisation relevant for being able
+        to insert this behaviour in a tree for offline rendering to
+        dot graphs.
+
+        Other one-time initialisation requirements should be met via
+        the setup() method.
         """
         super(Foo, self).__init__(name)
 
     def setup(self, timeout):
         """
         When is this called?
-          This is not automatically called, your tree or
-          your program should call the setup function after construction
-          to make sure it gets run. A useful pattern is to set a flag so
-          that your initialise function can barf the first time your
-          behaviour is ticked.
+          This function should be either manually called by your program
+          or indirectly called by a parent behaviour when it's own setup
+          method has been called.
+
+          If you have vital initialisation here, a useful design pattern
+          is to put a guard in your initialise() function to barf the
+          first time your behaviour is ticked if setup has not been
+          called/succeeded.
 
         What to do here?
-          Do most of your ros setup here, candidates are:
-          - publishers, subscribers, services, actions with private names
-          - wait_for_xxx calls
+          Delayed one-time initialisation that would otherwise intefere
+          with offline rendering of this behaviour in a tree to dot graph.
+          Good examples include:
+          - Hardware or driver initialisation
+          - Middleware initialisation (e.g. ROS pubs/subs/services)
         """
         self.logger.debug("  %s [Foo::setup()]" % self.name)
 
@@ -36,8 +45,8 @@ class Foo(py_trees.Behaviour):
           status is not RUNNING thereafter.
 
         What to do here?
-          Any clearing, initialisation you need before putting your behaviour
-          though a period of work.
+          Any initialisation you need before putting your behaviour
+          to work.
         """
         self.logger.debug("  %s [Foo::initialise()]" % self.name)
 
@@ -47,7 +56,7 @@ class Foo(py_trees.Behaviour):
           Every time your behaviour is ticked.
 
         What to do here?
-          - Triggering, checking, monitring. Anything...but do not block!
+          - Triggering, checking, monitoring. Anything...but do not block!
           - Set a feedback message
           - return a py_trees.Status.[RUNNING, SUCCESS, FAILURE]
         """
@@ -66,7 +75,7 @@ class Foo(py_trees.Behaviour):
     def terminate(self, new_status):
         """
         When is this called?
-           Whenever your behaviour changes state.
+           Whenever your behaviour switches to a non-running state.
             - SUCCESS || FAILURE : your behaviour's work cycle has finished
             - INVALID : a higher priority branch has interrupted, or shutting down
         """

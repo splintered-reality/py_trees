@@ -1,0 +1,30 @@
+digraph demo_dot_graphs_fine_detail {
+graph [fontname="times-roman"];
+node [fontname="times-roman"];
+edge [fontname="times-roman"];
+"Demo Dot Graphs fine_detail" [fillcolor=cyan, fontcolor=black, fontsize=11, shape=octagon, style=filled];
+"BlackBox 1" [fillcolor=gray20, fontcolor=white, fontsize=11, shape=box, style=filled];
+"Demo Dot Graphs fine_detail" -> "BlackBox 1";
+Worker [fillcolor=gray, fontcolor=black, fontsize=11, shape=ellipse, style=filled];
+"BlackBox 1" -> Worker;
+"Worker*" [fillcolor=gray, fontcolor=black, fontsize=11, shape=ellipse, style=filled];
+"BlackBox 1" -> "Worker*";
+"Worker**" [fillcolor=gray, fontcolor=black, fontsize=11, shape=ellipse, style=filled];
+"BlackBox 1" -> "Worker**";
+"Blackbox 3" [fillcolor=gray20, fontcolor=dodgerblue, fontsize=11, shape=box, style=filled];
+"BlackBox 1" -> "Blackbox 3";
+"Worker***" [fillcolor=gray, fontcolor=black, fontsize=11, shape=ellipse, style=filled];
+"Blackbox 3" -> "Worker***";
+"Worker****" [fillcolor=gray, fontcolor=black, fontsize=11, shape=ellipse, style=filled];
+"Blackbox 3" -> "Worker****";
+"Worker*****" [fillcolor=gray, fontcolor=black, fontsize=11, shape=ellipse, style=filled];
+"Blackbox 3" -> "Worker*****";
+"Blackbox 2" [fillcolor=gray20, fontcolor=lawngreen, fontsize=11, shape=box, style=filled];
+"Demo Dot Graphs fine_detail" -> "Blackbox 2";
+"Worker******" [fillcolor=gray, fontcolor=black, fontsize=11, shape=ellipse, style=filled];
+"Blackbox 2" -> "Worker******";
+"Worker*******" [fillcolor=gray, fontcolor=black, fontsize=11, shape=ellipse, style=filled];
+"Blackbox 2" -> "Worker*******";
+"Worker********" [fillcolor=gray, fontcolor=black, fontsize=11, shape=ellipse, style=filled];
+"Blackbox 2" -> "Worker********";
+}

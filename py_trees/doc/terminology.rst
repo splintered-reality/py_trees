@@ -3,6 +3,24 @@ Terminology
 
 .. glossary::
 
+
+   blocking
+      A behaviour is sometimes referred to as a 'blocking' behaviour. Technically, the execution
+      of a behaviour should be non-blocking (i.e. the tick part), however when it's progress from
+      'RUNNING' to 'FAILURE/SUCCESS' takes more than one tick, we say that the behaviour itself
+      is blocking. In short, `blocking == RUNNING`.
+
+   fsm
+   flying spaghetti monster
+      Whilst a serious religous entity in his own right (see `pastafarianism`_), it's also
+      very easy to imagine your code become a spiritual flying spaghetti monster if left
+      unchecked::
+
+               _  _(o)_(o)_  _
+             ._\`:_ F S M _:' \_,
+                 / (`---'\ `-.
+              ,-`  _)    (_,
+
    tick
    ticks
    ticking
@@ -25,13 +43,11 @@ Terminology
       - without this it would be a concurrent mess of locks and threads.
 
       Always keep in mind that your behaviours' executions must be light. There is no
-      parallelising here. In almost all cases, most of your robot behaviour trees are probably
-      not going to be significantly expensive (unlike games with thousands of characters).
+      parallelising here and your tick time needs to remain small. The tree should be solely
+      about decision making, not doing any actual blocking work. Any blocking work should be
+      happening somewhere else with a behaviour simply in charge of starting/monitoring and
+      catching the result of that work.
 
       Add an image of a ticking tree here.
 
-   blocking
-      A behaviour is sometimes referred to as a 'blocking' behaviour. Technically, the execution
-      of a behaviour should be non-blocking (i.e. the tick part), however when it's progress from
-      'RUNNING' to 'FAILURE/SUCCESS' takes more than one tick, we say that the beahviour itself
-      is blocking. In short, `blocking == RUNNING`.
+.. _pastafarianism: http://www.venganza.org/

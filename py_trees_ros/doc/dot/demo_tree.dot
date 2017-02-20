@@ -1,0 +1,15 @@
+digraph root {
+Root [shape=house, fontsize=11, style=filled, fillcolor=cyan];
+EveryN [shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+Root -> EveryN;
+Sequence [shape=box, fontsize=11, style=filled, fillcolor=orange];
+Root -> Sequence;
+Guard [shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+Sequence -> Guard;
+Periodic [shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+Sequence -> Periodic;
+Finisher [shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+Sequence -> Finisher;
+Idle [shape=ellipse, fontsize=11, style=filled, fillcolor=gray];
+Root -> Idle;
+}
