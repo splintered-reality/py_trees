@@ -4,6 +4,8 @@
 [ ![0.5.x-Release] [0.5.x-release-image] ] [0.5.x-releases]
 [ ![0.4.x-Release] [0.4.x-release-image] ] [0.4.x-releases]
 
+[ ![Docs] [docs-image] ] [docs]
+[ ![0.5.x-Docs] [0.5.x-docs-image] ] [0.5.x-docs]
 
 [license-image]: https://img.shields.io/badge/License-BSD%203--Clause-orange.svg?style=plastic
 [license]: LICENSE
@@ -13,7 +15,10 @@
 [0.4.x-release-image]: http://img.shields.io/badge/release-0.4.x-blue.svg?style=plastic
 [0.4.x-releases]: https://github.com/stonier/py_trees/tree/release/0.4-indigo-kinetic
 
-Expecting your robot to behave? You are probably in the wrong place.
+[docs-image]: https://readthedocs.org/projects/py-trees/badge/?version=latest&style=plastic
+[docs]: http://py-trees.readthedocs.io/en/latest
+[0.5.x-docs-image]: https://readthedocs.org/projects/py-trees/badge/?version=release-0.5-kinetic&style=plastic
+[0.5.x-docs]: http://py-trees.readthedocs.io/en/release-0.5-kinetic/
 
 ## About
 
@@ -26,15 +31,8 @@ of medium sized decision making engines for use in fields like robotics. Brief f
 * Python decorators for enabling meta behaviours
 * Render trees to dot graphs or visualise with ascii graphs on stdout
 
-The full package documentation is available on read the docs:
+Refer to the [package documentation](http://py-trees.readthedocs.io/en/latest/) for more detail.
 
-[ ![Docs] [docs-image] ] [docs]
-[ ![0.5.x-Docs] [0.5.x-docs-image] ] [0.5.x-docs]
-
-[docs-image]: https://readthedocs.org/projects/py-trees/badge/?version=latest&style=plastic
-[docs]: http://py-trees.readthedocs.io/en/latest
-[0.5.x-docs-image]: https://readthedocs.org/projects/py-trees/badge/?version=release-0.5-kinetic&style=plastic
-[0.5.x-docs]: http://py-trees.readthedocs.io/en/release-0.5-kinetic/
 
 ## Installation
 
