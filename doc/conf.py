@@ -27,7 +27,7 @@ with open(version_file) as f:
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
-sys.path.insert(0, os.path.abspath('..'))
+sys.path.insert(0, project_dir)
 
 # -- General configuration ------------------------------------------------
 
