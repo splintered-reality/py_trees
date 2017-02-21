@@ -16,6 +16,37 @@ Expecting your robot to behave? You are probably in the wrong place.
 
 ## Documentation
 
-Full documentation can be found at http://py-trees.readthedocs.io/en/latest/.
+http://py-trees.readthedocs.io/en/latest
+
+## Installation
+
+From [ppa](https://launchpad.net/~d-stonier/+archive/ubuntu/snorriheim) on Ubuntu/Xenial
+
+```
+sudo apt install python-py-trees
+```
+
+From [pypi](https://pypi.python.org/pypi/py_trees):
+
+```
+pip install py_trees
+```
+
+Or in a sandboxed ROS Kinetic environment (coming soon):
+
+```
+sudo apt install ros-kinetic-py-trees
+```
 
 ## Development
+
+You can develop in either a virtualenv (python style):
+
+```
+source ./virtualenv.bash
+```
+
+or in a catkin environment alongside other ROS py-trees packages from the repositories listed in
+https://github.com/stonier/repos_index/blob/devel/kinetic/py_trees.repos.
+
+
