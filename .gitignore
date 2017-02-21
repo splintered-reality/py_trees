@@ -1,4 +1,4 @@
-*/*.egg-info
+py_trees.egg-info
 */doc/html
 */doc/manifest.yaml
 *.pyc
