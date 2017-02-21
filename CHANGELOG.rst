@@ -1,8 +1,8 @@
 Changelog
 =========
 
-Forthcoming
------------
+0.5.2 (2017-02-22)
+------------------
 * [docs] disable colour when building
 * [docs] sidebar headings
 * [docs] dont require project installation
