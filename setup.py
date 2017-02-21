@@ -3,11 +3,12 @@
 from setuptools import find_packages, setup
 import os
 
-install_requires = [
+# You need install_requires if you don't have a ROS environment
+install_requires = [] if os.environ.get('CATKIN_BINARY_DIR') else [
     # docs
+    "Sphinx",
     "sphinx-argparse",
     "sphinx_rtd_theme",
-    "pydot",
     # runtime
     'enum34',
     'pydot'
