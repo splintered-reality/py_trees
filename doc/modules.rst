@@ -7,7 +7,7 @@ py_trees
 --------
 
 .. automodule:: py_trees
-   :synopsis: are your behavoiur trees misbehaving?
+   :synopsis: are your behaviour trees misbehaving?
 
 py_trees.behaviour
 ------------------

@@ -15,8 +15,8 @@
 [0.4.x-release-image]: http://img.shields.io/badge/release-0.4.x-blue.svg?style=plastic
 [0.4.x-releases]: https://github.com/stonier/py_trees/tree/release/0.4-indigo-kinetic
 
-[docs-image]: https://readthedocs.org/projects/py-trees/badge/?version=latest&style=plastic
-[docs]: http://py-trees.readthedocs.io/en/latest
+[docs-image]: https://readthedocs.org/projects/py-trees/badge/?version=devel&style=plastic
+[docs]: http://py-trees.readthedocs.io/
 [0.5.x-docs-image]: https://readthedocs.org/projects/py-trees/badge/?version=release-0.5-kinetic&style=plastic
 [0.5.x-docs]: http://py-trees.readthedocs.io/en/release-0.5-kinetic/
 
@@ -29,7 +29,7 @@ of medium sized decision making engines for use in fields like robotics. Brief f
 * Python decorators for enabling meta behaviours
 * Render trees to dot graphs or visualise with ascii graphs on stdout
 
-Refer to the [package documentation](http://py-trees.readthedocs.io/en/latest/) for more detail.
+Refer to the [package documentation](http://py-trees.readthedocs.io/) for more detail.
 
 
 ## Installation
