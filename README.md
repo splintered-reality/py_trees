@@ -6,7 +6,7 @@
 [ ![Docs] [docs-image] ] [docs]
 [ ![0.5.x-Docs] [0.5.x-docs-image] ] [0.5.x-docs]
 
-| docs-latest |
+|docs-latest|
 
 [license-image]: https://img.shields.io/badge/License-BSD%203--Clause-blue.svg?style=plastic
 [license]: LICENSE
