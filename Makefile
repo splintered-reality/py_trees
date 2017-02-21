@@ -21,19 +21,22 @@ VERSION=`./setup.py --version`
 
 help:
 	@echo "Local Build"
-	@echo "  build     : build the python package."
+	@echo "  deps      : install various build dependencies"
+	@echo "  build     : build the python package"
+	@echo "  clean     : clean build/dist directories"
 	@echo "Packages"
-	@echo "  pypi      : upload the package to PyPI."
+	@echo "  pypi      : upload the package to PyPI"
 	@echo "  source_deb: source packaging (for ppas)"
-	@echo "  deb       : build the deb."
-	@echo "Other"
-	@echo "  build_deps: install various build dependencies."
-	@echo "  clean     : clean build/dist directories."
+	@echo "  deb       : build the deb"
+	@echo "Documentation"
+	@echo "  docs      : buidl sphinx documentation"
+docs:
+	sphinx-build -b html doc doc/html
 
 build:
 	python setup.py build
 
-build_deps:
+deps:
 	echo "Downloading dependencies"
 	sudo apt-get install python-stdeb virtualenvwrapper
 
