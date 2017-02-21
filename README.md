@@ -19,7 +19,7 @@ Expecting your robot to behave? You are probably in the wrong place.
 
 ## Documentation
 
-http://py-trees.readthedocs.io/en/latest
+* http://py-trees.readthedocs.io/en/latest
 
 ## Installation
 
@@ -51,6 +51,6 @@ source ./virtualenv.bash
 
 or in a catkin environment alongside other ROS py-trees packages:
 
-    https://github.com/stonier/repos_index/blob/devel/kinetic/py_trees.repos.
+* https://github.com/stonier/repos_index/blob/devel/kinetic/py_trees.repos
 
 
