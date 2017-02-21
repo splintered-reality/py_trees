@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # License: BSD
-#   https://raw.githubusercontent.com/stonier/py_trees_suite/devel/LICENSE
+#   https://raw.githubusercontent.com/stonier/py_trees/devel/LICENSE
 #
 ##############################################################################
 # Documentation
@@ -196,7 +196,7 @@ def create_imposter(cls):
 
             There is some analysis explaining the need for this override in
 
-                https://github.com/stonier/py_trees_suite/issues/32
+                https://github.com/stonier/py_trees/issues/32
 
             :return py_trees.Behaviour: a reference to itself
             """

@@ -32,7 +32,7 @@ d = setup(
     install_requires=install_requires,
     author='Daniel Stonier, Naveed Usmani, Michal Staniaszek',
     maintainer='Daniel Stonier <d.stonier@gmail.com>, Naveed Usmani <naveedhd@gmail.com>',
-    url='http://github.com/stonier/py_trees_suite',
+    url='http://github.com/stonier/py_trees',
     keywords='behaviour-trees',
     classifiers=[
         'Environment :: Console',
