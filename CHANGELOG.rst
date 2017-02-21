@@ -1,6 +1,10 @@
 Changelog
 =========
 
+0.5.4 (2017-02-22)
+------------------
+* [infra] handle pypi/catkin conflicts with install_requires
+
 0.5.2 (2017-02-22)
 ------------------
 * [docs] disable colour when building
