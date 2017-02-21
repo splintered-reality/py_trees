@@ -12,8 +12,10 @@
 [0.4.x-release-image]: http://img.shields.io/badge/release-0.4.x-blue.svg?style=plastic
 [0.4.x-releases]: https://github.com/stonier/py_trees/tree/release/0.4-indigo-kinetic
 
-## About
-
 Expecting your robot to behave? You are probably in the wrong place.
 
-This is a python implementation of behaviour trees.
+## Documentation
+
+Full documentation can be found at http://py-trees.readthedocs.io/en/latest/.
+
+## Development
