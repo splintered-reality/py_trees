@@ -7,12 +7,12 @@
 [ ![0.5.x-Docs] [0.5.x-docs-image] ] [0.5.x-docs]
 
 
-[license-image]: https://img.shields.io/badge/License-BSD%203--Clause-blue.svg?style=plastic
+[license-image]: https://img.shields.io/badge/License-BSD%203--Clause-orange.svg?style=plastic
 [license]: LICENSE
 
-[0.5.x-release-image]: http://img.shields.io/badge/release-0.5.x-green.svg?style=plastic
+[0.5.x-release-image]: http://img.shields.io/badge/release-0.5.x-blue.svg?style=plastic
 [0.5.x-releases]: https://github.com/stonier/py_trees/tree/release/0.5-kinetic
-[0.4.x-release-image]: http://img.shields.io/badge/release-0.4.x-green.svg?style=plastic
+[0.4.x-release-image]: http://img.shields.io/badge/release-0.4.x-blue.svg?style=plastic
 [0.4.x-releases]: https://github.com/stonier/py_trees/tree/release/0.4-indigo-kinetic
 [docs-image]: https://readthedocs.org/projects/py-trees/badge/?version=latest&style=plastic
 [docs]: http://py-trees.readthedocs.io/en/latest
