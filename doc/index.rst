@@ -7,7 +7,8 @@ Py Trees
 ========
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
+   :caption: Guide
 
    background
    behaviours
@@ -17,9 +18,15 @@ Py Trees
    visualisation
    the_crazy_hospital
    terminology
-   programs
-   modules
+   faq
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Reference
+
    changelog
+   demos
+   modules
 
 Indices and tables
 ==================

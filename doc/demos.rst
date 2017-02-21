@@ -1,7 +1,7 @@
-.. _programs-section-label:
+.. _demos-section-label:
 
-Programs
-========
+Demos
+=====
 
 .. _py-trees-demo-action-behaviour-program:
 
