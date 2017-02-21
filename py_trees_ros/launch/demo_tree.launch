@@ -1,9 +1,0 @@
-<!--
-  Runs the simple demo tree as a ROSBehaviour tree, this lets you test it usefully with:
-
-   - rqt_py_trees
-   - rostopic echo /demo_tree/tick/ascii_tree
--->
-<launch>
-  <node pkg="py_trees_ros" type="demo_tree" name="demo_tree"/>
-</launch>
