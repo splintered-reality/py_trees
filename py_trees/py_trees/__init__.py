@@ -36,3 +36,9 @@ from .blackboard import Blackboard
 from .common import Status
 from .composites import Composite, Selector, Sequence
 from .trees import BehaviourTree, CONTINUOUS_TICK_TOCK
+
+##############################################################################
+# Version
+##############################################################################
+
+from .version import __version__

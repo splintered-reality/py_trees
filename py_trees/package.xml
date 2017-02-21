@@ -1,12 +1,14 @@
 <package format="2">
+  <!-- Some duplication of properties here and in package.xml. -->
+  <!-- Make sure to update them both -->
+  <!-- That is the price paid for a pypi and catkin package.  -->
   <name>py_trees</name>
   <version>0.5.0</version>
   <description>
-    Behaviour trees in python.
+    Pythonic implementation of behaviour trees.
   </description>
 
   <maintainer email="stonier@yujinrobot.com">Daniel Stonier</maintainer>
-  <maintainer email="m.staniaszek@gmail.com">Michal Staniaszek</maintainer>
   <maintainer email="naveedhd@gmail.com">Naveed Usmani</maintainer>
 
   <license>BSD</license>
@@ -21,7 +23,6 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <doc_depend>>python-catkin-pkg</doc_depend>
   <doc_depend>python-sphinx-argparse</doc_depend>
   <doc_depend>python-sphinx-rtd-theme</doc_depend>
 

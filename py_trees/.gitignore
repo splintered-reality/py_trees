@@ -4,6 +4,10 @@
 *.pyc
 *.png
 *.svg
+build
+dist
+deb_dist
+py_trees*.tar.gz 
 *~
 \#*
 .#*
