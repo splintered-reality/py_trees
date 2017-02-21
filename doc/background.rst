@@ -39,7 +39,7 @@ this way you can flexibly cater for your own needs.
 Design
 ------
 
-.. note:: For rapid development of small scale decision engines that don't need to be real time reactive.
+.. note:: For rapid development of medium scale decision engines that don't need to be real time reactive.
 
 That is, don't try using it for an NPC gaming engine with
 hundreds of characters and thousands of beahaviours for each character.
