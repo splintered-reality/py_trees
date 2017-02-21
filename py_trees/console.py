@@ -100,26 +100,25 @@ def read_single_keypress():
 ##############################################################################
 
 
-def console_has_colours(stream):
+def console_has_colours():
     """
     Detects if the specified stream has colourising capability.
 
     Args:
         stream (:obj:`stream`): stream to check (typically sys.stdout)
     """
-    if not hasattr(stream, "isatty"):
+    # From django.core.management.color.supports_color
+    #   https://github.com/django/django/blob/master/django/core/management/color.py
+    plat = sys.platform
+    supported_platform = plat != 'Pocket PC' and (plat != 'win32' or
+                                                  'ANSICON' in os.environ)
+    # isatty is not always implemented, #6223.
+    is_a_tty = hasattr(sys.stdout, 'isatty') and sys.stdout.isatty()
+    if not supported_platform or not is_a_tty:
         return False
-    if not stream.isatty():
-        return False  # auto color only on TTYs
-    try:
-        import curses
-        curses.setupterm()
-        return curses.tigetnum("colors") > 2
-    except:
-        # guess false in case of error
-        return False
+    return True
 
-has_colours = console_has_colours(sys.stdout)
+has_colours = console_has_colours()
 """ Whether the loading program has access to colours or not."""
 
 if has_colours:
