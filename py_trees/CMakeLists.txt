@@ -15,31 +15,10 @@ catkin_python_setup()
 
 catkin_package()
 
-
-##############################################################################
-# Installs
-##############################################################################
-
-#install(FILES src/rocon_uri/rules/rules.yaml DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/rules.yaml)
-
-catkin_install_python(
-    PROGRAMS
-        scripts/py-trees-demo-action-behaviour
-        scripts/py-trees-demo-behaviour-lifecycle
-        scripts/py-trees-demo-blackboard
-        scripts/py-trees-demo-context-switching
-        scripts/py-trees-demo-dot-graphs
-        scripts/py-trees-demo-selector
-        scripts/py-trees-demo-sequence
-        scripts/py-trees-demo-tree-stewardship
-    DESTINATION
-        ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-
 ##############################################################################
 # Unit Tests
 ##############################################################################
 
 if (CATKIN_ENABLE_TESTING)
-  add_subdirectory(tests)
+  catkin_add_nosetests(nosetests)
 endif()
