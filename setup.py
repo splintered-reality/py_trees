@@ -5,7 +5,7 @@ import os
 
 install_requires = [
     # docs
-    "sphinx_argparse",
+    "sphinx-argparse",
     "sphinx_rtd_theme",
     "pydot",
     # runtime
