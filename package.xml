@@ -23,6 +23,8 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
+  <build_depend>python-setuptools</build_depend>
+
   <doc_depend>python-sphinx-argparse</doc_depend>
   <doc_depend>python-sphinx-rtd-theme</doc_depend>
 
