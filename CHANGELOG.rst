@@ -1,10 +1,15 @@
 Changelog
 =========
 
+Forthcoming
+-----------
+* [docs] disable colour when building
+* [docs] sidebar headings
+* [docs] dont require project installation
+
 0.5.1 (2017-02-21)
 ------------------
 * [infra] pypi package enabled
-
 
 0.5.0 (2017-02-21)
 ------------------
