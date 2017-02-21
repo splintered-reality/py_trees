@@ -6,7 +6,7 @@
 [ ![Docs] [docs-image] ] [docs]
 [ ![0.5.x-Docs] [0.5.x-docs-image] ] [0.5.x-docs]
 
-|docs-latest|
+|docs|
 
 [license-image]: https://img.shields.io/badge/License-BSD%203--Clause-blue.svg?style=plastic
 [license]: LICENSE
@@ -56,7 +56,7 @@ or in a catkin environment alongside other ROS py-trees packages:
 
 
 
-.. |docs-latest| image:: https://readthedocs.org/projects/docs/badge/?version=latest
+.. |docs| image:: https://readthedocs.org/projects/py_trees/badge/?version=latest
     :alt: Documentation Status
     :scale: 100%
     :target: https://docs.readthedocs.io/en/latest/?badge=latest
