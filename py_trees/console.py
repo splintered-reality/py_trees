@@ -102,11 +102,10 @@ def read_single_keypress():
 
 def console_has_colours():
     """
-    Detects if the specified stream has colourising capability.
-
-    Args:
-        stream (:obj:`stream`): stream to check (typically sys.stdout)
+    Detects if the console (stdout) has colourising capability.
     """
+    if os.environ.get("PY_TREES_DISABLE_COLORS"):
+        return False
     # From django.core.management.color.supports_color
     #   https://github.com/django/django/blob/master/django/core/management/color.py
     plat = sys.platform
