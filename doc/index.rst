@@ -7,7 +7,7 @@ Py Trees
 ========
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Guide
 
    background
@@ -21,12 +21,12 @@ Py Trees
    faq
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Reference
 
-   changelog
    demos
    modules
+   changelog
 
 Indices and tables
 ==================
