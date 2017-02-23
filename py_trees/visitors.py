@@ -14,7 +14,7 @@ each and every behaviour in the tree, or visit behaviours as the tree is
 traversed in an executing tick. At each behaviour, the visitor
 runs its own method on the behaviour to do as it wishes - logging, introspecting).
 
-.. note:: Visitors should not modify the behaviours they visit.
+.. warning:: Visitors should not modify the behaviours they visit.
 """
 
 ##############################################################################
@@ -96,7 +96,7 @@ class SnapshotVisitor(VisitorBase):
 
     .. seealso::
 
-        This visitor should be used with the :class:`~py_trees.trees.BehaviourTree` class to collect
+        This visitor is used with the :class:`~py_trees.trees.BehaviourTree` class to collect
         information and :func:`~py_trees.display.ascii_tree` to display information.
     """
     def __init__(self, full=False):

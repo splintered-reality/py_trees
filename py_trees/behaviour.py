@@ -75,18 +75,18 @@ class Behaviour(object):
 
     def setup(self, timeout):
         """
+        Subclasses may override this method to do any one-time delayed construction that
+        is necessary for runtime. This is best done here rather than in the constructor
+        so that trees can be instantiated on the fly without any severe runtime requirements
+        (e.g. a hardware sensor) on any pc to produce visualisations such as dot graphs.
+
+        .. note:: User Customisable Callback
+
         Args:
             timeout (:obj:`float`): time to wait (0.0 is blocking forever)
 
         Returns:
             :obj:`bool`: whether it timed out trying to setup
-
-        .. note:: User Customisable Callback
-
-        Subclasses may override this method to do any one-time delayed construction that
-        is necessary for runtime. This is best done here rather than in the constructor
-        so that trees can be instantiated on the fly without any severe runtime requirements
-        (e.g. a hardware sensor) on any pc to produce visualisations such as dot graphs.
         """
         return True
 
