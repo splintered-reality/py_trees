@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from setuptools import find_packages, setup
+import nose
 import os
 
 # You need install_requires if you don't have a ROS environment
@@ -46,6 +47,8 @@ d = setup(
     description="pythonic implementation of behaviour trees",
     long_description="A behaviour tree implementation for rapid development of small scale decision making engines that don't need to be real time reactive.",
     license='BSD',
+    test_suite='nose.collector',
+    test_require=['nose'],
     # test_suite='tests',
     # Unfortunately catkin builds do not like this
     #     entry_points={
