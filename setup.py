@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 from setuptools import find_packages, setup
-import nose
 import os
 
 # You need install_requires if you don't have a ROS environment
@@ -10,6 +9,8 @@ install_requires = [] if os.environ.get('CATKIN_BINARY_DIR') else [
     "Sphinx",
     "sphinx-argparse",
     "sphinx_rtd_theme",
+    # tests
+    "nose",
     # runtime
     'enum34',
     'pydot'
