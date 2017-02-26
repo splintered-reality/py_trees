@@ -1,3 +1,5 @@
+.. _blackboards-section:
+
 Blackboards
 ===========
 
