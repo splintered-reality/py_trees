@@ -23,6 +23,7 @@ from . import demos
 from . import display
 from . import logging
 from . import meta
+from . import programs
 from . import syntax_highlighting
 from . import tests
 from . import timers

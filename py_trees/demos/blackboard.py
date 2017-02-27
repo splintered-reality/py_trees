@@ -34,9 +34,12 @@ import py_trees.console as console
 
 
 def description():
-    content = "Demonstrates usage of the blackboard and related behaviours.\n\n"
-    content += "A sequence is populated with 2-tick jobs that are allowed to run through to\n"
-    content += "completion.\n"
+    content = "Demonstrates usage of the blackboard and related behaviours.\n"
+    content += "\n"
+    content += "A sequence is populated with a default set blackboard variable\n"
+    content += "behaviour, a custom write to blackboard behaviour that writes\n"
+    content += "a more complicated structure, and finally a default check\n"
+    content += "blackboard variable beheaviour that looks for the first variable.\n"
 
     if py_trees.console.has_colours:
         banner_line = console.green + "*" * 79 + "\n" + console.reset
@@ -71,7 +74,7 @@ def command_line_argument_parser():
 
 class BlackboardWriter(py_trees.behaviour.Behaviour):
     """
-    Writes a complicated structure to the blackboard.
+    Custom writer that submits a more complicated variable to the blackboard.
     """
     def __init__(self, name="Writer"):
         super(BlackboardWriter, self).__init__(name)

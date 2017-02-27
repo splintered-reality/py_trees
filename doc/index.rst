@@ -25,6 +25,7 @@ Py Trees
    :caption: Reference
 
    demos
+   programs
    modules
    changelog
 

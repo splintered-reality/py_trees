@@ -73,5 +73,6 @@ d = setup(
              'scripts/py-trees-demo-selector',
              'scripts/py-trees-demo-sequence',
              'scripts/py-trees-demo-tree-stewardship',
+             'scripts/py-trees-render'
              ],
 )

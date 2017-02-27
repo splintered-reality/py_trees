@@ -264,7 +264,7 @@ def stringify_dot_tree(root):
     return graph.to_string()
 
 
-def render_dot_tree(root, visibility_level=common.VisibilityLevel.DETAIL):
+def render_dot_tree(root, visibility_level=common.VisibilityLevel.DETAIL, name=None):
     """
     Render the dot tree to .dot, .svg, .png. files in the current
     working directory. These will be named with the root behaviour name.
@@ -272,6 +272,7 @@ def render_dot_tree(root, visibility_level=common.VisibilityLevel.DETAIL):
     Args:
         root (:class:`~py_trees.behaviour.Behaviour`): the root of a tree, or subtree
         visibility_level (:class`~py_trees.common.VisibilityLevel`): collapse subtrees at or under this level
+        name (:obj:`str`): name to use for the created files (defaults to the root behaviour name)
 
     Example:
 
@@ -296,8 +297,8 @@ def render_dot_tree(root, visibility_level=common.VisibilityLevel.DETAIL):
         can quickly visualise what tree the program will execute.
     """
     graph = generate_pydot_graph(root, visibility_level)
-    name = root.name.lower().replace(" ", "_")
-    print("Writing %s.dot/svg/png" % name)
-    graph.write(name + '.dot')
-    graph.write_png(name + '.png')
-    graph.write_svg(name + '.svg')
+    filename_wo_extension = root.name.lower().replace(" ", "_") if name is None else name
+    print("Writing %s.dot/svg/png" % filename_wo_extension)
+    graph.write(filename_wo_extension + '.dot')
+    graph.write_png(filename_wo_extension + '.png')
+    graph.write_svg(filename_wo_extension + '.svg')
