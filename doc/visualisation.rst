@@ -22,19 +22,21 @@ with the :func:`~py_trees.display.ascii_tree` function:
 .. autofunction:: py_trees.display.ascii_tree
     :noindex:
 
-Dot Graphs
-----------
+Render to File (Dot/SVG/PNG)
+----------------------------
 
-**Rendering to File**
+**API**
 
 You can render trees into dot/png/svg files simply by calling the :func:`~py_trees.display.render_dot_tree`
 function.
 
-.. autofunction:: py_trees.display.render_dot_tree
-    :noindex:
-
-They can also be converted to the dot graph format for export to other programs using the
+Should you wish to capture the dot graph result directly (as a dot graph object), use the
 :func:`~py_trees.display.generate_pydot_graph` method.
+
+**Command Line Utility**
+
+You can also render any exposed method in your python packages that creates
+a tree and returns the root of the tree from the command line using the :ref:`py-trees-render` program.
 
 **Blackboxes and Visibility Levels**
 

@@ -1,6 +1,10 @@
 Changelog
 =========
 
+Forthcoming
+-----------
+* [programs] py-trees-render program added
+
 0.5.4 (2017-02-22)
 ------------------
 * [infra] handle pypi/catkin conflicts with install_requires
