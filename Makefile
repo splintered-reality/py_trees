@@ -23,7 +23,7 @@ help:
 	@echo "Local Build"
 	@echo "  deps      : install various build dependencies"
 	@echo "  build     : build the python package"
-	@echo "  tests     : run all of the nosetests
+	@echo "  tests     : run all of the nosetests"
 	@echo "  clean     : clean build/dist directories"
 	@echo "Packages"
 	@echo "  pypi      : upload the package to PyPI"
@@ -67,3 +67,5 @@ pypi:
 
 tests:
 	python setup.py test
+
+.PHONY: tests clean
