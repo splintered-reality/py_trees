@@ -441,7 +441,7 @@ def running_is_failure(cls):
         def wrapped(self):
             self.original.tick_once()
             if self.original.status == common.Status.RUNNING:
-                self.feedback_message = "running is failure [%s]" % self.original.feedback_message
+                self.feedback_message = "running is failure" + (" [%s]" % self.original.feedback_message if self.original.feedback_message else "")
                 return common.Status.FAILURE
             else:
                 self.feedback_message = self.original.feedback_message
@@ -486,7 +486,7 @@ def running_is_success(cls):
         def wrapped(self):
             self.original.tick_once()
             if self.original.status == common.Status.RUNNING:
-                self.feedback_message = "running is success [%s]" % self.original.feedback_message
+                self.feedback_message = "running is success" + (" [%s]" % self.original.feedback_message if self.original.feedback_message else "")
                 return common.Status.SUCCESS
             else:
                 self.feedback_message = self.original.feedback_message
@@ -531,7 +531,7 @@ def failure_is_success(cls):
         def wrapped(self):
             self.original.tick_once()
             if self.original.status == common.Status.FAILURE:
-                self.feedback_message = "failure is success [%s]" % self.original.feedback_message
+                self.feedback_message = "failure is success" + (" [%s]" % self.original.feedback_message if self.original.feedback_message else "")
                 return common.Status.SUCCESS
             else:
                 self.feedback_message = self.original.feedback_message
@@ -576,7 +576,7 @@ def failure_is_running(cls):
         def wrapped(self):
             self.original.tick_once()
             if self.original.status == common.Status.FAILURE:
-                self.feedback_message = "failure is running [%s]" % self.original.feedback_message
+                self.feedback_message = "failure is running" + (" [%s]" % self.original.feedback_message if self.original.feedback_message else "")
                 return common.Status.RUNNING
             else:
                 self.feedback_message = self.original.feedback_message
@@ -621,7 +621,7 @@ def success_is_failure(cls):
         def wrapped(self):
             self.original.tick_once()
             if self.original.status == common.Status.SUCCESS:
-                self.feedback_message = "success is failure [%s]" % self.original.feedback_message
+                self.feedback_message = "success is failure" + (" [%s]" % self.original.feedback_message if self.original.feedback_message else "")
                 return common.Status.FAILURE
             else:
                 self.feedback_message = self.original.feedback_message
