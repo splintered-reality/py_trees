@@ -202,8 +202,15 @@ def create_imposter(cls):
             """
             self.logger.debug("%s.tick()" % (self.__class__.__name__))
 
+            # this only initialises the imposter
+            if self.status != common.Status.RUNNING:
+                self.initialise()
+
             # initialise() and terminate() for the original behaviour
-            # will be called from inside the update()
+            # will be called from inside the original's tick()
+            for behaviour in self.original.tick():
+                if behaviour != self.original:
+                    yield behaviour
             new_status = self.update()
             if new_status not in list(common.Status):
                 self.logger.error("A behaviour returned an invalid status, setting to INVALID [%s][%s]" % (new_status, self.name))
@@ -213,10 +220,9 @@ def create_imposter(cls):
 
         def update(self):
             """
-            This is the usual method where extra functionality
-            is added.
+            This is the usual method that gets replaced by
+            the meta classes.
             """
-            self.original.tick_once()
             return self.original.status
 
         def __getattr__(self, name):
@@ -283,7 +289,6 @@ def timeout(cls, duration):
             # when the underlying original will initialise itself
             if self.original.status != common.Status.RUNNING:
                 self.initialise()
-            self.original.tick_once()
             current_time = time.time()
             if current_time > self.finish_time:
                 self.feedback_message = "timed out"
@@ -342,7 +347,6 @@ def inverter(cls):
     def _update(func):
         @functools.wraps(func)
         def wrapped(self):
-            self.original.tick_once()
             if self.original.status == common.Status.SUCCESS:
                 return common.Status.FAILURE
                 self.feedback_message = "success -> failure"
@@ -439,7 +443,6 @@ def running_is_failure(cls):
     def _update(func):
         @functools.wraps(func)
         def wrapped(self):
-            self.original.tick_once()
             if self.original.status == common.Status.RUNNING:
                 self.feedback_message = "running is failure" + (" [%s]" % self.original.feedback_message if self.original.feedback_message else "")
                 return common.Status.FAILURE
@@ -484,7 +487,6 @@ def running_is_success(cls):
     def _update(func):
         @functools.wraps(func)
         def wrapped(self):
-            self.original.tick_once()
             if self.original.status == common.Status.RUNNING:
                 self.feedback_message = "running is success" + (" [%s]" % self.original.feedback_message if self.original.feedback_message else "")
                 return common.Status.SUCCESS
@@ -529,7 +531,6 @@ def failure_is_success(cls):
     def _update(func):
         @functools.wraps(func)
         def wrapped(self):
-            self.original.tick_once()
             if self.original.status == common.Status.FAILURE:
                 self.feedback_message = "failure is success" + (" [%s]" % self.original.feedback_message if self.original.feedback_message else "")
                 return common.Status.SUCCESS
@@ -574,7 +575,6 @@ def failure_is_running(cls):
     def _update(func):
         @functools.wraps(func)
         def wrapped(self):
-            self.original.tick_once()
             if self.original.status == common.Status.FAILURE:
                 self.feedback_message = "failure is running" + (" [%s]" % self.original.feedback_message if self.original.feedback_message else "")
                 return common.Status.RUNNING
@@ -619,7 +619,6 @@ def success_is_failure(cls):
     def _update(func):
         @functools.wraps(func)
         def wrapped(self):
-            self.original.tick_once()
             if self.original.status == common.Status.SUCCESS:
                 self.feedback_message = "success is failure" + (" [%s]" % self.original.feedback_message if self.original.feedback_message else "")
                 return common.Status.FAILURE
@@ -664,7 +663,6 @@ def success_is_running(cls):
     def _update(func):
         @functools.wraps(func)
         def wrapped(self):
-            self.original.tick_once()
             if self.original.status == common.Status.SUCCESS:
                 self.feedback_message = "success is running [%s]" % self.original.feedback_message
                 return common.Status.RUNNING
@@ -725,7 +723,6 @@ def condition(cls, status):
         @functools.wraps(func)
         def wrapped(self):
             self.logger.debug("%s.update()" % self.__class__.__name__)
-            self.original.tick_once()
             self.feedback_message = "'{0}' has status {1}, waiting for {2}".format(self.original.name, self.original.status, self.succeed_status)
             if self.original.status == self.succeed_status:
                 if self.original.status == common.Status.RUNNING:
