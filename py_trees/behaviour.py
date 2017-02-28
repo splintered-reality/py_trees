@@ -102,9 +102,6 @@ class Behaviour(object):
 
     def terminate(self, new_status):
         """
-        Args:
-            new_status (:class:`~py_trees.common.Status`): the behaviour is transitioning to this new status
-
         .. note:: User Customisable Callback
 
         Subclasses may override this method to clean up. It will be triggered when a behaviour either
@@ -118,6 +115,9 @@ class Behaviour(object):
 
         * cancel an external action that got started
         * shut down any tempoarary communication handles
+
+        Args:
+            new_status (:class:`~py_trees.common.Status`): the behaviour is transitioning to this new status
 
         .. warning:: Do not set `self.status = new_status` here, that is automatically handled
            by the :meth:`~py_trees.behaviour.Behaviour.stop` method. Use the argument purely for introspection purposes (e.g.
