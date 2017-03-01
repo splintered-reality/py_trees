@@ -1,6 +1,10 @@
 Changelog
 =========
 
+0.5.6 (2017-03-01)
+------------------
+* [infra] update maintainer email
+
 0.5.5 (2017-03-01)
 ------------------
 * [docs] many minor doc updates
