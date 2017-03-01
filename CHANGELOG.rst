@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.5.6 (2017-03-01)
+0.5.7 (2017-03-01)
 ------------------
 * [infra] update maintainer email
 
