@@ -265,7 +265,7 @@ class CheckBlackboardVariable(behaviours.Behaviour):
         Clears the internally stored message ready for a new run
         if ``old_data_is_valid`` wasn't set.
         """
-        self.logger.debug("  %s [CheckBlackboardVariable::initialise()]" % self.name)
+        self.logger.debug("%s.initialise()" % self.__class__.__name__)
         if self.clearing_policy == common.ClearingPolicy.ON_INITIALISE:
             self.matching_result = None
 
@@ -276,7 +276,7 @@ class CheckBlackboardVariable(behaviours.Behaviour):
         Returns:
              :class:`~py_trees.common.Status`: :data:`~py_trees.common.Status.FAILURE` if not matched, :data:`~py_trees.common.Status.SUCCESS` otherwise.
         """
-        self.logger.debug("  %s [CheckBlackboardVariable::update()]" % self.name)
+        self.logger.debug("%s.update()" % self.__class__.__name__)
         if self.matching_result is not None:
             return self.matching_result
 
@@ -316,7 +316,7 @@ class CheckBlackboardVariable(behaviours.Behaviour):
         Always discard the matching result if it was invalidated by a parent or
         higher priority interrupt.
         """
-        self.logger.debug("  %s [WaitForBlackboardVariable::terminate()][%s->%s]" % (self.name, self.status, new_status))
+        self.logger.debug("%s.terminate(%s)" % (self.__class__.__name__, "%s->%s" % (self.status, new_status) if self.status != new_status else "%s" % new_status))
         if new_status == common.Status.INVALID:
             self.matching_result = None
 
@@ -360,7 +360,7 @@ class WaitForBlackboardVariable(behaviours.Behaviour):
         Clears the internally stored message ready for a new run
         if ``old_data_is_valid`` wasn't set.
         """
-        self.logger.debug("  %s [WaitForBlackboardVariable::initialise()]" % self.name)
+        self.logger.debug("%s.initialise()" % self.__class__.__name__)
         if self.clearing_policy == common.ClearingPolicy.ON_INITIALISE:
             self.matching_result = None
 
@@ -371,7 +371,7 @@ class WaitForBlackboardVariable(behaviours.Behaviour):
         Returns:
              :class:`~py_trees.common.Status`: :data:`~py_trees.common.Status.FAILURE` if not matched, :data:`~py_trees.common.Status.SUCCESS` otherwise.
         """
-        self.logger.debug("  %s [WaitForBlackboardVariable::update()]" % self.name)
+        self.logger.debug("%s.update()" % self.__class__.__name__)
         if self.matching_result is not None:
             return self.matching_result
 
@@ -408,6 +408,6 @@ class WaitForBlackboardVariable(behaviours.Behaviour):
         Always discard the matching result if it was invalidated by a parent or
         higher priority interrupt.
         """
-        self.logger.debug("  %s [WaitForBlackboardVariable::terminate()][%s->%s]" % (self.name, self.status, new_status))
+        self.logger.debug("%s.terminate(%s)" % (self.__class__.__name__, "%s->%s" % (self.status, new_status) if self.status != new_status else "%s" % new_status))
         if new_status == common.Status.INVALID:
             self.matching_result = None
