@@ -8,7 +8,7 @@
     Pythonic implementation of behaviour trees.
   </description>
 
-  <maintainer email="stonier@yujinrobot.com">Daniel Stonier</maintainer>
+  <maintainer email="d.stonier@gmail.com">Daniel Stonier</maintainer>
   <maintainer email="naveedhd@gmail.com">Naveed Usmani</maintainer>
 
   <license>BSD</license>
