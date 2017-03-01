@@ -263,6 +263,19 @@ class BehaviourTree(object):
             tick_tocks += 1
         self.interrupt_tick_tocking = False
 
+    def tip(self):
+        """
+        Get the *tip* of the tree.
+        This corresponds to the the deepest node that was running before the
+        subtree traversal reversed direction and headed back to this node.
+
+        Returns:
+            :class:`~py_trees.behaviour.Behaviour` or :obj:`None`: child behaviour, itself or :obj:`None` if its status is :data:`~py_trees.common.Status.INVALID`
+
+        .. seealso:: :meth:`~py_trees.behaviour.Behaviour.tip`
+        """
+        return self.root.tip()
+
     def interrupt(self):
         """
         Interrupt tick-tock if it is tick-tocking. Note that this will permit a currently
