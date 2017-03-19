@@ -1,6 +1,10 @@
 Changelog
 =========
 
+0.5.8 (2017-03-19)
+------------------
+* [infra] setup.py tests_require, not test_require
+
 0.5.7 (2017-03-01)
 ------------------
 * [infra] update maintainer email
