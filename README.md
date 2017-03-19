@@ -1,11 +1,11 @@
 # Py Trees
 
-[ ![License] [license-image] ] [license]
-[ ![0.5.x-Release] [0.5.x-release-image] ] [0.5.x-releases]
-[ ![0.4.x-Release] [0.4.x-release-image] ] [0.4.x-releases]
+[![License][license-image]][license]
+[![0.5.x-Release][0.5.x-release-image]][0.5.x-releases]
+[![0.4.x-Release][0.4.x-release-image]][0.4.x-releases]
 
-[ ![Docs] [docs-image] ] [docs]
-[ ![0.5.x-Docs] [0.5.x-docs-image] ] [0.5.x-docs]
+[![Docs][docs-image]][docs]
+[![0.5.x-Docs][0.5.x-docs-image]][0.5.x-docs]
 
 [license-image]: https://img.shields.io/badge/License-BSD%203--Clause-orange.svg?style=plastic
 [license]: LICENSE
