@@ -138,6 +138,7 @@ class BehaviourTree(object):
         method using the child and index arguments.
 
         Args:
+            child (:class:`~py_trees.behaviour.Behaviour`): subtree to insert
             unique_id (uuid.UUID): unique id of the parent
             index (:obj:`int`): insert the child at this index, pushing all children after it back one.
 
