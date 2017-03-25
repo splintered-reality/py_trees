@@ -1,6 +1,10 @@
 Changelog
 =========
 
+0.5.9 (2017-03-25)
+------------------
+* [docs] bugfix image links and rewrite the motivation
+
 0.5.8 (2017-03-19)
 ------------------
 * [infra] setup.py tests_require, not test_require
