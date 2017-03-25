@@ -1,8 +1,10 @@
 # Py Trees
 
 [![License][license-image]][license]
-[![0.5.x-Release][0.5.x-release-image]][0.5.x-releases]
-[![0.4.x-Release][0.4.x-release-image]][0.4.x-releases]
+
+[![devel-Sources][devel-sources-image]][devel-sources]
+[![0.5.x-Sources][0.5.x-sources-image]][0.5.x-sources]
+[![0.4.x-Sources][0.4.x-sources-image]][0.4.x-sources]
 
 [![Docs][docs-image]][docs]
 [![0.5.x-Docs][0.5.x-docs-image]][0.5.x-docs]
@@ -10,10 +12,12 @@
 [license-image]: https://img.shields.io/badge/License-BSD%203--Clause-orange.svg?style=plastic
 [license]: LICENSE
 
-[0.5.x-release-image]: http://img.shields.io/badge/release-0.5.x-blue.svg?style=plastic
-[0.5.x-releases]: https://github.com/stonier/py_trees/tree/release/0.5-kinetic
-[0.4.x-release-image]: http://img.shields.io/badge/release-0.4.x-blue.svg?style=plastic
-[0.4.x-releases]: https://github.com/stonier/py_trees/tree/release/0.4-indigo-kinetic
+[devel-sources-image]: http://img.shields.io/badge/sources-devel-blue.svg?style=plastic
+[devel-sources]: https://github.com/stonier/py_trees/tree/devel
+[0.5.x-sources-image]: http://img.shields.io/badge/sources-0.5.x-blue.svg?style=plastic
+[0.5.x-sources]: https://github.com/stonier/py_trees/tree/release/0.5-kinetic
+[0.4.x-sources-image]: http://img.shields.io/badge/sources-0.4.x-blue.svg?style=plastic
+[0.4.x-sources]: https://github.com/stonier/py_trees/tree/release/0.4-indigo-kinetic
 
 [docs-image]: https://readthedocs.org/projects/py-trees/badge/?version=devel&style=plastic
 [docs]: http://py-trees.readthedocs.io/
