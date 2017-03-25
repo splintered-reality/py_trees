@@ -1,22 +1,23 @@
 Background
 ==========
 
+.. _introduction-section:
+
 Introduction
 ------------
 
 .. note:: Behaviour trees are a decision making engine often used in the gaming industry.
 
-Other engines
-that are often used include hierarchical finite state machines, task networks, scripting
+Others include hierarchical finite state machines, task networks, scripting
 engines all of which have various pros and cons. Behaviour trees sit somewhere in the middle
 of these allowing you a good blend of purposeful planning towards goals with enough reactivity
 to shift in the presence of important events. They are also wonderfully simple to compose.
 
-There's a wealth of information already covering behaviour trees. Rather than regurgitating
-it in a lesser form here, dig through some of these first. A good starter is
+There's much information already covering behaviour trees. Rather than regurgitating
+it here, dig through some of these first. A good starter is
 `AI GameDev - Behaviour Trees`_ (free signup and login) which puts behaviour trees in context
 alongside other techniques. A simpler read is Patrick Goebel's `Behaviour Trees For Robotics`_.
-Some other useful readings are listed at the bottom.
+Other readings are listed at the bottom of this page.
 
 Some standout features of behaviour trees that makes them very attractive:
 
@@ -28,29 +29,36 @@ Some standout features of behaviour trees that makes them very attractive:
 Motivation
 ----------
 
-.. note:: Existing behaviour tree implementations? There are almost none that are open.
+The driving use case for this package was to implement a higher level decision making layer in robotics, i.e.
+scenarios with some overlap into the control layer. Behaviour trees turned out to be a much more
+apt fit to handle the many concurrent processes in a robot after attempts with finite state machines
+became entangled in wiring complexity as the problem grew in scope.
 
-Some have started, but either haven't progressed far (e.g. `Owyl`_), or look great, but are
-inaccessible except in some niche, e.g. `Behaviour Designer`_, which is a frontend to the trees in the unity framework.
+.. note:: There are very few open behaviour tree implementations.
+
+Most of these have either not progressed significantly (e.g. `Owyl`_), or are
+accessible only in some niche, e.g. `Behaviour Designer`_, which is a frontend to the trees in the unity framework.
 Does this mean people do not use them? It is more probable that most behaviour tree
-implementations happen within the closed doors of gaming/robot companies. Our search for a useful
-implementation for robotics we could just drop in came up with nothing.
+implementations happen within the closed doors of gaming/robot companies.
 
 `Youtube - Second Generation of Behaviour Trees`_ is an enlightening video about behaviour trees and
-the developments of the last ten years from an industry expert. He even
+the developments of the last ten years from an industry expert. It also
 walks you through a simple c++ implementation. His advice? If you can't find one that fits, roll your own.
 It is relatively simple and this way you can flexibly cater for your own needs.
 
 Design
 ------
 
+The requirements for the previously discussed robotics use case match that of the more general:
+
 .. note:: Rapid development of medium scale decision engines that don't need to be real time reactive.
 
-That is, don't try using this for an NPC gaming engine with
-hundreds of characters and thousands of beahaviours for each character.
-In contrast, handling the higher level planning and scenario decision making in robotics is a good fit.
-These systems typically do not grow too large (~ hundreds of behaviours) and do not need to handle
-the reactive decision making that is usually directly incorporated into the controller subsystems.
+Developers should expect to be able to get up to speed and write their own trees with enough
+power and flexibility to adapt the library to their needs. Robotics is a good fit.
+The decision making layer typically does not grow too large (~ hundreds of behaviours) and does not
+need to handle the reactive decision making that is usually directly incorporated into the controller subsystems.
+On the other hand, it is not scoped to enable an NPC gaming engine with hundreds of characters and thousands
+of beahaviours for each character.
 
 This implementation uses all the whizbang tricks (generators, decorators)
 that python has to offer. Some design constraints that have been assumed to enable a practical, easy to use framework:
