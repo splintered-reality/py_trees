@@ -1,5 +1,3 @@
-[![License][license-image]][license]
-
 | Devel | Kinetic | Indigo |
 |:---:|:---:|:---:|
 | [![devel-Sources][devel-sources-image]][devel-sources] | [![0.5.x-Sources][0.5.x-sources-image]][0.5.x-sources] | [![0.4.x-Sources][0.4.x-sources-image]][0.4.x-sources] |
