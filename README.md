@@ -1,5 +1,3 @@
-# Py Trees
-
 [![License][license-image]][license]
 
 | Devel | Kinetic | Indigo |
@@ -27,6 +25,8 @@
 [devel-docs]: http://py-trees.readthedocs.io/
 [0.5.x-docs-image]: https://readthedocs.org/projects/py-trees/badge/?version=release-0.5-kinetic&style=plastic
 [0.5.x-docs]: http://py-trees.readthedocs.io/en/release-0.5-kinetic/
+
+# Py Trees
 
 This is a python implementation of behaviour trees designed to facilitate the rapid development
 of medium sized decision making engines for use in fields like robotics. Brief feature list:
