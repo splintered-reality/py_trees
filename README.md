@@ -1,3 +1,18 @@
+# Py Trees
+
+This is a python implementation of behaviour trees designed to facilitate the rapid development
+of medium sized decision making engines for use in fields like robotics. Brief feature list:
+
+* Sequence, Selector, Parallel and Chooser composites
+* Blackboards for data sharing
+* Python generators for smarter ticking over the tree graph
+* Python decorators for enabling meta behaviours
+* Render trees to dot graphs or visualise with ascii graphs on stdout
+
+Refer to the [package documentation](http://py-trees.readthedocs.io/) for more detail.
+
+## Status
+
 | Devel | Kinetic | Indigo |
 |:---:|:---:|:---:|
 | [![devel-Sources][devel-sources-image]][devel-sources] | [![0.5.x-Sources][0.5.x-sources-image]][0.5.x-sources] | [![0.4.x-Sources][0.4.x-sources-image]][0.4.x-sources] |
@@ -23,20 +38,6 @@
 [devel-docs]: http://py-trees.readthedocs.io/
 [0.5.x-docs-image]: https://readthedocs.org/projects/py-trees/badge/?version=release-0.5-kinetic&style=plastic
 [0.5.x-docs]: http://py-trees.readthedocs.io/en/release-0.5-kinetic/
-
-# Py Trees
-
-This is a python implementation of behaviour trees designed to facilitate the rapid development
-of medium sized decision making engines for use in fields like robotics. Brief feature list:
-
-* Sequence, Selector, Parallel and Chooser composites
-* Blackboards for data sharing
-* Python generators for smarter ticking over the tree graph
-* Python decorators for enabling meta behaviours
-* Render trees to dot graphs or visualise with ascii graphs on stdout
-
-Refer to the [package documentation](http://py-trees.readthedocs.io/) for more detail.
-
 
 ## Installation
 
