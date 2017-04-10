@@ -9,35 +9,11 @@ of medium sized decision making engines for use in fields like robotics. Brief f
 * Python decorators for enabling meta behaviours
 * Render trees to dot graphs or visualise with ascii graphs on stdout
 
-Refer to the [py_trees sphinx documentation](http://py-trees.readthedocs.io/) for more detail and the [py_trees_ros sphinx documentation](https://stonier.github.io/py_trees_ros/) for information on how to use py_trees with ROS.
+Detailed api reference and demo instructions can be found in the [sphinx documentation](http://py-trees.readthedocs.io/) for the package.
 
-## Status
+## Extensions
 
-| Devel | Kinetic | Indigo |
-|:---:|:---:|:---:|
-| [![devel-Sources][devel-sources-image]][devel-sources] | [![0.5.x-Sources][0.5.x-sources-image]][0.5.x-sources] | [![0.4.x-Sources][0.4.x-sources-image]][0.4.x-sources] |
-| [![devel-Status][devel-build-status-image]][devel-build-status] | [![kinetic-Status][kinetic-build-status-image]][kinetic-build-status] | |
-| [![devel-Docs][devel-docs-image]][devel-docs] | [![0.5.x-Docs][0.5.x-docs-image]][0.5.x-docs] | |
-
-[license-image]: https://img.shields.io/badge/License-BSD%203--Clause-orange.svg?style=plastic
-[license]: LICENSE
-
-[devel-sources-image]: http://img.shields.io/badge/sources-devel-blue.svg?style=plastic
-[devel-sources]: https://github.com/stonier/py_trees/tree/devel
-[0.5.x-sources-image]: http://img.shields.io/badge/sources-0.5.x--kinetic-blue.svg?style=plastic
-[0.5.x-sources]: https://github.com/stonier/py_trees/tree/release/0.5-kinetic
-[0.4.x-sources-image]: http://img.shields.io/badge/sources-0.4.x--indigo--kinetic-blue.svg?style=plastic
-[0.4.x-sources]: https://github.com/stonier/py_trees/tree/release/0.4-indigo-kinetic
-
-[devel-build-status-image]: http://build.ros.org/job/Kdev__py_trees__ubuntu_xenial_amd64/badge/icon?style=plastic
-[devel-build-status]: http://build.ros.org/job/Kdev__py_trees__ubuntu_xenial_amd64                     
-[kinetic-build-status-image]: http://build.ros.org/job/Kbin_uX64__py_trees__ubuntu_xenial_amd64__binary/badge/icon?style=plastic
-[kinetic-build-status]: http://build.ros.org/job/Kbin_uX64__py_trees__ubuntu_xenial_amd64__binary
-
-[devel-docs-image]: https://readthedocs.org/projects/py-trees/badge/?version=devel&style=plastic
-[devel-docs]: http://py-trees.readthedocs.io/
-[0.5.x-docs-image]: https://readthedocs.org/projects/py-trees/badge/?version=release-0.5-kinetic&style=plastic
-[0.5.x-docs]: http://py-trees.readthedocs.io/en/release-0.5-kinetic/
+See also [py_trees_ros](https://github.com/stonier/py_trees_ros/tree/devel) ([sphinx documentation](https://stonier.github.io/py_trees_ros/)) for how to use py_trees with ROS.
 
 ## Installation
 
@@ -70,4 +46,32 @@ source ./virtualenv.bash
 or in a catkin environment alongside other ROS py-trees packages:
 
 * https://github.com/stonier/repos_index/blob/devel/kinetic/py_trees.repos
+
+## Status
+
+| Devel | Kinetic | Indigo |
+|:---:|:---:|:---:|
+| [![devel-Sources][devel-sources-image]][devel-sources] | [![0.5.x-Sources][0.5.x-sources-image]][0.5.x-sources] | [![0.4.x-Sources][0.4.x-sources-image]][0.4.x-sources] |
+| [![devel-Status][devel-build-status-image]][devel-build-status] | [![kinetic-Status][kinetic-build-status-image]][kinetic-build-status] | |
+| [![devel-Docs][devel-docs-image]][devel-docs] | [![0.5.x-Docs][0.5.x-docs-image]][0.5.x-docs] | |
+
+[license-image]: https://img.shields.io/badge/License-BSD%203--Clause-orange.svg?style=plastic
+[license]: LICENSE
+
+[devel-sources-image]: http://img.shields.io/badge/sources-devel-blue.svg?style=plastic
+[devel-sources]: https://github.com/stonier/py_trees/tree/devel
+[0.5.x-sources-image]: http://img.shields.io/badge/sources-0.5.x--kinetic-blue.svg?style=plastic
+[0.5.x-sources]: https://github.com/stonier/py_trees/tree/release/0.5-kinetic
+[0.4.x-sources-image]: http://img.shields.io/badge/sources-0.4.x--indigo--kinetic-blue.svg?style=plastic
+[0.4.x-sources]: https://github.com/stonier/py_trees/tree/release/0.4-indigo-kinetic
+
+[devel-build-status-image]: http://build.ros.org/job/Kdev__py_trees__ubuntu_xenial_amd64/badge/icon?style=plastic
+[devel-build-status]: http://build.ros.org/job/Kdev__py_trees__ubuntu_xenial_amd64                     
+[kinetic-build-status-image]: http://build.ros.org/job/Kbin_uX64__py_trees__ubuntu_xenial_amd64__binary/badge/icon?style=plastic
+[kinetic-build-status]: http://build.ros.org/job/Kbin_uX64__py_trees__ubuntu_xenial_amd64__binary
+
+[devel-docs-image]: https://readthedocs.org/projects/py-trees/badge/?version=devel&style=plastic
+[devel-docs]: http://py-trees.readthedocs.io/
+[0.5.x-docs-image]: https://readthedocs.org/projects/py-trees/badge/?version=release-0.5-kinetic&style=plastic
+[0.5.x-docs]: http://py-trees.readthedocs.io/en/release-0.5-kinetic/
 
