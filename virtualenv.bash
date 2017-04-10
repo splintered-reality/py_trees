@@ -14,6 +14,7 @@ if [ "${VIRTUAL_ENV}" == "" ]; then
   fi
 fi
 # Always pulling for now
+pip install -r rtd-requirements.txt
 python setup.py develop
 
 echo ""
