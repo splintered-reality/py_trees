@@ -9,7 +9,7 @@ of medium sized decision making engines for use in fields like robotics. Brief f
 * Python decorators for enabling meta behaviours
 * Render trees to dot graphs or visualise with ascii graphs on stdout
 
-Refer to the [sphinx documentation](http://py-trees.readthedocs.io/) for more detail and the [py_trees_ros sphinx documentation]([py_trees_ros](https://stonier.github.io/py_trees_ros/)) for information on how to use py_trees with ROS.
+Refer to the [sphinx documentation](http://py-trees.readthedocs.io/) for more detail and the [py_trees_ros sphinx documentation](https://stonier.github.io/py_trees_ros/) for information on how to use py_trees with ROS.
 
 ## Status
 
