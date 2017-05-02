@@ -373,13 +373,13 @@ def _oneshot_tick(func):
     the oneshot variable is unset, yielding the unmodified object otherwise.
     """
     @functools.wraps(func)
-    def wrapped(self, *args, **kwargs):
-        if self.status == common.Status.FAILURE or self.status == common.Status.SUCCESS:
+    def wrapped(*args, **kwargs):
+        if func.im_self.status == common.Status.FAILURE or func.im_self.status == common.Status.SUCCESS:
             # if returned success/fail at any point, don't update or re-init
-            yield self
+            yield func.im_self
         else:
             # otherwise, run the tick as normal yield from in python 3.3
-            for child in func(self, *args, **kwargs):
+            for child in func(*args, **kwargs):
                 yield child
     return wrapped
 
