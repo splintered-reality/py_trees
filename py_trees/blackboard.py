@@ -326,12 +326,12 @@ class WaitForBlackboardVariable(behaviours.Behaviour):
     Check the blackboard to see if it has a specific variable
     and optionally whether that variable has a specific value.
     Unlike :py:class:`~py_trees.blackboard.CheckBlackboardVariable`
-    this class will be in a :data:`~py_trees.common.Status.SUCCESS` state until the variable appears
+    this class will be in a :data:`~py_trees.common.Status.RUNNING` state until the variable appears
     and (optionally) is matched.
 
     Args:
         name (:obj:`str`): name of the behaviour
-        variable_name (:obj:`str`): name of the variable to set
+        variable_name (:obj:`str`): name of the variable to check
         expected_value (:obj:`any`): expected value to find (if `None`, check for existence only)
         comparison_operator (:obj:`func`): one from the python `operator module`_
         clearing_policy (:obj:`any`): when to clear the match result, see :py:class:`~py_trees.common.ClearingPolicy`
@@ -363,6 +363,7 @@ class WaitForBlackboardVariable(behaviours.Behaviour):
         self.logger.debug("%s.initialise()" % self.__class__.__name__)
         if self.clearing_policy == common.ClearingPolicy.ON_INITIALISE:
             self.matching_result = None
+        self.check_attr = operator.attrgetter(self.variable_name)
 
     def update(self):
         """
@@ -376,26 +377,24 @@ class WaitForBlackboardVariable(behaviours.Behaviour):
             return self.matching_result
 
         # existence failure check
-        if not hasattr(self.blackboard, self.variable_name):
+        try:
+            value = self.check_attr(self.blackboard)
+            # if existence check required only
+            if self.expected_value is None:
+                self.feedback_message = "'%s' exists on the blackboard (as required)" % self.variable_name
+                result = common.Status.SUCCESS
+            # expected value matching
+            else:
+                success = self.comparison_operator(value, self.expected_value)
+                if success:
+                    self.feedback_message = "'%s' comparison succeeded [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
+                    result = common.Status.SUCCESS
+                else:
+                    self.feedback_message = "'%s' comparison failed [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
+                    result = common.Status.RUNNING
+        except AttributeError:
             self.feedback_message = 'blackboard variable {0} did not exist'.format(self.variable_name)
             result = common.Status.RUNNING
-
-        # if existence check required only
-        elif self.expected_value is None:
-            self.feedback_message = "'%s' exists on the blackboard (as required)" % self.variable_name
-            result = common.Status.SUCCESS
-
-        else:
-            # expected value matching
-            value = getattr(self.blackboard, self.variable_name)
-            success = self.comparison_operator(value, self.expected_value)
-
-            if success:
-                self.feedback_message = "'%s' comparison succeeded [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
-                result = common.Status.SUCCESS
-            else:
-                self.feedback_message = "'%s' comparison failed [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
-                result = common.Status.RUNNING
 
         if result == common.Status.SUCCESS and self.clearing_policy == common.ClearingPolicy.ON_SUCCESS:
             self.matching_result = None
