@@ -132,7 +132,7 @@ class Composite(Behaviour):
         Adds a child.
 
         Args:
-            child (:class:`~py_trees.behaviour.Behaviour`): child to delete
+            child (:class:`~py_trees.behaviour.Behaviour`): child to add
 
         Returns:
             uuid.UUID: unique id of the child

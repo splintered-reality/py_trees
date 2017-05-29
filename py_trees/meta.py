@@ -175,7 +175,7 @@ def create_imposter(cls):
 
         def tip(self):
             """
-            This function overrides :meth:`~py_trees.behaviour.Behaviour.tick`
+            This function overrides :meth:`~py_trees.behaviour.Behaviour.tip`
             and provides a fused capability depending on whether the original
             behaviour is a composite or not. If it is composite, it relies on
             the composite's return value, else it uses it's own.
@@ -187,6 +187,34 @@ def create_imposter(cls):
                 return self.original.tip()
             else:
                 return super(Imposter, self).tip()
+
+        def add_child(self, child):
+            """
+            Adds a child. This function overrides :meth:`~py_trees.composites.Composite.add_child`
+            with additional adoption of child from the original composite.
+            If the original is :class:`~py_trees.behaviour.Behaviour`,
+            this would raise exception as it would do usually.
+
+            Args:
+                child (:class:`~py_trees.behaviour.Behaviour`): child to add
+
+            Returns:
+                uuid.UUID: unique id of the child
+            """
+            self.original.add_child(child)
+            # meta adopts the child from original
+            child.parent = self
+            return child.id
+
+        def add_children(self, children):
+            """
+            Append a list of children to the current list.
+
+            Args:
+                children ([:class:`~py_trees.behaviour.Behaviour`]): list of children to add
+            """
+            for child in children:
+                self.add_child(child)
 
         def tick(self):
             """
