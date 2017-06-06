@@ -150,9 +150,7 @@ class Composite(Behaviour):
             children ([:class:`~py_trees.behaviour.Behaviour`]): list of children to add
         """
         for child in children:
-            assert isinstance(child, Behaviour), "children must be behaviours, but you passed in %s" % type(child)
-            self.children.append(child)
-            child.parent = self
+            self.add_child(child)
 
     def remove_child(self, child):
         """
