@@ -391,6 +391,26 @@ class Chooser(Selector):
     def __init__(self, name="Chooser", children=None, *args, **kwargs):
         super(Chooser, self).__init__(name, children, *args, **kwargs)
 
+    def set_current_child(self):
+        """
+        Tick the children until it finds a RUNNING or SUCCESS child
+        and set it as the current_child.
+        If the chooser behaviour already has a current_child, this iteration
+        will start with the remaining lower priority children, and should
+        only be called if the current_child is FAILURE and we would wan't to select
+        the next RUNNING or SUCCESS sibling as current_child
+        """
+        children = self.children
+        if self.current_child is not None:
+            children = self.children[self.children.index(self.current_child) + 1:]
+            self.current_child = None
+        for child in children:
+            for node in child.tick():
+                yield node
+            if child.status == Status.RUNNING or child.status == Status.SUCCESS:
+                self.current_child = child
+                break
+
     def tick(self):
         """
         Run the tick behaviour for this chooser. Note that the status
@@ -420,15 +440,15 @@ class Chooser(Selector):
                 if child is self.current_child:
                     for node in self.current_child.tick():
                         yield node
+                    if self.current_child.status == Status.FAILURE:
+                        for child in self.set_current_child():
+                            yield child
+                        break
                 elif child.status != Status.INVALID:
                     child.stop(Status.INVALID)
         else:
-            for child in self.children:
-                for node in child.tick():
-                    yield node
-                if child.status == Status.RUNNING or child.status == Status.SUCCESS:
-                    self.current_child = child
-                    break
+            for child in self.set_current_child():
+                yield child
         new_status = self.current_child.status if self.current_child is not None else Status.FAILURE
         self.stop(new_status)
         yield self
