@@ -13,6 +13,7 @@ Time related behaviours.
 # Imports
 ##############################################################################
 
+import numbers
 import time
 
 from . import behaviour
@@ -80,6 +81,7 @@ class Timer(behaviour.Behaviour):
     """
     def __init__(self, name="Timer", duration=5.0):
         super(Timer, self).__init__(name)
+        assert isinstance(duration, numbers.Real), "Timer: duration should be int or float, but you passed in %s" % type(duration)
         self.duration = duration
         self.finish_time = None
         self.feedback_message = "duration set to '{0}'s".format(self.duration)
