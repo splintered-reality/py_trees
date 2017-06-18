@@ -336,6 +336,11 @@ class WaitForBlackboardVariable(behaviours.Behaviour):
         comparison_operator (:obj:`func`): one from the python `operator module`_
         clearing_policy (:obj:`any`): when to clear the match result, see :py:class:`~py_trees.common.ClearingPolicy`
 
+    .. tip::
+        There are times when you want to get the expected match once and then save
+        that result thereafter. For example, to flag once a system has reached a
+        subgoal. Use the :data:`~py_trees.common.ClearingPolicy.NEVER` flag to do this.
+
     .. seealso:: :class:`~py_trees.blackboard.CheckBlackboardVariable`
 
     .. include:: weblinks.rst
@@ -398,7 +403,7 @@ class WaitForBlackboardVariable(behaviours.Behaviour):
 
         if result == common.Status.SUCCESS and self.clearing_policy == common.ClearingPolicy.ON_SUCCESS:
             self.matching_result = None
-        elif result != common.Status.RUNNING:
+        elif result != common.Status.RUNNING:  # will fall in here if clearing ON_INITIALISE, or NEVER
             self.matching_result = result
         return result
 
