@@ -173,9 +173,18 @@ def create_imposter(cls):
             # id is important to match for composites...the children must relate to the correct parent id
             self.id = self.original.id
 
+            if isinstance(self.original, composites.Composite):
+                # monkeypatch add_child
+                def add_child(child):
+                    assert isinstance(child, behaviour.Behaviour), "children must be behaviours, but you passed in %s" % type(child)
+                    self.children.append(child)
+                    child.parent = self
+                    return child.id
+                self.original.add_child = add_child
+
         def tip(self):
             """
-            This function overrides :meth:`~py_trees.behaviour.Behaviour.tick`
+            This function overrides :meth:`~py_trees.behaviour.Behaviour.tip`
             and provides a fused capability depending on whether the original
             behaviour is a composite or not. If it is composite, it relies on
             the composite's return value, else it uses it's own.
