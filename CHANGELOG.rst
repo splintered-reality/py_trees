@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.5.10 (2017-06-17)
+-------------------
+* [meta] add children monkeypatching for composite imposters
+* [blackboard] check for nested variables in WaitForBlackboard
+
 0.5.9 (2017-03-25)
 ------------------
 * [docs] bugfix image links and rewrite the motivation
