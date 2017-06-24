@@ -15,39 +15,7 @@ Detailed api reference and demo instructions can be found in the [sphinx documen
 
 See also [py_trees_ros](https://github.com/stonier/py_trees_ros/tree/devel) ([sphinx documentation](https://stonier.github.io/py_trees_ros/)) for how to use py_trees with ROS.
 
-## Installation
-
-From [ppa](https://launchpad.net/~d-stonier/+archive/ubuntu/snorriheim) on Ubuntu/Xenial
-
-```
-sudo apt install python-py-trees
-```
-
-From [pypi](https://pypi.python.org/pypi/py_trees):
-
-```
-pip install py_trees
-```
-
-Or in a sandboxed ROS Kinetic environment (coming soon):
-
-```
-sudo apt install ros-kinetic-py-trees
-```
-
-## Development
-
-You can develop in either a virtualenv (python style):
-
-```
-source ./virtualenv.bash
-```
-
-or in a catkin environment alongside other ROS py-trees packages:
-
-* https://github.com/stonier/repos_index/blob/devel/kinetic/py_trees.repos
-
-## Status
+## Sources, Builds & Docs
 
 | Devel | Kinetic | Indigo |
 |:---:|:---:|:---:|
@@ -74,4 +42,39 @@ or in a catkin environment alongside other ROS py-trees packages:
 [devel-docs]: http://py-trees.readthedocs.io/
 [0.5.x-docs-image]: https://readthedocs.org/projects/py-trees/badge/?version=release-0.5-kinetic&style=plastic
 [0.5.x-docs]: http://py-trees.readthedocs.io/en/release-0.5-kinetic/
+
+
+## Getting Started
+
+**Installation**
+
+From [ppa](https://launchpad.net/~d-stonier/+archive/ubuntu/snorriheim) on Ubuntu/Xenial
+
+```
+sudo apt install python-py-trees
+```
+
+From [pypi](https://pypi.python.org/pypi/py_trees):
+
+```
+pip install py_trees
+```
+
+Or in a sandboxed ROS Kinetic environment (coming soon):
+
+```
+sudo apt install ros-kinetic-py-trees
+```
+
+**Development**
+
+You can develop in either a virtualenv (python style):
+
+```
+source ./virtualenv.bash
+```
+
+or in a catkin environment alongside other ROS py-trees packages:
+
+* https://github.com/stonier/repos_index/blob/devel/kinetic/py_trees.repos
 
