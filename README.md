@@ -13,7 +13,7 @@ Detailed api reference and demo instructions can be found in the [sphinx documen
 
 ## Extensions
 
-See also [py_trees_ros](https://github.com/stonier/py_trees_ros/tree/devel) ([sphinx documentation](https://stonier.github.io/py_trees_ros/)) for how to use py_trees with ROS.
+See also the [py_trees_ros](https://github.com/stonier/py_trees_ros/tree/devel) package for playing with ROS.
 
 ## Sources, Builds & Docs
 
