@@ -28,6 +28,8 @@
   <doc_depend>python-sphinx</doc_depend>
   <doc_depend>python-sphinx-argparse</doc_depend>
   <doc_depend>python-sphinx-rtd-theme</doc_depend>
+  <doc_depend>python-enum34</doc_depend>
+  <doc_depend>python-pydot</doc_depend>
 
   <exec_depend>python-enum34</exec_depend>
   <exec_depend>python-pydot</exec_depend>
