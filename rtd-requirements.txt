@@ -1,3 +1,4 @@
 Sphinx
 sphinx-argparse
 sphinx_rtd_theme
+enum
