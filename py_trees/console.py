@@ -189,22 +189,22 @@ def logdebug(message):
 
 def loginfo(message):
     '''
-    Prefixes ``[ INFO]`` to the message.
+    Prefixes ``[INFO]`` to the message.
 
     Args:
         message (:obj:`str`): message to log.
     '''
-    print("[ INFO] " + message)
+    print("[INFO] " + message)
 
 
 def logwarn(message):
     '''
-    Prefixes ``[ WARN]`` and colours the message yellow.
+    Prefixes ``[WARN]`` and colours the message yellow.
 
     Args:
         message (:obj:`str`): message to log.
     '''
-    print(yellow + "[ WARN] " + message + reset)
+    print(yellow + "[WARN] " + message + reset)
 
 
 def logerror(message):
