@@ -58,7 +58,7 @@ class Behaviour(object):
 
     """
     def __init__(self, name="", *args, **kwargs):
-        assert isinstance(name, basestring), "a behaviour name should be a string, but you passed in %s" % type(name)
+        assert isinstance(name, str), "a behaviour name should be a string, but you passed in %s" % type(name)
         self.id = uuid.uuid4()  # used to uniquely identify this node (helps with removing children from a tree)
         self.name = name
         self.status = Status.INVALID

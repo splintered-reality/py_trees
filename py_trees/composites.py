@@ -35,7 +35,7 @@ Perform the checks or actions you need to do in the non-composite behaviours.
 # Imports
 ##############################################################################
 
-from __future__ import absolute_import
+
 
 import itertools
 
@@ -62,7 +62,7 @@ class Composite(Behaviour):
     def __init__(self, name="", children=None, *args, **kwargs):
         super(Composite, self).__init__(name, *args, **kwargs)
         if children is not None:
-            map(self.add_child, children)
+            list(map(self.add_child, children))
         else:
             self.children = []
 
