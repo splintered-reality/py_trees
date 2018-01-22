@@ -114,7 +114,7 @@ def main():
     """
     args = command_line_argument_parser().parse_args()
     args.enum_level = py_trees.common.string_to_visibility_level(args.level)
-    print((description()))
+    print(description())
     py_trees.logging.level = py_trees.logging.Level.DEBUG
 
     root = create_tree(args.level)

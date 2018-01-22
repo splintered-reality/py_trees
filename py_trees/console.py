@@ -162,11 +162,11 @@ def pretty_println(msg, colour=white):
 
 
 def debug(msg):
-    print((green + msg + reset))
+    print(green + msg + reset)
 
 
 def warning(msg):
-    print((yellow + msg + reset))
+    print(yellow + msg + reset)
 
 
 def info(msg):
@@ -174,7 +174,7 @@ def info(msg):
 
 
 def error(msg):
-    print((red + msg + reset))
+    print(red + msg + reset)
 
 
 def logdebug(message):
@@ -184,7 +184,7 @@ def logdebug(message):
     Args:
         message (:obj:`str`): message to log.
     '''
-    print((green + "[DEBUG] " + message + reset))
+    print(green + "[DEBUG] " + message + reset)
 
 
 def loginfo(message):
@@ -194,7 +194,7 @@ def loginfo(message):
     Args:
         message (:obj:`str`): message to log.
     '''
-    print(("[ INFO] " + message))
+    print("[ INFO] " + message)
 
 
 def logwarn(message):
@@ -204,7 +204,7 @@ def logwarn(message):
     Args:
         message (:obj:`str`): message to log.
     '''
-    print((yellow + "[ WARN] " + message + reset))
+    print(yellow + "[ WARN] " + message + reset)
 
 
 def logerror(message):
@@ -214,7 +214,7 @@ def logerror(message):
     Args:
         message (:obj:`str`): message to log.
     '''
-    print((red + "[ERROR] " + message + reset))
+    print(red + "[ERROR] " + message + reset)
 
 
 def logfatal(message):
@@ -224,7 +224,7 @@ def logfatal(message):
     Args:
         message (:obj:`str`): message to log.
     '''
-    print((bold_red + "[FATAL] " + message + reset))
+    print(bold_red + "[FATAL] " + message + reset)
 
 
 ##############################################################################
@@ -240,4 +240,4 @@ if __name__ == '__main__':
     logfatal("logfatal message")
     pretty_print("red\n", red)
     print("some normal text")
-    print((cyan + "    Name" + reset + ": " + yellow + "Dude" + reset))
+    print(cyan + "    Name" + reset + ": " + yellow + "Dude" + reset)

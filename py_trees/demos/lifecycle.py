@@ -125,7 +125,7 @@ def main():
     """
     command_line_argument_parser().parse_args()
 
-    print((description()))
+    print(description())
 
     py_trees.logging.level = py_trees.logging.Level.DEBUG
 

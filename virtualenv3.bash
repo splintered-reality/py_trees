@@ -1,11 +1,15 @@
 #!/bin/bash
 
 # Script for setting up the development environment.
+#source /usr/share/virtualenvwrapper/virtualenvwrapper.sh
+
+NAME=py3_trees
+VERSION="--python=/usr/bin/python3"
 
 if [ "${VIRTUAL_ENV}" == "" ]; then
-  workon py_trees
+  workon ${NAME}
   if [ $? -ne 0 ]; then
-    mkvirtualenv py_trees
+    mkvirtualenv ${VERSION} ${NAME}
   fi
 fi
 # Always pulling for now

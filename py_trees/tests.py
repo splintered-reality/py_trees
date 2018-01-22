@@ -24,11 +24,11 @@ Bless my noggin with a tickle from your noodly appendages!
 
 
 def pre_tick_visitor(behaviour_tree):
-    print(("\n--------- Run %s ---------\n" % behaviour_tree.count))
+    print("\n--------- Run %s ---------\n" % behaviour_tree.count)
 
 
 def tick_tree(tree, visitor, from_iteration, to_iteration):
-    print(("\n================== Iteration %s-%s ==================\n" % (from_iteration, to_iteration)))
+    print("\n================== Iteration %s-%s ==================\n" % (from_iteration, to_iteration))
     for i in range(from_iteration, to_iteration + 1):
         print(("\n--------- Run %s ---------\n" % i))
         for node in tree.tick():
@@ -38,4 +38,4 @@ def tick_tree(tree, visitor, from_iteration, to_iteration):
 def print_summary(nodes):
     print("\n--------- Summary ---------\n")
     for node in nodes:
-        print(("%s" % node))
+        print("%s" % node)

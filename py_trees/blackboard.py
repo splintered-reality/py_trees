@@ -141,7 +141,7 @@ class Blackboard(object):
         """
         s = console.green + type(self).__name__ + "\n" + console.reset
         max_length = 0
-        for k in list(self.__dict__.keys()):
+        for k in self.__dict__.keys():
             max_length = len(k) if len(k) > max_length else max_length
         keys = sorted(self.__dict__)
         for key in keys:

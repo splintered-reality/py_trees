@@ -108,7 +108,7 @@ def main():
     Entry point for the demo script.
     """
     args = command_line_argument_parser().parse_args()
-    print((description()))
+    print(description())
     py_trees.logging.level = py_trees.logging.Level.DEBUG
 
     tree = create_tree()
@@ -129,4 +129,4 @@ def main():
     print("\n")
     py_trees.display.print_ascii_tree(tree, show_status=True)
     print("\n")
-    print((py_trees.blackboard.Blackboard()))
+    print(py_trees.blackboard.Blackboard())

@@ -89,15 +89,15 @@ def pre_tick_handler(behaviour_tree):
         behaviour_tree (:class:`~py_trees.trees.BehaviourTree`): the tree custodian
 
     """
-    print(("\n--------- Run %s ---------\n" % behaviour_tree.count))
+    print("\n--------- Run %s ---------\n" % behaviour_tree.count)
 
 
 def post_tick_handler(snapshot_visitor, behaviour_tree):
     """
     Prints an ascii tree with the current snapshot status.
     """
-    print(("\n" + py_trees.display.ascii_tree(behaviour_tree.root,
-                                             snapshot_information=snapshot_visitor)))
+    print("\n" + py_trees.display.ascii_tree(behaviour_tree.root,
+                                             snapshot_information=snapshot_visitor))
 
 
 def create_tree():
@@ -129,7 +129,7 @@ def main():
     args = command_line_argument_parser().parse_args()
     py_trees.logging.level = py_trees.logging.Level.DEBUG
     tree = create_tree()
-    print((description(tree)))
+    print(description(tree))
 
     ####################
     # Rendering

@@ -32,10 +32,10 @@ from .common import Status
 
 # hide from public exposure
 _behaviour_status_to_ascii = {
-    Status.SUCCESS: console.green + '\u2713' + console.reset,
-    Status.FAILURE: console.red + "x" + console.reset,
-    Status.INVALID: console.yellow + "-" + console.reset,
-    Status.RUNNING: console.blue + "*" + console.reset
+    Status.SUCCESS: console.green + u'\u2713' + console.reset,
+    Status.FAILURE: console.red + u'\u2715' + console.reset,
+    Status.INVALID: console.yellow + u'-' + console.reset,
+    Status.RUNNING: console.blue + u'*' + console.reset
 }
 
 
@@ -54,7 +54,6 @@ def _generate_ascii_tree(tree, indent=0, snapshot_information=None):
     nodes = {} if snapshot_information is None else snapshot_information.nodes
     previously_running_nodes = [] if snapshot_information is None else snapshot_information.previously_running_nodes
     running_nodes = [] if snapshot_information is None else snapshot_information.running_nodes
-
     if indent == 0:
         if tree.id in nodes:
             yield "%s [%s]" % (tree.name, _behaviour_status_to_ascii[nodes[tree.id]])
@@ -182,7 +181,7 @@ def print_ascii_tree(root, indent=0, show_status=False):
             self.previously_running_nodes = self.running_nodes
     snapshot_information = InstantSnapshot(root) if show_status else None
     for line in _generate_ascii_tree(root, indent, snapshot_information):
-        print(("%s" % line))
+        print("%s" % line)
 
 
 def generate_pydot_graph(root, visibility_level):
@@ -298,7 +297,7 @@ def render_dot_tree(root, visibility_level=common.VisibilityLevel.DETAIL, name=N
     """
     graph = generate_pydot_graph(root, visibility_level)
     filename_wo_extension = root.name.lower().replace(" ", "_") if name is None else name
-    print(("Writing %s.dot/svg/png" % filename_wo_extension))
+    print("Writing %s.dot/svg/png" % filename_wo_extension)
     graph.write(filename_wo_extension + '.dot')
     graph.write_png(filename_wo_extension + '.png')
     graph.write_svg(filename_wo_extension + '.svg')
