@@ -487,6 +487,7 @@ def test_failed_tree():
     root.add_child(f2)
     root.add_child(f3)
     tree = py_trees.BehaviourTree(root)
+    py_trees.display.print_ascii_tree(tree.root)
     tree.tick()
     print("\n--------- Assertions ---------\n")
     print("root.tip().name == Failure 3")

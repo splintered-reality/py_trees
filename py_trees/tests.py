@@ -30,7 +30,7 @@ def pre_tick_visitor(behaviour_tree):
 def tick_tree(tree, visitor, from_iteration, to_iteration):
     print("\n================== Iteration %s-%s ==================\n" % (from_iteration, to_iteration))
     for i in range(from_iteration, to_iteration + 1):
-        print("\n--------- Run %s ---------\n" % i)
+        print(("\n--------- Run %s ---------\n" % i))
         for node in tree.tick():
             node.visit(visitor)
 
