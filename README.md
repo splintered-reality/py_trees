@@ -67,7 +67,10 @@ sudo apt install ros-kinetic-py-trees
 You can develop in either a virtualenv (python style):
 
 ```
+# python 2
 source ./virtualenv.bash
+# python 3
+source ./virtualenv3.bash
 ```
 
 or in a catkin environment alongside other ROS py-trees packages:
