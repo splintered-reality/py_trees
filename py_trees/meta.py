@@ -77,11 +77,18 @@ def create_behaviour_from_function(func):
     class_name = func.__name__.capitalize()
 
     def terminate(self, new_status):
+        self.logger.debug("%s.terminate()[%s->%s]" % (self.__class__.__name__,
+                                                      self.status, new_status))
         if new_status == common.Status.INVALID:
             self.feedback_message = ""
 
+    def to_string(self):
+        s = '"{}" : {} - {}'.format(self.name, self.status, self.feedback_message)
+        return s
+
+
     # globals()[class_name] = type(class_name, (Behaviour,), dict(update=func))
-    return type(class_name, (behaviour.Behaviour,), dict(update=func, terminate=terminate))
+    return type(class_name, (behaviour.Behaviour,), dict(update=func, terminate=terminate, __repr__=to_string))
 
 
 ##############################################################################
