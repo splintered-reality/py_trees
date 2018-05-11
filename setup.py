@@ -5,17 +5,22 @@ import os
 
 # You need install_requires if you don't have a ROS environment
 install_requires = [] if os.environ.get('CATKIN_BINARY_DIR') else [
-    # tests
-    "nose",
     # runtime
-    'enum34',
+    'enum34;python_version<"3.4"',
     'pydot'
 ]
+extras_require = {} if os.environ.get('CATKIN_BINARY_DIR') else {
+    'test': ["nose"],
+    'docs': ["Sphinx", "sphinx-argparse", "sphinx_rtd_theme"]
+}
 ##############################
 # Pull in __version__
 ##############################
 
-project_dir = os.path.abspath(os.path.join(os.path.abspath(__file__), os.pardir))
+project_dir = os.path.abspath(
+    os.path.join(
+        os.path.abspath(__file__),
+        os.pardir))
 version_file = os.path.join(project_dir, 'py_trees', 'version.py')
 with open(version_file) as f:
     exec(f.read())
@@ -29,6 +34,7 @@ d = setup(
     version=__version__,
     packages=find_packages(exclude=['tests*', 'docs*']),
     install_requires=install_requires,
+    extras_require=extras_require,
     author='Daniel Stonier, Naveed Usmani, Michal Staniaszek',
     maintainer='Daniel Stonier <d.stonier@gmail.com>, Naveed Usmani <naveedhd@gmail.com>',
     url='http://github.com/stonier/py_trees',
