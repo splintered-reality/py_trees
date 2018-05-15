@@ -9,11 +9,13 @@ install_requires = [] if os.environ.get('CATKIN_BINARY_DIR') else [
     'enum34;python_version<"3.4"',
     'pydot'
 ]
+
+tests_require=['nose']
+
 extras_require = {} if os.environ.get('CATKIN_BINARY_DIR') else {
-    'test': ["nose"],
+    'test': tests_require,
     'docs': ["Sphinx", "sphinx-argparse", "sphinx_rtd_theme"]
 }
-tests_require=['nose']
 ##############################
 # Pull in __version__
 ##############################
