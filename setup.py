@@ -13,6 +13,7 @@ extras_require = {} if os.environ.get('CATKIN_BINARY_DIR') else {
     'test': ["nose"],
     'docs': ["Sphinx", "sphinx-argparse", "sphinx_rtd_theme"]
 }
+tests_require=['nose']
 ##############################
 # Pull in __version__
 ##############################
@@ -51,7 +52,7 @@ d = setup(
     long_description="A behaviour tree implementation for rapid development of small scale decision making engines that don't need to be real time reactive.",
     license='BSD',
     test_suite='nose.collector',
-    tests_require=['nose'],
+    tests_require=tests_require,
     # test_suite='tests',
     # Unfortunately catkin builds do not like this
     #     entry_points={

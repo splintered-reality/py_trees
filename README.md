@@ -42,7 +42,7 @@ Detailed api reference and demo instructions can be found in the [sphinx documen
 
 ## Getting Started
 
-### Installation
+**Installation**
 
 From [ppa](https://launchpad.net/~d-stonier/+archive/ubuntu/snorriheim) on Ubuntu/Xenial
 
@@ -62,7 +62,7 @@ Or in a sandboxed ROS Kinetic environment (coming soon):
 sudo apt install ros-kinetic-py-trees
 ```
 
-### Development
+**Development**
 
 You can develop in either a virtualenv (python style):
 
@@ -77,10 +77,3 @@ or in a catkin environment alongside other ROS py-trees packages:
 
 * https://github.com/stonier/repos_index/blob/devel/kinetic/py_trees.repos
 
-#### Optional
-In order to run tests or build documentation. You might require additional dependencies which can be obtained as follows:
-
-```
-pip install py_trees[test]
-pip install py_trees[docs]
-```
