@@ -1,2 +1,26 @@
+##############################################################################
+#
+# Requirements for a complete environment for running, testing and generating
+# documentation.
+#
+# Unfortunately this duplicates what is formally expressed in setup.py
+# but covers two use cases (sometimes more than covers):
+#
+# 1) Setting up the environment on read-the-docs for automatic doc generation
+# 2) Setting up a virtualenv with test & doc dependencies at your fingertips
+#
+# NB: If refactoring this name, make sure the read-the-docs server is aware
+# of the name change.
+##############################################################################
+
+# install_requires
 enum34;python_version<"3.4"
 pydot
+
+# extras_require[docs]
+Sphinx
+sphinx-argparse
+sphinx_rtd_theme
+
+# extras_require[test] || tests_require
+nose

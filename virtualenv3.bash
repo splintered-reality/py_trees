@@ -12,8 +12,10 @@ if [ "${VIRTUAL_ENV}" == "" ]; then
     mkvirtualenv ${VERSION} ${NAME}
   fi
 fi
-# Always pulling for now
+# Pull all requirements - test/doc & install
 pip install -r rtd-requirements.txt
+
+# NB: This would only pull install_requires
 python setup.py develop
 
 echo ""
