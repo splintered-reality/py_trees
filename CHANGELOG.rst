@@ -3,6 +3,9 @@ Changelog
 
 Forthcoming
 -----------
+
+0.6.0 (2018-05-15)
+------------------
 * Python 2/3 compatibility
 
 0.5.10 (2017-06-17)
