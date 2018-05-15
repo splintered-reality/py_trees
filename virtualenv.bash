@@ -8,10 +8,12 @@ if [ "${VIRTUAL_ENV}" == "" ]; then
     mkvirtualenv py_trees
   fi
 fi
-# Pull all requirements - test/doc & install
-pip install -r rtd-requirements.txt
 
-# NB: This would only pull install_requires
+# Get all dependencies for testing, doc generation
+pip install -e .[docs]
+pip install -e .[test]
+
+# NB: this automagically nabs install_requires
 python setup.py develop
 
 echo ""
