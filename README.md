@@ -13,7 +13,7 @@ Detailed api reference and demo instructions can be found in the [sphinx documen
 
 ## Sources, Builds & Docs
 
-| Devel | Kinetic | Indigo |
+| Devel | Melodic | Kinetic | Indigo |
 |:---:|:---:|:---:|
 | [![devel-Sources][devel-sources-image]][devel-sources] | [![0.6.x-Sources][0.6.x-sources-image]][0.6.x-sources] | [![0.5.x-Sources][0.5.x-sources-image]][0.5.x-sources] | [![0.4.x-Sources][0.4.x-sources-image]][0.4.x-sources] |
 | [![devel-Status][devel-build-status-image]][devel-build-status] | [![melodic-Status][melodic-build-status-image]][melodic-build-status] | [![kinetic-Status][kinetic-build-status-image]][kinetic-build-status] | |
