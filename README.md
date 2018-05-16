@@ -33,7 +33,7 @@ Detailed api reference and demo instructions can be found in the [sphinx documen
 
 [devel-build-status-image]: http://build.ros.org/job/Mdev__py_trees__ubuntu_bionic_amd64/badge/icon?style=plastic
 [devel-build-status]: http://build.ros.org/job/Mdev__py_trees__ubuntu_bionic_amd64
-[melodic-build-status-image]: http://build.ros.org/job/Mbin_uX64__py_trees__ubuntu_bionic_amd64__binary/badge/icon?style=plastic
+[melodic-build-status-image]: http://build.ros.org/job/Mbin_uB64__py_trees__ubuntu_bionic_amd64__binary/badge/icon?style=plastic
 [melodic-build-status]: http://build.ros.org/job/Mbin_uX64__py_trees__ubuntu_bionic_amd64__binary
 [kinetic-build-status-image]: http://build.ros.org/job/Kbin_uX64__py_trees__ubuntu_xenial_amd64__binary/badge/icon?style=plastic
 [kinetic-build-status]: http://build.ros.org/job/Kbin_uX64__py_trees__ubuntu_xenial_amd64__binary
