@@ -36,7 +36,7 @@ class Timer(behaviour.Behaviour):
     The timer gets reset either upon entry (:meth:`~py_trees.behaviour.Behaviour.initialise`)
     if it hasn't already been set and gets cleared when it either runs out, or the behaviour is
     interrupted by a higher priority or parent cancelling it.
-    
+
     Args:
         name (:obj:`str`): name of the behaviour
         duration (:obj:`int`): length of time to run (in seconds)
