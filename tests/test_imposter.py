@@ -27,11 +27,11 @@ logger = py_trees.logging.Logger("Nosetest")
 ##############################################################################
 
 def create_impostered_composite():
-    return py_trees.meta.failure_is_running(py_trees.composites.Sequence)("Impostered Composite")
+    return py_trees.meta.failure_is_running(py_trees.composites.Sequence)(name="Impostered Composite")
 
 
 def create_impostered_behaviour():
-    return py_trees.meta.success_is_failure(py_trees.behaviours.Success)("Impostered Behaviour")
+    return py_trees.meta.success_is_failure(py_trees.behaviours.Success)(name="Impostered Behaviour")
 
 
 def has_child_with_name(parent, child_name):

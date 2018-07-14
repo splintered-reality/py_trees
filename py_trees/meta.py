@@ -150,19 +150,12 @@ def create_imposter(cls):
                 kwargs['name'] = str(kwargs['name'])
                 name = kwargs['name']
                 kwargs['name'] = "_" + kwargs['name']
-                new_args = args
             else:
-                # if the list is empty, give it a placeholder name
-                if not args:
-                    new_args = ["Imposter"]
-                else:
-                    new_args = list(args)
-                    new_args[0] = str(new_args[0])
-                name = new_args[0]
-                new_args[0] = "_" + name
-                new_args = tuple(new_args)
+                # if name is missing, give it a placeholder name to indicate it is internal
+                name = "_Imposter"
+                kwargs['name'] = name
             super(Imposter, self).__init__(name)
-            self.original = cls(*new_args, **kwargs)
+            self.original = cls(*args, **kwargs)
 
             # aliases to original variables/methods
             self.blackbox_level = self.original.blackbox_level
