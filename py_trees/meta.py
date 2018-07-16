@@ -143,19 +143,12 @@ def create_imposter(cls):
         def __init__(self, *args, **kwargs):
             """
             Pass on the arguments intact except for the name. That is
-            prefixed with an underscore to denote that it is internal and
-            not linked in the usual fashion.
+            modified to begin with an underscore to denote that it is
+            internal.
             """
-            if 'name' in kwargs:
-                kwargs['name'] = str(kwargs['name'])
-                name = kwargs['name']
-                kwargs['name'] = "_" + kwargs['name']
-            else:
-                # if name is missing, give it a placeholder name to indicate it is internal
-                name = "_Imposter"
-                kwargs['name'] = name
-            super(Imposter, self).__init__(name)
             self.original = cls(*args, **kwargs)
+            super(Imposter, self).__init__(self.original.name)
+            self.original.name = "_" + self.original.name
 
             # aliases to original variables/methods
             self.blackbox_level = self.original.blackbox_level
