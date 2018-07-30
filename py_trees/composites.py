@@ -551,10 +551,11 @@ class Parallel(Composite):
         children ([:class:`~py_trees.behaviour.Behaviour`]): list of children to add
         num_children_to_succeed (:obj:`int`): number of children that are required to return :data:`~py_trees.common.Status.SUCCESS` when using :data:`~py_trees.common.ParallelPolicy.SUCCESS_ON_N`
         allow_failure (:obj:`bool`): when false if any child fails :data:`~py_trees.common.Status.FAILURE` will be returned, if true :data:`~py_trees.common.Status.FAILURE` will be returned only if enough nodes have failed to make success impossible
+        synchronize (:obj:`bool`): when true the parallel node runs each of its children to a terminal state before ticking any child that has reached a terminal state, when false it will always tick all children
         *args: variable length argument list
         **kwargs: arbitrary keyword arguments
     """
-    def __init__(self, name="Parallel", policy=common.ParallelPolicy.SUCCESS_ON_ALL, children=None, num_children_to_succeed=1, allow_failure=False, *args, **kwargs):
+    def __init__(self, name="Parallel", policy=common.ParallelPolicy.SUCCESS_ON_ALL, children=None, num_children_to_succeed=1, allow_failure=False, synchronize=False, *args, **kwargs):
         super(Parallel, self).__init__(name, children, *args, **kwargs)
         self.policy = policy
         if self.policy == common.ParallelPolicy.SUCCESS_ON_N:
@@ -565,6 +566,7 @@ class Parallel(Composite):
             self.num_children_to_succeed = None
 
         self.allow_failure = allow_failure
+        self.synchronize = synchronize
 
     def tick(self):
         """
@@ -578,7 +580,11 @@ class Parallel(Composite):
             self.initialise()
         self.logger.debug("%s.tick()" % self.__class__.__name__)
         # process them all first
-        for child in self.children:
+        children = self.children
+        if self.synchronize and self.status != Status.SUCCESS and self.status != Status.FAILURE:
+            children = [c for c in self.children if c.status != Status.SUCCESS and c.status != Status.FAILURE]
+        # If not synchronized always tick every child
+        for child in children:
             for node in child.tick():
                 yield node
         # Determine how many children can fail and how many are needed to succeed
