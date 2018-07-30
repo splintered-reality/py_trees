@@ -540,7 +540,6 @@ class Parallel(Composite):
 
     Ticks every child every time the parallel is run (a poor man's form of paralellism).
 
-    * Parallels will return :data:`~py_trees.common.Status.FAILURE` if any child returns :py:data:`~py_trees.common.Status.FAILURE`
     * Parallels with policy :data:`~py_trees.common.ParallelPolicy.SUCCESS_ON_ONE` return :py:data:`~py_trees.common.Status.SUCCESS` if **at least one** child returns :py:data:`~py_trees.common.Status.SUCCESS` and others are :py:data:`~py_trees.common.Status.RUNNING`.
     * Parallels with policy :data:`~py_trees.common.ParallelPolicy.SUCCESS_ON_ALL` only returns :py:data:`~py_trees.common.Status.SUCCESS` if **all** children return :py:data:`~py_trees.common.Status.SUCCESS`
 
@@ -550,12 +549,22 @@ class Parallel(Composite):
         name (:obj:`str`): the composite behaviour name
         policy (:class:`~py_trees.common.ParallelPolicy`): policy to use for deciding success or otherwise
         children ([:class:`~py_trees.behaviour.Behaviour`]): list of children to add
+        num_children_to_succeed (:obj:`int`): number of children that are required to return :data:`~py_trees.common.Status.SUCCESS` when using :data:`~py_trees.common.ParallelPolicy.SUCCESS_ON_N`
+        allow_failure (:obj:`bool`): when false if any child fails :data:`~py_trees.common.Status.FAILURE` will be returned, if true :data:`~py_trees.common.Status.FAILURE` will be returned only if enough nodes have failed to make success impossible
         *args: variable length argument list
         **kwargs: arbitrary keyword arguments
     """
-    def __init__(self, name="Parallel", policy=common.ParallelPolicy.SUCCESS_ON_ALL, children=None, *args, **kwargs):
+    def __init__(self, name="Parallel", policy=common.ParallelPolicy.SUCCESS_ON_ALL, children=None, num_children_to_succeed=1, allow_failure=False, *args, **kwargs):
         super(Parallel, self).__init__(name, children, *args, **kwargs)
         self.policy = policy
+        if self.policy == common.ParallelPolicy.SUCCESS_ON_N:
+            self.num_children_to_succeed = num_children_to_succeed
+        elif self.policy == common.ParallelPolicy.SUCCESS_ON_ONE:
+            self.num_children_to_succeed = 1
+        elif self.policy == common.ParallelPolicy.SUCCESS_ON_ALL:
+            self.num_children_to_succeed = None
+
+        self.allow_failure = allow_failure
 
     def tick(self):
         """
@@ -572,17 +581,23 @@ class Parallel(Composite):
         for child in self.children:
             for node in child.tick():
                 yield node
-        # new_status = Status.SUCCESS if self.policy == common.ParallelPolicy.SUCCESS_ON_ALL else Status.RUNNING
+        # Determine how many children can fail and how many are needed to succeed
+        num_failed = sum([c.status == Status.FAILURE for c in self.children])
+        num_succeeded = sum([c.status == Status.SUCCESS for c in self.children])
+        num_children = len(self.children)
+        num_children_to_succeed = num_children
+        if self.num_children_to_succeed is not None:
+            num_children_to_succeed = max(1, min(self.num_children_to_succeed, num_children))
+        num_children_allowed_to_fail = 0
+        if self.allow_failure:
+            num_children_allowed_to_fail = num_children - num_children_to_succeed
+        # Set status based on previously calculated values
         new_status = Status.RUNNING
-        if any([c.status == Status.FAILURE for c in self.children]):
+        if num_failed > num_children_allowed_to_fail:
             new_status = Status.FAILURE
-        else:
-            if self.policy == common.ParallelPolicy.SUCCESS_ON_ALL:
-                if all([c.status == Status.SUCCESS for c in self.children]):
-                    new_status = Status.SUCCESS
-            elif self.policy == common.ParallelPolicy.SUCCESS_ON_ONE:
-                if any([c.status == Status.SUCCESS for c in self.children]):
-                    new_status = Status.SUCCESS
+        elif num_succeeded >= num_children_to_succeed:
+            new_status = Status.SUCCESS
+
         # special case composite - this parallel may have children that are still running
         # so if the parallel itself has reached a final status, then these running children
         # need to be made aware of it too
