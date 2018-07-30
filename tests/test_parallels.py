@@ -245,3 +245,147 @@ def test_parallel_success_on_n_allow_failure():
     print("success.status == py_trees.Status.SUCCESS")
     assert(success.status == py_trees.Status.SUCCESS)
 
+
+def test_parallel_unsync_infinite_loop():
+    print(console.bold + "\n****************************************************************************************" + console.reset)
+    print(console.bold + "* Parallel un-snychronized infinte loop" + console.reset)
+    print(console.bold + "****************************************************************************************\n" + console.reset)
+    root = py_trees.composites.Parallel("Parallel", policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ALL)
+    periodic = py_trees.meta.failure_is_running(py_trees.behaviours.Periodic)(name="periodic", n=0)
+    success_every_other = py_trees.meta.failure_is_running(py_trees.behaviours.SuccessEveryN)("SuccessEveryOther", 3)
+    root.add_child(periodic)
+    root.add_child(success_every_other)
+    py_trees.display.print_ascii_tree(root)
+    visitor = py_trees.visitors.DebugVisitor()
+    py_trees.tests.tick_tree(root, visitor, 1, 1)
+
+    print("\n--------- Assertions ---------\n")
+    print("root.status == py_trees.Status.RUNNING")
+    assert(root.status == py_trees.Status.RUNNING)
+    print("periodic.status == py_trees.Status.SUCCESS")
+    assert(periodic.status == py_trees.Status.SUCCESS)
+    print("success_every_other.status == py_trees.Status.RUNNING")
+    assert(success_every_other.status == py_trees.Status.RUNNING)
+
+    py_trees.tests.tick_tree(root, visitor, 2, 2)
+
+    print("\n--------- Assertions ---------\n")
+    print("root.status == py_trees.Status.RUNNING")
+    assert(root.status == py_trees.Status.RUNNING)
+    print("periodic.status == py_trees.Status.RUNNING")
+    assert(periodic.status == py_trees.Status.RUNNING)
+    print("success_every_other.status == py_trees.Status.RUNNING")
+    assert(success_every_other.status == py_trees.Status.RUNNING)
+
+    py_trees.tests.tick_tree(root, visitor, 3, 3)
+
+    print("\n--------- Assertions ---------\n")
+    print("root.status == py_trees.Status.RUNNING")
+    assert(root.status == py_trees.Status.RUNNING)
+    print("periodic.status == py_trees.Status.RUNNING")
+    assert(periodic.status == py_trees.Status.RUNNING)
+    print("success_every_other.status == py_trees.Status.SUCCESS")
+    assert(success_every_other.status == py_trees.Status.SUCCESS)
+
+    py_trees.tests.tick_tree(root, visitor, 4, 4)
+
+    print("\n--------- Assertions ---------\n")
+    print("root.status == py_trees.Status.RUNNING")
+    assert(root.status == py_trees.Status.RUNNING)
+    print("periodic.status == py_trees.Status.SUCCESS")
+    assert(periodic.status == py_trees.Status.SUCCESS)
+    print("success_every_other.status == py_trees.Status.RUNNING")
+    assert(success_every_other.status == py_trees.Status.RUNNING)
+
+    py_trees.tests.tick_tree(root, visitor, 5, 5)
+
+    print("\n--------- Assertions ---------\n")
+    print("root.status == py_trees.Status.RUNNING")
+    assert(root.status == py_trees.Status.RUNNING)
+    print("periodic.status == py_trees.Status.RUNNING")
+    assert(periodic.status == py_trees.Status.RUNNING)
+    print("success_every_other.status == py_trees.Status.RUNNING")
+    assert(success_every_other.status == py_trees.Status.RUNNING)
+
+    py_trees.tests.tick_tree(root, visitor, 6, 6)
+
+    print("\n--------- Assertions ---------\n")
+    print("root.status == py_trees.Status.RUNNING")
+    assert(root.status == py_trees.Status.RUNNING)
+    print("periodic.status == py_trees.Status.RUNNING")
+    assert(periodic.status == py_trees.Status.RUNNING)
+    print("success_every_other.status == py_trees.Status.SUCCESS")
+    assert(success_every_other.status == py_trees.Status.SUCCESS)
+
+
+def test_parallel_sync():
+    print(console.bold + "\n****************************************************************************************" + console.reset)
+    print(console.bold + "* Parallel snychronized" + console.reset)
+    print(console.bold + "****************************************************************************************\n" + console.reset)
+    root = py_trees.composites.Parallel("Parallel", policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ALL, synchronize=True)
+    periodic = py_trees.meta.failure_is_running(py_trees.behaviours.Periodic)(name="periodic", n=0)
+    success_every_other = py_trees.meta.failure_is_running(py_trees.behaviours.SuccessEveryN)("SuccessEveryOther", 3)
+    root.add_child(periodic)
+    root.add_child(success_every_other)
+    py_trees.display.print_ascii_tree(root)
+    visitor = py_trees.visitors.DebugVisitor()
+    py_trees.tests.tick_tree(root, visitor, 1, 1)
+
+    print("\n--------- Assertions ---------\n")
+    print("root.status == py_trees.Status.RUNNING")
+    assert(root.status == py_trees.Status.RUNNING)
+    print("periodic.status == py_trees.Status.SUCCESS")
+    assert(periodic.status == py_trees.Status.SUCCESS)
+    print("success_every_other.status == py_trees.Status.RUNNING")
+    assert(success_every_other.status == py_trees.Status.RUNNING)
+
+    py_trees.tests.tick_tree(root, visitor, 2, 2)
+
+    print("\n--------- Assertions ---------\n")
+    print("root.status == py_trees.Status.RUNNING")
+    assert(root.status == py_trees.Status.RUNNING)
+    print("periodic.status == py_trees.Status.SUCCESS")
+    assert(periodic.status == py_trees.Status.SUCCESS)
+    print("success_every_other.status == py_trees.Status.RUNNING")
+    assert(success_every_other.status == py_trees.Status.RUNNING)
+
+    py_trees.tests.tick_tree(root, visitor, 3, 3)
+
+    print("\n--------- Assertions ---------\n")
+    print("root.status == py_trees.Status.SUCCESS")
+    assert(root.status == py_trees.Status.SUCCESS)
+    print("periodic.status == py_trees.Status.SUCCESS")
+    assert(periodic.status == py_trees.Status.SUCCESS)
+    print("success_every_other.status == py_trees.Status.SUCCESS")
+    assert(success_every_other.status == py_trees.Status.SUCCESS)
+
+    py_trees.tests.tick_tree(root, visitor, 4, 4)
+
+    print("\n--------- Assertions ---------\n")
+    print("root.status == py_trees.Status.RUNNING")
+    assert(root.status == py_trees.Status.RUNNING)
+    print("periodic.status == py_trees.Status.RUNNING")
+    assert(periodic.status == py_trees.Status.RUNNING)
+    print("success_every_other.status == py_trees.Status.RUNNING")
+    assert(success_every_other.status == py_trees.Status.RUNNING)
+
+    py_trees.tests.tick_tree(root, visitor, 5, 5)
+
+    print("\n--------- Assertions ---------\n")
+    print("root.status == py_trees.Status.RUNNING")
+    assert(root.status == py_trees.Status.RUNNING)
+    print("periodic.status == py_trees.Status.RUNNING")
+    assert(periodic.status == py_trees.Status.RUNNING)
+    print("success_every_other.status == py_trees.Status.RUNNING")
+    assert(success_every_other.status == py_trees.Status.RUNNING)
+
+    py_trees.tests.tick_tree(root, visitor, 6, 6)
+
+    print("\n--------- Assertions ---------\n")
+    print("root.status == py_trees.Status.SUCCESS")
+    assert(root.status == py_trees.Status.SUCCESS)
+    print("periodic.status == py_trees.Status.SUCCESS")
+    assert(periodic.status == py_trees.Status.SUCCESS)
+    print("success_every_other.status == py_trees.Status.SUCCESS")
+    assert(success_every_other.status == py_trees.Status.SUCCESS)
+
