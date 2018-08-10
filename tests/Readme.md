@@ -1,3 +1,9 @@
+# All
+
+```
+python3 setup.py test
+```
+
 # Nosetests
 
 Because I can never remember...execute with `nosetests my_test.py` in this folder.
@@ -9,7 +15,9 @@ notes in the .cfg file).
 
 ```
 # Test all under the current directory
-pytest-3
-# Test a single script
-pytest-3 test_flakes.py
+py.test-3 tests
+
+# Test a single test
+py.test-3 tests/test_flakes.py
+py.test-3 tests/test_pep257.py
 ```
