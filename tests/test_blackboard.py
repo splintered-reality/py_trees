@@ -39,6 +39,8 @@ class FooBar(object):
 
 def create_blackboard():
     """
+    Create a blackboard with a few variables.
+
     Fill with as many different types as we need to get full coverage on
     pretty printing blackboard tests.
     """

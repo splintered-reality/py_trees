@@ -11,5 +11,5 @@ notes in the .cfg file).
 # Test all under the current directory
 pytest-3
 # Test a single script
-pytest-3 test_copyright.py
+pytest-3 test_flakes.py
 ```
