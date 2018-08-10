@@ -38,9 +38,7 @@ class MustGoOnRegardless(py_trees.behaviours.Failure):
 
 
 def test_failure_is_success_tree():
-    print(console.bold + "\n****************************************************************************************" + console.reset)
-    print(console.bold + "* Failure is Success Tree" + console.reset)
-    print(console.bold + "****************************************************************************************\n" + console.reset)
+    console.banner("Failure is Success Tree")
     root = py_trees.Selector(name="Root")
     failure = py_trees.behaviours.Failure(name="Failure")
     goon = MustGoOnRegardless(name="DontBeAfraidToBeTheGoon")
@@ -60,9 +58,7 @@ def test_failure_is_success_tree():
 
 
 def test_success_is_failure_tree():
-    print(console.bold + "\n****************************************************************************************" + console.reset)
-    print(console.bold + "* Success is Failure Tree" + console.reset)
-    print(console.bold + "****************************************************************************************\n" + console.reset)
+    console.banner("Success is Failure Tree")
     root = py_trees.Selector("Root")
     failure = py_trees.behaviours.Failure(name="Failure")
     going_down = py_trees.meta.success_is_failure(py_trees.behaviours.Success)(name="Going Down")
@@ -82,9 +78,7 @@ def test_success_is_failure_tree():
 
 
 def test_inverter_tree():
-    print(console.bold + "\n****************************************************************************************" + console.reset)
-    print(console.bold + "* Inverter Tree" + console.reset)
-    print(console.bold + "****************************************************************************************\n" + console.reset)
+    console.banner("Inverter Tree")
     root = py_trees.Sequence(name="Root")
     selector = py_trees.Selector(name="Selector")
     failure = py_trees.behaviours.Failure(name="Failure")
@@ -114,9 +108,7 @@ def test_inverter_tree():
 
 
 def test_running_is_failure_tree():
-    print(console.bold + "\n****************************************************************************************" + console.reset)
-    print(console.bold + "* Running is Failure Tree" + console.reset)
-    print(console.bold + "****************************************************************************************\n" + console.reset)
+    console.banner("Running is Failure Tree")
     root = py_trees.Selector(name="Root")
     running = py_trees.meta.running_is_failure(py_trees.behaviours.Running)(name="Running")
     failure = py_trees.meta.running_is_failure(py_trees.behaviours.Failure)(name="Failure")
@@ -140,9 +132,7 @@ def test_running_is_failure_tree():
 
 
 def test_inverter_sequence():
-    print(console.bold + "\n****************************************************************************************" + console.reset)
-    print(console.bold + "* Inverter Sequence Tree" + console.reset)
-    print(console.bold + "****************************************************************************************\n" + console.reset)
+    console.banner("Inverter Sequence Tree")
     root = py_trees.meta.inverter(py_trees.Sequence)(name="Root")
     selector = py_trees.Selector(name="Selector")
     failure = py_trees.behaviours.Failure(name="Failure")
@@ -170,9 +160,7 @@ def test_inverter_sequence():
 
 
 def test_timeout():
-    print(console.bold + "\n****************************************************************************************" + console.reset)
-    print(console.bold + "* Timeout" + console.reset)
-    print(console.bold + "****************************************************************************************\n" + console.reset)
+    console.banner("Timeout")
     root = py_trees.meta.timeout(py_trees.behaviours.Running, 0.2)(name="Success w/ Timeout")
     py_trees.display.print_ascii_tree(root)
     visitor = py_trees.visitors.DebugVisitor()
@@ -192,9 +180,7 @@ def test_timeout():
 
 
 def test_condition():
-    print(console.bold + "\n****************************************************************************************" + console.reset)
-    print(console.bold + "* Condition" + console.reset)
-    print(console.bold + "****************************************************************************************\n" + console.reset)
+    console.banner("Condition")
 
     Conditional = py_trees.meta.condition(py_trees.behaviours.Count, py_trees.Status.SUCCESS)
     condition = Conditional(name="D", fail_until=2, running_until=2, success_until=10, reset=False)

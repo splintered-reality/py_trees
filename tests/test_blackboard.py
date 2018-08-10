@@ -55,23 +55,23 @@ def create_blackboard():
 
 
 def test_print_blackboard():
-    print(console.bold + "\n****************************************************************************************" + console.reset)
-    print(console.bold + "* Blackboard" + console.reset)
-    print(console.bold + "****************************************************************************************\n" + console.reset)
+    console.banner("Blackboard")
     blackboard = create_blackboard()
     print('{0}'.format(blackboard))
 
 
 def test_variable_exists():
-    print(console.bold + "\n****************************************************************************************" + console.reset)
-    print(console.bold + "* Check Existence of Variable" + console.reset)
-    print(console.bold + "****************************************************************************************\n" + console.reset)
-    unused_blackboard = create_blackboard()
+    console.banner("Check Existence of Variable")
+    create_blackboard()
     tuples = []
-    tuples.append((py_trees.blackboard.CheckBlackboardVariable(name="check_foo_exists", variable_name="foo"), Status.SUCCESS))
-    tuples.append((py_trees.blackboard.CheckBlackboardVariable(name="check_bar_exists", variable_name="bar"), Status.FAILURE))
-    tuples.append((py_trees.blackboard.CheckBlackboardVariable(name="check_nested_foo_exists", variable_name="foobar.foo"), Status.SUCCESS))
-    tuples.append((py_trees.blackboard.CheckBlackboardVariable(name="check_nested_bar_exists", variable_name="foobar.bar"), Status.FAILURE))
+    tuples.append((py_trees.blackboard.CheckBlackboardVariable(
+        name="check_foo_exists", variable_name="foo"), Status.SUCCESS))
+    tuples.append((py_trees.blackboard.CheckBlackboardVariable(
+        name="check_bar_exists", variable_name="bar"), Status.FAILURE))
+    tuples.append((py_trees.blackboard.CheckBlackboardVariable(
+        name="check_nested_foo_exists", variable_name="foobar.foo"), Status.SUCCESS))
+    tuples.append((py_trees.blackboard.CheckBlackboardVariable(
+        name="check_nested_bar_exists", variable_name="foobar.bar"), Status.FAILURE))
     for b, unused in tuples:
         b.tick_once()
     for b, asserted_result in tuples:
@@ -80,17 +80,23 @@ def test_variable_exists():
 
 
 def test_expected_value():
-    print(console.bold + "\n****************************************************************************************" + console.reset)
-    print(console.bold + "* Check Expected Value" + console.reset)
-    print(console.bold + "****************************************************************************************\n" + console.reset)
-    unused_blackboard = create_blackboard()
+    console.banner("Check Expected Value")
+    create_blackboard()
     tuples = []
-    tuples.append((py_trees.blackboard.CheckBlackboardVariable(name="check_foo_equals_bar", variable_name="foo", expected_value="bar"), Status.SUCCESS))
-    tuples.append((py_trees.blackboard.CheckBlackboardVariable(name="check_foo_equals_foo", variable_name="foo", expected_value="foo"), Status.FAILURE))
-    tuples.append((py_trees.blackboard.CheckBlackboardVariable(name="check_bar_equals_bar", variable_name="bar", expected_value="bar"), Status.FAILURE))
-    tuples.append((py_trees.blackboard.CheckBlackboardVariable(name="check_bar_equals_foo", variable_name="bar", expected_value="foo"), Status.FAILURE))
-    tuples.append((py_trees.blackboard.CheckBlackboardVariable(name="check_nested_foo_equals_bar", variable_name="foobar.foo", expected_value="bar"), Status.SUCCESS))
-    tuples.append((py_trees.blackboard.CheckBlackboardVariable(name="check_nested_foo_equals_foo", variable_name="foobar.foo", expected_value="foo"), Status.FAILURE))
+    tuples.append((py_trees.blackboard.CheckBlackboardVariable(
+        name="check_foo_equals_bar", variable_name="foo", expected_value="bar"), Status.SUCCESS))
+    tuples.append((py_trees.blackboard.CheckBlackboardVariable(
+        name="check_foo_equals_foo", variable_name="foo", expected_value="foo"), Status.FAILURE))
+    tuples.append((py_trees.blackboard.CheckBlackboardVariable(
+        name="check_bar_equals_bar", variable_name="bar", expected_value="bar"), Status.FAILURE))
+    tuples.append((py_trees.blackboard.CheckBlackboardVariable(
+        name="check_bar_equals_foo", variable_name="bar", expected_value="foo"), Status.FAILURE))
+    tuples.append((py_trees.blackboard.CheckBlackboardVariable(
+        name="check_nested_foo_equals_bar", variable_name="foobar.foo", expected_value="bar"),
+        Status.SUCCESS))
+    tuples.append((py_trees.blackboard.CheckBlackboardVariable(
+        name="check_nested_foo_equals_foo", variable_name="foobar.foo", expected_value="foo"),
+        Status.FAILURE))
     for b, unused in tuples:
         b.tick_once()
     for b, asserted_result in tuples:
@@ -99,18 +105,28 @@ def test_expected_value():
 
 
 def test_expected_value_inverted():
-    print(console.bold + "\n****************************************************************************************" + console.reset)
-    print(console.bold + "* Check Not Expected Value" + console.reset)
-    print(console.bold + "****************************************************************************************\n" + console.reset)
-    unused_blackboard = create_blackboard()
+    console.banner("heck Not Expected Value")
+    create_blackboard()
 
     tuples = []
-    tuples.append((py_trees.blackboard.CheckBlackboardVariable(name="check_foo_not_equals_bar", variable_name="foo", expected_value="bar", comparison_operator=operator.ne), Status.FAILURE))
-    tuples.append((py_trees.blackboard.CheckBlackboardVariable(name="check_foo_not_equals_foo", variable_name="foo", expected_value="foo", comparison_operator=operator.ne), Status.SUCCESS))
-    tuples.append((py_trees.blackboard.CheckBlackboardVariable(name="check_bar_not_equals_bar", variable_name="bar", expected_value="bar", comparison_operator=operator.ne), Status.FAILURE))
-    tuples.append((py_trees.blackboard.CheckBlackboardVariable(name="check_bar_not_equals_foo", variable_name="bar", expected_value="foo", comparison_operator=operator.ne), Status.FAILURE))
-    tuples.append((py_trees.blackboard.CheckBlackboardVariable(name="check_nested_foo_not_equals_bar", variable_name="foobar.foo", expected_value="bar", comparison_operator=operator.ne), Status.FAILURE))
-    tuples.append((py_trees.blackboard.CheckBlackboardVariable(name="check_nested_foo_not_equals_foo", variable_name="foobar.foo", expected_value="foo", comparison_operator=operator.ne), Status.SUCCESS))
+    tuples.append((py_trees.blackboard.CheckBlackboardVariable(
+        name="check_foo_not_equals_bar", variable_name="foo", expected_value="bar",
+        comparison_operator=operator.ne), Status.FAILURE))
+    tuples.append((py_trees.blackboard.CheckBlackboardVariable(
+        name="check_foo_not_equals_foo", variable_name="foo", expected_value="foo",
+        comparison_operator=operator.ne), Status.SUCCESS))
+    tuples.append((py_trees.blackboard.CheckBlackboardVariable(
+        name="check_bar_not_equals_bar", variable_name="bar", expected_value="bar",
+        comparison_operator=operator.ne), Status.FAILURE))
+    tuples.append((py_trees.blackboard.CheckBlackboardVariable(
+        name="check_bar_not_equals_foo", variable_name="bar", expected_value="foo",
+        comparison_operator=operator.ne), Status.FAILURE))
+    tuples.append((py_trees.blackboard.CheckBlackboardVariable(
+        name="check_nested_foo_not_equals_bar", variable_name="foobar.foo", expected_value="bar",
+        comparison_operator=operator.ne), Status.FAILURE))
+    tuples.append((py_trees.blackboard.CheckBlackboardVariable(
+        name="check_nested_foo_not_equals_foo", variable_name="foobar.foo", expected_value="foo",
+        comparison_operator=operator.ne), Status.SUCCESS))
     for b, unused in tuples:
         b.tick_once()
     for b, asserted_result in tuples:
@@ -119,22 +135,32 @@ def test_expected_value_inverted():
 
 
 def test_wait_for_blackboard_variable():
-    print(console.bold + "\n****************************************************************************************" + console.reset)
-    print(console.bold + "* Wait for Blackboard Variable" + console.reset)
-    print(console.bold + "****************************************************************************************\n" + console.reset)
-    unused_blackboard = create_blackboard()
+    console.banner("Wait for Blackboard Variable")
+    create_blackboard()
 
     tuples = []
-    tuples.append((py_trees.blackboard.WaitForBlackboardVariable(name="check_foo_exists", variable_name="foo"), Status.SUCCESS))
-    tuples.append((py_trees.blackboard.WaitForBlackboardVariable(name="check_bar_exists", variable_name="bar"), Status.RUNNING))
-    tuples.append((py_trees.blackboard.WaitForBlackboardVariable(name="check_nested_foo_exists", variable_name="foobar.foo"), Status.SUCCESS))
-    tuples.append((py_trees.blackboard.WaitForBlackboardVariable(name="check_nested_bar_exists", variable_name="foobar.bar"), Status.RUNNING))
-    tuples.append((py_trees.blackboard.WaitForBlackboardVariable(name="check_foo_equals_bar", variable_name="foo", expected_value="bar"), Status.SUCCESS))
-    tuples.append((py_trees.blackboard.WaitForBlackboardVariable(name="check_foo_equals_foo", variable_name="foo", expected_value="foo"), Status.RUNNING))
-    tuples.append((py_trees.blackboard.WaitForBlackboardVariable(name="check_bar_equals_bar", variable_name="bar", expected_value="bar"), Status.RUNNING))
-    tuples.append((py_trees.blackboard.WaitForBlackboardVariable(name="check_bar_equals_foo", variable_name="bar", expected_value="foo"), Status.RUNNING))
-    tuples.append((py_trees.blackboard.WaitForBlackboardVariable(name="check_nested_foo_equals_bar", variable_name="foobar.foo", expected_value="bar"), Status.SUCCESS))
-    tuples.append((py_trees.blackboard.WaitForBlackboardVariable(name="check_nested_foo_equals_foo", variable_name="foobar.foo", expected_value="foo"), Status.RUNNING))
+    tuples.append((py_trees.blackboard.WaitForBlackboardVariable(
+        name="check_foo_exists", variable_name="foo"), Status.SUCCESS))
+    tuples.append((py_trees.blackboard.WaitForBlackboardVariable(
+        name="check_bar_exists", variable_name="bar"), Status.RUNNING))
+    tuples.append((py_trees.blackboard.WaitForBlackboardVariable(
+        name="check_nested_foo_exists", variable_name="foobar.foo"), Status.SUCCESS))
+    tuples.append((py_trees.blackboard.WaitForBlackboardVariable(
+        name="check_nested_bar_exists", variable_name="foobar.bar"), Status.RUNNING))
+    tuples.append((py_trees.blackboard.WaitForBlackboardVariable(
+        name="check_foo_equals_bar", variable_name="foo", expected_value="bar"), Status.SUCCESS))
+    tuples.append((py_trees.blackboard.WaitForBlackboardVariable(
+        name="check_foo_equals_foo", variable_name="foo", expected_value="foo"), Status.RUNNING))
+    tuples.append((py_trees.blackboard.WaitForBlackboardVariable(
+        name="check_bar_equals_bar", variable_name="bar", expected_value="bar"), Status.RUNNING))
+    tuples.append((py_trees.blackboard.WaitForBlackboardVariable(
+        name="check_bar_equals_foo", variable_name="bar", expected_value="foo"), Status.RUNNING))
+    tuples.append((py_trees.blackboard.WaitForBlackboardVariable(
+        name="check_nested_foo_equals_bar", variable_name="foobar.foo", expected_value="bar"),
+        Status.SUCCESS))
+    tuples.append((py_trees.blackboard.WaitForBlackboardVariable(
+        name="check_nested_foo_equals_foo", variable_name="foobar.foo", expected_value="foo"),
+        Status.RUNNING))
     for b, unused in tuples:
         b.tick_once()
     for b, asserted_result in tuples:
@@ -143,9 +169,7 @@ def test_wait_for_blackboard_variable():
 
 
 def test_clear_blackboard_variable():
-    print(console.bold + "\n****************************************************************************************" + console.reset)
-    print(console.bold + "* Clear Blackboard Variable" + console.reset)
-    print(console.bold + "****************************************************************************************\n" + console.reset)
+    console.banner("Clear Blackboard Variable")
     blackboard = create_blackboard()
     blackboard.foo = "bar"
     clear_foo = py_trees.blackboard.ClearBlackboardVariable(name="Clear Foo", variable_name="foo")
@@ -164,11 +188,10 @@ def test_clear_blackboard_variable():
 
 
 def test_set_blackboard_variable():
-    print(console.bold + "\n****************************************************************************************" + console.reset)
-    print(console.bold + "* Set Blackboard Variable" + console.reset)
-    print(console.bold + "****************************************************************************************\n" + console.reset)
+    console.banner("Set Blackboard Variable")
     blackboard = create_blackboard()
-    set_foo = py_trees.blackboard.SetBlackboardVariable(name="Set Foo", variable_name="foo", variable_value="bar")
+    set_foo = py_trees.blackboard.SetBlackboardVariable(
+        name="Set Foo", variable_name="foo", variable_value="bar")
     print(" - Set 'foo'")
     set_foo.tick_once()
     print("\n%s" % blackboard)

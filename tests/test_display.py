@@ -22,12 +22,11 @@ import py_trees.display as display
 
 
 def test_symbols():
-    print(console.bold + "\n****************************************************************************************" + console.reset)
-    print(console.bold + "* Symbols" + console.reset)
-    print(console.bold + "****************************************************************************************" + console.reset)
-    # This test has no assertions, except from the human eye. When it fails, ticks and crosses fail and must be
-    # inspected by the human eye
-    print("[{0}][{1}][{2}][{3}]".format(display._behaviour_status_to_ascii[py_trees.common.Status.SUCCESS],
-                                        display._behaviour_status_to_ascii[py_trees.common.Status.FAILURE],
-                                        display._behaviour_status_to_ascii[py_trees.common.Status.INVALID],
-                                        display._behaviour_status_to_ascii[py_trees.common.Status.RUNNING]))
+    console.banner("Symbols")
+    # This test has no assertions, except from the human eye. When it fails,
+    # ticks and crosses fail and must be inspected by the human eye
+    print("[{0}][{1}][{2}][{3}]".format(
+        display._behaviour_status_to_ascii[py_trees.common.Status.SUCCESS],
+        display._behaviour_status_to_ascii[py_trees.common.Status.FAILURE],
+        display._behaviour_status_to_ascii[py_trees.common.Status.INVALID],
+        display._behaviour_status_to_ascii[py_trees.common.Status.RUNNING]))

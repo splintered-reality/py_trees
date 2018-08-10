@@ -28,9 +28,7 @@ logger = py_trees.logging.Logger("Nosetest")
 
 
 def test_parallel_failure():
-    print(console.bold + "\n****************************************************************************************" + console.reset)
-    print(console.bold + "* Parallel Failure" + console.reset)
-    print(console.bold + "****************************************************************************************\n" + console.reset)
+    console.banner("Parallel Failure")
     root = py_trees.composites.Parallel("Parallel")
     failure = py_trees.behaviours.Failure("Failure")
     success = py_trees.behaviours.Success("Success")
@@ -50,9 +48,7 @@ def test_parallel_failure():
 
 
 def test_parallel_success():
-    print(console.bold + "\n****************************************************************************************" + console.reset)
-    print(console.bold + "* Parallel Success" + console.reset)
-    print(console.bold + "****************************************************************************************\n" + console.reset)
+    console.banner("Parallel Success")
     root = py_trees.composites.Parallel("Parallel")
     success1 = py_trees.behaviours.Success("Success1")
     success2 = py_trees.behaviours.Success("Success2")
@@ -72,11 +68,11 @@ def test_parallel_success():
 
 
 def test_parallel_running():
-    print(console.bold + "\n****************************************************************************************" + console.reset)
-    print(console.bold + "* Parallel Running" + console.reset)
-    print(console.bold + "****************************************************************************************\n" + console.reset)
-    root = py_trees.composites.Parallel("Parallel", policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ALL)
-    success_after_1 = py_trees.behaviours.Count(name="SuccessAfter1", fail_until=0, running_until=1, success_until=20)
+    console.banner("Parallel Running")
+    root = py_trees.composites.Parallel(
+        "Parallel", policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ALL)
+    success_after_1 = py_trees.behaviours.Count(
+        name="SuccessAfter1", fail_until=0, running_until=1, success_until=20)
 
     running = py_trees.behaviours.Running("Running")
     success_every_other = py_trees.behaviours.SuccessEveryN("SuccessEveryOther", 2)
@@ -111,11 +107,10 @@ def test_parallel_running():
 
 
 def test_parallel_success_on_one():
-    print(console.bold + "\n****************************************************************************************" + console.reset)
-    print(console.bold + "* Parallel Success on One" + console.reset)
-    print(console.bold + "****************************************************************************************\n" + console.reset)
+    console.banner("Parallel Success on One")
     print("")
-    root = py_trees.composites.Parallel(name="Parallel", policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE)
+    root = py_trees.composites.Parallel(
+        name="Parallel", policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE)
     running1 = py_trees.behaviours.Running("Running1")
     success = py_trees.behaviours.Success("Success")
     running2 = py_trees.behaviours.Running("Running2")
@@ -136,4 +131,3 @@ def test_parallel_success_on_one():
     assert(success.status == py_trees.Status.SUCCESS)
     print("running2.status == py_trees.Status.SUCCESS")
     assert(running2.status == py_trees.Status.SUCCESS)
-

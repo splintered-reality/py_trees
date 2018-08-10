@@ -161,6 +161,12 @@ def pretty_println(msg, colour=white):
 ##############################################################################
 
 
+def banner(msg):
+    print(bold + "\n" + 80 * "*" + reset)
+    print(bold + "* " + msg + reset)
+    print(bold + 80 * "*" + "\n" + reset)
+
+
 def debug(msg):
     print(green + msg + reset)
 

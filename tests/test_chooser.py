@@ -28,9 +28,7 @@ logger = py_trees.logging.Logger("Nosetest")
 
 
 def test_low_priority_runner():
-    print(console.bold + "\n****************************************************************************************" + console.reset)
-    print(console.bold + "* Low Priority Runner" + console.reset)
-    print(console.bold + "****************************************************************************************\n" + console.reset)
+    console.banner("Low Priority Runner")
     root = py_trees.composites.Chooser()
     failure = py_trees.behaviours.Failure("Failure")
     running = py_trees.behaviours.Running("Running")
@@ -60,9 +58,7 @@ def test_low_priority_runner():
 
 
 def test_low_priority_success():
-    print(console.bold + "\n****************************************************************************************" + console.reset)
-    print(console.bold + "* Low Priority Success" + console.reset)
-    print(console.bold + "****************************************************************************************\n" + console.reset)
+    console.banner("Low Priority Success")
     root = py_trees.composites.Chooser()
     failure = py_trees.behaviours.Failure("Failure")
     success = py_trees.behaviours.Success("Success")
@@ -93,9 +89,7 @@ def test_low_priority_success():
 
 
 def test_higher_priority_ignore():
-    print(console.bold + "\n****************************************************************************************" + console.reset)
-    print(console.bold + "* Ignore Higher Priority" + console.reset)
-    print(console.bold + "****************************************************************************************\n" + console.reset)
+    console.banner("Ignore Higher Priority")
     root = py_trees.composites.Chooser()
     ping_pong = py_trees.behaviours.SuccessEveryN("Ping Pong", 2)
     running = py_trees.behaviours.Running("Running")
@@ -122,4 +116,3 @@ def test_higher_priority_ignore():
     assert(ping_pong.status == py_trees.Status.INVALID)  # got invalidated and didnt get ticked
     print("running.status == py_trees.Status.RUNNING")
     assert(running.status == py_trees.Status.RUNNING)
-
