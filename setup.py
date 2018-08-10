@@ -2,9 +2,12 @@
 
 from setuptools import find_packages, setup
 import os
+import sys
 
 # You need install_requires if you don't have a ROS environment
-install_requires = [] if os.environ.get('CATKIN_BINARY_DIR') else [
+install_requires = [ # ] if os.environ.get('AMENT_PREFIX_PATH') else [
+    # build
+    'setuptools',
     # runtime
     'enum34;python_version<"3.4"',
     'pydot'
@@ -12,7 +15,7 @@ install_requires = [] if os.environ.get('CATKIN_BINARY_DIR') else [
 
 tests_require=['nose']
 
-extras_require = {} if os.environ.get('CATKIN_BINARY_DIR') else {
+extras_require = {} if os.environ.get('AMENT_PREFIX_PATH') else {
     'test': tests_require,
     'docs': ["Sphinx", "sphinx-argparse", "sphinx_rtd_theme"]
 }
@@ -20,13 +23,16 @@ extras_require = {} if os.environ.get('CATKIN_BINARY_DIR') else {
 # Pull in __version__
 ##############################
 
-project_dir = os.path.abspath(
-    os.path.join(
-        os.path.abspath(__file__),
-        os.pardir))
-version_file = os.path.join(project_dir, 'py_trees', 'version.py')
-with open(version_file) as f:
-    exec(f.read())
+# Doesn't work - ament tooling reads the file and uses that directly
+# so __file__ won't work.
+# project_dir = os.path.abspath(
+#     os.path.join(
+#         os.path.abspath(__file__),
+#         os.pardir))
+# sys.exit("Project File {}".format(os.path.abspath(__file__)))
+# version_file = os.path.join(project_dir, 'py_trees', 'version.pyd')
+# with open(version_file) as f:
+#     exec(f.read())
 
 
 # Some duplication of properties here and in package.xml.
@@ -34,7 +40,7 @@ with open(version_file) as f:
 # That is the price paid for a pypi and catkin package.
 d = setup(
     name='py_trees',
-    version=__version__,
+    version='0.6.0',  # also update package.xml and version.py
     packages=find_packages(exclude=['tests*', 'docs*']),
     install_requires=install_requires,
     extras_require=extras_require,

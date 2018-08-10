@@ -1,15 +1,17 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format2.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="2">
-  <!-- Some duplication of properties here and in package.xml. -->
-  <!-- Make sure to update them both -->
-  <!-- That is the price paid for a pypi and catkin package.  -->
   <name>py_trees</name>
+  <!-- When updating, also update setup.py and version.py -->
   <version>0.6.0</version>
   <description>
     Pythonic implementation of behaviour trees.
   </description>
+  <author>Daniel Stonier</author>
+  <author>Michal Staniaszek</author>
+  <author>Naveed Usmani</author>
 
   <maintainer email="d.stonier@gmail.com">Daniel Stonier</maintainer>
-  <maintainer email="naveedhd@gmail.com">Naveed Usmani</maintainer>
 
   <license>BSD</license>
 
@@ -17,13 +19,7 @@
   <url type="repository">https://github.com/stonier/py_trees</url>
   <url type="bugtracker">https://github.com/stonier/py_trees/issues</url>
 
-  <author>Daniel Stonier</author>
-  <author>Michal Staniaszek</author>
-  <author>Naveed Usmani</author>
-
-  <buildtool_depend>catkin</buildtool_depend>
-
-  <build_depend>python-setuptools</build_depend>
+  <!-- <build_depend>python-setuptools</build_depend> -->
 
   <doc_depend>python-sphinx</doc_depend>
   <doc_depend>python-sphinx-argparse</doc_depend>
@@ -32,9 +28,15 @@
   <doc_depend>python-pydot</doc_depend>
 
   <exec_depend>python-enum34</exec_depend>
-  <exec_depend>python-pydot</exec_depend>
+  <exec_depend>python3-pydot</exec_depend>
+
+  <!-- Need to use python3-rosdep to get these? -->
+  <test_depend>ament_copyright</test_depend>
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
+  <test_depend>python3-pytest</test_depend>
 
   <export>
-    <rosdoc config="rosdoc.yaml"/>
+    <build_type>ament_python</build_type>
   </export>
 </package>
