@@ -41,9 +41,14 @@ def tick_tree(root, from_iteration, to_iteration):
     return count
 
 
+@py_trees.meta.oneshot
+class OneShotSequence(py_trees.composites.Sequence):
+    pass
+
 ##############################################################################
 # Tests
 ##############################################################################
+
 
 def test_oneshot_does_not_modify_class():
     print(console.bold + "\n****************************************************************************************" + console.reset)
@@ -51,10 +56,16 @@ def test_oneshot_does_not_modify_class():
     print(console.bold + "****************************************************************************************\n" + console.reset)
     oneshot = py_trees.meta.oneshot(py_trees.composites.Sequence)(name="Oneshot",
                                                                   children=[py_trees.behaviours.Failure(name="Failure")])
-    normal = py_trees.composites.Sequence(name="Normal",
-                                          children=[py_trees.behaviours.Failure(name="Failure")])
     oneshot_count = tick_tree(oneshot, 1, 2)
     print(console.yellow + "\nOneshot Sequence Tick Count: {}".format(oneshot_count) + console.reset)
+
+    decorated_oneshot = OneShotSequence(name="Oneshot",
+                                        children=[py_trees.behaviours.Failure(name="Failure")])
+    decorated_oneshot_count = tick_tree(decorated_oneshot, 1, 2)
+    print(console.yellow + "\nDecorated Oneshot Sequence Tick Count: {}".format(decorated_oneshot_count) + console.reset)
+
+    normal = py_trees.composites.Sequence(name="Normal",
+                                          children=[py_trees.behaviours.Failure(name="Failure")])
     normal_count = tick_tree(normal, 1, 2)
     print(console.yellow + "\nNormal Sequence Tick Count: {}".format(normal_count) + console.reset)
     assert(oneshot_count == 1)
