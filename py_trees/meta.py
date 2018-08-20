@@ -404,8 +404,10 @@ def oneshot(cls):
 
            do_or_die = gimme_a_second_chance(GimmeASecondChance)("Do or Die")
     """
-    setattr(cls, "tick", _oneshot_tick(cls.tick))
-    return cls
+    class OneShot(cls):
+        pass
+    setattr(OneShot, "tick", _oneshot_tick(OneShot.tick))
+    return OneShot
 
 #############################
 # RunningIsFailure
