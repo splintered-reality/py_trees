@@ -379,6 +379,23 @@ def _oneshot_tick(func):
     return wrapped
 
 
+def _oneshot_stop(func):
+    """
+    Replace the original function as follows:
+    In case the original function has not been called before,
+    call it only if the new status is SUCCESS or FAILURE.
+    """
+    @functools.wraps(func)
+    def wrapped(self, new_status):
+        # Stop is called the first time when SUCCESS / FAILURE is reported.
+        # It may later be invoked to set the new_status to INVALID.
+        if not self._terminated:
+            if new_status in [common.Status.SUCCESS, common.Status.FAILURE]:
+                self._terminated = True
+            func(self, new_status)
+    return wrapped
+
+
 def oneshot(cls):
     """
     A decorator that ensures the given behaviour run only until it returns
@@ -405,8 +422,12 @@ def oneshot(cls):
            do_or_die = gimme_a_second_chance(GimmeASecondChance)("Do or Die")
     """
     class OneShot(cls):
-        pass
+        def __init__(self, *args, **kwargs):
+            super(OneShot, self).__init__(*args, **kwargs)
+            self._terminated = False
+
     setattr(OneShot, "tick", _oneshot_tick(OneShot.tick))
+    setattr(OneShot, "stop", _oneshot_stop(OneShot.stop))
     return OneShot
 
 #############################
