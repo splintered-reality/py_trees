@@ -4,6 +4,10 @@ Changelog
 Forthcoming
 -----------
 
+0.6.2 (2018-08-31)
+------------------
+* Oneshot bugfix - react to priority interrupts correctly
+
 0.6.1 (2018-08-20)
 ------------------
 * Oneshot bugfix - no longer permanently modifies the original class
