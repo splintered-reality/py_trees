@@ -474,7 +474,7 @@ class Sequence(Composite):
         """
         self.logger.debug("%s.tick()" % self.__class__.__name__)
         if self.status != Status.RUNNING:
-            self.logger.debug("%s.tick() [resetting]" % self.__class__.__name__)
+            self.logger.debug("%s.tick() [!RUNNING->resetting child index]" % self.__class__.__name__)
             # sequence specific handling
             self.current_index = 0
             for child in self.children:
