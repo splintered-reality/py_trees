@@ -4,6 +4,10 @@ Changelog
 Forthcoming
 -----------
 
+0.6.3 (2018-09-04)
+------------------
+* Parallels bugfix - don't send own status to running children, invalidate them instead
+
 0.6.2 (2018-08-31)
 ------------------
 * Oneshot bugfix - react to priority interrupts correctly
