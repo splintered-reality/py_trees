@@ -72,7 +72,11 @@ def test_parallel_running():
     root = py_trees.composites.Parallel(
         "Parallel", policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ALL)
     success_after_1 = py_trees.behaviours.Count(
-        name="SuccessAfter1", fail_until=0, running_until=1, success_until=20)
+        name="SuccessAfter1",
+        fail_until=0,
+        running_until=1,
+        success_until=20,
+        reset=False)
 
     running = py_trees.behaviours.Running("Running")
     success_every_other = py_trees.behaviours.SuccessEveryN("SuccessEveryOther", 2)
@@ -86,10 +90,10 @@ def test_parallel_running():
     print("\n--------- Assertions ---------\n")
     print("root.status == py_trees.Status.FAILURE")
     assert(root.status == py_trees.Status.FAILURE)
-    print("success_after_1.status == py_trees.Status.FAILURE")
-    assert(success_after_1.status == py_trees.Status.FAILURE)
-    print("running.status == py_trees.Status.FAILURE")
-    assert(running.status == py_trees.Status.FAILURE)
+    print("success_after_1.status == py_trees.Status.INVALID")
+    assert(success_after_1.status == py_trees.Status.INVALID)
+    print("running.status == py_trees.Status.INVALID")
+    assert(running.status == py_trees.Status.INVALID)
     print("success_every_other.status == py_trees.Status.FAILURE")
     assert(success_every_other.status == py_trees.Status.FAILURE)
 
@@ -125,9 +129,9 @@ def test_parallel_success_on_one():
     print("All children get switched to success if one goes to success.")
     print("root.status == py_trees.Status.SUCCESS")
     assert(root.status == py_trees.Status.SUCCESS)
-    print("running1.status == py_trees.Status.SUCCESS")
-    assert(running1.status == py_trees.Status.SUCCESS)
+    print("running1.status == py_trees.Status.INVALID")
+    assert(running1.status == py_trees.Status.INVALID)
     print("success.status == py_trees.Status.SUCCESS")
     assert(success.status == py_trees.Status.SUCCESS)
-    print("running2.status == py_trees.Status.SUCCESS")
-    assert(running2.status == py_trees.Status.SUCCESS)
+    print("running2.status == py_trees.Status.INVALID")
+    assert(running2.status == py_trees.Status.INVALID)
