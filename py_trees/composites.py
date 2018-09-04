@@ -589,7 +589,8 @@ class Parallel(Composite):
         if new_status != Status.RUNNING:
             for child in self.children:
                 if child.status == Status.RUNNING:
-                    child.stop(new_status)
+                    # interrupt it (exactly as if it was interrupted by a higher priority)
+                    child.stop(Status.INVALID)
             self.stop(new_status)
         self.status = new_status
         yield self
