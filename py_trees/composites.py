@@ -580,7 +580,7 @@ class Parallel(Composite):
             self.initialise()
         self.logger.debug("%s.tick()" % self.__class__.__name__)
         # process them all first
-        children = self.children
+        children = list(self.children)
         if self.synchronize and self.status != Status.SUCCESS and self.status != Status.FAILURE:
             children = [c for c in self.children if c.status != Status.SUCCESS and c.status != Status.FAILURE]
         # If not synchronized always tick every child
