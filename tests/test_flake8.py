@@ -6,16 +6,14 @@
 # Imports
 ##############################################################################
 
-from ament_flake8.main import main
-import pytest
+try:
+    from ament_flake8.main import main
+    import pytest
 
-##############################################################################
-# Tests
-##############################################################################
-
-
-@pytest.mark.flake8
-@pytest.mark.linter
-def test_flake8():
-    rc = main(argv=[])
-    assert rc == 0, 'Found errors'
+    @pytest.mark.flake8
+    @pytest.mark.linter
+    def test_flake8():
+        rc = main(argv=[])
+        assert rc == 0, 'Found errors'
+except:
+    print("No ament in your environment, skipping {}".format(__file__))
