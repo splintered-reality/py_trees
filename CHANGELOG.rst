@@ -4,6 +4,10 @@ Changelog
 Forthcoming
 -----------
 
+0.6.4 (2018-09-19)
+------------------
+* Ascii tree bugfix - replace awkward newlines with spaces
+
 0.6.3 (2018-09-04)
 ------------------
 * Parallels bugfix - don't send own status to running children, invalidate them instead
