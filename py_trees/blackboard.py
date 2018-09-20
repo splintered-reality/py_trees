@@ -250,7 +250,8 @@ class CheckBlackboardVariable(behaviours.Behaviour):
                  variable_name="dummy",
                  expected_value=None,
                  comparison_operator=operator.eq,
-                 clearing_policy=common.ClearingPolicy.ON_INITIALISE
+                 clearing_policy=common.ClearingPolicy.ON_INITIALISE,
+                 debug_feedback_message=False
                  ):
         super(CheckBlackboardVariable, self).__init__(name)
         self.blackboard = Blackboard()
@@ -259,6 +260,7 @@ class CheckBlackboardVariable(behaviours.Behaviour):
         self.comparison_operator = comparison_operator
         self.matching_result = None
         self.clearing_policy = clearing_policy
+        self.debug_feedback_message = debug_feedback_message
 
     def initialise(self):
         """
@@ -299,10 +301,16 @@ class CheckBlackboardVariable(behaviours.Behaviour):
             success = self.comparison_operator(value, self.expected_value)
 
             if success:
-                self.feedback_message = "'%s' comparison succeeded [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
+                if self.debug_feedback_message:  # costly
+                    self.feedback_message = "'%s' comparison succeeded [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
+                else: 
+                    self.feedback_message = "'%s' comparison succeeded" % (self.variable_name)
                 result = common.Status.SUCCESS
             else:
-                self.feedback_message = "'%s' comparison failed [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
+                if self.debug_feedback_message:  # costly
+                    self.feedback_message = "'%s' comparison failed [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
+                else:
+                    self.feedback_message = "'%s' comparison failed" % (self.variable_name)
                 result = common.Status.FAILURE
 
         if result == common.Status.SUCCESS and self.clearing_policy == common.ClearingPolicy.ON_SUCCESS:
