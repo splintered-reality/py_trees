@@ -416,10 +416,10 @@ def inverter(cls):
         @functools.wraps(func)
         def wrapped(self):
             if self.original.status == common.Status.SUCCESS:
+                self.feedback_message = "success -> failure [{}]".format(self.original.feedback_message)
                 return common.Status.FAILURE
-                self.feedback_message = "success -> failure"
             elif self.original.status == common.Status.FAILURE:
-                self.feedback_message = "failure -> success"
+                self.feedback_message = "failure -> success [{}]".format(self.original.feedback_message)
                 return common.Status.SUCCESS
             else:
                 self.feedback_message = self.original.feedback_message
