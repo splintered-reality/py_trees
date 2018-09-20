@@ -4,6 +4,11 @@ Changelog
 Forthcoming
 -----------
 
+0.6.5 (2018-09-19)
+------------------
+* Inverters bugfix - pick up missing feedback messages
+* Eliminate costly blackboard variable check feedback message
+
 0.6.4 (2018-09-19)
 ------------------
 * Ascii tree bugfix - replace awkward newlines with spaces
