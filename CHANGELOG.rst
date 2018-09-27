@@ -4,6 +4,28 @@ Changelog
 Forthcoming
 -----------
 
+0.7.0 (2018-09-27)
+------------------
+* python3 only support from this point forward
+* upgraded to be compatible for ros2 projects
+
+0.6.5 (2018-09-19)
+------------------
+* Inverters bugfix - pick up missing feedback messages
+* Eliminate costly blackboard variable check feedback message
+
+0.6.4 (2018-09-19)
+------------------
+* Ascii tree bugfix - replace awkward newlines with spaces
+
+0.6.3 (2018-09-04)
+------------------
+* Parallels bugfix - don't send own status to running children, invalidate them instead
+
+0.6.2 (2018-08-31)
+------------------
+* Oneshot bugfix - react to priority interrupts correctly
+
 0.6.1 (2018-08-20)
 ------------------
 * Oneshot bugfix - no longer permanently modifies the original class
