@@ -63,7 +63,11 @@ deb:
 #
 # Note, you probably need to register the first time.
 # You can also send it to testpypi first if you wish (see tutorial).
+
+PYPI_DEPS=twine
+
 pypi: 
+	@dpkg -s ${PYPI_DEPS} > /dev/null || sudo apt install ${PYPI_DEPS}
 	python setup.py sdist bdist_wheel
 	twine upload dist/*
 
