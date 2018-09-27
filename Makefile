@@ -71,6 +71,12 @@ pypi:
 	python setup.py sdist bdist_wheel
 	twine upload dist/*
 
+pypi_test: 
+	@dpkg -s ${PYPI_DEPS} > /dev/null || sudo apt install ${PYPI_DEPS}
+	python setup.py sdist bdist_wheel
+	twine upload dist/*
+	twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+
 tests:
 	python setup.py test
 
