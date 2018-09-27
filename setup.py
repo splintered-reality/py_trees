@@ -64,27 +64,16 @@ d = setup(
     tests_require=tests_require,
     # test_suite='tests',
     # Unfortunately catkin builds do not like this
-    #     entry_points={
-    #         'console_scripts': [
-    #             'py-trees-demo-action-behaviour = py_trees.demos.action:main',
-    #             'py-trees-demo-behaviour-lifecycle = py_trees.demos.lifecycle:main',
-    #             'py-trees-demo-blackboard = py_trees.demos.blackboard:main',
-    #             'py-trees-demo-context-switching = py_trees.demos.context_switching:main',
-    #             'py-trees-demo-dot-graphs = py_trees.demos.dot_graphs:main',
-    #             'py-trees-demo-selector = py_trees.demos.selector:main',
-    #             'py-trees-demo-sequence = py_trees.demos.sequence:main',
-    #             'py-trees-demo-tree-stewardship = py_trees.demos.stewardship:main',
-    #         ],
-    #     },
-    # So we do the tedious way
-    scripts=['scripts/py-trees-demo-action-behaviour',
-             'scripts/py-trees-demo-behaviour-lifecycle',
-             'scripts/py-trees-demo-blackboard',
-             'scripts/py-trees-demo-context-switching',
-             'scripts/py-trees-demo-dot-graphs',
-             'scripts/py-trees-demo-selector',
-             'scripts/py-trees-demo-sequence',
-             'scripts/py-trees-demo-tree-stewardship',
-             'scripts/py-trees-render'
-             ],
+    entry_points={
+         'console_scripts': [
+             'py-trees-demo-action-behaviour = py_trees.demos.action:main',
+             'py-trees-demo-behaviour-lifecycle = py_trees.demos.lifecycle:main',
+             'py-trees-demo-blackboard = py_trees.demos.blackboard:main',
+             'py-trees-demo-context-switching = py_trees.demos.context_switching:main',
+             'py-trees-demo-dot-graphs = py_trees.demos.dot_graphs:main',
+             'py-trees-demo-selector = py_trees.demos.selector:main',
+             'py-trees-demo-sequence = py_trees.demos.sequence:main',
+             'py-trees-demo-tree-stewardship = py_trees.demos.stewardship:main',
+         ],
+     },
 )
