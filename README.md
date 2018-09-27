@@ -62,24 +62,21 @@ From [pypi](https://pypi.python.org/pypi/py_trees):
 pip install py_trees
 ```
 
-Or in a sandboxed ROS Kinetic environment (coming soon):
+Or in a ROS2 environment:
 
 ```
-sudo apt install ros-kinetic-py-trees
+sudo apt install ros-<rosdistro>-py-trees
 ```
 
 **Development**
 
-You can develop in either a virtualenv (python style):
+You can develop in either a virtualenv (python3):
 
 ```
-# python 2
 source ./virtualenv.bash
-# python 3
-source ./virtualenv3.bash
 ```
 
-or in a catkin environment alongside other ROS py-trees packages:
+or in a ament-colcon environment:
 
-* https://github.com/stonier/repos_index/blob/devel/kinetic/py_trees.repos
+<TODO: instructions forthcoming>
 
