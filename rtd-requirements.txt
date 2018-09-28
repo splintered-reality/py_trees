@@ -4,10 +4,7 @@
 # documentation.
 #
 # Unfortunately this duplicates what is formally expressed in setup.py
-# but covers two use cases (sometimes more than covers):
-#
-# 1) Setting up the environment on read-the-docs for automatic doc generation
-# 2) Setting up a virtualenv with test & doc dependencies at your fingertips
+# but covers the needs of read-the-docs that give us automatic doc generation.
 #
 # NB: If refactoring this name, make sure the read-the-docs server is aware
 # of the name change.
