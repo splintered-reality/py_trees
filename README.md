@@ -13,17 +13,19 @@ Detailed api reference and demo instructions can be found in the [sphinx documen
 
 ## Sources, Builds & Docs
 
-| Devel | Melodic | Kinetic |
-|:---:|:---:|:---:|
-| [![devel-Sources][devel-sources-image]][devel-sources] | [![0.6.x-Sources][0.6.x-sources-image]][0.6.x-sources] | [![0.5.x-Sources][0.5.x-sources-image]][0.5.x-sources] |
-| [![devel-Status][devel-build-status-image]][devel-build-status] | [![melodic-Status][melodic-build-status-image]][melodic-build-status] | [![kinetic-Status][kinetic-build-status-image]][kinetic-build-status] | |
-| [![devel-Docs][devel-docs-image]][devel-docs] | [![0.6.x-Docs][0.5.x-docs-image]][0.6.x-docs] | [![0.5.x-Docs][0.5.x-docs-image]][0.5.x-docs] | |
+| Devel | 0.7.x/Bouncy | 0.6.x/Melodic | 0.5.x/Kinetic |
+|:---:|:---:|:---:|:---:|
+| [![devel-Sources][devel-sources-image]][devel-sources] | [![0.7.x-Sources][0.7.x-sources-image]][0.7.x-sources] | [![0.6.x-Sources][0.6.x-sources-image]][0.6.x-sources] | [![0.5.x-Sources][0.5.x-sources-image]][0.5.x-sources] |
+| [![devel-Status][devel-build-status-image]][devel-build-status] | - | [![melodic-Status][melodic-build-status-image]][melodic-build-status] | [![kinetic-Status][kinetic-build-status-image]][kinetic-build-status] | |
+| [![devel-Docs][devel-docs-image]][devel-docs] | [![0.7.x-Docs][0.7.x-docs-image]][0.7.x-docs] | [![0.6.x-Docs][0.6.x-docs-image]][0.6.x-docs] | [![0.5.x-Docs][0.5.x-docs-image]][0.5.x-docs] | |
 
 [license-image]: https://img.shields.io/badge/License-BSD%203--Clause-orange.svg?style=plastic
 [license]: LICENSE
 
 [devel-sources-image]: http://img.shields.io/badge/sources-devel-blue.svg?style=plastic
 [devel-sources]: https://github.com/stonier/py_trees/tree/devel
+[0.7.x-sources-image]: http://img.shields.io/badge/sources-0.7.x-blue.svg?style=plastic
+[0.7.x-sources]: https://github.com/stonier/py_trees/tree/release/0.7.x
 [0.6.x-sources-image]: http://img.shields.io/badge/sources-0.6.x--melodic-blue.svg?style=plastic
 [0.6.x-sources]: https://github.com/stonier/py_trees/tree/release/0.6-melodic
 [0.5.x-sources-image]: http://img.shields.io/badge/sources-0.5.x--kinetic-blue.svg?style=plastic
@@ -33,6 +35,8 @@ Detailed api reference and demo instructions can be found in the [sphinx documen
 
 [devel-build-status-image]: http://build.ros.org/job/Mdev__py_trees__ubuntu_bionic_amd64/badge/icon?style=plastic
 [devel-build-status]: http://build.ros.org/job/Mdev__py_trees__ubuntu_bionic_amd64
+[bouncy-build-status-image]: http://build.ros.org/job/Mbin_uB64__py_trees__ubuntu_bionic_amd64__binary/badge/icon?style=plastic
+[bouncy-build-status]: http://build.ros.org/job/Mbin_uX64__py_trees__ubuntu_bionic_amd64__binary
 [melodic-build-status-image]: http://build.ros.org/job/Mbin_uB64__py_trees__ubuntu_bionic_amd64__binary/badge/icon?style=plastic
 [melodic-build-status]: http://build.ros.org/job/Mbin_uX64__py_trees__ubuntu_bionic_amd64__binary
 [kinetic-build-status-image]: http://build.ros.org/job/Kbin_uX64__py_trees__ubuntu_xenial_amd64__binary/badge/icon?style=plastic
@@ -40,10 +44,12 @@ Detailed api reference and demo instructions can be found in the [sphinx documen
 
 [devel-docs-image]: https://readthedocs.org/projects/py-trees/badge/?version=devel&style=plastic
 [devel-docs]: http://py-trees.readthedocs.io/
+[0.7.x-docs-image]: https://readthedocs.org/projects/py-trees/badge/?version=release-0.7.x&style=plastic
+[0.7.x-docs]: http://py-trees.readthedocs.io/en/release-0.7.x/
 [0.6.x-docs-image]: https://readthedocs.org/projects/py-trees/badge/?version=release-0.6-melodic&style=plastic
-[0.6.x-docs]: http://py-trees.readthedocs.io/en/release-0.6-melodic/
+[0.6.x-docs]: http://py-trees.readthedocs.io/en/release-0.6.x/
 [0.5.x-docs-image]: https://readthedocs.org/projects/py-trees/badge/?version=release-0.5-kinetic&style=plastic
-[0.5.x-docs]: http://py-trees.readthedocs.io/en/release-0.5-kinetic/
+[0.5.x-docs]: http://py-trees.readthedocs.io/en/release-0.5.x/
 
 
 ## Getting Started
