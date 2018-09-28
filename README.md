@@ -11,6 +11,10 @@ of medium sized decision making engines for use in fields like robotics. Brief f
 
 Detailed api reference and demo instructions can be found in the [sphinx documentation](http://py-trees.readthedocs.io/) for the package. There is also the [py_trees_ros](https://github.com/stonier/py_trees_ros/tree/devel) package which includes additional modules and documentation for using py_trees with ROS.
 
+## Python2 vs Python3
+
+Release 0.6.x supported both Python2 and Python3. 0.7.x and onwards will only have official support (bugs and doc.) for python3.
+
 ## Sources, Builds & Docs
 
 | Devel | 0.7.x/Bouncy | 0.6.x/Melodic | 0.5.x/Kinetic |
@@ -56,30 +60,32 @@ Detailed api reference and demo instructions can be found in the [sphinx documen
 
 **Installation**
 
-From [ppa](https://launchpad.net/~d-stonier/+archive/ubuntu/snorriheim) on Ubuntu/Xenial
-
-```
-sudo apt install python-py-trees
-```
-
 From [pypi](https://pypi.python.org/pypi/py_trees):
 
 ```
-pip install py_trees
+$ pip install py_trees
 ```
 
 Or in a ROS2 environment:
 
 ```
-sudo apt install ros-<rosdistro>-py-trees
+$ sudo apt install ros-<rosdistro>-py-trees
 ```
+
+Build your own python3 deb:
+
+```
+$ source ./virtualenv.bash
+$ make deb
+```
+
 
 **Development**
 
 You can develop in either a virtualenv (python3):
 
 ```
-source ./virtualenv.bash
+$ source ./virtualenv.bash
 ```
 
 or in a ament-colcon environment:

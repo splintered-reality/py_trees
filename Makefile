@@ -7,7 +7,6 @@ VERSION=`./setup.py --version`
 
 help:
 	@echo "Local Build"
-	@echo "  deps      : install various build dependencies"
 	@echo "  build     : build the python package"
 	@echo "  tests     : run all of the nosetests"
 	@echo "  clean     : clean build/dist directories"
@@ -23,10 +22,6 @@ docs:
 
 build:
 	python setup.py build
-
-deps:
-	echo "Downloading dependencies"
-	sudo apt-get install python-stdeb virtualenvwrapper
 
 clean:
 	-rm -f MANIFEST

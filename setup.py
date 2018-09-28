@@ -17,7 +17,8 @@ tests_require=['nose']
 
 extras_require = {} if os.environ.get('AMENT_PREFIX_PATH') else {
     'test': tests_require,
-    'docs': ["Sphinx", "sphinx-argparse", "sphinx_rtd_theme"]
+    'docs': ["Sphinx", "sphinx-argparse", "sphinx_rtd_theme"],
+    'debs': ['stdeb', 'twine']
 }
 ##############################
 # Pull in __version__
