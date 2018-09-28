@@ -50,9 +50,9 @@ Release 0.6.x supported both Python2 and Python3. 0.7.x and onwards will only ha
 [devel-docs]: http://py-trees.readthedocs.io/
 [0.7.x-docs-image]: https://readthedocs.org/projects/py-trees/badge/?version=release-0.7.x&style=plastic
 [0.7.x-docs]: http://py-trees.readthedocs.io/en/release-0.7.x/
-[0.6.x-docs-image]: https://readthedocs.org/projects/py-trees/badge/?version=release-0.6-melodic&style=plastic
+[0.6.x-docs-image]: https://readthedocs.org/projects/py-trees/badge/?version=release-0.6.x&style=plastic
 [0.6.x-docs]: http://py-trees.readthedocs.io/en/release-0.6.x/
-[0.5.x-docs-image]: https://readthedocs.org/projects/py-trees/badge/?version=release-0.5-kinetic&style=plastic
+[0.5.x-docs-image]: https://readthedocs.org/projects/py-trees/badge/?version=release-0.5.x&style=plastic
 [0.5.x-docs]: http://py-trees.readthedocs.io/en/release-0.5.x/
 
 
