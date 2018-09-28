@@ -59,20 +59,12 @@ deb:
 # Note, you probably need to register the first time.
 # You can also send it to testpypi first if you wish (see tutorial).
 
-PYPI_DEPS=twine
-
-# @dpkg -s ${PYPI_DEPS} > /dev/null || sudo apt install ${PYPI_DEPS}
-# need pip's twine for now to get around bugs with system twine (need v1.11+)
-# Refer to 
-#    https://github.com/pypa/twine/issues/342
-_pypi_prep: 
-	@pip list --user --format=columns | grep twine > /dev/null || pip install -U twine
+pypi:
 	python setup.py sdist bdist_wheel
-
-pypi: _pypi_prep
 	twine upload dist/*
 
-pypi_test: _pypi_prep
+pypi_test:
+	python setup.py sdist bdist_wheel
 	twine upload --repository-url https://test.pypi.org/legacy/ dist/*
 
 tests:
