@@ -60,6 +60,13 @@ Release 0.6.x supported both Python2 and Python3. 0.7.x and onwards will only ha
 
 **Installation**
 
+
+From [ppa](https://launchpad.net/~d-stonier/+archive/ubuntu/snorriheim) on Ubuntu/Bionic
+
+```
+sudo apt install python3-py-trees
+```
+
 From [pypi](https://pypi.python.org/pypi/py_trees):
 
 ```
