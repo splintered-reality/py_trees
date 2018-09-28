@@ -27,8 +27,7 @@
   <doc_depend>python-enum34</doc_depend>
   <doc_depend>python-pydot</doc_depend>
 
-  <exec_depend>python-enum34</exec_depend>
-  <exec_depend>python3-pydot</exec_depend>
+  <exec_depend>python-pydot</exec_depend>
 
   <!-- Need to use python3-rosdep to get these? -->
   <test_depend>ament_copyright</test_depend>
