@@ -13,7 +13,7 @@ install_requires = [ # ] if os.environ.get('AMENT_PREFIX_PATH') else [
     'pydot'
 ]
 
-tests_require=['nose']
+tests_require=['nose', 'pytest', 'flake8']
 
 extras_require = {} if os.environ.get('AMENT_PREFIX_PATH') else {
     'test': tests_require,
