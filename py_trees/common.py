@@ -129,4 +129,3 @@ def string_to_visibility_level(level):
         return VisibilityLevel.BIG_PICTURE
     else:
         return VisibilityLevel.ALL
-

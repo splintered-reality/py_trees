@@ -117,8 +117,10 @@ def console_has_colours():
         return False
     return True
 
+
 has_colours = console_has_colours()
 """ Whether the loading program has access to colours or not."""
+
 
 if has_colours:
     # reset = "\x1b[0;0m"

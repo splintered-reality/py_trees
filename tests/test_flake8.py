@@ -6,6 +6,7 @@
 # Imports
 ##############################################################################
 
+import os
 import sys
 
 try:
@@ -17,6 +18,14 @@ except ImportError as e:
     sys.exit(1)
 
 ##############################################################################
+# Logging
+##############################################################################
+
+# Disable alot of spam coming from pytest
+from logging import getLogger
+getLogger('flake8').propagate = False
+
+##############################################################################
 # Tests
 ##############################################################################
 
@@ -24,5 +33,16 @@ except ImportError as e:
 @pytest.mark.flake8
 @pytest.mark.linter
 def test_flake8():
-    rc = main(argv=[])
+    module_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'py_trees')
+    test_path = os.path.dirname(__file__)
+    config_file = os.path.join(os.path.dirname(__file__), 'setup.cfg')
+    argv = [
+        "--config",
+        config_file,
+        "paths",
+        module_path,
+        test_path
+    ]
+    # argv = ["--help"]
+    rc = main(argv)
     assert rc == 0, 'Found errors'

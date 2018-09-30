@@ -153,12 +153,12 @@ def main():
     # Tick Tock
     ####################
     if args.interactive:
-        unused_result = py_trees.console.read_single_keypress()
+        py_trees.console.read_single_keypress()
     while True:
         try:
             behaviour_tree.tick()
             if args.interactive:
-                unused_result = py_trees.console.read_single_keypress()
+                py_trees.console.read_single_keypress()
             else:
                 time.sleep(0.5)
         except KeyboardInterrupt:

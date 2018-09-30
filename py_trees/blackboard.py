@@ -303,7 +303,7 @@ class CheckBlackboardVariable(behaviours.Behaviour):
             if success:
                 if self.debug_feedback_message:  # costly
                     self.feedback_message = "'%s' comparison succeeded [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
-                else: 
+                else:
                     self.feedback_message = "'%s' comparison succeeded" % (self.variable_name)
                 result = common.Status.SUCCESS
             else:

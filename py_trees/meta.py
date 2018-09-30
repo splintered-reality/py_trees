@@ -208,9 +208,9 @@ def create_imposter(cls):
 
             # initialise() and terminate() for the original behaviour
             # will be called from inside the original's tick()
-            for behaviour in self.original.tick():
-                if behaviour != self.original:
-                    yield behaviour
+            for sub_behaviour in self.original.tick():
+                if sub_behaviour != self.original:
+                    yield sub_behaviour
             new_status = self.update()
             if new_status not in list(common.Status):
                 self.logger.error("A behaviour returned an invalid status, setting to INVALID [%s][%s]" % (new_status, self.name))
@@ -359,8 +359,8 @@ def oneshot(cls):
                 yield self
             else:
                 self.logger.debug("OneShot.wrapped_tick()")
-                for behaviour in func(self):
-                    yield behaviour
+                for b in func(self):
+                    yield b  # b = behaviour
         return wrapped
 
     def _oneshot_terminate(func):

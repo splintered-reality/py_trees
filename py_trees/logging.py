@@ -58,6 +58,7 @@ class Level(IntEnum):
     WARN = 2
     ERROR = 3
 
+
 # module variable
 level = Level.INFO
 
