@@ -47,7 +47,8 @@ def tick_tree(root, oneshot, from_tick, to_tick):
         for unused_node in root.tick():
             count += 1
         if oneshot:
-            oneshot.logger.debug("OneShot.status[{}[{}]]".format(oneshot.status, oneshot.original.status))
+            oneshot.logger.debug(
+                "OneShot.status[{}[{}]]".format(oneshot.status, oneshot.original.status))
     return count
 
 
@@ -92,26 +93,25 @@ class CounterTester(py_trees.behaviours.Count):
 
 
 def test_custom_construction():
-    print(console.bold + "\n****************************************************************************************" + console.reset)
-    print(console.bold + "* Construction Arguments are passed" + console.reset)
-    print(console.bold + "****************************************************************************************\n" + console.reset)
+    console.banner("Construction Arguments are passed")
     oneshot = py_trees.meta.oneshot(Foo)(name="Oneshot",
                                          what_am_i="Bar")
     print(console.cyan + "What Am I: " + console.yellow + oneshot.what_am_i + console.reset)
-    assert(oneshot.what_am_i, "Bar")
+    assert(oneshot.what_am_i == "Bar")
 
 
 def test_oneshot_does_not_modify_class():
-    print(console.bold + "\n****************************************************************************************" + console.reset)
-    print(console.bold + "* Test Oneshots Do Not Modify the Original Class" + console.reset)
-    print(console.bold + "****************************************************************************************\n" + console.reset)
-    oneshot = py_trees.meta.oneshot(py_trees.composites.Sequence)(name="Oneshot",
-                                                                  children=[py_trees.behaviours.Failure(name="Failure")])
+    console.banner("Test Oneshots Do Not Modify the Original Class")
+    oneshot = py_trees.meta.oneshot(
+        py_trees.composites.Sequence)(
+            name="Oneshot",
+            children=[py_trees.behaviours.Failure(name="Failure")])
     oneshot_count = tick_tree(root=oneshot,
                               oneshot=oneshot,
                               from_tick=1,
                               to_tick=2)
-    print(console.cyan + "\nOneshot Sequence Tick Count: " + console.yellow + "{}".format(oneshot_count) + console.reset)
+    print(console.cyan + "\nOneshot Sequence Tick Count: " +
+          console.yellow + "{}".format(oneshot_count) + console.reset)
     assert(oneshot_count == 1)
 
     decorated_oneshot = OneShotSequence(
@@ -121,14 +121,16 @@ def test_oneshot_does_not_modify_class():
                                         oneshot=decorated_oneshot,
                                         from_tick=1,
                                         to_tick=2)
-    print(console.cyan + "\nDecorated Oneshot Sequence Tick Count: " + console.yellow + "{}".format(decorated_oneshot_count) + console.reset)
+    print(console.cyan + "\nDecorated Oneshot Sequence Tick Count: " +
+          console.yellow + "{}".format(decorated_oneshot_count) + console.reset)
     assert(decorated_oneshot_count == 1)
 
     normal = py_trees.composites.Sequence(
         name="Normal",
         children=[py_trees.behaviours.Failure(name="Failure")])
     normal_count = tick_tree(root=normal, oneshot=None, from_tick=1, to_tick=2)
-    print(console.cyan + "\nNormal Sequence Tick Count: " + console.yellow + "{}".format(normal_count) + console.reset)
+    print(console.cyan + "\nNormal Sequence Tick Count: " +
+          console.yellow + "{}".format(normal_count) + console.reset)
     # Hitherto, the decorator modified the sequence permanently, so the tick count for the latter
     # would be the same. This behaviour is confusing - the decorators should always create
     # *new* classes so there is only one policy for decoration - instance modification only.
@@ -136,20 +138,23 @@ def test_oneshot_does_not_modify_class():
 
 
 def test_priority_interrupt():
-    print(console.bold + "\n****************************************************************************************" + console.reset)
-    print(console.bold + "* Priority Interrupt" + console.reset)
-    print(console.bold + "****************************************************************************************\n" + console.reset)
-    oneshot = py_trees.meta.oneshot(py_trees.composites.Sequence)(name="Oneshot",
-                                                                  children=[py_trees.behaviours.Failure(name="Failure")])
+    console.banner("Priority Interrupt")
+    oneshot = py_trees.meta.oneshot(
+        py_trees.composites.Sequence)(
+            name="Oneshot",
+            children=[py_trees.behaviours.Failure(name="Failure")])
     # Tree with higher priority branch, Higher
     root = py_trees.composites.Selector(name="Root")
-    fail_after_one = py_trees.behaviours.Count(name="HighPriority", fail_until=1, running_until=1, success_until=2)
+    fail_after_one = py_trees.behaviours.Count(
+        name="HighPriority", fail_until=1, running_until=1, success_until=2)
     root.add_children([fail_after_one, oneshot])
     tick_tree(root=root, oneshot=oneshot, from_tick=1, to_tick=2)
-    print(console.cyan + "\nOneShot Status (After Interrupt): " + console.yellow + "{}".format(oneshot.status) + console.reset)
+    print(console.cyan + "\nOneShot Status (After Interrupt): " +
+          console.yellow + "{}".format(oneshot.status) + console.reset)
     assert(oneshot.status == py_trees.common.Status.INVALID)
     final_count = tick_tree(root=root, oneshot=oneshot, from_tick=3, to_tick=3)
-    print(console.cyan + "\nTick Count (After Resumption): " + console.yellow + "{}".format(final_count) + console.reset)
+    print(console.cyan + "\nTick Count (After Resumption): " +
+          console.yellow + "{}".format(final_count) + console.reset)
     assert(final_count == 3)
 
 
@@ -158,10 +163,9 @@ def test_running_sequence():
     Makes sure proper responses are returned from a oneshot sequence
     with running children.
     """
-    print(console.bold + "\n****************************************************************************************" + console.reset)
-    print(console.bold + "* Running Sequence" + console.reset)
-    print(console.bold + "****************************************************************************************\n" + console.reset)
-    run_a_bit = py_trees.behaviours.Count(name="RunABit", fail_until=0, running_until=2, success_until=5)
+    console.banner("Running Sequence")
+    run_a_bit = py_trees.behaviours.Count(
+        name="RunABit", fail_until=0, running_until=2, success_until=5)
     oneshot = py_trees.meta.oneshot(py_trees.composites.Sequence)(
         name="Oneshot",
         children=[run_a_bit])
@@ -176,9 +180,7 @@ def test_oneshot_does_not_re_initialise():
     to make sure it blocks on needless termination calls coming from
     priority interrupts / resets.
     """
-    print(console.bold + "\n****************************************************************************************" + console.reset)
-    print(console.bold + "* OneShot does not ReIinitialise" + console.reset)
-    print(console.bold + "****************************************************************************************\n" + console.reset)
+    console.banner("OneShot does not ReInitialise")
     success = py_trees.behaviours.Success(name="Success")
     tester = py_trees.meta.oneshot(CounterTester)(
         name="Tester",
@@ -191,15 +193,15 @@ def test_oneshot_does_not_re_initialise():
     tick_tree(root, tester, 1, 5)
     assert(tester.status == py_trees.common.Status.SUCCESS)
     print("\n")
-    print(console.cyan + "Terminate Count: " + console.yellow + "{}".format(tester.terminate_count) + console.reset)
-    print(console.cyan + "Initialize Count: " + console.yellow + "{}".format(tester.initialise_count) + console.reset)
+    print(console.cyan + "Terminate Count: " +
+          console.yellow + "{}".format(tester.terminate_count) + console.reset)
+    print(console.cyan + "Initialize Count: " +
+          console.yellow + "{}".format(tester.initialise_count) + console.reset)
     assert(tester.initialise_count == 1)
 
 
 def test_oneshot_does_re_initialise():
-    print(console.bold + "\n****************************************************************************************" + console.reset)
-    print(console.bold + "* OneShot does ReIinitialise" + console.reset)
-    print(console.bold + "****************************************************************************************\n" + console.reset)
+    console.banner("OneShot does ReInitialise")
     """Makes sure that the oneshot decorator calls terminate and
     initialise if they were called due to early termination involving
     an INVALID new_status. Also ensures that it does not call it
@@ -250,7 +252,9 @@ def test_oneshot_does_re_initialise():
         assert(tester.status == tester_expected_status[i])
         assert(periodic_success.status == periodic_expected_status[i])
     print("\n")
-    print(console.cyan + "Terminate Count: " + console.yellow + "{}".format(tester.terminate_count) + console.reset)
-    print(console.cyan + "Initialize Count: " + console.yellow + "{}".format(tester.initialise_count) + console.reset)
+    print(console.cyan + "Terminate Count: " +
+          console.yellow + "{}".format(tester.terminate_count) + console.reset)
+    print(console.cyan + "Initialize Count: " +
+          console.yellow + "{}".format(tester.initialise_count) + console.reset)
     assert(tester.terminate_count == 3)
     assert(tester.initialise_count == 3)
