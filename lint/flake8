@@ -20,3 +20,9 @@ RESET="\e[0m"
 PWD="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 flake8 --config=${PWD}/../setup.cfg ${PWD}/../py_trees ${PWD}/../tests
+
+if [ $? -eq 0 ]; then
+  echo -e "${GREEN} I'm grooty, you should be too.${RESET}"
+else
+  echo -e "${RED} Not grooty, see above for error details.${RESET}"
+fi
