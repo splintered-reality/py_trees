@@ -24,23 +24,16 @@
   <doc_depend>python-sphinx</doc_depend>
   <doc_depend>python-sphinx-argparse</doc_depend>
   <doc_depend>python-sphinx-rtd-theme</doc_depend>
-  <doc_depend>python-enum34</doc_depend>
   <doc_depend>python-pydot</doc_depend>
 
   <exec_depend>python-pydot</exec_depend>
 
-  <!-- Need to use python3-rosdep to get these? -->
-  <!--
-  <test_depend>ament_copyright</test_depend>
-  <test_depend>ament_flake8</test_depend>
-  <test_depend>ament_pep257</test_depend>
-   -->
   <!--
     ROSDistro should have python3 versions folded
     into python-nose, python-pytest
   -->
   <test_depend>python-nose</test_depend>
-  <test_depend>python-pytest</test_depend>
+  <test_depend>python-nose-yanc</test_depend>
 
   <export>
     <build_type>ament_python</build_type>
