@@ -51,6 +51,12 @@ jobs:
             . venv/bin/activate
             python setup.py nosetests
 
+      - run:
+          name: linters
+          command: |
+            . venv/bin/activate
+            ./lint/flake8
+            
       - store_artifacts:
           path: nosetests.html
           destination: nosetests.html

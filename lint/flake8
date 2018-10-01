@@ -19,4 +19,4 @@ RESET="\e[0m"
 
 PWD="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-flake8 --config=${PWD}/setup.cfg ${PWD}/../py_trees ${PWD}/../tests
+flake8 --config=${PWD}/../setup.cfg ${PWD}/../py_trees ${PWD}/../tests
