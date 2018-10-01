@@ -30,10 +30,10 @@ Release 0.6.x supported both Python2 and Python3. 0.7.x and onwards will only ha
 [devel-sources]: https://github.com/stonier/py_trees/tree/devel
 [0.7.x-sources-image]: http://img.shields.io/badge/sources-0.7.x-blue.svg?style=plastic
 [0.7.x-sources]: https://github.com/stonier/py_trees/tree/release/0.7.x
-[0.6.x-sources-image]: http://img.shields.io/badge/sources-0.6.x--melodic-blue.svg?style=plastic
-[0.6.x-sources]: https://github.com/stonier/py_trees/tree/release/0.6-melodic
-[0.5.x-sources-image]: http://img.shields.io/badge/sources-0.5.x--kinetic-blue.svg?style=plastic
-[0.5.x-sources]: https://github.com/stonier/py_trees/tree/release/0.5-kinetic
+[0.6.x-sources-image]: http://img.shields.io/badge/sources-0.6.x-blue.svg?style=plastic
+[0.6.x-sources]: https://github.com/stonier/py_trees/tree/release/0.6.x
+[0.5.x-sources-image]: http://img.shields.io/badge/sources-0.5.x-blue.svg?style=plastic
+[0.5.x-sources]: https://github.com/stonier/py_trees/tree/release/0.5.x
 [0.4.x-sources-image]: http://img.shields.io/badge/sources-0.4.x--indigo--kinetic-blue.svg?style=plastic
 [0.4.x-sources]: https://github.com/stonier/py_trees/tree/release/0.4-indigo-kinetic
 
