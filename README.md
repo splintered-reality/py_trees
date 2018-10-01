@@ -37,8 +37,8 @@ Release 0.6.x supported both Python2 and Python3. 0.7.x and onwards will only ha
 [0.4.x-sources-image]: http://img.shields.io/badge/sources-0.4.x--indigo--kinetic-blue.svg?style=plastic
 [0.4.x-sources]: https://github.com/stonier/py_trees/tree/release/0.4-indigo-kinetic
 
-[devel-build-status-image]: http://build.ros.org/job/Mdev__py_trees__ubuntu_bionic_amd64/badge/icon?style=plastic
-[devel-build-status]: http://build.ros.org/job/Mdev__py_trees__ubuntu_bionic_amd64
+[devel-build-status-image]: http://build.ros.org/job/Mbin_uB64__py_trees__ubuntu_bionic_amd64__binary/badge/icon?style=plastic
+[devel-build-status]: https://circleci.com/gh/stonier/py_trees/tree/devel
 [bouncy-build-status-image]: http://build.ros.org/job/Mbin_uB64__py_trees__ubuntu_bionic_amd64__binary/badge/icon?style=plastic
 [bouncy-build-status]: http://build.ros.org/job/Mbin_uX64__py_trees__ubuntu_bionic_amd64__binary
 [melodic-build-status-image]: http://build.ros.org/job/Mbin_uB64__py_trees__ubuntu_bionic_amd64__binary/badge/icon?style=plastic
