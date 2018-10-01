@@ -12,7 +12,7 @@ it will pick up the nosetests configuration in `setup.cfg`.
 
 ```
 # All Tests via SetupTools (indirectly)
-$ python3 setup.py test
+$ python3 setup.py nosetests
 # All Tests via Nosetest (directly)
 $ nosetests ./tests
 # A single test
