@@ -193,6 +193,7 @@ class Composite(Behaviour):
         child_index = self.children.index(child)
         self.logger.debug("%s.replace_child()[%s->%s]" % (self.__class__.__name__, child.name, replacement.name))
         self.children[child_index] = replacement
+        replacement.parent = self
 
     def remove_child_by_id(self, child_id):
         """
