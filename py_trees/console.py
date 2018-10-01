@@ -164,9 +164,9 @@ def pretty_println(msg, colour=white):
 
 
 def banner(msg):
-    print(bold + "\n" + 80 * "*" + reset)
-    print(bold + "* " + msg + reset)
-    print(bold + 80 * "*" + "\n" + reset)
+    print(green + "\n" + 80 * "*" + reset)
+    print(green + "* " + bold_white + msg.center(80) + reset)
+    print(green + 80 * "*" + "\n" + reset)
 
 
 def debug(msg):
