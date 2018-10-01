@@ -1,5 +1,7 @@
 # Py Trees
 
+## About
+
 This is a python implementation of behaviour trees designed to facilitate the rapid development
 of medium sized decision making engines for use in fields like robotics. Brief feature list:
 
@@ -9,9 +11,17 @@ of medium sized decision making engines for use in fields like robotics. Brief f
 * Python decorators for enabling meta behaviours
 * Render trees to dot graphs or visualise with ascii graphs on stdout
 
-Detailed api reference and demo instructions can be found in the [sphinx documentation](http://py-trees.readthedocs.io/) for the package. There is also the [py_trees_ros](https://github.com/stonier/py_trees_ros/tree/devel) package which includes additional modules and documentation for using py_trees with ROS.
+**Sphinx Documentation**
 
-## Python2 vs Python3
+Detailed api reference and demo instructions can be found on read-the-docs
+([devel](http://py-trees.readthedocs.io/), [0.7.x](http://py-trees.readthedocs.io/en/release-0.7.x/), [0.6.x](http://py-trees.readthedocs.io/en/release-0.6.x/)).
+
+**ROS**
+
+This package is a pure python-only package, however you can find additional modules and documentation for
+using py_trees with ROS 1 in the [py_trees_ros](https://github.com/stonier/py_trees_ros/tree/devel) package.
+
+**Python2 vs Python3**
 
 Release 0.6.x supported both Python2 and Python3. 0.7.x and onwards will only have official support (bugs and doc.) for python3.
 
@@ -87,7 +97,7 @@ $ make deb
 ```
 
 
-**Development**
+**Development Environment**
 
 You can develop in either a virtualenv (python3):
 
@@ -97,5 +107,13 @@ $ source ./virtualenv.bash
 
 or in a ament-colcon environment:
 
-<TODO: instructions forthcoming>
+```
+$ mkdir src
+$ git clone https://github.com/stonier/py_trees src/py_trees
+$ colcon build
+$ colcon test
+```
 
+**Demos and Tutorials**
+
+Move on to the documentation ([devel](http://py-trees.readthedocs.io/), [0.7.x](http://py-trees.readthedocs.io/en/release-0.7.x/), [0.6.x](http://py-trees.readthedocs.io/en/release-0.6.x/))!
