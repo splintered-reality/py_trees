@@ -67,6 +67,8 @@ From [ppa](https://launchpad.net/~d-stonier/+archive/ubuntu/snorriheim) on Ubunt
 sudo apt install python3-py-trees
 ```
 
+Dude
+
 From [pypi](https://pypi.python.org/pypi/py_trees):
 
 ```
