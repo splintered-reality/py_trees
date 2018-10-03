@@ -66,7 +66,7 @@ Release 0.6.x supported both Python2 and Python3. 0.7.x and onwards will only ha
 [0.5.x-docs]: http://py-trees.readthedocs.io/en/release-0.5.x/
 
 
-## Getting Started
+## Getting Started2
 
 **Installation**
 
