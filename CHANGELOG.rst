@@ -3,24 +3,25 @@ Changelog
 
 Forthcoming
 -----------
+* [bugfix] properly set/reset parents when replacing/removing children in composites
 
 0.7.0 (2018-09-27)
 ------------------
-* python3 only support from this point forward
-* upgraded to be compatible for ros2 projects
+* [announce] python3 only support from this point forward
+* [announce] now compatible for ros2 projects
 
 0.6.5 (2018-09-19)
 ------------------
-* Inverters bugfix - pick up missing feedback messages
-* Eliminate costly blackboard variable check feedback message
+* [bugfix] pick up missing feedback messages in inverters
+* [bugfix] eliminate costly/spammy blackboard variable check feedback message
 
 0.6.4 (2018-09-19)
 ------------------
-* Ascii tree bugfix - replace awkward newlines with spaces
+* [bugfix] replace awkward newlines with spaces in ascii trees
 
 0.6.3 (2018-09-04)
 ------------------
-* Parallels bugfix - don't send own status to running children, invalidate them instead
+* [bugfix] don't send the parellel's status to running children, invalidate them instead
 
 0.6.2 (2018-08-31)
 ------------------
