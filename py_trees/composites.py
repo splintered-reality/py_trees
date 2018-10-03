@@ -167,6 +167,7 @@ class Composite(Behaviour):
             child.stop(Status.INVALID)
         child_index = self.children.index(child)
         self.children.remove(child)
+        child.parent = None
         return child_index
 
     def remove_all_children(self):
@@ -176,6 +177,7 @@ class Composite(Behaviour):
         for child in self.children:
             if child.status == Status.RUNNING:
                 child.stop(Status.INVALID)
+            child.parent = None
         # makes sure to delete it for this class and all references to it
         #   http://stackoverflow.com/questions/850795/clearing-python-lists
         del self.children[:]
@@ -193,6 +195,7 @@ class Composite(Behaviour):
         child_index = self.children.index(child)
         self.logger.debug("%s.replace_child()[%s->%s]" % (self.__class__.__name__, child.name, replacement.name))
         self.children[child_index] = replacement
+        child.parent = None
         replacement.parent = self
 
     def remove_child_by_id(self, child_id):
@@ -210,6 +213,7 @@ class Composite(Behaviour):
             if child.status == Status.RUNNING:
                 child.stop(Status.INVALID)
             self.children.remove(child)
+            child.parent = None
         else:
             raise IndexError('child was not found with the specified id [%s]' % child_id)
 
