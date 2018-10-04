@@ -543,7 +543,7 @@ class Parallel(Composite):
 
     .. graphviz:: dot/parallel.dot
 
-    Ticks every child every time the parallel is run (a poor man's form of paralellism).
+    Ticks every child every time the parallel is run (a poor man's form of parallelism).
 
     * Parallels will return :data:`~py_trees.common.Status.FAILURE` if any child returns :py:data:`~py_trees.common.Status.FAILURE`
     * Parallels with policy :data:`~py_trees.common.ParallelPolicy.SUCCESS_ON_ONE` return :py:data:`~py_trees.common.Status.SUCCESS` if **at least one** child returns :py:data:`~py_trees.common.Status.SUCCESS` and others are :py:data:`~py_trees.common.Status.RUNNING`.

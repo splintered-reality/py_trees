@@ -83,7 +83,7 @@ def command_line_argument_parser():
 
 def pre_tick_handler(behaviour_tree):
     """
-    This prints a banner will run immediately before every tick of the tree.
+    This prints a banner and will run immediately before every tick of the tree.
 
     Args:
         behaviour_tree (:class:`~py_trees.trees.BehaviourTree`): the tree custodian
