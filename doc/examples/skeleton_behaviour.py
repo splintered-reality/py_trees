@@ -30,7 +30,7 @@ class Foo(py_trees.Behaviour):
           called/succeeded.
 
         What to do here?
-          Delayed one-time initialisation that would otherwise intefere
+          Delayed one-time initialisation that would otherwise interfere
           with offline rendering of this behaviour in a tree to dot graph.
           Good examples include:
           - Hardware or driver initialisation

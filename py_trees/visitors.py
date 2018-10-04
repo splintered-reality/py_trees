@@ -12,7 +12,7 @@ Visitors are entities that can be passed to a tree implementation
 (e.g. :class:`~py_trees.trees.BehaviourTree`) and used to either visit
 each and every behaviour in the tree, or visit behaviours as the tree is
 traversed in an executing tick. At each behaviour, the visitor
-runs its own method on the behaviour to do as it wishes - logging, introspecting).
+runs its own method on the behaviour to do as it wishes - logging, introspecting, etc.
 
 .. warning:: Visitors should not modify the behaviours they visit.
 """

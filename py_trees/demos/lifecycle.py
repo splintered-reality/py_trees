@@ -92,7 +92,7 @@ class Counter(py_trees.behaviour.Behaviour):
         """
         Reset a counter variable.
         """
-        self.logger.debug("%s.initialise()]" % (self.__class__.__name__))
+        self.logger.debug("%s.initialise()" % (self.__class__.__name__))
         self.counter = 0
 
     def update(self):
