@@ -98,7 +98,9 @@ def read_single_keypress():
         return ret
 
     def read_single_keypress_windows():
-        """Windows case, can't use fcntl and termios"""
+        """Windows case, can't use fcntl and termios.
+        Not same implementation as for Unix, requires a newline to continue.
+        """
         import msvcrt
         # read a single keystroke
         ret = sys.stdin.read(1)
@@ -107,8 +109,11 @@ def read_single_keypress():
         return ret
     try:
         return read_single_keypress_unix()
-    except ImportError:
-        return read_single_keypress_windows()
+    except ImportError as e_unix:
+        try:
+            return read_single_keypress_windows()
+        except ImportError as e_windows:
+            raise ImportError("Neither unix nor windows implementations supported [{}][{}]".format(str(e_unix),str(e_windows)))
 
 ##############################################################################
 # Methods
