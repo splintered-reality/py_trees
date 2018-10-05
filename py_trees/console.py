@@ -32,10 +32,8 @@ These colour definitions can be used in the following way:
 # Imports
 ##############################################################################
 
-import fcntl
 import os
 import sys
-import termios
 
 
 # python2 is raw-input, python3 is input
@@ -63,37 +61,54 @@ def read_single_keypress():
     Raises:
         KeyboardInterrupt: if CTRL-C was pressed (keycode 0x03)
     """
-    fd = sys.stdin.fileno()
-    # save old state
-    flags_save = fcntl.fcntl(fd, fcntl.F_GETFL)
-    attrs_save = termios.tcgetattr(fd)
-    # make raw - the way to do this comes from the termios(3) man page.
-    attrs = list(attrs_save)  # copy the stored version to update
-    # iflag
-    attrs[0] &= ~(termios.IGNBRK | termios.BRKINT | termios.PARMRK |
-                  termios.ISTRIP | termios.INLCR | termios. IGNCR |
-                  termios.ICRNL | termios.IXON)
-    # oflag
-    attrs[1] &= ~termios.OPOST
-    # cflag
-    attrs[2] &= ~(termios.CSIZE | termios. PARENB)
-    attrs[2] |= termios.CS8
-    # lflag
-    attrs[3] &= ~(termios.ECHONL | termios.ECHO | termios.ICANON |
-                  termios.ISIG | termios.IEXTEN)
-    termios.tcsetattr(fd, termios.TCSANOW, attrs)
-    # turn off non-blocking
-    fcntl.fcntl(fd, fcntl.F_SETFL, flags_save & ~os.O_NONBLOCK)
-    # read a single keystroke
-    ret = sys.stdin.read(1)  # returns a single character
-    if ord(ret) == 3:  # CTRL-C
+    def read_single_keypress_unix():
+        """For Unix case, where fcntl, termios is available."""
+        import fcntl
+        import termios
+        fd = sys.stdin.fileno()
+        # save old state
+        flags_save = fcntl.fcntl(fd, fcntl.F_GETFL)
+        attrs_save = termios.tcgetattr(fd)
+        # make raw - the way to do this comes from the termios(3) man page.
+        attrs = list(attrs_save)  # copy the stored version to update
+        # iflag
+        attrs[0] &= ~(termios.IGNBRK | termios.BRKINT | termios.PARMRK |
+                    termios.ISTRIP | termios.INLCR | termios. IGNCR |
+                    termios.ICRNL | termios.IXON)
+        # oflag
+        attrs[1] &= ~termios.OPOST
+        # cflag
+        attrs[2] &= ~(termios.CSIZE | termios. PARENB)
+        attrs[2] |= termios.CS8
+        # lflag
+        attrs[3] &= ~(termios.ECHONL | termios.ECHO | termios.ICANON |
+                    termios.ISIG | termios.IEXTEN)
+        termios.tcsetattr(fd, termios.TCSANOW, attrs)
+        # turn off non-blocking
+        fcntl.fcntl(fd, fcntl.F_SETFL, flags_save & ~os.O_NONBLOCK)
+        # read a single keystroke
+        ret = sys.stdin.read(1)  # returns a single character
+        if ord(ret) == 3:  # CTRL-C
+            termios.tcsetattr(fd, termios.TCSAFLUSH, attrs_save)
+            fcntl.fcntl(fd, fcntl.F_SETFL, flags_save)
+            raise KeyboardInterrupt("Ctrl-c")
+        # restore old state
         termios.tcsetattr(fd, termios.TCSAFLUSH, attrs_save)
         fcntl.fcntl(fd, fcntl.F_SETFL, flags_save)
-        raise KeyboardInterrupt("Ctrl-c")
-    # restore old state
-    termios.tcsetattr(fd, termios.TCSAFLUSH, attrs_save)
-    fcntl.fcntl(fd, fcntl.F_SETFL, flags_save)
-    return ret
+        return ret
+
+    def read_single_keypress_windows():
+        """Windows case, can't use fcntl and termios"""
+        import msvcrt
+        # read a single keystroke
+        ret = sys.stdin.read(1)
+        if ord(ret) == 3:  # CTRL-C
+            raise KeyboardInterrupt("Ctrl-c")
+        return ret
+    try:
+        return read_single_keypress_unix()
+    except ImportError:
+        return read_single_keypress_windows()
 
 ##############################################################################
 # Methods
