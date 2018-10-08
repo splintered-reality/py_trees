@@ -21,6 +21,7 @@ from . import composites  # noqa
 from . import console  # noqa
 from . import demos  # noqa
 from . import display  # noqa
+from . import idioms #noqa
 from . import logging  # noqa
 from . import meta  # noqa
 from . import programs  # noqa
