@@ -3,6 +3,7 @@ Changelog
 
 Forthcoming
 -----------
+* [idioms] oneshot added
 * [bugfix] properly set/reset parents when replacing/removing children in composites
 
 0.7.0 (2018-09-27)
