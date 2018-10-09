@@ -258,3 +258,66 @@ def test_oneshot_does_re_initialise():
           console.yellow + "{}".format(tester.initialise_count) + console.reset)
     assert(tester.terminate_count == 3)
     assert(tester.initialise_count == 3)
+
+def test_oneshot_idiom_with_sequence():
+    console.banner("Idiom w/ Sequence and Interrupt")
+    oneshot = py_trees.idioms.oneshot(
+        name="Work",
+        variable_name="oneshot",
+        behaviour=py_trees.composites.Sequence(
+            name="OneShot",
+            children=[
+                py_trees.behaviours.Success(name="Success 1"),
+                py_trees.behaviours.Success(name="Success 2")
+            ]
+        )
+    )
+    # Tree with higher priority branch
+    selector = py_trees.composites.Selector(name="Selector")
+    fail_after_one = py_trees.behaviours.Count(
+        name="HighPriority", fail_until=1, running_until=1, success_until=2)
+    selector.add_children([fail_after_one, oneshot])
+    tick_tree(root=selector, oneshot=None, from_tick=1, to_tick=2)
+    print(console.cyan + "\nOneShot Status (After Interrupt): " +
+          console.yellow + "{}".format(oneshot.status) + console.reset)
+    assert(oneshot.status == py_trees.common.Status.INVALID)
+    final_count = tick_tree(root=selector, oneshot=None, from_tick=3, to_tick=3)
+    print(console.white +
+          "\nTick count after resumption should be low since the oneshot\n" +
+          "has already fired and it's just quick, in and out."
+           + console.reset)
+    print(console.cyan + "\nTick Count (After Resumption): " +
+          console.yellow + "{}".format(final_count) + console.reset)
+    assert(final_count == 4)
+
+
+def test_oneshot_idiom_with_nonsequence_subtree():
+    console.banner("Idiom w/ Non-Sequence Subtree and Interrupt")
+    oneshot = py_trees.idioms.oneshot(
+        name="Work",
+        variable_name="oneshot",
+        behaviour=py_trees.composites.Selector(
+            name="OneShot",
+            children=[
+                py_trees.behaviours.Failure(name="Failure"),
+                py_trees.behaviours.Success(name="Success")
+            ]
+        )
+    )
+    # Tree with higher priority branch
+    selector = py_trees.composites.Selector(name="Selector")
+    fail_after_one = py_trees.behaviours.Count(
+        name="HighPriority", fail_until=1, running_until=1, success_until=2)
+    selector.add_children([fail_after_one, oneshot])
+    tick_tree(root=selector, oneshot=None, from_tick=1, to_tick=2)
+    print(console.cyan + "\nOneShot Status (After Interrupt): " +
+          console.yellow + "{}".format(oneshot.status) + console.reset)
+    assert(oneshot.status == py_trees.common.Status.INVALID)
+    final_count = tick_tree(root=selector, oneshot=None, from_tick=3, to_tick=3)
+    print(console.white +
+          "\nTick count after resumption should be low since the oneshot\n" +
+          "has already fired and it's just quick, in and out."
+           + console.reset)
+    print(console.cyan + "\nTick Count (After Resumption): " +
+          console.yellow + "{}".format(final_count) + console.reset)
+    assert(final_count == 4)

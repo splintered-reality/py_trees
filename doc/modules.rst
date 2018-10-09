@@ -87,6 +87,17 @@ py_trees.display
     :show-inheritance:
     :synopsis: visualising trees with dot graphs, strings or on stdout
 
+.. _py-trees-idioms-module:
+
+py_trees.idioms
+---------------
+
+.. automodule:: py_trees.idioms
+    :members:
+    :special-members:
+    :show-inheritance:
+    :synopsis: creators of common behaviour tree patterns
+
 py_trees.meta
 -------------
 
