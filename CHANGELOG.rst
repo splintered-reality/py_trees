@@ -4,6 +4,7 @@ Changelog
 Forthcoming
 -----------
 * [bugfix] python3 rosdeps
+* [idioms] pick_up_where_you_left_off added
 
 0.7.5 (2018-10-10)
 ------------------

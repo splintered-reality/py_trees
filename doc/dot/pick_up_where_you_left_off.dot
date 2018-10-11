@@ -1,0 +1,34 @@
+digraph pick_up_where_you_left_off {
+graph [fontname="times-roman"];
+node [fontname="times-roman"];
+edge [fontname="times-roman"];
+"Pick Up Where You Left Off" [shape=octagon, style=filled, fillcolor=cyan, fontsize=11, fontcolor=black];
+"High Priority" [shape=ellipse, style=filled, fillcolor=gray, fontsize=11, fontcolor=black];
+"Pick Up Where You Left Off" -> "High Priority";
+Tasks [shape=box, style=filled, fillcolor=orange, fontsize=11, fontcolor=black];
+"Pick Up Where You Left Off" -> Tasks;
+"Do or Don't" [shape=octagon, style=filled, fillcolor=cyan, fontsize=11, fontcolor=black];
+Tasks -> "Do or Don't";
+"Done?" [shape=ellipse, style=filled, fillcolor=gray, fontsize=11, fontcolor=black];
+"Do or Don't" -> "Done?";
+Worker [shape=box, style=filled, fillcolor=orange, fontsize=11, fontcolor=black];
+"Do or Don't" -> Worker;
+"Task 1" [shape=ellipse, style=filled, fillcolor=gray, fontsize=11, fontcolor=black];
+Worker -> "Task 1";
+"Mark\ntask_1_done" [shape=ellipse, style=filled, fillcolor=gray, fontsize=11, fontcolor=black];
+Worker -> "Mark\ntask_1_done";
+"Do or Don't*" [shape=octagon, style=filled, fillcolor=cyan, fontsize=11, fontcolor=black];
+Tasks -> "Do or Don't*";
+"Done?*" [shape=ellipse, style=filled, fillcolor=gray, fontsize=11, fontcolor=black];
+"Do or Don't*" -> "Done?*";
+"Worker*" [shape=box, style=filled, fillcolor=orange, fontsize=11, fontcolor=black];
+"Do or Don't*" -> "Worker*";
+"Task 2" [shape=ellipse, style=filled, fillcolor=gray, fontsize=11, fontcolor=black];
+"Worker*" -> "Task 2";
+"Mark\ntask_2_done" [shape=ellipse, style=filled, fillcolor=gray, fontsize=11, fontcolor=black];
+"Worker*" -> "Mark\ntask_2_done";
+"Clear\ntask_1_done" [shape=ellipse, style=filled, fillcolor=gray, fontsize=11, fontcolor=black];
+Tasks -> "Clear\ntask_1_done";
+"Clear\ntask_2_done" [shape=ellipse, style=filled, fillcolor=gray, fontsize=11, fontcolor=black];
+Tasks -> "Clear\ntask_2_done";
+}
