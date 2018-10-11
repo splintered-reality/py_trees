@@ -540,31 +540,21 @@ class Parallel(Composite):
 
     Ticks every child every time the parallel is run (a poor man's form of paralellism).
 
-    * Parallels with policy :data:`~py_trees.common.ParallelPolicy.SUCCESS_ON_ONE` return :py:data:`~py_trees.common.Status.SUCCESS` if **at least one** child returns :py:data:`~py_trees.common.Status.SUCCESS` and others are :py:data:`~py_trees.common.Status.RUNNING`.
-    * Parallels with policy :data:`~py_trees.common.ParallelPolicy.SUCCESS_ON_ALL` only returns :py:data:`~py_trees.common.Status.SUCCESS` if **all** children return :py:data:`~py_trees.common.Status.SUCCESS`
-
     .. seealso:: The :ref:`py-trees-demo-context-switching-program` program demos a parallel used to assist in a context switching scenario.
 
     Args:
         name (:obj:`str`): the composite behaviour name
-        policy (:class:`~py_trees.common.ParallelPolicy`): policy to use for deciding success or otherwise
         children ([:class:`~py_trees.behaviour.Behaviour`]): list of children to add
-        num_children_to_succeed (:obj:`int`): number of children that are required to return :data:`~py_trees.common.Status.SUCCESS` when using :data:`~py_trees.common.ParallelPolicy.SUCCESS_ON_N`
+        num_children_to_succeed (:obj:`int`): number of children that are required to return :data:`~py_trees.common.Status.SUCCESS`
         allow_failure (:obj:`bool`): when false if any child fails :data:`~py_trees.common.Status.FAILURE` will be returned, if true :data:`~py_trees.common.Status.FAILURE` will be returned only if enough nodes have failed to make success impossible
         synchronize (:obj:`bool`): when true the parallel node runs each of its children to a terminal state before ticking any child that has reached a terminal state, when false it will always tick all children
         *args: variable length argument list
         **kwargs: arbitrary keyword arguments
     """
-    def __init__(self, name="Parallel", policy=common.ParallelPolicy.SUCCESS_ON_ALL, children=None, num_children_to_succeed=1, allow_failure=False, synchronize=False, *args, **kwargs):
+    SUCCESS_ON_ALL = -1
+    def __init__(self, name="Parallel", children=None, num_children_to_succeed=SUCCESS_ON_ALL, allow_failure=False, synchronize=False, *args, **kwargs):
         super(Parallel, self).__init__(name, children, *args, **kwargs)
-        self.policy = policy
-        if self.policy == common.ParallelPolicy.SUCCESS_ON_N:
-            self.num_children_to_succeed = num_children_to_succeed
-        elif self.policy == common.ParallelPolicy.SUCCESS_ON_ONE:
-            self.num_children_to_succeed = 1
-        elif self.policy == common.ParallelPolicy.SUCCESS_ON_ALL:
-            self.num_children_to_succeed = None
-
+        self.num_children_to_succeed = num_children_to_succeed
         self.allow_failure = allow_failure
         self.synchronize = synchronize
 
@@ -592,7 +582,9 @@ class Parallel(Composite):
         num_succeeded = sum([c.status == Status.SUCCESS for c in self.children])
         num_children = len(self.children)
         num_children_to_succeed = num_children
-        if self.num_children_to_succeed is not None:
+        if self.num_children_to_succeed == Parallel.SUCCESS_ON_ALL:
+            num_children_to_succeed = num_children
+        else:
             num_children_to_succeed = max(1, min(self.num_children_to_succeed, num_children))
         num_children_allowed_to_fail = 0
         if self.allow_failure:

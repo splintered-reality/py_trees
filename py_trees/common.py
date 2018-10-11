@@ -37,17 +37,6 @@ class Status(enum.Enum):
     INVALID = "INVALID"
     """Behaviour is uninitialised and inactive, i.e. this is the status before first entry, and after a higher priority switch has occurred."""
 
-
-class ParallelPolicy(enum.Enum):
-    """Policy rules for :py:class:`~py_trees.composites.Parallel` composites."""
-
-    SUCCESS_ON_ALL = "SUCCESS_ON_ALL"
-    """:py:data:`~py_trees.common.Status.SUCCESS` only when each and every child returns :py:data:`~py_trees.common.Status.SUCCESS`."""
-    SUCCESS_ON_ONE = "SUCCESS_ON_ONE"
-    """:py:data:`~py_trees.common.Status.SUCCESS` so long as at least one child has :py:data:`~py_trees.common.Status.SUCCESS` and the remainder are :py:data:`~py_trees.common.Status.RUNNING`"""
-    SUCCESS_ON_N = "SUCCESS_ON_N"
-    """:py:data:`~py_trees.common.Status.SUCCESS` so long as at N children have :py:data:`~py_trees.common.Status.SUCCESS` and the remainder are :py:data:`~py_trees.common.Status.RUNNING`"""
-
 class Foo(enum.IntEnum):
     """
     Foo
