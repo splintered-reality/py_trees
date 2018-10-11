@@ -1,10 +1,11 @@
 Changelog
 =========
 
-Forthcoming
+0.7.5 (2018-10-10)
 -----------
 * [idioms] oneshot added
 * [bugfix] properly set/reset parents when replacing/removing children in composites
+* [bugfix] python3 rosdeps
 
 0.7.0 (2018-09-27)
 ------------------
