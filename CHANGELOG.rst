@@ -3,6 +3,12 @@ Changelog
 
 Forthcoming
 -----------
+* [bugfix] python3 rosdeps
+* [idioms] pick_up_where_you_left_off added
+
+0.7.5 (2018-10-10)
+------------------
+* [idioms] oneshot added
 * [bugfix] properly set/reset parents when replacing/removing children in composites
 
 0.7.0 (2018-09-27)
@@ -25,15 +31,15 @@ Forthcoming
 
 0.6.2 (2018-08-31)
 ------------------
-* Oneshot bugfix - react to priority interrupts correctly
+* [bugfix] oneshot now reacts to priority interrupts correctly
 
 0.6.1 (2018-08-20)
 ------------------
-* Oneshot bugfix - no longer permanently modifies the original class
+* [bugfix] oneshot no longer permanently modifies the original class
 
 0.6.0 (2018-05-15)
 ------------------
-* Python 2/3 compatibility
+* [infra] python 2/3 compatibility
 
 0.5.10 (2017-06-17)
 -------------------

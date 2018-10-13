@@ -131,3 +131,17 @@ py-trees-demo-tree-stewardship
    :linenos:
    :caption: py_trees/demos/stewardship.py
 
+py-trees-demo-pick-up-where-you-left-off
+----------------------------------------
+
+.. automodule:: py_trees.demos.pick_up_where_you_left_off
+    :members:
+    :special-members:
+    :show-inheritance:
+    :synopsis: demo the 'pickup where you left off' idiom
+
+.. literalinclude:: ../py_trees/demos/pick_up_where_you_left_off.py
+   :language: python
+   :linenos:
+   :caption: py_trees/demos/pick_up_where_you_left_off.py
+

@@ -1,0 +1,20 @@
+digraph oneshot {
+graph [fontname="times-roman"];
+node [fontname="times-roman"];
+edge [fontname="times-roman"];
+OneShot [shape=octagon, style=filled, fillcolor=cyan, fontsize=11, fontcolor=black];
+"Done?" [shape=ellipse, style=filled, fillcolor=gray, fontsize=11, fontcolor=black];
+OneShot -> "Done?";
+Sequence [shape=box, style=filled, fillcolor=orange, fontsize=11, fontcolor=black];
+OneShot -> Sequence;
+Guard [shape=ellipse, style=filled, fillcolor=gray, fontsize=11, fontcolor=black];
+Sequence -> Guard;
+"Action 1" [shape=ellipse, style=filled, fillcolor=gray, fontsize=11, fontcolor=black];
+Sequence -> "Action 1";
+"Action 2" [shape=ellipse, style=filled, fillcolor=gray, fontsize=11, fontcolor=black];
+Sequence -> "Action 2";
+"Action 3" [shape=ellipse, style=filled, fillcolor=gray, fontsize=11, fontcolor=black];
+Sequence -> "Action 3";
+"Mark Done" [shape=ellipse, style=filled, fillcolor=gray, fontsize=11, fontcolor=black];
+Sequence -> "Mark Done";
+}
