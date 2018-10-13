@@ -2,7 +2,6 @@
 
 from setuptools import find_packages, setup
 import os
-import sys
 
 # You need install_requires if you don't have a ROS environment
 install_requires = [ # ] if os.environ.get('AMENT_PREFIX_PATH') else [
@@ -24,16 +23,10 @@ extras_require = {} if os.environ.get('AMENT_PREFIX_PATH') else {
 # Pull in __version__
 ##############################
 
-# Doesn't work - ament tooling reads the file and uses that directly
-# so __file__ won't work.
-# project_dir = os.path.abspath(
-#     os.path.join(
-#         os.path.abspath(__file__),
-#         os.pardir))
-# sys.exit("Project File {}".format(os.path.abspath(__file__)))
-# version_file = os.path.join(project_dir, 'py_trees', 'version.pyd')
-# with open(version_file) as f:
-#     exec(f.read())
+# Can't use __file__ of setup.py to determine
+# the relative path to ./py_trees/version.py since
+# ament doesn't actually use this file - it parses
+# this file and executes it directly.
 
 
 # Some duplication of properties here and in package.xml.
@@ -63,8 +56,6 @@ d = setup(
     license='BSD',
     test_suite='nose.collector',
     tests_require=tests_require,
-    # test_suite='tests',
-    # Unfortunately catkin builds do not like this
     entry_points={
          'console_scripts': [
              'py-trees-demo-action-behaviour = py_trees.demos.action:main',
