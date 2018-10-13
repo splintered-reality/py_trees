@@ -30,7 +30,7 @@ Release 0.6.x supported both Python2 and Python3. 0.7.x and onwards will only ha
 | Devel | 0.7.x/Bouncy | 0.6.x/Melodic | 0.5.x/Kinetic |
 |:---:|:---:|:---:|:---:|
 | [![devel-Sources][devel-sources-image]][devel-sources] | [![0.7.x-Sources][0.7.x-sources-image]][0.7.x-sources] | [![0.6.x-Sources][0.6.x-sources-image]][0.6.x-sources] | [![0.5.x-Sources][0.5.x-sources-image]][0.5.x-sources] |
-| [![devel-Status][devel-build-status-image]][devel-build-status] | - | [![melodic-Status][melodic-build-status-image]][melodic-build-status] | [![kinetic-Status][kinetic-build-status-image]][kinetic-build-status] | |
+| [![devel-Status][devel-build-status-image]][devel-build-status] | [![0.7.x-Status][0.7.x-build-status-image]][0.7.x-build-status] | [![melodic-Status][melodic-build-status-image]][melodic-build-status] | [![kinetic-Status][kinetic-build-status-image]][kinetic-build-status] | |
 | [![devel-Docs][devel-docs-image]][devel-docs] | [![0.7.x-Docs][0.7.x-docs-image]][0.7.x-docs] | [![0.6.x-Docs][0.6.x-docs-image]][0.6.x-docs] | [![0.5.x-Docs][0.5.x-docs-image]][0.5.x-docs] | |
 
 [license-image]: https://img.shields.io/badge/License-BSD%203--Clause-orange.svg?style=plastic
@@ -49,6 +49,8 @@ Release 0.6.x supported both Python2 and Python3. 0.7.x and onwards will only ha
 
 [devel-build-status-image]: http://build.ros.org/job/Mbin_uB64__py_trees__ubuntu_bionic_amd64__binary/badge/icon?style=plastic
 [devel-build-status]: https://circleci.com/gh/stonier/py_trees/tree/devel
+[0.7.x-build-status-image]: http://build.ros.org/job/Mbin_uB64__py_trees__ubuntu_bionic_amd64__binary/badge/icon?style=plastic
+[0.7.x-build-status]: https://circleci.com/gh/stonier/py_trees/tree/release/0.7.x
 [bouncy-build-status-image]: http://build.ros.org/job/Mbin_uB64__py_trees__ubuntu_bionic_amd64__binary/badge/icon?style=plastic
 [bouncy-build-status]: http://build.ros.org/job/Mbin_uX64__py_trees__ubuntu_bionic_amd64__binary
 [melodic-build-status-image]: http://build.ros.org/job/Mbin_uB64__py_trees__ubuntu_bionic_amd64__binary/badge/icon?style=plastic
