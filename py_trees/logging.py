@@ -74,7 +74,7 @@ class Logger(object):
     """
 
     def __init__(self, name=None):
-        self.prefix = '{:<12}'.format(name) + " : " if name else ""
+        self.prefix = '{:<20}'.format(name.replace("\n", " ")) + " : " if name else ""
 
     def debug(self, msg):
         global level
