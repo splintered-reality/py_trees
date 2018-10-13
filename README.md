@@ -13,13 +13,9 @@
 
 [devel-sources-image]: http://img.shields.io/badge/sources-devel-blue.svg?style=plastic
 [devel-sources]: https://github.com/stonier/py_trees/tree/devel
-[0.7.x-sources-image]: http://img.shields.io/badge/sources-0.7.x-blue.svg?style=plastic
 [0.7.x-sources]: https://github.com/stonier/py_trees/tree/release/0.7.x
-[0.6.x-sources-image]: http://img.shields.io/badge/sources-0.6.x-blue.svg?style=plastic
 [0.6.x-sources]: https://github.com/stonier/py_trees/tree/release/0.6.x
-[0.5.x-sources-image]: http://img.shields.io/badge/sources-0.5.x-blue.svg?style=plastic
 [0.5.x-sources]: https://github.com/stonier/py_trees/tree/release/0.5.x
-[0.4.x-sources-image]: http://img.shields.io/badge/sources-0.4.x--indigo--kinetic-blue.svg?style=plastic
 [0.4.x-sources]: https://github.com/stonier/py_trees/tree/release/0.4-indigo-kinetic
 
 [devel-build-status-image]: http://build.ros.org/job/Mbin_uB64__py_trees__ubuntu_bionic_amd64__binary/badge/icon?style=plastic
@@ -95,16 +91,26 @@ $ make deb
 
 API, guides and demo instructions can be found in the sphinx generated documetnation on Read-The-Docs ([devel](http://py-trees.readthedocs.io/), [0.7.x](http://py-trees.readthedocs.io/en/release-0.7.x/), [0.6.x](http://py-trees.readthedocs.io/en/release-0.6.x/))!
 
-## ROS
+## PyTrees in ROS
 
-This repository is python-only, however additional modules and documentation are available for using `py_trees` with `ROS`.
+This repository is python-only, however additional modules & documentation are available for using `py_trees` with `ROS` that provide ROS-specific behaviours, logging, tools and visualisations in ROS.
 
-| | ROS2/Bouncy | ROS1/Melodic | ROS1/Kinetic |
+| | [ROS2/Bouncy][bouncy-repository] | [ROS1/Melodic][melodic-repository] | [ROS1/Kinetic][kinetic-repository] |
 |:---:|:---:|:---:|:---:|
-| py_trees | [0.7.x][py-trees-0.7.x] | [0.6.x][py-trees-0.6.x] | [0.5.x][py-trees-0.5.x] |
-| py_trees-msgs | - | [0.3.x][py-trees-msgs-melodic] |[0.3.x][py-trees-msgs-kinetic] |
-| py_trees-ros | - | [0.5.x][py-trees-ros-melodic] | [0.5.x][py-trees-ros-kinetic] |
-| rqt_py_trees | - | [0.3.x][rqt-py-trees-melodic] | [0.3.x][rqt-py-trees-kinetic] |
+| py_trees | [![0.7.x][0.7.x-sources-image]][py-trees-0.7.x] | [![0.6.x][0.6.x-sources-image]][py-trees-0.6.x] | [![0.5.x][0.5.x-sources-image]][py-trees-0.5.x] |
+| py_trees-msgs | - | [![0.3.x][0.3.x-sources-image]][py-trees-msgs-melodic] | [![0.3.x][0.3.x-sources-image]][py-trees-msgs-kinetic] |
+| py_trees-ros | - | [![0.5.x][0.5.x-sources-image]][py-trees-ros-melodic] | [![0.5.x][0.5.x-sources-image]][py-trees-ros-kinetic] |
+| rqt_py_trees | - | [![0.3.x][0.3.x-sources-image]][rqt-py-trees-melodic] | [![0.3.x][0.3.x-sources-image]][rqt-py-trees-kinetic] |
+
+[0.7.x-sources-image]: http://img.shields.io/badge/sources-0.7.x-blue.svg?style=plastic
+[0.6.x-sources-image]: http://img.shields.io/badge/sources-0.6.x-blue.svg?style=plastic
+[0.5.x-sources-image]: http://img.shields.io/badge/sources-0.5.x-blue.svg?style=plastic
+[0.4.x-sources-image]: http://img.shields.io/badge/sources-0.4.x-blue.svg?style=plastic
+[0.3.x-sources-image]: http://img.shields.io/badge/sources-0.3.x-blue.svg?style=plastic
+
+[bouncy-repository]: http://repo.ros2.org/status_page/ros_bouncy_default.html?q=py_trees
+[melodic-repository]: http://repositories.ros.org/status_page/ros_melodic_default.html?q=py_trees
+[kinetic-repository]: http://repositories.ros.org/status_page/ros_kinetic_default.html?q=py_trees
 
 [py-trees-0.7.x]: https://github.com/stonier/py_trees/tree/release/0.7.x
 [py-trees-0.6.x]: https://github.com/stonier/py_trees/tree/release/0.6.x
