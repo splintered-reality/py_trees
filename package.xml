@@ -19,19 +19,19 @@
   <url type="repository">https://github.com/stonier/py_trees</url>
   <url type="bugtracker">https://github.com/stonier/py_trees/issues</url>
 
-  <doc_depend>python-sphinx</doc_depend>
-  <doc_depend>python-sphinx-argparse</doc_depend>
-  <doc_depend>python-sphinx-rtd-theme</doc_depend>
-  <doc_depend>python-pydot</doc_depend>
+  <build_depend>python3-setuptools</build_depend>
 
-  <exec_depend>python-pydot</exec_depend>
+  <doc_depend>python3-sphinx</doc_depend>
+  <doc_depend>python3-sphinx-argparse</doc_depend>
+  <doc_depend>python3-sphinx-rtd-theme</doc_depend>
+  <doc_depend>python3-pydot</doc_depend>
 
-  <!--
-    ROSDistro should have python3 versions folded
-    into python-nose, python-pytest
-  -->
-  <test_depend>python-nose</test_depend>
-  <test_depend>python-nose-yanc</test_depend>
+  <exec_depend>python3-pydot</exec_depend>
+
+  <test_depend>python3-nose</test_depend>
+  <test_depend>python3-nose-yanc</test_depend>
+  <!-- Not a deb :/ -->
+  <!-- <test_depend>python3-nose-htmloutput</test_depend> -->
 
   <export>
     <build_type>ament_python</build_type>
