@@ -1,33 +1,8 @@
 # Py Trees
 
-## About
+## Status
 
-This is a python implementation of behaviour trees designed to facilitate the rapid development
-of medium sized decision making engines for use in fields like robotics. Brief feature list:
-
-* Sequence, Selector, Parallel and Chooser composites
-* Blackboards for data sharing
-* Python generators for smarter ticking over the tree graph
-* Python decorators for enabling meta behaviours
-* Render trees to dot graphs or visualise with ascii graphs on stdout
-
-**Sphinx Documentation**
-
-Detailed api reference and demo instructions can be found on read-the-docs
-([devel](http://py-trees.readthedocs.io/), [0.7.x](http://py-trees.readthedocs.io/en/release-0.7.x/), [0.6.x](http://py-trees.readthedocs.io/en/release-0.6.x/)).
-
-**ROS**
-
-This package is a pure python-only package, however you can find additional modules and documentation for
-using py_trees with ROS 1 in the [py_trees_ros](https://github.com/stonier/py_trees_ros/tree/devel) package.
-
-**Python2 vs Python3**
-
-Release 0.6.x supported both Python2 and Python3. 0.7.x and onwards will only have official support (bugs and doc.) for python3.
-
-## Sources, Builds & Docs
-
-| Devel | 0.7.x/Bouncy | 0.6.x/Melodic | 0.5.x/Kinetic |
+| Devel | 0.7.x | 0.6.x | 0.5.x |
 |:---:|:---:|:---:|:---:|
 | [![devel-Sources][devel-sources-image]][devel-sources] | [![0.7.x-Sources][0.7.x-sources-image]][0.7.x-sources] | [![0.6.x-Sources][0.6.x-sources-image]][0.6.x-sources] | [![0.5.x-Sources][0.5.x-sources-image]][0.5.x-sources] |
 | [![devel-Status][devel-build-status-image]][devel-build-status] | [![0.7.x-Status][0.7.x-build-status-image]][0.7.x-build-status] | [![melodic-Status][melodic-build-status-image]][melodic-build-status] | [![kinetic-Status][kinetic-build-status-image]][kinetic-build-status] | |
@@ -67,16 +42,24 @@ Release 0.6.x supported both Python2 and Python3. 0.7.x and onwards will only ha
 [0.5.x-docs-image]: https://readthedocs.org/projects/py-trees/badge/?version=release-0.5.x&style=plastic
 [0.5.x-docs]: http://py-trees.readthedocs.io/en/release-0.5.x/
 
+## About
 
-## Getting Started
+This is a python3 implementation of behaviour trees designed to facilitate the rapid development of medium sized decision making engines for use in fields like robotics. Brief feature list:
 
-**Installation**
+* Sequence, Selector, Parallel and Chooser composites
+* Blackboards for data sharing
+* Python generators for smarter ticking over the tree graph
+* Python decorators for enabling meta behaviours
+* Render trees to dot graphs or visualise with ascii graphs on stdout
 
+Note: Official python2 support was dropped in the 0.6.x releases although it may 'just work'.
 
-From [ppa](https://launchpad.net/~d-stonier/+archive/ubuntu/snorriheim) on Ubuntu/Bionic
+## Installation
+
+From [ppa](https://launchpad.net/~d-stonier/+archive/ubuntu/snorriheim) on Ubuntu/Bionic:
 
 ```
-sudo apt install python3-py-trees
+$ sudo apt install python3-py-trees
 ```
 
 From [pypi](https://pypi.python.org/pypi/py_trees):
@@ -85,37 +68,50 @@ From [pypi](https://pypi.python.org/pypi/py_trees):
 $ pip install py_trees
 ```
 
-Or in a ROS2 environment:
+From the ROS2 ecosystem:
 
 ```
 $ sudo apt install ros-<rosdistro>-py-trees
 ```
 
+In a Python Virtual Environment:
+
+```
+$ git clone https://github.com/stonier/py_trees
+$ cd py_trees
+$ source ./virtualenv.bash
+```
+
 Build your own python3 deb:
 
 ```
+$ git clone https://github.com/stonier/py_trees
+$ cd py_trees
 $ source ./virtualenv.bash
 $ make deb
 ```
 
+## Demos and Tutorials
 
-**Development Environment**
+API, guides and demo instructions can be found in the sphinx generated documetnation on Read-The-Docs ([devel](http://py-trees.readthedocs.io/), [0.7.x](http://py-trees.readthedocs.io/en/release-0.7.x/), [0.6.x](http://py-trees.readthedocs.io/en/release-0.6.x/))!
 
-You can develop in either a virtualenv (python3):
+## ROS
 
-```
-$ source ./virtualenv.bash
-```
+This repository is python-only, however additional modules and documentation are available for using `py_trees` with `ROS`.
 
-or in a ament-colcon environment:
+| | ROS1/Kinetic | ROS1/Melodic | ROS2/Bouncy |
+|:---:|:---:|:---:|:---:|
+| py_trees | [0.5.x][py-trees-0.5.x] | [0.6.x][py-trees-0.6.x] | [0.7.x][py-trees-0.7.x] |
+| py_trees-msgs | [0.3.x][py-trees-msgs-kinetic] | [0.3.x][py-trees-msgs-melodic] | - |
+| py_trees-ros | [0.5.x][py-trees-ros-kinetic] | [0.5.x][py-trees-ros-melodic] | - |
+| rqt_py_trees | [0.3.x][rqt-py-trees-kinetic] | [0.3.x][rqt-py-trees-melodic] | - |
 
-```
-$ mkdir src
-$ git clone https://github.com/stonier/py_trees src/py_trees
-$ colcon build
-$ colcon test
-```
-
-**Demos and Tutorials**
-
-Move on to the documentation ([devel](http://py-trees.readthedocs.io/), [0.7.x](http://py-trees.readthedocs.io/en/release-0.7.x/), [0.6.x](http://py-trees.readthedocs.io/en/release-0.6.x/))!
+[py-trees-0.7.x]: https://github.com/stonier/py_trees/tree/release/0.7.x
+[py-trees-0.6.x]: https://github.com/stonier/py_trees/tree/release/0.6.x
+[py-trees-0.5.x]: https://github.com/stonier/py_trees/tree/release/0.5.x
+[py-trees-msgs-kinetic]: https://github.com/stonier/py_trees_msgs/tree/release/0.3-kinetic
+[py-trees-msgs-melodic]: https://github.com/stonier/py_trees_msgs/tree/release/0.3-melodic
+[py-trees-ros-kinetic]: https://github.com/stonier/py_trees_ros/tree/release/0.5-kinetic
+[py-trees-ros-melodic]: https://github.com/stonier/py_trees_ros/tree/release/0.5-melodic
+[rqt-py-trees-kinetic]: https://github.com/stonier/rqt_py_trees/tree/release/0.3-kinetic
+[rqt-py-trees-melodic]: https://github.com/stonier/rqt_py_trees/tree/release/0.3-melodic
