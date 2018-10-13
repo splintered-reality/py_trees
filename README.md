@@ -99,12 +99,12 @@ API, guides and demo instructions can be found in the sphinx generated documetna
 
 This repository is python-only, however additional modules and documentation are available for using `py_trees` with `ROS`.
 
-| | ROS1/Kinetic | ROS1/Melodic | ROS2/Bouncy |
+| | ROS2/Bouncy | ROS1/Melodic | ROS1/Kinetic |
 |:---:|:---:|:---:|:---:|
-| py_trees | [0.5.x][py-trees-0.5.x] | [0.6.x][py-trees-0.6.x] | [0.7.x][py-trees-0.7.x] |
-| py_trees-msgs | [0.3.x][py-trees-msgs-kinetic] | [0.3.x][py-trees-msgs-melodic] | - |
-| py_trees-ros | [0.5.x][py-trees-ros-kinetic] | [0.5.x][py-trees-ros-melodic] | - |
-| rqt_py_trees | [0.3.x][rqt-py-trees-kinetic] | [0.3.x][rqt-py-trees-melodic] | - |
+| py_trees | [0.7.x][py-trees-0.7.x] | [0.6.x][py-trees-0.6.x] | [0.5.x][py-trees-0.5.x] |
+| py_trees-msgs | - | [0.3.x][py-trees-msgs-melodic] |[0.3.x][py-trees-msgs-kinetic] |
+| py_trees-ros | - | [0.5.x][py-trees-ros-melodic] | [0.5.x][py-trees-ros-kinetic] |
+| rqt_py_trees | - | [0.3.x][rqt-py-trees-melodic] | [0.3.x][rqt-py-trees-kinetic] |
 
 [py-trees-0.7.x]: https://github.com/stonier/py_trees/tree/release/0.7.x
 [py-trees-0.6.x]: https://github.com/stonier/py_trees/tree/release/0.6.x
