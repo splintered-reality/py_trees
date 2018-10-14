@@ -100,8 +100,8 @@ class Counter(py_trees.behaviour.Behaviour):
         Increment the counter and decide upon a new status result for the behaviour.
         """
         self.counter += 1
-        new_status = py_trees.Status.SUCCESS if self.counter == 3 else py_trees.Status.RUNNING
-        if new_status == py_trees.Status.SUCCESS:
+        new_status = py_trees.common.Status.SUCCESS if self.counter == 3 else py_trees.common.Status.RUNNING
+        if new_status == py_trees.common.Status.SUCCESS:
             self.feedback_message = "counting...{0} - phew, thats enough for today".format(self.counter)
         else:
             self.feedback_message = "still counting"

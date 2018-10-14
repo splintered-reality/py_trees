@@ -103,7 +103,7 @@ class ContextSwitch(py_trees.behaviour.Behaviour):
         Just returns RUNNING while it waits for other activities to finish.
         """
         self.logger.debug("%s.update()[RUNNING][%s]" % (self.__class__.__name__, self.feedback_message))
-        return py_trees.Status.RUNNING
+        return py_trees.common.Status.RUNNING
 
     def terminate(self, new_status):
         """
