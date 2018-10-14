@@ -3,6 +3,13 @@ Changelog
 
 Forthcoming
 -----------
+API noteworthy changes from 0.7.x -> 0.8.x:
+
+* Lower level namespace types no longer exist, e.g. :code:`py_trees.Status` -> :code:`py_trees.common.Status`
+
+Regular changelog details:
+
+* [infra] shortcuts to types in __init__.py removed
 * [bugfix] python3 rosdeps
 * [idioms] pick_up_where_you_left_off added
 
