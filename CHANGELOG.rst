@@ -5,7 +5,7 @@ Forthcoming
 -----------
 API noteworthy changes from 0.7.x -> 0.8.x:
 
-* Lower level namespace types no longer exist (#117), e.g. :code:`py_trees.Status` -> :code:`py_trees.common.Status`
+* Lower level namespace types no longer exist (PR117_), e.g. :code:`py_trees.Status` -> :code:`py_trees.common.Status`
 
 Regular changelog details:
 
@@ -133,3 +133,5 @@ Regular changelog details:
 * ascii tree and tick views
 * use generators and visitors to more efficiently walk/introspect trees
 * a first implementation of behaviour trees in python
+
+.. _PR117: https://github.com/stonier/py_trees/pull/117
