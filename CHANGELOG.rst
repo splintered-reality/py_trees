@@ -5,7 +5,7 @@ Forthcoming
 -----------
 API noteworthy changes from 0.7.x -> 0.8.x:
 
-* Lower level namespace types no longer exist, e.g. :code:`py_trees.Status` -> :code:`py_trees.common.Status`
+* Lower level namespace types no longer exist (#117), e.g. :code:`py_trees.Status` -> :code:`py_trees.common.Status`
 
 Regular changelog details:
 
