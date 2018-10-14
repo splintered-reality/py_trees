@@ -8,10 +8,6 @@
 # Imports
 ##############################################################################
 
-# enable some python3 compatibility options:
-# (unicode_literals not compatible with python2 uuid module)
-from __future__ import absolute_import, print_function
-
 import py_trees
 import py_trees.console as console
 

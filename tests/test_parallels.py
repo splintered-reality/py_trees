@@ -8,10 +8,6 @@
 # Imports
 ##############################################################################
 
-# enable some python3 compatibility options:
-# (unicode_literals not compatible with python2 uuid module)
-from __future__ import absolute_import, print_function
-
 import py_trees
 import py_trees.console as console
 
@@ -39,12 +35,12 @@ def test_parallel_failure():
     py_trees.tests.tick_tree(root, visitor, 1, 1)
 
     print("\n--------- Assertions ---------\n")
-    print("root.status == py_trees.Status.FAILURE")
-    assert(root.status == py_trees.Status.FAILURE)
-    print("failure.status == py_trees.Status.FAILURE")
-    assert(failure.status == py_trees.Status.FAILURE)
-    print("success.status == py_trees.Status.SUCCESS")
-    assert(success.status == py_trees.Status.SUCCESS)
+    print("root.status == py_trees.common.Status.FAILURE")
+    assert(root.status == py_trees.common.Status.FAILURE)
+    print("failure.status == py_trees.common.Status.FAILURE")
+    assert(failure.status == py_trees.common.Status.FAILURE)
+    print("success.status == py_trees.common.Status.SUCCESS")
+    assert(success.status == py_trees.common.Status.SUCCESS)
 
 
 def test_parallel_success():
@@ -59,12 +55,12 @@ def test_parallel_success():
     py_trees.tests.tick_tree(root, visitor, 1, 1)
 
     print("\n--------- Assertions ---------\n")
-    print("root.status == py_trees.Status.SUCCESS")
-    assert(root.status == py_trees.Status.SUCCESS)
-    print("success1.status == py_trees.Status.SUCCESS")
-    assert(success1.status == py_trees.Status.SUCCESS)
-    print("success2.status == py_trees.Status.SUCCESS")
-    assert(success2.status == py_trees.Status.SUCCESS)
+    print("root.status == py_trees.common.Status.SUCCESS")
+    assert(root.status == py_trees.common.Status.SUCCESS)
+    print("success1.status == py_trees.common.Status.SUCCESS")
+    assert(success1.status == py_trees.common.Status.SUCCESS)
+    print("success2.status == py_trees.common.Status.SUCCESS")
+    assert(success2.status == py_trees.common.Status.SUCCESS)
 
 
 def test_parallel_running():
@@ -88,26 +84,26 @@ def test_parallel_running():
     py_trees.tests.tick_tree(root, visitor, 1, 1)
 
     print("\n--------- Assertions ---------\n")
-    print("root.status == py_trees.Status.FAILURE")
-    assert(root.status == py_trees.Status.FAILURE)
-    print("success_after_1.status == py_trees.Status.INVALID")
-    assert(success_after_1.status == py_trees.Status.INVALID)
-    print("running.status == py_trees.Status.INVALID")
-    assert(running.status == py_trees.Status.INVALID)
-    print("success_every_other.status == py_trees.Status.FAILURE")
-    assert(success_every_other.status == py_trees.Status.FAILURE)
+    print("root.status == py_trees.common.Status.FAILURE")
+    assert(root.status == py_trees.common.Status.FAILURE)
+    print("success_after_1.status == py_trees.common.Status.INVALID")
+    assert(success_after_1.status == py_trees.common.Status.INVALID)
+    print("running.status == py_trees.common.Status.INVALID")
+    assert(running.status == py_trees.common.Status.INVALID)
+    print("success_every_other.status == py_trees.common.Status.FAILURE")
+    assert(success_every_other.status == py_trees.common.Status.FAILURE)
 
     py_trees.tests.tick_tree(root, visitor, 2, 2)
 
     print("\n--------- Assertions ---------\n")
-    print("root.status == py_trees.Status.RUNNING")
-    assert(root.status == py_trees.Status.RUNNING)
-    print("success_after_1.status == py_trees.Status.SUCCESS")
-    assert(success_after_1.status == py_trees.Status.SUCCESS)
-    print("running.status == py_trees.Status.RUNNING")
-    assert(running.status == py_trees.Status.RUNNING)
-    print("success_every_other.status == py_trees.Status.SUCCESS")
-    assert(success_every_other.status == py_trees.Status.SUCCESS)
+    print("root.status == py_trees.common.Status.RUNNING")
+    assert(root.status == py_trees.common.Status.RUNNING)
+    print("success_after_1.status == py_trees.common.Status.SUCCESS")
+    assert(success_after_1.status == py_trees.common.Status.SUCCESS)
+    print("running.status == py_trees.common.Status.RUNNING")
+    assert(running.status == py_trees.common.Status.RUNNING)
+    print("success_every_other.status == py_trees.common.Status.SUCCESS")
+    assert(success_every_other.status == py_trees.common.Status.SUCCESS)
 
 
 def test_parallel_success_on_one():
@@ -127,11 +123,11 @@ def test_parallel_success_on_one():
 
     print("\n--------- Assertions ---------\n")
     print("All children get switched to success if one goes to success.")
-    print("root.status == py_trees.Status.SUCCESS")
-    assert(root.status == py_trees.Status.SUCCESS)
-    print("running1.status == py_trees.Status.INVALID")
-    assert(running1.status == py_trees.Status.INVALID)
-    print("success.status == py_trees.Status.SUCCESS")
-    assert(success.status == py_trees.Status.SUCCESS)
-    print("running2.status == py_trees.Status.INVALID")
-    assert(running2.status == py_trees.Status.INVALID)
+    print("root.status == py_trees.common.Status.SUCCESS")
+    assert(root.status == py_trees.common.Status.SUCCESS)
+    print("running1.status == py_trees.common.Status.INVALID")
+    assert(running1.status == py_trees.common.Status.INVALID)
+    print("success.status == py_trees.common.Status.SUCCESS")
+    assert(success.status == py_trees.common.Status.SUCCESS)
+    print("running2.status == py_trees.common.Status.INVALID")
+    assert(running2.status == py_trees.common.Status.INVALID)
