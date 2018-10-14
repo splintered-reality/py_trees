@@ -8,10 +8,6 @@
 # Imports
 ##############################################################################
 
-# enable some python3 compatibility options:
-# (unicode_literals not compatible with python2 uuid module)
-from __future__ import absolute_import, print_function
-
 import py_trees
 import py_trees.console as console
 
@@ -39,22 +35,22 @@ def test_low_priority_runner():
     py_trees.tests.tick_tree(root, visitor, 1, 1)
 
     print("\n--------- Assertions ---------\n")
-    print("root.status == py_trees.Status.RUNNING")
-    assert(root.status == py_trees.Status.RUNNING)
-    print("failure.status == py_trees.Status.FAILURE")
-    assert(failure.status == py_trees.Status.FAILURE)
-    print("running.status == py_trees.Status.RUNNING")
-    assert(running.status == py_trees.Status.RUNNING)
+    print("root.status == py_trees.common.Status.RUNNING")
+    assert(root.status == py_trees.common.Status.RUNNING)
+    print("failure.status == py_trees.common.Status.FAILURE")
+    assert(failure.status == py_trees.common.Status.FAILURE)
+    print("running.status == py_trees.common.Status.RUNNING")
+    assert(running.status == py_trees.common.Status.RUNNING)
 
     py_trees.tests.tick_tree(root, visitor, 2, 2)
 
     print("\n--------- Assertions ---------\n")
-    print("root.status == py_trees.Status.RUNNING")
-    assert(root.status == py_trees.Status.RUNNING)
-    print("failure.status == py_trees.Status.INVALID")
-    assert(failure.status == py_trees.Status.INVALID)
-    print("running.status == py_trees.Status.RUNNING")
-    assert(running.status == py_trees.Status.RUNNING)
+    print("root.status == py_trees.common.Status.RUNNING")
+    assert(root.status == py_trees.common.Status.RUNNING)
+    print("failure.status == py_trees.common.Status.INVALID")
+    assert(failure.status == py_trees.common.Status.INVALID)
+    print("running.status == py_trees.common.Status.RUNNING")
+    assert(running.status == py_trees.common.Status.RUNNING)
 
 
 def test_low_priority_success():
@@ -69,23 +65,23 @@ def test_low_priority_success():
     py_trees.tests.tick_tree(root, visitor, 1, 1)
 
     print("\n--------- Assertions ---------\n")
-    print("root.status == py_trees.Status.SUCCESS")
-    assert(root.status == py_trees.Status.SUCCESS)
-    print("failure.status == py_trees.Status.FAILURE")
-    assert(failure.status == py_trees.Status.FAILURE)
-    print("success.status == py_trees.Status.SUCCESS")
-    assert(success.status == py_trees.Status.SUCCESS)
+    print("root.status == py_trees.common.Status.SUCCESS")
+    assert(root.status == py_trees.common.Status.SUCCESS)
+    print("failure.status == py_trees.common.Status.FAILURE")
+    assert(failure.status == py_trees.common.Status.FAILURE)
+    print("success.status == py_trees.common.Status.SUCCESS")
+    assert(success.status == py_trees.common.Status.SUCCESS)
 
     py_trees.tests.tick_tree(root, visitor, 2, 2)
 
     # make sure both children are ticked again (different to above)
     print("\n--------- Assertions ---------\n")
-    print("root.status == py_trees.Status.SUCCESS")
-    assert(root.status == py_trees.Status.SUCCESS)
-    print("failure.status == py_trees.Status.FAILURE")
-    assert(failure.status == py_trees.Status.FAILURE)
-    print("success.status == py_trees.Status.SUCCESS")
-    assert(success.status == py_trees.Status.SUCCESS)
+    print("root.status == py_trees.common.Status.SUCCESS")
+    assert(root.status == py_trees.common.Status.SUCCESS)
+    print("failure.status == py_trees.common.Status.FAILURE")
+    assert(failure.status == py_trees.common.Status.FAILURE)
+    print("success.status == py_trees.common.Status.SUCCESS")
+    assert(success.status == py_trees.common.Status.SUCCESS)
 
 
 def test_higher_priority_ignore():
@@ -100,19 +96,19 @@ def test_higher_priority_ignore():
     py_trees.tests.tick_tree(root, visitor, 1, 1)
 
     print("\n--------- Assertions ---------\n")
-    print("root.status == py_trees.Status.RUNNING")
-    assert(root.status == py_trees.Status.RUNNING)
-    print("ping_pong.status == py_trees.Status.FAILURE")
-    assert(ping_pong.status == py_trees.Status.FAILURE)
-    print("running.status == py_trees.Status.RUNNING")
-    assert(running.status == py_trees.Status.RUNNING)
+    print("root.status == py_trees.common.Status.RUNNING")
+    assert(root.status == py_trees.common.Status.RUNNING)
+    print("ping_pong.status == py_trees.common.Status.FAILURE")
+    assert(ping_pong.status == py_trees.common.Status.FAILURE)
+    print("running.status == py_trees.common.Status.RUNNING")
+    assert(running.status == py_trees.common.Status.RUNNING)
 
     py_trees.tests.tick_tree(root, visitor, 2, 2)
 
     print("\n--------- Assertions ---------\n")
-    print("root.status == py_trees.Status.RUNNING")
-    assert(root.status == py_trees.Status.RUNNING)
-    print("ping_pong.status == py_trees.Status.INVALID")
-    assert(ping_pong.status == py_trees.Status.INVALID)  # got invalidated and didnt get ticked
-    print("running.status == py_trees.Status.RUNNING")
-    assert(running.status == py_trees.Status.RUNNING)
+    print("root.status == py_trees.common.Status.RUNNING")
+    assert(root.status == py_trees.common.Status.RUNNING)
+    print("ping_pong.status == py_trees.common.Status.INVALID")
+    assert(ping_pong.status == py_trees.common.Status.INVALID)  # got invalidated and didnt get ticked
+    print("running.status == py_trees.common.Status.RUNNING")
+    assert(running.status == py_trees.common.Status.RUNNING)

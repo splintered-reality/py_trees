@@ -3,6 +3,13 @@ Changelog
 
 Forthcoming
 -----------
+API noteworthy changes from 0.7.x -> 0.8.x:
+
+* Lower level namespace types no longer exist (PR117_), e.g. :code:`py_trees.Status` -> :code:`py_trees.common.Status`
+
+Regular changelog details:
+
+* [infra] shortcuts to types in __init__.py removed
 * [bugfix] python3 rosdeps
 * [idioms] pick_up_where_you_left_off added
 
@@ -126,3 +133,5 @@ Forthcoming
 * ascii tree and tick views
 * use generators and visitors to more efficiently walk/introspect trees
 * a first implementation of behaviour trees in python
+
+.. _PR117: https://github.com/stonier/py_trees/pull/117

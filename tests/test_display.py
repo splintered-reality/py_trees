@@ -8,10 +8,6 @@
 # Imports
 ##############################################################################
 
-# python2-3 compatibility - either this, or prefix with a u for python 2 below
-#     print(u"[{0}][{1}][{2}][{3}]".format(
-from __future__ import unicode_literals
-
 import py_trees
 import py_trees.console as console
 import py_trees.display as display

@@ -7,10 +7,6 @@
 # Imports
 ##############################################################################
 
-# enable some python3 compatibility options:
-# (unicode_literals not compatible with python2 uuid module)
-from __future__ import absolute_import, print_function
-
 import py_trees
 import py_trees.console as console
 
@@ -58,35 +54,35 @@ def test_high_priority_interrupt():
     print()
 
     print("\n--------- Assertions ---------\n")
-    print("high_priority_interrupt.status == py_trees.Status.FAILURE")
-    assert(high_priority_interrupt.status == py_trees.Status.FAILURE)
-    print("piwylo.status == py_trees.Status.RUNNING")
-    assert(piwylo.status == py_trees.Status.RUNNING)
-    print("task_one.status == py_trees.Status.SUCCESS")
-    assert(task_one.status == py_trees.Status.SUCCESS)
-    print("task_two.status == py_trees.Status.RUNNING")
-    assert(task_two.status == py_trees.Status.RUNNING)
+    print("high_priority_interrupt.status == py_trees.common.Status.FAILURE")
+    assert(high_priority_interrupt.status == py_trees.common.Status.FAILURE)
+    print("piwylo.status == py_trees.common.Status.RUNNING")
+    assert(piwylo.status == py_trees.common.Status.RUNNING)
+    print("task_one.status == py_trees.common.Status.SUCCESS")
+    assert(task_one.status == py_trees.common.Status.SUCCESS)
+    print("task_two.status == py_trees.common.Status.RUNNING")
+    assert(task_two.status == py_trees.common.Status.RUNNING)
 
     py_trees.tests.tick_tree(root, visitor, 4, 5)
 
     print("\n--------- Assertions ---------\n")
-    print("high_priority_interrupt.status == py_trees.Status.SUCCESS")
-    assert(high_priority_interrupt.status == py_trees.Status.SUCCESS)
-    print("piwylo.status == py_trees.Status.INVALID")
-    assert(piwylo.status == py_trees.Status.INVALID)
-    print("task_one.status == py_trees.Status.INVALID")
-    assert(task_one.status == py_trees.Status.INVALID)
-    print("task_two.status == py_trees.Status.INVALID")
-    assert(task_two.status == py_trees.Status.INVALID)
+    print("high_priority_interrupt.status == py_trees.common.Status.SUCCESS")
+    assert(high_priority_interrupt.status == py_trees.common.Status.SUCCESS)
+    print("piwylo.status == py_trees.common.Status.INVALID")
+    assert(piwylo.status == py_trees.common.Status.INVALID)
+    print("task_one.status == py_trees.common.Status.INVALID")
+    assert(task_one.status == py_trees.common.Status.INVALID)
+    print("task_two.status == py_trees.common.Status.INVALID")
+    assert(task_two.status == py_trees.common.Status.INVALID)
 
     py_trees.tests.tick_tree(root, visitor, 6, 8)
 
     print("\n--------- Assertions ---------\n")
-    print("high_priority_interrupt.status == py_trees.Status.FAILURE")
-    assert(high_priority_interrupt.status == py_trees.Status.FAILURE)
-    print("piwylo.status == py_trees.Status.RUNNING")
-    assert(piwylo.status == py_trees.Status.RUNNING)
-    print("task_one.status == py_trees.Status.INVALID")
-    assert(task_one.status == py_trees.Status.INVALID)
-    print("task_two.status == py_trees.Status.RUNNING")
-    assert(task_two.status == py_trees.Status.RUNNING)
+    print("high_priority_interrupt.status == py_trees.common.Status.FAILURE")
+    assert(high_priority_interrupt.status == py_trees.common.Status.FAILURE)
+    print("piwylo.status == py_trees.common.Status.RUNNING")
+    assert(piwylo.status == py_trees.common.Status.RUNNING)
+    print("task_one.status == py_trees.common.Status.INVALID")
+    assert(task_one.status == py_trees.common.Status.INVALID)
+    print("task_two.status == py_trees.common.Status.RUNNING")
+    assert(task_two.status == py_trees.common.Status.RUNNING)

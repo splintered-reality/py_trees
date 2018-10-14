@@ -24,6 +24,7 @@ import argparse
 import atexit
 import multiprocessing
 import py_trees
+import py_trees.common
 import time
 
 import py_trees.console as console
@@ -135,12 +136,12 @@ class Action(py_trees.behaviour.Behaviour):
         """
         Increment the counter and decide upon a new status result for the behaviour.
         """
-        new_status = py_trees.Status.RUNNING
+        new_status = py_trees.common.Status.RUNNING
         if self.parent_connection.poll():
             self.percentage_completion = self.parent_connection.recv().pop()
             if self.percentage_completion == 100:
-                new_status = py_trees.Status.SUCCESS
-        if new_status == py_trees.Status.SUCCESS:
+                new_status = py_trees.common.Status.SUCCESS
+        if new_status == py_trees.common.Status.SUCCESS:
             self.feedback_message = "Processing finished"
             self.logger.debug("%s.update()[%s->%s][%s]" % (self.__class__.__name__, self.status, new_status, self.feedback_message))
         else:

@@ -161,7 +161,7 @@ def main():
     ####################
     if args.interactive:
         py_trees.console.read_single_keypress()
-    while True:
+    for i in range(1, 11):
         try:
             behaviour_tree.tick()
             if args.interactive:

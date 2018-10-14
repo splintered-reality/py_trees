@@ -83,11 +83,11 @@ class BlackboardWriter(py_trees.behaviour.Behaviour):
 
     def update(self):
         """
-        Write a dictionary to the blackboard and return :data:`~py_trees.Status.SUCCESS`.
+        Write a dictionary to the blackboard and return :data:`~py_trees.common.Status.SUCCESS`.
         """
         self.logger.debug("%s.update()" % (self.__class__.__name__))
         self.blackboard.spaghetti = {"type": "Gnocchi", "quantity": 2}
-        return py_trees.Status.SUCCESS
+        return py_trees.common.Status.SUCCESS
 
 
 def create_tree():

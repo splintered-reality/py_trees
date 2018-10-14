@@ -8,16 +8,11 @@
 # Imports
 ##############################################################################
 
-# enable some python3 compatibility options:
-# (unicode_literals not compatible with python2 uuid module)
-from __future__ import absolute_import, print_function
-
-# from nose.tools import assert_raises
-
 import py_trees
-from py_trees import Blackboard, Status
 import py_trees.console as console
 import operator
+
+from py_trees.common import Status
 
 ##############################################################################
 # Logging Level
@@ -44,7 +39,7 @@ def create_blackboard():
     Fill with as many different types as we need to get full coverage on
     pretty printing blackboard tests.
     """
-    blackboard = Blackboard()
+    blackboard = py_trees.blackboard.Blackboard()
     blackboard.foo = "bar"
     blackboard.some_tuple = (1, "bar")
     blackboard.foobar = FooBar()
@@ -201,4 +196,4 @@ def test_set_blackboard_variable():
     assert(hasattr(blackboard, "foo"))
     assert(blackboard.foo == "bar")
     print(" - Assert set_foo.status == SUCCESS")
-    assert(set_foo.status == py_trees.Status.SUCCESS)
+    assert(set_foo.status == Status.SUCCESS)
