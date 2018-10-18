@@ -2,11 +2,11 @@
 
 ## Status
 
-| Devel | 0.7.x | 0.6.x | 0.5.x |
+| Devel | 0.8.x | 0.6.x | 0.5.x |
 |:---:|:---:|:---:|:---:|
-| [![devel-Sources][devel-sources-image]][devel-sources] | [![0.7.x-Sources][0.7.x-sources-image]][0.7.x-sources] | [![0.6.x-Sources][0.6.x-sources-image]][0.6.x-sources] | [![0.5.x-Sources][0.5.x-sources-image]][0.5.x-sources] |
-| [![devel-Status][devel-build-status-image]][devel-build-status] | [![0.7.x-Status][0.7.x-build-status-image]][0.7.x-build-status] | [![melodic-Status][melodic-build-status-image]][melodic-build-status] | [![kinetic-Status][kinetic-build-status-image]][kinetic-build-status] | |
-| [![devel-Docs][devel-docs-image]][devel-docs] | [![0.7.x-Docs][0.7.x-docs-image]][0.7.x-docs] | [![0.6.x-Docs][0.6.x-docs-image]][0.6.x-docs] | [![0.5.x-Docs][0.5.x-docs-image]][0.5.x-docs] | |
+| [![devel-Sources][devel-sources-image]][devel-sources] | [![0.8.x-Sources][0.8.x-sources-image]][0.8.x-sources] | [![0.6.x-Sources][0.6.x-sources-image]][0.6.x-sources] | [![0.5.x-Sources][0.5.x-sources-image]][0.5.x-sources] |
+| [![devel-Status][devel-build-status-image]][devel-build-status] | [![0.8.x-Status][0.8.x-build-status-image]][0.8.x-build-status] | [![melodic-Status][melodic-build-status-image]][melodic-build-status] | [![kinetic-Status][kinetic-build-status-image]][kinetic-build-status] | |
+| [![devel-Docs][devel-docs-image]][devel-docs] | [![0.8.x-Docs][0.8.x-docs-image]][0.8.x-docs] | [![0.6.x-Docs][0.6.x-docs-image]][0.6.x-docs] | [![0.5.x-Docs][0.5.x-docs-image]][0.5.x-docs] | |
 
 [license-image]: https://img.shields.io/badge/License-BSD%203--Clause-orange.svg?style=plastic
 [license]: LICENSE
@@ -102,12 +102,12 @@ This repository is python-only, however additional modules & documentation are a
 
 | | [ROS2/Bouncy][bouncy-repository] | [ROS1/Melodic][melodic-repository] | [ROS1/Kinetic][kinetic-repository] |
 |:---:|:---:|:---:|:---:|
-| py_trees | [![0.8.x][0.8.x-sources-image]][py-trees-0.7.x] | [![0.6.x][0.6.x-sources-image]][py-trees-0.6.x] | [![0.5.x][0.5.x-sources-image]][py-trees-0.5.x] |
+| py_trees | [![0.8.x][0.8.x-sources-image]][py-trees-0.8.x] | [![0.6.x][0.6.x-sources-image]][py-trees-0.6.x] | [![0.5.x][0.5.x-sources-image]][py-trees-0.5.x] |
 | py_trees-msgs | - | [![0.3.x][0.3.x-sources-image]][py-trees-msgs-melodic] | [![0.3.x][0.3.x-sources-image]][py-trees-msgs-kinetic] |
 | py_trees-ros | - | [![0.5.x][0.5.x-sources-image]][py-trees-ros-melodic] | [![0.5.x][0.5.x-sources-image]][py-trees-ros-kinetic] |
 | rqt_py_trees | - | [![0.3.x][0.3.x-sources-image]][rqt-py-trees-melodic] | [![0.3.x][0.3.x-sources-image]][rqt-py-trees-kinetic] |
 
-[0.8.x-sources-image]: http://img.shields.io/badge/sources-0.7.x-blue.svg?style=plastic
+[0.8.x-sources-image]: http://img.shields.io/badge/sources-0.8.x-blue.svg?style=plastic
 [0.7.x-sources-image]: http://img.shields.io/badge/sources-0.7.x-blue.svg?style=plastic
 [0.6.x-sources-image]: http://img.shields.io/badge/sources-0.6.x-blue.svg?style=plastic
 [0.5.x-sources-image]: http://img.shields.io/badge/sources-0.5.x-blue.svg?style=plastic
