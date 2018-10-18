@@ -1,9 +1,9 @@
-<?xml version="1.0"? encoding="utf-8">
+<?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format2.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>py_trees</name>
   <!-- When updating, also update setup.py and version.py -->
-  <version>0.8.0</version>
+  <version>0.8.1</version>
   <description>
     Pythonic implementation of behaviour trees.
   </description>
