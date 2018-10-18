@@ -14,14 +14,11 @@ Release Notes
 * [idioms] 'Pick Up Where You Left Off'
 * [idioms] 'OneShot'
 
-0.8.x (2018-10-18)
-------------------
-
 Changelog
 =========
 
-Forthcoming
------------
+0.8.0 (2018-10-18)
+------------------
 * [infra] shortcuts to types in __init__.py removed (PR117_)
 * [bugfix] python3 rosdeps
 * [idioms] pick_up_where_you_left_off added
