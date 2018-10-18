@@ -1,15 +1,28 @@
+Release Notes
+=============
+
+0.8.x (2018-10-18)
+------------------
+
+**Breaking API**
+
+* Lower level namespace types no longer exist (PR117_), e.g. :code:`py_trees.Status` -> :code:`py_trees.common.Status`
+* Python2 support dropped
+
+**New Features**
+
+* [idioms] 'Pick Up Where You Left Off'
+* [idioms] 'OneShot'
+
+0.8.x (2018-10-18)
+------------------
+
 Changelog
 =========
 
 Forthcoming
 -----------
-API noteworthy changes from 0.7.x -> 0.8.x:
-
-* Lower level namespace types no longer exist (PR117_), e.g. :code:`py_trees.Status` -> :code:`py_trees.common.Status`
-
-Regular changelog details:
-
-* [infra] shortcuts to types in __init__.py removed
+* [infra] shortcuts to types in __init__.py removed (PR117_)
 * [bugfix] python3 rosdeps
 * [idioms] pick_up_where_you_left_off added
 
