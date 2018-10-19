@@ -30,6 +30,7 @@
 
   <test_depend>python3-nose</test_depend>
   <test_depend>python3-nose-yanc</test_depend>
+
   <!-- Not a deb :/ -->
   <!-- <test_depend>python3-nose-htmloutput</test_depend> -->
 
