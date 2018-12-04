@@ -14,6 +14,7 @@ from __future__ import absolute_import, print_function
 
 import py_trees
 import py_trees.console as console
+import time
 
 ##############################################################################
 # Logging Level
@@ -199,60 +200,65 @@ def test_inverter_sequence():
     assert(selector.status == py_trees.Status.SUCCESS)
 
 
-# def test_timeout():
-#     print(console.bold + "\n****************************************************************************************" + console.reset)
-#     print(console.bold + "* Timeout" + console.reset)
-#     print(console.bold + "****************************************************************************************\n" + console.reset)
-#     root = py_trees.meta.timeout(py_trees.behaviours.Running, 0.2)("Success w/ Timeout")
-#     py_trees.display.print_ascii_tree(root)
-#     visitor = py_trees.visitors.DebugVisitor()
-#     py_trees.tests.tick_tree(root, visitor, 1, 1)
+def test_timeout():
+    print(console.bold + "\n****************************************************************************************" + console.reset)
+    print(console.bold + "* Timeout" + console.reset)
+    print(console.bold + "****************************************************************************************\n" + console.reset)
+    # root = py_trees.meta.timeout(py_trees.behaviours.Running, 0.2)("Success w/ Timeout")
+    root = py_trees.decorators.Timeout(py_trees.behaviours.Running(), 0.2)
+    py_trees.display.print_ascii_tree(root)
+    visitor = py_trees.visitors.DebugVisitor()
+    py_trees.tests.tick_tree(root, visitor, 1, 1)
 
-#     print("\n--------- Assertions ---------\n")
-#     print("root.status == py_trees.Status.RUNNING")
-#     print("root.status %s" % root.status)
-#     assert(root.status == py_trees.Status.RUNNING)
+    print("\n--------- Assertions ---------\n")
+    print("root.status == py_trees.Status.RUNNING")
+    print("root.status %s" % root.status)
+    assert(root.status == py_trees.Status.RUNNING)
+    print("root.decorated.status == py_trees.Status.RUNNING")
+    assert(root.decorated.status == py_trees.Status.RUNNING)
 
-#     time.sleep(0.3)
-#     py_trees.tests.tick_tree(root, visitor, 1, 1)
+    time.sleep(0.3)
+    py_trees.tests.tick_tree(root, visitor, 1, 1)
 
-#     print("\n--------- Assertions ---------\n")
-#     print("root.status == py_trees.Status.FAILURE")
-#     assert(root.status == py_trees.Status.FAILURE)
+    print("\n--------- Assertions ---------\n")
+    print("root.status == py_trees.Status.FAILURE")
+    assert(root.status == py_trees.Status.FAILURE)
+    print("root.decorated.status == py_trees.Status.INVALID")
+    assert(root.decorated.status == py_trees.Status.INVALID)
 
 
-# def test_condition():
-#     print(console.bold + "\n****************************************************************************************" + console.reset)
-#     print(console.bold + "* Condition" + console.reset)
-#     print(console.bold + "****************************************************************************************\n" + console.reset)
+def test_condition():
+    print(console.bold + "\n****************************************************************************************" + console.reset)
+    print(console.bold + "* Condition" + console.reset)
+    print(console.bold + "****************************************************************************************\n" + console.reset)
 
-#     Conditional = py_trees.meta.condition(py_trees.behaviours.Count, py_trees.Status.SUCCESS)
-#     condition = Conditional(name="D", fail_until=2, running_until=2, success_until=10, reset=False)
+    counter = py_trees.behaviours.Count(name="D", fail_until=2, running_until=2, success_until=10, reset=False)
+    condition = py_trees.decorators.Condition(counter, py_trees.Status.SUCCESS)
+    py_trees.display.print_ascii_tree(condition)
+    visitor = py_trees.visitors.DebugVisitor()
+    py_trees.tests.tick_tree(condition, visitor, 1, 1)
 
-#     visitor = py_trees.visitors.DebugVisitor()
-#     py_trees.tests.tick_tree(condition, visitor, 1, 1)
+    print("\n--------- Assertions ---------\n")
+    print("condition.decorated.status == py_trees.Status.FAILURE")
+    assert(condition.decorated.status == py_trees.Status.FAILURE)
+    print("condition.status == py_trees.Status.RUNNING")
+    assert(condition.status == py_trees.Status.RUNNING)
 
-#     print("\n--------- Assertions ---------\n")
-#     print("condition.original.status == py_trees.Status.FAILURE")
-#     assert(condition.original.status == py_trees.Status.FAILURE)
-#     print("condition.status == py_trees.Status.RUNNING")
-#     assert(condition.status == py_trees.Status.RUNNING)
+    py_trees.tests.tick_tree(condition, visitor, 2, 2)
 
-#     py_trees.tests.tick_tree(condition, visitor, 2, 2)
+    print("\n--------- Assertions ---------\n")
+    print("condition.decorated.status == py_trees.Status.FAILURE")
+    assert(condition.decorated.status == py_trees.Status.FAILURE)
+    print("condition.status == py_trees.Status.RUNNING")
+    assert(condition.status == py_trees.Status.RUNNING)
 
-#     print("\n--------- Assertions ---------\n")
-#     print("condition.original.status == py_trees.Status.FAILURE")
-#     assert(condition.original.status == py_trees.Status.FAILURE)
-#     print("condition.status == py_trees.Status.RUNNING")
-#     assert(condition.status == py_trees.Status.RUNNING)
+    py_trees.tests.tick_tree(condition, visitor, 3, 3)
 
-#     py_trees.tests.tick_tree(condition, visitor, 3, 3)
-
-#     print("\n--------- Assertions ---------\n")
-#     print("condition.original.status == py_trees.Status.SUCCESS")
-#     assert(condition.original.status == py_trees.Status.SUCCESS)
-#     print("condition.status == py_trees.Status.SUCCESS")
-#     assert(condition.status == py_trees.Status.SUCCESS)
+    print("\n--------- Assertions ---------\n")
+    print("condition.decorated.status == py_trees.Status.SUCCESS")
+    assert(condition.decorated.status == py_trees.Status.SUCCESS)
+    print("condition.status == py_trees.Status.SUCCESS")
+    assert(condition.status == py_trees.Status.SUCCESS)
 
 
 def test_new_decorator():

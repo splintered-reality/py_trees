@@ -18,6 +18,8 @@ Decorators
 from .behaviour import Behaviour
 from .common import Status
 
+import time
+
 
 ##############################################################################
 # Decorators
@@ -70,7 +72,32 @@ class Decorator(Behaviour):
 
 
 class Timeout(Decorator):
-    pass
+    def __init__(self, decorated, duration):
+        super(Timeout, self).__init__(decorated)
+        self.duration = duration
+        self.finish_time = None
+
+    def initialise(self):
+        if self.finish_time is None:
+            self.finish_time = time.time() + self.duration
+
+    def update(self):
+        # make sure this class initialises time related functions
+        # when the underlying original will initialise itself
+        if self.decorated.status != Status.RUNNING:
+            self.initialise()
+        current_time = time.time()
+        if current_time > self.finish_time:
+            self.feedback_message = "timed out"
+            # invalidate the decorated (i.e. cancel it)
+            self.decorated.stop(Status.INVALID)
+            return Status.FAILURE
+        self.feedback_message = self.decorated.feedback_message + " [time left: %s]" % (self.finish_time - current_time)
+        return self.decorated.status
+
+    def terminate(self, new_status):
+        if new_status != Status.RUNNING:
+            self.finish_time = None
 
 
 class Inverter(Decorator):
@@ -86,7 +113,37 @@ class Inverter(Decorator):
 
 
 class OneShot(Decorator):
-    pass
+    def __init__(self, decorated):
+        super(OneShot, self).__init__(decorated)
+        self.final_status = None
+
+    def update(self):
+        self.logger.debug("OneShot.wrapped_update()")
+        if self.final_status:
+            return self.final_status
+        if self.decorated.status in (Status.FAILURE, Status.SUCCESS):
+            self.final_status = self.decorated.status
+        return self.decorated.status
+
+    def tick(self):
+        if self.final_status:
+            self.status = self.final_status
+            self.logger.debug("OneShot.wrapped_tick()[rebounding]")
+            yield self
+        else:
+            self.logger.debug("OneShot.wrapped_tick()")
+            for behaviour in super(OneShot, self).tick():
+                yield behaviour
+
+    def terminate(self, new_status):
+        self.logger.debug("OneShot.wrapped_terminate()[{}]".format(new_status))
+        # handle only the interrupt/reset case
+        if new_status == Status.INVALID:
+            if self.final_status:
+                self.status = new_status
+            else:
+                self.decorated.stop(new_status)
+                self.status = self.decorated.status
 
 
 class RunningIsFailure(Decorator):
@@ -144,4 +201,16 @@ class SuccessIsRunning(Decorator):
 
 
 class Condition(Decorator):
-    pass
+    def __init__(self, decorated, status):
+        super(Condition, self).__init__(decorated)
+        self.succeed_status = status
+
+    def update(self):
+        self.logger.debug("%s.update()" % self.__class__.__name__)
+        self.feedback_message = "'{0}' has status {1}, waiting for {2}".format(self.decorated.name, self.decorated.status, self.succeed_status)
+        if self.decorated.status == self.succeed_status:
+            if self.decorated.status == Status.RUNNING:
+                self.decorated.stop()
+            return Status.SUCCESS
+        return Status.RUNNING
+
