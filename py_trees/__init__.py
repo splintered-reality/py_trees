@@ -19,6 +19,7 @@ from . import blackboard
 from . import common
 from . import composites
 from . import console
+from . import decorators
 from . import demos
 from . import display
 from . import logging

@@ -11,3 +11,4 @@ py_trees*.tar.gz
 *~
 \#*
 .#*
+*.vscode
