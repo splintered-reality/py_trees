@@ -23,8 +23,9 @@ import pydot
 from . import common
 from . import console
 
-from .composites import Sequence, Selector, Parallel, Chooser
+from .composites import Sequence, Selector, Parallel, Chooser, Composite
 from .common import Status
+from .decorators import Decorator
 
 ##############################################################################
 # Behaviour
@@ -37,6 +38,19 @@ _behaviour_status_to_ascii = {
     Status.INVALID: console.yellow + "-" + console.reset,
     Status.RUNNING: console.blue + "*" + console.reset
 }
+
+
+def _get_behaviour_ascii_bullet(tree):
+    if isinstance(tree, Sequence):
+        return "[-] "
+    elif isinstance(tree, Selector):
+        return "(-) "
+    elif isinstance(tree, Parallel):
+        return "(o) "
+    elif isinstance(tree, Decorator):
+        return "<-> "
+
+    return "--> "
 
 
 def _generate_ascii_tree(tree, indent=0, snapshot_information=None):
@@ -55,31 +69,24 @@ def _generate_ascii_tree(tree, indent=0, snapshot_information=None):
     previously_running_nodes = [] if snapshot_information is None else snapshot_information.previously_running_nodes
     running_nodes = [] if snapshot_information is None else snapshot_information.running_nodes
 
-    if indent == 0:
-        if tree.id in nodes:
-            yield "%s [%s]" % (tree.name, _behaviour_status_to_ascii[nodes[tree.id]])
-        elif tree.id in previously_running_nodes and tree.id not in running_nodes:
-            yield "%s" % tree.name + " [" + console.yellow + "-" + console.reset + "]"
-        else:
-            yield "%s" % tree.name
-    for child in tree.children:
-        bullet = "--> "
-        if isinstance(child, Sequence):
-            bullet = "[-] "
-        elif isinstance(child, Selector):
-            bullet = "(-) "
-        elif isinstance(child, Parallel):
-            bullet = "(o) "
-        if child.id in nodes:
-            message = "" if not child.feedback_message else " -- " + child.feedback_message
-            yield "    " * indent + bullet + child.name + " [%s]" % _behaviour_status_to_ascii[nodes[child.id]] + message
-        elif child.id in previously_running_nodes and child.id not in running_nodes:
-            yield "    " * indent + bullet + child.name + " [" + console.yellow + "-" + console.reset + "]"
-        else:
-            yield "    " * indent + bullet + child.name
-        if child.children != []:
+    bullet = _get_behaviour_ascii_bullet(tree)
+    if tree.id in nodes:
+        message = "" if not tree.feedback_message else " -- " + tree.feedback_message
+        yield "    " * indent + bullet + tree.name + " [%s]" % _behaviour_status_to_ascii[nodes[tree.id]] + message
+    elif tree.id in previously_running_nodes and tree.id not in running_nodes:
+        yield "    " * indent + bullet + tree.name + " [" + console.yellow + "-" + console.reset + "]"
+    else:
+        yield "    " * indent + bullet + tree.name
+
+    # trickle down
+    if isinstance(tree, Composite):
+        for child in tree.children:
             for line in _generate_ascii_tree(child, indent + 1, snapshot_information):
                 yield line
+
+    if isinstance(tree, Decorator):
+        for line in _generate_ascii_tree(tree.decorated, indent + 1, snapshot_information):
+            yield line
 
 
 def ascii_tree(tree, indent=0, snapshot_information=None):
