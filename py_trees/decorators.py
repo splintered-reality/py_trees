@@ -70,6 +70,14 @@ class Decorator(Behaviour):
         self.decorated.stop(new_status)
         super(Decorator, self).stop(new_status)
 
+    def iterate(self, direct_descendants=False):
+        if not direct_descendants:
+            for node in self.decorated.iterate():
+                yield node
+        else:
+            yield self.decorated
+        yield self
+
 
 class Timeout(Decorator):
     def __init__(self, decorated, duration):
