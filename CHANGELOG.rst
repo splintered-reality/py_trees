@@ -6,11 +6,11 @@ Release Notes
 
 **Breaking API**
 
-* [exceptions] refactored names of existing exceptions for better clarity 
+* [exceptions] drop unused exception types, prefer built-in types as much as possible
 
 **New Features**
 
-* ...
+* [composites] raise TypeError when setup methods don't return a bool (common mistake)
 
 0.8.x (2018-10-18)
 ------------------
