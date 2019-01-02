@@ -1,6 +1,17 @@
 Release Notes
 =============
 
+1.0.x (2019-01-xx)
+------------------
+
+**Breaking API**
+
+* [exceptions] refactored names of existing exceptions for better clarity 
+
+**New Features**
+
+* ...
+
 0.8.x (2018-10-18)
 ------------------
 
