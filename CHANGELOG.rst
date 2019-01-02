@@ -1,6 +1,17 @@
 Release Notes
 =============
 
+1.0.x (2019-01-xx)
+------------------
+
+**Breaking API**
+
+* [exceptions] drop unused exception types, prefer built-in types as much as possible
+
+**New Features**
+
+* [composites] raise TypeError when setup methods don't return a bool (common mistake)
+
 0.8.x (2018-10-18)
 ------------------
 

@@ -82,9 +82,11 @@ class Composite(Behaviour):
         result = True
         for child in self.children:
             new_result = child.setup(timeout)
-            if new_result is None:
-                # replace with py_trees exception!
-                self.logger.error("%s.setup()['%s'.setup() returned None (must be True||False)]" % (self.__class__.__name__, child.name))
+            if type(new_result) != bool:
+                error_message = "invalid return type from child's setup method (should be bool) [child:'{}'][type:'{}']".format(child.name, type(new_result))
+                logger_message = "{}.setup()[{}]".format(self.__class__.__name__, error_message)
+                self.logger.error(logger_message)
+                raise TypeError(error_message)
             result = result and new_result
             if not result:
                 break
