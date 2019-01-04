@@ -16,3 +16,4 @@ py_trees*.tar.gz
 .eggs
 tests/.README.md.html
 nosetests.html
+eclipse

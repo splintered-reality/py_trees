@@ -75,6 +75,9 @@ class Composite(Behaviour):
         Args:
              timeout (:obj:`float`): time to wait (0.0 is blocking forever)
 
+        Raises:
+            TypeError: if children's setup methods fail to return a boolean
+
         Return:
             :obj:`bool`: suceess or failure of the operation
         """
@@ -83,10 +86,8 @@ class Composite(Behaviour):
         for child in self.children:
             new_result = child.setup(timeout)
             if type(new_result) != bool:
-                error_message = "invalid return type from child's setup method (should be bool) [child:'{}'][type:'{}']".format(child.name, type(new_result))
-                logger_message = "{}.setup()[{}]".format(self.__class__.__name__, error_message)
-                self.logger.error(logger_message)
-                raise TypeError(error_message)
+                message = "invalid return type from child's setup method (should be bool) [child:'{}'][type:'{}']".format(child.name, type(new_result))
+                raise TypeError(message)
             result = result and new_result
             if not result:
                 break
