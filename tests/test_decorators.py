@@ -191,28 +191,68 @@ def test_invalid_setup():
 #     assert(failure.status == py_trees.common.Status.FAILURE)
 #     print("selector.status == py_trees.common.Status.SUCCESS")
 #     assert(selector.status == py_trees.common.Status.SUCCESS)
-# 
-# 
-# def test_timeout():
-#     console.banner("Timeout")
-#     root = py_trees.meta.timeout(py_trees.behaviours.Running, 0.2)(name="Success w/ Timeout")
-#     py_trees.display.print_ascii_tree(root)
-#     visitor = py_trees.visitors.DebugVisitor()
-#     py_trees.tests.tick_tree(root, visitor, 1, 1)
-# 
-#     print("\n--------- Assertions ---------\n")
-#     print("root.status == py_trees.common.Status.RUNNING")
-#     print("root.status %s" % root.status)
-#     assert(root.status == py_trees.common.Status.RUNNING)
-# 
-#     time.sleep(0.3)
-#     py_trees.tests.tick_tree(root, visitor, 1, 1)
-# 
-#     print("\n--------- Assertions ---------\n")
-#     print("root.status == py_trees.common.Status.FAILURE")
-#     assert(root.status == py_trees.common.Status.FAILURE)
-# 
-# 
+
+
+def test_timeout():
+    console.banner("Timeout")
+    running = py_trees.behaviours.Running(name="Running")
+    timeout = py_trees.decorators.Timeout(child=running, duration=0.2)
+    py_trees.display.print_ascii_tree(timeout)
+    visitor = py_trees.visitors.DebugVisitor()
+    
+    # Test that it times out and re-initialises properly
+    for i in range(0,2):
+        py_trees.tests.tick_tree(timeout, visitor, 2*i+1, 2*i+1)
+
+        print("\n--------- Assertions ---------\n")
+        print("timeout.status == py_trees.common.Status.RUNNING")
+        assert(timeout.status == py_trees.common.Status.RUNNING)
+        print("running.status == py_trees.common.Status.RUNNING")
+        assert(running.status == py_trees.common.Status.RUNNING)
+
+        time.sleep(0.3)
+        py_trees.tests.tick_tree(timeout, visitor, 2*i+2, 2*i+2)
+
+        print("\n--------- Assertions ---------\n")
+        print("timeout.status == py_trees.common.Status.FAILURE")
+        assert(timeout.status == py_trees.common.Status.FAILURE)
+        print("running.status == py_trees.common.Status.INVALID")
+        assert(running.status == py_trees.common.Status.INVALID)
+
+    # test that it passes on success
+    count = py_trees.behaviours.Count(name="Count", fail_until=0, running_until=1, success_until=10, reset=False)
+    timeout = py_trees.decorators.Timeout(child=count, duration=0.2)
+    py_trees.display.print_ascii_tree(timeout)
+
+    py_trees.tests.tick_tree(timeout, visitor, 1, 1)
+
+    print("\n--------- Assertions ---------\n")
+    print("timeout.status == py_trees.common.Status.RUNNING")
+    assert(timeout.status == py_trees.common.Status.RUNNING)
+    print("count.status == py_trees.common.Status.RUNNING")
+    assert(count.status == py_trees.common.Status.RUNNING)
+
+    py_trees.tests.tick_tree(timeout, visitor, 2, 2)
+
+    print("\n--------- Assertions ---------\n")
+    print("timeout.status == py_trees.common.Status.SUCCESS")
+    assert(timeout.status == py_trees.common.Status.SUCCESS)
+    print("count.status == py_trees.common.Status.SUCCESS")
+    assert(count.status == py_trees.common.Status.SUCCESS)
+
+    # test that it passes on failure
+    failure = py_trees.behaviours.Failure()
+    timeout = py_trees.decorators.Timeout(child=failure, duration=0.2)
+    py_trees.display.print_ascii_tree(timeout)
+
+    py_trees.tests.tick_tree(timeout, visitor, 1, 1)
+
+    print("\n--------- Assertions ---------\n")
+    print("timeout.status == py_trees.common.Status.FAILURE")
+    assert(timeout.status == py_trees.common.Status.FAILURE)
+    print("failure.status == py_trees.common.Status.FAILURE")
+    assert(failure.status == py_trees.common.Status.FAILURE)
+
 # def test_condition():
 #     console.banner("Condition")
 # 

@@ -8,32 +8,14 @@
 ##############################################################################
 
 """
-Decorators are single-child behaviours that provide common modifications to
-their underlying child behaviour (e.g. inverting the result). i.e. they
-provide a means for behaviours to wear different 'hats' depending on their
-context without a behaviour tree.
+Decorators are behaviours that manage a single child and provide common
+modifications to their underlying child behaviour (e.g. inverting the result).
+i.e. they provide a means for behaviours to wear different 'hats' depending
+on their context without a behaviour tree.
 
 .. image:: images/many-hats.png
    :width: 40px
    :align: center
-
-The documentation for each decorator listed below includes example code
-demonstrating its use.
-
-**Decorators**
-
-TODO
-
-* :func:`py_trees.decorators.condition`
-* :func:`py_trees.decorators.inverter`
-* :func:`py_trees.decorators.failure_is_running`
-* :func:`py_trees.decorators.failure_is_success`
-* :func:`py_trees.decorators.oneshot`
-* :func:`py_trees.decorators.running_is_failure`
-* :func:`py_trees.decorators.running_is_success`
-* :func:`py_trees.decorators.success_is_failure`
-* :func:`py_trees.decorators.success_is_running`
-* :func:`py_trees.decorators.timeout`
 """
 
 ##############################################################################
@@ -150,32 +132,22 @@ class Decorator(behaviour.Behaviour):
 class Timeout(Decorator):
     """
     A decorator that applies a timeout pattern to an existing behaviour.
-    If the timeout is reached, the encapsulated behaviour's :meth:`~py_trees.behaviour.Behaviour.stop`
-    method is called with status :data:`~py_trees.common.Status.FAILURE` otherwise it will
+    If the timeout is reached, the encapsulated behaviour's
+    :meth:`~py_trees.behaviour.Behaviour.stop` method is called with
+    status :data:`~py_trees.common.Status.FAILURE` otherwise it will
     simply directly tick and return with the same status
     as that of it's encapsulated behaviour.
 
     Args:
         child (:class:`~py_trees.behaviour.Behaviour`): behaviour to time
+        name (:obj:`str`): the decorator name (can be None)
         duration (:obj:`float`): timeout length in seconds
 
     Returns:
         :class:`~py_trees.behaviour.Behaviour`: the modified behaviour class with timeout
-
-    Examples:
-
-        .. code-block:: python
-
-           @py_trees.meta.timeout(10)
-           class WorkBehaviour(py_trees.behaviour.Behaviour)
-
-        or
-
-        .. code-block:: python
-
-            work_with_timeout = py_trees.meta.timeout(WorkBehaviour, 10.0)(name="Work")
     """
-    def __init__(self, child,
+    def __init__(self,
+                 child,
                  name=common.Name.AUTO_GENERATED,
                  duration=5.0):
         super(Timeout, self).__init__(name=name, child=child)
@@ -183,23 +155,17 @@ class Timeout(Decorator):
         self.finish_time = None
 
     def initialise(self):
-        if self.finish_time is None:
-            self.finish_time = time.time() + self.duration
+        self.finish_time = time.time() + self.duration
+        self.feedback_message = ""
  
     def update(self):
-        # make sure this class initialises time related functions
-        # when the underlying original will initialise itself
-        if self.decorated.status != common.Status.RUNNING:
-            self.initialise()
         current_time = time.time()
         if current_time > self.finish_time:
             self.feedback_message = "timed out"
-            # invalidate the decorated (i.e. cancel it)
+            # invalidate the decorated (i.e. cancel it), could also put this logic in a terminate() method
             self.decorated.stop(common.Status.INVALID)
             return common.Status.FAILURE
-        self.feedback_message = self.decorated.feedback_message + " [time left: %s]" % (self.finish_time - current_time)
+        # Don't show the time remaining, that will change the message every tick and make the tree hard to
+        # debug since it will record a continuous stream of events
+        self.feedback_message = self.decorated.feedback_message + " [timeout: {}]".format(self.finish_time)
         return self.decorated.status
- 
-    def terminate(self, new_status):
-        if new_status != common.Status.RUNNING:
-            self.finish_time = None
