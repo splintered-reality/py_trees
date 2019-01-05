@@ -11,6 +11,7 @@ Release Notes
 **New Features**
 
 * [composites] raise TypeError when setup methods don't return a bool (common mistake)
+* [blackboard] method for clearing the blackboard
 
 0.8.x (2018-10-18)
 ------------------
