@@ -45,7 +45,7 @@ class Decorator(behaviour.Behaviour):
         
         Args:
             name (:obj:`str`): the decorator name (can be None)
-            children (:class:`~py_trees.behaviour.Behaviour`): the child to be decorated
+            child (:class:`~py_trees.behaviour.Behaviour`): the child to be decorated
 
         Raises:
             TypeError: if the child is not an instance of :class:`~py_trees.behaviour.Behaviour`
@@ -121,9 +121,15 @@ class Decorator(behaviour.Behaviour):
         Args:
             new_status (:class:`~py_trees.common.Status`): the behaviour is transitioning to this new status
         """
-        self.logger.debug("%s.terminate()[%s]" % (self.__class__.__name__, new_status))
+        self.logger.debug("%s.stop(%s)" % (self.__class__.__name__, new_status))
+        self.terminate(new_status)
+        # priority interrupt handling
+        if new_status == common.Status.INVALID:
+            self.decorated.stop(new_status)
+        # if the decorator returns SUCCESS/FAILURE and should stop the child
         if self.decorated.status == common.Status.RUNNING:
             self.decorated.stop(new_status)
+        self.status = new_status
  
 ##############################################################################
 # Decorators
@@ -137,31 +143,39 @@ class Timeout(Decorator):
     status :data:`~py_trees.common.Status.FAILURE` otherwise it will
     simply directly tick and return with the same status
     as that of it's encapsulated behaviour.
-
-    Args:
-        child (:class:`~py_trees.behaviour.Behaviour`): behaviour to time
-        name (:obj:`str`): the decorator name (can be None)
-        duration (:obj:`float`): timeout length in seconds
-
-    Returns:
-        :class:`~py_trees.behaviour.Behaviour`: the modified behaviour class with timeout
     """
     def __init__(self,
                  child,
                  name=common.Name.AUTO_GENERATED,
                  duration=5.0):
+        """
+        Init with the decorated child and a timeout duration.
+                
+        Args:
+            child (:class:`~py_trees.behaviour.Behaviour`): behaviour to time
+            name (:obj:`str`): the decorator name
+            duration (:obj:`float`): timeout length in seconds
+        """
         super(Timeout, self).__init__(name=name, child=child)
         self.duration = duration
         self.finish_time = None
 
     def initialise(self):
+        """
+        Reset the feedback message and finish time on behaviour entry.
+        """
         self.finish_time = time.time() + self.duration
         self.feedback_message = ""
  
     def update(self):
+        """
+        Terminate the child and return :data:`~py_trees.common.Status.FAILURE`
+        if the timeout is exceeded.
+        """
         current_time = time.time()
         if current_time > self.finish_time:
             self.feedback_message = "timed out"
+            self.logger.debug("{}.update() {}".format(self.__class__.__name__, self.feedback_message))
             # invalidate the decorated (i.e. cancel it), could also put this logic in a terminate() method
             self.decorated.stop(common.Status.INVALID)
             return common.Status.FAILURE
@@ -169,3 +183,62 @@ class Timeout(Decorator):
         # debug since it will record a continuous stream of events
         self.feedback_message = self.decorated.feedback_message + " [timeout: {}]".format(self.finish_time)
         return self.decorated.status
+
+
+class OneShot(Decorator):
+    """
+    A decorator that implements the oneshot pattern.
+
+    This decorator ensures that the underlying child is ticked through
+    to *successful* completion just once and while doing so, will return
+    with the same status as it's child. Thereafter it will return
+    :data:`~py_trees.common.Status.SUCCESS`.
+    """
+    def __init__(self, child,
+                 name=common.Name.AUTO_GENERATED):
+        """
+        Init with the decorated child.
+                
+        Args:
+            child (:class:`~py_trees.behaviour.Behaviour`): behaviour to time
+            name (:obj:`str`): the decorator name
+        """
+        super(OneShot, self).__init__(name=name, child=child)
+        self.final_status = None
+
+    def update(self):
+        """
+        Bounce if the child has already successfully completed.
+        """
+        if self.final_status:
+            self.logger.debug("{}.update()[bouncing]".format(self.__class__.__name__))
+            return self.final_status
+        return self.decorated.status
+    
+    def tick(self):
+        """
+        Select between decorator (single child) and behaviour (no children) style
+        ticks depending on whether or not the underlying child has been ticked
+        successfully to completion previously.
+        """
+        if self.final_status:
+            # ignore the child
+            for node in behaviour.Behaviour.tick(self):
+                yield node
+        else:
+            # tick the child
+            for node in Decorator.tick(self):
+                yield node
+ 
+    def terminate(self, new_status):
+        """
+        If returning :data:`~py_trees.common.Status.SUCCESS` for the first time,
+        flag it so future ticks will block entry to the child.
+        """
+        if not self.final_status and new_status == common.Status.SUCCESS:
+            self.logger.debug("{}.terminate({})[oneshot completed]".format(self.__class__.__name__, new_status))
+            self.feedback_message = "oneshot completed"
+            self.final_status = common.Status.SUCCESS
+        else:
+            self.logger.debug("{}.terminate({})".format(self.__class__.__name__, new_status))
+            
