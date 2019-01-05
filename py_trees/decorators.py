@@ -241,4 +241,31 @@ class OneShot(Decorator):
             self.final_status = common.Status.SUCCESS
         else:
             self.logger.debug("{}.terminate({})".format(self.__class__.__name__, new_status))
-            
+
+class Inverter(Decorator):
+    """
+    A decorator that inverts the result of a class's update function.
+    """
+    def __init__(self, child, name=common.Name.AUTO_GENERATED):
+        """
+        Init with the decorated child.
+                
+        Args:
+            child (:class:`~py_trees.behaviour.Behaviour`): behaviour to time
+            name (:obj:`str`): the decorator name
+        """
+        super(Inverter, self).__init__(name=name, child=child)
+
+    def update(self):
+        """
+        Flip :data:`~py_trees.common.Status.FAILURE` and 
+        :data:`~py_trees.common.Status.SUCCESS`
+        """
+        if self.decorated.status == common.Status.SUCCESS:
+            return common.Status.FAILURE
+            self.feedback_message = "success -> failure"
+        elif self.decorated.status == common.Status.FAILURE:
+            self.feedback_message = "failure -> success"
+            return common.Status.SUCCESS
+        self.feedback_message = self.decorated.feedback_message
+        return self.decorated.status
