@@ -12,6 +12,7 @@ Release Notes
 
 * [composites] raise TypeError when setup methods don't return a bool (common mistake)
 * [blackboard] method for clearing the blackboard
+* [meta] behaviours from functions can now automagically generate names
 
 0.8.x (2018-10-18)
 ------------------
