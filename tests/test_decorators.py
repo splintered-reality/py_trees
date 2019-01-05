@@ -71,44 +71,46 @@ def test_invalid_setup():
     print("TypeError has message with substring 'NoneType'")
     assert("NoneType" in str(context.exception))
 
-# def test_failure_is_success_tree():
-#     console.banner("Failure is Success Tree")
-#     root = py_trees.composites.Selector(name="Root")
-#     failure = py_trees.behaviours.Failure(name="Failure")
-#     goon = MustGoOnRegardless(name="DontBeAfraidToBeTheGoon")
-#     root.add_child(failure)
-#     root.add_child(goon)
-#     py_trees.display.print_ascii_tree(root)
-#     visitor = py_trees.visitors.DebugVisitor()
-#     py_trees.tests.tick_tree(root, visitor, 1, 1)
-# 
-#     print("\n--------- Assertions ---------\n")
-#     print("root.status == py_trees.common.Status.SUCCESS")
-#     assert(root.status == py_trees.common.Status.SUCCESS)
-#     print("failure.status == py_trees.common.Status.FAILURE")
-#     assert(failure.status == py_trees.common.Status.FAILURE)
-#     print("goon.status == py_trees.common.Status.SUCCESS")
-#     assert(goon.status == py_trees.common.Status.SUCCESS)
-# 
-# 
-# def test_success_is_failure_tree():
-#     console.banner("Success is Failure Tree")
-#     root = py_trees.composites.Selector("Root")
-#     failure = py_trees.behaviours.Failure(name="Failure")
-#     going_down = py_trees.meta.success_is_failure(py_trees.behaviours.Success)(name="Going Down")
-#     root.add_child(failure)
-#     root.add_child(going_down)
-#     py_trees.display.print_ascii_tree(root)
-#     visitor = py_trees.visitors.DebugVisitor()
-#     py_trees.tests.tick_tree(root, visitor, 1, 1)
-# 
-#     print("\n--------- Assertions ---------\n")
-#     print("failure.status == py_trees.common.Status.FAILURE")
-#     assert(failure.status == py_trees.common.Status.FAILURE)
-#     print("going_down.status == py_trees.common.Status.FAILURE")
-#     assert(going_down.status == py_trees.common.Status.FAILURE)
-#     print("root.status == py_trees.common.Status.FAILURE")
-#     assert(root.status == py_trees.common.Status.FAILURE)
+def test_failure_is_success_tree():
+    console.banner("Failure is Success Tree")
+    root = py_trees.composites.Selector(name="Root")
+    failure = py_trees.behaviours.Failure(name="Failure")
+    goon = py_trees.decorators.FailureIsSuccess(
+        child=py_trees.behaviours.Failure()
+    )
+    root.add_child(failure)
+    root.add_child(goon)
+    py_trees.display.print_ascii_tree(root)
+    visitor = py_trees.visitors.DebugVisitor()
+    py_trees.tests.tick_tree(root, 1, 1, visitor, print_snapshot=True)
+ 
+    print("\n--------- Assertions ---------\n")
+    print("root.status == py_trees.common.Status.SUCCESS")
+    assert(root.status == py_trees.common.Status.SUCCESS)
+    print("failure.status == py_trees.common.Status.FAILURE")
+    assert(failure.status == py_trees.common.Status.FAILURE)
+    print("goon.status == py_trees.common.Status.SUCCESS")
+    assert(goon.status == py_trees.common.Status.SUCCESS)
+ 
+ 
+def test_success_is_failure_tree():
+    console.banner("Success is Failure Tree")
+    root = py_trees.composites.Selector("Root")
+    failure = py_trees.behaviours.Failure(name="Failure")
+    going_down = py_trees.meta.success_is_failure(py_trees.behaviours.Success)(name="Going Down")
+    root.add_child(failure)
+    root.add_child(going_down)
+    py_trees.display.print_ascii_tree(root)
+    visitor = py_trees.visitors.DebugVisitor()
+    py_trees.tests.tick_tree(root, 1, 1, visitor, print_snapshot=True)
+ 
+    print("\n--------- Assertions ---------\n")
+    print("failure.status == py_trees.common.Status.FAILURE")
+    assert(failure.status == py_trees.common.Status.FAILURE)
+    print("going_down.status == py_trees.common.Status.FAILURE")
+    assert(going_down.status == py_trees.common.Status.FAILURE)
+    print("root.status == py_trees.common.Status.FAILURE")
+    assert(root.status == py_trees.common.Status.FAILURE)
 
 
 def test_inverter():
@@ -143,29 +145,29 @@ def test_inverter():
         print("failure2.status == py_trees.common.Status.FAILURE")
         assert(failure2.status == py_trees.common.Status.FAILURE)
  
+
+def test_running_is_failure_tree():
+    console.banner("Running is Failure Tree")
+    root = py_trees.composites.Selector(name="Root")
+    running = py_trees.meta.running_is_failure(py_trees.behaviours.Running)(name="Running")
+    failure = py_trees.meta.running_is_failure(py_trees.behaviours.Failure)(name="Failure")
+    success = py_trees.meta.running_is_failure(py_trees.behaviours.Success)(name="Success")
+    root.add_child(running)
+    root.add_child(failure)
+    root.add_child(success)
+    visitor = py_trees.visitors.DebugVisitor()
+    py_trees.tests.tick_tree(root, 1, 1, visitor, print_snapshot=True)
  
-# def test_running_is_failure_tree():
-#     console.banner("Running is Failure Tree")
-#     root = py_trees.composites.Selector(name="Root")
-#     running = py_trees.meta.running_is_failure(py_trees.behaviours.Running)(name="Running")
-#     failure = py_trees.meta.running_is_failure(py_trees.behaviours.Failure)(name="Failure")
-#     success = py_trees.meta.running_is_failure(py_trees.behaviours.Success)(name="Success")
-#     root.add_child(running)
-#     root.add_child(failure)
-#     root.add_child(success)
-#     py_trees.display.print_ascii_tree(root)
-#     visitor = py_trees.visitors.DebugVisitor()
-#     py_trees.tests.tick_tree(root, visitor, 1, 1)
-# 
-#     print("\n--------- Assertions ---------\n")
-#     print("running.status == py_trees.common.Status.FAILURE")
-#     assert(running.status == py_trees.common.Status.FAILURE)
-#     print("failure.status == py_trees.common.Status.FAILURE")
-#     assert(failure.status == py_trees.common.Status.FAILURE)
-#     print("success.status == py_trees.common.Status.SUCCESS")
-#     assert(success.status == py_trees.common.Status.SUCCESS)
-#     print("root.status == py_trees.common.Status.SUCCESS")
-#     assert(root.status == py_trees.common.Status.SUCCESS)
+    print("\n--------- Assertions ---------\n")
+    print("running.status == py_trees.common.Status.FAILURE")
+    assert(running.status == py_trees.common.Status.FAILURE)
+    print("failure.status == py_trees.common.Status.FAILURE")
+    assert(failure.status == py_trees.common.Status.FAILURE)
+    print("success.status == py_trees.common.Status.SUCCESS")
+    assert(success.status == py_trees.common.Status.SUCCESS)
+    print("root.status == py_trees.common.Status.SUCCESS")
+    assert(root.status == py_trees.common.Status.SUCCESS)
+
 
 def test_timeout():
     console.banner("Timeout")

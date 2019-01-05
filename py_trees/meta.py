@@ -77,7 +77,6 @@ def create_behaviour_from_function(func):
     class_name = func.__name__.capitalize()
 
     def init(self, name=class_name):
-        print("Name: {}".format(name))
         behaviour.Behaviour.__init__(self, name=name)
 
     def terminate(self, new_status):

@@ -22,11 +22,9 @@ on their context without a behaviour tree.
 # Imports
 ##############################################################################
 
-import functools
 import time
 
 from . import behaviour
-from . import behaviours
 from . import common
 
 ##############################################################################
@@ -38,7 +36,7 @@ class Decorator(behaviour.Behaviour):
     A decorator is responsible for handling the lifecycle of a single
     child beneath
     """
-    def __init__(self, name, child):
+    def __init__(self, child, name=common.Name.AUTO_GENERATED):
         """
         Common initialisation steps for a decorator - type checks and
         name construction (if None is given).
@@ -260,6 +258,9 @@ class Inverter(Decorator):
         """
         Flip :data:`~py_trees.common.Status.FAILURE` and 
         :data:`~py_trees.common.Status.SUCCESS`
+
+        Returns:
+            :class:`~py_trees.common.Status`: the behaviour's new status :class:`~py_trees.common.Status`
         """
         if self.decorated.status == common.Status.SUCCESS:
             return common.Status.FAILURE
@@ -269,3 +270,125 @@ class Inverter(Decorator):
             return common.Status.SUCCESS
         self.feedback_message = self.decorated.feedback_message
         return self.decorated.status
+
+
+class RunningIsFailure(Decorator):
+    """
+    Got to be snappy! We want results...yesterday!
+    """
+    def update(self):
+        """
+        Return the decorated child's status unless it is
+        :data:`~py_trees.common.Status.RUNNING` in which case, return
+        :data:`~py_trees.common.Status.FAILURE`.
+
+        Returns:
+            :class:`~py_trees.common.Status`: the behaviour's new status :class:`~py_trees.common.Status`
+        """
+        if self.decorated.status == common.Status.RUNNING:
+            self.feedback_message = "running is failure" + (" [%s]" % self.decorated.feedback_message if self.decorated.feedback_message else "")
+            return common.Status.FAILURE
+        else:
+            self.feedback_message = self.decorated.feedback_message
+            return self.decorated.status
+
+
+class RunningIsSuccess(Decorator):
+    """
+    Don't hang around...
+    """
+    def update(self):
+        """
+        Return the decorated child's status unless it is
+        :data:`~py_trees.common.Status.RUNNING` in which case, return
+        :data:`~py_trees.common.Status.SUCCESS`.
+
+        Returns:
+            :class:`~py_trees.common.Status`: the behaviour's new status :class:`~py_trees.common.Status`
+        """
+        if self.decorated.status == common.Status.RUNNING:
+            self.feedback_message = "running is success" + (" [%s]" % self.decorated.feedback_message if self.decorated.feedback_message else "")
+            return common.Status.SUCCESS
+        self.feedback_message = self.decorated.feedback_message
+        return self.decorated.status
+
+
+class FailureIsSuccess(Decorator):
+    """
+    Be positive, always succeed.
+    """
+    def update(self):
+        """
+        Return the decorated child's status unless it is
+        :data:`~py_trees.common.Status.FAILURE` in which case, return
+        :data:`~py_trees.common.Status.SUCCESS`.
+
+        Returns:
+            :class:`~py_trees.common.Status`: the behaviour's new status :class:`~py_trees.common.Status`
+        """
+        if self.decorated.status == common.Status.FAILURE:
+            self.feedback_message = "failure is success" + (" [%s]" % self.decorated.feedback_message if self.decorated.feedback_message else "")
+            return common.Status.SUCCESS
+        self.feedback_message = self.decorated.feedback_message
+        return self.decorated.status
+
+
+class FailureIsRunning(Decorator):
+    """
+    Dont stop running.
+    """
+    def update(self):
+        """
+        Return the decorated child's status unless it is
+        :data:`~py_trees.common.Status.FAILURE` in which case, return
+        :data:`~py_trees.common.Status.RUNNING`.
+
+        Returns:
+            :class:`~py_trees.common.Status`: the behaviour's new status :class:`~py_trees.common.Status`
+        """
+        if self.decorated.status == common.Status.FAILURE:
+            self.feedback_message = "failure is running" + (" [%s]" % self.decorated.feedback_message if self.decorated.feedback_message else "")
+            return common.Status.RUNNING
+        self.feedback_message = self.decorated.feedback_message
+        return self.decorated.status
+
+
+class SuccessIsFailure(Decorator):
+    """
+    Be depressed, always fail.
+    """
+    def update(self):
+        """
+        Return the decorated child's status unless it is
+        :data:`~py_trees.common.Status.SUCCESS` in which case, return
+        :data:`~py_trees.common.Status.FAILURE`.
+
+        Returns:
+            :class:`~py_trees.common.Status`: the behaviour's new status :class:`~py_trees.common.Status`
+        """
+        if self.decorated.status == common.Status.SUCCESS:
+            self.feedback_message = "success is failure" + (" [%s]" % self.decorated.feedback_message if self.decorated.feedback_message else "")
+            return common.Status.FAILURE
+        self.feedback_message = self.decorated.feedback_message
+        return self.decorated.status
+
+
+class SuccessIsRunning(Decorator):
+    """
+    It never ends...
+    """
+    def update(self):
+        """
+        Return the decorated child's status unless it is
+        :data:`~py_trees.common.Status.SUCCESS` in which case, return
+        :data:`~py_trees.common.Status.RUNNING`.
+
+        Returns:
+            :class:`~py_trees.common.Status`: the behaviour's new status :class:`~py_trees.common.Status`
+        """
+        if self.decorated.status == common.Status.SUCCESS:
+            self.feedback_message = "success is running [%s]" % self.decorated.feedback_message
+            return common.Status.RUNNING
+        self.feedback_message = self.decorated.feedback_message
+        return self.decorated.status
+
