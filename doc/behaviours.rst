@@ -145,10 +145,3 @@ concepts discussed above, but not present in the very simple lifecycle
 
 .. image:: images/action.gif
 
-Meta Behaviours
----------------
-
-.. automodule:: py_trees.meta
-    :noindex:
-
-

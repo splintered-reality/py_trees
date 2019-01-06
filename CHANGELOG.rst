@@ -7,6 +7,9 @@ Release Notes
 **Breaking API**
 
 * [exceptions] drop unused exception types, prefer built-in types as much as possible
+* [decorators] new-style decorators can be found in py_trees.decorators
+* [decorators] new-style decorators now stop their running child on completion (SUCCESS||FAILURE)
+* [decorators] old-style decorators in py_trees.meta have been deprecated 
 
 **New Features**
 

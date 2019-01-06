@@ -16,6 +16,34 @@ on their context without a behaviour tree.
 .. image:: images/many-hats.png
    :width: 40px
    :align: center
+
+An example:
+
+.. graphviz:: dot/decorators.dot
+
+.. literalinclude:: examples/decorators.py
+   :language: python
+   :linenos:
+
+
+**Decorators (Hats)**
+
+Decorators with very specific functionality:
+
+* :func:`py_trees.decorators.Condition`
+* :func:`py_trees.decorators.Inverter`
+* :func:`py_trees.decorators.OneShot`
+* :func:`py_trees.decorators.TimeOut`
+
+And the X is Y family:
+
+* :func:`py_trees.decorators.Failure_is_running`
+* :func:`py_trees.decorators.Failure_is_success`
+* :func:`py_trees.decorators.RunningIsFailure`
+* :func:`py_trees.decorators.RunningIsSuccess`
+* :func:`py_trees.decorators.SuccessIsFailure`
+* :func:`py_trees.decorators.SuccessIsRunning`
+
 """
 
 ##############################################################################
@@ -189,7 +217,7 @@ class OneShot(Decorator):
     with the same status as it's child. Thereafter it will return
     :data:`~py_trees.common.Status.SUCCESS`.
     
-    .. seealso:: :meth:`~py_trees.idioms.oneshot`
+    .. seealso:: :meth:`py_trees.idioms.oneshot`
     """
     def __init__(self, child,
                  name=common.Name.AUTO_GENERATED):
