@@ -97,7 +97,10 @@ def test_success_is_failure_tree():
     console.banner("Success is Failure Tree")
     root = py_trees.composites.Selector("Root")
     failure = py_trees.behaviours.Failure(name="Failure")
-    going_down = py_trees.meta.success_is_failure(py_trees.behaviours.Success)(name="Going Down")
+    going_down = py_trees.decorators.SuccessIsFailure(
+        name="Going Down",
+        child=py_trees.behaviours.Success()
+    )
     root.add_child(failure)
     root.add_child(going_down)
     py_trees.display.print_ascii_tree(root)
@@ -149,9 +152,15 @@ def test_inverter():
 def test_running_is_failure_tree():
     console.banner("Running is Failure Tree")
     root = py_trees.composites.Selector(name="Root")
-    running = py_trees.meta.running_is_failure(py_trees.behaviours.Running)(name="Running")
-    failure = py_trees.meta.running_is_failure(py_trees.behaviours.Failure)(name="Failure")
-    success = py_trees.meta.running_is_failure(py_trees.behaviours.Success)(name="Success")
+    running = py_trees.decorators.RunningIsFailure(
+        child=py_trees.behaviours.Running()
+    )
+    failure = py_trees.decorators.RunningIsFailure(
+        child=py_trees.behaviours.Failure()
+    )
+    success = py_trees.decorators.RunningIsFailure(
+        child=py_trees.behaviours.Success()
+    )
     root.add_child(running)
     root.add_child(failure)
     root.add_child(success)

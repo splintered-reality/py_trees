@@ -22,8 +22,8 @@ import pydot
 
 from . import behaviour
 from . import common
-from . import console
 from . import composites
+from . import console
 from . import decorators
 from . import utilities
 
