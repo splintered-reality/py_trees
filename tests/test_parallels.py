@@ -119,7 +119,7 @@ def test_parallel_success_on_one():
     root.add_child(running2)
     py_trees.display.print_ascii_tree(root)
     visitor = py_trees.visitors.DebugVisitor()
-    py_trees.tests.tick_tree(root, 1, 1, visitor)
+    py_trees.tests.tick_tree(root, 1, 1, visitor, print_snapshot=True)
 
     print("\n--------- Assertions ---------\n")
     print("All children get switched to success if one goes to success.")
