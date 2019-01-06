@@ -36,10 +36,9 @@ def test_high_priority_interrupt():
         running_until=2,
         success_until=10
     )
-    high_priority_interrupt = py_trees.meta.running_is_failure(
-        py_trees.behaviours.Periodic)(
+    high_priority_interrupt = py_trees.decorators.RunningIsFailure(
         name="High Priority",
-        n=3
+        child=py_trees.behaviours.Periodic(name="Periodic", n=3)
     )
     piwylo = py_trees.idioms.pick_up_where_you_left_off(
         name="Pick Up\nWhere You\nLeft Off",

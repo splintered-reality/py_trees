@@ -310,7 +310,10 @@ def test_success_failure_tree():
     console.banner("Success Failure Tree")
     root = py_trees.composites.Selector(name="Root")
     failure = py_trees.behaviours.Failure(name="Failure")
-    failure2 = py_trees.meta.inverter(py_trees.behaviours.Success)(name="Failure2")
+    failure2 = py_trees.decorators.Inverter(
+        name="Failure2",
+        child=py_trees.behaviours.Success()
+    )
     success = py_trees.behaviours.Success(name="Success")
     root.add_child(failure)
     root.add_child(failure2)
