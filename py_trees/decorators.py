@@ -47,9 +47,6 @@ class Decorator(behaviour.Behaviour):
 
         Raises:
             TypeError: if the child is not an instance of :class:`~py_trees.behaviour.Behaviour`
-
-        Return:
-            :obj:`bool`: suceess or failure of the operation
         """
         # Checks
         if not isinstance(child, behaviour.Behaviour):
@@ -191,6 +188,8 @@ class OneShot(Decorator):
     to *successful* completion just once and while doing so, will return
     with the same status as it's child. Thereafter it will return
     :data:`~py_trees.common.Status.SUCCESS`.
+    
+    .. seealso:: :meth:`~py_trees.idioms.oneshot`
     """
     def __init__(self, child,
                  name=common.Name.AUTO_GENERATED):
@@ -392,3 +391,39 @@ class SuccessIsRunning(Decorator):
         self.feedback_message = self.decorated.feedback_message
         return self.decorated.status
 
+class Condition(Decorator):
+    """
+    Encapsulates a behaviour and wait for it's status to flip to the
+    desired state. This behaviour will tick with
+    :data:`~py_trees.common.Status.RUNNING` while waiting and
+    :data:`~py_trees.common.Status.SUCCESS` when the flip occurs.
+    """
+    def __init__(self, 
+                 child,
+                 name=common.Name.AUTO_GENERATED, 
+                 status=common.Status.SUCCESS):
+        """
+        Initialise with child and optional name, status variables.
+
+        Args:
+            child (:class:`~py_trees.behaviour.Behaviour`): the child to be decorated
+            name (:obj:`str`): the decorator name (can be None)
+            status (:class:`~py_trees.common.Status`): the desired status to watch for
+        """
+        super(Condition, self).__init__(child, name)
+        self.succeed_status = status
+
+    def update(self):
+        """
+        :data:`~py_trees.common.Status.SUCCESS` if the decorated child has returned
+        the specified status, otherwise :data:`~py_trees.common.Status.RUNNING`.
+        This decorator will never return :data:`~py_trees.common.Status.FAILURE`
+
+        Returns:
+            :class:`~py_trees.common.Status`: the behaviour's new status :class:`~py_trees.common.Status`
+        """
+        self.logger.debug("%s.update()" % self.__class__.__name__)
+        self.feedback_message = "'{0}' has status {1}, waiting for {2}".format(self.decorated.name, self.decorated.status, self.succeed_status)
+        if self.decorated.status == self.succeed_status:
+            return common.Status.SUCCESS
+        return common.Status.RUNNING
