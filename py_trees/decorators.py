@@ -37,8 +37,8 @@ Decorators with very specific functionality:
 
 And the X is Y family:
 
-* :func:`py_trees.decorators.Failure_is_running`
-* :func:`py_trees.decorators.Failure_is_success`
+* :func:`py_trees.decorators.FailureIsRunning`
+* :func:`py_trees.decorators.FailureIsSuccess`
 * :func:`py_trees.decorators.RunningIsFailure`
 * :func:`py_trees.decorators.RunningIsSuccess`
 * :func:`py_trees.decorators.SuccessIsFailure`

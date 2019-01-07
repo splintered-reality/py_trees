@@ -17,3 +17,4 @@ py_trees*.tar.gz
 tests/.README.md.html
 nosetests.html
 eclipse
+*.vscode
