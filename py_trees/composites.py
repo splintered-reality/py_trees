@@ -551,6 +551,7 @@ class Parallel(Composite):
     * Parallels will return :data:`~py_trees.common.Status.FAILURE` if any child returns :py:data:`~py_trees.common.Status.FAILURE`
     * Parallels with policy :data:`~py_trees.common.ParallelPolicy.SUCCESS_ON_ONE` return :py:data:`~py_trees.common.Status.SUCCESS` if **at least one** child returns :py:data:`~py_trees.common.Status.SUCCESS` and others are :py:data:`~py_trees.common.Status.RUNNING`.
     * Parallels with policy :data:`~py_trees.common.ParallelPolicy.SUCCESS_ON_ALL` only returns :py:data:`~py_trees.common.Status.SUCCESS` if **all** children return :py:data:`~py_trees.common.Status.SUCCESS`
+    * Parallels with policy :data:`~py_trees.common.ParallelPolicy.SUCCESS_ON_SELECTED` only returns :py:data:`~py_trees.common.Status.SUCCESS` if a **specified subset** of children return :py:data:`~py_trees.common.Status.SUCCESS`
 
     .. seealso:: The :ref:`py-trees-demo-context-switching-program` program demos a parallel used to assist in a context switching scenario.
 
@@ -558,12 +559,43 @@ class Parallel(Composite):
         name (:obj:`str`): the composite behaviour name
         policy (:class:`~py_trees.common.ParallelPolicy`): policy to use for deciding success or otherwise
         children ([:class:`~py_trees.behaviour.Behaviour`]): list of children to add
-        *args: variable length argument list
-        **kwargs: arbitrary keyword arguments
+        success_on_selected ([:class:`~py_trees.behaviour.Behaviour`]): list of children upon which success depends
     """
-    def __init__(self, name="Parallel", policy=common.ParallelPolicy.SUCCESS_ON_ALL, children=None, *args, **kwargs):
-        super(Parallel, self).__init__(name, children, *args, **kwargs)
+    def __init__(self,
+                 name="Parallel",
+                 policy=common.ParallelPolicy.SUCCESS_ON_ALL,
+                 children=None,
+                 success_on_selected=None
+                ):
+        super(Parallel, self).__init__(name, children)
         self.policy = policy
+        self.success_on_selected = success_on_selected
+
+    def setup(self, timeout):
+        """
+        Detect before ticking whether the policy configuration is invalid.
+
+        Args:
+            timeout (:obj:`float`): time to wait (0.0 is blocking forever)
+
+        Returns:
+            :obj:`bool`: whether it timed out trying to setup
+        """
+        try:
+            self.validate_policy_configuration()
+        except RuntimeError as e:
+            self.logger.error("{} [{}]".format(str(e), self.name))
+            return False
+        return True
+    
+    def initialise(self):
+        """
+        Detect on behaviour entry whether the policy configuration is invalid.
+        
+        Raises:
+            RuntimeError: if policy configuration was invalid
+        """
+        self.validate_policy_configuration()
 
     def tick(self):
         """
@@ -586,11 +618,14 @@ class Parallel(Composite):
             new_status = Status.FAILURE
         else:
             if self.policy == common.ParallelPolicy.SUCCESS_ON_ALL:
-                if all([c.status == Status.SUCCESS for c in self.children]):
-                    new_status = Status.SUCCESS
+                if all([c.status == common.Status.SUCCESS for c in self.children]):
+                    new_status = common.Status.SUCCESS
             elif self.policy == common.ParallelPolicy.SUCCESS_ON_ONE:
-                if any([c.status == Status.SUCCESS for c in self.children]):
-                    new_status = Status.SUCCESS
+                if any([c.status == common.Status.SUCCESS for c in self.children]):
+                    new_status = common.Status.SUCCESS
+            elif self.policy == common.ParallelPolicy.SUCCESS_ON_SELECTED:
+                if all([c.status == common.Status.SUCCESS for c in self.success_on_selected]):
+                    new_status = common.Status.SUCCESS
         # special case composite - this parallel may have children that are still running
         # so if the parallel itself has reached a final status, then these running children
         # need to be made aware of it too
@@ -606,7 +641,9 @@ class Parallel(Composite):
     @property
     def current_child(self):
         """
-        Have to check if there's anything actually running first.
+        In some cases it's clear what the current child is, in others, there
+        is an ambiguity as multipe could exist. If the latter is true, it
+        will return the child relevant farthest down the list.
 
         Returns:
             :class:`~py_trees.behaviour.Behaviour`: the child that is currently running, or None
@@ -618,9 +655,39 @@ class Parallel(Composite):
                 if child.status == Status.FAILURE:
                     return child
             # shouldn't get here
-        elif self.status == Status.SUCCESS and self.policy == common.ParallelPolicy.SUCCESS_ON_ONE:
+        elif self.status == Status.SUCCESS:  # one, all or selected
+            success_children = []
             for child in self.children:
                 if child.status == Status.SUCCESS:
-                    return child
-        else:
+                    success_children.append(child)
+            return success_children[-1]
+        else:  # RUNNING
             return self.children[-1]
+
+    def validate_policy_configuration(self):
+        """
+        Policy configuration can be invalid if:
+        
+        * Policy is not SUCCESS_ON_SELECTED and behaviours have been specified
+        * Policy is SUCCESS_ON_SELECTED and no behaviours have been specified
+        * Policy is SUCCESS_ON_SELECTED and behaviours that are not children exist
+
+        Raises:
+            RuntimeError: if policy configuration was invalid
+        """
+        if self.policy == common.ParallelPolicy.SUCCESS_ON_SELECTED:
+            if not self.success_on_selected:
+                raise RuntimeError("Policy SUCCESS_ON_SELECTED but no behaviours have been listed [empty list]")
+            print("Success on Selected:")
+            for b in self.success_on_selected:
+                print(b)
+            print("Children:")
+            for c in self.children:
+                print(c)
+            empty_list = [b for b in self.success_on_selected if b not in self.children]
+            if not empty_list:
+                raise RuntimeError("Policy SUCCESS_ON_SELECTED but behaviours that are not children exist")
+        else:
+            if self.success_on_selected:
+                raise RuntimeError("Policy is not SUCCESS_ON_SELECTED but behaviours for selected success have been specified [should be empty]")
+                

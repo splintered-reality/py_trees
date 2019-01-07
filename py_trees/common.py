@@ -45,6 +45,8 @@ class ParallelPolicy(enum.Enum):
     """:py:data:`~py_trees.common.Status.SUCCESS` only when each and every child returns :py:data:`~py_trees.common.Status.SUCCESS`."""
     SUCCESS_ON_ONE = "SUCCESS_ON_ONE"
     """:py:data:`~py_trees.common.Status.SUCCESS` so long as at least one child has :py:data:`~py_trees.common.Status.SUCCESS` and the remainder are :py:data:`~py_trees.common.Status.RUNNING`"""
+    SUCCESS_ON_SELECTED = "SUCCESS_ON_SELECTED"
+    """:py:data:`~py_trees.common.Status.SUCCESS` so long as each child in a separately specified list has :py:data:`~py_trees.common.Status.SUCCESS`."""
 
 
 class OneShotPolicy(enum.Enum):

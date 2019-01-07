@@ -131,3 +131,58 @@ def test_parallel_success_on_one():
     assert(success.status == py_trees.common.Status.SUCCESS)
     print("running2.status == py_trees.common.Status.INVALID")
     assert(running2.status == py_trees.common.Status.INVALID)
+
+
+def test_parallel_success_on_selected():
+    console.banner("Parallel Success on Selected")
+    print("")
+    running1 = py_trees.behaviours.Running(name="Running1")
+    success1 = py_trees.behaviours.Count(
+        name="Success1",
+        fail_until=0,
+        running_until=1,
+        success_until=10)
+    success2 = py_trees.behaviours.Count(
+        name="Success2",
+        fail_until=0,
+        running_until=2,
+        success_until=10)
+    running2 = py_trees.behaviours.Running(name="Running2")
+
+    root = py_trees.composites.Parallel(
+        name="Parallel",
+        policy=py_trees.common.ParallelPolicy.SUCCESS_ON_SELECTED,
+        success_on_selected=[success1, success2])
+    root.add_children([running1, success1, success2, running2])
+    
+    py_trees.display.print_ascii_tree(root)
+    visitor = py_trees.visitors.DebugVisitor()
+
+    py_trees.tests.tick_tree(root, visitor, 1, 1)
+    print("\n--------- Assertions ---------\n")
+    print("All children get switched to success if one goes to success.")
+    print("root.status == py_trees.common.Status.RUNNING")
+    assert(root.status == py_trees.common.Status.RUNNING)
+    print("running1.status == py_trees.common.Status.RUNNING")
+    assert(running1.status == py_trees.common.Status.RUNNING)
+    print("success1.status == py_trees.common.Status.RUNNING")
+    assert(success1.status == py_trees.common.Status.RUNNING)
+    print("success2.status == py_trees.common.Status.RUNNING")
+    assert(success2.status == py_trees.common.Status.RUNNING)
+    print("running2.status == py_trees.common.Status.RUNNING")
+    assert(running2.status == py_trees.common.Status.RUNNING)
+
+    py_trees.tests.tick_tree(root, visitor, 2, 3)
+    print("\n--------- Assertions ---------\n")
+    print("All children get switched to success if one goes to success.")
+    print("root.status == py_trees.common.Status.SUCCESS")
+    assert(root.status == py_trees.common.Status.SUCCESS)
+    print("running1.status == py_trees.common.Status.INVALID")
+    assert(running1.status == py_trees.common.Status.INVALID)
+    print("success1.status == py_trees.common.Status.SUCCESS")
+    assert(success1.status == py_trees.common.Status.SUCCESS)
+    print("success2.status == py_trees.common.Status.SUCCESS")
+    assert(success2.status == py_trees.common.Status.SUCCESS)
+    print("running2.status == py_trees.common.Status.INVALID")
+    assert(running2.status == py_trees.common.Status.INVALID)
+
