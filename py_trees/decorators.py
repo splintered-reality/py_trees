@@ -151,7 +151,7 @@ class Decorator(behaviour.Behaviour):
             self.decorated.stop(new_status)
         # if the decorator returns SUCCESS/FAILURE and should stop the child
         if self.decorated.status == common.Status.RUNNING:
-            self.decorated.stop(new_status)
+            self.decorated.stop(common.Status.INVALID)
         self.status = new_status
  
 ##############################################################################
