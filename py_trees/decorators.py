@@ -290,8 +290,8 @@ class Inverter(Decorator):
             :class:`~py_trees.common.Status`: the behaviour's new status :class:`~py_trees.common.Status`
         """
         if self.decorated.status == common.Status.SUCCESS:
-            return common.Status.FAILURE
             self.feedback_message = "success -> failure"
+            return common.Status.FAILURE
         elif self.decorated.status == common.Status.FAILURE:
             self.feedback_message = "failure -> success"
             return common.Status.SUCCESS
