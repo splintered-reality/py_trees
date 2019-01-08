@@ -9,7 +9,8 @@ Release Notes
 * [exceptions] drop unused exception types, prefer built-in types as much as possible
 * [decorators] new-style decorators can be found in py_trees.decorators
 * [decorators] new-style decorators now stop their running child on completion (SUCCESS||FAILURE)
-* [decorators] old-style decorators in py_trees.meta have been deprecated 
+* [decorators] old-style decorators in py_trees.meta have been deprecated
+* [decorators] oneshot now activates upon *successful completion* (SUCCESS only), previously on *any completion* (SUCCESS||FAILURE).
 
 **New Features**
 
