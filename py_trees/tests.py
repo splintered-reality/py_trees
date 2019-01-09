@@ -44,11 +44,11 @@ def tick_tree(tree,
         for node in tree.tick():
             if visitor is not None:
                 node.visit(visitor)
-    if print_snapshot:
-        print(console.green + "\nAscii Tree Snapshot" + console.reset)
-        display.print_ascii_tree(tree, show_status=True)
-    if print_blackboard:
-        print(str(blackboard.Blackboard()))
+        if print_snapshot:
+            print(console.green + "\nAscii Tree Snapshot" + console.reset)
+            display.print_ascii_tree(tree, show_status=True)
+        if print_blackboard:
+            print(str(blackboard.Blackboard()))
 
 
 def print_summary(nodes):
