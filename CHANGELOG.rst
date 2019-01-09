@@ -1,6 +1,14 @@
 Changelog
 =========
 
+**Breaking API**
+[decorators] new-style decorators can be found built-in types as much as possible
+[decorators] new-style decorators now stop their running child on completion (SUCCESS||FAULURE)
+[decorators] onshot now activates upon *successful completion* (SUCCESS only), previously on *any completion* (SUCCESS||FAILURE)
+
+**New Features**
+[meta] behaviours from functions can now automagically generate names
+
 0.5.10 (2017-06-17)
 -------------------
 * [meta] add children monkeypatching for composite imposters

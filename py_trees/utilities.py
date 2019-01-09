@@ -18,7 +18,7 @@ Assorted utility functions.
 import os
 
 ##############################################################################
-# Which
+# System OS Tools
 ##############################################################################
 
 
@@ -47,3 +47,23 @@ def which(program):
                 return exe_file
 
     return None
+
+##############################################################################
+# Python Helpers
+##############################################################################
+
+def static_variables(**kwargs):
+    """
+    This is a decorator that can be used with python methods to attach 
+    initialised static variables to the method.
+     .. code-block:: python
+        @static_variables(counter=0)
+        def foo():
+            foo.counter += 1
+            print("Counter: {}".formta(foo.counter))
+    """
+    def decorate(func):
+        for k in kwargs:
+            setattr(func, k, kwargs[k])
+        return func
+    return decorate

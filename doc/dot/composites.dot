@@ -5,5 +5,5 @@ edge [fontname="times-roman"];
 Sequence [fontcolor=black, shape=box, fontsize=11, style=filled, fillcolor=orange];
 Selector [fontcolor=black, shape=octagon, fontsize=11, style=filled, fillcolor=cyan];
 Chooser [fontcolor=black, shape=doubleoctagon, fontsize=11, style=filled, fillcolor=cyan];
-Parallel [fontcolor=black, shape=note, fontsize=11, style=filled, fillcolor=gold];
+Parallel [fontcolor=black, shape=parallelogram, fontsize=11, style=filled, fillcolor=gold];
 }
