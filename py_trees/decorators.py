@@ -213,23 +213,33 @@ class OneShot(Decorator):
     A decorator that implements the oneshot pattern.
 
     This decorator ensures that the underlying child is ticked through
-    to *successful* completion just once and while doing so, will return
+    to completion just once and while doing so, will return
     with the same status as it's child. Thereafter it will return
-    :data:`~py_trees.common.Status.SUCCESS`.
-    
+    with the final status of the underlying child.
+
+    Completion status is determined by the policy given on construction.
+    A successful completion will activate the oneshot only when
+    the underlying child returns :data:`~py_trees.common.Status.SUCCESS`
+    (i.e. it permits retries), otherwise it will activate on
+    :data:`~py_trees.common.Status.SUCCESS` ||
+    :data:`~py_trees.common.Status.FAILURE`.
+
     .. seealso:: :meth:`py_trees.idioms.oneshot`
     """
     def __init__(self, child,
-                 name=common.Name.AUTO_GENERATED):
+                 name=common.Name.AUTO_GENERATED,
+                 policy=common.OneShotPolicy.ON_SUCCESSFUL_COMPLETION):
         """
         Init with the decorated child.
-                
+
         Args:
-            child (:class:`~py_trees.behaviour.Behaviour`): behaviour to time
             name (:obj:`str`): the decorator name
+            child (:class:`~py_trees.behaviour.Behaviour`): behaviour to time
+            policy (:class:`~py_trees.common.OneShotPolicy`): policy determining when the oneshot should activate
         """
         super(OneShot, self).__init__(name=name, child=child)
         self.final_status = None
+        self.policy = policy
 
     def update(self):
         """
@@ -239,7 +249,7 @@ class OneShot(Decorator):
             self.logger.debug("{}.update()[bouncing]".format(self.__class__.__name__))
             return self.final_status
         return self.decorated.status
-    
+
     def tick(self):
         """
         Select between decorator (single child) and behaviour (no children) style
@@ -254,18 +264,19 @@ class OneShot(Decorator):
             # tick the child
             for node in Decorator.tick(self):
                 yield node
- 
+
     def terminate(self, new_status):
         """
         If returning :data:`~py_trees.common.Status.SUCCESS` for the first time,
         flag it so future ticks will block entry to the child.
         """
-        if not self.final_status and new_status == common.Status.SUCCESS:
+        if not self.final_status and new_status in self.policy.value:
             self.logger.debug("{}.terminate({})[oneshot completed]".format(self.__class__.__name__, new_status))
             self.feedback_message = "oneshot completed"
-            self.final_status = common.Status.SUCCESS
+            self.final_status = new_status
         else:
             self.logger.debug("{}.terminate({})".format(self.__class__.__name__, new_status))
+
 
 class Inverter(Decorator):
     """
@@ -274,7 +285,7 @@ class Inverter(Decorator):
     def __init__(self, child, name=common.Name.AUTO_GENERATED):
         """
         Init with the decorated child.
-                
+
         Args:
             child (:class:`~py_trees.behaviour.Behaviour`): behaviour to time
             name (:obj:`str`): the decorator name
@@ -283,7 +294,7 @@ class Inverter(Decorator):
 
     def update(self):
         """
-        Flip :data:`~py_trees.common.Status.FAILURE` and 
+        Flip :data:`~py_trees.common.Status.FAILURE` and
         :data:`~py_trees.common.Status.SUCCESS`
 
         Returns:

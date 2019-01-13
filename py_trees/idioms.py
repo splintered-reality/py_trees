@@ -16,14 +16,16 @@ representing common behaviour tree idioms.
 # Imports
 ##############################################################################
 
+from . import behaviours
 from . import blackboard
 from . import common
 from . import composites
-# from . import meta
+from . import decorators
 
 ##############################################################################
 # Creational Methods
 ##############################################################################
+
 
 def pick_up_where_you_left_off(name, tasks):
     """
@@ -88,45 +90,77 @@ def pick_up_where_you_left_off(name, tasks):
         root.add_child(clear_mark_done)
     return root
 
-def oneshot(name, variable_name, behaviour):
+
+def oneshot(name, variable_name, behaviour, policy=common.OneShotPolicy.ON_SUCCESSFUL_COMPLETION):
     """
-    Ensure that a particular pattern is executed through to *successful*
+    Ensure that a particular pattern is executed through to
     completion just once. Thereafter it will just rebound with success.
 
     .. graphviz:: dot/oneshot.dot
 
     .. note::
 
-       This does not prevent re-entry when executed through to completion
-       with result :data:`~py_trees.common.Status.FAILURE`.
+       Completion on :data:`~py_trees.common.Status.SUCCESS`||:data:`~py_trees.common.Status.FAILURE`
+       or on :data:`~py_trees.common.Status.SUCCESS` only (permits retries if it fails) is
+       determined by the policy.
 
     Args:
         name (:obj:`str`): the name to use for the oneshot root (selector)
         variable_name (:obj:`str`): name for the flag used on the blackboard (ensure it is unique)
-        behaviour (:class:`~py_trees.behaviour.Behaviour`): beheaviour or root of a subtree to oneshot
+        behaviour (:class:`~py_trees.behaviour.Behaviour`): single behaviour or composited subtree to oneshot
+        policy (:class:`~py_trees.common.OneShotPolicy`): policy determining when the oneshot should activate
 
     Returns:
         :class:`~py_trees.behaviour.Behaviour`: the root of the oneshot subtree
     """
     subtree_root = composites.Selector(name=name)
-    check_flag = blackboard.CheckBlackboardVariable(
-        name="Done?",
-        variable_name=variable_name,
-        expected_value=True,
-        clearing_policy=common.ClearingPolicy.NEVER
+    oneshot_with_guard = composites.Sequence(
+        name="Oneshot w/ Guard")
+    check_not_done = decorators.Inverter(
+        name="Not Completed?",
+        child=blackboard.CheckBlackboardVariable(
+            name="Completed?",
+            variable_name=variable_name,
+            expected_value=None,
+            clearing_policy=common.ClearingPolicy.ON_INITIALISE
+        )
     )
-    set_flag = blackboard.SetBlackboardVariable(
-        name="Mark Done",
+    set_flag_on_success = blackboard.SetBlackboardVariable(
+        name="Mark Done\n[SUCCESS]",
         variable_name=variable_name,
-        variable_value=True
+        variable_value=common.Status.SUCCESS
     )
     # If it's a sequence, don't double-nest it in a redundant manner
     if isinstance(behaviour, composites.Sequence):
-        behaviour.add_child(set_flag)
+        behaviour.add_child(set_flag_on_success)
         sequence = behaviour
     else:
         sequence = composites.Sequence(name="OneShot")
-        sequence.add_children([behaviour, set_flag])
+        sequence.add_children([behaviour, set_flag_on_success])
 
-    subtree_root.add_children([check_flag, sequence])
+    oneshot_with_guard.add_child(check_not_done)
+    if policy == common.OneShotPolicy.ON_SUCCESSFUL_COMPLETION:
+        oneshot_with_guard.add_child(sequence)
+    else:  # ON_COMPLETION (SUCCESS || FAILURE)
+        oneshot_handler = composites.Selector(name="Oneshot Handler")
+        bookkeeping = composites.Sequence(name="Bookkeeping")
+        set_flag_on_failure = blackboard.SetBlackboardVariable(
+            name="Mark Done\n[FAILURE]",
+            variable_name=variable_name,
+            variable_value=common.Status.FAILURE
+        )
+        bookkeeping.add_children(
+            [set_flag_on_failure,
+             behaviours.Failure(name="Failure")
+             ])
+        oneshot_handler.add_children([sequence, bookkeeping])
+        oneshot_with_guard.add_child(oneshot_handler)
+
+    oneshot_result = blackboard.CheckBlackboardVariable(
+            name="Oneshot Result",
+            variable_name=variable_name,
+            expected_value=common.Status.SUCCESS,
+            clearing_policy=common.ClearingPolicy.NEVER
+        )
+    subtree_root.add_children([oneshot_with_guard, oneshot_result])
     return subtree_root

@@ -10,13 +10,13 @@ Release Notes
 * [decorators] new-style decorators can be found in py_trees.decorators
 * [decorators] new-style decorators now stop their running child on completion (SUCCESS||FAILURE)
 * [decorators] old-style decorators in py_trees.meta have been deprecated
-* [decorators] oneshot now activates upon *successful completion* (SUCCESS only), previously on *any completion* (SUCCESS||FAILURE).
 
 **New Features**
 
 * [composites] raise TypeError when setup methods don't return a bool (common mistake)
 * [blackboard] method for clearing the blackboard
 * [meta] behaviours from functions can now automagically generate names
+* [decorators] oneshot policies for activating on completion or *successful* completion only.
 
 0.8.x (2018-10-18)
 ------------------
