@@ -111,10 +111,11 @@ def create_tree():
         running_until=2,
         success_until=10
     )
-    high_priority_interrupt = py_trees.meta.running_is_failure(
-        py_trees.behaviours.Periodic)(
-        name="High Priority",
-        n=3
+    high_priority_interrupt = py_trees.decorators.RunningIsFailure(
+        child = py_trees.behaviours.Periodic(
+            name="High Priority",
+            n=3
+         )
     )
     piwylo = py_trees.idioms.pick_up_where_you_left_off(
         name="Pick Up\nWhere You\nLeft Off",
@@ -161,7 +162,7 @@ def main():
     ####################
     if args.interactive:
         py_trees.console.read_single_keypress()
-    for i in range(1, 11):
+    for unused_i in range(1, 11):
         try:
             behaviour_tree.tick()
             if args.interactive:
