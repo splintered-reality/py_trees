@@ -25,3 +25,9 @@ Oneshot
 
 .. automethod:: py_trees.idioms.oneshot
     :noindex:
+
+Pickup Where You left Off
+-------------------------
+
+.. automethod:: py_trees.idioms.pick_up_where_you_left_off
+    :noindex:

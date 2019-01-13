@@ -19,6 +19,7 @@ from . import blackboard  # noqa
 from . import common  # noqa
 from . import composites  # noqa
 from . import console  # noqa
+from . import decorators  # noqa
 from . import demos  # noqa
 from . import display  # noqa
 from . import idioms #noqa

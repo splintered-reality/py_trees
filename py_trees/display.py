@@ -20,24 +20,63 @@ strings or stdout.
 
 import pydot
 
+from . import behaviour
 from . import common
+from . import composites
 from . import console
-
-from .composites import Sequence, Selector, Parallel, Chooser
-from .common import Status
+from . import decorators
+from . import utilities
 
 ##############################################################################
-# Behaviour
+# Methods
 ##############################################################################
 
-# hide from public exposure
-_behaviour_status_to_ascii = {
-    Status.SUCCESS: console.green + u'\u2713' + console.reset,
-    Status.FAILURE: console.red + u'\u2715' + console.reset,
-    Status.INVALID: console.yellow + u'-' + console.reset,
-    Status.RUNNING: console.blue + u'*' + console.reset
-}
+@utilities.static_variables(
+    type_to_unicode = {
+        composites.Sequence: "[-] ",
+        composites.Selector: "[o] ",
+        composites.Parallel: "[" + u'\u2016' + "] ",
+        decorators.Decorator: "-^- ",
+        behaviour.Behaviour: "--> "
+    }
+)
+def ascii_bullet(node):
+    """
+    Generate a text bullet for the specified behaviour's type.
+    
+    Args:
+        node (:class:`~py_trees.behaviour.Behaviour`): convert this behaviour's type to text
+        
+    Returns:
+        :obj:`str`): the text bullet
+    """
+    for behaviour_type in [composites.Sequence,
+                           composites.Selector,
+                           composites.Parallel,
+                           decorators.Decorator]:
+        if isinstance(node, behaviour_type):
+            return ascii_bullet.type_to_unicode[behaviour_type]
+    return ascii_bullet.type_to_unicode[behaviour.Behaviour]
 
+@utilities.static_variables(
+    status_to_unicode = {
+        common.Status.SUCCESS: console.green + u'\u2713' + console.reset,
+        common.Status.FAILURE: console.red + u'\u2715' + console.reset,
+        common.Status.INVALID: console.yellow + u'-' + console.reset,
+        common.Status.RUNNING: console.blue + u'*' + console.reset
+    }
+)
+def ascii_check_mark(status):
+    """
+    Generate a text check mark for the specified status.
+    
+    Args:
+        status (:class:`~py_trees.common.Status`): convert this status to text
+        
+    Returns:
+        :obj:`str`): the text check mark
+    """
+    return ascii_check_mark.status_to_unicode[status]
 
 def _generate_ascii_tree(tree, indent=0, snapshot_information=None):
     """
@@ -51,27 +90,22 @@ def _generate_ascii_tree(tree, indent=0, snapshot_information=None):
     Yields:
         :obj:`str`: a string with information about a single behaviour in the tree
     """
+
     nodes = {} if snapshot_information is None else snapshot_information.nodes
     previously_running_nodes = [] if snapshot_information is None else snapshot_information.previously_running_nodes
     running_nodes = [] if snapshot_information is None else snapshot_information.running_nodes
     if indent == 0:
         if tree.id in nodes:
-            yield "%s [%s]" % (tree.name.replace('\n', ' '), _behaviour_status_to_ascii[nodes[tree.id]])
+            yield "%s [%s]" % (tree.name.replace('\n', ' '), ascii_check_mark(nodes[tree.id]))
         elif tree.id in previously_running_nodes and tree.id not in running_nodes:
             yield "%s" % tree.name.replace('\n', ' ') + " [" + console.yellow + "-" + console.reset + "]"
         else:
             yield "%s" % tree.name.replace('\n', ' ')
     for child in tree.children:
-        bullet = "--> "
-        if isinstance(child, Sequence):
-            bullet = "[-] "
-        elif isinstance(child, Selector):
-            bullet = "(-) "
-        elif isinstance(child, Parallel):
-            bullet = "(o) "
+        bullet = ascii_bullet(child)
         if child.id in nodes:
             message = "" if not child.feedback_message else " -- " + child.feedback_message
-            yield "    " * indent + bullet + child.name.replace('\n', ' ') + " [%s]" % _behaviour_status_to_ascii[nodes[child.id]] + message
+            yield "    " * indent + bullet + child.name.replace('\n', ' ') + " [%s]" % ascii_check_mark(nodes[child.id]) + message
         elif child.id in previously_running_nodes and child.id not in running_nodes:
             yield "    " * indent + bullet + child.name.replace('\n', ' ') + " [" + console.yellow + "-" + console.reset + "]"
         else:
@@ -184,7 +218,7 @@ def print_ascii_tree(root, indent=0, show_status=False):
         print("%s" % line)
 
 
-def generate_pydot_graph(root, visibility_level):
+def generate_pydot_graph(root, visibility_level, collapse_decorators):
     """
     Generate the pydot graph - this is usually the first step in
     rendering the tree to file. See also :py:func:`render_dot_tree`.
@@ -192,6 +226,7 @@ def generate_pydot_graph(root, visibility_level):
     Args:
         root (:class:`~py_trees.behaviour.Behaviour`): the root of a tree, or subtree
         visibility_level (:class`~py_trees.common.VisibilityLevel`): collapse subtrees at or under this level
+        collapse_decorators (:obj:`bool`): only show the decorator (not the child)
 
     Returns:
         pydot.Dot: graph
@@ -201,16 +236,16 @@ def generate_pydot_graph(root, visibility_level):
                                  common.BlackBoxLevel.COMPONENT: "lawngreen",
                                  common.BlackBoxLevel.BIG_PICTURE: "white"
                                  }
-        if isinstance(node, Chooser):
+        if isinstance(node, composites.Chooser):
             attributes = ('doubleoctagon', 'cyan', 'black')  # octagon
-        elif isinstance(node, Selector):
+        elif isinstance(node, composites.Selector):
             attributes = ('octagon', 'cyan', 'black')  # octagon
-        elif isinstance(node, Sequence):
+        elif isinstance(node, composites.Sequence):
             attributes = ('box', 'orange', 'black')
-        elif isinstance(node, Parallel):
-            attributes = ('note', 'gold', 'black')
-        elif node.children != []:
-            attributes = ('ellipse', 'ghostwhite', 'black')  # encapsulating behaviour (e.g. wait)
+        elif isinstance(node, composites.Parallel):
+            attributes = ('parallelogram', 'gold', 'black')
+        elif isinstance(node, decorators.Decorator):
+            attributes = ('ellipse', 'ghostwhite', 'black')
         else:
             attributes = ('ellipse', 'gray', 'black')
         if node.blackbox_level != common.BlackBoxLevel.NOT_A_BLACKBOX:
@@ -229,7 +264,9 @@ def generate_pydot_graph(root, visibility_level):
     graph.add_node(node_root)
     names = [root.name]
 
-    def add_edges(root, root_dot_name, visibility_level):
+    def add_edges(root, root_dot_name, visibility_level, collapse_decorators):
+        if isinstance(root, decorators.Decorator) and collapse_decorators:
+            return
         if visibility_level < root.blackbox_level:
             for c in root.children:
                 (node_shape, node_colour, node_font_colour) = get_node_attributes(c, visibility_level)
@@ -242,9 +279,9 @@ def generate_pydot_graph(root, visibility_level):
                 edge = pydot.Edge(root_dot_name, proposed_dot_name)
                 graph.add_edge(edge)
                 if c.children != []:
-                    add_edges(c, proposed_dot_name, visibility_level)
+                    add_edges(c, proposed_dot_name, visibility_level, collapse_decorators)
 
-    add_edges(root, root.name, visibility_level)
+    add_edges(root, root.name, visibility_level, collapse_decorators)
     return graph
 
 
@@ -263,7 +300,10 @@ def stringify_dot_tree(root):
     return graph.to_string()
 
 
-def render_dot_tree(root, visibility_level=common.VisibilityLevel.DETAIL, name=None):
+def render_dot_tree(root, 
+                    visibility_level=common.VisibilityLevel.DETAIL,
+                    collapse_decorators=False,
+                    name=None):
     """
     Render the dot tree to .dot, .svg, .png. files in the current
     working directory. These will be named with the root behaviour name.
@@ -271,6 +311,7 @@ def render_dot_tree(root, visibility_level=common.VisibilityLevel.DETAIL, name=N
     Args:
         root (:class:`~py_trees.behaviour.Behaviour`): the root of a tree, or subtree
         visibility_level (:class`~py_trees.common.VisibilityLevel`): collapse subtrees at or under this level
+        collapse_decorators (:obj:`bool`): only show the decorator (not the child)
         name (:obj:`str`): name to use for the created files (defaults to the root behaviour name)
 
     Example:
@@ -295,7 +336,7 @@ def render_dot_tree(root, visibility_level=common.VisibilityLevel.DETAIL, name=N
         A good practice is to provide a command line argument for optional rendering of a program so users
         can quickly visualise what tree the program will execute.
     """
-    graph = generate_pydot_graph(root, visibility_level)
+    graph = generate_pydot_graph(root, visibility_level, collapse_decorators)
     filename_wo_extension = root.name.lower().replace(" ", "_") if name is None else name
     print("Writing %s.dot/svg/png" % filename_wo_extension)
     graph.write(filename_wo_extension + '.dot')

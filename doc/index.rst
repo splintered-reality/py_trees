@@ -13,6 +13,7 @@ Py Trees
    background
    behaviours
    composites
+   decorators
    blackboards
    idioms
    trees
