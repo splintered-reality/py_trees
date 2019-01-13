@@ -58,10 +58,7 @@ class Behaviour(object):
 
     """
     def __init__(self, name="", *args, **kwargs):
-        try:
-            assert isinstance(name, basestring), "a behaviour name should be a string, but you passed in %s" % type(name)  # python2 compatibility
-        except NameError:
-            assert isinstance(name, str), "a behaviour name should be a string, but you passed in %s" % type(name)
+        assert isinstance(name, str), "a behaviour name should be a string, but you passed in %s" % type(name)
         self.id = uuid.uuid4()  # used to uniquely identify this node (helps with removing children from a tree)
         self.name = name
         self.status = Status.INVALID
@@ -91,6 +88,7 @@ class Behaviour(object):
         Returns:
             :obj:`bool`: whether it timed out trying to setup
         """
+        del timeout  # Unused argument
         return True
 
     def initialise(self):
