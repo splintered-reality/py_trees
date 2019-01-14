@@ -254,7 +254,7 @@ def generate_pydot_graph(root, visibility_level, collapse_decorators):
 
     fontsize = 11
     graph = pydot.Dot(graph_type='digraph')
-    graph.set_name(root.name.lower().replace(" ", "_"))
+    graph.set_name(utilities.get_valid_filename(root.name))  # filename doubles up as a good variable name for dot graphs
     # fonts: helvetica, times-bold, arial (times-roman is the default, but this helps some viewers, like kgraphviewer)
     graph.set_graph_defaults(fontname='times-roman')
     graph.set_node_defaults(fontname='times-roman')
@@ -337,7 +337,8 @@ def render_dot_tree(root,
         can quickly visualise what tree the program will execute.
     """
     graph = generate_pydot_graph(root, visibility_level, collapse_decorators)
-    filename_wo_extension = root.name.lower().replace(" ", "_") if name is None else name
+    filename_wo_extension_to_convert = root.name if name is None else name
+    filename_wo_extension = utilities.get_valid_filename(filename_wo_extension_to_convert)
     print("Writing %s.dot/svg/png" % filename_wo_extension)
     graph.write(filename_wo_extension + '.dot')
     graph.write_png(filename_wo_extension + '.png')

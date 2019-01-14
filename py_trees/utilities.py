@@ -16,6 +16,7 @@ Assorted utility functions.
 ##############################################################################
 
 import os
+import re
 
 ##############################################################################
 # System OS Tools
@@ -47,6 +48,27 @@ def which(program):
                 return exe_file
 
     return None
+
+def get_valid_filename(s: str) -> str:
+    """
+    Return the given string converted to a string that can be used for a clean
+    filename (without extension). Remove leading and trailing spaces; convert
+    other spaces and newlines to underscores; and remove anything that is not
+    an alphanumeric, dash, underscore, or dot.
+
+    .. code-block:: python
+
+        >>> utilities.get_valid_filename("john's portrait in 2004.jpg")
+        'johns_portrait_in_2004.jpg'
+
+    Args:
+        program (:obj:`str`): string to convert to a valid filename
+
+    Returns:
+        :obj:`str`: a representation of the specified string as a valid filename
+    """
+    s = str(s).strip().lower().replace(' ', '_').replace('\n', '_')
+    return re.sub(r'(?u)[^-\w.]', '', s)
 
 ##############################################################################
 # Python Helpers
