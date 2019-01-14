@@ -18,6 +18,7 @@ strings or stdout.
 # Imports
 ##############################################################################
 
+import os
 import pydot
 
 from . import behaviour
@@ -300,10 +301,11 @@ def stringify_dot_tree(root):
     return graph.to_string()
 
 
-def render_dot_tree(root, 
-                    visibility_level=common.VisibilityLevel.DETAIL,
-                    collapse_decorators=False,
-                    name=None):
+def render_dot_tree(root: behaviour.Behaviour,
+                    visibility_level: common.VisibilityLevel=common.VisibilityLevel.DETAIL,
+                    collapse_decorators: bool=False,
+                    name: str=None,
+                    target_directory: str=os.getcwd()):
     """
     Render the dot tree to .dot, .svg, .png. files in the current
     working directory. These will be named with the root behaviour name.
@@ -340,6 +342,6 @@ def render_dot_tree(root,
     filename_wo_extension_to_convert = root.name if name is None else name
     filename_wo_extension = utilities.get_valid_filename(filename_wo_extension_to_convert)
     print("Writing %s.dot/svg/png" % filename_wo_extension)
-    graph.write(filename_wo_extension + '.dot')
-    graph.write_png(filename_wo_extension + '.png')
-    graph.write_svg(filename_wo_extension + '.svg')
+    graph.write(os.path.join(target_directory, filename_wo_extension + '.dot'))
+    graph.write_png(os.path.join(target_directory, filename_wo_extension + '.png'))
+    graph.write_svg(os.path.join(target_directory, filename_wo_extension + '.svg'))
