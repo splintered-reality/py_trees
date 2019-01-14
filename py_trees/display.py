@@ -18,6 +18,7 @@ strings or stdout.
 # Imports
 ##############################################################################
 
+import os
 import pydot
 
 from . import behaviour
@@ -254,7 +255,7 @@ def generate_pydot_graph(root, visibility_level, collapse_decorators):
 
     fontsize = 11
     graph = pydot.Dot(graph_type='digraph')
-    graph.set_name(root.name.lower().replace(" ", "_"))
+    graph.set_name("pastafarianism")  # consider making this unique to the tree sometime, e.g. based on the root name
     # fonts: helvetica, times-bold, arial (times-roman is the default, but this helps some viewers, like kgraphviewer)
     graph.set_graph_defaults(fontname='times-roman')
     graph.set_node_defaults(fontname='times-roman')
@@ -300,10 +301,11 @@ def stringify_dot_tree(root):
     return graph.to_string()
 
 
-def render_dot_tree(root, 
-                    visibility_level=common.VisibilityLevel.DETAIL,
-                    collapse_decorators=False,
-                    name=None):
+def render_dot_tree(root: behaviour.Behaviour,
+                    visibility_level: common.VisibilityLevel=common.VisibilityLevel.DETAIL,
+                    collapse_decorators: bool=False,
+                    name: str=None,
+                    target_directory: str=os.getcwd()):
     """
     Render the dot tree to .dot, .svg, .png. files in the current
     working directory. These will be named with the root behaviour name.
@@ -337,8 +339,13 @@ def render_dot_tree(root,
         can quickly visualise what tree the program will execute.
     """
     graph = generate_pydot_graph(root, visibility_level, collapse_decorators)
-    filename_wo_extension = root.name.lower().replace(" ", "_") if name is None else name
-    print("Writing %s.dot/svg/png" % filename_wo_extension)
-    graph.write(filename_wo_extension + '.dot')
-    graph.write_png(filename_wo_extension + '.png')
-    graph.write_svg(filename_wo_extension + '.svg')
+    filename_wo_extension_to_convert = root.name if name is None else name
+    filename_wo_extension = utilities.get_valid_filename(filename_wo_extension_to_convert)
+    filenames = {}
+    for extension, writer in {"dot": graph.write, "png": graph.write_png, "svg": graph.write_svg}.items():
+        filename = filename_wo_extension + '.' + extension
+        pathname = os.path.join(target_directory, filename)
+        print("Writing {}".format(pathname))
+        writer(pathname)
+        filenames[extension] = pathname
+    return filenames
