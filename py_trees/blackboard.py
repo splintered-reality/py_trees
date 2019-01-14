@@ -265,6 +265,7 @@ class CheckBlackboardVariable(behaviours.Behaviour):
             expected_value (:obj:`any`): expected value to find (if `None`, check for existence only)
             comparison_operator (:obj:`func`): one from the python `operator module`_
             clearing_policy (:obj:`any`): when to clear the match result, see :py:class:`~py_trees.common.ClearingPolicy`
+            debug_feedback_message (:obj:`bool`): provide additional detail in behaviour feedback messages for debugging
 
         .. tip::
             If just checking for existence, use the default argument
