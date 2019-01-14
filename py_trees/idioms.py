@@ -112,6 +112,8 @@ def oneshot(name, variable_name, behaviour, policy=common.OneShotPolicy.ON_SUCCE
 
     Returns:
         :class:`~py_trees.behaviour.Behaviour`: the root of the oneshot subtree
+
+    .. seealso:: :class:`py_trees.decorators.OneShot`
     """
     subtree_root = composites.Selector(name=name)
     oneshot_with_guard = composites.Sequence(

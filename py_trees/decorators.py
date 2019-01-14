@@ -220,9 +220,13 @@ class OneShot(Decorator):
     with the final status of the underlying child.
 
     Completion status is determined by the policy given on construction.
-    A successful completion will activate the oneshot only when
+
+    * With policy :data:`~py_trees.common.OneShotPolicy.ON_SUCCESSFUL_COMPLETION`,
+    the oneshot will activate only when
     the underlying child returns :data:`~py_trees.common.Status.SUCCESS`
-    (i.e. it permits retries), otherwise it will activate on
+    (i.e. it permits retries).
+    * With policy :data:`~py_trees.common.OneShotPolicy.ON_COMPLETION`,
+    the oneshot will activate when the child returns
     :data:`~py_trees.common.Status.SUCCESS` ||
     :data:`~py_trees.common.Status.FAILURE`.
 
