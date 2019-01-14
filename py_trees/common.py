@@ -47,12 +47,22 @@ class ParallelPolicy(enum.Enum):
     """:py:data:`~py_trees.common.Status.SUCCESS` so long as at least one child has :py:data:`~py_trees.common.Status.SUCCESS` and the remainder are :py:data:`~py_trees.common.Status.RUNNING`"""
 
 
+class OneShotPolicy(enum.Enum):
+    """Policy rules for :py:class:`~py_trees.decorators.OneShot` (decorator) or :py:meth:`~py_trees.idioms.oneshot (idiom) oneshots."""
+
+    ON_COMPLETION = [Status.SUCCESS, Status.FAILURE]
+    """Return :py:data:`~py_trees.common.Status.SUCCESS` after the specified child/subtree reaches completion (:py:data:`~py_trees.common.Status.SUCCESS` || :py:data:`~py_trees.common.Status.FAILURE`)."""
+    ON_SUCCESSFUL_COMPLETION = [Status.SUCCESS]
+    """Permits the oneshot to keep trying until it's first success."""
+
+
 class Name(enum.Enum):
     """
     Naming conventions.
     """
     AUTO_GENERATED = "AUTO_GENERATED"
     """:py:data:`~py_trees.common.Name.AUTO_GENERATED` leaves it to the behaviour to generate a useful, informative name."""
+
 
 class ClearingPolicy(enum.IntEnum):
     """

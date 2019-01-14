@@ -246,23 +246,6 @@ class CheckBlackboardVariable(behaviours.Behaviour):
     It is a binary behaviour, always updating it's status
     with either :data:`~py_trees.common.Status.SUCCESS` or
     :data:`~py_trees.common.Status.FAILURE` at each tick.
-
-    Args:
-        name (:obj:`str`): name of the behaviour
-        variable_name (:obj:`str`): name of the variable to set
-        expected_value (:obj:`any`): expected value to find (if `None`, check for existence only)
-        comparison_operator (:obj:`func`): one from the python `operator module`_
-        clearing_policy (:obj:`any`): when to clear the match result, see :py:class:`~py_trees.common.ClearingPolicy`
-
-    .. tip::
-        If just checking for existence, use the default argument `expected_value=None`.
-
-    .. tip::
-        There are times when you want to get the expected match once and then save
-        that result thereafter. For example, to flag once a system has reached a
-        subgoal. Use the :data:`~py_trees.common.ClearingPolicy.NEVER` flag to do this.
-
-    .. include:: weblinks.rst
     """
     def __init__(self,
                  name,
@@ -272,6 +255,27 @@ class CheckBlackboardVariable(behaviours.Behaviour):
                  clearing_policy=common.ClearingPolicy.ON_INITIALISE,
                  debug_feedback_message=False
                  ):
+        """
+        Initialise the behaviour. It's worth noting that there are a few
+        combinations to the configuration that serve different use cases.
+
+        Args:
+            name (:obj:`str`): name of the behaviour
+            variable_name (:obj:`str`): name of the variable to set
+            expected_value (:obj:`any`): expected value to find (if `None`, check for existence only)
+            comparison_operator (:obj:`func`): one from the python `operator module`_
+            clearing_policy (:obj:`any`): when to clear the match result, see :py:class:`~py_trees.common.ClearingPolicy`
+            debug_feedback_message (:obj:`bool`): provide additional detail in behaviour feedback messages for debugging
+
+        .. tip::
+            If just checking for existence, use the default argument
+            on construction, `expected_value=None`.
+
+        .. tip::
+            There are times when you want to get the expected match once and then save
+            that result thereafter. For example, to flag once a system has reached a
+            subgoal. Use the :data:`~py_trees.common.ClearingPolicy.NEVER` flag to do this.
+        """
         super(CheckBlackboardVariable, self).__init__(name)
         self.blackboard = Blackboard()
         self.variable_name = variable_name
