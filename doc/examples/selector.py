@@ -3,7 +3,7 @@
 import py_trees
 
 if __name__ == '__main__':
-    root = py_trees.composites.Selector("Selector\nDude")
+    root = py_trees.composites.Selector("Selector")
     high = py_trees.behaviours.Success(name="High Priority")
     med = py_trees.behaviours.Success(name="Med Priority")
     low = py_trees.behaviours.Success(name="Low Priority")
