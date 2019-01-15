@@ -8,6 +8,7 @@
 # Imports
 ##############################################################################
 
+import nose.tools
 import py_trees
 import py_trees.console as console
 
@@ -66,7 +67,7 @@ def test_parallel_success():
 def test_parallel_running():
     console.banner("Parallel Running")
     root = py_trees.composites.Parallel(
-        "Parallel", policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ALL)
+        "Parallel", policy=py_trees.common.ParallelPolicy.SuccessOnAll())
     success_after_1 = py_trees.behaviours.Count(
         name="SuccessAfter1",
         fail_until=0,
@@ -110,7 +111,7 @@ def test_parallel_success_on_one():
     console.banner("Parallel Success on One")
     print("")
     root = py_trees.composites.Parallel(
-        name="Parallel", policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE)
+        name="Parallel", policy=py_trees.common.ParallelPolicy.SuccessOnOne())
     running1 = py_trees.behaviours.Running("Running1")
     success = py_trees.behaviours.Success("Success")
     running2 = py_trees.behaviours.Running("Running2")
@@ -151,14 +152,15 @@ def test_parallel_success_on_selected():
 
     root = py_trees.composites.Parallel(
         name="Parallel",
-        policy=py_trees.common.ParallelPolicy.SUCCESS_ON_SELECTED,
-        success_on_selected=[success1, success2])
+        policy=py_trees.common.ParallelPolicy.SuccessOnSelected(
+            children=[success1, success2])
+        )
     root.add_children([running1, success1, success2, running2])
-    
+
     py_trees.display.print_ascii_tree(root)
     visitor = py_trees.visitors.DebugVisitor()
 
-    py_trees.tests.tick_tree(root, visitor, 1, 1)
+    py_trees.tests.tick_tree(root, 1, 1, visitor, print_snapshot=True)
     print("\n--------- Assertions ---------\n")
     print("All children get switched to success if one goes to success.")
     print("root.status == py_trees.common.Status.RUNNING")
@@ -172,7 +174,7 @@ def test_parallel_success_on_selected():
     print("running2.status == py_trees.common.Status.RUNNING")
     assert(running2.status == py_trees.common.Status.RUNNING)
 
-    py_trees.tests.tick_tree(root, visitor, 2, 3)
+    py_trees.tests.tick_tree(root, 2, 3, visitor, print_snapshot=True)
     print("\n--------- Assertions ---------\n")
     print("All children get switched to success if one goes to success.")
     print("root.status == py_trees.common.Status.SUCCESS")
@@ -186,3 +188,35 @@ def test_parallel_success_on_selected():
     print("running2.status == py_trees.common.Status.INVALID")
     assert(running2.status == py_trees.common.Status.INVALID)
 
+
+def test_parallel_success_on_selected_invalid_configuration():
+    console.banner("Parallel Success on Selected [Invalid Configuration]")
+    print("")
+    running1 = py_trees.behaviours.Running(name="Running1")
+    running2 = py_trees.behaviours.Running(name="Running2")
+    running3 = py_trees.behaviours.Running(name="Running3")
+
+    different_policy = py_trees.common.ParallelPolicy.SuccessOnSelected(
+            children=[running1, running2]
+    )
+    empty_policy = py_trees.common.ParallelPolicy.SuccessOnSelected(
+            children=[]
+    )
+    parallel = py_trees.composites.Parallel(
+        name="Parallel",
+        children=[running1, running3]
+    )
+    for policy in [different_policy, empty_policy]:
+        print("")
+        print(console.cyan + "Policy Children: " + console.yellow + str([c.name for c in policy.children]) + console.reset)
+        print(console.cyan + "Parallel Children: " + console.yellow + str([c.name for c in parallel.children]) + console.reset)
+        parallel.policy = policy
+        print("\n--------- Assertions ---------\n")
+        print("setup() returns 'False' due to invalid configuration")
+        result = parallel.setup(timeout=5.0)
+        assert(not result)
+        print("initialise() raises a 'RuntimeError' due to invalid configuration")
+        with nose.tools.assert_raises(RuntimeError) as context:
+            parallel.tick_once()
+            print("RuntimeError has message with substring 'SuccessOnSelected'")
+            assert("SuccessOnSelected" in str(context.exception))

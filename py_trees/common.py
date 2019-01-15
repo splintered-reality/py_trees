@@ -21,9 +21,6 @@ import enum
 # Status
 ##############################################################################
 
-# """ An enumerator representing the status of a behaviour """
-# Status = Enum('Status', 'SUCCESS FAILURE RUNNING INVALID')
-
 
 class Status(enum.Enum):
     """An enumerator representing the status of a behaviour """
@@ -38,55 +35,40 @@ class Status(enum.Enum):
     """Behaviour is uninitialised and inactive, i.e. this is the status before first entry, and after a higher priority switch has occurred."""
 
 
-class ParallelPolicy2(enum.Enum):
-    """Policy rules for :py:class:`~py_trees.composites.Parallel` composites."""
-
-    SUCCESS_ON_ALL = "SUCCESS_ON_ALL"
-    """:py:data:`~py_trees.common.Status.SUCCESS` only when each and every child returns :py:data:`~py_trees.common.Status.SUCCESS`."""
-    SUCCESS_ON_ONE = "SUCCESS_ON_ONE"
-    """:py:data:`~py_trees.common.Status.SUCCESS` so long as at least one child has :py:data:`~py_trees.common.Status.SUCCESS` and the remainder are :py:data:`~py_trees.common.Status.RUNNING`"""
-    SUCCESS_ON_NONE = "SUCCESS_ON_NONE"
-    """:py:data:`~py_trees.common.Status.SUCCESS` so long as every child returns :py:data:`~py_trees.common.Status.RUNNING`, otherwise :py:data:`~py_trees.common.Status.FAILURE`"""
-    SUCCESS_ALWAYS = "SUCCESS_ALWAYS"
-    """:py:data:`~py_trees.common.Status.SUCCESS` always, so long as none of the children return :py:data:`~py_trees.common.Status.FAILURE`"""
-    SUCCESS_ON_SELECTED = "SUCCESS_ON_SELECTED"
-    """:py:data:`~py_trees.common.Status.SUCCESS` so long as each child in a separately specified list has :py:data:`~py_trees.common.Status.SUCCESS`."""
-
-
 class ParallelPolicy(object):
     class Base(object):
-    """
-    Base class for parallel policies. Should never be used directly.
-    """
+        """
+        Base class for parallel policies. Should never be used directly.
+        """
         pass
 
     class SuccessOnAll(Base):
-    """
-    Return :py:data:`~py_trees.common.Status.SUCCESS` only when each and every child returns
-    :py:data:`~py_trees.common.Status.SUCCESS`.
-    """
+        """
+        Return :py:data:`~py_trees.common.Status.SUCCESS` only when each and every child returns
+        :py:data:`~py_trees.common.Status.SUCCESS`.
+        """
         pass
 
     class SuccessOnOne(Base):
-    """
-    Return :py:data:`~py_trees.common.Status.SUCCESS` so long as at least one child has :py:data:`~py_trees.common.Status.SUCCESS`
-    and the remainder are :py:data:`~py_trees.common.Status.RUNNING`
-    """
+        """
+        Return :py:data:`~py_trees.common.Status.SUCCESS` so long as at least one child has :py:data:`~py_trees.common.Status.SUCCESS`
+        and the remainder are :py:data:`~py_trees.common.Status.RUNNING`
+        """
         pass
 
     class SuccessAlways(Base):
-    """
-    Return :py:data:`~py_trees.common.Status.SUCCESS` always, so long as none of the children return
-    :py:data:`~py_trees.common.Status.FAILURE`.
-    """
+        """
+        Return :py:data:`~py_trees.common.Status.SUCCESS` always, so long as none of the children return
+        :py:data:`~py_trees.common.Status.FAILURE`.
+        """
         pass
 
     class SuccessOnSelected(Base):
-    """
-    Retrun :py:data:`~py_trees.common.Status.SUCCESS` so long as each child in a specified list returns
-    :py:data:`~py_trees.common.Status.SUCCESS`.
-    """
-        def __init__(children: typing.List(py_trees.behaviour.Behaviour)):
+        """
+        Retrun :py:data:`~py_trees.common.Status.SUCCESS` so long as each child in a specified list returns
+        :py:data:`~py_trees.common.Status.SUCCESS`.
+        """
+        def __init__(self, children):
             self.children = children
 
 

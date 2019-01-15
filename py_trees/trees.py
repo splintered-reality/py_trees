@@ -191,7 +191,7 @@ class BehaviourTree(object):
 
     def setup(self, timeout):
         """
-         Relays to calling the :meth:`~py_trees.behaviour.Behaviuor.setup` method
+         Relays to calling the :meth:`~py_trees.behaviour.Behaviour.setup` method
          on the root behaviour. This in turn should get recursively called down through
          the entire tree.
 

@@ -24,6 +24,7 @@ logger = py_trees.logging.Logger("Nosetest")
 # Classes
 ##############################################################################
 
+
 class InvalidSetup(py_trees.behaviour.Behaviour):
     def setup(self, timeout):
         # A common mistake is to forget to return a boolean value
@@ -35,6 +36,7 @@ class InvalidSetup(py_trees.behaviour.Behaviour):
 ##############################################################################
 # Tests
 ##############################################################################
+
 
 def test_invalid_setup():
     console.banner("Invalid Setup")
@@ -61,6 +63,7 @@ def test_replacing_children():
     assert(old_child.parent is None)
     print("new_child.parent is parent")
     assert(new_child.parent is parent)
+
 
 def test_removing_children():
     console.banner("Removing Children")
