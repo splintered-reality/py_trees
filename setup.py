@@ -38,6 +38,7 @@ d = setup(
     version=__version__,
     packages=find_packages(exclude=['tests*', 'docs*']),
     install_requires=install_requires,
+    extras_require=extras_require,
     author='Daniel Stonier, Naveed Usmani, Michal Staniaszek',
     maintainer='Daniel Stonier <d.stonier@gmail.com>, Naveed Usmani <naveedhd@gmail.com>',
     url='http://github.com/stonier/py_trees',

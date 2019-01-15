@@ -22,22 +22,23 @@ jobs:
       # Download and cache dependencies
       - restore_cache:
           keys:
-          - setup-py-{{ checksum "setup.py" }}
+          - setup-py2-{{ checksum "setup.py" }}
           # fallback to using the latest cache if no exact match is found
-          - setup-py-
+          # - setup-py-
 
       - run:
           name: Install Dependencies
           command: |
-            python -m virtualenv venv
-            . venv/bin/activate
-            # pip install -r requirements.txt
-            # pip install -e .[docs]
-            pip install -e .[test]
+            echo "Working Directory: `pwd`" > install_dependencies_output
+            echo "VirtualEnv Version: `virtualenv --version`" >> install_dependencies_output
+            python -m virtualenv venv >> install_dependencies_output
+            . venv/bin/activate >> install_dependencies_output
+            pip install -e .[test] >> install_dependencies_output
+
       - save_cache:
           paths:
             - ./venv
-          key: setup-py-{{ checksum "setup.py" }}
+          key: setup-py2-{{ checksum "setup.py" }}
         
       # run tests!
       # this example uses Django's built-in test-runner
@@ -49,12 +50,11 @@ jobs:
           command: |
             . venv/bin/activate
             python setup.py nosetests
-      - run:
-          name: Linters
-          command: |
-            . venv/bin/activate
-            ./lint/flake8
-            
+
+      - store_artifacts:
+          path: install_dependencies_output
+          destination: install_dependencies_output
+
       - store_artifacts:
           path: nosetests.html
           destination: nosetests.html
