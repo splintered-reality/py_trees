@@ -550,11 +550,10 @@ class Parallel(Composite):
     Ticks every child every time the parallel is run (a poor man's form of parallelism).
 
     * Parallels will return :data:`~py_trees.common.Status.FAILURE` if any child returns :py:data:`~py_trees.common.Status.FAILURE`
-    * Parallels with policy :data:`~py_trees.common.ParallelPolicy.SUCCESS_ON_ALL` only returns :py:data:`~py_trees.common.Status.SUCCESS` if **all** children return :py:data:`~py_trees.common.Status.SUCCESS`
-    * Parallels with policy :data:`~py_trees.common.ParallelPolicy.SUCCESS_ON_ONE` return :py:data:`~py_trees.common.Status.SUCCESS` if **at least one** child returns :py:data:`~py_trees.common.Status.SUCCESS` and others are :py:data:`~py_trees.common.Status.RUNNING`
-    * Parallels with policy :data:`~py_trees.common.ParallelPolicy.SUCCESS_ON_NONE` return :py:data:`~py_trees.common.Status.SUCCESS` if **every** child returns :py:data:`~py_trees.common.Status.RUNNING` otherwise it returns :py:data:`~py_trees.common.Status.FAILURE`
-    * Parallels with policy :data:`~py_trees.common.ParallelPolicy.SUCCESS_ALWAYS` return :py:data:`~py_trees.common.Status.SUCCESS` so long as no child returns :py:data:`~py_trees.common.Status.FAILURE`
-    * Parallels with policy :data:`~py_trees.common.ParallelPolicy.SUCCESS_ON_SELECTED` only returns :py:data:`~py_trees.common.Status.SUCCESS` if a **specified subset** of children return :py:data:`~py_trees.common.Status.SUCCESS`
+    * Parallels with policy :class:`~py_trees.common.ParallelPolicy.SuccessOnAll` only returns :py:data:`~py_trees.common.Status.SUCCESS` if **all** children return :py:data:`~py_trees.common.Status.SUCCESS`
+    * Parallels with policy :class:`~py_trees.common.ParallelPolicy.SuccessOnOne` return :py:data:`~py_trees.common.Status.SUCCESS` if **at least one** child returns :py:data:`~py_trees.common.Status.SUCCESS` and others are :py:data:`~py_trees.common.Status.RUNNING`
+    * Parallels with policy :class:`~py_trees.common.ParallelPolicy.SuccessAlways` return :py:data:`~py_trees.common.Status.SUCCESS` so long as no child returns :py:data:`~py_trees.common.Status.FAILURE`
+    * Parallels with policy :class:`~py_trees.common.ParallelPolicy.SuccessOnSelected` only returns :py:data:`~py_trees.common.Status.SUCCESS` if a **specified subset** of children return :py:data:`~py_trees.common.Status.SUCCESS`
 
     .. seealso:: The :ref:`py-trees-demo-context-switching-program` program demos a parallel used to assist in a context switching scenario.
     """
