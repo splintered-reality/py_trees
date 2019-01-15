@@ -36,11 +36,20 @@ class Status(enum.Enum):
 
 
 class ParallelPolicy(object):
+    """
+    Configurable policies for :py:class:`~py_trees.composites.Parallel` behaviours.
+    """
     class Base(object):
         """
         Base class for parallel policies. Should never be used directly.
         """
         def __init__(self, synchronise=False):
+            """
+            Default policy configuration.
+
+            Args:
+                :obj:`bool`: block ticking of children with status :py:data:`~py_trees.common.Status.SUCCESS` until the policy criteria is met
+            """
             self.synchronise = synchronise
 
     class SuccessOnAll(Base):
@@ -49,6 +58,12 @@ class ParallelPolicy(object):
         :py:data:`~py_trees.common.Status.SUCCESS`.
         """
         def __init__(self, synchronise=True):
+            """
+            Policy configuration.
+
+            Args:
+                :obj:`bool`: block ticking of children with status :py:data:`~py_trees.common.Status.SUCCESS` until the policy criteria is met
+            """
             super().__init__(synchronise=synchronise)
 
     class SuccessOnOne(Base):
@@ -57,6 +72,9 @@ class ParallelPolicy(object):
         and the remainder are :py:data:`~py_trees.common.Status.RUNNING`
         """
         def __init__(self):
+            """
+            No configuration necessary for this policy.
+            """
             super().__init__(synchronise=False)
 
     class SuccessOnSelected(Base):
@@ -65,6 +83,13 @@ class ParallelPolicy(object):
         :py:data:`~py_trees.common.Status.SUCCESS`.
         """
         def __init__(self, children, synchronise=True):
+            """
+            Policy configuraiton.
+
+            Args:
+                children ([:class:`~py_trees.behaviour.Behaviour`]): list of children to succeed on
+                :obj:`bool`: block ticking of children with status :py:data:`~py_trees.common.Status.SUCCESS` until the policy criteria is met
+            """
             super().__init__(synchronise=synchronise)
             self.children = children
 

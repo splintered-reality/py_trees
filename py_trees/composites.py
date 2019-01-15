@@ -676,9 +676,8 @@ class Parallel(Composite):
         """
         Policy configuration can be invalid if:
 
-        * Policy is not SUCCESS_ON_SELECTED and behaviours have been specified
-        * Policy is SUCCESS_ON_SELECTED and no behaviours have been specified
-        * Policy is SUCCESS_ON_SELECTED and behaviours that are not children exist
+        * Policy is SuccessOnSelected and no behaviours have been specified
+        * Policy is SuccessOnSelected and behaviours that are not children exist
 
         Raises:
             RuntimeError: if policy configuration was invalid
