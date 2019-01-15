@@ -220,3 +220,51 @@ def test_parallel_success_on_selected_invalid_configuration():
             parallel.tick_once()
             print("RuntimeError has message with substring 'SuccessOnSelected'")
             assert("SuccessOnSelected" in str(context.exception))
+
+
+def test_parallel_synchronisation():
+    console.banner("Parallel Synchronisation")
+    root = py_trees.composites.Parallel(
+        name="Parallel",
+        policy=py_trees.common.ParallelPolicy.SuccessOnAll(
+            synchronise=True
+        ))
+    success = py_trees.behaviours.Success()
+    success_every_second = py_trees.decorators.FailureIsRunning(
+        name="SuccessEverySecond",
+        child=py_trees.behaviours.SuccessEveryN(name="Flipper", n=2)
+    )
+
+    root.add_children([success, success_every_second])
+    py_trees.display.print_ascii_tree(root)
+    visitor = py_trees.visitors.DebugVisitor()
+    py_trees.tests.tick_tree(root, 1, 1, visitor, print_snapshot=True)
+
+    print("\n--------- Assertions ---------\n")
+    print("root.status == py_trees.common.Status.RUNNING")
+    assert(root.status == py_trees.common.Status.RUNNING)
+    print("success.status == py_trees.common.Status.SUCCESS")
+    assert(success.status == py_trees.common.Status.SUCCESS)
+    print("success_every_second.status == py_trees.common.Status.RUNNING")
+    assert(success_every_second.status == py_trees.common.Status.RUNNING)
+
+    py_trees.tests.tick_tree(root, 2, 2, visitor, print_snapshot=True)
+
+    print("\n--------- Assertions ---------\n")
+    print("root.status == py_trees.common.Status.SUCCESS")
+    assert(root.status == py_trees.common.Status.SUCCESS)
+    print("success.status == py_trees.common.Status.SUCCESS")
+    assert(success.status == py_trees.common.Status.SUCCESS)
+    print("success_every_second.status == py_trees.common.Status.SUCCESS")
+    assert(success_every_second.status == py_trees.common.Status.SUCCESS)
+    # check that succeess did not get ticked
+
+    py_trees.tests.tick_tree(root, 3, 3, visitor, print_snapshot=True)
+
+    print("\n--------- Assertions ---------\n")
+    print("root.status == py_trees.common.Status.RUNNING")
+    assert(root.status == py_trees.common.Status.RUNNING)
+    print("success.status == py_trees.common.Status.SUCCESS")
+    assert(success.status == py_trees.common.Status.SUCCESS)
+    print("success_every_second.status == py_trees.common.Status.RUNNING")
+    assert(success_every_second.status == py_trees.common.Status.RUNNING)

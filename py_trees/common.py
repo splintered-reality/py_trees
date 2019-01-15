@@ -40,35 +40,32 @@ class ParallelPolicy(object):
         """
         Base class for parallel policies. Should never be used directly.
         """
-        pass
+        def __init__(self, synchronise=False):
+            self.synchronise = synchronise
 
     class SuccessOnAll(Base):
         """
         Return :py:data:`~py_trees.common.Status.SUCCESS` only when each and every child returns
         :py:data:`~py_trees.common.Status.SUCCESS`.
         """
-        pass
+        def __init__(self, synchronise=True):
+            super().__init__(synchronise=synchronise)
 
     class SuccessOnOne(Base):
         """
         Return :py:data:`~py_trees.common.Status.SUCCESS` so long as at least one child has :py:data:`~py_trees.common.Status.SUCCESS`
         and the remainder are :py:data:`~py_trees.common.Status.RUNNING`
         """
-        pass
-
-    class SuccessAlways(Base):
-        """
-        Return :py:data:`~py_trees.common.Status.SUCCESS` always, so long as none of the children return
-        :py:data:`~py_trees.common.Status.FAILURE`.
-        """
-        pass
+        def __init__(self):
+            super().__init__(synchronise=False)
 
     class SuccessOnSelected(Base):
         """
         Retrun :py:data:`~py_trees.common.Status.SUCCESS` so long as each child in a specified list returns
         :py:data:`~py_trees.common.Status.SUCCESS`.
         """
-        def __init__(self, children):
+        def __init__(self, children, synchronise=True):
+            super().__init__(synchronise=synchronise)
             self.children = children
 
 

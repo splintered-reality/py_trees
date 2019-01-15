@@ -552,7 +552,6 @@ class Parallel(Composite):
     * Parallels will return :data:`~py_trees.common.Status.FAILURE` if any child returns :py:data:`~py_trees.common.Status.FAILURE`
     * Parallels with policy :class:`~py_trees.common.ParallelPolicy.SuccessOnAll` only returns :py:data:`~py_trees.common.Status.SUCCESS` if **all** children return :py:data:`~py_trees.common.Status.SUCCESS`
     * Parallels with policy :class:`~py_trees.common.ParallelPolicy.SuccessOnOne` return :py:data:`~py_trees.common.Status.SUCCESS` if **at least one** child returns :py:data:`~py_trees.common.Status.SUCCESS` and others are :py:data:`~py_trees.common.Status.RUNNING`
-    * Parallels with policy :class:`~py_trees.common.ParallelPolicy.SuccessAlways` return :py:data:`~py_trees.common.Status.SUCCESS` so long as no child returns :py:data:`~py_trees.common.Status.FAILURE`
     * Parallels with policy :class:`~py_trees.common.ParallelPolicy.SuccessOnSelected` only returns :py:data:`~py_trees.common.Status.SUCCESS` if a **specified subset** of children return :py:data:`~py_trees.common.Status.SUCCESS`
 
     Parallels with policy :class:`~py_trees.common.ParallelPolicy.SuccessOnSelected` will validate themselves just-in-time at
@@ -588,7 +587,7 @@ class Parallel(Composite):
         """
         try:
             self.validate_policy_configuration()
-        except RuntimeError as e:
+        except RuntimeError as unused_e:
             return False
         return True
 
@@ -608,18 +607,23 @@ class Parallel(Composite):
         Yields:
             :class:`~py_trees.behaviour.Behaviour`: a reference to itself or one of its children
         """
-        if self.status != Status.RUNNING:
+        self.logger.debug("%s.tick()" % self.__class__.__name__)
+        if self.status != common.Status.RUNNING:
+            # invalidate all the children so synchronisation starts with a clean slate
+            self.logger.debug("%s.tick(): re-initialising" % self.__class__.__name__)
+            for child in self.children:
+                child.stop(common.Status.INVALID)
             # subclass (user) handling
             self.initialise()
-        self.logger.debug("%s.tick()" % self.__class__.__name__)
         # process them all first
         for child in self.children:
+            if self.policy.synchronise and child.status == common.Status.SUCCESS:
+                continue
             for node in child.tick():
                 yield node
-        # new_status = Status.SUCCESS if self.policy == common.ParallelPolicy.SUCCESS_ON_ALL else Status.RUNNING
-        new_status = Status.RUNNING
-        if any([c.status == Status.FAILURE for c in self.children]):
-            new_status = Status.FAILURE
+        new_status = common.Status.RUNNING
+        if any([c.status == common.Status.FAILURE for c in self.children]):
+            new_status = common.Status.FAILURE
         else:
             if type(self.policy) is common.ParallelPolicy.SuccessOnAll:
                 if all([c.status == common.Status.SUCCESS for c in self.children]):
@@ -627,19 +631,17 @@ class Parallel(Composite):
             elif type(self.policy) is common.ParallelPolicy.SuccessOnOne:
                 if any([c.status == common.Status.SUCCESS for c in self.children]):
                     new_status = common.Status.SUCCESS
-            elif type(self.policy) is common.ParallelPolicy.SuccessAlways:
-                    new_status = common.Status.SUCCESS
             elif type(self.policy) is common.ParallelPolicy.SuccessOnSelected:
                 if all([c.status == common.Status.SUCCESS for c in self.policy.children]):
                     new_status = common.Status.SUCCESS
         # this parallel may have children that are still running
         # so if the parallel itself has reached a final status, then
         # these running children need to be terminated so they don't dangle
-        if new_status != Status.RUNNING:
+        if new_status != common.Status.RUNNING:
             for child in self.children:
-                if child.status == Status.RUNNING:
+                if child.status == common.Status.RUNNING:
                     # interrupt it (exactly as if it was interrupted by a higher priority)
-                    child.stop(Status.INVALID)
+                    child.stop(common.Status.INVALID)
             self.stop(new_status)
         self.status = new_status
         yield self
@@ -654,17 +656,17 @@ class Parallel(Composite):
         Returns:
             :class:`~py_trees.behaviour.Behaviour`: the child that is currently running, or None
         """
-        if self.status == Status.INVALID:
+        if self.status == common.Status.INVALID:
             return None
-        if self.status == Status.FAILURE:
+        if self.status == common.Status.FAILURE:
             for child in self.children:
-                if child.status == Status.FAILURE:
+                if child.status == common.Status.FAILURE:
                     return child
             # shouldn't get here
-        elif self.status == Status.SUCCESS:  # one, all or selected
+        elif self.status == common.Status.SUCCESS:  # one, all or selected
             success_children = []
             for child in self.children:
-                if child.status == Status.SUCCESS:
+                if child.status == common.Status.SUCCESS:
                     success_children.append(child)
             return success_children[-1]
         else:  # RUNNING
