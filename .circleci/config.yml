@@ -1,0 +1,60 @@
+# Python CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-python/ for more details
+#
+version: 2
+jobs:
+  build:
+    docker:
+      # specify the version you desire here
+      - image: circleci/python:2.7
+      
+      # Specify service dependencies here if necessary
+      # CircleCI maintains a library of pre-built images
+      # documented at https://circleci.com/docs/2.0/circleci-images/
+      # - image: circleci/postgres:9.4
+
+    working_directory: ~/repo
+
+    steps:
+      - checkout
+
+      # Download and cache dependencies
+      - restore_cache:
+          keys:
+          - setup-py-{{ checksum "setup.py" }}
+          # fallback to using the latest cache if no exact match is found
+          - setup-py-
+
+      - run:
+          name: Install Dependencies
+          command: |
+            python -m virtualenv venv
+            . venv/bin/activate
+            # pip install -r requirements.txt
+            # pip install -e .[docs]
+            pip install -e .[test]
+      - save_cache:
+          paths:
+            - ./venv
+          key: setup-py-{{ checksum "setup.py" }}
+        
+      # run tests!
+      # this example uses Django's built-in test-runner
+      # other common Python testing frameworks include pytest and nose
+      # https://pytest.org
+      # https://nose.readthedocs.io
+      - run:
+          name: Tests
+          command: |
+            . venv/bin/activate
+            python setup.py nosetests
+      - run:
+          name: Linters
+          command: |
+            . venv/bin/activate
+            ./lint/flake8
+            
+      - store_artifacts:
+          path: nosetests.html
+          destination: nosetests.html

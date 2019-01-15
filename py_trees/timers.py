@@ -20,47 +20,18 @@ from . import behaviour
 from . import common
 from . import meta
 
+
 ##############################################################################
 # Behaviours
 ##############################################################################
 
-
-# class Pause(behaviour.Behaviour):
-#     """
-#     Does nothing until the specified timeout is reached, then returns SUCCESS.
-#     If the duration is 0.0, then this behaviour blocks indefinitely.
-#
-#     This can also be used as a timeout with highest priority in a selector.
-#     """
-#     def __init__(self, name="Pause", duration=1.0):
-#         """
-#         Prepare the behaviour
-#
-#         :param string name: this behaviour's name
-#         :param float duration: the amount of time to pause for; set to zero to pause indefinitely
-#         """
-#         super(Pause, self).__init__(name)
-#         self.duration = duration
-#         self.start_time = None
-#         self.finish_time = None
-#
-#     def initialise(self):
-#         self.logger.debug("  %s [Pause::initialise()]" % self.name)
-#         self.start_time = time.time()
-#         self.finish_time = self.start_time + self.duration
-#
-#     def update(self):
-#         self.logger.debug("  %s [Pause::update()]" % self.name)
-#         if self.duration == 0.0:
-#             return common.Status.RUNNING
-#         else:
-#             return common.Status.SUCCESS if time.time() > self.finish_time else common.Status.RUNNING
-
-
 class Timer(behaviour.Behaviour):
     """
     Simple timer class that is :py:data:`~py_trees.common.Status.RUNNING` until the timer
-    runs out, at which point it is :data:`~py_trees.common.Status.SUCCESS`.
+    runs out, at which point it is :data:`~py_trees.common.Status.SUCCESS`. This can be
+    used in a wide variety of situations - pause, duration, timeout depending on how
+    it is wired into the tree (e.g. pause in a sequence, duration/timeout in
+    a parallel).
 
     The timer gets reset either upon entry (:meth:`~py_trees.behaviour.Behaviour.initialise`)
     if it hasn't already been set and gets cleared when it either runs out, or the behaviour is

@@ -11,4 +11,10 @@ py_trees*.tar.gz
 *~
 \#*
 .#*
+.DS_Store
+.README.md.html
+.eggs
+tests/.README.md.html
+nosetests.html
+eclipse
 *.vscode
