@@ -10,8 +10,8 @@
 """
 Decorators are behaviours that manage a single child and provide common
 modifications to their underlying child behaviour (e.g. inverting the result).
-i.e. they provide a means for behaviours to wear different 'hats' depending
-on their context without a behaviour tree.
+That is, they provide a means for behaviours to wear different 'hats' and
+this combinatorially expands the capabilities of your behaviour library.
 
 .. image:: images/many-hats.png
    :width: 40px
@@ -44,6 +44,29 @@ And the X is Y family:
 * :func:`py_trees.decorators.SuccessIsFailure`
 * :func:`py_trees.decorators.SuccessIsRunning`
 
+**Decorators for Blocking Behaviours**
+
+It is worth making a note of the effect of decorators on
+behaviours that return :data:`~py_trees.common.Status.RUNNING` for
+some time before finally returning  :data:`~py_trees.common.Status.SUCCESS`
+or  :data:`~py_trees.common.Status.FAILURE` (blocking behaviours) since
+the results are often at first, surprising.
+
+A decorator, such as :func:`py_trees.decorators.RunningIsSuccess` on
+a blocking behaviour will immediately terminate the underlying child and
+re-intialise on it's next tick. This is necessary to ensure the underlying
+child isn't left in a dangling state (i.e.
+:data:`~py_trees.common.Status.RUNNING`), but is often not what is being
+sought.
+
+The typical use case being attempted is to convert the blocking
+behaviour into a non-blocking behaviour. If the underlying child has no
+state being modified in either the :meth:`~py_trees.behaviour.Behaviour.initialise`
+or :meth:`~py_trees.behaviour.Behaviour.terminate` methods (e.g. machinery is
+entirely launched at init or setup time), then conversion to a non-blocking
+representative of the original succeeds. Otherwise, another approach is
+needed. Usually this entails writing a non-blocking counterpart, or
+combination of behaviours to affect the non-blocking characteristics.
 """
 
 ##############################################################################
