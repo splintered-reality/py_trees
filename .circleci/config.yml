@@ -29,11 +29,11 @@ jobs:
       - run:
           name: Install Dependencies
           command: |
-            python3 -m venv venv
-            . venv/bin/activate
-            # pip install -r requirements.txt
-            # pip install -e .[docs]
-            pip install -e .[test]
+            echo "Working Directory: `pwd`" > install_dependencies_output
+            echo "VirtualEnv Version: `virtualenv --version`" >> install_dependencies_output
+            python3 -m venv venv >> install_dependencies_output
+            . venv/bin/activate >> install_dependencies_output
+            pip install -e .[test] >> install_dependencies_output
 
       - save_cache:
           paths:
@@ -55,9 +55,18 @@ jobs:
           name: Linters
           command: |
             . venv/bin/activate
-            ./lint/flake8
+            ./lint/flake8 | tee lint_output
+
+      - store_artifacts:
+          path: install_dependencies_output
+          destination: install_dependencies_output
             
       - store_artifacts:
           path: nosetests.html
           destination: nosetests.html
+          
+      - store_artifacts:
+          path: lint_output
+          destination: lint_output
+            
           
