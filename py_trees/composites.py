@@ -73,7 +73,7 @@ class Composite(Behaviour):
         Relays to each child's :meth:`~py_trees.behaviour.Behaviuor.setup` method in turn.
 
         Args:
-             timeout (:obj:`float`): time to wait (0.0 is blocking forever)
+            timeout (:obj:`float`): time to wait (use common.Duration.INFINITE to block indefinitely)
 
         Raises:
             TypeError: if children's setup methods fail to return a boolean

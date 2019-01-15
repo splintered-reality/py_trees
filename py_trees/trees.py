@@ -196,7 +196,8 @@ class BehaviourTree(object):
          the entire tree.
 
         Args:
-             timeout (:obj:`float`): time to wait (0.0 is blocking forever)
+            timeout (:obj:`float`): time to wait (use common.Duration.INFINITE to block indefinitely)
+
 
         Return:
             :obj:`bool`: suceess or failure of the operation
