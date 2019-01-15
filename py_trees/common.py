@@ -16,6 +16,7 @@ Common definitions, methods and variables used by the py_trees library.
 ##############################################################################
 
 import enum
+import math
 
 ##############################################################################
 # Status
@@ -62,6 +63,16 @@ class Name(enum.Enum):
     """
     AUTO_GENERATED = "AUTO_GENERATED"
     """:py:data:`~py_trees.common.Name.AUTO_GENERATED` leaves it to the behaviour to generate a useful, informative name."""
+
+
+class Duration(enum.Enum):
+    """
+    Naming conventions.
+    """
+    INIFINITE = math.inf
+    """:py:data:`~py_trees.common.Duration.INFINITE` oft used for perpetually blocking operations."""
+    UNTIL_THE_BATTLE_OF_ALFREDO = math.inf
+    """:py:data:`~py_trees.common.Duration.UNTIL_THE_BATTLE_OF_ALFREDO` is an alias for :py:data:`~py_trees.common.Duration.INFINITE`."""
 
 
 class ClearingPolicy(enum.IntEnum):

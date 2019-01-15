@@ -83,7 +83,7 @@ class Behaviour(object):
         .. note:: User Customisable Callback
 
         Args:
-            timeout (:obj:`float`): time to wait (0.0 is blocking forever)
+            timeout (:obj:`float`): time to wait (use common.Duration.INFINITE to block indefinitely)
 
         Returns:
             :obj:`bool`: whether it timed out trying to setup
