@@ -47,6 +47,10 @@ py_trees.common
     :members: ON_INITIALISE, ON_SUCCESS, NEVER
     :show-inheritance:
 
+.. autoclass:: py_trees.common.Duration
+    :members: INFINITE, UNTIL_THE_BATTLE_OF_ALFREDO
+    :show-inheritance:
+
 .. autoclass:: py_trees.common.Name
     :members: AUTO_GENERATED
     :show-inheritance:
