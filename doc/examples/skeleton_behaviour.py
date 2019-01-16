@@ -35,6 +35,9 @@ class Foo(py_trees.Behaviour):
           Good examples include:
           - Hardware or driver initialisation
           - Middleware initialisation (e.g. ROS pubs/subs/services)
+          Validation of the behaviour's configuration if such validation
+          cannot be ensured in __init__ (for example, children may
+          have been added or removed, policies switched).
         """
         self.logger.debug("  %s [Foo::setup()]" % self.name)
 

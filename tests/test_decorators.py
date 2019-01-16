@@ -26,14 +26,6 @@ logger = py_trees.logging.Logger("Nosetest")
 # Classes
 ##############################################################################
 
-class InvalidSetup(py_trees.behaviour.Behaviour):
-    def setup(self, timeout):
-        # A common mistake is to forget to return a boolean value
-        # Composite behaviours will at least check to make sure that
-        # their children do so and raise TypeError's if they fail
-        # to do so.
-        pass
-
 
 class DummyDecorator(py_trees.decorators.Decorator):
     def __init__(self, child, name=py_trees.common.Name.AUTO_GENERATED):
@@ -61,20 +53,6 @@ def test_invalid_child():
     print("\n--------- Assertions ---------\n")
     print("TypeError is raised")
     assert_raises(TypeError, DummyDecorator.__init__, child=5)
-
-
-def test_invalid_setup():
-    console.banner("Invalid Setup")
-    parent = py_trees.decorators.Decorator(
-        name="Decorator",
-        child=InvalidSetup(name="Invalid Setup")
-    )
-    print("\n--------- Assertions ---------\n")
-    print("TypeError is raised")
-    with assert_raises(TypeError) as context:
-        parent.setup(timeout=15)
-    print("TypeError has message with substring 'NoneType'")
-    assert("NoneType" in str(context.exception))
 
 
 def test_failure_is_success_tree():

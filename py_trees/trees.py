@@ -193,16 +193,17 @@ class BehaviourTree(object):
         """
          Relays to calling the :meth:`~py_trees.behaviour.Behaviour.setup` method
          on the root behaviour. This in turn should get recursively called down through
-         the entire tree.
+         the entire tree (if it does not, a behaviour with children has not 
+         recursively called :meth:`~py_trees.behaviour.Behaviour.setup` on each of it's
+         children as it should).
 
         Args:
             timeout (:obj:`float`): time to wait (use common.Duration.INFINITE to block indefinitely)
 
-
-        Return:
-            :obj:`bool`: suceess or failure of the operation
+        Raises:
+            Exception: be ready to catch if any of the behaviours raise an exception
         """
-        return self.root.setup(timeout)
+        self.root.setup(timeout)
 
     def tick(self, pre_tick_handler=None, post_tick_handler=None):
         """

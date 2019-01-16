@@ -75,21 +75,34 @@ class Behaviour(object):
 
     def setup(self, timeout):
         """
-        Subclasses may override this method to do any one-time delayed construction that
-        is necessary for runtime. This is best done here rather than in the constructor
-        so that trees can be instantiated on the fly without any severe runtime requirements
-        (e.g. a hardware sensor) on any pc to produce visualisations such as dot graphs.
+        Subclasses may override this method to do any one-off delayed construction &
+        validation that is necessary prior to ticking the tree. Such construction is best
+        done here rather than in __init__ so that trees can be instantiated on the fly for
+        easy rendering to dot graphs without imposing runtime requirements (e.g. establishing
+        a middleware connection to a sensor).
+        
+        Equally as important, executing methods here which validate the configuration of
+        behaviours will help increase confidence that your tree will successfully tick
+        without logical software errors before actually ticking. This is useful both
+        before a tree's first tick and immediately after any modifications to a tree
+        has been made between ticks.
+        
+        .. tip::
 
+           * If there are children, be sure to recursively call this function on each one so
+             that a single setup invocation at the root of a tree will traverse the entire tree.
+           * Faults are notified to the user of the behaviour via exceptions. Choice of exception to
+             use is left to the user.
+        
         .. note:: User Customisable Callback
 
         Args:
-            timeout (:obj:`float`): time to wait (use common.Duration.INFINITE to block indefinitely)
+            timeout (:obj:`float`): time (s) to wait (use common.Duration.INFINITE to block indefinitely)
 
-        Returns:
-            :obj:`bool`: whether it timed out trying to setup
+        Raises:
+            Exception: if this behaviour has a fault in construction or configuration
         """
         del timeout  # Unused argument
-        return True
 
     def initialise(self):
         """
@@ -239,6 +252,9 @@ class Behaviour(object):
 
         Yields:
             :class:`~py_trees.behaviour.Behaviour`: a reference to itself
+
+        .. warning:: Override this method only in exceptional circumstances, prefer overriding :meth:`~py_trees.behaviour.Behaviour.update` instead.
+
         """
         self.logger.debug("%s.tick()" % (self.__class__.__name__))
         if self.status != Status.RUNNING:
@@ -286,7 +302,7 @@ class Behaviour(object):
         generator. It will finally set the new status once the user's :meth:`~py_trees.behaviour.Behaviour.terminate`
         function has been called.
 
-        .. warning:: Do not use this method, override :meth:`~py_trees.behaviour.Behaviour.terminate` instead.
+        .. warning:: Override this method only in exceptional circumstances, prefer overriding :meth:`~py_trees.behaviour.Behaviour.terminate` instead.
         """
         self.logger.debug("%s.stop(%s)" % (self.__class__.__name__, "%s->%s" % (self.status, new_status) if self.status != new_status else "%s" % new_status))
         self.terminate(new_status)
