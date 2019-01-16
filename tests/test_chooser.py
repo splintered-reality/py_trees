@@ -32,7 +32,7 @@ def test_low_priority_runner():
     root.add_child(running)
     py_trees.display.print_ascii_tree(root)
     visitor = py_trees.visitors.DebugVisitor()
-    py_trees.tests.tick_tree(root, 1, 1, visitor)
+    py_trees.tests.tick_tree(root, 1, 1, visitors=[visitor])
 
     print("\n--------- Assertions ---------\n")
     print("root.status == py_trees.common.Status.RUNNING")
@@ -42,7 +42,7 @@ def test_low_priority_runner():
     print("running.status == py_trees.common.Status.RUNNING")
     assert(running.status == py_trees.common.Status.RUNNING)
 
-    py_trees.tests.tick_tree(root, 2, 2, visitor)
+    py_trees.tests.tick_tree(root, 2, 2, visitors=[visitor])
 
     print("\n--------- Assertions ---------\n")
     print("root.status == py_trees.common.Status.RUNNING")
@@ -62,7 +62,7 @@ def test_low_priority_success():
     root.add_child(success)
     py_trees.display.print_ascii_tree(root)
     visitor = py_trees.visitors.DebugVisitor()
-    py_trees.tests.tick_tree(root, 1, 1, visitor)
+    py_trees.tests.tick_tree(root, 1, 1, visitors=[visitor])
 
     print("\n--------- Assertions ---------\n")
     print("root.status == py_trees.common.Status.SUCCESS")
@@ -72,7 +72,7 @@ def test_low_priority_success():
     print("success.status == py_trees.common.Status.SUCCESS")
     assert(success.status == py_trees.common.Status.SUCCESS)
 
-    py_trees.tests.tick_tree(root, 2, 2, visitor)
+    py_trees.tests.tick_tree(root, 2, 2, visitors=[visitor])
 
     # make sure both children are ticked again (different to above)
     print("\n--------- Assertions ---------\n")
@@ -93,7 +93,7 @@ def test_higher_priority_ignore():
     root.add_child(running)
     py_trees.display.print_ascii_tree(root)
     visitor = py_trees.visitors.DebugVisitor()
-    py_trees.tests.tick_tree(root, 1, 1, visitor)
+    py_trees.tests.tick_tree(root, 1, 1, visitors=[visitor])
 
     print("\n--------- Assertions ---------\n")
     print("root.status == py_trees.common.Status.RUNNING")
@@ -103,7 +103,7 @@ def test_higher_priority_ignore():
     print("running.status == py_trees.common.Status.RUNNING")
     assert(running.status == py_trees.common.Status.RUNNING)
 
-    py_trees.tests.tick_tree(root, 2, 2, visitor)
+    py_trees.tests.tick_tree(root, 2, 2, visitors=[visitor])
 
     print("\n--------- Assertions ---------\n")
     print("root.status == py_trees.common.Status.RUNNING")

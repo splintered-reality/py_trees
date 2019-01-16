@@ -56,8 +56,7 @@ py_trees.common
     :show-inheritance:
 
 .. autoclass:: py_trees.common.ParallelPolicy
-    :members: SUCCESS_ON_ALL, SUCCESS_ON_ONE
-    :show-inheritance:
+    :members: SuccessOnAll, SuccessOnOne, SuccessOnSelected
 
 .. autoclass:: py_trees.common.Status
     :members: SUCCESS, FAILURE, RUNNING, INVALID

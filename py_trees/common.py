@@ -22,9 +22,6 @@ import math
 # Status
 ##############################################################################
 
-# """ An enumerator representing the status of a behaviour """
-# Status = Enum('Status', 'SUCCESS FAILURE RUNNING INVALID')
-
 
 class Status(enum.Enum):
     """An enumerator representing the status of a behaviour """
@@ -39,13 +36,63 @@ class Status(enum.Enum):
     """Behaviour is uninitialised and inactive, i.e. this is the status before first entry, and after a higher priority switch has occurred."""
 
 
-class ParallelPolicy(enum.Enum):
-    """Policy rules for :py:class:`~py_trees.composites.Parallel` composites."""
+class ParallelPolicy(object):
+    """
+    Configurable policies for :py:class:`~py_trees.composites.Parallel` behaviours.
+    """
+    class Base(object):
+        """
+        Base class for parallel policies. Should never be used directly.
+        """
+        def __init__(self, synchronise=False):
+            """
+            Default policy configuration.
 
-    SUCCESS_ON_ALL = "SUCCESS_ON_ALL"
-    """:py:data:`~py_trees.common.Status.SUCCESS` only when each and every child returns :py:data:`~py_trees.common.Status.SUCCESS`."""
-    SUCCESS_ON_ONE = "SUCCESS_ON_ONE"
-    """:py:data:`~py_trees.common.Status.SUCCESS` so long as at least one child has :py:data:`~py_trees.common.Status.SUCCESS` and the remainder are :py:data:`~py_trees.common.Status.RUNNING`"""
+            Args:
+                synchronise (:obj:`bool`): stop ticking of children with status :py:data:`~py_trees.common.Status.SUCCESS` until the policy criteria is met
+            """
+            self.synchronise = synchronise
+
+    class SuccessOnAll(Base):
+        """
+        Return :py:data:`~py_trees.common.Status.SUCCESS` only when each and every child returns
+        :py:data:`~py_trees.common.Status.SUCCESS`.
+        """
+        def __init__(self, synchronise=True):
+            """
+            Policy configuration.
+
+            Args:
+                synchronise (:obj:`bool`): stop ticking of children with status :py:data:`~py_trees.common.Status.SUCCESS` until the policy criteria is met
+            """
+            super().__init__(synchronise=synchronise)
+
+    class SuccessOnOne(Base):
+        """
+        Return :py:data:`~py_trees.common.Status.SUCCESS` so long as at least one child has :py:data:`~py_trees.common.Status.SUCCESS`
+        and the remainder are :py:data:`~py_trees.common.Status.RUNNING`
+        """
+        def __init__(self):
+            """
+            No configuration necessary for this policy.
+            """
+            super().__init__(synchronise=False)
+
+    class SuccessOnSelected(Base):
+        """
+        Retrun :py:data:`~py_trees.common.Status.SUCCESS` so long as each child in a specified list returns
+        :py:data:`~py_trees.common.Status.SUCCESS`.
+        """
+        def __init__(self, children, synchronise=True):
+            """
+            Policy configuraiton.
+
+            Args:
+                children ([:class:`~py_trees.behaviour.Behaviour`]): list of children to succeed on
+                synchronise (:obj:`bool`): stop ticking of children with status :py:data:`~py_trees.common.Status.SUCCESS` until the policy criteria is met
+            """
+            super().__init__(synchronise=synchronise)
+            self.children = children
 
 
 class OneShotPolicy(enum.Enum):

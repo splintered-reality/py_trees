@@ -114,7 +114,7 @@ class ContextSwitch(py_trees.behaviour.Behaviour):
 
 
 def create_tree():
-    root = py_trees.composites.Parallel(name="Parallel", policy=py_trees.common.ParallelPolicy.SUCCESS_ON_ONE)
+    root = py_trees.composites.Parallel(name="Parallel", policy=py_trees.common.ParallelPolicy.SuccessOnOne())
     context_switch = ContextSwitch(name="Context")
     sequence = py_trees.composites.Sequence(name="Sequence")
     for job in ["Action 1", "Action 2"]:

@@ -34,7 +34,8 @@ def pre_tick_visitor(behaviour_tree):
 def tick_tree(tree,
               from_tick,
               to_tick,
-              visitor=None,
+              *,
+              visitors=[],
               print_snapshot=False,
               print_blackboard=False
               ):
@@ -42,7 +43,7 @@ def tick_tree(tree,
     for i in range(from_tick, to_tick + 1):
         print(("\n--------- Run %s ---------\n" % i))
         for node in tree.tick():
-            if visitor is not None:
+            for visitor in visitors:
                 node.visit(visitor)
     if print_snapshot:
         print(console.green + "\nAscii Tree Snapshot" + console.reset)

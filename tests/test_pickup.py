@@ -49,7 +49,7 @@ def test_high_priority_interrupt():
 
     py_trees.display.print_ascii_tree(root)
     visitor = py_trees.visitors.DebugVisitor()
-    py_trees.tests.tick_tree(root, 1, 3, visitor)
+    py_trees.tests.tick_tree(root, 1, 3, visitors=[visitor])
     print()
 
     print("\n--------- Assertions ---------\n")
@@ -62,7 +62,7 @@ def test_high_priority_interrupt():
     print("task_two.status == py_trees.common.Status.RUNNING")
     assert(task_two.status == py_trees.common.Status.RUNNING)
 
-    py_trees.tests.tick_tree(root, 4, 5, visitor)
+    py_trees.tests.tick_tree(root, 4, 5, visitors=[visitor])
 
     print("\n--------- Assertions ---------\n")
     print("high_priority_interrupt.status == py_trees.common.Status.SUCCESS")
@@ -74,7 +74,7 @@ def test_high_priority_interrupt():
     print("task_two.status == py_trees.common.Status.INVALID")
     assert(task_two.status == py_trees.common.Status.INVALID)
 
-    py_trees.tests.tick_tree(root, 6, 8, visitor)
+    py_trees.tests.tick_tree(root, 6, 8, visitors=[visitor])
 
     print("\n--------- Assertions ---------\n")
     print("high_priority_interrupt.status == py_trees.common.Status.FAILURE")
