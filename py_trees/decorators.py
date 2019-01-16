@@ -112,27 +112,19 @@ class Decorator(behaviour.Behaviour):
         # Give a convenient alias
         self.decorated = self.children[0]
 
-    def setup(self, timeout):
+    def setup(self, timeout: float):
         """
         Relays to the decorated child's :meth:`~py_trees.behaviour.Behaviour.setup`
         method.
 
         Args:
-            timeout (:obj:`float`): time to wait (use common.Duration.INFINITE to block indefinitely)
+            timeout (:obj:`float`): time (s) to wait (use common.Duration.INFINITE to block indefinitely)
 
         Raises:
-            TypeError: if children's setup methods fail to return a boolean
-
-        Return:
-            :obj:`bool`: suceess or failure of the operation
+            Exception: be ready to catch if any the decorated child raises an exception
         """
         self.logger.debug("%s.setup()" % (self.__class__.__name__))
-        result = self.decorated.setup(timeout)
-        if type(result) != bool:
-            message = "invalid return type from child's setup method (should be bool) [child:'{}'][type:'{}']".format(
-                self.decorated.name, type(result))
-            raise TypeError(message)
-        return result
+        self.decorated.setup(timeout)
 
     def tick(self):
         """

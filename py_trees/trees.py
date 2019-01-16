@@ -61,12 +61,12 @@ class BehaviourTree(object):
         post_tick_handlers ([:obj:`func`]): functions that run after the entire tree is ticked
 
     Raises:
-        AssertionError: if incoming root variable is not the correct type
+        TypeError: if incoming root variable is not an instance of :class:`~py_trees.behaviour.Behaviour`
     """
-    def __init__(self, root):
+    def __init__(self, root: behaviour.Behaviour):
         self.count = 0
-        assert root is not None, "root node must not be 'None'"
-        assert isinstance(root, behaviour.Behaviour), "root node must be an instance of or descendant of pytrees.behaviour.Behaviour"
+        if not isinstance(root, behaviour.Behaviour):
+            raise TypeError("root node must be an instance of 'py_trees.behaviour.Behaviour' [{}]".format(type(root)))
         self.root = root
         self.visitors = []
         self.pre_tick_handlers = []
@@ -117,9 +117,10 @@ class BehaviourTree(object):
             :obj:`bool`: success or failure of the operation
 
         Raises:
-            AssertionError: if unique id is the behaviour tree's root node id
+            RuntimeError: if unique id is the behaviour tree's root node id
         """
-        assert self.root.id != unique_id, "may not prune the root node"
+        if self.root.id == unique_id:
+            raise RuntimeError("may not prune the root node")
         for child in self.root.iterate():
             if child.id == unique_id:
                 parent = child.parent
@@ -146,7 +147,7 @@ class BehaviourTree(object):
             :obj:`bool`: suceess or failure (parent not found) of the operation
 
         Raises:
-            AssertionError: if the parent is not a :class:`~py_trees.composites.Composite`
+            TypeError: if the parent is not a :class:`~py_trees.composites.Composite`
 
         .. todo::
 
@@ -156,7 +157,8 @@ class BehaviourTree(object):
         """
         for node in self.root.iterate():
             if node.id == unique_id:
-                assert isinstance(node, composites.Composite), "parent must be a Composite behaviour."
+                if not isinstance(node, composites.Composite):
+                    raise TypeError("parent must be a Composite behaviour.")
                 node.insert_child(child, index)
                 if self.tree_update_handler is not None:
                     self.tree_update_handler(self.root)
@@ -178,7 +180,8 @@ class BehaviourTree(object):
         Returns:
             :obj:`bool`: suceess or failure of the operation
         """
-        assert self.root.id != unique_id, "may not replace the root node"
+        if self.root.id == unique_id:
+            raise RuntimeError("may not replace the root node")
         for child in self.root.iterate():
             if child.id == unique_id:
                 parent = child.parent
@@ -193,16 +196,17 @@ class BehaviourTree(object):
         """
          Relays to calling the :meth:`~py_trees.behaviour.Behaviour.setup` method
          on the root behaviour. This in turn should get recursively called down through
-         the entire tree.
+         the entire tree (if it does not, a behaviour with children has not 
+         recursively called :meth:`~py_trees.behaviour.Behaviour.setup` on each of it's
+         children as it should).
 
         Args:
             timeout (:obj:`float`): time to wait (use common.Duration.INFINITE to block indefinitely)
 
-
-        Return:
-            :obj:`bool`: suceess or failure of the operation
+        Raises:
+            Exception: be ready to catch if any of the behaviours raise an exception
         """
-        return self.root.setup(timeout)
+        self.root.setup(timeout)
 
     def tick(self, pre_tick_handler=None, post_tick_handler=None):
         """

@@ -8,6 +8,8 @@
 # Imports
 ##############################################################################
 
+import nose.tools
+
 import py_trees
 import py_trees.console as console
 
@@ -21,35 +23,8 @@ py_trees.logging.level = py_trees.logging.Level.DEBUG
 logger = py_trees.logging.Logger("Nosetest")
 
 ##############################################################################
-# Classes
-##############################################################################
-
-
-class InvalidSetup(py_trees.behaviour.Behaviour):
-    def setup(self, timeout):
-        # A common mistake is to forget to return a boolean value
-        # Composite behaviours will at least check to make sure that
-        # their children do so and raise TypeError's if they fail
-        # to do so.
-        pass
-
-##############################################################################
 # Tests
 ##############################################################################
-
-
-def test_invalid_setup():
-    console.banner("Invalid Setup")
-    parent = py_trees.composites.Sequence(name="Parent")
-    child = InvalidSetup(name="Invalid Setup")
-    parent.add_child(child)
-    print("\n--------- Assertions ---------\n")
-    print("TypeError is raised")
-    with assert_raises(TypeError) as context:
-        parent.setup(timeout=15)
-    print("TypeError has message with substring 'NoneType'")
-    assert("NoneType" in str(context.exception))
-
 
 def test_replacing_children():
     console.banner("Replacing Children")
@@ -82,3 +57,12 @@ def test_removing_children():
     parent.add_child(child)
     parent.remove_all_children()
     assert(child.parent is None)
+
+def test_composite_errors():
+    console.banner("Timer Errors")
+    root = py_trees.composites.Selector()
+    print("add_child raises a 'TypeError' due to not being an instance of Behaviour")
+    with nose.tools.assert_raises(TypeError) as context:
+        root.add_child(5.0)
+        print("TypeError has message with substring 'behaviours'")
+        assert("behaviours" in str(context.exception))

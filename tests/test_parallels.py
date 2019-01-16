@@ -209,9 +209,11 @@ def test_parallel_success_on_selected_invalid_configuration():
         print(console.cyan + "Parallel Children: " + console.yellow + str([c.name for c in parallel.children]) + console.reset)
         parallel.policy = policy
         print("\n--------- Assertions ---------\n")
-        print("setup() returns 'False' due to invalid configuration")
-        result = parallel.setup(timeout=5.0)
-        assert(not result)
+        print("setup() raises a 'RuntimeError' due to invalid configuration")
+        with nose.tools.assert_raises(RuntimeError) as context:
+            parallel.setup(timeout=15)
+            print("RuntimeError has message with substring 'SuccessOnSelected'")
+            assert("SuccessOnSelected" in str(context.exception))
         print("initialise() raises a 'RuntimeError' due to invalid configuration")
         with nose.tools.assert_raises(RuntimeError) as context:
             parallel.tick_once()

@@ -122,7 +122,6 @@ class Action(py_trees.behaviour.Behaviour):
         self.planning = multiprocessing.Process(target=planning, args=(self.child_connection,))
         atexit.register(self.planning.terminate)
         self.planning.start()
-        return True
 
     def initialise(self):
         """

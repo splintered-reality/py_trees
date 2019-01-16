@@ -86,7 +86,6 @@ class Counter(py_trees.behaviour.Behaviour):
         No delayed initialisation required for this example.
         """
         self.logger.debug("%s.setup()" % (self.__class__.__name__))
-        return True
 
     def initialise(self):
         """

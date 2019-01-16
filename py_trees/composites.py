@@ -69,30 +69,20 @@ class Composite(behaviour.Behaviour):
     ############################################
     # Worker Overrides
     ############################################
-    def setup(self, timeout):
+    def setup(self, timeout: float):
         """
-        Relays to each child's :meth:`~py_trees.behaviour.Behaviour.setup` method in turn.
+        Relays to each child's :meth:`~py_trees.behaviour.Behaviour.setup` method in turn, but
+        does not do any construction or validation itself.
 
         Args:
-            timeout (:obj:`float`): time to wait (use common.Duration.INFINITE to block indefinitely)
+            timeout (:obj:`float`): time (s) to wait (use common.Duration.INFINITE to block indefinitely)
 
         Raises:
-            TypeError: if children's setup methods fail to return a boolean
-
-        Return:
-            :obj:`bool`: suceess or failure of the operation
+            Exception: be ready to catch if any of the children raise an exception
         """
         self.logger.debug("%s.setup()" % (self.__class__.__name__))
-        result = True
         for child in self.children:
-            new_result = child.setup(timeout)
-            if type(new_result) != bool:
-                message = "invalid return type from child's setup method (should be bool) [child:'{}'][type:'{}']".format(child.name, type(new_result))
-                raise TypeError(message)
-            result = result and new_result
-            if not result:
-                break
-        return result
+            child.setup(timeout)
 
     def stop(self, new_status=Status.INVALID):
         """
@@ -137,10 +127,14 @@ class Composite(behaviour.Behaviour):
         Args:
             child (:class:`~py_trees.behaviour.Behaviour`): child to add
 
+        Raises:
+            TypeError: if the provided child is not an instance of :class:`~py_trees.behaviour.Behaviour`
+
         Returns:
             uuid.UUID: unique id of the child
         """
-        assert isinstance(child, behaviour.Behaviour), "children must be behaviours, but you passed in %s" % type(child)
+        if not isinstance(child, behaviour.Behaviour):
+            raise TypeError("children must be behaviours, but you passed in {}".format(type(child)))
         self.children.append(child)
         child.parent = self
         return child.id
@@ -570,9 +564,7 @@ class Parallel(Composite):
     construction and even dynamically between ticks.
 
     .. seealso::
-
-       The :ref:`py-trees-demo-context-switching-program` program demos a
-       parallel used to assist in a context switching scenario.
+       * :ref:`Context Switching Demo <py-trees-demo-context-switching-program>`
     """
     def __init__(self,
                  name: str="Parallel",
@@ -593,16 +585,13 @@ class Parallel(Composite):
         Detect before ticking whether the policy configuration is invalid.
 
         Args:
-            timeout (:obj:`float`): time to wait (0.0 is blocking forever)
+            timeout (:obj:`float`): time (s) to wait (use common.Duration.INFINITE to block indefinitely)
 
-        Returns:
-            :obj:`bool`: whether it timed out trying to setup
+        Raises:
+            RuntimeError: if the parallel's policy configuration is invalid
+            Exception: be ready to catch if any of the children raise an exception
         """
-        try:
-            self.validate_policy_configuration()
-        except RuntimeError as unused_e:
-            return False
-        return True
+        self.validate_policy_configuration()
 
     def tick(self):
         """
