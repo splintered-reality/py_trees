@@ -31,13 +31,15 @@ class Foo(py_trees.Behaviour):
 
         What to do here?
           Delayed one-time initialisation that would otherwise interfere
-          with offline rendering of this behaviour in a tree to dot graph.
+          with offline rendering of this behaviour in a tree to dot graph
+          or validation of the behaviour's configuration.
+          
           Good examples include:
+          
           - Hardware or driver initialisation
           - Middleware initialisation (e.g. ROS pubs/subs/services)
-          Validation of the behaviour's configuration if such validation
-          cannot be ensured in __init__ (for example, children may
-          have been added or removed, policies switched).
+          - A parallel checking for a valid policy configuration after
+            children have been added or removed
         """
         self.logger.debug("  %s [Foo::setup()]" % self.name)
 
