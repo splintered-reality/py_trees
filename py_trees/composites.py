@@ -650,7 +650,7 @@ class Parallel(Composite):
     def current_child(self):
         """
         In some cases it's clear what the current child is, in others, there
-        is an ambiguity as multipe could exist. If the latter is true, it
+        is an ambiguity as multiple could exist. If the latter is true, it
         will return the child relevant farthest down the list.
 
         Returns:
