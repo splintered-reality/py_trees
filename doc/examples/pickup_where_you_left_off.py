@@ -15,7 +15,7 @@ if __name__ == '__main__':
         running_until=2,
         success_until=10
     )
-    high_priority_interrupt = py_trees.meta.running_is_failure(
+    high_priority_interrupt = py_trees.decorators.RunningIsFailure(
         py_trees.behaviours.Periodic)(
         name="High Priority",
         n=3

@@ -112,7 +112,7 @@ class SuccessEveryN(Behaviour):
 
     .. tip::
        Use with decorators to change the status value as desired, e.g.
-       :meth:`py_trees.meta.failure_is_running`
+       :meth:`py_trees.decorators.FailureIsRunning`
     """
     def __init__(self, name, n):
         super(SuccessEveryN, self).__init__(name)
