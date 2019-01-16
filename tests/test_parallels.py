@@ -123,7 +123,6 @@ def test_parallel_success_on_one():
     py_trees.tests.tick_tree(root, 1, 1, visitors=[visitor], print_snapshot=True)
 
     print("\n--------- Assertions ---------\n")
-    print("All children get switched to success if one goes to success.")
     print("root.status == py_trees.common.Status.SUCCESS")
     assert(root.status == py_trees.common.Status.SUCCESS)
     print("running1.status == py_trees.common.Status.INVALID")
@@ -162,7 +161,6 @@ def test_parallel_success_on_selected():
 
     py_trees.tests.tick_tree(root, 1, 1, visitors=[visitor], print_snapshot=True)
     print("\n--------- Assertions ---------\n")
-    print("All children get switched to success if one goes to success.")
     print("root.status == py_trees.common.Status.RUNNING")
     assert(root.status == py_trees.common.Status.RUNNING)
     print("running1.status == py_trees.common.Status.RUNNING")
@@ -176,7 +174,6 @@ def test_parallel_success_on_selected():
 
     py_trees.tests.tick_tree(root, 2, 3, visitors=[visitor], print_snapshot=True)
     print("\n--------- Assertions ---------\n")
-    print("All children get switched to success if one goes to success.")
     print("root.status == py_trees.common.Status.SUCCESS")
     assert(root.status == py_trees.common.Status.SUCCESS)
     print("running1.status == py_trees.common.Status.INVALID")
@@ -252,7 +249,6 @@ def test_parallel_synchronisation():
     assert(success.status == py_trees.common.Status.SUCCESS)
     print("success_every_second.status == py_trees.common.Status.RUNNING")
     assert(success_every_second.status == py_trees.common.Status.RUNNING)
-    print("success [id: {}] did not get ticked [snapshot: {}]".format(success.id, snapshot_visitor.nodes.keys()))
 
     snapshot_visitor.initialise()
     py_trees.tests.tick_tree(

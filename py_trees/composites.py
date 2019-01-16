@@ -642,6 +642,8 @@ class Parallel(Composite):
             elif type(self.policy) is common.ParallelPolicy.SuccessOnSelected:
                 if all([c.status == common.Status.SUCCESS for c in self.policy.children]):
                     new_status = common.Status.SUCCESS
+            else:
+                raise RuntimeError("this parallel has been configured with an unrecognised policy [{}]".format(type(self.policy)))
         # this parallel may have children that are still running
         # so if the parallel itself has reached a final status, then
         # these running children need to be terminated so they don't dangle
