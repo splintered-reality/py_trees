@@ -8,6 +8,8 @@
 # Imports
 ##############################################################################
 
+import nose.tools
+
 import py_trees
 import py_trees.console as console
 
@@ -55,3 +57,12 @@ def test_removing_children():
     parent.add_child(child)
     parent.remove_all_children()
     assert(child.parent is None)
+
+def test_composite_errors():
+    console.banner("Timer Errors")
+    root = py_trees.composites.Selector()
+    print("add_child raises a 'TypeError' due to not being an instance of Behaviour")
+    with nose.tools.assert_raises(TypeError) as context:
+        root.add_child(5.0)
+        print("TypeError has message with substring 'behaviours'")
+        assert("behaviours" in str(context.exception))

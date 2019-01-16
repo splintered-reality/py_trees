@@ -8,6 +8,8 @@
 # Imports
 ##############################################################################
 
+import nose.tools
+
 import py_trees
 import py_trees.console as console
 
@@ -472,3 +474,40 @@ def test_failed_tree():
     assert(root.tip().name == "Failure 3")
 
     # TODO failed sequence tree
+
+def test_tree_errors():
+    console.banner("Tree Errors")
+    root = 5.0
+    print("__init__ raises a 'TypeError' due to invalid root variable type being passed")
+    with nose.tools.assert_raises(TypeError) as context:
+        tree = py_trees.trees.BehaviourTree(root)
+        print("TypeError has message with substring 'must be an instance of'")
+        assert("must be an instance of" in str(context.exception))
+    
+    root = py_trees.behaviours.Success()
+    print("__init__ raises a 'RuntimeError' because we try to prune the root node")
+    with nose.tools.assert_raises(RuntimeError) as context:
+        tree = py_trees.trees.BehaviourTree(root)
+        tree.prune_subtree(root.id)
+        print("RuntimeError has message with substring 'prune'")
+        assert("prune" in str(context.exception))
+
+    root = py_trees.behaviours.Success()
+    new_subtree = py_trees.behaviours.Success()
+    print("__init__ raises a 'RuntimeError' because we try to replace the root node")
+    with nose.tools.assert_raises(RuntimeError) as context:
+        tree = py_trees.trees.BehaviourTree(root)
+        tree.replace_subtree(root.id, new_subtree)
+        print("RuntimeError has message with substring 'replace'")
+        assert("replace" in str(context.exception))
+
+    root = py_trees.behaviours.Success()
+    new_subtree = py_trees.behaviours.Success()
+    print("__init__ raises a 'TypeError' because we try to insert a subtree beneath a standalone behaviour")
+    with nose.tools.assert_raises(TypeError) as context:
+        tree = py_trees.trees.BehaviourTree(root)
+        tree.insert_subtree(child=new_subtree, unique_id=root.id, index=0)
+        print("TypeError has message with substring 'Composite'")
+        assert("Composite" in str(context.exception))
+    
+    

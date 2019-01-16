@@ -43,6 +43,9 @@ class Behaviour(object):
         *args: variable length argument list.
         **kwargs: arbitrary keyword arguments.
 
+    Raises:
+        TypeError: if the provided name is not a string
+
     Attributes:
         name (:obj:`str`): the behaviour name
         status (:class:`~py_trees.common.Status`): the behaviour status (:data:`~py_trees.common.Status.INVALID`, :data:`~py_trees.common.Status.RUNNING`, :data:`~py_trees.common.Status.FAILURE`, :data:`~py_trees.common.Status.SUCCESS`)
@@ -58,7 +61,8 @@ class Behaviour(object):
 
     """
     def __init__(self, name="", *args, **kwargs):
-        assert isinstance(name, str), "a behaviour name should be a string, but you passed in %s" % type(name)
+        if not isinstance(name, str):
+            raise TypeError("a behaviour name should be a string, but you passed in {}".format(type(name)))
         self.id = uuid.uuid4()  # used to uniquely identify this node (helps with removing children from a tree)
         self.name = name
         self.status = Status.INVALID

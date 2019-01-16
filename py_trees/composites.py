@@ -127,10 +127,14 @@ class Composite(behaviour.Behaviour):
         Args:
             child (:class:`~py_trees.behaviour.Behaviour`): child to add
 
+        Raises:
+            TypeError: if the provided child is not an instance of :class:`~py_trees.behaviour.Behaviour`
+
         Returns:
             uuid.UUID: unique id of the child
         """
-        assert isinstance(child, behaviour.Behaviour), "children must be behaviours, but you passed in %s" % type(child)
+        if not isinstance(child, behaviour.Behaviour):
+            raise TypeError("children must be behaviours, but you passed in {}".format(type(child)))
         self.children.append(child)
         child.parent = self
         return child.id
