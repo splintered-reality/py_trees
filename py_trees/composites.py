@@ -549,17 +549,30 @@ class Parallel(Composite):
 
     Ticks every child every time the parallel is run (a poor man's form of parallelism).
 
-    * Parallels will return :data:`~py_trees.common.Status.FAILURE` if any child returns :py:data:`~py_trees.common.Status.FAILURE`
-    * Parallels with policy :class:`~py_trees.common.ParallelPolicy.SuccessOnAll` only returns :py:data:`~py_trees.common.Status.SUCCESS` if **all** children return :py:data:`~py_trees.common.Status.SUCCESS`
-    * Parallels with policy :class:`~py_trees.common.ParallelPolicy.SuccessOnOne` return :py:data:`~py_trees.common.Status.SUCCESS` if **at least one** child returns :py:data:`~py_trees.common.Status.SUCCESS` and others are :py:data:`~py_trees.common.Status.RUNNING`
-    * Parallels with policy :class:`~py_trees.common.ParallelPolicy.SuccessOnSelected` only returns :py:data:`~py_trees.common.Status.SUCCESS` if a **specified subset** of children return :py:data:`~py_trees.common.Status.SUCCESS`
+    * Parallels will return :data:`~py_trees.common.Status.FAILURE` if any
+      child returns :py:data:`~py_trees.common.Status.FAILURE`
+    * Parallels with policy :class:`~py_trees.common.ParallelPolicy.SuccessOnAll`
+      only returns :py:data:`~py_trees.common.Status.SUCCESS` if **all** children
+      return :py:data:`~py_trees.common.Status.SUCCESS`
+    * Parallels with policy :class:`~py_trees.common.ParallelPolicy.SuccessOnOne`
+      return :py:data:`~py_trees.common.Status.SUCCESS` if **at least one** child
+      returns :py:data:`~py_trees.common.Status.SUCCESS` and others are
+      :py:data:`~py_trees.common.Status.RUNNING`
+    * Parallels with policy :class:`~py_trees.common.ParallelPolicy.SuccessOnSelected`
+      only returns :py:data:`~py_trees.common.Status.SUCCESS` if a **specified subset**
+      of children return :py:data:`~py_trees.common.Status.SUCCESS`
 
-    Parallels with policy :class:`~py_trees.common.ParallelPolicy.SuccessOnSelected` will validate themselves just-in-time at
-    :meth:`~py_trees.behaviour.Behaviour.setup` and :meth:`~py_trees.behaviour.Behaviour.initialise` time to check if the policy's
-    selected set of children is a subset of the children of this parallel. Doing this just-in-time is due to the fact that
-    the parallel's children may change after construction and even dynamically between ticks.
+    Parallels with policy :class:`~py_trees.common.ParallelPolicy.SuccessOnSelected` will
+    validate themselves just-in-time in the :meth:`~py_trees.behaviour.Behaviour.setup` and
+    :meth:`~py_trees.behaviour.Behaviour.tick` methods to check if the policy's
+    selected set of children is a subset of the children of this parallel. Doing this
+    just-in-time is due to the fact that the parallel's children may change after
+    construction and even dynamically between ticks.
 
-    .. seealso:: The :ref:`py-trees-demo-context-switching-program` program demos a parallel used to assist in a context switching scenario.
+    .. seealso::
+
+       The :ref:`py-trees-demo-context-switching-program` program demos a
+       parallel used to assist in a context switching scenario.
     """
     def __init__(self,
                  name: str="Parallel",
@@ -591,23 +604,18 @@ class Parallel(Composite):
             return False
         return True
 
-    def initialise(self):
-        """
-        Detect on behaviour entry whether the policy configuration is invalid.
-
-        Raises:
-            RuntimeError: if the policy configuration was invalid
-        """
-        self.validate_policy_configuration()
-
     def tick(self):
         """
         Tick over the children.
 
         Yields:
             :class:`~py_trees.behaviour.Behaviour`: a reference to itself or one of its children
+
+        Raises:
+            RuntimeError: if the policy configuration was invalid
         """
         self.logger.debug("%s.tick()" % self.__class__.__name__)
+        self.validate_policy_configuration()
         if self.status != common.Status.RUNNING:
             # invalidate all the children so synchronisation starts with a clean slate
             self.logger.debug("%s.tick(): re-initialising" % self.__class__.__name__)
@@ -688,11 +696,10 @@ class Parallel(Composite):
                                  "selection of children [{}]".format(self.name))
                 self.logger.error(error_message)
                 raise RuntimeError(error_message)
-            empty_list = [b for b in self.policy.children if b not in self.children]
+            missing_children_names = [child.name for child in self.policy.children if child not in self.children]
 
-            if empty_list:
-                children_names = [c.name for c in empty_list]
+            if missing_children_names:
                 error_message = ("policy SuccessOnSelected has selected behaviours that are "
-                                 "not children of this parallel {}[{}]""".format(children_names, self.name))
+                                 "not children of this parallel {}[{}]""".format(missing_children_names, self.name))
                 self.logger.error(error_message)
                 raise RuntimeError(error_message)
