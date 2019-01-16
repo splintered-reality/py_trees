@@ -33,7 +33,7 @@ def test_parallel_failure():
     root.add_child(success)
     py_trees.display.print_ascii_tree(root)
     visitor = py_trees.visitors.DebugVisitor()
-    py_trees.tests.tick_tree(root, 1, 1, visitor)
+    py_trees.tests.tick_tree(root, 1, 1, visitors=[visitor])
 
     print("\n--------- Assertions ---------\n")
     print("root.status == py_trees.common.Status.FAILURE")
@@ -53,7 +53,7 @@ def test_parallel_success():
     root.add_child(success2)
     py_trees.display.print_ascii_tree(root)
     visitor = py_trees.visitors.DebugVisitor()
-    py_trees.tests.tick_tree(root, 1, 1, visitor)
+    py_trees.tests.tick_tree(root, 1, 1, visitors=[visitor])
 
     print("\n--------- Assertions ---------\n")
     print("root.status == py_trees.common.Status.SUCCESS")
@@ -82,7 +82,7 @@ def test_parallel_running():
     root.add_child(success_every_other)
     py_trees.display.print_ascii_tree(root)
     visitor = py_trees.visitors.DebugVisitor()
-    py_trees.tests.tick_tree(root, 1, 1, visitor)
+    py_trees.tests.tick_tree(root, 1, 1, visitors=[visitor])
 
     print("\n--------- Assertions ---------\n")
     print("root.status == py_trees.common.Status.FAILURE")
@@ -94,7 +94,7 @@ def test_parallel_running():
     print("success_every_other.status == py_trees.common.Status.FAILURE")
     assert(success_every_other.status == py_trees.common.Status.FAILURE)
 
-    py_trees.tests.tick_tree(root, 2, 2, visitor)
+    py_trees.tests.tick_tree(root, 2, 2, visitors=[visitor])
 
     print("\n--------- Assertions ---------\n")
     print("root.status == py_trees.common.Status.RUNNING")
@@ -120,7 +120,7 @@ def test_parallel_success_on_one():
     root.add_child(running2)
     py_trees.display.print_ascii_tree(root)
     visitor = py_trees.visitors.DebugVisitor()
-    py_trees.tests.tick_tree(root, 1, 1, visitor, print_snapshot=True)
+    py_trees.tests.tick_tree(root, 1, 1, visitors=[visitor], print_snapshot=True)
 
     print("\n--------- Assertions ---------\n")
     print("All children get switched to success if one goes to success.")
@@ -160,7 +160,7 @@ def test_parallel_success_on_selected():
     py_trees.display.print_ascii_tree(root)
     visitor = py_trees.visitors.DebugVisitor()
 
-    py_trees.tests.tick_tree(root, 1, 1, visitor, print_snapshot=True)
+    py_trees.tests.tick_tree(root, 1, 1, visitors=[visitor], print_snapshot=True)
     print("\n--------- Assertions ---------\n")
     print("All children get switched to success if one goes to success.")
     print("root.status == py_trees.common.Status.RUNNING")
@@ -174,7 +174,7 @@ def test_parallel_success_on_selected():
     print("running2.status == py_trees.common.Status.RUNNING")
     assert(running2.status == py_trees.common.Status.RUNNING)
 
-    py_trees.tests.tick_tree(root, 2, 3, visitor, print_snapshot=True)
+    py_trees.tests.tick_tree(root, 2, 3, visitors=[visitor], print_snapshot=True)
     print("\n--------- Assertions ---------\n")
     print("All children get switched to success if one goes to success.")
     print("root.status == py_trees.common.Status.SUCCESS")
@@ -237,8 +237,13 @@ def test_parallel_synchronisation():
 
     root.add_children([success, success_every_second])
     py_trees.display.print_ascii_tree(root)
-    visitor = py_trees.visitors.DebugVisitor()
-    py_trees.tests.tick_tree(root, 1, 1, visitor, print_snapshot=True)
+    debug_visitor = py_trees.visitors.DebugVisitor()
+    snapshot_visitor = py_trees.visitors.SnapshotVisitor()
+    py_trees.tests.tick_tree(
+        root, 1, 1,
+        visitors=[debug_visitor, snapshot_visitor],
+        print_snapshot=True
+    )
 
     print("\n--------- Assertions ---------\n")
     print("root.status == py_trees.common.Status.RUNNING")
@@ -247,8 +252,14 @@ def test_parallel_synchronisation():
     assert(success.status == py_trees.common.Status.SUCCESS)
     print("success_every_second.status == py_trees.common.Status.RUNNING")
     assert(success_every_second.status == py_trees.common.Status.RUNNING)
+    print("success [id: {}] did not get ticked [snapshot: {}]".format(success.id, snapshot_visitor.nodes.keys()))
 
-    py_trees.tests.tick_tree(root, 2, 2, visitor, print_snapshot=True)
+    snapshot_visitor.initialise()
+    py_trees.tests.tick_tree(
+        root, 2, 2,
+        visitors=[debug_visitor, snapshot_visitor],
+        print_snapshot=True
+    )
 
     print("\n--------- Assertions ---------\n")
     print("root.status == py_trees.common.Status.SUCCESS")
@@ -257,9 +268,15 @@ def test_parallel_synchronisation():
     assert(success.status == py_trees.common.Status.SUCCESS)
     print("success_every_second.status == py_trees.common.Status.SUCCESS")
     assert(success_every_second.status == py_trees.common.Status.SUCCESS)
-    # check that succeess did not get ticked
+    print("success [id: {}] did not get ticked [snapshot: {}]".format(success.id, [str(ident) for ident in snapshot_visitor.nodes.keys()]))
+    assert(success.id not in snapshot_visitor.nodes)
 
-    py_trees.tests.tick_tree(root, 3, 3, visitor, print_snapshot=True)
+    snapshot_visitor.initialise()
+    py_trees.tests.tick_tree(
+        root, 3, 3,
+        visitors=[debug_visitor, snapshot_visitor],
+        print_snapshot=True
+    )
 
     print("\n--------- Assertions ---------\n")
     print("root.status == py_trees.common.Status.RUNNING")

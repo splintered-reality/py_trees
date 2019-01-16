@@ -107,7 +107,7 @@ class SnapshotVisitor(VisitorBase):
 
     def initialise(self):
         """
-        Switch running to previously running and then reset all other variables. This will
+        Switch running to previously running and then reset all other variables. This should
         get called before a tree ticks.
         """
         self.nodes = {}
