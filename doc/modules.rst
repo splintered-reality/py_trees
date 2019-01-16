@@ -47,6 +47,10 @@ py_trees.common
     :members: ON_INITIALISE, ON_SUCCESS, NEVER
     :show-inheritance:
 
+.. autoclass:: py_trees.common.Name
+    :members: AUTO_GENERATED
+    :show-inheritance:
+
 .. autoclass:: py_trees.common.ParallelPolicy
     :members: SUCCESS_ON_ALL, SUCCESS_ON_ONE
     :show-inheritance:
@@ -78,6 +82,15 @@ py_trees.console
 .. automodule:: py_trees.console
     :members:
     :synopsis: colour definitions and syntax highlighting for the console
+
+py_trees.decorators
+-------------------
+
+ .. automodule:: py_trees.decorators
+    :members:
+    :special-members:
+    :show-inheritance:
+    :synopsis: hats for behaviours
 
 py_trees.display
 ----------------

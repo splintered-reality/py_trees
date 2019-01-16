@@ -1,0 +1,14 @@
+digraph life {
+graph [fontname="times-roman"];
+node [fontname="times-roman"];
+edge [fontname="times-roman"];
+Life [fillcolor=orange, fontcolor=black, fontsize=11, shape=box, style=filled];
+Inverter [fillcolor=ghostwhite, fontcolor=black, fontsize=11, shape=ellipse, style=filled];
+Life -> Inverter;
+"Busy?" [fillcolor=gray, fontcolor=black, fontsize=11, shape=ellipse, style=filled];
+Inverter -> "Busy?";
+Timeout [fillcolor=ghostwhite, fontcolor=black, fontsize=11, shape=ellipse, style=filled];
+Life -> Timeout;
+"Have a Beer!" [fillcolor=gray, fontcolor=black, fontsize=11, shape=ellipse, style=filled];
+Timeout -> "Have a Beer!";
+}

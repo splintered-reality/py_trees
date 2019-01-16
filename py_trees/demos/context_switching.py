@@ -78,7 +78,7 @@ def command_line_argument_parser():
 class ContextSwitch(py_trees.behaviour.Behaviour):
     """
     An example of a context switching class that sets (in ``initialise()``)
-    and restores a context (in ``terminate()``. Use in parallel with a
+    and restores a context (in ``terminate()``). Use in parallel with a
     sequence/subtree that does the work while in this context.
 
     .. attention:: Simply setting a pair of behaviours (set and reset context) on

@@ -14,4 +14,4 @@ This package contains py_trees program script code.
 # Imports
 ##############################################################################
 
-from . import render
+from . import render  # noqa
