@@ -48,7 +48,7 @@ class ParallelPolicy(object):
             Default policy configuration.
 
             Args:
-                :obj:`bool`: block ticking of children with status :py:data:`~py_trees.common.Status.SUCCESS` until the policy criteria is met
+                synchronise (:obj:`bool`): stop ticking of children with status :py:data:`~py_trees.common.Status.SUCCESS` until the policy criteria is met
             """
             self.synchronise = synchronise
 
@@ -62,7 +62,7 @@ class ParallelPolicy(object):
             Policy configuration.
 
             Args:
-                :obj:`bool`: block ticking of children with status :py:data:`~py_trees.common.Status.SUCCESS` until the policy criteria is met
+                synchronise (:obj:`bool`): stop ticking of children with status :py:data:`~py_trees.common.Status.SUCCESS` until the policy criteria is met
             """
             super().__init__(synchronise=synchronise)
 
@@ -88,7 +88,7 @@ class ParallelPolicy(object):
 
             Args:
                 children ([:class:`~py_trees.behaviour.Behaviour`]): list of children to succeed on
-                :obj:`bool`: block ticking of children with status :py:data:`~py_trees.common.Status.SUCCESS` until the policy criteria is met
+                synchronise (:obj:`bool`): stop ticking of children with status :py:data:`~py_trees.common.Status.SUCCESS` until the policy criteria is met
             """
             super().__init__(synchronise=synchronise)
             self.children = children
