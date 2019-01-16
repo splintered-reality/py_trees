@@ -121,7 +121,7 @@ py_trees.meta
     :members:
     :special-members:
     :show-inheritance:
-    :synopsis: factories and decorators for behaviours
+    :synopsis: factories for behaviours
 
 py_trees.timers
 ---------------
