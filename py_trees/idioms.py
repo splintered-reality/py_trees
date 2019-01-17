@@ -27,7 +27,12 @@ from . import decorators
 ##############################################################################
 
 
-def pick_up_where_you_left_off(name, tasks):
+def pick_up_where_you_left_off(
+        name="Pickup Where You Left Off Idiom",
+        tasks=[behaviours.Dummy(name="Dummy1"),  # dummy behaviours to enable dot rendering with py-trees-render
+               behaviours.Dummy(name="Dummy1")
+               ]
+        ):
     """
     Rudely interrupted while enjoying a sandwich, a caveman (just because
     they wore loincloths does not mean they were not civilised), picks
@@ -91,7 +96,10 @@ def pick_up_where_you_left_off(name, tasks):
     return root
 
 
-def oneshot(name, variable_name, behaviour, policy=common.OneShotPolicy.ON_SUCCESSFUL_COMPLETION):
+def oneshot(name="OneShot Idiom",
+            variable_name="oneshot",
+            behaviour=behaviours.Dummy(),  # dummy behaviour to enable dot rendering with py-trees-render
+            policy=common.OneShotPolicy.ON_SUCCESSFUL_COMPLETION):
     """
     Ensure that a particular pattern is executed through to
     completion just once. Thereafter it will just rebound with success.

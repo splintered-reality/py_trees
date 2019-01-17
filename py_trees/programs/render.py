@@ -88,6 +88,7 @@ def command_line_argument_parser():
                         help='visibility level')
     parser.add_argument('-n', '--name', default=None, help='name to use for the created files (defaults to the root behaviour name)')
     parser.add_argument('-k', '--kwargs', default="{}", type=json.loads, help='dictionary of keyword arguments to the method')
+    parser.add_argument('-v', '--verbose', default=False, action='store_true', help="embellish each node in the dot graph with extra information")
     return parser
 
 
@@ -112,4 +113,9 @@ def main():
 
     # TODO figure out how to insert keyword arguments
     root = method_itself(**(args.kwargs))
-    py_trees.display.render_dot_tree(root, args.enum_level, args.name)
+    py_trees.display.render_dot_tree(
+        root,
+        args.enum_level,
+        args.name,
+        with_qualified_names=args.verbose
+    )
