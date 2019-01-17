@@ -60,7 +60,7 @@ class Behaviour(object):
        * :ref:`The Action Behaviour Demo <py-trees-demo-action-behaviour-program>`
 
     """
-    def __init__(self, name, *args, **kwargs):
+    def __init__(self, name=common.Name.AUTO_GENERATED, *args, **kwargs):
         if not name or name == common.Name.AUTO_GENERATED:
             name = self.__class__.__name__
         if not isinstance(name, str):
