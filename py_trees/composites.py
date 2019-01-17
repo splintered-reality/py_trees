@@ -58,7 +58,12 @@ class Composite(behaviour.Behaviour):
         *args: variable length argument list
         **kwargs: arbitrary keyword arguments
     """
-    def __init__(self, name, children=None, *args, **kwargs):
+    def __init__(self,
+                 name: str=common.Name.AUTO_GENERATED,
+                 children=None,
+                 *args,
+                 **kwargs
+                 ):
         super(Composite, self).__init__(name, *args, **kwargs)
         if children is not None:
             for child in children:
@@ -591,7 +596,6 @@ class Parallel(Composite):
             RuntimeError: if the parallel's policy configuration is invalid
             Exception: be ready to catch if any of the children raise an exception
         """
-        del timeout  # unused parameter
         self.validate_policy_configuration()
 
     def tick(self):

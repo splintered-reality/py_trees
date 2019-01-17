@@ -231,7 +231,7 @@ def generate_pydot_graph(root, visibility_level, collapse_decorators, with_quali
         root (:class:`~py_trees.behaviour.Behaviour`): the root of a tree, or subtree
         visibility_level (:class`~py_trees.common.VisibilityLevel`): collapse subtrees at or under this level
         collapse_decorators (:obj:`bool`): only show the decorator (not the child)
-        with_class_names: (:obj:`bool`): print the class information for each behaviour in each node
+        with_qualified_names: (:obj:`bool`): print the class information for each behaviour in each node
 
     Returns:
         pydot.Dot: graph
