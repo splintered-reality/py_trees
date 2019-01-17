@@ -19,7 +19,7 @@ import os
 import re
 
 ##############################################################################
-# System OS Tools
+# System Tools
 ##############################################################################
 
 
@@ -49,6 +49,7 @@ def which(program):
 
     return None
 
+
 def get_valid_filename(s: str) -> str:
     """
     Return the given string converted to a string that can be used for a clean
@@ -70,13 +71,37 @@ def get_valid_filename(s: str) -> str:
     s = str(s).strip().lower().replace(' ', '_').replace('\n', '_')
     return re.sub(r'(?u)[^-\w.]', '', s)
 
+
+def get_fully_qualified_name(instance: object) -> str:
+    """
+    Get at the fully qualified name of an object, e.g.
+    an instance of a :class:`~py_trees.composites.Sequence`
+    becomes 'py_trees.composites.Sequence'.
+
+    Args:
+        instance (:obj:`object`): an instance of any class
+
+    Returns:
+        :obj:`str`: the fully qualified name
+    """
+    module = instance.__class__.__module__
+    # if there is no module, it will report builtin, get that
+    # string via what should remain constant, the 'str' class
+    # and check against that.
+    builtin = str.__class__.__module__
+    if module is None or module == builtin:
+        return instance.__class__.__name__
+    else:
+        return module + '.' + instance.__class__.__name__
+
 ##############################################################################
 # Python Helpers
 ##############################################################################
 
+
 def static_variables(**kwargs):
     """
-    This is a decorator that can be used with python methods to attach 
+    This is a decorator that can be used with python methods to attach
     initialised static variables to the method.
 
     .. code-block:: python
