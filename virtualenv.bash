@@ -77,8 +77,14 @@ VERSION="--python=/usr/bin/python3"
 
 if [ "${VIRTUAL_ENV}" == "" ]; then
   workon ${NAME}
-  if [ $? -ne 0 ]; then
+  result=$?
+  echo $result
+  if [ $result -eq 1 ]; then
     mkvirtualenv ${VERSION} ${NAME}
+  fi
+  if [ $result -eq 127 ]; then
+    pretty_error "Failed to find virtualenvwrapper aliases: 1) re-log or 2) source virtualenvwrapper.sh in your shell's .rc"
+    return 1
   fi
 fi
 
