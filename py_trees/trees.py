@@ -196,7 +196,7 @@ class BehaviourTree(object):
         """
          Relays to calling the :meth:`~py_trees.behaviour.Behaviour.setup` method
          on the root behaviour. This in turn should get recursively called down through
-         the entire tree (if it does not, a behaviour with children has not 
+         the entire tree (if it does not, a behaviour with children has not
          recursively called :meth:`~py_trees.behaviour.Behaviour.setup` on each of it's
          children as it should).
 
