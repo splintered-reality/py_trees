@@ -8,7 +8,6 @@ install_requires = [  # ] if os.environ.get('AMENT_PREFIX_PATH') else [
     # build
     'setuptools',
     # runtime
-    'enum34;python_version<"3.4"',
     'pydot'
 ]
 
