@@ -55,16 +55,12 @@ class Composite(behaviour.Behaviour):
     Args:
         name (:obj:`str`): the composite behaviour name
         children ([:class:`~py_trees.behaviour.Behaviour`]): list of children to add
-        *args: variable length argument list
-        **kwargs: arbitrary keyword arguments
     """
     def __init__(self,
                  name: str=common.Name.AUTO_GENERATED,
-                 children=None,
-                 *args,
-                 **kwargs
+                 children: typing.List[behaviour.Behaviour]=None
                  ):
-        super(Composite, self).__init__(name, *args, **kwargs)
+        super(Composite, self).__init__(name)
         if children is not None:
             for child in children:
                 self.add_child(child)
@@ -280,12 +276,10 @@ class Selector(Composite):
     Args:
         name (:obj:`str`): the composite behaviour name
         children ([:class:`~py_trees.behaviour.Behaviour`]): list of children to add
-        *args: variable length argument list
-        **kwargs: arbitrary keyword arguments
     """
 
-    def __init__(self, name="Selector", children=None, *args, **kwargs):
-        super(Selector, self).__init__(name, children, *args, **kwargs)
+    def __init__(self, name="Selector", children=None):
+        super(Selector, self).__init__(name, children)
         self.current_child = None
 
     def tick(self):
@@ -388,13 +382,10 @@ class Chooser(Selector):
     Args:
         name (:obj:`str`): the composite behaviour name
         children ([:class:`~py_trees.behaviour.Behaviour`]): list of children to add
-        *args: variable length argument list
-        **kwargs: arbitrary keyword arguments
-
     """
 
-    def __init__(self, name="Chooser", children=None, *args, **kwargs):
-        super(Chooser, self).__init__(name, children, *args, **kwargs)
+    def __init__(self, name="Chooser", children=None):
+        super(Chooser, self).__init__(name, children)
 
     def tick(self):
         """
@@ -465,12 +456,10 @@ class Sequence(Composite):
     Args:
         name (:obj:`str`): the composite behaviour name
         children ([:class:`~py_trees.behaviour.Behaviour`]): list of children to add
-        *args: variable length argument list
-        **kwargs: arbitrary keyword arguments
 
     """
-    def __init__(self, name="Sequence", children=None, *args, **kwargs):
-        super(Sequence, self).__init__(name, children, *args, **kwargs)
+    def __init__(self, name="Sequence", children=None):
+        super(Sequence, self).__init__(name, children)
         self.current_index = -1  # -1 indicates uninitialised
 
     def tick(self):

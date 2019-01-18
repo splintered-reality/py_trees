@@ -160,8 +160,8 @@ class Count(Behaviour):
     Attributes:
         count (:obj:`int`): a simple counter which increments every tick
     """
-    def __init__(self, name="Count", fail_until=3, running_until=5, success_until=6, reset=True, *args, **kwargs):
-        super(Count, self).__init__(name, *args, **kwargs)
+    def __init__(self, name="Count", fail_until=3, running_until=5, success_until=6, reset=True):
+        super(Count, self).__init__(name)
         self.count = 0
         self.fail_until = fail_until
         self.running_until = running_until

@@ -40,8 +40,6 @@ class Behaviour(object):
 
     Args:
         name (:obj:`str`): the behaviour name
-        *args: variable length argument list.
-        **kwargs: arbitrary keyword arguments.
 
     Raises:
         TypeError: if the provided name is not a string
@@ -60,7 +58,7 @@ class Behaviour(object):
        * :ref:`The Action Behaviour Demo <py-trees-demo-action-behaviour-program>`
 
     """
-    def __init__(self, name=common.Name.AUTO_GENERATED, *args, **kwargs):
+    def __init__(self, name=common.Name.AUTO_GENERATED):
         if not name or name == common.Name.AUTO_GENERATED:
             name = self.__class__.__name__
         if not isinstance(name, str):
