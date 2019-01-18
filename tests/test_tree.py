@@ -552,21 +552,21 @@ def test_tree_setup():
     root.add_children([first, second, third])
     tree = py_trees.trees.BehaviourTree(root=root)
     print("\n--------- Assertions ---------\n")
-    print(console.cyan + "Timeout: " + console.yellow + "No Visitor" + console.reset)
+    print(console.cyan + "Short Timeout: " + console.yellow + "No Visitor" + console.reset)
     with nose.tools.assert_raises(RuntimeError) as context:
         tree.setup(timeout=2*duration)
     print("RuntimeError has message with substring 'timed out'")
     assert("timed out" in str(context.exception))
 
     print("\n--------- Assertions ---------\n")
-    print(console.cyan + "No timeout: " + console.yellow + "No Visitor" + console.reset)
+    print(console.cyan + "Short timeout: " + console.yellow + "No Visitor" + console.reset)
     try:
         tree.setup(timeout=4*duration)
     except RuntimeError:
         assert False, "should not have timed out"
 
     print("\n--------- Assertions ---------\n")
-    print(console.cyan + "Timeout: " + console.yellow + "With Visitor" + console.reset)
+    print(console.cyan + "Long Timeout: " + console.yellow + "With Visitor" + console.reset)
     visitor = SetupVisitor()
     with nose.tools.assert_raises(RuntimeError) as context:
         tree.setup(timeout=2*duration, visitor=visitor)
@@ -574,9 +574,17 @@ def test_tree_setup():
     assert("timed out" in str(context.exception))
 
     print("\n--------- Assertions ---------\n")
-    print(console.cyan + "No timeout: " + console.yellow + "With Visitor" + console.reset)
+    print(console.cyan + "Long timeout: " + console.yellow + "With Visitor" + console.reset)
     visitor = SetupVisitor()
     try:
         tree.setup(timeout=4*duration, visitor=visitor)
+    except RuntimeError:
+        assert False, "should not have timed out"
+
+    print("\n--------- Assertions ---------\n")
+    print(console.cyan + "No timeout: " + console.yellow + "No Visitor" + console.reset)
+    visitor = SetupVisitor()
+    try:
+        tree.setup()
     except RuntimeError:
         assert False, "should not have timed out"

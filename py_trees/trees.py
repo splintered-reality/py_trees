@@ -29,6 +29,7 @@ import multiprocessing
 import time
 
 from . import behaviour
+from . import common
 from . import composites
 from . import visitors
 
@@ -197,7 +198,7 @@ class BehaviourTree(object):
                     return True
         return False
 
-    def setup(self, timeout: float, visitor: visitors.VisitorBase=None):
+    def setup(self, timeout: float=common.Duration.INFINITE, visitor: visitors.VisitorBase=None):
         """
         Crawls across the tree calling :meth:`~py_trees.behaviour.Behaviour.setup`
         on each behaviour.
@@ -215,6 +216,9 @@ class BehaviourTree(object):
         Raises:
             Exception: be ready to catch if any of the behaviours raise an exception
         """
+        if timeout == common.Duration.INFINITE:
+            timeout = None
+
         def visited_setup():
             for node in self.root.iterate():
                 node.setup()
@@ -223,7 +227,7 @@ class BehaviourTree(object):
         setup_process = multiprocessing.Process(target=visited_setup)
         setup_process.start()
         setup_process.join(timeout=timeout)
-        if setup_process.is_alive():
+        if setup_process.is_alive():  # could just as easily have checked the result of join
             setup_process.terminate()
             raise RuntimeError("tree setup() timed out")
 
