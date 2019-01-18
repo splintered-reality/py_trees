@@ -73,12 +73,20 @@ class Behaviour(object):
         self.feedback_message = ""  # useful for debugging, or human readable updates, but not necessary to implement
         self.blackbox_level = common.BlackBoxLevel.NOT_A_BLACKBOX
 
+    def testies(self) -> bool:
+        """
+        Testies
+        """
+        return True
+
     ############################################
     # User Customisable Functions (virtual)
     ############################################
 
     def setup(self, timeout):
         """
+        .. note:: User Customisable Callback
+
         Subclasses may override this method to do any one-off delayed construction &
         validation that is necessary prior to ticking the tree. Such construction is best
         done here rather than in __init__ so that trees can be instantiated on the fly for
@@ -97,8 +105,6 @@ class Behaviour(object):
              that a single setup invocation at the root of a tree will traverse the entire tree.
            * Faults are notified to the user of the behaviour via exceptions. Choice of exception to
              use is left to the user.
-
-        .. note:: User Customisable Callback
 
         Args:
             timeout (:obj:`float`): time (s) to wait (use common.Duration.INFINITE to block indefinitely)
