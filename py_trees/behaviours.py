@@ -42,6 +42,12 @@ def running(self):
     return Status.RUNNING
 
 
+def dummy(self):
+    self.logger.debug("%s.update()" % self.__class__.__name__)
+    self.feedback_message = "crash test dummy"
+    return Status.RUNNING
+
+
 Success = meta.create_behaviour_from_function(success)
 """
 Do nothing but tick over with :data:`~py_trees.common.Status.SUCCESS`.
@@ -55,6 +61,11 @@ Do nothing but tick over with :data:`~py_trees.common.Status.FAILURE`.
 Running = meta.create_behaviour_from_function(running)
 """
 Do nothing but tick over with :data:`~py_trees.common.Status.RUNNING`.
+"""
+
+Dummy = meta.create_behaviour_from_function(dummy)
+"""
+Crash test dummy used for anything dangerous.
 """
 
 ##############################################################################

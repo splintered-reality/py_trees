@@ -4,7 +4,7 @@ from setuptools import find_packages, setup
 import os
 
 # You need install_requires if you don't have a ROS environment
-install_requires = [ # ] if os.environ.get('AMENT_PREFIX_PATH') else [
+install_requires = [  # ] if os.environ.get('AMENT_PREFIX_PATH') else [
     # build
     'setuptools',
     # runtime
@@ -12,7 +12,7 @@ install_requires = [ # ] if os.environ.get('AMENT_PREFIX_PATH') else [
     'pydot'
 ]
 
-tests_require=['nose', 'pydot', 'pytest', 'flake8', 'yanc', 'nose-htmloutput']
+tests_require = ['nose', 'pydot', 'pytest', 'flake8', 'yanc', 'nose-htmloutput']
 
 extras_require = {} if os.environ.get('AMENT_PREFIX_PATH') else {
     'test': tests_require,
@@ -58,6 +58,7 @@ d = setup(
     tests_require=tests_require,
     entry_points={
          'console_scripts': [
+             'py-trees-render = py_trees.programs.render:main',
              'py-trees-demo-action-behaviour = py_trees.demos.action:main',
              'py-trees-demo-behaviour-lifecycle = py_trees.demos.lifecycle:main',
              'py-trees-demo-blackboard = py_trees.demos.blackboard:main',

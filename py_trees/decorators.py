@@ -94,7 +94,7 @@ class Decorator(behaviour.Behaviour):
         name construction (if None is given).
 
         Args:
-            name (:obj:`str`): the decorator name (can be None)
+            name (:obj:`str`): the decorator name
             child (:class:`~py_trees.behaviour.Behaviour`): the child to be decorated
 
         Raises:
@@ -103,9 +103,6 @@ class Decorator(behaviour.Behaviour):
         # Checks
         if not isinstance(child, behaviour.Behaviour):
             raise TypeError("A decorator's child must be an instance of py_trees.behaviours.Behaviour")
-        # Construct an informative name if none is provided
-        if not name or name == common.Name.AUTO_GENERATED:
-            name = self.__class__.__name__ + "\n[{}]".format(child.name)
         # Initialise
         super(Decorator, self).__init__(name=name)
         self.children.append(child)

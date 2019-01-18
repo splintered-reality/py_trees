@@ -36,18 +36,6 @@ class DummyDecorator(py_trees.decorators.Decorator):
 ##############################################################################
 
 
-def test_set_name():
-    console.banner("Set Name")
-    child = py_trees.behaviours.Success(name="Woohoo")
-    named_decorator = DummyDecorator(name="Foo", child=child)
-    no_named_decorator = DummyDecorator(child=child)
-    print("\n--------- Assertions ---------\n")
-    print("named_decorator.name == Foo")
-    assert(named_decorator.name == "Foo")
-    print("no_named_decorator.name == DummyDecorator\\n[Woohoo]")
-    assert(no_named_decorator.name == "DummyDecorator\n[Woohoo]")
-
-
 def test_invalid_child():
     console.banner("Invalid Child")
     print("\n--------- Assertions ---------\n")

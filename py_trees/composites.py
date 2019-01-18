@@ -58,7 +58,12 @@ class Composite(behaviour.Behaviour):
         *args: variable length argument list
         **kwargs: arbitrary keyword arguments
     """
-    def __init__(self, name="", children=None, *args, **kwargs):
+    def __init__(self,
+                 name: str=common.Name.AUTO_GENERATED,
+                 children=None,
+                 *args,
+                 **kwargs
+                 ):
         super(Composite, self).__init__(name, *args, **kwargs)
         if children is not None:
             for child in children:
@@ -567,7 +572,7 @@ class Parallel(Composite):
        * :ref:`Context Switching Demo <py-trees-demo-context-switching-program>`
     """
     def __init__(self,
-                 name: str="Parallel",
+                 name: str=common.Name.AUTO_GENERATED,
                  policy: common.ParallelPolicy.Base=common.ParallelPolicy.SuccessOnAll(),
                  children: typing.List[behaviour.Behaviour]=None
                  ):
@@ -670,6 +675,15 @@ class Parallel(Composite):
             return success_children[-1]
         else:  # RUNNING
             return self.children[-1]
+
+    def verbose_info_string(self) -> str:
+        """
+        Provide additional information about the underlying policy.
+
+        Returns:
+            :obj:`str`: name of the policy along with it's configuration
+        """
+        return str(self.policy)
 
     def validate_policy_configuration(self):
         """

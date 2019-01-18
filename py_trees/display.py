@@ -32,8 +32,9 @@ from . import utilities
 # Methods
 ##############################################################################
 
+
 @utilities.static_variables(
-    type_to_unicode = {
+    type_to_unicode={
         composites.Sequence: "[-] ",
         composites.Selector: "[o] ",
         composites.Parallel: "[" + u'\u2016' + "] ",
@@ -44,10 +45,10 @@ from . import utilities
 def ascii_bullet(node):
     """
     Generate a text bullet for the specified behaviour's type.
-    
+
     Args:
         node (:class:`~py_trees.behaviour.Behaviour`): convert this behaviour's type to text
-        
+
     Returns:
         :obj:`str`): the text bullet
     """
@@ -59,8 +60,9 @@ def ascii_bullet(node):
             return ascii_bullet.type_to_unicode[behaviour_type]
     return ascii_bullet.type_to_unicode[behaviour.Behaviour]
 
+
 @utilities.static_variables(
-    status_to_unicode = {
+    status_to_unicode={
         common.Status.SUCCESS: console.green + u'\u2713' + console.reset,
         common.Status.FAILURE: console.red + u'\u2715' + console.reset,
         common.Status.INVALID: console.yellow + u'-' + console.reset,
@@ -70,14 +72,15 @@ def ascii_bullet(node):
 def ascii_check_mark(status):
     """
     Generate a text check mark for the specified status.
-    
+
     Args:
         status (:class:`~py_trees.common.Status`): convert this status to text
-        
+
     Returns:
         :obj:`str`): the text check mark
     """
     return ascii_check_mark.status_to_unicode[status]
+
 
 def _generate_ascii_tree(tree, indent=0, snapshot_information=None):
     """
@@ -219,7 +222,7 @@ def print_ascii_tree(root, indent=0, show_status=False):
         print("%s" % line)
 
 
-def generate_pydot_graph(root, visibility_level, collapse_decorators):
+def generate_pydot_graph(root, visibility_level, collapse_decorators, with_qualified_names):
     """
     Generate the pydot graph - this is usually the first step in
     rendering the tree to file. See also :py:func:`render_dot_tree`.
@@ -228,11 +231,12 @@ def generate_pydot_graph(root, visibility_level, collapse_decorators):
         root (:class:`~py_trees.behaviour.Behaviour`): the root of a tree, or subtree
         visibility_level (:class`~py_trees.common.VisibilityLevel`): collapse subtrees at or under this level
         collapse_decorators (:obj:`bool`): only show the decorator (not the child)
+        with_qualified_names: (:obj:`bool`): print the class information for each behaviour in each node
 
     Returns:
         pydot.Dot: graph
     """
-    def get_node_attributes(node, visibility_level):
+    def get_node_attributes(node):
         blackbox_font_colours = {common.BlackBoxLevel.DETAIL: "dodgerblue",
                                  common.BlackBoxLevel.COMPONENT: "lawngreen",
                                  common.BlackBoxLevel.BIG_PICTURE: "white"
@@ -253,15 +257,34 @@ def generate_pydot_graph(root, visibility_level, collapse_decorators):
             attributes = (attributes[0], 'gray20', blackbox_font_colours[node.blackbox_level])
         return attributes
 
-    fontsize = 11
+    def get_node_label(node_name, behaviour):
+        """
+        This extracts a more detailed string (when applicable) to append to
+        that which will be used for the node name.
+        """
+        node_label = node_name
+        if behaviour.verbose_info_string():
+            node_label += "\n{}".format(behaviour.verbose_info_string())
+        if with_qualified_names:
+            node_label += "\n({})".format(utilities.get_fully_qualified_name(behaviour))
+        return node_label
+
+    fontsize = 9
     graph = pydot.Dot(graph_type='digraph')
     graph.set_name("pastafarianism")  # consider making this unique to the tree sometime, e.g. based on the root name
     # fonts: helvetica, times-bold, arial (times-roman is the default, but this helps some viewers, like kgraphviewer)
-    graph.set_graph_defaults(fontname='times-roman')
+    graph.set_graph_defaults(fontname='times-roman', splines='curved')
     graph.set_node_defaults(fontname='times-roman')
     graph.set_edge_defaults(fontname='times-roman')
-    (node_shape, node_colour, node_font_colour) = get_node_attributes(root, visibility_level)
-    node_root = pydot.Node(root.name, shape=node_shape, style="filled", fillcolor=node_colour, fontsize=fontsize, fontcolor=node_font_colour)
+    (node_shape, node_colour, node_font_colour) = get_node_attributes(root)
+    node_root = pydot.Node(
+        root.name,
+        label=get_node_label(root.name, root),
+        shape=node_shape,
+        style="filled",
+        fillcolor=node_colour,
+        fontsize=fontsize,
+        fontcolor=node_font_colour)
     graph.add_node(node_root)
     names = [root.name]
 
@@ -270,17 +293,28 @@ def generate_pydot_graph(root, visibility_level, collapse_decorators):
             return
         if visibility_level < root.blackbox_level:
             for c in root.children:
-                (node_shape, node_colour, node_font_colour) = get_node_attributes(c, visibility_level)
-                proposed_dot_name = c.name
-                while proposed_dot_name in names:
-                    proposed_dot_name = proposed_dot_name + "*"
-                names.append(proposed_dot_name)
-                node = pydot.Node(proposed_dot_name, shape=node_shape, style="filled", fillcolor=node_colour, fontsize=fontsize, fontcolor=node_font_colour)
+                (node_shape, node_colour, node_font_colour) = get_node_attributes(c)
+                node_name = c.name
+                while node_name in names:
+                    node_name += "*"
+                names.append(c.name)
+                # Node attributes can be found on page 5 of
+                #    https://graphviz.gitlab.io/_pages/pdf/dot.1.pdf
+                # Attributes that may be useful: tooltip, xlabel
+                node = pydot.Node(
+                    node_name,
+                    label=get_node_label(node_name, c),
+                    shape=node_shape,
+                    style="filled",
+                    fillcolor=node_colour,
+                    fontsize=fontsize,
+                    fontcolor=node_font_colour,
+                )
                 graph.add_node(node)
-                edge = pydot.Edge(root_dot_name, proposed_dot_name)
+                edge = pydot.Edge(root_dot_name, node_name)
                 graph.add_edge(edge)
                 if c.children != []:
-                    add_edges(c, proposed_dot_name, visibility_level, collapse_decorators)
+                    add_edges(c, node_name, visibility_level, collapse_decorators)
 
     add_edges(root, root.name, visibility_level, collapse_decorators)
     return graph
@@ -305,7 +339,8 @@ def render_dot_tree(root: behaviour.Behaviour,
                     visibility_level: common.VisibilityLevel=common.VisibilityLevel.DETAIL,
                     collapse_decorators: bool=False,
                     name: str=None,
-                    target_directory: str=os.getcwd()):
+                    target_directory: str=os.getcwd(),
+                    with_qualified_names: bool=False):
     """
     Render the dot tree to .dot, .svg, .png. files in the current
     working directory. These will be named with the root behaviour name.
@@ -315,6 +350,8 @@ def render_dot_tree(root: behaviour.Behaviour,
         visibility_level (:class`~py_trees.common.VisibilityLevel`): collapse subtrees at or under this level
         collapse_decorators (:obj:`bool`): only show the decorator (not the child)
         name (:obj:`str`): name to use for the created files (defaults to the root behaviour name)
+        target_directory (:obj:`str`): default is to use the current working directory, set this to redirect elsewhere
+        with_qualified_names (:obj:`bool`): print the class names of each behaviour in the dot node
 
     Example:
 
@@ -338,7 +375,7 @@ def render_dot_tree(root: behaviour.Behaviour,
         A good practice is to provide a command line argument for optional rendering of a program so users
         can quickly visualise what tree the program will execute.
     """
-    graph = generate_pydot_graph(root, visibility_level, collapse_decorators)
+    graph = generate_pydot_graph(root, visibility_level, collapse_decorators, with_qualified_names=with_qualified_names)
     filename_wo_extension_to_convert = root.name if name is None else name
     filename_wo_extension = utilities.get_valid_filename(filename_wo_extension_to_convert)
     filenames = {}

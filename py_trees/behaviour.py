@@ -60,7 +60,9 @@ class Behaviour(object):
        * :ref:`The Action Behaviour Demo <py-trees-demo-action-behaviour-program>`
 
     """
-    def __init__(self, name="", *args, **kwargs):
+    def __init__(self, name=common.Name.AUTO_GENERATED, *args, **kwargs):
+        if not name or name == common.Name.AUTO_GENERATED:
+            name = self.__class__.__name__
         if not isinstance(name, str):
             raise TypeError("a behaviour name should be a string, but you passed in {}".format(type(name)))
         self.id = uuid.uuid4()  # used to uniquely identify this node (helps with removing children from a tree)
@@ -84,20 +86,20 @@ class Behaviour(object):
         done here rather than in __init__ so that trees can be instantiated on the fly for
         easy rendering to dot graphs without imposing runtime requirements (e.g. establishing
         a middleware connection to a sensor).
-        
+
         Equally as important, executing methods here which validate the configuration of
         behaviours will help increase confidence that your tree will successfully tick
         without logical software errors before actually ticking. This is useful both
         before a tree's first tick and immediately after any modifications to a tree
         has been made between ticks.
-        
+
         .. tip::
 
            * If there are children, be sure to recursively call this function on each one so
              that a single setup invocation at the root of a tree will traverse the entire tree.
            * Faults are notified to the user of the behaviour via exceptions. Choice of exception to
              use is left to the user.
-        
+
         .. note:: User Customisable Callback
 
         Args:
@@ -312,3 +314,16 @@ class Behaviour(object):
         self.terminate(new_status)
         self.status = new_status
         self.iterator = self.tick()
+
+    def verbose_info_string(self):
+        """
+        Override to provide a one line informative string about the behaviour. This
+        gets used in, e.g. dot graph rendering of the tree.
+
+        .. tip::
+           Use this sparingly. A good use case is for when the behaviour type
+           and class name isn't sufficient to inform the user about it's
+           mechanisms for controlling the flow of a tree tick (e.g. parallels
+           with policies).
+        """
+        return ""
