@@ -32,10 +32,7 @@ from .common import Status
 class Behaviour(object):
     """
     Defines the basic properties and methods required of a node in a
-    behaviour tree.
-
-    Uses all the whizbang tricks from coroutines and generators to do this
-    as optimally as you may in python. When implementing your own behaviour,
+    behaviour tree. When implementing your own behaviour,
     subclass this class.
 
     Args:
@@ -45,10 +42,12 @@ class Behaviour(object):
         TypeError: if the provided name is not a string
 
     Attributes:
+        id (:class:`uuid.UUID`): automagically generated unique identifier for the behaviour
         name (:obj:`str`): the behaviour name
         status (:class:`~py_trees.common.Status`): the behaviour status (:data:`~py_trees.common.Status.INVALID`, :data:`~py_trees.common.Status.RUNNING`, :data:`~py_trees.common.Status.FAILURE`, :data:`~py_trees.common.Status.SUCCESS`)
         parent (:class:`~py_trees.behaviour.Behaviour`): a :class:`~py_trees.composites.Composite` instance if nested in a tree, otherwise None
         children ([:class:`~py_trees.behaviour.Behaviour`]): empty for regular behaviours, populated for composites
+        logger (:class:`logging.Logger`): a simple logging mechanism
         feedback_message(:obj:`str`): a simple message used to notify of significant happenings
         blackbox_level (:class:`~py_trees.common.BlackBoxLevel`): a helper variable for dot graphs and runtime gui's to collapse/explode entire subtrees dependent upon the blackbox level.
 
@@ -74,10 +73,10 @@ class Behaviour(object):
         self.blackbox_level = common.BlackBoxLevel.NOT_A_BLACKBOX
 
     ############################################
-    # User Customisable Functions (virtual)
+    # User Customisable Callbacks
     ############################################
 
-    def setup(self, timeout):
+    def setup(self):
         """
         Subclasses may override this method to do any one-off delayed construction &
         validation that is necessary prior to ticking the tree. Such construction is best
@@ -85,7 +84,7 @@ class Behaviour(object):
         easy rendering to dot graphs without imposing runtime requirements (e.g. establishing
         a middleware connection to a sensor).
 
-        Equally as important, executing methods here which validate the configuration of
+        Equally as important, executing methods which validate the configuration of
         behaviours will help increase confidence that your tree will successfully tick
         without logical software errors before actually ticking. This is useful both
         before a tree's first tick and immediately after any modifications to a tree
@@ -93,20 +92,15 @@ class Behaviour(object):
 
         .. tip::
 
-           * If there are children, be sure to recursively call this function on each one so
-             that a single setup invocation at the root of a tree will traverse the entire tree.
-           * Faults are notified to the user of the behaviour via exceptions. Choice of exception to
-             use is left to the user.
+           Faults are notified to the user of the behaviour via exceptions.
+           Choice of exception to use is left to the user.
 
         .. note:: User Customisable Callback
-
-        Args:
-            timeout (:obj:`float`): time (s) to wait (use common.Duration.INFINITE to block indefinitely)
 
         Raises:
             Exception: if this behaviour has a fault in construction or configuration
         """
-        del timeout  # Unused argument
+        pass
 
     def initialise(self):
         """
@@ -173,8 +167,19 @@ class Behaviour(object):
         for unused in self.tick():
             pass
 
+    def setup_with_descendants(self):
+        """
+        Iterates over this child, it's children (it's children's children, ...)
+        calling the user defined :meth:`~py_trees.behaviour.Behaviuor.setup`
+        on each in turn.
+        """
+        for child in self.children:
+            for node in child.iterate():
+                node.setup()
+        self.setup()
+
     ############################################
-    # Workers
+    # Introspection
     ############################################
     def has_parent_with_name(self, name):
         """
@@ -223,6 +228,11 @@ class Behaviour(object):
             :class:`~py_trees.behaviour.Behaviour` or :obj:`None`: child behaviour, itself or :obj:`None` if its status is :data:`~py_trees.common.Status.INVALID`
         """
         return self if self.status != Status.INVALID else None
+
+    ############################################
+    # Advanced Methods
+    # (oft indirectly used from a TreeManager)
+    ############################################
 
     def visit(self, visitor):
         """

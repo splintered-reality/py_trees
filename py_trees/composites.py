@@ -70,20 +70,6 @@ class Composite(behaviour.Behaviour):
     ############################################
     # Worker Overrides
     ############################################
-    def setup(self, timeout: float):
-        """
-        Relays to each child's :meth:`~py_trees.behaviour.Behaviour.setup` method in turn, but
-        does not do any construction or validation itself.
-
-        Args:
-            timeout (:obj:`float`): time (s) to wait (use common.Duration.INFINITE to block indefinitely)
-
-        Raises:
-            Exception: be ready to catch if any of the children raise an exception
-        """
-        self.logger.debug("%s.setup()" % (self.__class__.__name__))
-        for child in self.children:
-            child.setup(timeout)
 
     def stop(self, new_status=Status.INVALID):
         """
@@ -574,17 +560,15 @@ class Parallel(Composite):
         super(Parallel, self).__init__(name, children)
         self.policy = policy
 
-    def setup(self, timeout: float):
+    def setup(self):
         """
         Detect before ticking whether the policy configuration is invalid.
-
-        Args:
-            timeout (:obj:`float`): time (s) to wait (use common.Duration.INFINITE to block indefinitely)
 
         Raises:
             RuntimeError: if the parallel's policy configuration is invalid
             Exception: be ready to catch if any of the children raise an exception
         """
+        self.logger.debug("%s.setup()" % (self.__class__.__name__))
         self.validate_policy_configuration()
 
     def tick(self):

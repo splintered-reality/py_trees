@@ -9,6 +9,7 @@
 ##############################################################################
 
 import nose.tools
+import time
 
 import py_trees
 import py_trees.console as console
@@ -20,6 +21,35 @@ import py_trees.console as console
 py_trees.logging.level = py_trees.logging.Level.DEBUG
 logger = py_trees.logging.Logger("Nosetest")
 
+
+##############################################################################
+# Classes
+##############################################################################
+
+class SleepInSetup(py_trees.behaviour.Behaviour):
+    """
+    Used in testing of the tree setup timeout.
+    """
+    def __init__(self, name, duration):
+        super().__init__(name=name)
+        self.duration = duration
+
+    def setup(self):
+        self.logger.debug("{}.setup() [{}][{}]".format(
+            self.__class__.__name__, self.name, time.time()))
+        time.sleep(self.duration)
+
+
+class SetupVisitor(py_trees.visitors.VisitorBase):
+    """
+    Picks up and logs feedback messages and the behaviour's status. Logging is done with
+    the behaviour's logger.
+    """
+    def __init__(self):
+        super().__init__(full=True)
+
+    def run(self, behaviour):
+        behaviour.logger.debug("{}.setup() [Visited: {}]".format(self.__class__.__name__, behaviour.name))
 
 ##############################################################################
 # Tests
@@ -475,15 +505,16 @@ def test_failed_tree():
 
     # TODO failed sequence tree
 
+
 def test_tree_errors():
     console.banner("Tree Errors")
     root = 5.0
     print("__init__ raises a 'TypeError' due to invalid root variable type being passed")
     with nose.tools.assert_raises(TypeError) as context:
-        tree = py_trees.trees.BehaviourTree(root)
+        unused_tree = py_trees.trees.BehaviourTree(root)
         print("TypeError has message with substring 'must be an instance of'")
         assert("must be an instance of" in str(context.exception))
-    
+
     root = py_trees.behaviours.Success()
     print("__init__ raises a 'RuntimeError' because we try to prune the root node")
     with nose.tools.assert_raises(RuntimeError) as context:
@@ -509,5 +540,43 @@ def test_tree_errors():
         tree.insert_subtree(child=new_subtree, unique_id=root.id, index=0)
         print("TypeError has message with substring 'Composite'")
         assert("Composite" in str(context.exception))
-    
-    
+
+
+def test_tree_setup():
+    console.banner("Tree Setup")
+    duration = 0.05
+    first = SleepInSetup(name="First", duration=duration)
+    second = SleepInSetup(name="Second", duration=duration)
+    third = SleepInSetup(name="Third", duration=duration)
+    root = py_trees.composites.Sequence()
+    root.add_children([first, second, third])
+    tree = py_trees.trees.BehaviourTree(root=root)
+    print("\n--------- Assertions ---------\n")
+    print(console.cyan + "Timeout: " + console.yellow + "No Visitor" + console.reset)
+    with nose.tools.assert_raises(RuntimeError) as context:
+        tree.setup(timeout=2*duration)
+    print("RuntimeError has message with substring 'timed out'")
+    assert("timed out" in str(context.exception))
+
+    print("\n--------- Assertions ---------\n")
+    print(console.cyan + "No timeout: " + console.yellow + "No Visitor" + console.reset)
+    try:
+        tree.setup(timeout=4*duration)
+    except RuntimeError:
+        assert False, "should not have timed out"
+
+    print("\n--------- Assertions ---------\n")
+    print(console.cyan + "Timeout: " + console.yellow + "With Visitor" + console.reset)
+    visitor = SetupVisitor()
+    with nose.tools.assert_raises(RuntimeError) as context:
+        tree.setup(timeout=2*duration, visitor=visitor)
+    print("RuntimeError has message with substring 'timed out'")
+    assert("timed out" in str(context.exception))
+
+    print("\n--------- Assertions ---------\n")
+    print(console.cyan + "No timeout: " + console.yellow + "With Visitor" + console.reset)
+    visitor = SetupVisitor()
+    try:
+        tree.setup(timeout=4*duration, visitor=visitor)
+    except RuntimeError:
+        assert False, "should not have timed out"

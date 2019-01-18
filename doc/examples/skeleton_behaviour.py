@@ -4,7 +4,7 @@ import py_trees
 import random
 
 
-class Foo(py_trees.Behaviour):
+class Foo(py_trees.behaviour.Behaviour):
     def __init__(self, name):
         """
         Minimal one-time initialisation. A good rule of thumb is
@@ -17,25 +17,29 @@ class Foo(py_trees.Behaviour):
         """
         super(Foo, self).__init__(name)
 
-    def setup(self, timeout):
+    def setup(self):
         """
         When is this called?
           This function should be either manually called by your program
-          or indirectly called by a parent behaviour when it's own setup
-          method has been called.
+          to setup this behaviour alone, or more commonly, via
+          :meth:`~py_trees.behaviour.Behaviour.setup_with_descendants`
+          or :meth:`~py_trees.trees.BehaviourTree.setup`, both of which
+          will iterate over this behaviour, it's children (it's children's
+          children ...) calling :meth:`~py_trees.behaviour.Behaviour.setup`
+          on each in turn.
 
-          If you have vital initialisation here, a useful design pattern
-          is to put a guard in your initialise() function to barf the
-          first time your behaviour is ticked if setup has not been
-          called/succeeded.
+          If you have vital initialisation necessary to the success
+          execution of your behaviour, put a guard in your
+          :meth:`~py_trees.behaviour.Behaviour.initialise` method
+          to protect against entry without having been setup.
 
         What to do here?
           Delayed one-time initialisation that would otherwise interfere
           with offline rendering of this behaviour in a tree to dot graph
           or validation of the behaviour's configuration.
-          
+
           Good examples include:
-          
+
           - Hardware or driver initialisation
           - Middleware initialisation (e.g. ROS pubs/subs/services)
           - A parallel checking for a valid policy configuration after
@@ -63,19 +67,19 @@ class Foo(py_trees.Behaviour):
         What to do here?
           - Triggering, checking, monitoring. Anything...but do not block!
           - Set a feedback message
-          - return a py_trees.Status.[RUNNING, SUCCESS, FAILURE]
+          - return a py_trees.common.Status.[RUNNING, SUCCESS, FAILURE]
         """
         self.logger.debug("  %s [Foo::update()]" % self.name)
         ready_to_make_a_decision = random.choice([True, False])
         decision = random.choice([True, False])
         if not ready_to_make_a_decision:
-            return py_trees.Status.RUNNING
+            return py_trees.common.Status.RUNNING
         elif decision:
             self.feedback_message = "We are not bar!"
-            return py_trees.Status.SUCCESS
+            return py_trees.common.Status.SUCCESS
         else:
             self.feedback_message = "Uh oh"
-            return py_trees.Status.FAILURE
+            return py_trees.common.Status.FAILURE
 
     def terminate(self, new_status):
         """

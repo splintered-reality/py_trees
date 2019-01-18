@@ -90,7 +90,7 @@ class BlackboardWriter(py_trees.behaviour.Behaviour):
         return py_trees.common.Status.SUCCESS
 
 
-def create_tree():
+def create_root():
     root = py_trees.composites.Sequence("Sequence")
     set_blackboard_variable = py_trees.blackboard.SetBlackboardVariable(name="Set Foo", variable_name="foo", variable_value="bar")
     write_blackboard_variable = BlackboardWriter(name="Writer")
@@ -111,7 +111,7 @@ def main():
     print(description())
     py_trees.logging.level = py_trees.logging.Level.DEBUG
 
-    tree = create_tree()
+    root = create_root()
 
     ####################
     # Rendering
@@ -123,10 +123,10 @@ def main():
     ####################
     # Execute
     ####################
-    tree.setup(timeout=15)
+    root.setup_with_descendants()
     print("\n--------- Tick 0 ---------\n")
-    tree.tick_once()
+    root.tick_once()
     print("\n")
-    py_trees.display.print_ascii_tree(tree, show_status=True)
+    py_trees.display.print_ascii_tree(root, show_status=True)
     print("\n")
     print(py_trees.blackboard.Blackboard())

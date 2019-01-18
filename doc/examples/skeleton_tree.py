@@ -11,7 +11,7 @@ if __name__ == '__main__':
     root.add_children([high, med, low])
 
     behaviour_tree = py_trees.trees.BehaviourTree(root)
-    behaviour_tree.setup(15)
+    behaviour_tree.setup(timeout=15)
     try:
         behaviour_tree.tick_tock(
             sleep_ms=500,
