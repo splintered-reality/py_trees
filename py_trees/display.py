@@ -298,6 +298,9 @@ def generate_pydot_graph(root, visibility_level, collapse_decorators, with_quali
                 while node_name in names:
                     node_name += "*"
                 names.append(c.name)
+                # Node attributes can be found on page 5 of
+                #    https://graphviz.gitlab.io/_pages/pdf/dot.1.pdf
+                # Attributes that may be useful: tooltip, xlabel
                 node = pydot.Node(
                     node_name,
                     label=get_node_label(node_name, c),
@@ -306,8 +309,6 @@ def generate_pydot_graph(root, visibility_level, collapse_decorators, with_quali
                     fillcolor=node_colour,
                     fontsize=fontsize,
                     fontcolor=node_font_colour,
-                    # tooltip="foo",
-                    # xlabel="dunders"  # shows up like a stray cat somewhere to the topleft of the node in dot, png's
                 )
                 graph.add_node(node)
                 edge = pydot.Edge(root_dot_name, node_name)

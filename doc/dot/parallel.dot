@@ -1,10 +1,12 @@
 digraph pastafarianism {
-graph [fontname="times-roman"];
+graph [fontname="times-roman", splines=curved];
 node [fontname="times-roman"];
 edge [fontname="times-roman"];
-Parallel [fillcolor=gold, fontcolor=black, fontsize=11, shape=parallelogram, style=filled];
-B1 [fillcolor=gray, fontcolor=black, fontsize=11, shape=ellipse, style=filled];
+Parallel [fillcolor=gold, fontcolor=black, fontsize=9, label="Parallel\n--SuccessOnSelected(⚡,[B1,B2])--", shape=parallelogram, style=filled];
+B1 [fillcolor=gray, fontcolor=black, fontsize=9, label=B1, shape=ellipse, style=filled];
 Parallel -> B1;
-B2 [fillcolor=gray, fontcolor=black, fontsize=11, shape=ellipse, style=filled];
+B2 [fillcolor=gray, fontcolor=black, fontsize=9, label=B2, shape=ellipse, style=filled];
 Parallel -> B2;
+B3 [fillcolor=gray, fontcolor=black, fontsize=9, label=B3, shape=ellipse, style=filled];
+Parallel -> B3;
 }
