@@ -109,20 +109,6 @@ class Decorator(behaviour.Behaviour):
         # Give a convenient alias
         self.decorated = self.children[0]
 
-    def setup(self, timeout: float):
-        """
-        Relays to the decorated child's :meth:`~py_trees.behaviour.Behaviour.setup`
-        method.
-
-        Args:
-            timeout (:obj:`float`): time (s) to wait (use common.Duration.INFINITE to block indefinitely)
-
-        Raises:
-            Exception: be ready to catch if any the decorated child raises an exception
-        """
-        self.logger.debug("%s.setup()" % (self.__class__.__name__))
-        self.decorated.setup(timeout)
-
     def tick(self):
         """
         A decorator's tick is exactly the same as a normal proceedings for

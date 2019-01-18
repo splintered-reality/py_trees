@@ -70,7 +70,7 @@ def command_line_argument_parser():
     return parser
 
 
-def create_tree():
+def create_root():
     root = py_trees.composites.Sequence("Sequence")
     for action in ["Action 1", "Action 2", "Action 3"]:
         success_after_two = py_trees.behaviours.Count(name=action,
@@ -93,25 +93,25 @@ def main():
     print(description())
     py_trees.logging.level = py_trees.logging.Level.DEBUG
 
-    tree = create_tree()
+    root = create_root()
 
     ####################
     # Rendering
     ####################
     if args.render:
-        py_trees.display.render_dot_tree(tree)
+        py_trees.display.render_dot_tree(root)
         sys.exit()
 
     ####################
     # Execute
     ####################
-    tree.setup(timeout=15)
+    root.setup_with_descendants()
     for i in range(1, 6):
         try:
             print("\n--------- Tick {0} ---------\n".format(i))
-            tree.tick_once()
+            root.tick_once()
             print("\n")
-            py_trees.display.print_ascii_tree(tree, show_status=True)
+            py_trees.display.print_ascii_tree(root, show_status=True)
             time.sleep(1.0)
         except KeyboardInterrupt:
             break

@@ -6,7 +6,8 @@ Release Notes
 
 **Breaking API**
 
-* [behaviour] setup() no longer returns a boolean, catch exceptions instead, #143.
+* [behaviour] setup() no longer returns a boolean, catch exceptions instead, `#143 <https://github.com/stonier/py_trees/issues/143>`_.
+* [behaviour] setup() no longer takes timeouts, responsibility moved to BehaviourTree, `#148 <https://github.com/stonier/py_trees/issues/148>`_.
 * [decorators] new-style decorators found in py_trees.decorators
 * [decorators] new-style decorators stop their running child on completion (SUCCESS||FAILURE)
 * [decorators] old-style decorators in py_trees.meta deprecated

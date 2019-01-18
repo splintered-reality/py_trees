@@ -211,7 +211,7 @@ def test_parallel_success_on_selected_invalid_configuration():
         print("\n--------- Assertions ---------\n")
         print("setup() raises a 'RuntimeError' due to invalid configuration")
         with nose.tools.assert_raises(RuntimeError) as context:
-            parallel.setup(timeout=15)
+            parallel.setup()
             print("RuntimeError has message with substring 'SuccessOnSelected'")
             assert("SuccessOnSelected" in str(context.exception))
         print("initialise() raises a 'RuntimeError' due to invalid configuration")

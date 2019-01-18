@@ -81,7 +81,7 @@ class Counter(py_trees.behaviour.Behaviour):
         super(Counter, self).__init__(name)
         self.logger.debug("%s.__init__()" % (self.__class__.__name__))
 
-    def setup(self, unused_timeout=15):
+    def setup(self):
         """
         No delayed initialisation required for this example.
         """

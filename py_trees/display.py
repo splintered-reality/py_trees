@@ -297,7 +297,7 @@ def generate_pydot_graph(root, visibility_level, collapse_decorators, with_quali
                 node_name = c.name
                 while node_name in names:
                     node_name += "*"
-                names.append(c.name)
+                names.append(node_name)
                 # Node attributes can be found on page 5 of
                 #    https://graphviz.gitlab.io/_pages/pdf/dot.1.pdf
                 # Attributes that may be useful: tooltip, xlabel

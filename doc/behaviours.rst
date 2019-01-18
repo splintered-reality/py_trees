@@ -11,8 +11,7 @@ Skeleton
 --------
 
 Behaviours in py_trees are created by subclassing the
-:class:`~py_trees.behaviour.Behaviour` class. A skeleton
-with informative comments is shown below.
+:class:`~py_trees.behaviour.Behaviour` class. A skeleton example:
 
 .. literalinclude:: examples/skeleton_behaviour.py
    :language: python
