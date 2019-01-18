@@ -73,12 +73,6 @@ class Behaviour(object):
         self.feedback_message = ""  # useful for debugging, or human readable updates, but not necessary to implement
         self.blackbox_level = common.BlackBoxLevel.NOT_A_BLACKBOX
 
-    def testies(self) -> bool:
-        """
-        Testies
-        """
-        return True
-
     ############################################
     # User Customisable Functions (virtual)
     ############################################
