@@ -18,6 +18,7 @@ pydot
 Sphinx
 sphinx-argparse
 sphinx_rtd_theme
+sphinx-autodoc-annotation
 
 # extras_require[test] || tests_require
 nose

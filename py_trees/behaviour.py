@@ -78,6 +78,8 @@ class Behaviour(object):
 
     def setup(self):
         """
+        .. note:: User Customisable Callback
+
         Subclasses may override this method to do any one-off delayed construction &
         validation that is necessary prior to ticking the tree. Such construction is best
         done here rather than in __init__ so that trees can be instantiated on the fly for
@@ -94,8 +96,6 @@ class Behaviour(object):
 
            Faults are notified to the user of the behaviour via exceptions.
            Choice of exception to use is left to the user.
-
-        .. note:: User Customisable Callback
 
         Raises:
             Exception: if this behaviour has a fault in construction or configuration
