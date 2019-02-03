@@ -35,13 +35,6 @@ These colour definitions can be used in the following way:
 import os
 import sys
 
-
-# python2 is raw-input, python3 is input
-try:
-    input = raw_input
-except NameError:
-    pass
-
 ##############################################################################
 # Keypress
 ##############################################################################
@@ -146,15 +139,21 @@ if has_colours:
     # reset = "\x1b[0;0m"
     reset = "\x1b[0m"
     bold = "\x1b[%sm" % '1'
+    dim = "\x1b[%sm" % '2'
+    underlined = "\x1b[%sm" % '4'
+    blink = "\x1b[%sm" % '5'
     black, red, green, yellow, blue, magenta, cyan, white = ["\x1b[%sm" % str(i) for i in range(30, 38)]
     bold_black, bold_red, bold_green, bold_yellow, bold_blue, bold_magenta, bold_cyan, bold_white = ["\x1b[%sm" % ('1;' + str(i)) for i in range(30, 38)]
 else:
     reset = ""
     bold = ""
+    dim = ""
+    underlined = ""
+    blink = ""
     black, red, green, yellow, blue, magenta, cyan, white = ["" for i in range(30, 38)]
     bold_black, bold_red, bold_green, bold_yellow, bold_blue, bold_magenta, bold_cyan, bold_white = ["" for i in range(30, 38)]
 
-colours = [bold,
+colours = [bold, dim, underlined, blink,
            black, red, green, yellow, blue, magenta, cyan, white,
            bold_black, bold_red, bold_green, bold_yellow, bold_blue, bold_magenta, bold_cyan, bold_white
            ]
