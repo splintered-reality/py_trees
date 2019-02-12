@@ -4,6 +4,10 @@ Release Notes
 Forthcoming
 -----------
 
+1.0.1 (2018-10-18)
+------------------
+* [trees] don't use multiprocess on setup if not using timeouts
+
 1.0.x (2019-01-18)
 ------------------
 
@@ -35,9 +39,6 @@ Forthcoming
 
 * [idioms] 'Pick Up Where You Left Off'
 * [idioms] 'OneShot'
-
-Changelog
-=========
 
 0.8.0 (2018-10-18)
 ------------------
