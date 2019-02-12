@@ -216,20 +216,21 @@ class BehaviourTree(object):
         Raises:
             Exception: be ready to catch if any of the behaviours raise an exception
         """
-        if timeout == common.Duration.INFINITE:
-            timeout = None
-
         def visited_setup():
             for node in self.root.iterate():
                 node.setup()
                 if visitor is not None:
                     node.visit(visitor)
-        setup_process = multiprocessing.Process(target=visited_setup)
-        setup_process.start()
-        setup_process.join(timeout=timeout)
-        if setup_process.is_alive():  # could just as easily have checked the result of join
-            setup_process.terminate()
-            raise RuntimeError("tree setup() timed out")
+
+        if timeout == common.Duration.INFINITE:
+            visited_setup()
+        else:
+            setup_process = multiprocessing.Process(target=visited_setup)
+            setup_process.start()
+            setup_process.join(timeout=timeout)
+            if setup_process.is_alive():  # could just as easily have checked the result of join
+                setup_process.terminate()
+                raise RuntimeError("tree setup() timed out")
 
     def tick(self, pre_tick_handler=None, post_tick_handler=None):
         """

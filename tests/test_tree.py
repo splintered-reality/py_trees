@@ -8,8 +8,10 @@
 # Imports
 ##############################################################################
 
-import nose.tools
+import os
 import time
+
+import nose.tools
 
 import py_trees
 import py_trees.console as console
@@ -50,6 +52,16 @@ class SetupVisitor(py_trees.visitors.VisitorBase):
 
     def run(self, behaviour):
         behaviour.logger.debug("{}.setup() [Visited: {}]".format(self.__class__.__name__, behaviour.name))
+
+
+class SetupProcessId(py_trees.behaviour.Behaviour):
+    """Retrieve the process id on setup()."""
+    def __init__(self):
+        super().__init__()
+        self.setup_process_id = None
+
+    def setup(self):
+        self.setup_process_id = os.getpid()
 
 ##############################################################################
 # Tests
@@ -588,3 +600,20 @@ def test_tree_setup():
         tree.setup()
     except RuntimeError:
         assert False, "should not have timed out"
+
+
+def test_sync_and_async_setup():
+    """Test that when setup() is called with an infinite timeout that it runs on the main process.
+    When called with a finite timeout, it should run in a different process."""
+    main_process = os.getpid()
+    process_id_getter = SetupProcessId()
+    tree = py_trees.trees.BehaviourTree(root=process_id_getter)
+
+    # Invoking setup() with a finite timeout. The process id should be different from the main process.
+    tree.setup(timeout=1)
+    assert process_id_getter.setup_process_id != main_process, "Expected to be on a process id that is not " \
+                                                               "{}".format(main_process)
+
+    # Invoking setup() with an infitite timeout. The process id should be the same as the main process.
+    tree.setup(timeout=py_trees.common.Duration.INFINITE)
+    assert process_id_getter.setup_process_id == main_process, "Expected to be on process id {}".format(main_process)
