@@ -35,6 +35,25 @@ These colour definitions can be used in the following way:
 import os
 import sys
 
+
+##############################################################################
+# Special Characters
+##############################################################################
+
+def correct_encode(original: str, replacement: str, encoding: str = sys.stdout.encoding):
+    try:
+        original.encode(encoding)
+    except UnicodeError:
+        return replacement
+    return original
+
+
+lightning_bolt = correct_encode(u'\u26A1', "SYNC")
+double_vertical_line = correct_encode(u'\u2016', "||")
+check_mark = correct_encode(u'\u2713', "S")
+multiplication_x = correct_encode(u'\u2715', "F")
+
+
 ##############################################################################
 # Keypress
 ##############################################################################
@@ -268,3 +287,8 @@ if __name__ == '__main__':
     pretty_print("red\n", red)
     print("some normal text")
     print(cyan + "    Name" + reset + ": " + yellow + "Dude" + reset)
+    print("special characters are\n")
+    print("lightning_bolt: {}".format(lightning_bolt))
+    print("double_vertical_line: {}".format(double_vertical_line))
+    print("check_mark: {}".format(check_mark))
+    print("multiplication_x: {}".format(multiplication_x))

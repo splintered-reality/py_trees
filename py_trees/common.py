@@ -18,6 +18,8 @@ Common definitions, methods and variables used by the py_trees library.
 import enum
 import math
 
+from . import console
+
 ##############################################################################
 # Status
 ##############################################################################
@@ -72,7 +74,7 @@ class ParallelPolicy(object):
             Human readable description.
             """
             description = "--" + self.__class__.__name__ + "("
-            description += u'\u26A1' if self.synchronise else "-"  # lightning bolt
+            description += console.lightning_bolt if self.synchronise else "-"
             description += "--"
             return description
 
@@ -114,7 +116,7 @@ class ParallelPolicy(object):
             Human readable description.
             """
             description = "--" + self.__class__.__name__ + "("
-            description += u'\u26A1' if self.synchronise else "-"  # lightning bolt
+            description += console.lightning_bolt if self.synchronise else "-"
             description += ","
             description += "[" + ",".join([c.name for c in self.children]) + "]"
             description += ")--"

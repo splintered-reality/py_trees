@@ -37,7 +37,7 @@ from . import utilities
     type_to_unicode={
         composites.Sequence: "[-] ",
         composites.Selector: "[o] ",
-        composites.Parallel: "[" + u'\u2016' + "] ",
+        composites.Parallel: "[" + console.double_vertical_line + "] ",
         decorators.Decorator: "-^- ",
         behaviour.Behaviour: "--> "
     }
@@ -63,8 +63,8 @@ def ascii_bullet(node):
 
 @utilities.static_variables(
     status_to_unicode={
-        common.Status.SUCCESS: console.green + u'\u2713' + console.reset,
-        common.Status.FAILURE: console.red + u'\u2715' + console.reset,
+        common.Status.SUCCESS: console.green + console.check_mark + console.reset,
+        common.Status.FAILURE: console.red + console.multiplication_x + console.reset,
         common.Status.INVALID: console.yellow + u'-' + console.reset,
         common.Status.RUNNING: console.blue + u'*' + console.reset
     }
