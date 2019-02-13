@@ -78,7 +78,6 @@ VERSION="--python=/usr/bin/python3"
 if [ "${VIRTUAL_ENV}" == "" ]; then
   workon ${NAME}
   result=$?
-  echo $result
   if [ $result -eq 1 ]; then
     mkvirtualenv ${VERSION} ${NAME}
   fi
