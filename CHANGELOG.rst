@@ -4,6 +4,10 @@ Release Notes
 Forthcoming
 -----------
 
+1.0.3 (2018-10-19)
+------------------
+* [visitors] winds of change visitor and logging demo
+
 1.0.2 (2018-10-18)
 ------------------
 * [console] fallbacks for unicode chars when (UTF-8) encoding cannot support them
