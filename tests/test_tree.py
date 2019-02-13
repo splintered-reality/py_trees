@@ -8,7 +8,7 @@
 # Imports
 ##############################################################################
 
-import os
+import threading
 import time
 
 import nose.tools
@@ -53,15 +53,6 @@ class SetupVisitor(py_trees.visitors.VisitorBase):
     def run(self, behaviour):
         behaviour.logger.debug("{}.setup() [Visited: {}]".format(self.__class__.__name__, behaviour.name))
 
-
-class SetupProcessId(py_trees.behaviour.Behaviour):
-    """Retrieve the process id on setup()."""
-    def __init__(self):
-        super().__init__()
-        self.setup_process_id = None
-
-    def setup(self):
-        self.setup_process_id = os.getpid()
 
 ##############################################################################
 # Tests
@@ -569,6 +560,8 @@ def test_tree_setup():
         tree.setup(timeout=2*duration)
     print("RuntimeError has message with substring 'timed out'")
     assert("timed out" in str(context.exception))
+    active_threads = threading.active_count()
+    assert(active_threads == 1, "Only one thread should be active but there are {} active".format(active_threads))
 
     print("\n--------- Assertions ---------\n")
     print(console.cyan + "Short timeout: " + console.yellow + "No Visitor" + console.reset)
@@ -577,6 +570,9 @@ def test_tree_setup():
     except RuntimeError:
         assert False, "should not have timed out"
 
+    active_threads = threading.active_count()
+    assert(active_threads == 1, "Only one thread should be active but there are {} active".format(active_threads))
+
     print("\n--------- Assertions ---------\n")
     print(console.cyan + "Long Timeout: " + console.yellow + "With Visitor" + console.reset)
     visitor = SetupVisitor()
@@ -584,6 +580,8 @@ def test_tree_setup():
         tree.setup(timeout=2*duration, visitor=visitor)
     print("RuntimeError has message with substring 'timed out'")
     assert("timed out" in str(context.exception))
+    active_threads = threading.active_count()
+    assert(active_threads == 1, "Only one thread should be active but there are {} active".format(active_threads))
 
     print("\n--------- Assertions ---------\n")
     print(console.cyan + "Long timeout: " + console.yellow + "With Visitor" + console.reset)
@@ -592,6 +590,8 @@ def test_tree_setup():
         tree.setup(timeout=4*duration, visitor=visitor)
     except RuntimeError:
         assert False, "should not have timed out"
+    active_threads = threading.active_count()
+    assert(active_threads == 1, "Only one thread should be active but there are {} active".format(active_threads))
 
     print("\n--------- Assertions ---------\n")
     print(console.cyan + "No timeout: " + console.yellow + "No Visitor" + console.reset)
@@ -600,20 +600,5 @@ def test_tree_setup():
         tree.setup()
     except RuntimeError:
         assert False, "should not have timed out"
-
-
-def test_sync_and_async_setup():
-    """Test that when setup() is called with an infinite timeout that it runs on the main process.
-    When called with a finite timeout, it should run in a different process."""
-    main_process = os.getpid()
-    process_id_getter = SetupProcessId()
-    tree = py_trees.trees.BehaviourTree(root=process_id_getter)
-
-    # Invoking setup() with a finite timeout. The process id should be different from the main process.
-    tree.setup(timeout=1)
-    assert process_id_getter.setup_process_id != main_process, "Expected to be on a process id that is not " \
-                                                               "{}".format(main_process)
-
-    # Invoking setup() with an infitite timeout. The process id should be the same as the main process.
-    tree.setup(timeout=py_trees.common.Duration.INFINITE)
-    assert process_id_getter.setup_process_id == main_process, "Expected to be on process id {}".format(main_process)
+    active_threads = threading.active_count()
+    assert(active_threads == 1, "Only one thread should be active but there are {} active".format(active_threads))

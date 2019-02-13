@@ -25,7 +25,9 @@ can also be easily used as inspiration for your own tree custodians.
 # Imports
 ##############################################################################
 
-import multiprocessing
+import os
+import signal
+import threading
 import time
 
 from . import behaviour
@@ -198,7 +200,7 @@ class BehaviourTree(object):
                     return True
         return False
 
-    def setup(self, timeout: float=common.Duration.INFINITE, visitor: visitors.VisitorBase=None):
+    def setup(self, timeout: float=common.Duration.INFINITE, visitor: visitors.VisitorBase=None, verbose:bool=False):
         """
         Crawls across the tree calling :meth:`~py_trees.behaviour.Behaviour.setup`
         on each behaviour.
@@ -212,25 +214,40 @@ class BehaviourTree(object):
         Args:
             timeout (:obj:`float`): time (s) to wait (use common.Duration.INFINITE to block indefinitely)
             visitor (:class:`~py_trees.visitors.VisitorBase`): runnable entities on each node after it's setup
+            verbose (:obj:`bool`): whether to print the amount of time each node is taking to setup.
 
         Raises:
             Exception: be ready to catch if any of the behaviours raise an exception
+            RuntimeError: in case setup() times out.
         """
+        # This is the signal that is raised on completion of the timer.
+        _SIGNAL = signal.SIGUSR1
+
+        def on_timer_timed_out():
+            os.kill(os.getpid(), _SIGNAL)
+
+        def signal_handler(_signum, _frame):
+            raise RuntimeError("tree setup timed out")
+
         def visited_setup():
             for node in self.root.iterate():
+                if verbose:
+                    start_time = time.perf_counter()
                 node.setup()
+                if verbose:
+                    elapsed_time = time.perf_counter() - start_time
+                    print("{} took {} seconds to setup".format(node.name, elapsed_time))
                 if visitor is not None:
                     node.visit(visitor)
 
         if timeout == common.Duration.INFINITE:
             visited_setup()
         else:
-            setup_process = multiprocessing.Process(target=visited_setup)
-            setup_process.start()
-            setup_process.join(timeout=timeout)
-            if setup_process.is_alive():  # could just as easily have checked the result of join
-                setup_process.terminate()
-                raise RuntimeError("tree setup() timed out")
+            signal.signal(_SIGNAL, signal_handler)
+            timer = threading.Timer(interval=timeout, function=on_timer_timed_out)
+            timer.start()
+            visited_setup()
+            timer.cancel()  # This only works if the timer is still waiting.
 
     def tick(self, pre_tick_handler=None, post_tick_handler=None):
         """
