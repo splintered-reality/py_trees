@@ -18,4 +18,5 @@ tests/.README.md.html
 nosetests.html
 eclipse
 *.vscode
+dump.json
 

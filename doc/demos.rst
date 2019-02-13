@@ -83,6 +83,22 @@ py-trees-demo-dot-graphs
    :linenos:
    :caption: py_trees/demos/dot_graphs.py
 
+.. _py-trees-demo-logging-program:
+
+py-trees-demo-logging
+---------------------
+
+.. automodule:: py_trees.demos.logging
+    :members:
+    :special-members:
+    :show-inheritance:
+    :synopsis: demo tree logging to json files
+
+.. literalinclude:: ../py_trees/demos/logging.py
+   :language: python
+   :linenos:
+   :caption: py_trees/demos/logging.py
+
 .. _py-trees-demo-selector-program:
 
 py-trees-demo-selector

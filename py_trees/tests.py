@@ -41,6 +41,8 @@ def tick_tree(tree,
               ):
     print("\n================== Iteration {}-{} ==================\n".format(from_tick, to_tick))
     for i in range(from_tick, to_tick + 1):
+        for visitor in visitors:
+            visitor.initialise()
         print(("\n--------- Run %s ---------\n" % i))
         for node in tree.tick():
             for visitor in visitors:

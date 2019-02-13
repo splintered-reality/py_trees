@@ -24,6 +24,7 @@
 
 import argparse
 import functools
+import json
 import py_trees
 import sys
 import time
@@ -37,20 +38,21 @@ import py_trees.console as console
 
 def description(root):
     content = "A demonstration of logging with trees.\n\n"
-    content += "Trees will typically spend much time ticking without\n"
-    content += "a significant change that is relevant for the purposes\n"
-    content += "of monitoring or debugging. In this demo a significant\n"
-    content += "change is defined as one for which the visited path (i.e.\n"
-    content += "the decision making) has changed. Here a visitor is used\n"
-    content += "to trace the visited path from tick to tick, raising a flag\n"
-    content += "if the path changes. This flag is caught and prompts a\n"
-    content += "post-tick handler to commence logging for that tick.\n"
+    content += "This demo utilises a WindsOfChange visitor to trigger\n"
+    content += "a post-tick handler to dump a serialisation of the\n"
+    content += "tree to a json log file.\n"
+    content += "\n"
+    content += "This coupling of visitor and post-tick handler can be\n"
+    content += "used for any kind of event handling - the visitor is the\n"
+    content += "trigger and the post-tick handler the action. Aside from\n"
+    content += "logging, the most common use case is to serialise the tree\n"
+    content += "for messaging to a graphical, runtime monitor.\n"
     content += "\n"
     if py_trees.console.has_colours:
         banner_line = console.green + "*" * 79 + "\n" + console.reset
         s = "\n"
         s += banner_line
-        s += console.bold_white + "Trees".center(79) + "\n" + console.reset
+        s += console.bold_white + "Logging".center(79) + "\n" + console.reset
         s += banner_line
         s += "\n"
         s += content
@@ -79,23 +81,55 @@ def command_line_argument_parser():
     return parser
 
 
-def pre_tick_handler(behaviour_tree):
+def logger(winds_of_change_visitor, behaviour_tree):
     """
-    This prints a banner and will run immediately before every tick of the tree.
-
-    Args:
-        behaviour_tree (:class:`~py_trees.trees.BehaviourTree`): the tree custodian
-
+    A post-tick handler that logs the tree (relevant parts thereof) to a yaml file.
     """
-    print("\n--------- Run %s ---------\n" % behaviour_tree.count)
+    if winds_of_change_visitor.changed:
+        print(console.cyan + "Logging.......................yes\n" + console.reset)
+        tree_serialisation = {
+            'tick': behaviour_tree.count,
+            'nodes': []
+        }
+        for node in behaviour_tree.root.iterate():
+            node_type_str = "Behaviour"
+            for behaviour_type in [py_trees.composites.Sequence,
+                                   py_trees.composites.Selector,
+                                   py_trees.composites.Parallel,
+                                   py_trees.decorators.Decorator]:
+                if isinstance(node, behaviour_type):
+                    node_type_str = behaviour_type.__name__
+            node_snapshot = {
+                'name': node.name,
+                'id': str(node.id),
+                'parent_id': str(node.parent.id) if node.parent else "none",
+                'child_ids': [str(child.id) for child in node.children],
+                'tip_id': str(node.tip().id) if node.tip() else 'none',
+                'class_name': str(node.__module__) + '.' + str(type(node).__name__),
+                'type': node_type_str,
+                'status': node.status.value,
+                'message': node.feedback_message,
+                'is_active': True if node.id in winds_of_change_visitor.ticked_nodes else False
+                }
+            tree_serialisation['nodes'].append(node_snapshot)
+        if behaviour_tree.count == 0:
+            with open('dump.json', 'w+') as outfile:
+                json.dump(tree_serialisation, outfile, indent=4)
+        else:
+            with open('dump.json', 'a') as outfile:
+                json.dump(tree_serialisation, outfile, indent=4)
+    else:
+        print(console.yellow + "Logging.......................no\n" + console.reset)
 
 
-def post_tick_handler(snapshot_visitor, behaviour_tree):
+def display_ascii_tree(snapshot_visitor, behaviour_tree):
     """
     Prints an ascii tree with the current snapshot status.
     """
-    print("\n" + py_trees.display.ascii_tree(behaviour_tree.root,
-                                             snapshot_information=snapshot_visitor))
+    print("\n" + py_trees.display.ascii_tree(
+        behaviour_tree.root,
+        snapshot_information=snapshot_visitor)
+    )
 
 
 def create_tree():
@@ -109,7 +143,7 @@ def create_tree():
     sequence.add_child(finisher)
     sequence.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
     idle = py_trees.behaviours.Success("Idle")
-    root = py_trees.composites.Selector(name="Demo Tree")
+    root = py_trees.composites.Selector(name="Logging")
     root.add_child(every_n_success)
     root.add_child(sequence)
     root.add_child(idle)
@@ -140,11 +174,18 @@ def main():
     # Tree Stewardship
     ####################
     behaviour_tree = py_trees.trees.BehaviourTree(tree)
-    behaviour_tree.add_pre_tick_handler(pre_tick_handler)
-    behaviour_tree.visitors.append(py_trees.visitors.DebugVisitor())
+
+    debug_visitor = py_trees.visitors.DebugVisitor()
     snapshot_visitor = py_trees.visitors.SnapshotVisitor()
-    behaviour_tree.add_post_tick_handler(functools.partial(post_tick_handler, snapshot_visitor))
+    winds_of_change_visitor = py_trees.visitors.WindsOfChangeVisitor()
+
+    behaviour_tree.visitors.append(debug_visitor)
     behaviour_tree.visitors.append(snapshot_visitor)
+    behaviour_tree.visitors.append(winds_of_change_visitor)
+
+    behaviour_tree.add_post_tick_handler(functools.partial(display_ascii_tree, snapshot_visitor))
+    behaviour_tree.add_post_tick_handler(functools.partial(logger, winds_of_change_visitor))
+
     behaviour_tree.setup(timeout=15)
 
     ####################

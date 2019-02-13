@@ -127,7 +127,7 @@ class SnapshotVisitor(VisitorBase):
             self.running_nodes.append(behaviour.id)
 
 
-class ChangeVisitor(VisitorBase):
+class WindsOfChangeVisitor(VisitorBase):
     """
     Visits the ticked part of a tree, checking off the status against the set of status
     results recorded in the previous tick. If there has been a change, it flags it.
@@ -140,9 +140,7 @@ class ChangeVisitor(VisitorBase):
         running_nodes([uuid.UUID]): list of id's for behaviours which were traversed in the current tick
         previously_running_nodes([uuid.UUID]): list of id's for behaviours which were traversed in the last tick
 
-    .. seealso::
-
-        TODO: Some demo
+    .. seealso:: The :ref:`py-trees-demo-logging-program` program demonstrates use of this visitor to trigger logging of a tree serialisation.
     """
     def __init__(self):
         super().__init__(full=False)
@@ -156,6 +154,8 @@ class ChangeVisitor(VisitorBase):
         get called before a tree ticks.
         """
         self.changed = False
+        self.previously_ticked_nodes = self.ticked_nodes
+        self.ticked_nodes = {}
 
     def run(self, behaviour):
         """
@@ -165,7 +165,9 @@ class ChangeVisitor(VisitorBase):
         Args:
             behaviour (:class:`~py_trees.behaviour.Behaviour`): behaviour that is ticking
         """
-        if self.ticked_nodes != self.previously_ticked_nodes:
+        self.ticked_nodes[behaviour.id] = behaviour.status
+        try:
+            if self.ticked_nodes[behaviour.id] != self.previously_ticked_nodes[behaviour.id]:
+                self.changed = True
+        except KeyError:
             self.changed = True
-        self.previously_ticked_nodes = self.ticked_nodes
-        self.ticked_nodes = {}
