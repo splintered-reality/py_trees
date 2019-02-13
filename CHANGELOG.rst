@@ -3,6 +3,7 @@ Release Notes
 
 Forthcoming
 -----------
+* [console] fallbacks for unicode chars when (UTF-8) encoding cannot support them
 
 1.0.1 (2018-10-18)
 ------------------
