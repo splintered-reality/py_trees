@@ -125,3 +125,47 @@ class SnapshotVisitor(VisitorBase):
         self.nodes[behaviour.id] = behaviour.status
         if behaviour.status == common.Status.RUNNING:
             self.running_nodes.append(behaviour.id)
+
+
+class ChangeVisitor(VisitorBase):
+    """
+    Visits the ticked part of a tree, checking off the status against the set of status
+    results recorded in the previous tick. If there has been a change, it flags it.
+    This is useful for determining when to trigger, e.g. logging.
+
+    Attributes:
+        changed (Bool): flagged if there is a difference in the visited path or :class:`~py_trees.common.Status` of any behaviour on the path
+        ticked_nodes (dict): dictionary of behaviour id (uuid.UUID) and status (:class:`~py_trees.common.Status`) pairs from the current tick
+        previously_ticked+nodes (dict): dictionary of behaviour id (uuid.UUID) and status (:class:`~py_trees.common.Status`) pairs from the previous tick
+        running_nodes([uuid.UUID]): list of id's for behaviours which were traversed in the current tick
+        previously_running_nodes([uuid.UUID]): list of id's for behaviours which were traversed in the last tick
+
+    .. seealso::
+
+        TODO: Some demo
+    """
+    def __init__(self):
+        super().__init__(full=False)
+        self.changed = False
+        self.ticked_nodes = {}
+        self.previously_ticked_nodes = {}
+
+    def initialise(self):
+        """
+        Switch running to previously running and then reset all other variables. This should
+        get called before a tree ticks.
+        """
+        self.changed = False
+
+    def run(self, behaviour):
+        """
+        This method gets run as each behaviour is ticked. Catch the id and status and store it.
+        Additionally add it to the running list if it is :data:`~py_trees.common.Status.RUNNING`.
+
+        Args:
+            behaviour (:class:`~py_trees.behaviour.Behaviour`): behaviour that is ticking
+        """
+        if self.ticked_nodes != self.previously_ticked_nodes:
+            self.changed = True
+        self.previously_ticked_nodes = self.ticked_nodes
+        self.ticked_nodes = {}
