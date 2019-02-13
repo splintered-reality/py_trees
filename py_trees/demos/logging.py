@@ -1,0 +1,205 @@
+#!/usr/bin/env python
+#
+# License: BSD
+#   https://raw.githubusercontent.com/stonier/py_trees/devel/LICENSE
+#
+##############################################################################
+# Documentation
+##############################################################################
+
+"""
+.. argparse::
+   :module: py_trees.demos.stewardship
+   :func: command_line_argument_parser
+   :prog: py-trees-demo-tree-stewardship
+
+.. graphviz:: dot/stewardship.dot
+
+.. image:: images/tree_stewardship.gif
+"""
+
+##############################################################################
+# Imports
+##############################################################################
+
+import argparse
+import functools
+import json
+import py_trees
+import sys
+import time
+
+import py_trees.console as console
+
+##############################################################################
+# Classes
+##############################################################################
+
+
+def description(root):
+    content = "A demonstration of logging with trees.\n\n"
+    content += "This demo utilises a WindsOfChange visitor to trigger\n"
+    content += "a post-tick handler to dump a serialisation of the\n"
+    content += "tree to a json log file.\n"
+    content += "\n"
+    content += "This coupling of visitor and post-tick handler can be\n"
+    content += "used for any kind of event handling - the visitor is the\n"
+    content += "trigger and the post-tick handler the action. Aside from\n"
+    content += "logging, the most common use case is to serialise the tree\n"
+    content += "for messaging to a graphical, runtime monitor.\n"
+    content += "\n"
+    if py_trees.console.has_colours:
+        banner_line = console.green + "*" * 79 + "\n" + console.reset
+        s = "\n"
+        s += banner_line
+        s += console.bold_white + "Logging".center(79) + "\n" + console.reset
+        s += banner_line
+        s += "\n"
+        s += content
+        s += "\n"
+        s += banner_line
+    else:
+        s = content
+    return s
+
+
+def epilog():
+    if py_trees.console.has_colours:
+        return console.cyan + "And his noodly appendage reached forth to tickle the blessed...\n" + console.reset
+    else:
+        return None
+
+
+def command_line_argument_parser():
+    parser = argparse.ArgumentParser(description=description(create_tree()),
+                                     epilog=epilog(),
+                                     formatter_class=argparse.RawDescriptionHelpFormatter,
+                                     )
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('-r', '--render', action='store_true', help='render dot tree to file')
+    group.add_argument('-i', '--interactive', action='store_true', help='pause and wait for keypress at each tick')
+    return parser
+
+
+def logger(winds_of_change_visitor, behaviour_tree):
+    """
+    A post-tick handler that logs the tree (relevant parts thereof) to a yaml file.
+    """
+    if winds_of_change_visitor.changed:
+        print(console.cyan + "Logging.......................yes\n" + console.reset)
+        tree_serialisation = {
+            'tick': behaviour_tree.count,
+            'nodes': []
+        }
+        for node in behaviour_tree.root.iterate():
+            node_type_str = "Behaviour"
+            for behaviour_type in [py_trees.composites.Sequence,
+                                   py_trees.composites.Selector,
+                                   py_trees.composites.Parallel,
+                                   py_trees.decorators.Decorator]:
+                if isinstance(node, behaviour_type):
+                    node_type_str = behaviour_type.__name__
+            node_snapshot = {
+                'name': node.name,
+                'id': str(node.id),
+                'parent_id': str(node.parent.id) if node.parent else "none",
+                'child_ids': [str(child.id) for child in node.children],
+                'tip_id': str(node.tip().id) if node.tip() else 'none',
+                'class_name': str(node.__module__) + '.' + str(type(node).__name__),
+                'type': node_type_str,
+                'status': node.status.value,
+                'message': node.feedback_message,
+                'is_active': True if node.id in winds_of_change_visitor.ticked_nodes else False
+                }
+            tree_serialisation['nodes'].append(node_snapshot)
+        if behaviour_tree.count == 0:
+            with open('dump.json', 'w+') as outfile:
+                json.dump(tree_serialisation, outfile, indent=4)
+        else:
+            with open('dump.json', 'a') as outfile:
+                json.dump(tree_serialisation, outfile, indent=4)
+    else:
+        print(console.yellow + "Logging.......................no\n" + console.reset)
+
+
+def display_ascii_tree(snapshot_visitor, behaviour_tree):
+    """
+    Prints an ascii tree with the current snapshot status.
+    """
+    print("\n" + py_trees.display.ascii_tree(
+        behaviour_tree.root,
+        snapshot_information=snapshot_visitor)
+    )
+
+
+def create_tree():
+    every_n_success = py_trees.behaviours.SuccessEveryN("EveryN", 5)
+    sequence = py_trees.composites.Sequence(name="Sequence")
+    guard = py_trees.behaviours.Success("Guard")
+    periodic_success = py_trees.behaviours.Periodic("Periodic", 3)
+    finisher = py_trees.behaviours.Success("Finisher")
+    sequence.add_child(guard)
+    sequence.add_child(periodic_success)
+    sequence.add_child(finisher)
+    sequence.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
+    idle = py_trees.behaviours.Success("Idle")
+    root = py_trees.composites.Selector(name="Logging")
+    root.add_child(every_n_success)
+    root.add_child(sequence)
+    root.add_child(idle)
+    return root
+
+
+##############################################################################
+# Main
+##############################################################################
+
+def main():
+    """
+    Entry point for the demo script.
+    """
+    args = command_line_argument_parser().parse_args()
+    py_trees.logging.level = py_trees.logging.Level.DEBUG
+    tree = create_tree()
+    print(description(tree))
+
+    ####################
+    # Rendering
+    ####################
+    if args.render:
+        py_trees.display.render_dot_tree(tree)
+        sys.exit()
+
+    ####################
+    # Tree Stewardship
+    ####################
+    behaviour_tree = py_trees.trees.BehaviourTree(tree)
+
+    debug_visitor = py_trees.visitors.DebugVisitor()
+    snapshot_visitor = py_trees.visitors.SnapshotVisitor()
+    winds_of_change_visitor = py_trees.visitors.WindsOfChangeVisitor()
+
+    behaviour_tree.visitors.append(debug_visitor)
+    behaviour_tree.visitors.append(snapshot_visitor)
+    behaviour_tree.visitors.append(winds_of_change_visitor)
+
+    behaviour_tree.add_post_tick_handler(functools.partial(display_ascii_tree, snapshot_visitor))
+    behaviour_tree.add_post_tick_handler(functools.partial(logger, winds_of_change_visitor))
+
+    behaviour_tree.setup(timeout=15)
+
+    ####################
+    # Tick Tock
+    ####################
+    if args.interactive:
+        py_trees.console.read_single_keypress()
+    while True:
+        try:
+            behaviour_tree.tick()
+            if args.interactive:
+                py_trees.console.read_single_keypress()
+            else:
+                time.sleep(0.5)
+        except KeyboardInterrupt:
+            break
+    print("\n")
