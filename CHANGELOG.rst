@@ -1,6 +1,10 @@
 Changelog
 =========
 
+0.5.11 (2019-02-13)
+-------------------
+* [decorators] experimental module added
+
 0.5.10 (2017-06-17)
 -------------------
 * [meta] add children monkeypatching for composite imposters
