@@ -3,7 +3,7 @@
   <!-- Make sure to update them both -->
   <!-- That is the price paid for a pypi and catkin package.  -->
   <name>py_trees</name>
-  <version>0.6.6</version>
+  <version>0.6.7</version>
   <description>
     Pythonic implementation of behaviour trees.
   </description>
