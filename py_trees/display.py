@@ -221,7 +221,7 @@ def print_ascii_tree(root, indent=0, show_status=False):
         print("%s" % line)
 
 
-def generate_pydot_graph(root, visibility_level, collapse_decorators):
+def generate_pydot_graph(root, visibility_level, collapse_decorators=False):
     """
     Generate the pydot graph - this is usually the first step in
     rendering the tree to file. See also :py:func:`render_dot_tree`.
