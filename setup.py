@@ -5,12 +5,21 @@ import os
 
 # You need install_requires if you don't have a ROS environment
 install_requires = [] if os.environ.get('CATKIN_BINARY_DIR') else [
-    # tests
-    "nose",
+    # build
+    'setuptools',
     # runtime
     'enum34',
     'pydot'
 ]
+
+tests_require = ['nose', 'pydot', 'pytest', 'flake8', 'yanc', 'nose-htmloutput']
+
+extras_require = {} if os.environ.get('CATKIN_BINARY_DIR') else {
+    'test': tests_require,
+    'docs': ["Sphinx", "sphinx-argparse", "sphinx-rtd-theme"],
+    'debs': ['stdeb', 'twine']
+}
+
 ##############################
 # Pull in __version__
 ##############################
@@ -29,10 +38,12 @@ d = setup(
     version=__version__,
     packages=find_packages(exclude=['tests*', 'docs*']),
     install_requires=install_requires,
+    extras_require=extras_require,
     author='Daniel Stonier, Naveed Usmani, Michal Staniaszek',
     maintainer='Daniel Stonier <d.stonier@gmail.com>, Naveed Usmani <naveedhd@gmail.com>',
     url='http://github.com/stonier/py_trees',
     keywords='behaviour-trees',
+    zip_safe=True,
     classifiers=[
         'Environment :: Console',
         'Intended Audience :: Developers',
@@ -45,7 +56,7 @@ d = setup(
     long_description="A behaviour tree implementation for rapid development of small scale decision making engines that don't need to be real time reactive.",
     license='BSD',
     test_suite='nose.collector',
-    tests_require=['nose'],
+    tests_require=tests_require,
     # test_suite='tests',
     # Unfortunately catkin builds do not like this
     #     entry_points={

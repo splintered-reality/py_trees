@@ -4,24 +4,9 @@
 
 NAME=`./setup.py --name`
 VERSION=`./setup.py --version`
-# LOCAL_DIR = $(shell pwd)/doc/html/
-# REMOTE_DIR:=files@files.yujin.com:shared/documentation/${NAME}/${VERSION}
-# REMOTE_SSH:=files@files.yujin.com
-#docs:
-#	rosdoc_lite .
-#
-#details:
-#	@echo ${VERSION}
-#	@echo ${NAME}
-#
-#upload:
-#	ssh ${REMOTE_SSH} 'mkdir -p shared/documentation/${NAME}/${VERSION}; rm -f shared/documentation/${NAME}/latest; ln -sf ${VERSION} shared/documentation/${NAME}/latest'
-#	rsync --delete --recursive --links --verbose ${LOCAL_DIR} ${REMOTE_DIR}
-
 
 help:
 	@echo "Local Build"
-	@echo "  deps      : install various build dependencies"
 	@echo "  build     : build the python package"
 	@echo "  tests     : run all of the nosetests"
 	@echo "  clean     : clean build/dist directories"
@@ -37,10 +22,6 @@ docs:
 
 build:
 	python setup.py build
-
-deps:
-	echo "Downloading dependencies"
-	sudo apt-get install python-stdeb virtualenvwrapper
 
 clean:
 	-rm -f MANIFEST
@@ -62,8 +43,29 @@ deb:
 	rm -rf dist deb_dist
 	python setup.py --command-packages=stdeb.command bdist_deb
 
-pypi: 
-	python setup.py sdist upload
+# Pypi Packaging Tutorial: https://packaging.python.org/tutorials/packaging-projects/
+#
+# Use with a ~/.pypirc file:
+#
+# [distutils]
+# index-servers =
+#     pypi
+#
+# [pypi]
+# repository = https://upload.pypi.org/legacy/
+# username:<username>
+# password:<password>
+#
+# Note, you probably need to register the first time.
+# You can also send it to testpypi first if you wish (see tutorial).
+
+pypi:
+	python setup.py sdist bdist_wheel
+	twine upload dist/*
+
+pypi_test:
+	python setup.py sdist bdist_wheel
+	twine upload --repository-url https://test.pypi.org/legacy/ dist/*
 
 tests:
 	python setup.py test

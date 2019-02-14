@@ -1,0 +1,4 @@
+-r ../rtd-requirements.txt
+Sphinx
+sphinx-argparse
+sphinx_rtd_theme
