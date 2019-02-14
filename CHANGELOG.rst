@@ -3,6 +3,10 @@ Changelog
 
 Forthcoming
 -----------
+[decorators] new-style decorators can be found in py_trees.decorators
+[decorators] new-style decorators now stop their running child on completion (SUCCESS||FAILURE)
+[decorators] onshot now activates upon *successful completion* (SUCCESS only), previously on *any completion* (SUCCESS||FAILURE)
+[meta] behaviours from functions can now automagically generate names
 
 0.6.5 (2018-09-19)
 ------------------

@@ -20,10 +20,10 @@ from . import behaviour
 from . import common
 from . import meta
 
+
 ##############################################################################
 # Behaviours
 ##############################################################################
-
 
 class Timer(behaviour.Behaviour):
     """

@@ -13,11 +13,11 @@ This package contains py_trees demo script code.
 # Imports
 ##############################################################################
 
-from . import action
-from . import blackboard
-from . import context_switching
-from . import dot_graphs
-from . import lifecycle
-from . import selector
-from . import sequence
-from . import stewardship
+from . import action  # noqa
+from . import blackboard  # noqa
+from . import context_switching  # noqa
+from . import dot_graphs  # noqa
+from . import lifecycle  # noqa
+from . import selector  # noqa
+from . import sequence  # noqa
+from . import stewardship  # noqa

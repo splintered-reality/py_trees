@@ -5,17 +5,21 @@ import os
 
 # You need install_requires if you don't have a ROS environment
 install_requires = [] if os.environ.get('CATKIN_BINARY_DIR') else [
+    # build
+    'setuptools',
     # runtime
     'enum34;python_version<"3.4"',
     'pydot'
 ]
 
-tests_require=['nose']
+tests_require = ['nose', 'pydot', 'pytest', 'flake8', 'yanc', 'nose-htmloutput']
 
 extras_require = {} if os.environ.get('CATKIN_BINARY_DIR') else {
     'test': tests_require,
-    'docs': ["Sphinx", "sphinx-argparse", "sphinx_rtd_theme"]
+    'docs': ["Sphinx", "sphinx-argparse", "sphinx-rtd-theme"],
+    'debs': ['stdeb', 'twine']
 }
+
 ##############################
 # Pull in __version__
 ##############################
@@ -42,6 +46,7 @@ d = setup(
     maintainer='Daniel Stonier <d.stonier@gmail.com>, Naveed Usmani <naveedhd@gmail.com>',
     url='http://github.com/stonier/py_trees',
     keywords='behaviour-trees',
+    zip_safe=True,
     classifiers=[
         'Environment :: Console',
         'Intended Audience :: Developers',

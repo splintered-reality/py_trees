@@ -47,12 +47,12 @@ class ParallelPolicy(enum.Enum):
     """:py:data:`~py_trees.common.Status.SUCCESS` so long as at least one child has :py:data:`~py_trees.common.Status.SUCCESS` and the remainder are :py:data:`~py_trees.common.Status.RUNNING`"""
 
 
-class Foo(enum.IntEnum):
+class Name(enum.Enum):
     """
-    Foo
+    Naming conventions.
     """
-    MORE_FOO = 1
-    """More Foo"""
+    AUTO_GENERATED = "AUTO_GENERATED"
+    """More Foo"""	    """:py:data:`~py_trees.common.Name.AUTO_GENERATED` leaves it to the behaviour to generate a useful, informative name."""
 
 
 class ClearingPolicy(enum.IntEnum):
