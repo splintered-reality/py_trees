@@ -12,19 +12,19 @@
 [license]: LICENSE
 
 [devel-sources-image]: http://img.shields.io/badge/sources-devel-blue.svg?style=plastic
-[devel-sources]: https://github.com/stonier/py_trees/tree/devel
-[0.8.x-sources]: https://github.com/stonier/py_trees/tree/release/0.8.x
-[0.7.x-sources]: https://github.com/stonier/py_trees/tree/release/0.7.x
-[0.6.x-sources]: https://github.com/stonier/py_trees/tree/release/0.6.x
-[0.5.x-sources]: https://github.com/stonier/py_trees/tree/release/0.5.x
-[0.4.x-sources]: https://github.com/stonier/py_trees/tree/release/0.4-indigo-kinetic
+[devel-sources]: https://github.com/splintered-reality/py_trees/tree/devel
+[0.8.x-sources]: https://github.com/splintered-reality/py_trees/tree/release/0.8.x
+[0.7.x-sources]: https://github.com/splintered-reality/py_trees/tree/release/0.7.x
+[0.6.x-sources]: https://github.com/splintered-reality/py_trees/tree/release/0.6.x
+[0.5.x-sources]: https://github.com/splintered-reality/py_trees/tree/release/0.5.x
+[0.4.x-sources]: https://github.com/splintered-reality/py_trees/tree/release/0.4-indigo-kinetic
 
 [devel-build-status-image]: http://build.ros.org/job/Mbin_uB64__py_trees__ubuntu_bionic_amd64__binary/badge/icon?style=plastic
-[devel-build-status]: https://circleci.com/gh/stonier/py_trees/tree/devel
+[devel-build-status]: https://circleci.com/gh/splintered-reality/py_trees/tree/devel
 [0.8.x-build-status-image]: http://build.ros.org/job/Mbin_uB64__py_trees__ubuntu_bionic_amd64__binary/badge/icon?style=plastic
-[0.8.x-build-status]: https://circleci.com/gh/stonier/py_trees/tree/release/0.8.x
+[0.8.x-build-status]: https://circleci.com/gh/splintered-reality/py_trees/tree/release/0.8.x
 [0.7.x-build-status-image]: http://build.ros.org/job/Mbin_uB64__py_trees__ubuntu_bionic_amd64__binary/badge/icon?style=plastic
-[0.7.x-build-status]: https://circleci.com/gh/stonier/py_trees/tree/release/0.7.x
+[0.7.x-build-status]: https://circleci.com/gh/splintered-reality/py_trees/tree/release/0.7.x
 [bouncy-build-status-image]: http://build.ros.org/job/Mbin_uB64__py_trees__ubuntu_bionic_amd64__binary/badge/icon?style=plastic
 [bouncy-build-status]: http://build.ros.org/job/Mbin_uX64__py_trees__ubuntu_bionic_amd64__binary
 [melodic-build-status-image]: http://build.ros.org/job/Mbin_uB64__py_trees__ubuntu_bionic_amd64__binary/badge/icon?style=plastic
@@ -78,7 +78,7 @@ $ sudo apt install ros-<rosdistro>-py-trees
 In a Python Virtual Environment:
 
 ```
-$ git clone https://github.com/stonier/py_trees
+$ git clone https://github.com/splintered-reality/py_trees
 $ cd py_trees
 $ source ./virtualenv.bash
 ```
@@ -86,7 +86,7 @@ $ source ./virtualenv.bash
 Build your own python3 deb:
 
 ```
-$ git clone https://github.com/stonier/py_trees
+$ git clone https://github.com/splintered-reality/py_trees
 $ cd py_trees
 $ source ./virtualenv.bash
 $ make deb
@@ -118,13 +118,13 @@ This repository is python-only, however additional modules & documentation are a
 [melodic-repository]: http://repositories.ros.org/status_page/ros_melodic_default.html?q=py_trees
 [kinetic-repository]: http://repositories.ros.org/status_page/ros_kinetic_default.html?q=py_trees
 
-[py-trees-0.8.x]: https://github.com/stonier/py_trees/tree/release/0.8.x
-[py-trees-0.7.x]: https://github.com/stonier/py_trees/tree/release/0.7.x
-[py-trees-0.6.x]: https://github.com/stonier/py_trees/tree/release/0.6.x
-[py-trees-0.5.x]: https://github.com/stonier/py_trees/tree/release/0.5.x
+[py-trees-0.8.x]: https://github.com/splintered-reality/py_trees/tree/release/0.8.x
+[py-trees-0.7.x]: https://github.com/splintered-reality/py_trees/tree/release/0.7.x
+[py-trees-0.6.x]: https://github.com/splintered-reality/py_trees/tree/release/0.6.x
+[py-trees-0.5.x]: https://github.com/splintered-reality/py_trees/tree/release/0.5.x
 [py-trees-msgs-kinetic]: https://github.com/stonier/py_trees_msgs/tree/release/0.3-kinetic
 [py-trees-msgs-melodic]: https://github.com/stonier/py_trees_msgs/tree/release/0.3-melodic
-[py-trees-ros-kinetic]: https://github.com/stonier/py_trees_ros/tree/release/0.5-kinetic
-[py-trees-ros-melodic]: https://github.com/stonier/py_trees_ros/tree/release/0.5-melodic
-[rqt-py-trees-kinetic]: https://github.com/stonier/rqt_py_trees/tree/release/0.3-kinetic
-[rqt-py-trees-melodic]: https://github.com/stonier/rqt_py_trees/tree/release/0.3-melodic
+[py-trees-ros-kinetic]: https://github.com/splintered-reality/py_trees_ros/tree/release/0.5-kinetic
+[py-trees-ros-melodic]: https://github.com/splintered-reality/py_trees_ros/tree/release/0.5-melodic
+[rqt-py-trees-kinetic]: https://github.com/splintered-reality/rqt_py_trees/tree/release/0.3-kinetic
+[rqt-py-trees-melodic]: https://github.com/splintered-reality/rqt_py_trees/tree/release/0.3-melodic
