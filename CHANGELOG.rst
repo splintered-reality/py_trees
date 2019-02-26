@@ -4,15 +4,19 @@ Release Notes
 Forthcoming
 -----------
 
-1.0.3 (2018-10-19)
+1.0.4 (2019-02-26)
+------------------
+* [display] drop spline curves, it's buggy with graphviz 2.38
+
+1.0.3 (2019-02-13)
 ------------------
 * [visitors] winds of change visitor and logging demo
 
-1.0.2 (2018-10-18)
+1.0.2 (2019-02-13)
 ------------------
 * [console] fallbacks for unicode chars when (UTF-8) encoding cannot support them
 
-1.0.1 (2018-10-18)
+1.0.1 (2018-02-12)
 ------------------
 * [trees] don't use multiprocess on setup if not using timeouts
 
