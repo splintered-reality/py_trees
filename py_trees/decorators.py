@@ -30,19 +30,19 @@ An example:
 
 Decorators with very specific functionality:
 
-* :func:`py_trees.decorators.Condition`
-* :func:`py_trees.decorators.Inverter`
-* :func:`py_trees.decorators.OneShot`
-* :func:`py_trees.decorators.TimeOut`
+* :class:`py_trees.decorators.Condition`
+* :class:`py_trees.decorators.Inverter`
+* :class:`py_trees.decorators.OneShot`
+* :class:`py_trees.decorators.Timeout`
 
 And the X is Y family:
 
-* :func:`py_trees.decorators.FailureIsRunning`
-* :func:`py_trees.decorators.FailureIsSuccess`
-* :func:`py_trees.decorators.RunningIsFailure`
-* :func:`py_trees.decorators.RunningIsSuccess`
-* :func:`py_trees.decorators.SuccessIsFailure`
-* :func:`py_trees.decorators.SuccessIsRunning`
+* :class:`py_trees.decorators.FailureIsRunning`
+* :class:`py_trees.decorators.FailureIsSuccess`
+* :class:`py_trees.decorators.RunningIsFailure`
+* :class:`py_trees.decorators.RunningIsSuccess`
+* :class:`py_trees.decorators.SuccessIsFailure`
+* :class:`py_trees.decorators.SuccessIsRunning`
 
 **Decorators for Blocking Behaviours**
 

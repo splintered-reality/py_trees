@@ -1,3 +1,5 @@
+.. _behaviours-section:
+
 Behaviours
 ==========
 
@@ -17,6 +19,8 @@ Behaviours in py_trees are created by subclassing the
    :language: python
    :linenos:
 
+.. _lifecycle-section:
+
 Lifecycle
 ---------
 
@@ -35,6 +39,8 @@ Important points to focus on:
   :meth:`~py_trees.demos.lifecycle.Counter.terminate()` methods.
 * The parent :meth:`~py_trees.behaviour.Behaviour.tick()` method always calls update()
 * The :meth:`~py_trees.demos.lifecycle.Counter.update()` method is responsible for deciding the behaviour :ref:`status-section`.
+
+.. _initialisation-section:
 
 Initialisation
 --------------
@@ -84,6 +90,8 @@ The ``update()`` method must return one of ``RUNNING``. ``SUCCESS`` or ``FAILURE
 status of ``INVALID`` is the initial default and ordinarily automatically set by other
 mechansims (e.g. when a higher priority behaviour cancels the currently selected one).
 
+.. _feedback-message-section:
+
 Feedback Message
 ----------------
 
@@ -115,6 +123,8 @@ Avoid updating it with a feedback message at every tick with updated plan
 details. Instead, update the message whenever a significant change
 occurs - e.g. when the previous plan is re-planned or pre-empted.
 
+.. _loggers-section:
+
 Loggers
 -------
 
@@ -123,6 +133,8 @@ for anything heavier than debugging simple examples. This kind of logging
 tends to get rather heavy and requires a lot of filtering to find the points
 of change that you are interested in (see comments about the feedback
 messages above).
+
+.. _complex-example-section:
 
 Complex Example
 ---------------

@@ -1,14 +1,20 @@
+.. _trees-section:
+
 Trees
 =====
 
 .. automodule:: py_trees.trees
     :noindex:
 
+.. _behaviour-tree-section:
+
 The Behaviour Tree
 ------------------
 
 .. autoclass:: py_trees.trees.BehaviourTree
     :noindex:
+
+.. _skeleton-section:
 
 Skeleton
 --------
@@ -23,6 +29,8 @@ or indefinitely and use the :meth:`~py_trees.trees.BehaviourTree.interrupt` meth
 
 or create your own loop and tick at your own leisure with
 the :meth:`~py_trees.trees.BehaviourTree.tick` method.
+
+.. _pre-post-tick-handlers-section:
 
 Pre/Post Tick Handlers
 ----------------------
@@ -58,6 +66,7 @@ The relevant code:
    :lines: 135-136
    :caption: pre-tick-handler-adding
 
+.. _visitors-section:
 
 Visitors
 --------

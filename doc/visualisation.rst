@@ -1,8 +1,12 @@
+.. _visualisation-section:
+
 Visualisation
 =============
 
 .. automodule:: py_trees.display
     :noindex:
+
+.. _ascii-trees-section:
 
 Ascii Trees
 -----------
@@ -11,6 +15,8 @@ You can get a very simple ascii representation of the tree on stdout with :func:
 
 .. autofunction:: py_trees.display.print_ascii_tree
     :noindex:
+
+.. _ascii-trees-runtime-section:
 
 Ascii Trees (Runtime)
 ---------------------
@@ -21,6 +27,8 @@ with the :func:`~py_trees.display.ascii_tree` function:
 
 .. autofunction:: py_trees.display.ascii_tree
     :noindex:
+
+.. _render-to-file-section:
 
 Render to File (Dot/SVG/PNG)
 ----------------------------

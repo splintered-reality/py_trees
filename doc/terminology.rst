@@ -1,3 +1,5 @@
+.. _terminology-section:
+
 Terminology
 ===========
 
