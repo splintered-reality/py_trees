@@ -273,7 +273,7 @@ def generate_pydot_graph(root, visibility_level, collapse_decorators, with_quali
     graph = pydot.Dot(graph_type='digraph')
     graph.set_name("pastafarianism")  # consider making this unique to the tree sometime, e.g. based on the root name
     # fonts: helvetica, times-bold, arial (times-roman is the default, but this helps some viewers, like kgraphviewer)
-    graph.set_graph_defaults(fontname='times-roman', splines='curved')
+    graph.set_graph_defaults(fontname='times-roman')  # splines='curved' is buggy on 16.04, but would be nice to have
     graph.set_node_defaults(fontname='times-roman')
     graph.set_edge_defaults(fontname='times-roman')
     (node_shape, node_colour, node_font_colour) = get_node_attributes(root)
