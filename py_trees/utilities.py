@@ -61,7 +61,7 @@ def static_variables(**kwargs):
         @static_variables(counter=0)
         def foo():
             foo.counter += 1
-            print("Counter: {}".formta(foo.counter))
+            print("Counter: {}".format(foo.counter))
     """
     def decorate(func):
         for k in kwargs:
