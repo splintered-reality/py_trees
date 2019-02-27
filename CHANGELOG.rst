@@ -3,7 +3,7 @@ Changelog
 
 
 0.5.12 (2019-02-13)
-------------------
+-------------------
 [decorators] default option for collapsing decorators (resolves py_trees_ros bug)
 
 0.5.11 (2019-02-13)
