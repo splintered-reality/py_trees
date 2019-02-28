@@ -339,6 +339,34 @@ def test_timeout():
     print("failure.status == py_trees.common.Status.FAILURE")
     assert(failure.status == py_trees.common.Status.FAILURE)
 
+    # test that it succeeds if child succeeds on last tick
+    count = py_trees.behaviours.Count(
+        name="Count",
+        fail_until=0,
+        running_until=1,
+        success_until=10,
+        reset=False
+    )
+    timeout = py_trees.decorators.Timeout(child=count, duration=0.1)
+    py_trees.display.print_ascii_tree(timeout)
+
+    py_trees.tests.tick_tree(timeout, 1, 1, visitors=[visitor])
+
+    print("\n--------- Assertions ---------\n")
+    print("timeout.status == py_trees.common.Status.RUNNING")
+    assert(timeout.status == py_trees.common.Status.RUNNING)
+    print("count.status == py_trees.common.Status.RUNNING")
+    assert(count.status == py_trees.common.Status.RUNNING)
+
+    time.sleep(0.2)  # go past the duration
+    py_trees.tests.tick_tree(timeout, 2, 2, visitors=[visitor])
+
+    print("\n--------- Assertions ---------\n")
+    print("timeout.status == py_trees.common.Status.SUCCESS")
+    assert(timeout.status == py_trees.common.Status.SUCCESS)
+    print("count.status == py_trees.common.Status.SUCCESS")
+    assert(count.status == py_trees.common.Status.SUCCESS)
+
 
 def test_condition():
     console.banner("Condition")

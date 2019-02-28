@@ -196,15 +196,18 @@ class Timeout(Decorator):
         if the timeout is exceeded.
         """
         current_time = time.time()
-        if current_time > self.finish_time:
+        if self.decorated.status == common.Status.RUNNING and current_time > self.finish_time:
             self.feedback_message = "timed out"
             self.logger.debug("{}.update() {}".format(self.__class__.__name__, self.feedback_message))
             # invalidate the decorated (i.e. cancel it), could also put this logic in a terminate() method
             self.decorated.stop(common.Status.INVALID)
             return common.Status.FAILURE
-        # Don't show the time remaining, that will change the message every tick and make the tree hard to
-        # debug since it will record a continuous stream of events
-        self.feedback_message = self.decorated.feedback_message + " [timeout: {}]".format(self.finish_time)
+        if self.decorated.status == common.Status.RUNNING:
+            self.feedback_message = self.decorated.feedback_message + " [time remaining: {}s]".format(
+                self.finish_time - current_time
+            )
+        else:
+            self.feedback_message = self.decorated.feedback_message
         return self.decorated.status
 
 
