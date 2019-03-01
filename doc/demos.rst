@@ -147,6 +147,8 @@ py-trees-demo-tree-stewardship
    :linenos:
    :caption: py_trees/demos/stewardship.py
 
+.. _py-trees-demo-pick-up-where-you-left-off-program:
+
 py-trees-demo-pick-up-where-you-left-off
 ----------------------------------------
 

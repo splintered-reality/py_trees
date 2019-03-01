@@ -1,3 +1,5 @@
+.. _idioms-section:
+
 Idioms
 ======
 
@@ -20,11 +22,15 @@ composite's methods, visit the :ref:`py-trees-idioms-module` module api document
 
 .. tip:: First time through, make sure to follow the link through to relevant demo programs.
 
+.. _oneshot-section:
+
 Oneshot
 -------
 
 .. automethod:: py_trees.idioms.oneshot
     :noindex:
+
+.. _pick-up-where-you-left-off-section:
 
 Pickup Where You left Off
 -------------------------

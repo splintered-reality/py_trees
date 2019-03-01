@@ -26,6 +26,8 @@ Some standout features of behaviour trees that makes them very attractive:
 * **Simplicity** - very few core components, making it easy for designers to work with it
 * **Dynamic** - change the graph on the fly, between ticks or from parent behaviours themselves
 
+.. _motivation-section:
+
 Motivation
 ----------
 
@@ -45,6 +47,8 @@ implementations happen within the closed doors of gaming/robot companies.
 the developments of the last ten years from an industry expert. It also
 walks you through a simple c++ implementation. His advice? If you can't find one that fits, roll your own.
 It is relatively simple and this way you can flexibly cater for your own needs.
+
+.. _design-section:
 
 Design
 ------
@@ -69,6 +73,7 @@ that python has to offer. Some design constraints that have been assumed to enab
 
 .. hint:: A c++ version is feasible and may come forth if there's a need..
 
+.. _readings-section:
 
 Readings
 --------
