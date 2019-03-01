@@ -187,7 +187,7 @@ class Timeout(Decorator):
         """
         Reset the feedback message and finish time on behaviour entry.
         """
-        self.finish_time = time.time() + self.duration
+        self.finish_time = time.monotonic() + self.duration
         self.feedback_message = ""
 
     def update(self):
@@ -195,16 +195,19 @@ class Timeout(Decorator):
         Terminate the child and return :data:`~py_trees.common.Status.FAILURE`
         if the timeout is exceeded.
         """
-        current_time = time.time()
-        if current_time > self.finish_time:
+        current_time = time.monotonic()
+        if self.decorated.status == common.Status.RUNNING and current_time > self.finish_time:
             self.feedback_message = "timed out"
             self.logger.debug("{}.update() {}".format(self.__class__.__name__, self.feedback_message))
             # invalidate the decorated (i.e. cancel it), could also put this logic in a terminate() method
             self.decorated.stop(common.Status.INVALID)
             return common.Status.FAILURE
-        # Don't show the time remaining, that will change the message every tick and make the tree hard to
-        # debug since it will record a continuous stream of events
-        self.feedback_message = self.decorated.feedback_message + " [timeout: {}]".format(self.finish_time)
+        if self.decorated.status == common.Status.RUNNING:
+            self.feedback_message = "time still ticking ... [remaining: {}s]".format(
+                self.finish_time - current_time
+            )
+        else:
+            self.feedback_message = "child finished before timeout triggered"
         return self.decorated.status
 
 

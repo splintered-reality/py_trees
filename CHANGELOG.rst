@@ -3,6 +3,7 @@ Release Notes
 
 Forthcoming
 -----------
+* [decorators] fix timeout bug that doesn't respect a child's last tick
 
 1.0.4 (2019-02-26)
 ------------------
