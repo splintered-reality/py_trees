@@ -170,7 +170,7 @@ class Behaviour(object):
     def setup_with_descendants(self):
         """
         Iterates over this child, it's children (it's children's children, ...)
-        calling the user defined :meth:`~py_trees.behaviour.Behaviuor.setup`
+        calling the user defined :meth:`~py_trees.behaviour.Behaviour.setup`
         on each in turn.
         """
         for child in self.children:
