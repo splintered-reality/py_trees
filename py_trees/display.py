@@ -100,7 +100,8 @@ def _generate_ascii_tree(tree, indent=0, snapshot_information=None):
     running_nodes = [] if snapshot_information is None else snapshot_information.running_nodes
     if indent == 0:
         if tree.id in nodes:
-            yield "%s [%s]" % (tree.name.replace('\n', ' '), ascii_check_mark(nodes[tree.id]))
+            message = "" if not tree.feedback_message else " -- " + tree.feedback_message
+            yield "%s [%s]" % (tree.name.replace('\n', ' '), ascii_check_mark(nodes[tree.id])) + message
         elif tree.id in previously_running_nodes and tree.id not in running_nodes:
             yield "%s" % tree.name.replace('\n', ' ') + " [" + console.yellow + "-" + console.reset + "]"
         else:
