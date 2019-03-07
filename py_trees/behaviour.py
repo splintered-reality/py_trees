@@ -36,7 +36,7 @@ class Behaviour(object):
     subclass this class.
 
     Args:
-        name (:obj:`str`): the behaviour name
+        name (:obj:`str`, optional): the behaviour name, defaults to auto-generating from the class name
 
     Raises:
         TypeError: if the provided name is not a string
