@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+1.0.6 (2019-03-06)
+------------------
+* [decorators] fix missing root feedback message in ascii graphs
+
 1.0.5 (2019-02-28)
 ------------------
 * [decorators] fix timeout bug that doesn't respect a child's last tick
