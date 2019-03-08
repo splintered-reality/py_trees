@@ -48,6 +48,7 @@ def correct_encode(original: str, replacement: str, encoding: str = sys.stdout.e
     return original
 
 
+section_sign = correct_encode(u'\u00A7', "SYNC")
 lightning_bolt = correct_encode(u'\u26A1', "SYNC")
 double_vertical_line = correct_encode(u'\u2016', "||")
 check_mark = correct_encode(u'\u2713', "S")
