@@ -43,6 +43,74 @@ def test_invalid_child():
     assert_raises(TypeError, DummyDecorator.__init__, child=5)
 
 
+def test_child_parent():
+    """Ensure that the child behaviour of a decorator has a valid parent."""
+    running = py_trees.behaviours.Running()
+    running_is_failure = py_trees.decorators.RunningIsFailure(child=running)
+
+    # Make sure that the parent-child relationship is as expected.
+    assert running_is_failure.decorated == running
+    assert running.parent == running_is_failure
+
+    # Now replace the child.
+    success = py_trees.behaviours.Success()
+    running_is_failure.set_child(success)
+
+    # Make sure the old child is un-parented and the new child is parented to the decorator.
+    assert success.parent == running_is_failure
+    assert running.parent is None, "The parent of running should be None but it is {}".format(running.parent)
+
+    # Also make sure that the decorators decorated value is the new child.
+    assert running_is_failure.decorated == success
+
+
+def test_decorator_tip_with_interrupt():
+    """In case the decorator has been reset by an interrupt caused by a selector, the tip is the interrupting behaviour.
+    """
+    left = py_trees.behaviours.Count(running_until=0, fail_until=1, success_until=2, reset=True)
+    running = py_trees.behaviours.Running()
+    # Intentionally using a decorator that won't modify the result of the running behaviour in this case.
+    right = py_trees.decorators.SuccessIsRunning(child=running)
+    root = py_trees.composites.Selector(children=[left, right])
+    visitor = py_trees.visitors.DebugVisitor()
+    py_trees.tests.tick_tree(root, 1, 1, visitors=[visitor], print_snapshot=True)
+    # Initially (before invalidation) the tip is the decorated item (running).
+    assert root.tip() == running
+
+    # After ticking again (invalidation occurs) the tip is the interrupting behaviour (left).
+    py_trees.tests.tick_tree(root, 2, 2, visitors=[visitor], print_snapshot=True)
+    assert root.tip() == left
+    assert right.status == py_trees.common.Status.INVALID
+
+    # Ensure that when checking the tip of the now invalidated decorator that it's tip is None.
+    assert right.tip() is None
+
+    # After ticking once again, left is reset and the right branch is re-initialised and hence the result of the tip
+    # of the root is running once again.
+    py_trees.tests.tick_tree(root, 3, 3, visitors=[visitor], print_snapshot=True)
+    assert root.tip() == running
+
+
+def test_decorator_tip_when_resetting_child():
+    """In case the child has been reset by the decorator when it was running, the tip is the last ticked child."""
+    success = py_trees.behaviours.Success()
+    running = py_trees.behaviours.Running()
+    sequence = py_trees.composites.Sequence(children=[success, running])
+    root = py_trees.decorators.RunningIsSuccess(child=sequence)
+    visitor = py_trees.visitors.DebugVisitor()
+    py_trees.tests.tick_tree(root, 1, 1, visitors=[visitor], print_snapshot=True)
+    assert root.tip() == running
+
+
+def test_decorator_tip_when_not_resetting_child():
+    """In case the child has not been reset by the decorator, the tip is the tip of the child."""
+    running = py_trees.behaviours.Running()
+    root = py_trees.decorators.SuccessIsRunning(child=running)
+    visitor = py_trees.visitors.DebugVisitor()
+    py_trees.tests.tick_tree(root, 1, 1, visitors=[visitor], print_snapshot=True)
+    assert root.tip() == running
+
+
 def test_failure_is_success_tree():
     console.banner("Failure is Success Tree")
     root = py_trees.composites.Selector(name="Root")

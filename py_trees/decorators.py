@@ -105,9 +105,32 @@ class Decorator(behaviour.Behaviour):
             raise TypeError("A decorator's child must be an instance of py_trees.behaviours.Behaviour")
         # Initialise
         super(Decorator, self).__init__(name=name)
-        self.children.append(child)
-        # Give a convenient alias
+        # Use decorated as an alias for referring to the child.
+        self.decorated = None
+        self.set_child(child)
+
+        self._last_tip = None
+
+    def set_child(self, child):
+        """Set the child of the decorator"""
+        # Ensure the child has no parent.
+        assert child.parent is None
+
+        # Either append to the children list or replace the first child in that list.
+        if not self.children:
+            self.children.append(child)
+        else:
+            # First, un-parent the current child
+            self.children[0].parent = None
+            # Then replace the current child with the new child.
+            self.children[0] = child
+
+        # Refer to it using a convenient alias
         self.decorated = self.children[0]
+        self.decorated.parent = self
+
+    def initialise(self):
+        self._last_tip = None
 
     def tick(self):
         """
@@ -135,6 +158,19 @@ class Decorator(behaviour.Behaviour):
         self.status = new_status
         yield self
 
+    def tip(self):
+        """Return the tip of the decorated behaviour.
+
+        Notes:
+            This does not check if there is a decorated child since it assumes it always has one.
+        """
+        if self.status == common.Status.INVALID:
+            return None
+        elif self.decorated.status == common.Status.INVALID:
+            return self._last_tip
+        else:
+            return self.decorated.tip()
+
     def stop(self, new_status):
         """
         As with other composites, it checks if the child is running
@@ -150,6 +186,8 @@ class Decorator(behaviour.Behaviour):
             self.decorated.stop(new_status)
         # if the decorator returns SUCCESS/FAILURE and should stop the child
         if self.decorated.status == common.Status.RUNNING:
+            # Cache the last tipped item before resetting the decorated behaviour.
+            self._last_tip = self.decorated.tip()
             self.decorated.stop(common.Status.INVALID)
         self.status = new_status
 
@@ -187,6 +225,7 @@ class Timeout(Decorator):
         """
         Reset the feedback message and finish time on behaviour entry.
         """
+        super().initialise()
         self.finish_time = time.monotonic() + self.duration
         self.feedback_message = ""
 
