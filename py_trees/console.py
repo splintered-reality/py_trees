@@ -41,6 +41,19 @@ import sys
 ##############################################################################
 
 def correct_encode(original: str, replacement: str, encoding: str = sys.stdout.encoding):
+    """
+    Return the correct encoding according to the specified encoding. Used to
+    make sure we get an appropriate symbol, even if the shell is merely ascii as
+    is often the case on, e.g. Jenkins CI.
+
+    Args:
+        original (:obj:`str`): the unicode string (usually just a character)
+        replacement (:obj:`str`): the fallback ascii string
+        encoding (:obj:`str`, optional): the encoding to check against.
+
+    Returns:
+        :obj:`str`: either the original or replacement depending on whether exceptions were thrown.
+    """
     try:
         original.encode(encoding)
     except UnicodeError:
@@ -53,6 +66,26 @@ double_vertical_line = correct_encode(u'\u2016', "||")
 check_mark = correct_encode(u'\u2713', "S")
 multiplication_x = correct_encode(u'\u2715', "F")
 
+
+def forceably_replace_unicode_chars(original: str):
+    """
+    Workaround for, e.g. ROS messages until they support unicode.
+
+    Args:
+        original (:obj:`str`): the unicode string (usually just a character)
+
+    Returns:
+        :obj:`str`: the original string with unicode replacements
+    """
+    unicode_ascii_symbols = {
+        u'\u26A1': "SYNC",
+        u'\u2016': "||",
+        u'\u2713': "S",
+        u'\u2715': "F"
+    }
+    for unicode, replacement in unicode_ascii_symbols.items():
+        original = original.replace(unicode, replacement)
+    return original
 
 ##############################################################################
 # Keypress
