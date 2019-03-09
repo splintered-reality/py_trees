@@ -223,7 +223,11 @@ def print_ascii_tree(root, indent=0, show_status=False):
         print("%s" % line)
 
 
-def generate_pydot_graph(root, visibility_level, collapse_decorators, with_qualified_names):
+def generate_pydot_graph(
+        root: behaviour.Behaviour,
+        visibility_level: common.VisibilityLevel=common.VisibilityLevel.DETAIL,
+        collapse_decorators: bool=False,
+        with_qualified_names: bool=False):
     """
     Generate the pydot graph - this is usually the first step in
     rendering the tree to file. See also :py:func:`render_dot_tree`.
@@ -231,8 +235,8 @@ def generate_pydot_graph(root, visibility_level, collapse_decorators, with_quali
     Args:
         root (:class:`~py_trees.behaviour.Behaviour`): the root of a tree, or subtree
         visibility_level (:class`~py_trees.common.VisibilityLevel`): collapse subtrees at or under this level
-        collapse_decorators (:obj:`bool`): only show the decorator (not the child)
-        with_qualified_names: (:obj:`bool`): print the class information for each behaviour in each node
+        collapse_decorators (:obj:`bool`, optional): only show the decorator (not the child), defaults to False
+        with_qualified_names: (:obj:`bool`, optional): print the class information for each behaviour in each node, defaults to False
 
     Returns:
         pydot.Dot: graph
