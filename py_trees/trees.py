@@ -268,7 +268,11 @@ class BehaviourTree(object):
             post_tick_handler(self)
         self.count += 1
 
-    def tick_tock(self, sleep_ms, number_of_iterations=CONTINUOUS_TICK_TOCK, pre_tick_handler=None, post_tick_handler=None):
+    def tick_tock(self,
+                  sleep_ms,
+                  number_of_iterations=CONTINUOUS_TICK_TOCK,
+                  pre_tick_handler=None,
+                  post_tick_handler=None):
         """
         Tick continuously with a sleep interval as specified. This optionally accepts some handlers that will
         be used for the duration of this tick tock (c.f. those added by
