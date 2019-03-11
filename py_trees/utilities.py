@@ -19,6 +19,29 @@ import os
 import re
 
 ##############################################################################
+# Python Helpers
+##############################################################################
+
+
+def static_variables(**kwargs):
+    """
+    This is a decorator that can be used with python methods to attach
+    initialised static variables to the method.
+
+    .. code-block:: python
+
+       @static_variables(counter=0)
+       def foo():
+           foo.counter += 1
+           print("Counter: {}".format(foo.counter))
+    """
+    def decorate(func):
+        for k in kwargs:
+            setattr(func, k, kwargs[k])
+        return func
+    return decorate
+
+##############################################################################
 # System Tools
 ##############################################################################
 
@@ -93,26 +116,3 @@ def get_fully_qualified_name(instance: object) -> str:
         return instance.__class__.__name__
     else:
         return module + '.' + instance.__class__.__name__
-
-##############################################################################
-# Python Helpers
-##############################################################################
-
-
-def static_variables(**kwargs):
-    """
-    This is a decorator that can be used with python methods to attach
-    initialised static variables to the method.
-
-    .. code-block:: python
-
-       @static_variables(counter=0)
-       def foo():
-           foo.counter += 1
-           print("Counter: {}".format(foo.counter))
-    """
-    def decorate(func):
-        for k in kwargs:
-            setattr(func, k, kwargs[k])
-        return func
-    return decorate

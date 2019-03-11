@@ -17,5 +17,5 @@ import py_trees
 
 
 def test_correct_encode():
-    assert py_trees.console.correct_encode(u'\u26A1', "a", "ascii") == "a"
-    assert py_trees.console.correct_encode(u'\u26A1', "a", "utf-8") == u'\u26A1'
+    assert py_trees.console.define_symbol_or_fallback(u'\u26A1', "a", "ascii") == "a"
+    assert py_trees.console.define_symbol_or_fallback(u'\u26A1', "a", "utf-8") == u'\u26A1'
