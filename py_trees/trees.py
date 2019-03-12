@@ -351,10 +351,6 @@ def setup_tree_ascii_art_debug(tree: BehaviourTree):
 
     Args:
         tree (:class:`~py_trees.trees.BehaviourTree`): the behaviour tree that has just been ticked
-
-    Example:
-        .. code-block:: python
-
     """
     def ascii_tree_post_tick_handler(
         snapshot_visitor: visitors.SnapshotVisitor,
