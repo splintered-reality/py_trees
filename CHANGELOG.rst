@@ -1,6 +1,22 @@
 Release Notes
 =============
 
+1.1.x (2019-xx-yy)
+------------------
+
+**Breaking API**
+
+* [display] print_ascii_tree -> ascii_tree, `#178 <https://github.com/splintered-reality/py_trees/issues/178>`_.
+* [display] generate_pydot_graph -> dot_graph, `#178 <https://github.com/splintered-reality/py_trees/issues/178>`_.
+
+**New Features**
+
+* ...
+
+1.0.7 (2019-xx-yy)
+------------------
+* [display] optional arguments for generate_pydot_graph
+
 1.0.6 (2019-03-06)
 ------------------
 * [decorators] fix missing root feedback message in ascii graphs
