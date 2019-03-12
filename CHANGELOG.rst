@@ -11,7 +11,8 @@ Release Notes
 
 **New Features**
 
-* ...
+* [trees] add missing `add_visitor` method
+* [trees] convenience method for ascii art debugging
 
 1.0.7 (2019-xx-yy)
 ------------------
