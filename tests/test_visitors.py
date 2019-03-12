@@ -8,8 +8,6 @@
 # Imports
 ##############################################################################
 
-import os
-
 import nose.tools
 
 import py_trees
@@ -42,7 +40,7 @@ def test_winds_of_change():
     root.add_child(a)
     root.add_child(b)
     root.add_child(c)
-    py_trees.display.print_ascii_tree(root, 0)
+    print(py_trees.display.ascii_tree(root))
 
     debug_visitor = py_trees.visitors.DebugVisitor()
     snapshot_visitor = py_trees.visitors.SnapshotVisitor()

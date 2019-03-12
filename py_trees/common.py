@@ -75,7 +75,7 @@ class ParallelPolicy(object):
             """
             description = "--" + self.__class__.__name__ + "("
             description += console.lightning_bolt if self.synchronise else "-"
-            description += "--"
+            description += ")--"
             return description
 
     class SuccessOnOne(Base):

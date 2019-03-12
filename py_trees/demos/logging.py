@@ -128,7 +128,8 @@ def display_ascii_tree(snapshot_visitor, behaviour_tree):
     """
     print("\n" + py_trees.display.ascii_tree(
         behaviour_tree.root,
-        snapshot_information=snapshot_visitor)
+        visited=snapshot_visitor.visited,
+        previously_visited=snapshot_visitor.previously_visited)
     )
 
 

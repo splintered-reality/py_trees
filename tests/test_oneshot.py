@@ -60,7 +60,7 @@ def test_oneshot_with_fail_causes_reentry():
 
             # Ticking
             py_trees.tests.tick_tree(
-                tree=oneshot,
+                root=oneshot,
                 from_tick=1,
                 to_tick=1,
                 print_snapshot=True,
@@ -80,7 +80,7 @@ def test_oneshot_with_fail_causes_reentry():
 
             # Ticking
             py_trees.tests.tick_tree(
-                tree=oneshot,
+                root=oneshot,
                 from_tick=2,
                 to_tick=2,
                 print_snapshot=True,
@@ -148,7 +148,7 @@ def test_oneshot_with_subtrees_and_interrupt():
 
             # Ticking
             py_trees.tests.tick_tree(
-                tree=root,
+                root=root,
                 from_tick=1,
                 to_tick=2,
                 print_snapshot=True,
@@ -166,7 +166,7 @@ def test_oneshot_with_subtrees_and_interrupt():
             assert(oneshot.status == py_trees.common.Status.INVALID)
             assert(worker_subtree.status == py_trees.common.Status.INVALID)
             py_trees.tests.tick_tree(
-                tree=root,
+                root=root,
                 from_tick=3,
                 to_tick=3,
                 print_snapshot=True,
