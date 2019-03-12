@@ -602,6 +602,32 @@ def test_tree_setup():
         assert False, "should not have timed out"
 
 
+def test_ascii_tree_debug():
+    """
+    Just check the code path through to painting ascii art via
+    tree visitors and post-tick handlers is executable
+    """
+    console.banner("Tree Ascii Art")
+    root = py_trees.composites.Selector("Selector")
+    root.add_child(
+        py_trees.behaviours.Count(
+            name="High Priority",
+            fail_until=1,
+            running_until=1,
+            success_until=10
+        )
+    )
+    root.add_child(py_trees.behaviours.Running(name="Low Priority"))
+    tree = py_trees.trees.BehaviourTree(
+        root=root)
+    py_trees.trees.setup_tree_ascii_art_debug(tree)
+    tree.setup()
+    tree.tick()
+    # If we got all the way here, that suffices. If we really wished,
+    # we could catch stdout and check that.
+    assert(True)
+
+
 def test_sync_and_async_setup():
     """Test that when setup() is called with an infinite timeout that it runs on the main process.
     When called with a finite timeout, it should run in a different process."""

@@ -25,12 +25,14 @@ can also be easily used as inspiration for your own tree custodians.
 # Imports
 ##############################################################################
 
+import functools
 import multiprocessing
 import time
 
 from . import behaviour
 from . import common
 from . import composites
+from . import display
 from . import visitors
 
 CONTINUOUS_TICK_TOCK = -1
@@ -108,6 +110,20 @@ class BehaviourTree(object):
             handler (:obj:`func`): function
         """
         self.post_tick_handlers.append(handler)
+
+    def add_visitor(self, visitor):
+        """
+        Trees can run multiple visitors on each behaviour as they
+        tick through a tree.
+
+        Args:
+            visitor (:class:`~py_trees.visitors.VisitorBase`): sub-classed instance of a visitor
+
+        .. seealso:: :class:`~py_trees.visitors.DebugVisitor`,
+            :class:`~py_trees.visitors.SnapshotVisitor`,
+            :class:`~py_trees.visitors.WindsOfChangeVisitor`
+        """
+        self.visitors.append(visitor)
 
     def prune_subtree(self, unique_id):
         """
@@ -322,3 +338,40 @@ class BehaviourTree(object):
         Destroy the tree by stopping the root node.
         """
         self.root.stop()
+
+##############################################################################
+# Post Tick Handlers
+##############################################################################
+
+
+def setup_tree_ascii_art_debug(tree: BehaviourTree):
+    """
+    Convenience method for configuring a tree to paint an ascii
+    art snapshot on your console at the end of every tick.
+
+    Args:
+        tree (:class:`~py_trees.trees.BehaviourTree`): the behaviour tree that has just been ticked
+
+    Example:
+        .. code-block:: python
+
+    """
+    def ascii_tree_post_tick_handler(
+        snapshot_visitor: visitors.SnapshotVisitor,
+        tree: BehaviourTree
+    ):
+        print(
+            display.ascii_tree(
+                tree.root,
+                visited=snapshot_visitor.visited,
+                previously_visited=snapshot_visitor.previously_visited
+            )
+        )
+    snapshot_visitor = visitors.SnapshotVisitor()
+    tree.add_visitor(snapshot_visitor)
+    tree.add_post_tick_handler(
+        functools.partial(
+            ascii_tree_post_tick_handler,
+            snapshot_visitor
+        )
+    )

@@ -11,9 +11,9 @@ Visualisation
 Ascii Trees
 -----------
 
-You can get a very simple ascii representation of the tree on stdout with :func:`~py_trees.display.print_ascii_tree`:
+You can get an ascii art representation of the tree on stdout with :func:`~py_trees.display.ascii_tree`:
 
-.. autofunction:: py_trees.display.print_ascii_tree
+.. autofunction:: py_trees.display.ascii_tree
     :noindex:
 
 .. _ascii-trees-runtime-section:
