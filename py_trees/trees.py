@@ -109,6 +109,20 @@ class BehaviourTree(object):
         """
         self.post_tick_handlers.append(handler)
 
+    def add_visitor(self, visitor):
+        """
+        Trees can run multiple visitors on each behaviour as they
+        tick through a tree.
+
+        Args:
+            visitor (:class:`~py_trees.visitors.VisitorBase`): sub-classed instance of a visitor
+
+        .. seealso:: :class:`~py_trees.visitors.DebugVisitor`,
+            :class:`~py_trees.visitors.SnapshotVisitor`,
+            :class:`~py_trees.visitors.WindsOfChangeVisitor`
+        """
+        self.visitors.append(visitor)
+
     def prune_subtree(self, unique_id):
         """
         Prune a subtree given the unique id of the root of the subtree.
