@@ -123,7 +123,7 @@ def ascii_tree(
                                   snapshot_visitor))
             behaviour_tree.visitors.append(snapshot_visitor)
     """
-    symbols = unicode_symbols if console.has_unicode('utf-8') else ascii_symbols
+    symbols = unicode_symbols if console.has_unicode() else ascii_symbols
 
     def get_behaviour_type(b):
         for behaviour_type in [composites.Sequence,

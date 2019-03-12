@@ -60,7 +60,7 @@ def has_unicode(encoding: str=sys.stdout.encoding) -> bool:
     return True
 
 
-def define_symbol_or_fallback(original: str, fallback: str, encoding: str = sys.stdout.encoding):
+def define_symbol_or_fallback(original: str, fallback: str, encoding: str=sys.stdout.encoding):
     """
     Return the correct encoding according to the specified encoding. Used to
     make sure we get an appropriate symbol, even if the shell is merely ascii as
@@ -324,3 +324,4 @@ if __name__ == '__main__':
     print("double_vertical_line: {}".format(double_vertical_line))
     print("check_mark: {}".format(check_mark))
     print("multiplication_x: {}".format(multiplication_x))
+    # print("has unicode: {}".format(has_unicode()))

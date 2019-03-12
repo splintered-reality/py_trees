@@ -31,7 +31,7 @@ def pre_tick_visitor(behaviour_tree):
     print("\n--------- Run %s ---------\n" % behaviour_tree.count)
 
 
-def tick_tree(tree,
+def tick_tree(root,
               from_tick,
               to_tick,
               *,
@@ -44,12 +44,12 @@ def tick_tree(tree,
         for visitor in visitors:
             visitor.initialise()
         print(("\n--------- Run %s ---------\n" % i))
-        for node in tree.tick():
+        for node in root.tick():
             for visitor in visitors:
                 node.visit(visitor)
     if print_snapshot:
         print(console.green + "\nAscii Tree Snapshot" + console.reset)
-        display.print_ascii_tree(tree, show_status=True)
+        print(display.ascii_tree(root=root, show_status=True))
     if print_blackboard:
         print(str(blackboard.Blackboard()))
 

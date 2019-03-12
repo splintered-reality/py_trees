@@ -26,6 +26,7 @@ logger = py_trees.logging.Logger("Nosetest")
 # Tests
 ##############################################################################
 
+
 def test_replacing_children():
     console.banner("Replacing Children")
     parent = py_trees.composites.Sequence(name="Parent")
@@ -57,6 +58,7 @@ def test_removing_children():
     parent.add_child(child)
     parent.remove_all_children()
     assert(child.parent is None)
+
 
 def test_composite_errors():
     console.banner("Timer Errors")

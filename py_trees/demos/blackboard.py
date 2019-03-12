@@ -117,7 +117,7 @@ def main():
     # Rendering
     ####################
     if args.render:
-        py_trees.display.render_dot_tree(tree)
+        py_trees.display.render_dot_tree(root)
         sys.exit()
 
     ####################
@@ -127,6 +127,6 @@ def main():
     print("\n--------- Tick 0 ---------\n")
     root.tick_once()
     print("\n")
-    py_trees.display.print_ascii_tree(root, show_status=True)
+    print(py_trees.display.ascii_tree(root, show_status=True))
     print("\n")
     print(py_trees.blackboard.Blackboard())

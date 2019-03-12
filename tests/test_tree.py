@@ -78,7 +78,7 @@ def test_selector_composite():
     tree.add_child(a)
     tree.add_child(b)
     tree.add_child(c)
-    py_trees.display.print_ascii_tree(tree, 0)
+    print(py_trees.display.ascii_tree(tree))
     py_trees.tests.tick_tree(tree, 1, 3, visitors=[visitor])
     py_trees.tests.print_summary(nodes=[a, b, c])
     print("--------- Assertions ---------\n")
@@ -169,7 +169,7 @@ def test_mixed_tree():
     root.add_child(sequence)
     root.add_child(d)
 
-    py_trees.display.print_ascii_tree(root)
+    print(py_trees.display.ascii_tree(root))
 
     py_trees.tests.tick_tree(root, 1, 2, visitors=[visitor])
     py_trees.tests.print_summary(nodes=[a, b, c, d])
@@ -237,7 +237,7 @@ def test_display():
     root.add_child(sequence)
     root.add_child(d)
 
-    py_trees.display.print_ascii_tree(root)
+    print(py_trees.display.ascii_tree(root))
 
     assert(True)
 
@@ -281,13 +281,13 @@ def test_prune_behaviour_tree():
     root.add_child(d)
 
     tree = py_trees.trees.BehaviourTree(root)
-    py_trees.display.print_ascii_tree(tree.root)
+    print(py_trees.display.ascii_tree(tree.root))
     assert(len(sequence.children) == 2)
     tree.prune_subtree(c.id)
-    py_trees.display.print_ascii_tree(tree.root)
+    print(py_trees.display.ascii_tree(tree.root))
     assert(len(sequence.children) == 1)
     tree.prune_subtree(sequence.id)
-    py_trees.display.print_ascii_tree(tree.root)
+    print(py_trees.display.ascii_tree(tree.root))
     assert(len(root.children) == 2)
 
 
@@ -307,7 +307,7 @@ def test_replace_behaviour_tree():
     root.add_child(d)
 
     tree = py_trees.trees.BehaviourTree(root)
-    py_trees.display.print_ascii_tree(tree.root)
+    print(py_trees.display.ascii_tree(tree.root))
     assert(len(sequence1.children) == 2)
 
     sequence2 = py_trees.composites.Sequence(name="Sequence2")
@@ -319,7 +319,7 @@ def test_replace_behaviour_tree():
     sequence2.add_child(g)
 
     tree.replace_subtree(sequence1.id, sequence2)
-    py_trees.display.print_ascii_tree(tree.root)
+    print(py_trees.display.ascii_tree(tree.root))
     assert(len(sequence2.children) == 3)
 
 
@@ -339,7 +339,7 @@ def test_tick_tock_behaviour_tree():
     root.add_child(d)
 
     tree = py_trees.trees.BehaviourTree(root)
-    py_trees.display.print_ascii_tree(tree.root)
+    print(py_trees.display.ascii_tree(tree.root))
 
     visitor = py_trees.visitors.DebugVisitor()
     tree.visitors.append(visitor)
@@ -362,7 +362,7 @@ def test_success_failure_tree():
     root.add_child(failure)
     root.add_child(failure2)
     root.add_child(success)
-    py_trees.display.print_ascii_tree(root)
+    print(py_trees.display.ascii_tree(root))
     visitor = py_trees.visitors.DebugVisitor()
     py_trees.tests.tick_tree(root, 1, 1, visitors=[visitor])
 
@@ -388,7 +388,7 @@ def test_tip_simple():
     seq.add_child(b)
 
     tree = py_trees.trees.BehaviourTree(seq)
-    py_trees.display.print_ascii_tree(tree.root)
+    print(py_trees.display.ascii_tree(tree.root))
 
     visitor = py_trees.visitors.DebugVisitor()
     tree.visitors.append(visitor)
@@ -459,7 +459,7 @@ def test_tip_complex():
     sel.add_child(seq2)
 
     tree = py_trees.trees.BehaviourTree(sel)
-    py_trees.display.print_ascii_tree(tree.root)
+    print(py_trees.display.ascii_tree(tree.root))
 
     visitor = py_trees.visitors.DebugVisitor()
     tree.visitors.append(visitor)
@@ -509,7 +509,7 @@ def test_failed_tree():
     root.add_child(f2)
     root.add_child(f3)
     tree = py_trees.trees.BehaviourTree(root)
-    py_trees.display.print_ascii_tree(tree.root)
+    print(py_trees.display.ascii_tree(tree.root))
     tree.tick()
     print("\n--------- Assertions ---------\n")
     print("root.tip().name == Failure 3")
