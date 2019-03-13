@@ -46,10 +46,10 @@ unicode_symbols = {
     composites.Parallel: u'[' + console.double_vertical_line + u']',
     decorators.Decorator: u'-^-',
     behaviour.Behaviour: u'-->',
-    common.Status.SUCCESS: console.green + console.check_mark + console.reset,
-    common.Status.FAILURE: console.red + console.multiplication_x + console.reset,
-    common.Status.INVALID: console.yellow + u'-' + console.reset,
-    common.Status.RUNNING: console.blue + u'*' + console.reset
+    common.Status.SUCCESS: console.green + console.check_mark,
+    common.Status.FAILURE: console.red + console.multiplication_x,
+    common.Status.INVALID: console.yellow + u'-',
+    common.Status.RUNNING: console.blue + u'*'
 }
 
 ascii_symbols = {
@@ -58,10 +58,10 @@ ascii_symbols = {
     composites.Parallel: "[||]",
     decorators.Decorator: "-^-",
     behaviour.Behaviour: "-->",
-    common.Status.SUCCESS: console.green + 'o' + console.reset,
-    common.Status.FAILURE: console.red + 'x' + console.reset,
-    common.Status.INVALID: console.yellow + '-' + console.reset,
-    common.Status.RUNNING: console.blue + '*' + console.reset
+    common.Status.SUCCESS: console.green + 'o',
+    common.Status.FAILURE: console.red + 'x',
+    common.Status.INVALID: console.yellow + '-',
+    common.Status.RUNNING: console.blue + '*'
 }
 
 
@@ -124,6 +124,7 @@ def ascii_tree(
             behaviour_tree.visitors.append(snapshot_visitor)
     """
     symbols = unicode_symbols if console.has_unicode() else ascii_symbols
+    tip_id = root.tip().id if root.tip() else None
 
     def get_behaviour_type(b):
         for behaviour_type in [composites.Sequence,
@@ -134,32 +135,39 @@ def ascii_tree(
                 return behaviour_type
         return behaviour.Behaviour
 
-    def generate_lines(root, indent):
-        if indent == 0:
+    def generate_lines(root, internal_indent):
+        if internal_indent == indent:
             if show_status or root.id in visited.keys():
                 message = "" if not root.feedback_message else " -- " + root.feedback_message
-                yield "%s [%s]" % (root.name.replace('\n', ' '),
-                                   symbols[root.status]) + message
+                yield "    " * internal_indent + "{} [{}".format(
+                    root.name.replace('\n', ' '),
+                    symbols[root.status]
+                ) + console.white + "]" + message + console.reset
             elif (root.id in previously_visited.keys() and
                   root.id not in visited.keys() and
                   previously_visited[root.id] == common.Status.RUNNING):
-                yield "%s" % root.name.replace('\n', ' ') + " [" + console.yellow + "-" + console.reset + "]"
+                yield "    " * internal_indent + root.name.replace('\n', ' ') + " [" + console.yellow + "-" + console.white + "]" + console.reset
             else:
-                yield "%s" % root.name.replace('\n', ' ')
+                yield "    " * internal_indent + root.name.replace('\n', ' ') + console.reset
+            internal_indent += 1
         for child in root.children:
-            prefix = symbols[get_behaviour_type(child)] + " "
+            if child.id == tip_id:
+                prefix = console.bold + symbols[get_behaviour_type(child)] + " "
+            else:
+                prefix = symbols[get_behaviour_type(child)] + " "
             if show_status or child.id in visited.keys():
                 message = "" if not child.feedback_message else " -- " + child.feedback_message
-                yield "    " * indent + prefix + child.name.replace('\n', ' ') + " [%s]" % symbols[child.status] + message
+                yield "    " * internal_indent + prefix + child.name.replace('\n', ' ') + " [{}".format(symbols[child.status]) + console.white + "]" + message + console.reset
             elif (child.id in previously_visited.keys() and
                   child.id not in visited.keys() and
                   previously_visited[root.id] == common.Status.RUNNING):
-                yield "    " * indent + prefix + child.name.replace('\n', ' ') + " [" + console.yellow + "-" + console.reset + "]"
+                yield "    " * internal_indent + prefix + child.name.replace('\n', ' ') + " [" + console.yellow + "-" + console.white + "]" + console.reset
             else:
-                yield "    " * indent + prefix + child.name.replace('\n', ' ')
+                yield "    " * internal_indent + prefix + child.name.replace('\n', ' ') + console.reset
             if child.children != []:
-                for line in generate_lines(child, indent + 1):
+                for line in generate_lines(child, internal_indent + 1):
                     yield line
+    print("Tip: %s" % root.tip())
     s = ""
     for line in generate_lines(root, indent):
         s += "%s\n" % line
