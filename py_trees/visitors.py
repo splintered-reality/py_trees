@@ -21,10 +21,6 @@ runs its own method on the behaviour to do as it wishes - logging, introspecting
 # Imports
 ##############################################################################
 
-from . import common
-# from . import console
-# from . import syntax_highlighting
-
 ##############################################################################
 # Visitors
 ##############################################################################
