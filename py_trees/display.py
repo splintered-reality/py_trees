@@ -134,31 +134,34 @@ def ascii_tree(
                 return behaviour_type
         return behaviour.Behaviour
 
-    def generate_lines(root, indent):
-        if indent == 0:
+    def generate_lines(root, internal_indent):
+        if internal_indent == indent:
             if show_status or root.id in visited.keys():
                 message = "" if not root.feedback_message else " -- " + root.feedback_message
-                yield "%s [%s]" % (root.name.replace('\n', ' '),
-                                   symbols[root.status]) + message
+                yield "    " * internal_indent + "{} [{}]".format(
+                    root.name.replace('\n', ' '),
+                    symbols[root.status]
+                ) + message
             elif (root.id in previously_visited.keys() and
                   root.id not in visited.keys() and
                   previously_visited[root.id] == common.Status.RUNNING):
-                yield "%s" % root.name.replace('\n', ' ') + " [" + console.yellow + "-" + console.reset + "]"
+                yield "    " * internal_indent + root.name.replace('\n', ' ') + " [" + console.yellow + "-" + console.reset + "]"
             else:
-                yield "%s" % root.name.replace('\n', ' ')
+                yield "    " * internal_indent + root.name.replace('\n', ' ')
+            internal_indent += 1
         for child in root.children:
             prefix = symbols[get_behaviour_type(child)] + " "
             if show_status or child.id in visited.keys():
                 message = "" if not child.feedback_message else " -- " + child.feedback_message
-                yield "    " * indent + prefix + child.name.replace('\n', ' ') + " [%s]" % symbols[child.status] + message
+                yield "    " * internal_indent + prefix + child.name.replace('\n', ' ') + " [%s]" % symbols[child.status] + message
             elif (child.id in previously_visited.keys() and
                   child.id not in visited.keys() and
                   previously_visited[root.id] == common.Status.RUNNING):
-                yield "    " * indent + prefix + child.name.replace('\n', ' ') + " [" + console.yellow + "-" + console.reset + "]"
+                yield "    " * internal_indent + prefix + child.name.replace('\n', ' ') + " [" + console.yellow + "-" + console.reset + "]"
             else:
-                yield "    " * indent + prefix + child.name.replace('\n', ' ')
+                yield "    " * internal_indent + prefix + child.name.replace('\n', ' ')
             if child.children != []:
-                for line in generate_lines(child, indent + 1):
+                for line in generate_lines(child, internal_indent + 1):
                     yield line
     s = ""
     for line in generate_lines(root, indent):
