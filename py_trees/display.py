@@ -124,7 +124,7 @@ def ascii_tree(
             behaviour_tree.visitors.append(snapshot_visitor)
     """
     symbols = unicode_symbols if console.has_unicode() else ascii_symbols
-    tip_id = root.tip().id
+    tip_id = root.tip().id if root.tip() else None
 
     def get_behaviour_type(b):
         for behaviour_type in [composites.Sequence,
