@@ -167,7 +167,6 @@ def ascii_tree(
             if child.children != []:
                 for line in generate_lines(child, internal_indent + 1):
                     yield line
-    print("Tip: %s" % root.tip())
     s = ""
     for line in generate_lines(root, indent):
         s += "%s\n" % line
