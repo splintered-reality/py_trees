@@ -12,7 +12,12 @@ Release Notes
 **New Features**
 
 * [trees] add missing `add_visitor` method
-* [trees] convenience method for ascii art debugging
+* [trees] convenience method for ascii tree debugging
+* [display] highlight the tip in ascii tree snapshots
+
+**Bugfixes**
+
+* [display] correct first indent when non-zero
 
 1.0.7 (2019-xx-yy)
 ------------------
