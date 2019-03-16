@@ -285,12 +285,17 @@ class BehaviourTree(object):
         self.count += 1
 
     def tick_tock(self,
-                  sleep_ms,
+                  period_ms,
                   number_of_iterations=CONTINUOUS_TICK_TOCK,
                   pre_tick_handler=None,
                   post_tick_handler=None):
         """
-        Tick continuously with a sleep interval as specified. This optionally accepts some handlers that will
+        Tick continuously with period as specified. Depending on the implementation, the
+        period may be more or less accurate and may drift in some cases (the default
+        implementation here merely assumes zero time in tick and sleeps for this duration
+        of time and consequently, will drift).
+
+        This optionally accepts some handlers that will
         be used for the duration of this tick tock (c.f. those added by
         :meth:`~py_trees.trees.BehaviourTree.add_pre_tick_handler` and :meth:`~py_trees.trees.BehaviourTree.add_post_tick_handler`
         which will be automatically run every time).
@@ -298,7 +303,7 @@ class BehaviourTree(object):
         The handler functions must have a single argument of type :class:`~py_trees.trees.BehaviourTree`.
 
         Args:
-            sleep_ms (:obj:`float`): sleep this much between ticks (milliseconds)
+            period_ms (:obj:`float`): sleep this much between ticks (milliseconds)
             number_of_iterations (:obj:`int`): number of iterations to tick-tock
             pre_tick_handler (:obj:`func`): function to execute before ticking
             post_tick_handler (:obj:`func`): function to execute after ticking
@@ -307,7 +312,7 @@ class BehaviourTree(object):
         while not self.interrupt_tick_tocking and (tick_tocks < number_of_iterations or number_of_iterations == CONTINUOUS_TICK_TOCK):
             self.tick(pre_tick_handler, post_tick_handler)
             try:
-                time.sleep(sleep_ms / 1000.0)
+                time.sleep(period_ms / 1000.0)
             except KeyboardInterrupt:
                 break
             tick_tocks += 1
