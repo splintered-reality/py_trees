@@ -76,18 +76,18 @@ class Behaviour(object):
     # User Customisable Callbacks
     ############################################
 
-    def setup(self):
+    def setup(self, **kwargs):
         """
         .. note:: User Customisable Callback
 
-        Subclasses may override this method to do any one-off delayed construction &
+        Subclasses may override this method for any one-off delayed construction &
         validation that is necessary prior to ticking the tree. Such construction is best
         done here rather than in __init__ so that trees can be instantiated on the fly for
         easy rendering to dot graphs without imposing runtime requirements (e.g. establishing
-        a middleware connection to a sensor).
+        a middleware connection to a sensor or a driver to a serial port).
 
         Equally as important, executing methods which validate the configuration of
-        behaviours will help increase confidence that your tree will successfully tick
+        behaviours will increase confidence that your tree will successfully tick
         without logical software errors before actually ticking. This is useful both
         before a tree's first tick and immediately after any modifications to a tree
         has been made between ticks.
@@ -96,6 +96,18 @@ class Behaviour(object):
 
            Faults are notified to the user of the behaviour via exceptions.
            Choice of exception to use is left to the user.
+
+        .. warning::
+
+           The kwargs argument is for distributing objects at runtime to behaviours
+           before ticking. For example, a simulator instance with which behaviours can
+           interact with the simulator's python api, a ros2 node for setting up
+           communications. Use sparingly, as this is not proof against keyword conflicts
+           amongst disparate libraries of behaviours.
+
+        Args:
+            **kwargs (:obj:`dict`): distribute arguments to this
+               behaviour and in turn, all of it's children
 
         Raises:
             Exception: if this behaviour has a fault in construction or configuration

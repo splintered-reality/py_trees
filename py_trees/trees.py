@@ -6,6 +6,7 @@
 ##############################################################################
 # Documentation
 ##############################################################################
+from distutils.core import setup
 
 """
 While a graph of connected behaviours and composites form a tree in their own right
@@ -26,13 +27,13 @@ can also be easily used as inspiration for your own tree custodians.
 ##############################################################################
 
 import functools
-import multiprocessing
 import time
 
 from . import behaviour
 from . import common
 from . import composites
 from . import display
+from . import utilities
 from . import visitors
 
 CONTINUOUS_TICK_TOCK = -1
@@ -214,7 +215,10 @@ class BehaviourTree(object):
                     return True
         return False
 
-    def setup(self, timeout: float=common.Duration.INFINITE, visitor: visitors.VisitorBase=None):
+    def setup(self,
+              timeout: float=common.Duration.INFINITE,
+              visitor: visitors.VisitorBase=None,
+              **kwargs):
         """
         Crawls across the tree calling :meth:`~py_trees.behaviour.Behaviour.setup`
         on each behaviour.
@@ -228,25 +232,31 @@ class BehaviourTree(object):
         Args:
             timeout (:obj:`float`): time (s) to wait (use common.Duration.INFINITE to block indefinitely)
             visitor (:class:`~py_trees.visitors.VisitorBase`): runnable entities on each node after it's setup
+            **kwargs (:obj:`dict`): distribute arguments to this
+               behaviour and in turn, all of it's children
 
         Raises:
-            Exception: be ready to catch if any of the behaviours raise an exception
+            RuntimeError: a reflected exception from the multiprocessed children if such was thrown
         """
         def visited_setup():
             for node in self.root.iterate():
-                node.setup()
+                node.setup(**kwargs)
                 if visitor is not None:
                     node.visit(visitor)
 
         if timeout == common.Duration.INFINITE:
             visited_setup()
         else:
-            setup_process = multiprocessing.Process(target=visited_setup)
+            setup_process = utilities.Process(target=visited_setup)
             setup_process.start()
             setup_process.join(timeout=timeout)
             if setup_process.is_alive():  # could just as easily have checked the result of join
                 setup_process.terminate()
                 raise RuntimeError("tree setup() timed out")
+            elif setup_process.exception:
+                error, traceback = setup_process.exception
+                error_string = str(error).replace('"', '')
+                raise RuntimeError("{}\n{}".format(error_string, traceback))
 
     def tick(self, pre_tick_handler=None, post_tick_handler=None):
         """
