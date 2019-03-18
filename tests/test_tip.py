@@ -81,3 +81,87 @@ def test_sequence():
     print("root.tip()...................Root [{}]".format(root.tip().name))
     assert(root.tip() is root)
 
+def test_selector():
+    console.banner("Selector")
+    print("\n--------- Assertions ---------\n")
+    root = py_trees.composites.Selector(name="Root")
+    failure = py_trees.behaviours.Failure(name="Failure")
+    running = py_trees.behaviours.Running(name="Running")
+    root.add_children([failure, running])
+    py_trees.tests.tick_tree(root, 1, 1, print_snapshot=True)
+    print("root.tip()...................running [{}]".format(root.tip().name))
+    assert(root.tip() is running)
+
+    root = py_trees.composites.Selector(name="Root")
+    failure = py_trees.behaviours.Failure(name="Failure")
+    success = py_trees.behaviours.Success(name="Success")
+    root.add_children([failure, success])
+    py_trees.tests.tick_tree(root, 1, 1, print_snapshot=True)
+    print("root.tip()...................success [{}]".format(root.tip().name))
+    assert(root.tip() is success)
+
+    root = py_trees.composites.Selector(name="Root")
+    running = py_trees.behaviours.Running(name="Running")
+    failure = py_trees.behaviours.Failure(name="Failure")
+    root.add_children([running, failure])
+    py_trees.tests.tick_tree(root, 1, 1, print_snapshot=True)
+    print("root.tip()...................running [{}]".format(root.tip().name))
+    assert(root.tip() is running)
+
+    root = py_trees.composites.Selector(name="Root")
+    success = py_trees.behaviours.Success(name="Success")
+    failure = py_trees.behaviours.Failure(name="Failure")
+    root.add_children([success, failure])
+    py_trees.tests.tick_tree(root, 1, 1, print_snapshot=True)
+    print("root.tip()...................success [{}]".format(root.tip().name))
+    assert(root.tip() is success)
+
+    root = py_trees.composites.Selector(name="Root")
+    failure = py_trees.behaviours.Failure(name="Failure 1")
+    failure_two = py_trees.behaviours.Failure(name="Failure 2")
+    root.add_children([failure, failure_two])
+    py_trees.tests.tick_tree(root, 1, 1, print_snapshot=True)
+    print("root.tip()...................Failure 2 [{}]".format(root.tip().name))
+    assert(root.tip() is failure_two)
+
+    root = py_trees.composites.Selector(name="Root")
+    fail_then_run = py_trees.behaviours.Count(name="Fail Then Run", fail_until=1, running_until=10)
+    running = py_trees.behaviours.Running(name="Running")
+    root.add_children([fail_then_run, running])
+    py_trees.tests.tick_tree(root, 1, 1, print_snapshot=True)
+    print("root.tip()...................Running [{}]".format(root.tip().name))
+    assert(root.tip() is running)
+    py_trees.tests.tick_tree(root, 2, 2, print_snapshot=True)
+    print("root.tip()...................Fail Then Run [{}]".format(root.tip().name))
+    assert(root.tip() is fail_then_run)
+
+    root = py_trees.composites.Selector(name="Root")
+    py_trees.tests.tick_tree(root, 1, 1, print_snapshot=True)
+    print("root.tip()...................Root [{}]".format(root.tip().name))
+    assert(root.tip() is root)
+
+def test_decorator():
+    console.banner("Decorators")
+    print("\n--------- Assertions ---------\n")
+
+    # Decorators are the exception, when they reach SUCCESS||FAILURE and
+    # the child is RUNNING they invalidate their children, so look to the
+    # decorator, not the child!
+    child = py_trees.behaviours.Running(name="Child")
+    root = py_trees.decorators.RunningIsFailure(name="Decorator", child=child)
+    py_trees.tests.tick_tree(root, 1, 1, print_snapshot=True)
+    print("root.tip()...................Decorator [{}]".format(root.tip().name))
+    assert(root.tip() is root)
+
+    child = py_trees.behaviours.Success(name="Child")
+    root = py_trees.decorators.RunningIsSuccess(name="Decorator", child=child)
+    py_trees.tests.tick_tree(root, 1, 1, print_snapshot=True)
+    print("root.tip()...................Child [{}]".format(root.tip().name))
+    assert(root.tip() is child)
+    child = py_trees.behaviours.Running(name="Child")
+
+    child = py_trees.behaviours.Running(name="Child")
+    root = py_trees.decorators.SuccessIsFailure(name="Decorator", child=child)
+    py_trees.tests.tick_tree(root, 1, 1, print_snapshot=True)
+    print("root.tip()...................Child [{}]".format(root.tip().name))
+    assert(root.tip() is child)

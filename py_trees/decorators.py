@@ -163,10 +163,10 @@ class Decorator(behaviour.Behaviour):
         Returns:
             :class:`~py_trees.behaviour.Behaviour` or :obj:`None`: child behaviour, itself or :obj:`None` if its status is :data:`~py_trees.common.Status.INVALID`
         """
-        if self.decorated.status in [common.Status.RUNNING, common.Status.SUCCESS]:
+        if self.decorated.status != common.Status.INVALID:
             return self.decorated.tip()
         else:
-            return None
+            return super().tip()
 
 ##############################################################################
 # Decorators
