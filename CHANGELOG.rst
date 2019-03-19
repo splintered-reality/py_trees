@@ -6,8 +6,9 @@ Release Notes
 
 **Breaking API**
 
-* [display] print_ascii_tree -> ascii_tree, `#178 <https://github.com/splintered-reality/py_trees/issues/178>`_.
-* [display] generate_pydot_graph -> dot_graph, `#178 <https://github.com/splintered-reality/py_trees/issues/178>`_.
+* [display] print_ascii_tree -> ascii_tree, `#178 <https://github.com/splintered-reality/py_trees/pull/178>`_.
+* [display] generate_pydot_graph -> dot_graph, `#178 <https://github.com/splintered-reality/py_trees/pull/178>`_.
+* [trees] tick_tock(sleep_ms, ...) -> tick_tock(period_ms, ...), `#182 <https://github.com/splintered-reality/py_trees/pull/182>`_.
 
 **New Features**
 
