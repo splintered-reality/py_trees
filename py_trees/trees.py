@@ -6,6 +6,7 @@
 ##############################################################################
 # Documentation
 ##############################################################################
+from distutils.core import setup
 
 """
 While a graph of connected behaviours and composites form a tree in their own right
@@ -26,13 +27,16 @@ can also be easily used as inspiration for your own tree custodians.
 ##############################################################################
 
 import functools
-import multiprocessing
+import os
+import signal
+import threading
 import time
 
 from . import behaviour
 from . import common
 from . import composites
 from . import display
+from . import utilities
 from . import visitors
 
 CONTINUOUS_TICK_TOCK = -1
@@ -214,7 +218,10 @@ class BehaviourTree(object):
                     return True
         return False
 
-    def setup(self, timeout: float=common.Duration.INFINITE, visitor: visitors.VisitorBase=None):
+    def setup(self,
+              timeout: float=common.Duration.INFINITE,
+              visitor: visitors.VisitorBase=None,
+              **kwargs):
         """
         Crawls across the tree calling :meth:`~py_trees.behaviour.Behaviour.setup`
         on each behaviour.
@@ -228,25 +235,36 @@ class BehaviourTree(object):
         Args:
             timeout (:obj:`float`): time (s) to wait (use common.Duration.INFINITE to block indefinitely)
             visitor (:class:`~py_trees.visitors.VisitorBase`): runnable entities on each node after it's setup
+            **kwargs (:obj:`dict`): distribute arguments to this
+               behaviour and in turn, all of it's children
 
         Raises:
             Exception: be ready to catch if any of the behaviours raise an exception
+            RuntimeError: in case setup() times out
         """
+        # This is the signal that is raised on completion of the timer.
+        _SIGNAL = signal.SIGUSR1
+
+        def on_timer_timed_out():
+            os.kill(os.getpid(), _SIGNAL)
+
+        def signal_handler(unused_signum, unused_frame):
+            raise RuntimeError("tree setup timed out")
+
         def visited_setup():
             for node in self.root.iterate():
-                node.setup()
+                node.setup(**kwargs)
                 if visitor is not None:
                     node.visit(visitor)
 
         if timeout == common.Duration.INFINITE:
             visited_setup()
         else:
-            setup_process = multiprocessing.Process(target=visited_setup)
-            setup_process.start()
-            setup_process.join(timeout=timeout)
-            if setup_process.is_alive():  # could just as easily have checked the result of join
-                setup_process.terminate()
-                raise RuntimeError("tree setup() timed out")
+            signal.signal(_SIGNAL, signal_handler)
+            timer = threading.Timer(interval=timeout, function=on_timer_timed_out)
+            timer.start()
+            visited_setup()
+            timer.cancel()  # this only works if the timer is still waiting
 
     def tick(self, pre_tick_handler=None, post_tick_handler=None):
         """
@@ -285,12 +303,17 @@ class BehaviourTree(object):
         self.count += 1
 
     def tick_tock(self,
-                  sleep_ms,
+                  period_ms,
                   number_of_iterations=CONTINUOUS_TICK_TOCK,
                   pre_tick_handler=None,
                   post_tick_handler=None):
         """
-        Tick continuously with a sleep interval as specified. This optionally accepts some handlers that will
+        Tick continuously with period as specified. Depending on the implementation, the
+        period may be more or less accurate and may drift in some cases (the default
+        implementation here merely assumes zero time in tick and sleeps for this duration
+        of time and consequently, will drift).
+
+        This optionally accepts some handlers that will
         be used for the duration of this tick tock (c.f. those added by
         :meth:`~py_trees.trees.BehaviourTree.add_pre_tick_handler` and :meth:`~py_trees.trees.BehaviourTree.add_post_tick_handler`
         which will be automatically run every time).
@@ -298,7 +321,7 @@ class BehaviourTree(object):
         The handler functions must have a single argument of type :class:`~py_trees.trees.BehaviourTree`.
 
         Args:
-            sleep_ms (:obj:`float`): sleep this much between ticks (milliseconds)
+            period_ms (:obj:`float`): sleep this much between ticks (milliseconds)
             number_of_iterations (:obj:`int`): number of iterations to tick-tock
             pre_tick_handler (:obj:`func`): function to execute before ticking
             post_tick_handler (:obj:`func`): function to execute after ticking
@@ -307,7 +330,7 @@ class BehaviourTree(object):
         while not self.interrupt_tick_tocking and (tick_tocks < number_of_iterations or number_of_iterations == CONTINUOUS_TICK_TOCK):
             self.tick(pre_tick_handler, post_tick_handler)
             try:
-                time.sleep(sleep_ms / 1000.0)
+                time.sleep(period_ms / 1000.0)
             except KeyboardInterrupt:
                 break
             tick_tocks += 1

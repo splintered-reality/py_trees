@@ -563,9 +563,13 @@ class Parallel(Composite):
         super(Parallel, self).__init__(name, children)
         self.policy = policy
 
-    def setup(self):
+    def setup(self, **kwargs):
         """
         Detect before ticking whether the policy configuration is invalid.
+
+        Args:
+            **kwargs (:obj:`dict`): distribute arguments to this
+               behaviour and in turn, all of it's children
 
         Raises:
             RuntimeError: if the parallel's policy configuration is invalid
