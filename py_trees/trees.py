@@ -27,6 +27,9 @@ can also be easily used as inspiration for your own tree custodians.
 ##############################################################################
 
 import functools
+import os
+import signal
+import threading
 import time
 
 from . import behaviour
@@ -236,8 +239,18 @@ class BehaviourTree(object):
                behaviour and in turn, all of it's children
 
         Raises:
-            RuntimeError: a reflected exception from the multiprocessed children if such was thrown
+            Exception: be ready to catch if any of the behaviours raise an exception
+            RuntimeError: in case setup() times out
         """
+        # This is the signal that is raised on completion of the timer.
+        _SIGNAL = signal.SIGUSR1
+
+        def on_timer_timed_out():
+            os.kill(os.getpid(), _SIGNAL)
+
+        def signal_handler(unused_signum, unused_frame):
+            raise RuntimeError("tree setup timed out")
+
         def visited_setup():
             for node in self.root.iterate():
                 node.setup(**kwargs)
@@ -247,16 +260,11 @@ class BehaviourTree(object):
         if timeout == common.Duration.INFINITE:
             visited_setup()
         else:
-            setup_process = utilities.Process(target=visited_setup)
-            setup_process.start()
-            setup_process.join(timeout=timeout)
-            if setup_process.is_alive():  # could just as easily have checked the result of join
-                setup_process.terminate()
-                raise RuntimeError("tree setup() timed out")
-            elif setup_process.exception:
-                error, traceback = setup_process.exception
-                error_string = str(error).replace('"', '')
-                raise RuntimeError("{}\n{}".format(error_string, traceback))
+            signal.signal(_SIGNAL, signal_handler)
+            timer = threading.Timer(interval=timeout, function=on_timer_timed_out)
+            timer.start()
+            visited_setup()
+            timer.cancel()  # this only works if the timer is still waiting
 
     def tick(self, pre_tick_handler=None, post_tick_handler=None):
         """
