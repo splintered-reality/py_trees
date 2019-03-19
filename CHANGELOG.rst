@@ -1,7 +1,7 @@
 Release Notes
 =============
 
-1.1.x (2019-xx-yy)
+1.1.0 (2019-03-19)
 ------------------
 
 **Breaking API**
@@ -52,7 +52,7 @@ Release Notes
 ------------------
 * [trees] don't use multiprocess on setup if not using timeouts
 
-1.0.x (2019-01-18)
+1.0.0 (2019-01-18)
 ------------------
 
 **Breaking API**
