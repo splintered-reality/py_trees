@@ -6,18 +6,23 @@ Release Notes
 
 **Breaking API**
 
-* [display] print_ascii_tree -> ascii_tree, `#178 <https://github.com/splintered-reality/py_trees/issues/178>`_.
-* [display] generate_pydot_graph -> dot_graph, `#178 <https://github.com/splintered-reality/py_trees/issues/178>`_.
+* [display] print_ascii_tree -> ascii_tree, `#178 <https://github.com/splintered-reality/py_trees/pull/178>`_.
+* [display] generate_pydot_graph -> dot_graph, `#178 <https://github.com/splintered-reality/py_trees/pull/178>`_.
+* [trees] tick_tock(sleep_ms, ..) -> tick_tock(period_ms, ...),  `#182 <https://github.com/splintered-reality/py_trees/pull/182>`_.
 
 **New Features**
 
 * [trees] add missing `add_visitor` method
+* [trees] flexible setup() for children via kwargs
 * [trees] convenience method for ascii tree debugging
 * [display] highlight the tip in ascii tree snapshots
 
 **Bugfixes**
 
-* [display] correct first indent when non-zero
+* [trees] threaded timers for setup (avoids multiprocessing problems)
+* [behaviour|composites] bugfix tip behaviour, add tests
+* [display] correct first indent when non-zero in ascii_tree
+* [display] apply same formatting to root as children in ascii_tree
 
 1.0.7 (2019-xx-yy)
 ------------------
