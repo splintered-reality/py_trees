@@ -101,7 +101,10 @@ class Composite(behaviour.Behaviour):
         Returns:
             :class::`~py_trees.behaviour.Behaviour`: the tip function of the current child of this composite or None
         """
-        return self.current_child.tip() if self.current_child is not None else None
+        if self.current_child is not None:
+            return self.current_child.tip()
+        else:
+            return super().tip()
 
     ############################################
     # Children

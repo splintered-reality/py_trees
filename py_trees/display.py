@@ -137,20 +137,30 @@ def ascii_tree(
 
     def generate_lines(root, internal_indent):
         if internal_indent == indent:
+            #####################
+            # Root
+            #####################
+            if root.id == tip_id:
+                prefix = "    " * internal_indent + console.bold
+            else:
+                prefix = "    " * internal_indent
             if show_status or root.id in visited.keys():
                 message = "" if not root.feedback_message else " -- " + root.feedback_message
-                yield "    " * internal_indent + "{} [{}".format(
+                yield prefix + "{} [{}".format(
                     root.name.replace('\n', ' '),
                     symbols[root.status]
                 ) + console.white + "]" + message + console.reset
             elif (root.id in previously_visited.keys() and
                   root.id not in visited.keys() and
                   previously_visited[root.id] == common.Status.RUNNING):
-                yield "    " * internal_indent + root.name.replace('\n', ' ') + " [" + console.yellow + "-" + console.white + "]" + console.reset
+                yield prefix + root.name.replace('\n', ' ') + " [" + console.yellow + "-" + console.white + "]" + console.reset
             else:
-                yield "    " * internal_indent + root.name.replace('\n', ' ') + console.reset
+                yield prefix + root.name.replace('\n', ' ') + console.reset
             internal_indent += 1
         for child in root.children:
+            #####################
+            # Children
+            #####################
             if child.id == tip_id:
                 prefix = console.bold + symbols[get_behaviour_type(child)] + " "
             else:
