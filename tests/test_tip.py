@@ -48,6 +48,7 @@ def test_single_behaviour():
     print("success.tip()...................Success [{}]".format(success.tip().name))
     assert(success.tip() is success)
 
+
 def test_sequence():
     console.banner("Sequence")
     print("\n--------- Assertions ---------\n")
@@ -80,6 +81,7 @@ def test_sequence():
     py_trees.tests.tick_tree(root, 1, 1, print_snapshot=True)
     print("root.tip()...................Root [{}]".format(root.tip().name))
     assert(root.tip() is root)
+
 
 def test_selector():
     console.banner("Selector")
@@ -140,6 +142,7 @@ def test_selector():
     print("root.tip()...................Root [{}]".format(root.tip().name))
     assert(root.tip() is root)
 
+
 def test_decorator():
     console.banner("Decorators")
     print("\n--------- Assertions ---------\n")
@@ -165,3 +168,64 @@ def test_decorator():
     py_trees.tests.tick_tree(root, 1, 1, print_snapshot=True)
     print("root.tip()...................Child [{}]".format(root.tip().name))
     assert(root.tip() is child)
+
+
+def test_parallel():
+    console.banner("Parallel")
+    root = py_trees.composites.Parallel(name="Root", policy=py_trees.common.ParallelPolicy.SuccessOnAll())
+    failure = py_trees.behaviours.Failure(name="Failure")
+    running = py_trees.behaviours.Running(name="Running")
+    root.add_children([failure, running])
+    py_trees.tests.tick_tree(root, 1, 1, print_snapshot=True)
+    # running node is invalidated because failure failed
+    print("\n----- Assertions (OnAll) -----\n")
+    print("root.tip()...................failure [{}]".format(root.tip().name))
+    assert(root.tip() is failure)
+
+    root = py_trees.composites.Parallel(name="Root", policy=py_trees.common.ParallelPolicy.SuccessOnAll())
+    failure = py_trees.behaviours.Failure(name="Failure")
+    success = py_trees.behaviours.Success(name="Success")
+    root.add_children([failure, success])
+    py_trees.tests.tick_tree(root, 1, 1, print_snapshot=True)
+    print("\n----- Assertions (OnAll) -----\n")
+    print("root.tip()...................failure [{}]".format(root.tip().name))
+    assert(root.tip() is failure)
+
+    root = py_trees.composites.Parallel(name="Root", policy=py_trees.common.ParallelPolicy.SuccessOnOne())
+    failure = py_trees.behaviours.Failure(name="Failure")
+    success = py_trees.behaviours.Success(name="Success")
+    root.add_children([failure, success])
+    py_trees.tests.tick_tree(root, 1, 1, print_snapshot=True)
+    print("\n----- Assertions (OnOne) -----\n")
+    print("root.tip()...................failure [{}]".format(root.tip().name))
+    assert(root.tip() is failure)
+
+    root = py_trees.composites.Parallel(name="Root", policy=py_trees.common.ParallelPolicy.SuccessOnAll())
+    success = py_trees.behaviours.Success(name="Success")
+    running = py_trees.behaviours.Running(name="Running")
+    root.add_children([success, running])
+    py_trees.tests.tick_tree(root, 1, 1, print_snapshot=True)
+    # running node is tip because it was updated last
+    print("\n----- Assertions (OnAll) -----\n")
+    print("root.tip()...................running [{}]".format(root.tip().name))
+    assert(root.tip() is running)
+
+    root = py_trees.composites.Parallel(name="Root", policy=py_trees.common.ParallelPolicy.SuccessOnOne())
+    success = py_trees.behaviours.Success(name="Success")
+    running = py_trees.behaviours.Running(name="Running")
+    root.add_children([success, running])
+    py_trees.tests.tick_tree(root, 1, 1, print_snapshot=True)
+    # success is tip because it flipped it's parent to success
+    print("\n----- Assertions (OnOne) -----\n")
+    print("root.tip()...................success [{}]".format(root.tip().name))
+    assert(root.tip() is success)
+
+    root = py_trees.composites.Parallel(name="Root", policy=py_trees.common.ParallelPolicy.SuccessOnAll())
+    running = py_trees.behaviours.Running(name="Running 1")
+    running_two = py_trees.behaviours.Running(name="Running 2")
+    root.add_children([running, running_two])
+    py_trees.tests.tick_tree(root, 1, 1, print_snapshot=True)
+    # running two node is tip because it was updated last
+    print("\n----- Assertions (OnAll) -----\n")
+    print("root.tip()...................Running 2 [{}]".format(root.tip().name))
+    assert(root.tip() is running_two)
