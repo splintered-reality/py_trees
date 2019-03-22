@@ -1,6 +1,6 @@
 # Tests
 
-Make sure you source the virutal environment in all cases to run
+Make sure you source the virtual environment in all cases to run
 tests in this way.
 
 ## Executing Tests
