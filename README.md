@@ -80,7 +80,7 @@ $ sudo apt install ros-<crystal>-py-trees
 
 | ROS2 | Crystal |  ROS1 | Melodic | Kinetic |
 |:---:|:---:|:---:|:---:|:---:|
-| [py_trees][py-trees-ros-index] | [![1.1.x][1.1.x-sources-image]][py-trees-sources-1.1.x]<br/>[![1.1.x][1.1.x-debians-image]][crystal-build-farm]<br/>[![1.1.x][1.1.x-docs-image]][py-trees-docs-1.1.x] | [py_trees][py-trees-wiki] | [![0.6.x][0.6.x-sources-image]][py-trees-sources-0.6.x]<br/>[![0.6.x][0.6.x-debians-image]][melodic-build-farm]<br/>[![0.6.x][0.6.x-docs-image]][py-trees-docs-0.6.x] | [![0.5.x][0.5.x-sources-image]][py-trees-sources-0.5.x]<br/>[![0.5.x][0.5.x-debians-image]][kinetic-build-farm] |
+| [py_trees][py-trees-ros-index] | [![1.1.x][1.1.x-sources-image]][py-trees-sources-1.1.x]<br/>[![1.1.x][1.1.x-debians-image]][crystal-build-farm]<br/>[![1.1.x][1.1.x-docs-image]][py-trees-docs-1.1.x] | [py_trees][py-trees-wiki] | [![0.6.x][0.6.x-sources-image]][py-trees-sources-0.6.x]<br/>[![0.6.x][0.6.x-debians-image]][melodic-build-farm]<br/>[![0.6.x][0.6.x-docs-image]][py-trees-docs-0.6.x] | [![0.5.x][0.5.x-sources-image]][py-trees-sources-0.5.x]<br/>[![0.5.x][0.5.x-debians-image]][kinetic-build-farm]<br/><br/>[![0.5.x][0.5.x-docs-image]][py-trees-docs-0.5.x] |
 | [py_trees_ros_interfaces][py-trees-ros-interfaces-ros-index] | [![1.1.x][1.1.x-sources-image]][py-trees-ros-interfaces-sources-1.1.x]<br/>[![1.1.x][1.1.x-debians-image]][crystal-build-farm] | [py_trees_msgs][py-trees-msgs-wiki] | [![0.3.x][0.3.x-sources-image]][py-trees-msgs-melodic]<br/>[![0.3.x][0.3.x-debians-image]][melodic-build-farm]<br/>[![0.3.x][0.3.x-docs-image]][py-trees-msgs-docs-0.3.x] | [![0.3.x][0.3.x-sources-image]][py-trees-msgs-kinetic]<br/>[![0.3.x][0.3.x-debians-image]][kinetic-build-farm]<br/>[![0.3.x][0.3.x-docs-image]][py-trees-msgs-docs-0.3.x] |
 | [py_trees_ros][py-trees-ros-ros-index] | [![pre-1.0.x][1.0.x-sources-image]][py-trees-ros-sources-pre-1.0.x] | [py_trees_ros][py-trees-ros-wiki] | [![0.5.x][0.5.x-sources-image]][py-trees-ros-sources-0.5.x]<br/>[![0.5.x][0.5.x-debians-image]][melodic-build-farm]<br/>[![0.5.x][0.5.x-docs-image]][py-trees-ros-docs-0.5.x] | [![0.5.x][0.5.x-sources-image]][py-trees-ros-sources-0.5.x]<br/>[![0.5.x][0.5.x-debians-image]][kinetic-build-farm]<br/>[![0.5.x][0.5.x-docs-image]][py-trees-ros-docs-0.5.x] |
 | [py_trees_ros_tutorials][py-trees-ros-tutorials-ros-index] | [![1.0.x][1.0.x-sources-image]][py-trees-ros-tutorials-sources-pre-1.0.x] |  | - | - |
@@ -117,7 +117,7 @@ $ sudo apt install ros-<crystal>-py-trees
 [py-trees-docs-devel]: http://py-trees.readthedocs.io/
 [py-trees-docs-1.1.x]: http://py-trees.readthedocs.io/en/release-1.1.x/
 [py-trees-docs-0.6.x]: http://py-trees.readthedocs.io/en/release-0.6.x/
-[py-trees-docs-0.5.x]: http://py-trees.readthedocs.io/en/release-0.5.x/
+[py-trees-docs-0.5.x]: http://docs.ros.org/kinetic/api/py_trees/html/
 [py-trees-sources-devel]: https://github.com/splintered-reality/py_trees/tree/devel
 [py-trees-sources-1.1.x]: https://github.com/splintered-reality/py_trees/tree/release/1.1.x
 [py-trees-sources-0.6.x]: https://github.com/splintered-reality/py_trees/tree/release/0.6.x
