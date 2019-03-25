@@ -21,9 +21,6 @@ import enum
 # Status
 ##############################################################################
 
-# """ An enumerator representing the status of a behaviour """
-# Status = Enum('Status', 'SUCCESS FAILURE RUNNING INVALID')
-
 
 class Status(enum.Enum):
     """An enumerator representing the status of a behaviour """
@@ -129,4 +126,3 @@ def string_to_visibility_level(level):
         return VisibilityLevel.BIG_PICTURE
     else:
         return VisibilityLevel.ALL
-

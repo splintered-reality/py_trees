@@ -59,7 +59,7 @@ class Composite(Behaviour):
         *args: variable length argument list
         **kwargs: arbitrary keyword arguments
     """
-    def __init__(self, name="", children=None, *args, **kwargs):
+    def __init__(self, name=common.Name.AUTO_GENERATED, children=None, *args, **kwargs):
         super(Composite, self).__init__(name, *args, **kwargs)
         if children is not None:
             map(self.add_child, children)

@@ -39,7 +39,7 @@ class Behaviour(object):
     subclass this class.
 
     Args:
-        name (:obj:`str`): the behaviour name
+        name (:obj:`str`, optional): the behaviour name, defaults to auto-generating from the class name
         *args: variable length argument list.
         **kwargs: arbitrary keyword arguments.
 
@@ -57,8 +57,11 @@ class Behaviour(object):
        * :ref:`The Action Behaviour Demo <py-trees-demo-action-behaviour-program>`
 
     """
-    def __init__(self, name="", *args, **kwargs):
-        assert isinstance(name, basestring), "a behaviour name should be a string, but you passed in %s" % type(name)
+    def __init__(self, name=common.Name.AUTO_GENERATED, *args, **kwargs):
+        if not name or name == common.Name.AUTO_GENERATED:
+            name = self.__class__.__name__
+        if not isinstance(name, basestring):
+            raise TypeError("a behaviour name should be a string, but you passed in {}".format(type(name)))
         self.id = uuid.uuid4()  # used to uniquely identify this node (helps with removing children from a tree)
         self.name = name
         self.status = Status.INVALID
