@@ -49,7 +49,7 @@ class Name(enum.Enum):
     Naming conventions.
     """
     AUTO_GENERATED = "AUTO_GENERATED"
-    """More Foo"""	    """:py:data:`~py_trees.common.Name.AUTO_GENERATED` leaves it to the behaviour to generate a useful, informative name."""
+    """:py:data:`~py_trees.common.Name.AUTO_GENERATED` leaves it to the behaviour to generate a useful, informative name."""
 
 
 class ClearingPolicy(enum.IntEnum):

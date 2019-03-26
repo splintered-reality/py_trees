@@ -92,7 +92,16 @@ class Blackboard(object):
 
     .. seealso:: The :ref:`py-trees-demo-blackboard-program` program demos use of the blackboard along with a couple of the blackboard behaviours.
     """
+    # Dunder style to avoid collisions
     __shared_state = {}
+
+    @staticmethod
+    def clear():
+        """
+        Erase the blackboard contents. Typically this is used only when you
+        have repeated runs of different tree instances, as often happens in testing.
+        """
+        Blackboard.__shared_state.clear()
 
     def __init__(self):
         self.__dict__ = self.__shared_state
@@ -131,6 +140,19 @@ class Blackboard(object):
             return getattr(self, name)
         except AttributeError:
             return None
+
+    def unset(self, name):
+        """
+        For when you need to unset a blackboard variable, this provides a convenient helper method.
+        This is particularly useful for unit testing behaviours.
+
+        Args:
+            name (:obj:`str`): name of the variable to unset
+        """
+        try:
+            delattr(self, name)
+        except AttributeError:
+            pass
 
     def __str__(self):
         """
@@ -181,10 +203,7 @@ class ClearBlackboardVariable(behaviours.Success):
         Delete the variable from the blackboard.
         """
         self.blackboard = Blackboard()
-        try:
-            delattr(self.blackboard, self.variable_name)
-        except AttributeError:
-            pass
+        self.blackboard.unset(self.variable_name)
 
 
 class SetBlackboardVariable(behaviours.Success):

@@ -1,8 +1,10 @@
+#!/usr/bin/env python
 #
-# License: Yujin
+# License: BSD
+#   https://raw.githubusercontent.com/splintered-reality/py_trees/devel/LICENSE
 #
 ##############################################################################
-# Description
+# Documentation
 ##############################################################################
 
 """
@@ -41,6 +43,9 @@ class Timer(behaviour.Behaviour):
         name (:obj:`str`): name of the behaviour
         duration (:obj:`int`): length of time to run (in seconds)
 
+    Raises:
+        TypeError: if the provided duration is not a real number
+
     .. note::
         This succeeds the first time the behaviour is ticked **after** the expected
         finishing time.
@@ -52,7 +57,8 @@ class Timer(behaviour.Behaviour):
     """
     def __init__(self, name="Timer", duration=5.0):
         super(Timer, self).__init__(name)
-        assert isinstance(duration, numbers.Real), "Timer: duration should be int or float, but you passed in %s" % type(duration)
+        if not isinstance(duration, numbers.Real):
+            raise TypeError("Timer: duration should be int or float, but you passed in {}".format(type(duration)))
         self.duration = duration
         self.finish_time = None
         self.feedback_message = "duration set to '{0}'s".format(self.duration)
