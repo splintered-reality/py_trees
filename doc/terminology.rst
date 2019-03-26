@@ -6,11 +6,21 @@ Terminology
 .. glossary::
 
 
+   block
    blocking
       A behaviour is sometimes referred to as a 'blocking' behaviour. Technically, the execution
       of a behaviour should be non-blocking (i.e. the tick part), however when it's progress from
       'RUNNING' to 'FAILURE/SUCCESS' takes more than one tick, we say that the behaviour itself
       is blocking. In short, `blocking == RUNNING`.
+
+   data gathering
+      Caching events, notifications, or incoming data arriving asynchronously on the blackboard.
+      This is a fairly common practice for behaviour trees which exist inside a complex system.
+
+      In most cases, data gathering is done either outside the tree, or at the front end of your
+      tree under a parallel preceding the rest of the tree tick so that the ensuing behaviours
+      work on a constant, consistent set of data. Even if the incoming data is not arriving
+      asynchronously, this is useful conceptually and organisationally.
 
    fsm
    flying spaghetti monster
@@ -22,6 +32,11 @@ Terminology
              ._\`:_ F S M _:' \_,
                  / (`---'\ `-.
               ,-`  _)    (_,
+
+   guard
+      A guard is a behaviour at the start of a work sequence that checks for a particular condition
+      (e.g. is battery low?). If the check succeeds, then the door is opened to the rest of the
+      work sequence.
 
    tick
    ticks
