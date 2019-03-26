@@ -13,7 +13,7 @@
    :func: command_line_argument_parser
    :prog: py-trees-demo-tree-stewardship
 
-.. graphviz:: dot/stewardship.dot
+.. graphviz:: dot/demo-tree-stewardship.dot
 
 .. image:: images/tree_stewardship.gif
 """

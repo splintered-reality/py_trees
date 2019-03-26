@@ -9,13 +9,13 @@
 
 """
 .. argparse::
-   :module: py_trees.demos.stewardship
+   :module: py_trees.demos.logging
    :func: command_line_argument_parser
-   :prog: py-trees-demo-tree-stewardship
+   :prog: py-trees-demo-logging
 
-.. graphviz:: dot/stewardship.dot
+.. graphviz:: dot/demo-logging.dot
 
-.. image:: images/tree_stewardship.gif
+.. image:: images/logging.gif
 """
 
 ##############################################################################
