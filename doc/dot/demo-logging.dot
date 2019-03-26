@@ -1,0 +1,18 @@
+digraph pastafarianism {
+graph [fontname="times-roman"];
+node [fontname="times-roman"];
+edge [fontname="times-roman"];
+Logging [label=Logging, shape=octagon, style=filled, fillcolor=cyan, fontsize=9, fontcolor=black];
+EveryN [label=EveryN, shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+Logging -> EveryN;
+Sequence [label=Sequence, shape=box, style=filled, fillcolor=gray20, fontsize=9, fontcolor=lawngreen];
+Logging -> Sequence;
+Guard [label=Guard, shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+Sequence -> Guard;
+Periodic [label=Periodic, shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+Sequence -> Periodic;
+Finisher [label=Finisher, shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+Sequence -> Finisher;
+Idle [label=Idle, shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+Logging -> Idle;
+}
