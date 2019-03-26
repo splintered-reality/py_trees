@@ -1,8 +1,10 @@
+#!/usr/bin/env python
 #
-# License: Yujin
+# License: BSD
+#   https://raw.githubusercontent.com/splintered-reality/py_trees/devel/LICENSE
 #
 ##############################################################################
-# Description
+# Documentation
 ##############################################################################
 
 """
