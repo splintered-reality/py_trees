@@ -7,6 +7,9 @@
   <description>
     Pythonic implementation of behaviour trees.
   </description>
+  <author>Daniel Stonier</author>
+  <author>Michal Staniaszek</author>
+  <author>Naveed Usmani</author>
 
   <maintainer email="d.stonier@gmail.com">Daniel Stonier</maintainer>
   <maintainer email="naveedhd@gmail.com">Naveed Usmani</maintainer>
@@ -16,10 +19,6 @@
   <url type="website">http://py-trees.readthedocs.io</url>
   <url type="repository">https://github.com/stonier/py_trees</url>
   <url type="bugtracker">https://github.com/stonier/py_trees/issues</url>
-
-  <author>Daniel Stonier</author>
-  <author>Michal Staniaszek</author>
-  <author>Naveed Usmani</author>
 
   <buildtool_depend>catkin</buildtool_depend>
 

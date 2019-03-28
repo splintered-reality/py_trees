@@ -1,9 +1,11 @@
+.. _terminology-section:
+
 Terminology
 ===========
 
 .. glossary::
 
-
+   block
    blocking
       A behaviour is sometimes referred to as a 'blocking' behaviour. Technically, the execution
       of a behaviour should be non-blocking (i.e. the tick part), however when it's progress from
@@ -20,6 +22,11 @@ Terminology
              ._\`:_ F S M _:' \_,
                  / (`---'\ `-.
               ,-`  _)    (_,
+
+   guard
+      A guard is a behaviour at the start of a work sequence that checks for a particular condition
+      (e.g. is battery low?). If the check succeeds, then the door is opened to the rest of the
+      work sequence.
 
    tick
    ticks

@@ -86,7 +86,7 @@ py_trees.console
 py_trees.decorators
 -------------------
 
- .. automodule:: py_trees.decorators
+.. automodule:: py_trees.decorators
     :members:
     :special-members:
     :show-inheritance:
