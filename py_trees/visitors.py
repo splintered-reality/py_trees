@@ -49,6 +49,13 @@ class VisitorBase(object):
         """
         pass
 
+    def finalise(self):
+        """
+        Override this method if any work needs to be
+        performed after ticks (i.e. showing data).
+        """
+        pass
+
     def run(self, behaviour):
         """
         This method gets run as each behaviour is ticked. Override it to

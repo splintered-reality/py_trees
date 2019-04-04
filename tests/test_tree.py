@@ -602,6 +602,54 @@ def test_tree_setup():
     assert(active_threads == 1, "Only one thread should be active but there are {} active".format(active_threads))
 
 
+def test_pre_post_tick_activity_sequence():
+    """
+    Ensure the sequence of visitor and pre/post tick handler callbacks fire in
+    the correct order.
+    """
+    console.banner("Pre-Post Tick Activity")
+    root = py_trees.composites.Selector("Selector")
+    root.add_child(py_trees.behaviours.Success())
+    tree = py_trees.trees.BehaviourTree(root=root)
+    breadcrumbs = list()
+
+    class TestVisitor(py_trees.visitors.VisitorBase):
+        def __init__(self):
+            super().__init__()
+
+        def initialise(self):
+            breadcrumbs.append("visitor.initialise()")
+
+        def finalise(self):
+            breadcrumbs.append("visitor.finalise()")
+
+    tree.add_visitor(TestVisitor())
+    tree.add_pre_tick_handler(lambda tree: breadcrumbs.append("pre_tick_handler"))
+    tree.add_post_tick_handler(lambda tree: breadcrumbs.append("post_tick_handler"))
+    tree.setup()
+    tree.tick(
+        pre_tick_handler=lambda tree: breadcrumbs.append("one_shot_pre_tick_handler"),
+        post_tick_handler=lambda tree: breadcrumbs.append("one_shot_post_tick_handler")
+    )
+    expected_breadcrumbs = [
+        "one_shot_pre_tick_handler",
+        "pre_tick_handler",
+        "visitor.initialise()",
+        "visitor.finalise()",
+        "post_tick_handler",
+        "one_shot_post_tick_handler"
+        ]
+    print("")
+    assert(len(breadcrumbs) == len(expected_breadcrumbs))
+    for expected, actual in zip(expected_breadcrumbs, breadcrumbs):
+        print(
+            console.green + "Breadcrumb..................." +
+            console.cyan + "{} ".format(expected) +
+            console.yellow + "[{}]".format(actual)
+        )
+        assert(expected == actual)
+
+
 def test_unicode_tree_debug():
     """
     Just check the code path through to painting ascii art via
@@ -618,8 +666,7 @@ def test_unicode_tree_debug():
         )
     )
     root.add_child(py_trees.behaviours.Running(name="Low Priority"))
-    tree = py_trees.trees.BehaviourTree(
-        root=root)
+    tree = py_trees.trees.BehaviourTree(root=root)
     py_trees.trees.setup_tree_unicode_art_debug(tree)
     tree.setup()
     tree.tick()
