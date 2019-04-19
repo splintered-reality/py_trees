@@ -54,6 +54,7 @@ unicode_symbols = {
     common.Status.INVALID: console.yellow + u'-' + console.reset,
     common.Status.RUNNING: console.blue + u'*' + console.reset
 }
+"""Symbols for a unicode, escape sequence capable console."""
 
 ascii_symbols = {
     'space': ' ',
@@ -69,6 +70,7 @@ ascii_symbols = {
     common.Status.INVALID: console.yellow + '-' + console.reset,
     common.Status.RUNNING: console.blue + '*' + console.reset
 }
+"""Symbols for a non-unicode, non-escape sequence capable console."""
 
 html_symbols = {
     'space': '&nbsp;',
@@ -84,6 +86,7 @@ html_symbols = {
     common.Status.INVALID: '<text style="color:darkgoldenrod;">-</text>',
     common.Status.RUNNING: '<text style="color:blue;">*</text>'
 }
+"""Symbols for embedding in html."""
 
 
 def ascii_tree(
@@ -99,13 +102,16 @@ def ascii_tree(
 
     Args:
         root (:class:`~py_trees.behaviour.Behaviour`): the root of the tree, or subtree you want to show
-        indent (:obj:`int`): the number of characters to indent the tree
         show_status (:obj:`bool`): always show status and feedback message (i.e. for every element, not just those visited)
         visited (dict): dictionary of (uuid.UUID) and status (:class:`~py_trees.common.Status`) pairs for behaviours visited on the current tick
         previously_visited (dict): dictionary of behaviour id/status pairs from the previous tree tick
+        indent (:obj:`int`): the number of characters to indent the tree
+        symbols (dict): dictates formatting style (one of :data:`py_trees.display.unicode_symbols` || :data:`py_trees.display.ascii_symbols` || :data:`py_trees.display.html_symbols`)
 
     Returns:
         :obj:`str`: an ascii tree (i.e. in string form)
+
+    .. seealso:: :meth:`py_trees.display.html_tree`
 
     Examples:
 
@@ -218,15 +224,15 @@ def html_tree(
 
     Args:
         root (:class:`~py_trees.behaviour.Behaviour`): the root of the tree, or subtree you want to show
-        indent (:obj:`int`): the number of characters to indent the tree
         show_status (:obj:`bool`): always show status and feedback message (i.e. for every element, not just those visited)
         visited (dict): dictionary of (uuid.UUID) and status (:class:`~py_trees.common.Status`) pairs for behaviours visited on the current tick
         previously_visited (dict): dictionary of behaviour id/status pairs from the previous tree tick
+        indent (:obj:`int`): the number of characters to indent the tree
 
     Returns:
-        :obj:`str`: an ascii tree (i.e. in string form)
+        :obj:`str`: an ascii tree (i.e. as a html snippet)
 
-    .. seealso:: :meth:`display.ascii_tree`
+    .. seealso:: :meth:`py_trees.display.ascii_tree`
     """
     lines = ascii_tree(root, show_status, visited, previously_visited, indent, symbols=html_symbols)
     lines = lines.replace("\n", "<br/>\n")
