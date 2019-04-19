@@ -81,6 +81,13 @@ def define_symbol_or_fallback(original: str, fallback: str, encoding: str=sys.st
     return original
 
 
+class unicode_hex_values(object):
+    lightning_bolt = '26A1'
+    double_vertical_line = '2016'
+    check_mark = '2713'
+    multiplication_x = '2715'
+
+
 lightning_bolt = u'\u26A1'
 double_vertical_line = u'\u2016'
 check_mark = u'\u2713'

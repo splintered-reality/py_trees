@@ -23,24 +23,65 @@ def test_symbols():
     # This test has no assertions, except from the human eye. When it fails,
     # ticks and crosses fail and must be inspected by the human eye
     if console.has_unicode():
-        symbols = display.unicode_symbols
+        symbol_groups = (display.html_symbols, display.unicode_symbols, display.ascii_symbols)
     else:
-        symbols = display.ascii_symbols
-    print("[{0}][{1}][{2}][{3}]".format(
-        symbols[py_trees.common.Status.SUCCESS],
-        symbols[py_trees.common.Status.FAILURE],
-        symbols[py_trees.common.Status.INVALID],
-        symbols[py_trees.common.Status.RUNNING]
-        )
-    )
+        symbol_groups = (display.html_symbols, display.ascii_symbols)
 
-    print("[{0}][{1}][{2}][{3}]".format(
-        symbols[py_trees.behaviours.Behaviour],
-        symbols[py_trees.composites.Sequence],
-        symbols[py_trees.composites.Selector],
-        symbols[py_trees.composites.Parallel]
+    for symbols in symbol_groups:
+
+        print("Status: [{0}][{1}][{2}][{3}]".format(
+            symbols[py_trees.common.Status.SUCCESS],
+            symbols[py_trees.common.Status.FAILURE],
+            symbols[py_trees.common.Status.INVALID],
+            symbols[py_trees.common.Status.RUNNING]
+            )
+        )
+
+        print("Classes: [{0}][{1}][{2}][{3}]".format(
+            symbols[py_trees.behaviours.Behaviour],
+            symbols[py_trees.composites.Sequence],
+            symbols[py_trees.composites.Selector],
+            symbols[py_trees.composites.Parallel]
+            )
+        )
+
+
+def test_html_tree():
+    console.banner("Ascii/Html Snapshots - Comparison Check")
+
+    def print_tree(snapshot_visitor, tree):
+        print(
+            py_trees.display.ascii_tree(
+                tree.root,
+                visited=snapshot_visitor.visited,
+                previously_visited=snapshot_visitor.previously_visited
+            )
+        )
+        print(
+            py_trees.display.html_tree(
+                tree.root,
+                visited=snapshot_visitor.visited,
+                previously_visited=snapshot_visitor.previously_visited
+            )
+        )
+        print()
+
+    root = py_trees.composites.Selector("Selector")
+    root.add_child(
+        py_trees.behaviours.Count(
+            name="High Priority",
+            fail_until=1,
+            running_until=1,
+            success_until=10
         )
     )
+    root.add_child(py_trees.behaviours.Running(name="Low Priority"))
+    tree = py_trees.trees.BehaviourTree(root)
+    snapshot_visitor = py_trees.visitors.SnapshotVisitor()
+    tree.visitors.append(snapshot_visitor)
+    tree.add_post_tick_handler(functools.partial(print_tree, snapshot_visitor))
+    tree.tick()
+    tree.tick()
 
 
 def test_ascii_snapshot_priority_interrupt():

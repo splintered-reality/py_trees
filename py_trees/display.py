@@ -41,27 +41,48 @@ from . import utilities
 ##############################################################################
 
 unicode_symbols = {
+    'space': ' ',
+    'bold': console.bold,
+    'bold_reset': console.reset,
     composites.Sequence: u'[-]',
     composites.Selector: u'[o]',
     composites.Parallel: u'[' + console.double_vertical_line + u']',
     decorators.Decorator: u'-^-',
     behaviour.Behaviour: u'-->',
-    common.Status.SUCCESS: console.green + console.check_mark,
-    common.Status.FAILURE: console.red + console.multiplication_x,
-    common.Status.INVALID: console.yellow + u'-',
-    common.Status.RUNNING: console.blue + u'*'
+    common.Status.SUCCESS: console.green + console.check_mark + console.reset,
+    common.Status.FAILURE: console.red + console.multiplication_x + console.reset,
+    common.Status.INVALID: console.yellow + u'-' + console.reset,
+    common.Status.RUNNING: console.blue + u'*' + console.reset
 }
 
 ascii_symbols = {
+    'space': ' ',
+    'bold': console.bold,
+    'bold_reset': console.reset,
     composites.Sequence: "[-]",
     composites.Selector: "[o]",
     composites.Parallel: "[||]",
     decorators.Decorator: "-^-",
     behaviour.Behaviour: "-->",
-    common.Status.SUCCESS: console.green + 'o',
-    common.Status.FAILURE: console.red + 'x',
-    common.Status.INVALID: console.yellow + '-',
-    common.Status.RUNNING: console.blue + '*'
+    common.Status.SUCCESS: console.green + 'o' + console.reset,
+    common.Status.FAILURE: console.red + 'x' + console.reset,
+    common.Status.INVALID: console.yellow + '-' + console.reset,
+    common.Status.RUNNING: console.blue + '*' + console.reset
+}
+
+html_symbols = {
+    'space': '&nbsp;',
+    'bold': '<b>',
+    'bold_reset': '</b>',
+    composites.Sequence: '<text>[-]</text>',
+    composites.Selector: '<text>[o]</text>',
+    composites.Parallel: '<text style="color:green;">[&#x2016]</text>',  # c.f. console.double_vertical_line
+    decorators.Decorator: '<text>-^-</text>',
+    behaviour.Behaviour: '<text>--></text>',
+    common.Status.SUCCESS: '<text style="color:green;">&#x2713</text>',  # c.f. console.check_mark
+    common.Status.FAILURE: '<text style="color:red;">&#x2715</text>',  # c.f. console.multiplication_x
+    common.Status.INVALID: '<text style="color:darkgoldenrod;">-</text>',
+    common.Status.RUNNING: '<text style="color:blue;">*</text>'
 }
 
 
@@ -71,6 +92,7 @@ def ascii_tree(
         visited={},
         previously_visited={},
         indent=0,
+        symbols=None
      ):
     """
     Graffiti your console with with ascii trees.
@@ -123,7 +145,8 @@ def ascii_tree(
                                   snapshot_visitor))
             behaviour_tree.visitors.append(snapshot_visitor)
     """
-    symbols = unicode_symbols if console.has_unicode() else ascii_symbols
+    if symbols is None:
+        symbols = unicode_symbols if console.has_unicode() else ascii_symbols
     tip_id = root.tip().id if root.tip() else None
 
     def get_behaviour_type(b):
@@ -135,45 +158,45 @@ def ascii_tree(
                 return behaviour_type
         return behaviour.Behaviour
 
+    def style(s, font_weight=False):
+        """
+        Because the way the shell escape sequences reset everything, this needs to get used on any
+        single block of formatted text.
+        """
+        if font_weight:
+            return symbols['bold'] + s + symbols['bold_reset']
+        else:
+            return s
+
     def generate_lines(root, internal_indent):
+
+        def assemble_single_line(b):
+            font_weight = True if b.id == tip_id else False
+            s = symbols['space'] * 4 * internal_indent
+            s += style(symbols[get_behaviour_type(b)], font_weight)
+            s += " "
+
+            if show_status or b.id in visited.keys():
+                s += style("{} [".format(b.name.replace('\n', ' ')), font_weight)
+                s += style("{}".format(symbols[b.status]), font_weight)
+                message = "" if not b.feedback_message else " -- " + b.feedback_message
+                s += style("]" + message, font_weight)
+            elif (b.id in previously_visited.keys() and
+                  b.id not in visited.keys() and
+                  previously_visited[b.id] == common.Status.RUNNING):
+                s += style("{} [".format(b.name.replace('\n', ' ')), font_weight)
+                s += style("{}".format(symbols[b.status]), font_weight)
+                s += style("]", font_weight)
+            else:
+                s += style("{} [".format(b.name.replace('\n', ' ')), font_weight)
+            return s
+
         if internal_indent == indent:
-            #####################
             # Root
-            #####################
-            if root.id == tip_id:
-                prefix = "    " * internal_indent + console.bold + symbols[get_behaviour_type(root)] + " "
-            else:
-                prefix = "    " * internal_indent + symbols[get_behaviour_type(root)] + " "
-            if show_status or root.id in visited.keys():
-                message = "" if not root.feedback_message else " -- " + root.feedback_message
-                yield prefix + "{} [{}".format(
-                    root.name.replace('\n', ' '),
-                    symbols[root.status]
-                ) + console.white + "]" + message + console.reset
-            elif (root.id in previously_visited.keys() and
-                  root.id not in visited.keys() and
-                  previously_visited[root.id] == common.Status.RUNNING):
-                yield prefix + root.name.replace('\n', ' ') + " [" + console.yellow + "-" + console.white + "]" + console.reset
-            else:
-                yield prefix + root.name.replace('\n', ' ') + console.reset
+            yield assemble_single_line(root)
             internal_indent += 1
         for child in root.children:
-            #####################
-            # Children
-            #####################
-            if child.id == tip_id:
-                prefix = "    " * internal_indent + console.bold + symbols[get_behaviour_type(child)] + " "
-            else:
-                prefix = "    " * internal_indent + symbols[get_behaviour_type(child)] + " "
-            if show_status or child.id in visited.keys():
-                message = "" if not child.feedback_message else " -- " + child.feedback_message
-                yield prefix + child.name.replace('\n', ' ') + " [{}".format(symbols[child.status]) + console.white + "]" + message + console.reset
-            elif (child.id in previously_visited.keys() and
-                  child.id not in visited.keys() and
-                  previously_visited[root.id] == common.Status.RUNNING):
-                yield prefix + child.name.replace('\n', ' ') + " [" + console.yellow + "-" + console.white + "]" + console.reset
-            else:
-                yield prefix + child.name.replace('\n', ' ') + console.reset
+            yield assemble_single_line(child)
             if child.children != []:
                 for line in generate_lines(child, internal_indent + 1):
                     yield line
@@ -181,6 +204,33 @@ def ascii_tree(
     for line in generate_lines(root, indent):
         s += "%s\n" % line
     return s
+
+
+def html_tree(
+        root,
+        show_status=False,
+        visited={},
+        previously_visited={},
+        indent=0,
+     ):
+    """
+    Graffiti your ascii tree on an html snippet.
+
+    Args:
+        root (:class:`~py_trees.behaviour.Behaviour`): the root of the tree, or subtree you want to show
+        indent (:obj:`int`): the number of characters to indent the tree
+        show_status (:obj:`bool`): always show status and feedback message (i.e. for every element, not just those visited)
+        visited (dict): dictionary of (uuid.UUID) and status (:class:`~py_trees.common.Status`) pairs for behaviours visited on the current tick
+        previously_visited (dict): dictionary of behaviour id/status pairs from the previous tree tick
+
+    Returns:
+        :obj:`str`: an ascii tree (i.e. in string form)
+
+    .. seealso:: :meth:`display.ascii_tree`
+    """
+    lines = ascii_tree(root, show_status, visited, previously_visited, indent, symbols=html_symbols)
+    lines = lines.replace("\n", "<br/>\n")
+    return "<code>\n" + lines + "</code>"
 
 
 def dot_graph(
