@@ -211,7 +211,7 @@ def ascii_tree(
     return s
 
 
-def html_tree(
+def xhtml_tree(
         root,
         show_status=False,
         visited={},

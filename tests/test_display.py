@@ -47,7 +47,7 @@ def test_symbols():
         )
 
 
-def test_html_tree():
+def test_xhtml_tree():
     console.banner("Ascii/Html Snapshots - Comparison Check")
 
     def print_tree(snapshot_visitor, tree):
@@ -58,7 +58,7 @@ def test_html_tree():
                 previously_visited=snapshot_visitor.previously_visited
             )
         )
-        html_snippet = py_trees.display.html_tree(
+        html_snippet = py_trees.display.xhtml_tree(
             tree.root,
             visited=snapshot_visitor.visited,
             previously_visited=snapshot_visitor.previously_visited
