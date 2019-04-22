@@ -356,11 +356,18 @@ class BehaviourTree(object):
         """
         self.interrupt_tick_tocking = True
 
-    def destroy(self):
+    def shutdown(self):
         """
-        Destroy the tree by stopping the root node.
+        Crawls across the tree calling :meth:`~py_trees.behaviour.Behaviour.shutdown`
+        on each behaviour.
+
+        Raises:
+            Exception: be ready to catch if any of the behaviours raise an exception
         """
-        self.root.stop()
+        # TODO: this method is still quite naive .. could use similar visitors and
+        # timeout mechanisms as used in setup()
+        for node in self.root.iterate():
+            node.shutdown()
 
 ##############################################################################
 # Post Tick Handlers

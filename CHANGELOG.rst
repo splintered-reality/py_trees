@@ -1,6 +1,18 @@
 Release Notes
 =============
 
+Forthcoming
+-----------
+
+**Breaking API**
+
+* [trees] removes the curious looking and unused ``destroy()`` method 
+
+**New Features**
+
+* [behaviour] introduce a ``shutdown()`` method to compliment ``setup()``
+* [trees] walks the tree calling ``shutdown()`` on each node in it's own ``shutdown()`` method
+
 1.1.0 (2019-03-19)
 ------------------
 
@@ -12,8 +24,8 @@ Release Notes
 
 **New Features**
 
-* [trees] add missing `add_visitor` method
-* [trees] flexible setup() for children via kwargs
+* [trees] add missing ``add_visitor()`` method
+* [trees] flexible ``setup()`` for children via kwargs
 * [trees] convenience method for ascii tree debugging
 * [display] highlight the tip in ascii tree snapshots
 
