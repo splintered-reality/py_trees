@@ -64,6 +64,7 @@ class Behaviour(object):
             raise TypeError("a behaviour name should be a string, but you passed in {}".format(type(name)))
         self.id = uuid.uuid4()  # used to uniquely identify this node (helps with removing children from a tree)
         self.name = name
+        self.qualified_name = "{}/{}".format(self.__class__.__qualname__, self.name)  # convenience
         self.status = Status.INVALID
         self.iterator = self.tick()
         self.parent = None  # will get set if a behaviour is added to a composite
@@ -111,6 +112,8 @@ class Behaviour(object):
 
         Raises:
             Exception: if this behaviour has a fault in construction or configuration
+
+        .. seealso:: :meth:`py_trees.behaviour.Behaviour.shutdown`
         """
         pass
 
@@ -334,6 +337,20 @@ class Behaviour(object):
         self.terminate(new_status)
         self.status = new_status
         self.iterator = self.tick()
+
+    def shutdown(self):
+        """
+        .. note:: User Customisable Callback
+
+        Subclasses may override this method for any custom destruction of infrastructure
+        usually brought into being in :meth:`~py_trees.behaviour.Behaviour.setup`.
+
+        Raises:
+            Exception: of whatever flavour the child raises when errors occur on destruction
+
+        .. seealso:: :meth:`py_trees.behaviour.Behaviour.setup`
+        """
+        pass
 
     def verbose_info_string(self):
         """

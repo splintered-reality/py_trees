@@ -1,6 +1,18 @@
 Release Notes
 =============
 
+Forthcoming
+-----------
+
+**Breaking API**
+
+* [trees] removes the curious looking and unused ``destroy()`` method, `#193 <https://github.com/splintered-reality/py_trees/pull/193>`_
+
+**New Features**
+
+* [behaviour] ``shutdown()`` method to compliment ``setup()``, `#193 <https://github.com/splintered-reality/py_trees/pull/193>`_
+* [trees] walks the tree calling ``shutdown()`` on each node in it's own ``shutdown()`` method, `#193 <https://github.com/splintered-reality/py_trees/pull/193>`_
+
 1.1.0 (2019-03-19)
 ------------------
 
@@ -12,8 +24,8 @@ Release Notes
 
 **New Features**
 
-* [trees] add missing `add_visitor` method
-* [trees] flexible setup() for children via kwargs
+* [trees] add missing ``add_visitor()`` method
+* [trees] flexible ``setup()`` for children via kwargs
 * [trees] convenience method for ascii tree debugging
 * [display] highlight the tip in ascii tree snapshots
 
