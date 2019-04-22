@@ -6,12 +6,12 @@ Forthcoming
 
 **Breaking API**
 
-* [trees] removes the curious looking and unused ``destroy()`` method 
+* [trees] removes the curious looking and unused ``destroy()`` method, `#193 <https://github.com/splintered-reality/py_trees/pull/193>`_
 
 **New Features**
 
-* [behaviour] introduce a ``shutdown()`` method to compliment ``setup()``
-* [trees] walks the tree calling ``shutdown()`` on each node in it's own ``shutdown()`` method
+* [behaviour] ``shutdown()`` method to compliment ``setup()``, `#193 <https://github.com/splintered-reality/py_trees/pull/193>`_
+* [trees] walks the tree calling ``shutdown()`` on each node in it's own ``shutdown()`` method, `#193 <https://github.com/splintered-reality/py_trees/pull/193>`_
 
 1.1.0 (2019-03-19)
 ------------------
