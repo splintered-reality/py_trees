@@ -12,6 +12,7 @@ import functools
 import py_trees
 import py_trees.console as console
 import py_trees.display as display
+import xml.etree.ElementTree
 
 ##############################################################################
 # Tests
@@ -57,14 +58,17 @@ def test_html_tree():
                 previously_visited=snapshot_visitor.previously_visited
             )
         )
-        print(
-            py_trees.display.html_tree(
-                tree.root,
-                visited=snapshot_visitor.visited,
-                previously_visited=snapshot_visitor.previously_visited
-            )
+        html_snippet = py_trees.display.html_tree(
+            tree.root,
+            visited=snapshot_visitor.visited,
+            previously_visited=snapshot_visitor.previously_visited
         )
+        print(html_snippet)
         print()
+        try:
+            unused_element = xml.etree.ElementTree.fromstring(html_snippet)
+        except xml.etree.ElementTree.ParseError:
+            assert False, "failed to parse the xhtml snippet as valid xml"
 
     root = py_trees.composites.Selector("Selector")
     root.add_child(

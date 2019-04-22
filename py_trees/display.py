@@ -71,18 +71,17 @@ ascii_symbols = {
     common.Status.RUNNING: console.blue + '*' + console.reset
 }
 """Symbols for a non-unicode, non-escape sequence capable console."""
-
 html_symbols = {
-    'space': '&nbsp;',
+    'space': '<text>&#xa0;</text>',  # &nbsp; is not valid xhtml, see http://www.fileformat.info/info/unicode/char/00a0/index.htm
     'bold': '<b>',
     'bold_reset': '</b>',
     composites.Sequence: '<text>[-]</text>',
     composites.Selector: '<text>[o]</text>',
-    composites.Parallel: '<text style="color:green;">[&#x2016]</text>',  # c.f. console.double_vertical_line
+    composites.Parallel: '<text style="color:green;">[&#x2016;]</text>',  # c.f. console.double_vertical_line
     decorators.Decorator: '<text>-^-</text>',
     behaviour.Behaviour: '<text>--></text>',
-    common.Status.SUCCESS: '<text style="color:green;">&#x2713</text>',  # c.f. console.check_mark
-    common.Status.FAILURE: '<text style="color:red;">&#x2715</text>',  # c.f. console.multiplication_x
+    common.Status.SUCCESS: '<text style="color:green;">&#x2713;</text>',  # c.f. console.check_mark
+    common.Status.FAILURE: '<text style="color:red;">&#x2715;</text>',  # c.f. console.multiplication_x
     common.Status.INVALID: '<text style="color:darkgoldenrod;">-</text>',
     common.Status.RUNNING: '<text style="color:blue;">*</text>'
 }

@@ -11,9 +11,6 @@
 import py_trees
 import py_trees.console as console
 
-from nose.tools import assert_raises
-import time
-
 ##############################################################################
 # Logging Level
 ##############################################################################
