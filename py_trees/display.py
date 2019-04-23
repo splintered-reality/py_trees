@@ -193,7 +193,7 @@ def ascii_tree(
                 s += style("{}".format(symbols[b.status]), font_weight)
                 s += style("]", font_weight)
             else:
-                s += style("{} [".format(b.name.replace('\n', ' ')), font_weight)
+                s += style("{}".format(b.name.replace('\n', ' ')), font_weight)
             return s
 
         if internal_indent == indent:

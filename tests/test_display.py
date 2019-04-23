@@ -51,6 +51,7 @@ def test_xhtml_tree():
     console.banner("Ascii/Html Snapshots - Comparison Check")
 
     def print_tree(snapshot_visitor, tree):
+        # Visited
         print(
             py_trees.display.ascii_tree(
                 tree.root,
@@ -64,6 +65,12 @@ def test_xhtml_tree():
             previously_visited=snapshot_visitor.previously_visited
         )
         print(html_snippet)
+        print()
+        # Non-Visited
+        print(py_trees.display.ascii_tree(tree.root))
+        print()
+        non_visited_html_snippet = py_trees.display.xhtml_tree(tree.root)
+        print(non_visited_html_snippet)
         print()
         try:
             unused_element = xml.etree.ElementTree.fromstring(html_snippet)
