@@ -19,11 +19,11 @@ import xml.etree.ElementTree
 ##############################################################################
 
 
-def assert_banner():
+def print_assert_banner():
     print(console.green + "----- Asserts -----" + console.reset)
 
 
-def assert_details(text, expected, result):
+def print_assert_details(text, expected, result):
     print(console.green + text +
           "." * (70 - len(text)) +
           console.cyan + "{}".format(expected) +
@@ -111,23 +111,23 @@ def test_text_trees():
     print(snippets["non_visited_xhtml_status"])
     print()
 
-    assert_banner()
+    print_assert_banner()
     for snippet_name, snippet in snippets.items():
         for b in root.iterate():
-            assert_details("{} in {}".format(b.name, snippet_name), True, b.name in snippet)
+            print_assert_details("{} in {}".format(b.name, snippet_name), True, b.name in snippet)
             assert(b.name in snippet)
 
-    assert_details("status symbol '-' in visited_ascii_tree", True, '-' in snippets["visited_ascii_tree"])
+    print_assert_details("status symbol '-' in visited_ascii_tree", True, '-' in snippets["visited_ascii_tree"])
     assert('-' in snippets["visited_ascii_tree"])
-    assert_details("status symbol '-' in non_visited_ascii_tree_status", True, '-' in snippets["non_visited_ascii_tree_status"])
+    print_assert_details("status symbol '-' in non_visited_ascii_tree_status", True, '-' in snippets["non_visited_ascii_tree_status"])
     assert('-' in snippets["non_visited_ascii_tree_status"])
     try:
         unused_element = xml.etree.ElementTree.fromstring(snippets["visited_xhtml"])
         unused_element = xml.etree.ElementTree.fromstring(snippets["non_visited_xhtml"])
         unused_element = xml.etree.ElementTree.fromstring(snippets["non_visited_xhtml_status"])
-        assert_details("xml ParseError", None, None)
+        print_assert_details("xml ParseError", None, None)
     except xml.etree.ElementTree.ParseError as e:
-        assert_details("xml ParseError", None, str(e))
+        print_assert_details("xml ParseError", None, str(e))
         assert False, "failed to parse the xhtml snippet as valid xml"
 
 
