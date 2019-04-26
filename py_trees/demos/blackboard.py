@@ -127,6 +127,6 @@ def main():
     print("\n--------- Tick 0 ---------\n")
     root.tick_once()
     print("\n")
-    print(py_trees.display.ascii_tree(root, show_status=True))
+    print(py_trees.display.unicode_tree(root, show_status=True))
     print("\n")
     print(py_trees.blackboard.Blackboard())

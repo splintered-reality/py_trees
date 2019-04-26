@@ -52,7 +52,7 @@ def test_failure_is_success_tree():
     )
     root.add_child(failure)
     root.add_child(failure_is_success)
-    print(py_trees.display.ascii_tree(root))
+    print(py_trees.display.unicode_tree(root))
     visitor = py_trees.visitors.DebugVisitor()
     py_trees.tests.tick_tree(root, 1, 1, visitors=[visitor], print_snapshot=True)
 
@@ -186,7 +186,7 @@ def test_success_is_failure_tree():
     )
     root.add_child(failure)
     root.add_child(success_is_failure)
-    print(py_trees.display.ascii_tree(root))
+    print(py_trees.display.unicode_tree(root))
     visitor = py_trees.visitors.DebugVisitor()
     py_trees.tests.tick_tree(root, 1, 1, visitors=[visitor], print_snapshot=True)
 
@@ -214,7 +214,7 @@ def test_inverter():
     selector.add_child(success)
     root.add_child(selector)
     root.add_child(failure_inverter)
-    print(py_trees.display.ascii_tree(root))
+    print(py_trees.display.unicode_tree(root))
     visitor = py_trees.visitors.DebugVisitor()
 
     for i in range(0, 2):
@@ -277,7 +277,7 @@ def test_timeout():
     console.banner("Timeout")
     running = py_trees.behaviours.Running(name="Running")
     timeout = py_trees.decorators.Timeout(child=running, duration=0.2)
-    print(py_trees.display.ascii_tree(timeout))
+    print(py_trees.display.unicode_tree(timeout))
     visitor = py_trees.visitors.DebugVisitor()
 
     # Test that it times out and re-initialises properly
@@ -308,7 +308,7 @@ def test_timeout():
         reset=False
     )
     timeout = py_trees.decorators.Timeout(child=count, duration=0.2)
-    print(py_trees.display.ascii_tree(timeout))
+    print(py_trees.display.unicode_tree(timeout))
 
     py_trees.tests.tick_tree(timeout, 1, 1, visitors=[visitor])
 
@@ -329,7 +329,7 @@ def test_timeout():
     # test that it passes on failure
     failure = py_trees.behaviours.Failure()
     timeout = py_trees.decorators.Timeout(child=failure, duration=0.2)
-    print(py_trees.display.ascii_tree(timeout))
+    print(py_trees.display.unicode_tree(timeout))
 
     py_trees.tests.tick_tree(timeout, 1, 1, visitors=[visitor])
 
@@ -348,7 +348,7 @@ def test_timeout():
         reset=False
     )
     timeout = py_trees.decorators.Timeout(child=count, duration=0.1)
-    print(py_trees.display.ascii_tree(timeout))
+    print(py_trees.display.unicode_tree(timeout))
 
     py_trees.tests.tick_tree(timeout, 1, 1, visitors=[visitor])
 

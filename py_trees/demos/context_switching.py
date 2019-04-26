@@ -164,7 +164,7 @@ def main():
             print("\n--------- Tick {0} ---------\n".format(i))
             root.tick_once()
             print("\n")
-            print("{}".format(py_trees.display.ascii_tree(root, show_status=True)))
+            print("{}".format(py_trees.display.unicode_tree(root, show_status=True)))
             time.sleep(1.0)
         except KeyboardInterrupt:
             break

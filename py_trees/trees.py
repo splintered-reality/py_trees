@@ -374,20 +374,20 @@ class BehaviourTree(object):
 ##############################################################################
 
 
-def setup_tree_ascii_art_debug(tree: BehaviourTree):
+def setup_tree_unicode_art_debug(tree: BehaviourTree):
     """
-    Convenience method for configuring a tree to paint an ascii
-    art snapshot on your console at the end of every tick.
+    Convenience method for configuring a tree to paint unicode art
+    for your tree's snapshot on your console at the end of every tick.
 
     Args:
         tree (:class:`~py_trees.trees.BehaviourTree`): the behaviour tree that has just been ticked
     """
-    def ascii_tree_post_tick_handler(
+    def unicode_tree_post_tick_handler(
         snapshot_visitor: visitors.SnapshotVisitor,
         tree: BehaviourTree
     ):
         print(
-            display.ascii_tree(
+            display.unicode_tree(
                 tree.root,
                 visited=snapshot_visitor.visited,
                 previously_visited=snapshot_visitor.previously_visited
@@ -397,7 +397,7 @@ def setup_tree_ascii_art_debug(tree: BehaviourTree):
     tree.add_visitor(snapshot_visitor)
     tree.add_post_tick_handler(
         functools.partial(
-            ascii_tree_post_tick_handler,
+            unicode_tree_post_tick_handler,
             snapshot_visitor
         )
     )

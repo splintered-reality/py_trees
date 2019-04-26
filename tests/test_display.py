@@ -25,7 +25,7 @@ def assert_banner():
 
 def assert_details(text, expected, result):
     print(console.green + text +
-          "." * (40 - len(text)) +
+          "." * (70 - len(text)) +
           console.cyan + "{}".format(expected) +
           console.yellow + " [{}]".format(result) +
           console.reset)
@@ -40,9 +40,9 @@ def test_symbols():
     # This test has no assertions, except from the human eye. When it fails,
     # ticks and crosses fail and must be inspected by the human eye
     if console.has_unicode():
-        symbol_groups = (display.html_symbols, display.unicode_symbols, display.ascii_symbols)
+        symbol_groups = (display.xhtml_symbols, display.unicode_symbols, display.ascii_symbols)
     else:
-        symbol_groups = (display.html_symbols, display.ascii_symbols)
+        symbol_groups = (display.xhtml_symbols, display.ascii_symbols)
 
     for symbols in symbol_groups:
 
@@ -63,8 +63,8 @@ def test_symbols():
         )
 
 
-def test_xhtml_tree():
-    console.banner("Ascii/Html Snapshots - Comparison Check")
+def test_text_trees():
+    console.banner("Text Trees")
 
     root = py_trees.composites.Selector("Selector")
     high_priority = py_trees.behaviours.Count(
@@ -82,13 +82,13 @@ def test_xhtml_tree():
     tree.tick()
     snippets = {}
     # Visited
-    snippets["visited_ascii_tree"] = py_trees.display.ascii_tree(
+    snippets["visited_ascii_tree"] = display.ascii_tree(
             tree.root,
             visited=snapshot_visitor.visited,
             previously_visited=snapshot_visitor.previously_visited
         )
     print(snippets["visited_ascii_tree"])
-    snippets["visited_xhtml"] = py_trees.display.xhtml_tree(
+    snippets["visited_xhtml"] = display.xhtml_tree(
         tree.root,
         visited=snapshot_visitor.visited,
         previously_visited=snapshot_visitor.previously_visited
@@ -96,11 +96,19 @@ def test_xhtml_tree():
     print(snippets["visited_xhtml"])
     print()
     # Non-Visited
-    snippets["non_visited_ascii_tree"] = py_trees.display.ascii_tree(tree.root)
+    snippets["non_visited_ascii_tree"] = display.ascii_tree(tree.root)
     print(snippets["non_visited_ascii_tree"])
     print()
-    snippets["non_visited_xhtml"] = py_trees.display.xhtml_tree(tree.root)
+    snippets["non_visited_xhtml"] = display.xhtml_tree(tree.root)
     print(snippets["non_visited_xhtml"])
+    print()
+
+    # Non-Visited with Status
+    snippets["non_visited_ascii_tree_status"] = display.ascii_tree(tree.root, show_status=True)
+    print(snippets["non_visited_ascii_tree_status"])
+    print()
+    snippets["non_visited_xhtml_status"] = display.xhtml_tree(tree.root, show_status=True)
+    print(snippets["non_visited_xhtml_status"])
     print()
 
     assert_banner()
@@ -108,9 +116,15 @@ def test_xhtml_tree():
         for b in root.iterate():
             assert_details("{} in {}".format(b.name, snippet_name), True, b.name in snippet)
             assert(b.name in snippet)
+
+    assert_details("status symbol '-' in visited_ascii_tree", True, '-' in snippets["visited_ascii_tree"])
+    assert('-' in snippets["visited_ascii_tree"])
+    assert_details("status symbol '-' in non_visited_ascii_tree_status", True, '-' in snippets["non_visited_ascii_tree_status"])
+    assert('-' in snippets["non_visited_ascii_tree_status"])
     try:
         unused_element = xml.etree.ElementTree.fromstring(snippets["visited_xhtml"])
         unused_element = xml.etree.ElementTree.fromstring(snippets["non_visited_xhtml"])
+        unused_element = xml.etree.ElementTree.fromstring(snippets["non_visited_xhtml_status"])
         assert_details("xml ParseError", None, None)
     except xml.etree.ElementTree.ParseError as e:
         assert_details("xml ParseError", None, str(e))
@@ -125,9 +139,12 @@ def test_ascii_snapshot_priority_interrupt():
     """
     console.banner("Ascii Snapshots - Priority Interrupt")
 
+    if console.has_unicode():
+        text_tree = display.unicode_tree if console.has_unicode() else display.ascii_tree
+
     def post_tick_handler(snapshot_visitor, tree):
         print(
-            py_trees.display.ascii_tree(
+            text_tree(
                 tree.root,
                 visited=snapshot_visitor.visited,
                 previously_visited=snapshot_visitor.previously_visited
@@ -150,7 +167,7 @@ def test_ascii_snapshot_priority_interrupt():
     tree.add_post_tick_handler(functools.partial(post_tick_handler, snapshot_visitor))
     tree.tick()
     tree.tick()
-    last_line = py_trees.display.ascii_tree(
+    last_line = text_tree(
         tree.root,
         visited=snapshot_visitor.visited,
         previously_visited=snapshot_visitor.previously_visited

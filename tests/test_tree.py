@@ -68,7 +68,7 @@ def test_selector_composite():
     tree.add_child(a)
     tree.add_child(b)
     tree.add_child(c)
-    print(py_trees.display.ascii_tree(tree))
+    print(py_trees.display.unicode_tree(tree))
     py_trees.tests.tick_tree(tree, 1, 3, visitors=[visitor])
     py_trees.tests.print_summary(nodes=[a, b, c])
     print("--------- Assertions ---------\n")
@@ -159,7 +159,7 @@ def test_mixed_tree():
     root.add_child(sequence)
     root.add_child(d)
 
-    print(py_trees.display.ascii_tree(root))
+    print(py_trees.display.unicode_tree(root))
 
     py_trees.tests.tick_tree(root, 1, 2, visitors=[visitor])
     py_trees.tests.print_summary(nodes=[a, b, c, d])
@@ -227,7 +227,7 @@ def test_display():
     root.add_child(sequence)
     root.add_child(d)
 
-    print(py_trees.display.ascii_tree(root))
+    print(py_trees.display.unicode_tree(root))
 
     assert(True)
 
@@ -271,13 +271,13 @@ def test_prune_behaviour_tree():
     root.add_child(d)
 
     tree = py_trees.trees.BehaviourTree(root)
-    print(py_trees.display.ascii_tree(tree.root))
+    print(py_trees.display.unicode_tree(tree.root))
     assert(len(sequence.children) == 2)
     tree.prune_subtree(c.id)
-    print(py_trees.display.ascii_tree(tree.root))
+    print(py_trees.display.unicode_tree(tree.root))
     assert(len(sequence.children) == 1)
     tree.prune_subtree(sequence.id)
-    print(py_trees.display.ascii_tree(tree.root))
+    print(py_trees.display.unicode_tree(tree.root))
     assert(len(root.children) == 2)
 
 
@@ -297,7 +297,7 @@ def test_replace_behaviour_tree():
     root.add_child(d)
 
     tree = py_trees.trees.BehaviourTree(root)
-    print(py_trees.display.ascii_tree(tree.root))
+    print(py_trees.display.unicode_tree(tree.root))
     assert(len(sequence1.children) == 2)
 
     sequence2 = py_trees.composites.Sequence(name="Sequence2")
@@ -309,7 +309,7 @@ def test_replace_behaviour_tree():
     sequence2.add_child(g)
 
     tree.replace_subtree(sequence1.id, sequence2)
-    print(py_trees.display.ascii_tree(tree.root))
+    print(py_trees.display.unicode_tree(tree.root))
     assert(len(sequence2.children) == 3)
 
 
@@ -329,7 +329,7 @@ def test_tick_tock_behaviour_tree():
     root.add_child(d)
 
     tree = py_trees.trees.BehaviourTree(root)
-    print(py_trees.display.ascii_tree(tree.root))
+    print(py_trees.display.unicode_tree(tree.root))
 
     visitor = py_trees.visitors.DebugVisitor()
     tree.visitors.append(visitor)
@@ -352,7 +352,7 @@ def test_success_failure_tree():
     root.add_child(failure)
     root.add_child(failure2)
     root.add_child(success)
-    print(py_trees.display.ascii_tree(root))
+    print(py_trees.display.unicode_tree(root))
     visitor = py_trees.visitors.DebugVisitor()
     py_trees.tests.tick_tree(root, 1, 1, visitors=[visitor])
 
@@ -378,7 +378,7 @@ def test_tip_simple():
     seq.add_child(b)
 
     tree = py_trees.trees.BehaviourTree(seq)
-    print(py_trees.display.ascii_tree(tree.root))
+    print(py_trees.display.unicode_tree(tree.root))
 
     visitor = py_trees.visitors.DebugVisitor()
     tree.visitors.append(visitor)
@@ -449,7 +449,7 @@ def test_tip_complex():
     sel.add_child(seq2)
 
     tree = py_trees.trees.BehaviourTree(sel)
-    print(py_trees.display.ascii_tree(tree.root))
+    print(py_trees.display.unicode_tree(tree.root))
 
     visitor = py_trees.visitors.DebugVisitor()
     tree.visitors.append(visitor)
@@ -499,7 +499,7 @@ def test_failed_tree():
     root.add_child(f2)
     root.add_child(f3)
     tree = py_trees.trees.BehaviourTree(root)
-    print(py_trees.display.ascii_tree(tree.root))
+    print(py_trees.display.unicode_tree(tree.root))
     tree.tick()
     print("\n--------- Assertions ---------\n")
     print("root.tip().name == Failure 3")
@@ -602,7 +602,7 @@ def test_tree_setup():
     assert(active_threads == 1, "Only one thread should be active but there are {} active".format(active_threads))
 
 
-def test_ascii_tree_debug():
+def test_unicode_tree_debug():
     """
     Just check the code path through to painting ascii art via
     tree visitors and post-tick handlers is executable
@@ -620,7 +620,7 @@ def test_ascii_tree_debug():
     root.add_child(py_trees.behaviours.Running(name="Low Priority"))
     tree = py_trees.trees.BehaviourTree(
         root=root)
-    py_trees.trees.setup_tree_ascii_art_debug(tree)
+    py_trees.trees.setup_tree_unicode_art_debug(tree)
     tree.setup()
     tree.tick()
     # If we got all the way here, that suffices. If we really wished,

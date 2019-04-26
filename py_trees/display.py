@@ -12,14 +12,6 @@ Behaviour trees are significantly easier to design, monitor and debug
 with visualisations. Py Trees does provide minimal assistance to render
 trees to various simple output formats. Currently this includes dot graphs,
 strings or stdout.
-
-.. warning::
-
-   There is both disrespect for ascii and lack of recognition for unicode
-   in this file as the intention to make ascii art a first class citizen
-   in py_trees became tainted by the desire to make use of the very fine
-   looking unicode symbols underneath. If such behaviour offends, please
-   wear your peril-sensitive sunglasses when parsing or using this module.
 """
 
 ##############################################################################
@@ -71,7 +63,7 @@ ascii_symbols = {
     common.Status.RUNNING: console.blue + '*' + console.reset
 }
 """Symbols for a non-unicode, non-escape sequence capable console."""
-html_symbols = {
+xhtml_symbols = {
     'space': '<text>&#xa0;</text>',  # &nbsp; is not valid xhtml, see http://www.fileformat.info/info/unicode/char/00a0/index.htm
     'bold': '<b>',
     'bold_reset': '</b>',
@@ -88,68 +80,35 @@ html_symbols = {
 """Symbols for embedding in html."""
 
 
-def ascii_tree(
+def _generate_text_tree(
         root,
         show_status=False,
         visited={},
         previously_visited={},
         indent=0,
-        symbols=None
+        symbols=None,
      ):
     """
-    Graffiti your console with with ascii trees.
+    Generate a text tree utilising the specified symbol formatter.
 
     Args:
         root (:class:`~py_trees.behaviour.Behaviour`): the root of the tree, or subtree you want to show
-        show_status (:obj:`bool`): always show status and feedback message (i.e. for every element, not just those visited)
-        visited (dict): dictionary of (uuid.UUID) and status (:class:`~py_trees.common.Status`) pairs for behaviours visited on the current tick
+        show_status (:obj:`bool`): always show status and feedback message (i.e. for every element,
+            not just those visited)
+        visited (dict): dictionary of (uuid.UUID) and status (:class:`~py_trees.common.Status`) pairs
+            for behaviours visited on the current tick
         previously_visited (dict): dictionary of behaviour id/status pairs from the previous tree tick
         indent (:obj:`int`): the number of characters to indent the tree
-        symbols (dict): dictates formatting style (one of :data:`py_trees.display.unicode_symbols` || :data:`py_trees.display.ascii_symbols` || :data:`py_trees.display.html_symbols`)
+        symbols (dict, optional): dictates formatting style
+            (one of :data:`py_trees.display.unicode_symbols` || :data:`py_trees.display.ascii_symbols` || :data:`py_trees.display.xhtml_symbols`),
+            defaults to unicode if stdout supports it, ascii otherwise
 
     Returns:
-        :obj:`str`: an ascii tree (i.e. in string form)
+        :obj:`str`: a text-based representation of the behaviour tree
 
-    .. seealso:: :meth:`py_trees.display.html_tree`
-
-    Examples:
-
-        Use the :class:`~py_trees.visitors.SnapshotVisitor`
-        and :class:`~py_trees.trees.BehaviourTree`
-        to generate snapshot information at each tick and feed that to
-        a post tick handler that will print the traversed ascii tree
-        complete with status and feedback messages.
-
-        .. image:: images/ascii_tree.png
-            :width: 200px
-            :align: right
-
-        .. code-block:: python
-
-            def post_tick_handler(snapshot_visitor, behaviour_tree):
-                print(
-                    py_trees.display.ascii_tree(
-                        behaviour_tree.root,
-                        visited=snapshot_visitor.visited,
-                        previously_visited=snapshot_visitor.visited
-                    )
-                )
-
-            root = py_trees.composites.Sequence("Sequence")
-            for action in ["Action 1", "Action 2", "Action 3"]:
-                b = py_trees.behaviours.Count(
-                        name=action,
-                        fail_until=0,
-                        running_until=1,
-                        success_until=10)
-                root.add_child(b)
-            behaviour_tree = py_trees.trees.BehaviourTree(root)
-            snapshot_visitor = py_trees.visitors.SnapshotVisitor()
-            behaviour_tree.add_post_tick_handler(
-                functools.partial(post_tick_handler,
-                                  snapshot_visitor))
-            behaviour_tree.visitors.append(snapshot_visitor)
+    .. seealso:: :meth:`py_trees.display.ascii_tree`, :meth:`py_trees.display.unicode_tree`, :meth:`py_trees.display.xhtml_tree`
     """
+    # default to unicode if stdout supports it, ascii otherwise
     if symbols is None:
         symbols = unicode_symbols if console.has_unicode() else ascii_symbols
     tip_id = root.tip().id if root.tip() else None
@@ -211,7 +170,7 @@ def ascii_tree(
     return s
 
 
-def xhtml_tree(
+def ascii_tree(
         root,
         show_status=False,
         visited={},
@@ -219,7 +178,7 @@ def xhtml_tree(
         indent=0,
      ):
     """
-    Graffiti your ascii tree on an html snippet.
+    Graffiti your console with ascii art for your trees.
 
     Args:
         root (:class:`~py_trees.behaviour.Behaviour`): the root of the tree, or subtree you want to show
@@ -229,23 +188,151 @@ def xhtml_tree(
         indent (:obj:`int`): the number of characters to indent the tree
 
     Returns:
-        :obj:`str`: an ascii tree (i.e. as a html snippet)
+        :obj:`str`: an ascii tree (i.e. in string form)
 
-    .. seealso:: :meth:`py_trees.display.ascii_tree`
+    .. seealso:: :meth:`py_trees.display.xhtml_tree`, :meth:`py_trees.display.unicode_tree`
+
+    Examples:
+
+        Use the :class:`~py_trees.visitors.SnapshotVisitor`
+        and :class:`~py_trees.trees.BehaviourTree`
+        to generate snapshot information at each tick and feed that to
+        a post tick handler that will print the traversed ascii tree
+        complete with status and feedback messages.
+
+        .. image:: images/ascii_tree.png
+            :width: 200px
+            :align: right
+
+        .. code-block:: python
+
+            def post_tick_handler(snapshot_visitor, behaviour_tree):
+                print(
+                    py_trees.display.ascii_tree(
+                        behaviour_tree.root,
+                        visited=snapshot_visitor.visited,
+                        previously_visited=snapshot_visitor.visited
+                    )
+                )
+
+            root = py_trees.composites.Sequence("Sequence")
+            for action in ["Action 1", "Action 2", "Action 3"]:
+                b = py_trees.behaviours.Count(
+                        name=action,
+                        fail_until=0,
+                        running_until=1,
+                        success_until=10)
+                root.add_child(b)
+            behaviour_tree = py_trees.trees.BehaviourTree(root)
+            snapshot_visitor = py_trees.visitors.SnapshotVisitor()
+            behaviour_tree.add_post_tick_handler(
+                functools.partial(post_tick_handler,
+                                  snapshot_visitor))
+            behaviour_tree.visitors.append(snapshot_visitor)
     """
-    lines = ascii_tree(root, show_status, visited, previously_visited, indent, symbols=html_symbols)
+    lines = _generate_text_tree(
+        root,
+        show_status,
+        visited,
+        previously_visited,
+        indent,
+        symbols=ascii_symbols
+    )
+    return lines
+
+
+def unicode_tree(
+        root,
+        show_status=False,
+        visited={},
+        previously_visited={},
+        indent=0,
+     ):
+    """
+    Graffiti your console with unicode art for your trees.
+
+    Args:
+        root (:class:`~py_trees.behaviour.Behaviour`): the root of the tree, or subtree you want to show
+        show_status (:obj:`bool`): always show status and feedback message (i.e. for every element, not just those visited)
+        visited (dict): dictionary of (uuid.UUID) and status (:class:`~py_trees.common.Status`) pairs for behaviours visited on the current tick
+        previously_visited (dict): dictionary of behaviour id/status pairs from the previous tree tick
+        indent (:obj:`int`): the number of characters to indent the tree
+
+    Returns:
+        :obj:`str`: a unicode tree (i.e. in string form)
+
+    .. seealso:: :meth:`py_trees.display.ascii_tree`, :meth:`py_trees.display.xhtml_tree`
+
+    """
+    lines = _generate_text_tree(
+        root,
+        show_status,
+        visited,
+        previously_visited,
+        indent,
+        symbols=ascii_symbols
+    )
+    return lines
+
+
+def xhtml_tree(
+        root,
+        show_status=False,
+        visited={},
+        previously_visited={},
+        indent=0,
+     ):
+    """
+    Paint your tree on an xhtml snippet.
+
+    Args:
+        root (:class:`~py_trees.behaviour.Behaviour`): the root of the tree, or subtree you want to show
+        show_status (:obj:`bool`): always show status and feedback message (i.e. for every element, not just those visited)
+        visited (dict): dictionary of (uuid.UUID) and status (:class:`~py_trees.common.Status`) pairs for behaviours visited on the current tick
+        previously_visited (dict): dictionary of behaviour id/status pairs from the previous tree tick
+        indent (:obj:`int`): the number of characters to indent the tree
+
+    Returns:
+        :obj:`str`: an ascii tree (i.e. as a xhtml snippet)
+
+    .. seealso:: :meth:`py_trees.display.ascii_tree`, :meth:`py_trees.display.unicode_tree`
+
+    Examples:
+
+    .. code-block:: python
+
+        import py_trees
+        a = py_trees.behaviours.Success()
+        b = py_trees.behaviours.Success()
+        c = c = py_trees.composites.Sequence(children=[a, b])
+        c.tick_once()
+
+        f = open('testies.html', 'w')
+        f.write('<html><head><title>Foo</title><body>')
+        f.write(py_trees.display.xhtml_tree(c, show_status=True))
+        f.write("</body></html>")
+    """
+    lines = _generate_text_tree(
+        root,
+        show_status,
+        visited,
+        previously_visited,
+        indent,
+        symbols=xhtml_symbols
+    )
     lines = lines.replace("\n", "<br/>\n")
     return "<code>\n" + lines + "</code>"
 
 
-def dot_graph(
+def dot_tree(
         root: behaviour.Behaviour,
         visibility_level: common.VisibilityLevel=common.VisibilityLevel.DETAIL,
         collapse_decorators: bool=False,
         with_qualified_names: bool=False):
     """
-    Generate the pydot graph - this is usually the first step in
-    rendering the tree to file. See also :py:func:`render_dot_tree`.
+    Paint your tree on a pydot graph.
+
+    .. seealso:: :py:func:`render_dot_tree`.
 
     Args:
         root (:class:`~py_trees.behaviour.Behaviour`): the root of a tree, or subtree
@@ -387,7 +474,7 @@ def render_dot_tree(root: behaviour.Behaviour,
         A good practice is to provide a command line argument for optional rendering of a program so users
         can quickly visualise what tree the program will execute.
     """
-    graph = dot_graph(root, visibility_level, collapse_decorators, with_qualified_names=with_qualified_names)
+    graph = dot_tree(root, visibility_level, collapse_decorators, with_qualified_names=with_qualified_names)
     filename_wo_extension_to_convert = root.name if name is None else name
     filename_wo_extension = utilities.get_valid_filename(filename_wo_extension_to_convert)
     filenames = {}

@@ -92,7 +92,7 @@ class SnapshotVisitor(VisitorBase):
     .. seealso::
 
         This visitor is used with the :class:`~py_trees.trees.BehaviourTree` class to collect
-        information and :func:`~py_trees.display.generate_ascii_tree` to display information.
+        information and :meth:`py_trees.display.unicode_tree` to display information.
     """
     def __init__(self, full=False):
         super(SnapshotVisitor, self).__init__(full=full)

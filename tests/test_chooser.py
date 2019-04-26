@@ -30,7 +30,7 @@ def test_low_priority_runner():
     running = py_trees.behaviours.Running("Running")
     root.add_child(failure)
     root.add_child(running)
-    print(py_trees.display.ascii_tree(root))
+    print(py_trees.display.unicode_tree(root))
     visitor = py_trees.visitors.DebugVisitor()
     py_trees.tests.tick_tree(root, 1, 1, visitors=[visitor])
 
@@ -60,7 +60,7 @@ def test_low_priority_success():
     success = py_trees.behaviours.Success("Success")
     root.add_child(failure)
     root.add_child(success)
-    print(py_trees.display.ascii_tree(root))
+    print(py_trees.display.unicode_tree(root))
     visitor = py_trees.visitors.DebugVisitor()
     py_trees.tests.tick_tree(root, 1, 1, visitors=[visitor])
 
@@ -91,7 +91,7 @@ def test_higher_priority_ignore():
     running = py_trees.behaviours.Running("Running")
     root.add_child(ping_pong)
     root.add_child(running)
-    print(py_trees.display.ascii_tree(root))
+    print(py_trees.display.unicode_tree(root))
     visitor = py_trees.visitors.DebugVisitor()
     py_trees.tests.tick_tree(root, 1, 1, visitors=[visitor])
 
