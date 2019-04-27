@@ -146,7 +146,7 @@ $ sudo apt install ros-<crystal>-py-trees
 
 [py-trees-ros-interfaces-build-status-crystal]: http://build.ros2.org/job/Cbin_uB64__py_trees_ros_interfaces__ubuntu_bionic_amd64__binary/
 [py-trees-ros-interfaces-build-status-crystal-image]: http://build.ros2.org/job/Cbin_uB64__py_trees_ros_interfaces__ubuntu_bionic_amd64__binary/badge/icon?style=plastic
-[py-trees-ros-interfaces-ros-index]: https://index.ros.org/p/py_trees/github-splintered-reality-py_trees_ros_interfaces
+[py-trees-ros-interfaces-ros-index]: https://index.ros.org/p/py_trees_ros_interfaces/github-splintered-reality-py_trees_ros_interfaces
 [py-trees-ros-interfaces-sources-1.1.x]: https://github.com/splintered-reality/py_trees_ros_interfaces/tree/release/1.1.x
 
 [py-trees-ros-build-status-kinetic]: http://build.ros.org/job/Kbin_uX64__py_trees_ros__ubuntu_xenial_amd64__binary
@@ -157,14 +157,14 @@ $ sudo apt install ros-<crystal>-py-trees
 [py-trees-ros-docs-kinetic-image]: https://img.shields.io/jenkins/s/http/build.ros.org/job/Kdoc__py_trees_ros__ubuntu_xenial_amd64.svg?label=docs&style=plastic
 [py-trees-ros-docs-melodic]: http://docs.ros.org/melodic/api/py_trees_ros/html/
 [py-trees-ros-docs-melodic-image]: https://img.shields.io/jenkins/s/http/build.ros.org/job/Mdoc__py_trees_ros__ubuntu_bionic_amd64.svg?label=docs&style=plastic
-[py-trees-ros-ros-index]: https://index.ros.org/p/py_trees/github-splintered-reality-py_trees_ros
+[py-trees-ros-ros-index]: https://index.ros.org/p/py_trees_ros/github-splintered-reality-py_trees_ros
 [py-trees-ros-sources-pre-1.0.x]: https://github.com/splintered-reality/py_trees_ros/tree/release/pre-1.0.x
 [py-trees-ros-sources-0.5.x]: https://github.com/splintered-reality/py_trees_ros/tree/release/0.5.x
 [py-trees-ros-wiki]: http://wiki.ros.org/py_trees_ros
 
 
 [py-trees-ros-tutorials-sources-pre-1.0.x]: https://github.com/splintered-reality/py_trees_ros_tutorials/tree/release/pre-1.0.x
-[py-trees-ros-tutorials-ros-index]: https://index.ros.org/p/py_trees/github-splintered-reality-py_trees_ros_tutorials
+[py-trees-ros-tutorials-ros-index]: https://index.ros.org/p/py_trees_ros_tutorials/github-splintered-reality-py_trees_ros_tutorials
 
 [py-trees-msgs-build-status-kinetic]: http://build.ros.org/job/Kbin_uX64__py_trees_msgs__ubuntu_xenial_amd64__binary
 [py-trees-msgs-build-status-kinetic-image]: http://build.ros.org/job/Kbin_uX64__py_trees_msgs__ubuntu_xenial_amd64__binary/badge/icon?style=plastic
