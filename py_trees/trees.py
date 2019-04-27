@@ -36,7 +36,6 @@ from . import behaviour
 from . import common
 from . import composites
 from . import display
-from . import utilities
 from . import visitors
 
 CONTINUOUS_TICK_TOCK = -1
@@ -280,12 +279,13 @@ class BehaviourTree(object):
             post_tick_handler (:obj:`func`): function to execute after ticking
         """
         # pre
-        for handler in self.pre_tick_handlers:
-            handler(self)
         if pre_tick_handler is not None:
             pre_tick_handler(self)
+        for handler in self.pre_tick_handlers:
+            handler(self)
         for visitor in self.visitors:
             visitor.initialise()
+
         # tick
         for node in self.root.tick():
             for visitor in [visitor for visitor in self.visitors if not visitor.full]:
@@ -296,6 +296,8 @@ class BehaviourTree(object):
                 node.visit(visitor)
 
         # post
+        for visitor in self.visitors:
+            visitor.finalise()
         for handler in self.post_tick_handlers:
             handler(self)
         if post_tick_handler is not None:
