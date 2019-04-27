@@ -96,6 +96,7 @@ $ sudo apt install ros-<crystal>-py-trees
 
 [devel-sources-image]: http://img.shields.io/badge/sources-devel-blue.svg?style=plastic
 [1.2.x-sources-image]: http://img.shields.io/badge/sources-1.2.x-blue.svg?style=plastic
+[1.1.x-sources-image]: http://img.shields.io/badge/sources-1.1.x-blue.svg?style=plastic
 [1.0.x-sources-image]: http://img.shields.io/badge/sources-1.0.x-blue.svg?style=plastic
 [0.6.x-sources-image]: http://img.shields.io/badge/sources-0.6.x-blue.svg?style=plastic
 [0.5.x-sources-image]: http://img.shields.io/badge/sources-0.5.x-blue.svg?style=plastic
@@ -146,7 +147,7 @@ $ sudo apt install ros-<crystal>-py-trees
 [py-trees-ros-interfaces-build-status-crystal]: http://build.ros2.org/job/Cbin_uB64__py_trees_ros_interfaces__ubuntu_bionic_amd64__binary/
 [py-trees-ros-interfaces-build-status-crystal-image]: http://build.ros2.org/job/Cbin_uB64__py_trees_ros_interfaces__ubuntu_bionic_amd64__binary/badge/icon?style=plastic
 [py-trees-ros-interfaces-ros-index]: https://index.ros.org/p/py_trees/github-splintered-reality-py_trees_ros_interfaces
-[py-trees-ros-interfaces-sources-1.2.x]: https://github.com/splintered-reality/py_trees_ros_interfaces/tree/release/1.2.x
+[py-trees-ros-interfaces-sources-1.1.x]: https://github.com/splintered-reality/py_trees_ros_interfaces/tree/release/1.1.x
 
 [py-trees-ros-build-status-kinetic]: http://build.ros.org/job/Kbin_uX64__py_trees_ros__ubuntu_xenial_amd64__binary
 [py-trees-ros-build-status-kinetic-image]: http://build.ros.org/job/Kbin_uX64__py_trees_ros__ubuntu_xenial_amd64__binary/badge/icon?style=plastic
