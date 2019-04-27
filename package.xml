@@ -3,7 +3,7 @@
 <package format="3">
   <name>py_trees</name>
   <!-- When updating, also update setup.py and version.py -->
-  <version>1.1.0</version>
+  <version>1.2.0</version>
   <description>
     Pythonic implementation of behaviour trees.
   </description>
