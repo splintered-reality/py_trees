@@ -49,7 +49,7 @@ def tick_tree(root,
                 node.visit(visitor)
     if print_snapshot:
         print(console.green + "\nAscii Tree Snapshot" + console.reset)
-        print(display.ascii_tree(root=root, show_status=True))
+        print(display.unicode_tree(root=root, show_status=True))
     if print_blackboard:
         print(str(blackboard.Blackboard()))
 

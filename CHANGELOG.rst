@@ -7,11 +7,15 @@ Forthcoming
 **Breaking API**
 
 * [trees] removes the curious looking and unused ``destroy()`` method, `#193 <https://github.com/splintered-reality/py_trees/pull/193>`_
+* [display] ``ascii_tree`` -> ``ascii_tree``/``unicode_tree()``, no longer subverts the choice depending on your stdout, `#192 <https://github.com/splintered-reality/py_trees/pull/192>`_
+* [display] ``dot_graph`` -> ``dot_tree`` for consistency with the text tree methods, `#192 <https://github.com/splintered-reality/py_trees/pull/192>`_
 
 **New Features**
 
 * [behaviour] ``shutdown()`` method to compliment ``setup()``, `#193 <https://github.com/splintered-reality/py_trees/pull/193>`_
+* [display] ``xhtml_tree`` provides an xhtml compatible equivalent to the ``ascii_tree`` representation, `#192 <https://github.com/splintered-reality/py_trees/pull/192>`_
 * [trees] walks the tree calling ``shutdown()`` on each node in it's own ``shutdown()`` method, `#193 <https://github.com/splintered-reality/py_trees/pull/193>`_
+
 
 1.1.0 (2019-03-19)
 ------------------

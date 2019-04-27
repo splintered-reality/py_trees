@@ -47,7 +47,7 @@ def test_high_priority_interrupt():
     root = py_trees.composites.Selector(name="Root")
     root.add_children([high_priority_interrupt, piwylo])
 
-    print(py_trees.display.ascii_tree(root))
+    print(py_trees.display.unicode_tree(root))
     visitor = py_trees.visitors.DebugVisitor()
     py_trees.tests.tick_tree(root, 1, 3, visitors=[visitor])
     print()

@@ -112,7 +112,7 @@ def main():
             print("\n--------- Tick {0} ---------\n".format(i))
             root.tick_once()
             print("\n")
-            print(py_trees.display.ascii_tree(root=root, show_status=True))
+            print(py_trees.display.unicode_tree(root=root, show_status=True))
             time.sleep(1.0)
         except KeyboardInterrupt:
             break

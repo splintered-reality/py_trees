@@ -40,7 +40,7 @@ def test_winds_of_change():
     root.add_child(a)
     root.add_child(b)
     root.add_child(c)
-    print(py_trees.display.ascii_tree(root))
+    print(py_trees.display.unicode_tree(root))
 
     debug_visitor = py_trees.visitors.DebugVisitor()
     snapshot_visitor = py_trees.visitors.SnapshotVisitor()

@@ -18,7 +18,7 @@ help:
 	@echo "  docs      : buidl sphinx documentation"
 
 docs:
-	PY_TREES_DISABLE_COLORS=1 sphinx-build -b html doc doc/html
+	PY_TREES_DISABLE_COLORS=1 sphinx-build -E -b html doc doc/html
 
 build:
 	python setup.py build
