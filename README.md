@@ -66,7 +66,7 @@ $ sudo apt install ros-<rosdistro>-py-trees
 
 ## PyTrees-ROS Ecosystem
 
-This package maintains a minimal set of dependencies to provide the core capabilities of behaviour trees. Other packages extend these capabilities and provide additional convenience tools for use inside a ROS1/ROS2 ecosystem. Head on over to the `py_trees_ros` [README](https://github.com/splintered-reality/py_trees_ros/blob/devel/README.md) for the latest information.
+See the `py_trees_ros` [README](https://github.com/splintered-reality/py_trees_ros/blob/devel/README.md) for the latest information on pytrees packages in the ROS ecosystem and their status.
 
 
 [license-image]: https://img.shields.io/badge/License-BSD%203--Clause-orange.svg?style=plastic
