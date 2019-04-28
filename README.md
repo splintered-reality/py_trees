@@ -76,7 +76,7 @@ $ make deb
 From the ROS2 ecosystem:
 
 ```
-$ sudo apt install ros-<crystal>-py-trees
+$ sudo apt install ros-<rosdistro>-py-trees
 ```
 
 ## Demos and Tutorials
@@ -90,7 +90,7 @@ $ sudo apt install ros-<crystal>-py-trees
 |:---:|:---:|:---:|:---:|:---:|
 | [py_trees][py-trees-ros-index] | [![1.2.x][1.2.x-sources-image]][py-trees-sources-1.2.x]<br/>[![Build Status][py-trees-build-status-crystal-image]][py-trees-build-status-crystal] | [py_trees][py-trees-wiki] | [![0.6.x][0.6.x-sources-image]][py-trees-sources-0.6.x]<br/>[![Build Status][py-trees-build-status-melodic-image]][py-trees-build-status-melodic]<br/>[![Docs Status][py-trees-docs-melodic-image]][py-trees-docs-melodic] | [![0.5.x][0.5.x-sources-image]][py-trees-sources-0.5.x]<br/>[![Build Status][py-trees-build-status-kinetic-image]][py-trees-build-status-kinetic]<br/>[![Docs Status][py-trees-docs-kinetic-image]][py-trees-docs-kinetic] |
 | [py_trees_ros_interfaces][py-trees-ros-interfaces-ros-index] | [![1.1.x][1.1.x-sources-image]][py-trees-ros-interfaces-sources-1.1.x]<br/>[![Build Status][py-trees-ros-interfaces-build-status-crystal-image]][py-trees-ros-interfaces-build-status-crystal] | [py_trees_msgs][py-trees-msgs-wiki] | [![0.3.x][0.3.x-sources-image]][py-trees-msgs-sources-melodic]<br/>[![Build Status][py-trees-msgs-build-status-melodic-image]][py-trees-msgs-build-status-melodic]<br/>[![Docs Status][py-trees-msgs-docs-melodic-image]][py-trees-msgs-docs-melodic] | [![0.3.x][0.3.x-sources-image]][py-trees-msgs-sources-kinetic]<br/>[![Build Status][py-trees-msgs-build-status-kinetic-image]][py-trees-msgs-build-status-kinetic]<br/>[![Docs Status][py-trees-msgs-docs-kinetic-image]][py-trees-msgs-docs-kinetic] |
-| [py_trees_ros][py-trees-ros-ros-index] | [![pre-1.0.x][1.0.x-sources-image]][py-trees-ros-sources-pre-1.0.x] | [py_trees_ros][py-trees-ros-wiki] | [![0.5.x][0.5.x-sources-image]][py-trees-ros-sources-0.5.x]<br/>[![Build Status][py-trees-ros-build-status-melodic-image]][py-trees-ros-build-status-melodic]<br/>[![Docs Status][py-trees-ros-docs-melodic-image]][py-trees-ros-docs-melodic] | [![0.5.x][0.5.x-sources-image]][py-trees-ros-sources-0.5.x]<br/>[![Build Status][py-trees-ros-build-status-kinetic-image]][py-trees-ros-build-status-kinetic]<br/>[![Docs Status][py-trees-ros-docs-kinetic-image]][py-trees-ros-docs-kinetic] |
+| [py_trees_ros][py-trees-ros-ros-index] | [![1.0.x][1.0.x-sources-image]][py-trees-ros-sources-1.0.x] | [py_trees_ros][py-trees-ros-wiki] | [![0.5.x][0.5.x-sources-image]][py-trees-ros-sources-0.5.x]<br/>[![Build Status][py-trees-ros-build-status-melodic-image]][py-trees-ros-build-status-melodic]<br/>[![Docs Status][py-trees-ros-docs-melodic-image]][py-trees-ros-docs-melodic] | [![0.5.x][0.5.x-sources-image]][py-trees-ros-sources-0.5.x]<br/>[![Build Status][py-trees-ros-build-status-kinetic-image]][py-trees-ros-build-status-kinetic]<br/>[![Docs Status][py-trees-ros-docs-kinetic-image]][py-trees-ros-docs-kinetic] |
 | [py_trees_ros_tutorials][py-trees-ros-tutorials-ros-index] | [![1.0.x][1.0.x-sources-image]][py-trees-ros-tutorials-sources-pre-1.0.x] |  | - | - |
 | | - | [rqt_py_trees][rqt-py-trees-wiki] | [![0.3.x][0.3.x-sources-image]][rqt-py-trees-sources-melodic]<br/>[![Build Status][rqt-py-trees-build-status-melodic-image]][rqt-py-trees-build-status-melodic] | [![0.3.x][0.3.x-sources-image]][rqt-py-trees-sources-kinetic]<br/>[![Build Status][rqt-py-trees-build-status-kinetic-image]][rqt-py-trees-build-status-kinetic] |
 
@@ -158,7 +158,7 @@ $ sudo apt install ros-<crystal>-py-trees
 [py-trees-ros-docs-melodic]: http://docs.ros.org/melodic/api/py_trees_ros/html/
 [py-trees-ros-docs-melodic-image]: https://img.shields.io/jenkins/s/http/build.ros.org/job/Mdoc__py_trees_ros__ubuntu_bionic_amd64.svg?label=docs&style=plastic
 [py-trees-ros-ros-index]: https://index.ros.org/p/py_trees_ros/github-splintered-reality-py_trees_ros
-[py-trees-ros-sources-pre-1.0.x]: https://github.com/splintered-reality/py_trees_ros/tree/release/pre-1.0.x
+[py-trees-ros-sources-1.0.x]: https://github.com/splintered-reality/py_trees_ros/tree/release/1.0.x
 [py-trees-ros-sources-0.5.x]: https://github.com/splintered-reality/py_trees_ros/tree/release/0.5.x
 [py-trees-ros-wiki]: http://wiki.ros.org/py_trees_ros
 
