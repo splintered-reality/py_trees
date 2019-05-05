@@ -3,6 +3,7 @@ Release Notes
 
 Forthcoming
 -----------
+* [behaviours] new Mirror behaviour that reflects the status of another behaviour, `#194 <https://github.com/splintered-reality/py_trees/pull/194>`_
 
 1.2.0 (2019-04-28)
 ------------------

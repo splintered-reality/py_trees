@@ -15,8 +15,8 @@ A library of fundamental behaviours for use.
 # Imports
 ##############################################################################
 
-from .common import Status
-from .behaviour import Behaviour
+from . import behaviour
+from . import common
 from . import meta
 
 ##############################################################################
@@ -27,25 +27,25 @@ from . import meta
 def success(self):
     self.logger.debug("%s.update()" % self.__class__.__name__)
     self.feedback_message = "success"
-    return Status.SUCCESS
+    return common.Status.SUCCESS
 
 
 def failure(self):
     self.logger.debug("%s.update()" % self.__class__.__name__)
     self.feedback_message = "failure"
-    return Status.FAILURE
+    return common.Status.FAILURE
 
 
 def running(self):
     self.logger.debug("%s.update()" % self.__class__.__name__)
     self.feedback_message = "running"
-    return Status.RUNNING
+    return common.Status.RUNNING
 
 
 def dummy(self):
     self.logger.debug("%s.update()" % self.__class__.__name__)
     self.feedback_message = "crash test dummy"
-    return Status.RUNNING
+    return common.Status.RUNNING
 
 
 Success = meta.create_behaviour_from_function(success)
@@ -73,7 +73,35 @@ Crash test dummy used for anything dangerous.
 ##############################################################################
 
 
-class Periodic(Behaviour):
+class Mirror(behaviour.Behaviour):
+    """
+    Mirror the status of another behaviour. Typically the best way to reflect
+    properties across the tree is via the blackboard (since you can then
+    introspect), but this can be a useful shortcut sometimes.
+
+    Args:
+        name: name of the behaviour
+        mirrored: the behaviour to mirror
+    """
+    def __init__(
+        self,
+        mirrored: behaviour.Behaviour,
+        name: str=common.Name.AUTO_GENERATED,
+     ):
+        super().__init__(name)
+        self.mirrored = mirrored
+
+    def update(self) -> common.Status:
+        """
+        Simply reflect the status of the mirrored behaviour.
+
+        Returns:
+            status of the mirrored behaviour
+        """
+        return self.mirrored.status
+
+
+class Periodic(behaviour.Behaviour):
     """
     Simply periodically rotates it's status over the
     :data:`~py_trees.common.Status.RUNNING`, :data:`~py_trees.common.Status.SUCCESS`,
@@ -92,27 +120,27 @@ class Periodic(Behaviour):
         super(Periodic, self).__init__(name)
         self.count = 0
         self.period = n
-        self.response = Status.RUNNING
+        self.response = common.Status.RUNNING
 
     def update(self):
         self.count += 1
         if self.count > self.period:
-            if self.response == Status.FAILURE:
+            if self.response == common.Status.FAILURE:
                 self.feedback_message = "flip to running"
-                self.response = Status.RUNNING
-            elif self.response == Status.RUNNING:
+                self.response = common.Status.RUNNING
+            elif self.response == common.Status.RUNNING:
                 self.feedback_message = "flip to success"
-                self.response = Status.SUCCESS
+                self.response = common.Status.SUCCESS
             else:
                 self.feedback_message = "flip to failure"
-                self.response = Status.FAILURE
+                self.response = common.Status.FAILURE
             self.count = 0
         else:
             self.feedback_message = "constant"
         return self.response
 
 
-class SuccessEveryN(Behaviour):
+class SuccessEveryN(behaviour.Behaviour):
     """
     This behaviour updates it's status with :data:`~py_trees.common.Status.SUCCESS`
     once every N ticks, :data:`~py_trees.common.Status.FAILURE` otherwise.
@@ -135,13 +163,13 @@ class SuccessEveryN(Behaviour):
         self.logger.debug("%s.update()][%s]" % (self.__class__.__name__, self.count))
         if self.count % self.every_n == 0:
             self.feedback_message = "now"
-            return Status.SUCCESS
+            return common.Status.SUCCESS
         else:
             self.feedback_message = "not yet"
-            return Status.FAILURE
+            return common.Status.FAILURE
 
 
-class Count(Behaviour):
+class Count(behaviour.Behaviour):
     """
     A counting behaviour that updates its status at each tick depending on
     the value of the counter. The status will move through the states in order -
@@ -173,7 +201,7 @@ class Count(Behaviour):
     def terminate(self, new_status):
         self.logger.debug("%s.terminate(%s->%s)" % (self.__class__.__name__, self.status, new_status))
         # reset only if udpate got us into an invalid state
-        if new_status == Status.INVALID and self.reset:
+        if new_status == common.Status.INVALID and self.reset:
             self.count = 0
             self.number_count_resets += 1
         self.feedback_message = ""
@@ -184,19 +212,19 @@ class Count(Behaviour):
         if self.count <= self.fail_until:
             self.logger.debug("%s.update()[%s: failure]" % (self.__class__.__name__, self.count))
             self.feedback_message = "failing"
-            return Status.FAILURE
+            return common.Status.FAILURE
         elif self.count <= self.running_until:
             self.logger.debug("%s.update()[%s: running]" % (self.__class__.__name__, self.count))
             self.feedback_message = "running"
-            return Status.RUNNING
+            return common.Status.RUNNING
         elif self.count <= self.success_until:
             self.logger.debug("%s.update()[%s: success]" % (self.__class__.__name__, self.count))
             self.feedback_message = "success"
-            return Status.SUCCESS
+            return common.Status.SUCCESS
         else:
             self.logger.debug("%s.update()[%s: failure]" % (self.__class__.__name__, self.count))
             self.feedback_message = "failing forever more"
-            return Status.FAILURE
+            return common.Status.FAILURE
 
     def __repr__(self):
         """
