@@ -38,6 +38,7 @@ that this library is designed for.
 
 import operator
 
+from . import behaviour
 from . import behaviours
 from . import common
 from . import console
@@ -239,7 +240,7 @@ class SetBlackboardVariable(behaviours.Success):
         self.blackboard.set(self.variable_name, self.variable_value, overwrite=True)
 
 
-class CheckBlackboardVariable(behaviours.Behaviour):
+class CheckBlackboardVariable(behaviour.Behaviour):
     """
     Check the blackboard to see if it has a specific variable
     and optionally whether that variable has an expected value.
@@ -352,7 +353,7 @@ class CheckBlackboardVariable(behaviours.Behaviour):
             self.matching_result = None
 
 
-class WaitForBlackboardVariable(behaviours.Behaviour):
+class WaitForBlackboardVariable(behaviour.Behaviour):
     """
     Check the blackboard to see if it has a specific variable
     and optionally whether that variable has a specific value.

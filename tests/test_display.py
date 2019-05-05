@@ -55,7 +55,7 @@ def test_symbols():
         )
 
         print("Classes: [{0}][{1}][{2}][{3}]".format(
-            symbols[py_trees.behaviours.Behaviour],
+            symbols[py_trees.behaviour.Behaviour],
             symbols[py_trees.composites.Sequence],
             symbols[py_trees.composites.Selector],
             symbols[py_trees.composites.Parallel]
