@@ -11,22 +11,6 @@ import py_trees
 import py_trees.console as console
 
 ##############################################################################
-# Helpers
-##############################################################################
-
-
-def print_assert_banner():
-    print(console.green + "----- Asserts -----" + console.reset)
-
-
-def print_assert_details(text, expected, result):
-    print(console.green + text +
-          "." * (70 - len(text)) +
-          console.cyan + "{}".format(expected) +
-          console.yellow + " [{}]".format(result) +
-          console.reset)
-
-##############################################################################
 # Mirror
 ##############################################################################
 
@@ -50,17 +34,17 @@ def test_mirror():
         mirrored=original
     )
     root.add_children([original, mirror])
-    print_assert_banner()
+    py_trees.tests.print_assert_banner()
     for index in range(1, 4):
         root.tick_once()
-        print_assert_details(
+        py_trees.tests.print_assert_details(
             text="Tick {}.............".format(index),
             expected=original.status,
             result=mirror.status
         )
         assert(original.status == mirror.status)
     root.stop(py_trees.common.Status.INVALID)
-    print_assert_details(
+    py_trees.tests.print_assert_details(
         text="Priority Interrupt..".format(index),
         expected=original.status,
         result=mirror.status

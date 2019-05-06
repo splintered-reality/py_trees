@@ -27,6 +27,18 @@ from . import display
 ##############################################################################
 
 
+def print_assert_banner():
+    print(console.green + "----- Asserts -----" + console.reset)
+
+
+def print_assert_details(text, expected, result):
+    print(console.green + text +
+          "." * (70 - len(text)) +
+          console.cyan + "{}".format(expected) +
+          console.yellow + " [{}]".format(result) +
+          console.reset)
+
+
 def pre_tick_visitor(behaviour_tree):
     print("\n--------- Run %s ---------\n" % behaviour_tree.count)
 

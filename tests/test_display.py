@@ -15,22 +15,6 @@ import py_trees.display as display
 import xml.etree.ElementTree
 
 ##############################################################################
-# Helpers
-##############################################################################
-
-
-def print_assert_banner():
-    print(console.green + "----- Asserts -----" + console.reset)
-
-
-def print_assert_details(text, expected, result):
-    print(console.green + text +
-          "." * (70 - len(text)) +
-          console.cyan + "{}".format(expected) +
-          console.yellow + " [{}]".format(result) +
-          console.reset)
-
-##############################################################################
 # Tests
 ##############################################################################
 
@@ -111,23 +95,23 @@ def test_text_trees():
     print(snippets["non_visited_xhtml_status"])
     print()
 
-    print_assert_banner()
+    py_trees.tests.print_assert_banner()
     for snippet_name, snippet in snippets.items():
         for b in root.iterate():
-            print_assert_details("{} in {}".format(b.name, snippet_name), True, b.name in snippet)
+            py_trees.tests.print_assert_details("{} in {}".format(b.name, snippet_name), True, b.name in snippet)
             assert(b.name in snippet)
 
-    print_assert_details("status symbol '-' in visited_ascii_tree", True, '-' in snippets["visited_ascii_tree"])
+    py_trees.tests.print_assert_details("status symbol '-' in visited_ascii_tree", True, '-' in snippets["visited_ascii_tree"])
     assert('-' in snippets["visited_ascii_tree"])
-    print_assert_details("status symbol '-' in non_visited_ascii_tree_status", True, '-' in snippets["non_visited_ascii_tree_status"])
+    py_trees.tests.print_assert_details("status symbol '-' in non_visited_ascii_tree_status", True, '-' in snippets["non_visited_ascii_tree_status"])
     assert('-' in snippets["non_visited_ascii_tree_status"])
     try:
         unused_element = xml.etree.ElementTree.fromstring(snippets["visited_xhtml"])
         unused_element = xml.etree.ElementTree.fromstring(snippets["non_visited_xhtml"])
         unused_element = xml.etree.ElementTree.fromstring(snippets["non_visited_xhtml_status"])
-        print_assert_details("xml ParseError", None, None)
+        py_trees.tests.print_assert_details("xml ParseError", None, None)
     except xml.etree.ElementTree.ParseError as e:
-        print_assert_details("xml ParseError", None, str(e))
+        py_trees.tests.print_assert_details("xml ParseError", None, str(e))
         assert False, "failed to parse the xhtml snippet as valid xml"
 
 
