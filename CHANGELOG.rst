@@ -3,7 +3,8 @@ Release Notes
 
 Forthcoming
 -----------
-* [behaviours] new Mirror behaviour that reflects the status of another behaviour, `#194 <https://github.com/splintered-reality/py_trees/pull/194>`_
+* [behaviours] ``Mirror`` behaviour that reflects the status of another behaviour, `#194 <https://github.com/splintered-reality/py_trees/pull/194>`_
+* [idioms] ``eternal_guard`` idiom that continuously guards a task sequence (c.f. Unreal conditions)
 
 1.2.0 (2019-04-28)
 ------------------

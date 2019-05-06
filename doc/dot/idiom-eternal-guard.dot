@@ -1,0 +1,20 @@
+digraph pastafarianism {
+graph [fontname="times-roman"];
+node [fontname="times-roman"];
+edge [fontname="times-roman"];
+"Eternal Guard" [fillcolor=gold, fontcolor=black, fontsize=9, label="Eternal Guard\n--SuccessOnAll(-)--", shape=parallelogram, style=filled];
+Guard1 [fillcolor=gray, fontcolor=black, fontsize=9, label=Guard1, shape=ellipse, style=filled];
+"Eternal Guard" -> Guard1;
+Guard2 [fillcolor=gray, fontcolor=black, fontsize=9, label=Guard2, shape=ellipse, style=filled];
+"Eternal Guard" -> Guard2;
+"Guarded Tasks" [fillcolor=orange, fontcolor=black, fontsize=9, label="Guarded Tasks", shape=box, style=filled];
+"Eternal Guard" -> "Guarded Tasks";
+"Mirrored\nGuard1" [fillcolor=gray, fontcolor=black, fontsize=9, label="Mirrored\nGuard1", shape=ellipse, style=filled];
+"Guarded Tasks" -> "Mirrored\nGuard1";
+"Mirrored\nGuard2" [fillcolor=gray, fontcolor=black, fontsize=9, label="Mirrored\nGuard2", shape=ellipse, style=filled];
+"Guarded Tasks" -> "Mirrored\nGuard2";
+Task1 [fillcolor=gray, fontcolor=black, fontsize=9, label=Task1, shape=ellipse, style=filled];
+"Guarded Tasks" -> Task1;
+Task2 [fillcolor=gray, fontcolor=black, fontsize=9, label=Task2, shape=ellipse, style=filled];
+"Guarded Tasks" -> Task2;
+}

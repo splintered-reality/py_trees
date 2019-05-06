@@ -34,7 +34,7 @@ Terminology
               ,-`  _)    (_,
 
    guard
-      A guard is a behaviour at the start of a work sequence that checks for a particular condition
+      A guard is a behaviour at the start of a sequence that checks for a particular condition
       (e.g. is battery low?). If the check succeeds, then the door is opened to the rest of the
       work sequence.
 

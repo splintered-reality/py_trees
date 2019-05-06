@@ -20,7 +20,13 @@ creating them.
 The subsections below introduce each composite briefly. For a full listing of each
 composite's methods, visit the :ref:`py-trees-idioms-module` module api documentation.
 
-.. tip:: First time through, make sure to follow the link through to relevant demo programs.
+.. _eternal-guard-section:
+
+Eternal Guard
+-------------
+
+.. automethod:: py_trees.idioms.eternal_guard
+    :noindex:
 
 .. _oneshot-section:
 

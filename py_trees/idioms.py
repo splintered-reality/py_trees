@@ -16,6 +16,9 @@ representing common behaviour tree idioms.
 # Imports
 ##############################################################################
 
+from typing import List
+
+from . import behaviour
 from . import behaviours
 from . import blackboard
 from . import common
@@ -93,6 +96,60 @@ def pick_up_where_you_left_off(
             variable_name=task.name.lower().replace(" ", "_") + "_done"
         )
         root.add_child(clear_mark_done)
+    return root
+
+
+def eternal_guard(
+        name: str="Eternal Guard",
+        guards: List[behaviour.Behaviour]=[behaviours.Dummy(name="Guard1"),  # dummy behaviours to enable dot rendering with py-trees-render
+                                           behaviours.Dummy(name="Guard2")],
+        tasks: List[behaviour.Behaviour]=[behaviours.Dummy(name="Task1"),  # dummy behaviours to enable dot rendering with py-trees-render
+                                          behaviours.Dummy(name="Task2")]
+        ) -> behaviour.Behaviour:
+    """
+    The eternal guard idiom implements a stronger :term:`guard` than the typical check at the
+    beginning of a sequence of tasks. Here they guard continuously while the task sequence
+    is being executed. While executing, if any of the guards should update with
+    status :attr:`~common.Status.FAILURE`, then the task sequence is terminated.
+
+    .. graphviz:: dot/idiom-eternal-guard.dot
+        :align: center
+
+    .. note::
+
+       The guards are mirrored in the task sequence to ensure that any work in the
+       task sequence is blocked on the guard checks. If they were not present, then
+       in the case of a failing guard on the first tick entry into the subtree, the
+       tasks would start, only to be immediately invalidated by the parent parallel
+       when exiting the subtree.
+
+    .. warning::
+
+       Guards may only ever have status :attr:`~common.Status.FAILURE`
+       or :attr:`~common.Status.SUCCESS` lest they block work in the task sequence.
+
+    Args:
+        name: the name to use on the root behaviour of the idiom subtree
+        guards: behaviours that act as eternal guards
+
+    Returns:
+        the root of the idiom subtree
+    """
+    root = composites.Parallel(
+        name=name,
+        policy=common.ParallelPolicy.SuccessOnAll(synchronise=False)
+    )
+    root.add_children(guards)
+    task_sequence = composites.Sequence(name="Guarded Tasks")
+    for guard in guards:
+        task_sequence.add_child(
+            behaviours.Mirror(
+                name="Mirrored\n" + guard.name,
+                mirrored=guard
+            )
+        )
+    task_sequence.add_children(tasks)
+    root.add_child(task_sequence)
     return root
 
 
