@@ -131,6 +131,7 @@ def eternal_guard(
     Args:
         name: the name to use on the root behaviour of the idiom subtree
         guards: behaviours that act as eternal guards
+        tasks: behaviours that actually do the work (can be subtrees)
 
     Returns:
         the root of the idiom subtree
