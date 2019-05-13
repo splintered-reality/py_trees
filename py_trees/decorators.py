@@ -75,6 +75,8 @@ combination of behaviours to affect the non-blocking characteristics.
 
 import time
 
+from typing import Callable, Union  # noqa
+
 from . import behaviour
 from . import common
 
@@ -173,6 +175,69 @@ class Decorator(behaviour.Behaviour):
 ##############################################################################
 
 
+class EternalGuard(Decorator):
+    """
+    A decorator that continually guards the execution of a subtree.
+    If at any time the guard's condition check fails (returns False or
+    :attr:~py_trees.common.Status.FAILURE), then the child behaviour/subtree
+    is invalidated.
+
+    .. note:: This decorator's behaviour is stronger than the
+    :term:`guard` typical of a conditional check at the beginning of a
+    sequence of tasks as it continues to check on every tick whilst the
+    task (or sequence of tasks) runs.
+
+    Args:
+        child: the child behaviour or subtree
+        condition: a functional check that determines execution or not of the subtree
+        name: the decorator name
+    """
+    def __init__(
+            self,
+            *,
+            child: behaviour.Behaviour,
+            condition: Union[Callable[[], bool], Callable[[], common.Status]],
+            name: str=common.Name.AUTO_GENERATED,
+    ):
+        super().__init__(name=name, child=child)
+        self.condition = condition
+
+    def tick(self):
+        """
+        A decorator's tick is exactly the same as a normal proceedings for
+        a Behaviour's tick except that it also ticks the decorated child node.
+
+        Yields:
+            :class:`~py_trees.behaviour.Behaviour`: a reference to itself or one of its children
+        """
+        self.logger.debug("%s.tick()" % self.__class__.__name__)
+
+        # condition check
+        result = self.condition()
+        if type(result) == common.Status:
+            result = False if result == common.Status.FAILURE else True
+        elif type(result) != bool:
+            error_message = "conditional check must return 'bool' or 'common.Status' [{}]".format(type(result))
+            self.logger.error("The {}".format(error_message))
+            raise RuntimeError(error_message)
+
+        if not result:
+            # abort, abort, the FSM is losing his noodles!!!
+            self.stop(common.Status.FAILURE)
+            yield self
+        else:
+            # normal behaviour
+            for node in super().tick():
+                yield node
+
+    def update(self):
+        """
+        The update method is only ever triggered in the child's post-tick, which implies
+        that the condition has already been checked and passed (refer to the :meth:`tick` method).
+        """
+        return self.decorated.status
+
+
 class Timeout(Decorator):
     """
     A decorator that applies a timeout pattern to an existing behaviour.
@@ -183,16 +248,16 @@ class Timeout(Decorator):
     as that of it's encapsulated behaviour.
     """
     def __init__(self,
-                 child,
-                 name=common.Name.AUTO_GENERATED,
-                 duration=5.0):
+                 child: behaviour.Behaviour,
+                 name: str=common.Name.AUTO_GENERATED,
+                 duration: float=5.0):
         """
         Init with the decorated child and a timeout duration.
 
         Args:
-            child (:class:`~py_trees.behaviour.Behaviour`): behaviour to time
-            name (:obj:`str`): the decorator name
-            duration (:obj:`float`): timeout length in seconds
+            child: the child behaviour or subtree
+            name: the decorator name
+            duration: timeout length in seconds
         """
         super(Timeout, self).__init__(name=name, child=child)
         self.duration = duration
