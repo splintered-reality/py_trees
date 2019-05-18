@@ -28,7 +28,7 @@ from . import display
 
 
 def print_assert_banner():
-    print(console.green + "----- Asserts -----" + console.reset)
+    print(console.green + "\n--------- Assertions ---------\n" + console.reset)
 
 
 def print_assert_details(text, expected, result):

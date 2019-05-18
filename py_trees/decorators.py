@@ -78,6 +78,7 @@ import time
 from typing import Callable, Union  # noqa
 
 from . import behaviour
+from . import blackboard
 from . import common
 
 ##############################################################################
@@ -173,6 +174,40 @@ class Decorator(behaviour.Behaviour):
 ##############################################################################
 # Decorators
 ##############################################################################
+
+
+class StatusToBlackboard(Decorator):
+    """
+    Reflect the status of the decorator's child to the blackboard.
+
+    Args:
+        child: the child behaviour or subtree
+        variable_name: name of the variable to set
+        name: the decorator name
+    """
+    def __init__(
+            self,
+            *,
+            child: behaviour.Behaviour,
+            variable_name: str,
+            name: str=common.Name.AUTO_GENERATED,
+    ):
+        super().__init__(name=name, child=child)
+        self.blackboard_variable_name = variable_name
+        self.blackboard = blackboard.Blackboard()
+
+    def update(self):
+        """
+        Reflect the decorated child's status to the blackboard and return
+
+        Returns: the decorated child's status
+        """
+        self.blackboard.set(
+            name=self.blackboard_variable_name,
+            value=self.decorated.status,
+            overwrite=True
+        )
+        return self.decorated.status
 
 
 class EternalGuard(Decorator):

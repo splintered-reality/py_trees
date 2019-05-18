@@ -4,7 +4,8 @@ Release Notes
 Forthcoming
 -----------
 * [behaviours] ``Mirror`` behaviour that reflects the status of another behaviour, `#194 <https://github.com/splintered-reality/py_trees/pull/194>`_
-* [idioms] ``eternal_guard`` idiom that continuously guards a task sequence (c.f. Unreal conditions)
+* [decorators] ``StatusToBlackboard`` reflects the status of it's child to the blackboard, `#195 <https://github.com/splintered-reality/py_trees/pull/195>`_ 
+* [idioms] ``eternal_guard`` idiom that continuously guards a task sequence (c.f. Unreal conditions), `#195 <https://github.com/splintered-reality/py_trees/pull/195>`_
 
 1.2.0 (2019-04-28)
 ------------------
