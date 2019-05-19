@@ -20,6 +20,7 @@ this combinatorially expands the capabilities of your behaviour library.
 An example:
 
 .. graphviz:: dot/decorators.dot
+   :align: center
 
 .. literalinclude:: examples/decorators.py
    :language: python
@@ -31,8 +32,10 @@ An example:
 Decorators with very specific functionality:
 
 * :class:`py_trees.decorators.Condition`
+* :class:`py_trees.decorators.EternalGuard`
 * :class:`py_trees.decorators.Inverter`
 * :class:`py_trees.decorators.OneShot`
+* :class:`py_trees.decorators.StatusToBlackboard`
 * :class:`py_trees.decorators.Timeout`
 
 And the X is Y family:
@@ -218,14 +221,16 @@ class EternalGuard(Decorator):
     is invalidated.
 
     .. note:: This decorator's behaviour is stronger than the
-    :term:`guard` typical of a conditional check at the beginning of a
-    sequence of tasks as it continues to check on every tick whilst the
-    task (or sequence of tasks) runs.
+       :term:`guard` typical of a conditional check at the beginning of a
+       sequence of tasks as it continues to check on every tick whilst the
+       task (or sequence of tasks) runs.
 
     Args:
         child: the child behaviour or subtree
         condition: a functional check that determines execution or not of the subtree
         name: the decorator name
+
+    .. seealso:: :meth:`py_trees.idioms.eternal_guard`
     """
     def __init__(
             self,

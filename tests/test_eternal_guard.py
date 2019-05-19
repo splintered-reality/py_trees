@@ -65,7 +65,7 @@ def impl_eternal_guard_checks(name, root, eternal_guard, tasks):
 
 def test_eternal_guard_idiom():
     root = py_trees.composites.Selector(name="Root")
-    guards = [
+    conditions = [
         py_trees.behaviours.Count(
             name="F-S-S-S-S-S-F",  # TODO: F-R-S-S-S-S-F once I have that working
             fail_until=1,
@@ -77,7 +77,11 @@ def test_eternal_guard_idiom():
     ]
     tasks = create_tasks()
     idle = py_trees.behaviours.Running()
-    eternal_guard = py_trees.idioms.eternal_guard(name="Eternal Guard", guards=guards, tasks=tasks)
+    eternal_guard = py_trees.idioms.eternal_guard(
+        name="Eternal Guard",
+        conditions=conditions,
+        tasks=tasks
+    )
 
     root.add_children([eternal_guard, idle])
 

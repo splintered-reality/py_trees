@@ -208,7 +208,7 @@ def ascii_tree(
 
             def post_tick_handler(snapshot_visitor, behaviour_tree):
                 print(
-                    py_trees.display.ascii_tree(
+                    py_trees.display.unicode_tree(
                         behaviour_tree.root,
                         visited=snapshot_visitor.visited,
                         previously_visited=snapshot_visitor.visited

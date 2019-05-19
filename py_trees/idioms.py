@@ -101,8 +101,8 @@ def pick_up_where_you_left_off(
 
 def eternal_guard(
         name: str="Eternal Guard",
-        guards: List[behaviour.Behaviour]=[behaviours.Dummy(name="Guard1"),  # dummy behaviours to enable dot rendering with py-trees-render
-                                           behaviours.Dummy(name="Guard2")],
+        conditions: List[behaviour.Behaviour]=[behaviours.Dummy(name="Condition 1"),  # dummy behaviours to enable dot rendering with py-trees-render
+                                               behaviours.Dummy(name="Condition 2")],
         tasks: List[behaviour.Behaviour]=[behaviours.Dummy(name="Task1"),  # dummy behaviours to enable dot rendering with py-trees-render
                                           behaviours.Dummy(name="Task2")]
         ) -> behaviour.Behaviour:
@@ -115,42 +115,47 @@ def eternal_guard(
     .. graphviz:: dot/idiom-eternal-guard.dot
         :align: center
 
-    .. note::
-
-       The guards are mirrored in the task sequence to ensure that any work in the
-       task sequence is blocked on the guard checks. If they were not present, then
-       in the case of a failing guard on the first tick entry into the subtree, the
-       tasks would start, only to be immediately invalidated by the parent parallel
-       when exiting the subtree.
-
-    .. warning::
-
-       Guards may only ever have status :attr:`~common.Status.FAILURE`
-       or :attr:`~common.Status.SUCCESS` lest they block work in the task sequence.
-
     Args:
         name: the name to use on the root behaviour of the idiom subtree
-        guards: behaviours that act as eternal guards
+        conditions: behaviours on which tasks are conditional
         tasks: behaviours that actually do the work (can be subtrees)
 
     Returns:
         the root of the idiom subtree
+
+    .. seealso:: :class:`py_trees.decorators.EternalGuard`
     """
     root = composites.Parallel(
         name=name,
         policy=common.ParallelPolicy.SuccessOnAll(synchronise=False)
     )
-    root.add_children(guards)
-    task_sequence = composites.Sequence(name="Guarded Tasks")
-    for guard in guards:
-        task_sequence.add_child(
-            behaviours.Mirror(
-                name="Mirrored\n" + guard.name,
-                mirrored=guard
+    counter = 1
+    guarded_tasks = composites.Selector(name="Guarded Tasks")
+    for condition in conditions:
+        suffix = "" if len(conditions) == 1 else "_{}".format(counter)
+        blackboard_variable_name = name.lower().replace(" ", "_") + "_condition" + suffix
+        decorated_condition = decorators.StatusToBlackboard(
+            name="StatusToBB",
+            child=condition,
+            variable_name=blackboard_variable_name
+        )
+        root.add_child(decorated_condition)
+        guarded_tasks.add_child(
+            blackboard.CheckBlackboardVariable(
+                name="Abort on\n{}".format(condition.name),
+                variable_name=blackboard_variable_name,
+                expected_value=common.Status.FAILURE,
+                clearing_policy=common.ClearingPolicy.ON_INITIALISE
             )
         )
-    task_sequence.add_children(tasks)
-    root.add_child(task_sequence)
+        counter += 1
+    if len(tasks) == 1:
+        guarded_tasks.add_child(tasks[0])
+    else:
+        task_sequence = composites.Sequence("Tasks")
+        task_sequence.add_children(tasks)
+        guarded_tasks.add_child(task_sequence)
+    root.add_child(guarded_tasks)
     return root
 
 
