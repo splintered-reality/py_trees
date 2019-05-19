@@ -103,8 +103,7 @@ def eternal_guard(
         name: str="Eternal Guard",
         conditions: List[behaviour.Behaviour]=[behaviours.Dummy(name="Condition 1"),  # dummy behaviours to enable dot rendering with py-trees-render
                                                behaviours.Dummy(name="Condition 2")],
-        tasks: List[behaviour.Behaviour]=[behaviours.Dummy(name="Task1"),  # dummy behaviours to enable dot rendering with py-trees-render
-                                          behaviours.Dummy(name="Task2")]
+        subtree: behaviour.Behaviour=behaviours.Dummy(name="Task")  # dummy behaviour to enable dot rendering with py-trees-render
         ) -> behaviour.Behaviour:
     """
     The eternal guard idiom implements a stronger :term:`guard` than the typical check at the
@@ -118,7 +117,7 @@ def eternal_guard(
     Args:
         name: the name to use on the root behaviour of the idiom subtree
         conditions: behaviours on which tasks are conditional
-        tasks: behaviours that actually do the work (can be subtrees)
+        subtree: behaviour(s) that actually do the work
 
     Returns:
         the root of the idiom subtree
@@ -149,12 +148,7 @@ def eternal_guard(
             )
         )
         counter += 1
-    if len(tasks) == 1:
-        guarded_tasks.add_child(tasks[0])
-    else:
-        task_sequence = composites.Sequence("Tasks")
-        task_sequence.add_children(tasks)
-        guarded_tasks.add_child(task_sequence)
+    guarded_tasks.add_child(subtree)
     root.add_child(guarded_tasks)
     return root
 

@@ -76,11 +76,13 @@ def test_eternal_guard_idiom():
         py_trees.behaviours.Success(name="Success")
     ]
     tasks = create_tasks()
+    task_sequence = py_trees.composites.Sequence("Task Sequence")
+    task_sequence.add_children(tasks)
     idle = py_trees.behaviours.Running()
     eternal_guard = py_trees.idioms.eternal_guard(
         name="Eternal Guard",
         conditions=conditions,
-        tasks=tasks
+        subtree=task_sequence
     )
 
     root.add_children([eternal_guard, idle])
