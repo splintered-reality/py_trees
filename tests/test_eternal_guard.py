@@ -63,8 +63,7 @@ def impl_eternal_guard_checks(name, root, eternal_guard, tasks):
         assert(task.status == py_trees.common.Status.INVALID)
 
 
-def test_eternal_guard_idiom():
-    root = py_trees.composites.Selector(name="Root")
+def generate_eternal_guard():
     conditions = [
         py_trees.behaviours.Count(
             name="F-S-S-S-S-S-F",  # TODO: F-R-S-S-S-S-F once I have that working
@@ -78,12 +77,18 @@ def test_eternal_guard_idiom():
     tasks = create_tasks()
     task_sequence = py_trees.composites.Sequence("Task Sequence")
     task_sequence.add_children(tasks)
-    idle = py_trees.behaviours.Running()
     eternal_guard = py_trees.idioms.eternal_guard(
         name="Eternal Guard",
         conditions=conditions,
         subtree=task_sequence
     )
+    return eternal_guard, tasks
+
+
+def test_eternal_guard_idiom():
+    root = py_trees.composites.Selector(name="Root")
+    eternal_guard, tasks = generate_eternal_guard()
+    idle = py_trees.behaviours.Running()
 
     root.add_children([eternal_guard, idle])
 
@@ -95,8 +100,22 @@ def test_eternal_guard_idiom():
     )
 
 
+def test_eternal_guard_unique_names():
+    blackboard = py_trees.blackboard.Blackboard()
+    blackboard.clear()
+    message = "Ha, stole it"
+    blackboard.eternal_guard_condition_1 = message
+    root = py_trees.composites.Selector(name="Root")
+    eternal_guard, unused_tasks = generate_eternal_guard()
+    root.add_children([eternal_guard])
+    # tick once, get variables on the blackboard
+    py_trees.tests.tick_tree(root, 1, 1, print_snapshot=True)
+    assert(blackboard.get("eternal_guard_condition_1") == message)  # wasn't overwritten
+    assert(blackboard.get("eternal_guard_condition_2") is None)
+    # can't assert on the uuid variables though - they could be anything
+
+
 def test_eternal_guard_decorator():
-    pass
     root = py_trees.composites.Selector(name="Root")
 
     def condition_success():
