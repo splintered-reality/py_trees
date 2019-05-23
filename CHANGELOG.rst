@@ -3,7 +3,9 @@ Release Notes
 
 Forthcoming
 -----------
-* [behaviours] new Mirror behaviour that reflects the status of another behaviour, `#194 <https://github.com/splintered-reality/py_trees/pull/194>`_
+* [decorators] ``StatusToBlackboard`` reflects the status of it's child to the blackboard, `#195 <https://github.com/splintered-reality/py_trees/pull/195>`_ 
+* [decorators] ``EternalGuard`` decorator that continuously guards a subtree (c.f. Unreal conditions), `#195 <https://github.com/splintered-reality/py_trees/pull/195>`_
+* [idioms] ``eternal_guard`` counterpart to the decorator whose conditions are behaviours, `#195 <https://github.com/splintered-reality/py_trees/pull/195>`_
 
 1.2.0 (2019-04-28)
 ------------------

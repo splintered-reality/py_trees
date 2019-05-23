@@ -407,3 +407,36 @@ def test_condition():
     assert(child.status == py_trees.common.Status.SUCCESS)
     print("condition.status == py_trees.common.Status.SUCCESS")
     assert(condition.status == py_trees.common.Status.SUCCESS)
+
+
+def test_status_to_blackboard():
+    console.banner("Status to Blackboard")
+
+    child = py_trees.behaviours.Success()
+    decorator = py_trees.decorators.StatusToBlackboard(
+        name="Status2BB",
+        child=child,
+        variable_name="foo"
+        )
+    blackboard = py_trees.blackboard.Blackboard()
+    decorator.tick_once()
+
+    py_trees.tests.print_assert_banner()
+    py_trees.tests.print_assert_details(
+        text="Blackboard Variable (foo)",
+        expected=py_trees.common.Status.SUCCESS,
+        result=blackboard.foo
+    )
+    assert(blackboard.foo == py_trees.common.Status.SUCCESS)
+    py_trees.tests.print_assert_details(
+        text="Child Status",
+        expected=py_trees.common.Status.SUCCESS,
+        result=child.status
+    )
+    assert(child.status == py_trees.common.Status.SUCCESS)
+    py_trees.tests.print_assert_details(
+        text="Decorator Status",
+        expected=py_trees.common.Status.SUCCESS,
+        result=decorator.status
+    )
+    assert(decorator.status == py_trees.common.Status.SUCCESS)

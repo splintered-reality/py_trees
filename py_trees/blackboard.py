@@ -135,7 +135,7 @@ class Blackboard(object):
         this provides a convenient accessor.
 
         Args:
-            name (:obj:`str`): name of the variable to set
+            name (:obj:`str`): name of the variable to get
         """
         try:
             return getattr(self, name)

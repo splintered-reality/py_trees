@@ -73,34 +73,6 @@ Crash test dummy used for anything dangerous.
 ##############################################################################
 
 
-class Mirror(behaviour.Behaviour):
-    """
-    Mirror the status of another behaviour. Typically the best way to reflect
-    properties across the tree is via the blackboard (since you can then
-    introspect), but this can be a useful shortcut sometimes.
-
-    Args:
-        name: name of the behaviour
-        mirrored: the behaviour to mirror
-    """
-    def __init__(
-        self,
-        mirrored: behaviour.Behaviour,
-        name: str=common.Name.AUTO_GENERATED,
-     ):
-        super().__init__(name)
-        self.mirrored = mirrored
-
-    def update(self) -> common.Status:
-        """
-        Simply reflect the status of the mirrored behaviour.
-
-        Returns:
-            status of the mirrored behaviour
-        """
-        return self.mirrored.status
-
-
 class Periodic(behaviour.Behaviour):
     """
     Simply periodically rotates it's status over the

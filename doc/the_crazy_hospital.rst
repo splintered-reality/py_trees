@@ -23,9 +23,8 @@ Behaviours
 
 * Keep the constructor minimal so you can instantiate the behaviour for offline rendering
 * Put hardware or other runtime specific initialisation in :meth:`~py_trees.behaviour.Behaviour.setup`
-* Update :attr:`~py_trees.behaviour.Behaviour.feedback_message` for *significant events* only so you don't end up with too much noise
 * The :meth:`~py_trees.behaviour.Behaviour.update` method must be light and non-blocking so a tree can keep ticking over
-* Keep the scope of a single behaviour tight and focused, deploy larger concepts as subtrees
+* Keep the scope of a single behaviour tight and focused, deploy larger reusable concepts as subtrees (idioms)
 
 Composites
 ----------
@@ -36,5 +35,8 @@ Composites
 Trees
 -----
 
+* When designing your tree, stub them out with nonsense behaviours.
+  Focus on descriptive names, composite types and render dot graphs
+  to accelerate the design process (especially when collaborating). 
 * Make sure your pre/post tick handlers and visitors are all very light.
-* A good tick-tock rate for higher level decision making is around 500ms.
+* A good tick-tock rate for higher level decision making is around 1-500ms.
