@@ -1,13 +1,13 @@
 Release Notes
 =============
 
-Forthcoming
------------
-* [decorators] ``StatusToBlackboard`` reflects the status of it's child to the blackboard, `#195 <https://github.com/splintered-reality/py_trees/pull/195>`_ 
+1.2.1 (2019-05-21)
+------------------
+* [decorators] ``StatusToBlackboard`` reflects the status of it's child to the blackboard, `#195 <https://github.com/splintered-reality/py_trees/pull/195>`_
 * [decorators] ``EternalGuard`` decorator that continuously guards a subtree (c.f. Unreal conditions), `#195 <https://github.com/splintered-reality/py_trees/pull/195>`_
 * [idioms] ``eternal_guard`` counterpart to the decorator whose conditions are behaviours, `#195 <https://github.com/splintered-reality/py_trees/pull/195>`_
 
-1.2.0 (2019-04-28)
+1.2.x (2019-04-28)
 ------------------
 
 **Breaking API**
@@ -19,9 +19,12 @@ Forthcoming
 **New Features**
 
 * [behaviour] ``shutdown()`` method to compliment ``setup()``, `#193 <https://github.com/splintered-reality/py_trees/pull/193>`_
+* [decorators] ``StatusToBlackboard`` reflects the status of it's child to the blackboard, `#195 <https://github.com/splintered-reality/py_trees/pull/195>`_
+* [decorators] ``EternalGuard`` decorator that continuously guards a subtree (c.f. Unreal conditions), `#195 <https://github.com/splintered-reality/py_trees/pull/195>`_
 * [display] ``xhtml_tree`` provides an xhtml compatible equivalent to the ``ascii_tree`` representation, `#192 <https://github.com/splintered-reality/py_trees/pull/192>`_
+* [idioms] ``eternal_guard`` counterpart to the decorator whose conditions are behaviours, `#195 <https://github.com/splintered-reality/py_trees/pull/195>`_
 * [trees] walks the tree calling ``shutdown()`` on each node in it's own ``shutdown()`` method, `#193 <https://github.com/splintered-reality/py_trees/pull/193>`_
-* [visitors] get a ``finalise()`` method called immediately prior to post tick handlers, `#191 <https://github.com/splintered-reality/py_trees/pull/191>`_  
+* [visitors] get a ``finalise()`` method called immediately prior to post tick handlers, `#191 <https://github.com/splintered-reality/py_trees/pull/191>`_
 
 1.1.0 (2019-03-19)
 ------------------
