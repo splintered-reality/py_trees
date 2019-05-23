@@ -66,9 +66,9 @@ def impl_eternal_guard_checks(name, root, eternal_guard, tasks):
 def generate_eternal_guard():
     conditions = [
         py_trees.behaviours.Count(
-            name="F-S-S-S-S-S-F",  # TODO: F-R-S-S-S-S-F once I have that working
+            name="F-R-S-S-S-S-F",
             fail_until=1,
-            running_until=1,
+            running_until=2,
             success_until=6,
             reset=False
         ),
