@@ -41,6 +41,58 @@ from . import visitors
 CONTINUOUS_TICK_TOCK = -1
 
 ##############################################################################
+# Methods
+##############################################################################
+
+
+def setup(root: behaviour.Behaviour,
+          timeout: float=common.Duration.INFINITE,
+          visitor: visitors.VisitorBase=None,
+          **kwargs: int):
+    """
+    Crawls across a (sub)tree of behaviours
+    calling :meth:`~py_trees.behaviour.Behaviour.setup` on each behaviour.
+
+    Visitors can optionally be provided to provide a node-by-node analysis
+    on the result of each node's :meth:`~py_trees.behaviour.Behaviour.setup`
+    before the next node's :meth:`~py_trees.behaviour.Behaviour.setup` is called.
+    This is useful on trees with relatively long setup times to progressively
+    report out on the current status of the operation.
+
+    Args:
+        root: unmanaged (sub)tree root behaviour
+        timeout: time (s) to wait (use common.Duration.INFINITE to block indefinitely)
+        visitor: runnable entities on each node after it's setup
+        **kwargs: dictionary of arguments to distribute to all behaviours in the (sub) tree
+
+    Raises:
+        Exception: be ready to catch if any of the behaviours raise an exception
+        RuntimeError: in case setup() times out
+    """
+    _SIGNAL = signal.SIGUSR1
+
+    def on_timer_timed_out():
+        os.kill(os.getpid(), _SIGNAL)
+
+    def signal_handler(unused_signum, unused_frame):
+        raise RuntimeError("tree setup timed out")
+
+    def visited_setup():
+        for node in root.iterate():
+            node.setup(**kwargs)
+            if visitor is not None:
+                node.visit(visitor)
+
+    if timeout == common.Duration.INFINITE:
+        visited_setup()
+    else:
+        signal.signal(_SIGNAL, signal_handler)
+        timer = threading.Timer(interval=timeout, function=on_timer_timed_out)
+        timer.start()
+        visited_setup()
+        timer.cancel()  # this only works if the timer is still waiting
+
+##############################################################################
 # Trees
 ##############################################################################
 
@@ -150,7 +202,7 @@ class BehaviourTree(object):
                 if parent is not None:
                     parent.remove_child(child)
                     if self.tree_update_handler is not None:
-                        self.tree_update_handler(self.root)
+                        self.tree_update_handler()
                     return True
         return False
 
@@ -185,7 +237,7 @@ class BehaviourTree(object):
                     raise TypeError("parent must be a Composite behaviour.")
                 node.insert_child(child, index)
                 if self.tree_update_handler is not None:
-                    self.tree_update_handler(self.root)
+                    self.tree_update_handler()
                 return True
         return False
 
@@ -213,7 +265,7 @@ class BehaviourTree(object):
                 if parent is not None:
                     parent.replace_child(child, subtree)
                     if self.tree_update_handler is not None:
-                        self.tree_update_handler(self.root)
+                        self.tree_update_handler()
                     return True
         return False
 
@@ -241,29 +293,12 @@ class BehaviourTree(object):
             Exception: be ready to catch if any of the behaviours raise an exception
             RuntimeError: in case setup() times out
         """
-        # This is the signal that is raised on completion of the timer.
-        _SIGNAL = signal.SIGUSR1
-
-        def on_timer_timed_out():
-            os.kill(os.getpid(), _SIGNAL)
-
-        def signal_handler(unused_signum, unused_frame):
-            raise RuntimeError("tree setup timed out")
-
-        def visited_setup():
-            for node in self.root.iterate():
-                node.setup(**kwargs)
-                if visitor is not None:
-                    node.visit(visitor)
-
-        if timeout == common.Duration.INFINITE:
-            visited_setup()
-        else:
-            signal.signal(_SIGNAL, signal_handler)
-            timer = threading.Timer(interval=timeout, function=on_timer_timed_out)
-            timer.start()
-            visited_setup()
-            timer.cancel()  # this only works if the timer is still waiting
+        setup(
+            root=self.root,
+            timeout=timeout,
+            visitor=visitor,
+            **kwargs
+        )
 
     def tick(self, pre_tick_handler=None, post_tick_handler=None):
         """
