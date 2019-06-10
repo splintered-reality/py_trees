@@ -1,2 +1,10 @@
 eclipse.preferences.version=1
 encoding//doc/conf.py=utf-8
+encoding//doc/examples/decorators.py=utf-8
+encoding//doc/examples/oneshot.py=utf-8
+encoding//doc/examples/parallel.py=utf-8
+encoding//doc/examples/pickup_where_you_left_off.py=utf-8
+encoding//doc/examples/selector.py=utf-8
+encoding//doc/examples/sequence.py=utf-8
+encoding//doc/examples/skeleton_behaviour.py=utf-8
+encoding//doc/examples/skeleton_tree.py=utf-8

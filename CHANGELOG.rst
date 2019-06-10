@@ -4,7 +4,8 @@ Release Notes
 Forthcoming
 -----------
 * [trees] standalone ``setup()`` method with timer for use on unmanaged trees, `#198 <https://github.com/splintered-reality/py_trees/pull/198>`_
- 
+* [examples] fix api in ``skeleton_tree.py``,  `#199 <https://github.com/splintered-reality/py_trees/pull/199>`_
+
 1.2.1 (2019-05-21)
 ------------------
 * [decorators] ``StatusToBlackboard`` reflects the status of it's child to the blackboard, `#195 <https://github.com/splintered-reality/py_trees/pull/195>`_
