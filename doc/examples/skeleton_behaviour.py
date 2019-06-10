@@ -1,4 +1,5 @@
-# doc/examples/skeleton_behaviour.py
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
 import py_trees
 import random
