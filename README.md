@@ -1,6 +1,6 @@
 # Py Trees
 
-[[About](#about)][[Status](#status)][[Installation](#installation)][[Demos & Tutorials](#demos-and-tutorials)][[PyTrees-Ros Ecosystem](#pytrees-ros-ecosystem)]
+[[About](#about)][[Status](#status)][[Demos & Tutorials](#demos-and-tutorials)][[Installation](#installation)][[PyTrees-Ros Ecosystem](#pytrees-ros-ecosystem)]
 
 ----
 
@@ -22,6 +22,10 @@ PyTrees is a python implementation of behaviour trees designed to facilitate the
 | Compatibility | [![Python 3.6][python36-image]][python36-docs] | [![Python 3.6][python36-image]][python36-docs] | [![Python 2.7][python27-image]][python27-docs] | [![Python 2.7][python27-image]][python27-docs] |
 | Continuous Integration | [![devel-Status][devel-build-status-image]][devel-build-status] | [![1.2.x-Status][1.2.x-build-status-image]][1.2.x-build-status] | [![melodic-Status][melodic-build-status-image]][melodic-build-status] | [![kinetic-Status][kinetic-build-status-image]][kinetic-build-status] | |
 | Documentation | [![devel-Docs][rtd-devel-image]][docs-devel] | [![1.2.x-Docs][rtd-1.2.x-image]][docs-1.2.x] | [![0.6.x-Docs][rtd-0.6.x-image]][docs-0.6.x] | ![0.5.x-Docs][not-available-docs-image] | |
+
+## Demos and Tutorials
+
+[![devel][docs-devel-image]][docs-devel] [![1.2.x][docs-1.2.x-image]][docs-1.2.x] [![0.6.x][docs-0.6.x-image]][docs-0.6.x]
 
 ## Installation
 
@@ -59,10 +63,6 @@ From the ROS2 ecosystem:
 ```
 $ sudo apt install ros-<rosdistro>-py-trees
 ```
-
-## Demos and Tutorials
-
-[![devel][docs-devel-image]][docs-devel] [![1.2.x][docs-1.2.x-image]][docs-1.2.x] [![0.6.x][docs-0.6.x-image]][docs-0.6.x]
 
 ## PyTrees-ROS Ecosystem
 
