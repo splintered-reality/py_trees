@@ -14,6 +14,10 @@ PyTrees is a python implementation of behaviour trees designed to facilitate the
 * Python decorators for enabling meta behaviours
 * Render trees to dot graphs or visualise with ascii graphs on stdout
 
+## Docs and Demos
+
+[![devel][docs-devel-image]][docs-devel] [![1.2.x][docs-1.2.x-image]][docs-1.2.x] [![0.6.x][docs-0.6.x-image]][docs-0.6.x]
+
 ## Status
 
 | | Devel | 1.2.x | 0.6.x | 0.5.x |
@@ -22,10 +26,6 @@ PyTrees is a python implementation of behaviour trees designed to facilitate the
 | Compatibility | [![Python 3.6][python36-image]][python36-docs] | [![Python 3.6][python36-image]][python36-docs] | [![Python 2.7][python27-image]][python27-docs] | [![Python 2.7][python27-image]][python27-docs] |
 | Continuous Integration | [![devel-Status][devel-build-status-image]][devel-build-status] | [![1.2.x-Status][1.2.x-build-status-image]][1.2.x-build-status] | [![melodic-Status][melodic-build-status-image]][melodic-build-status] | [![kinetic-Status][kinetic-build-status-image]][kinetic-build-status] | |
 | Documentation | [![devel-Docs][rtd-devel-image]][docs-devel] | [![1.2.x-Docs][rtd-1.2.x-image]][docs-1.2.x] | [![0.6.x-Docs][rtd-0.6.x-image]][docs-0.6.x] | ![0.5.x-Docs][not-available-docs-image] | |
-
-## Demos and Tutorials
-
-[![devel][docs-devel-image]][docs-devel] [![1.2.x][docs-1.2.x-image]][docs-1.2.x] [![0.6.x][docs-0.6.x-image]][docs-0.6.x]
 
 ## Installation
 
