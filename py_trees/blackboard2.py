@@ -10,9 +10,7 @@ from . import console
 
 class Blackboard(object):
     """
-    `Borg`_ style key-value store for sharing amongst behaviours.
-
-    .. _Borg: http://code.activestate.com/recipes/66531-singleton-we-dont-need-no-stinkin-singleton-the-bo/
+    Key-value store for sharing amongst behaviours.
 
     Examples:
         You can instantiate the blackboard from anywhere in your program. Even
@@ -52,11 +50,15 @@ class Blackboard(object):
        Be careful of key collisions. This implementation leaves this management up to the user.
 
     Args:
+        name: client's not nec. unique, but convenient identifier (stringifies the uuid if None)
+        unique_identifier: client's unique identifier for tracking (auto-generates if None)
         read: list of keys this client has permission to read
         write: list of keys this client has permission to write
-        unique_identifier: uniquely identify the blackboard client
 
-    .. note:: initialisation
+    .. note::
+
+       Initialisation is not handled in construction, merely registration for tracking
+       purposes (and incidentally, access permissions).
 
     Raises:
         TypeError: if the provided unique identifier is not uuid.UUID type
@@ -66,9 +68,10 @@ class Blackboard(object):
         Blackboard.storage: key-value storage
         Blackboard.read: # typing.Dict[str, typing.List[uuid.UUID]]  / key : [unique identifier]
         Blackboard.write: # typing.Dict[str, typing.List[uuid.UUID]]  / key : [unique identifier]
+        name: client's, not necessarily unique, identifier for tracking
+        unique_identifier: client's unique identifier for tracking
         read: # typing.List[str] / [key]: list of keys this client has permission to read
         write: # typing.List[str] / [key]: list of keys this client has permission to write
-        unique_identifier: this blackboard client's unique identifier (used to track key-value reading/writing)
 
     .. seealso::
        * :ref:`Blackboards and Blackboard Behaviours <py-trees-demo-blackboard-program>`
@@ -78,16 +81,20 @@ class Blackboard(object):
     write = {}    # Dict[str, List[uuid.UUID]]  / name : [unique identifier]
 
     def __init__(
-            self,
+            self, *,
+            name: str=None,
+            unique_identifier: uuid.UUID=None,
             read: typing.List[str]=[],
-            write: typing.List[str]=[],
-            unique_identifier: uuid.UUID=None):
+            write: typing.List[str]=[]):
         print("__init__")
         if unique_identifier is None:
             unique_identifier = uuid.uuid4()
         if type(unique_identifier) != uuid.UUID:
             raise TypeError("provided unique identifier is not of type uuid.UUID")
+        if name is None or not name:
+            name = str(unique_identifier)
         super().__setattr__("unique_identifier", unique_identifier)
+        super().__setattr__("name", name)
         super().__setattr__("read", read)
         for key in read:
             Blackboard.read.setdefault(key, []).append(
@@ -200,7 +207,7 @@ class Blackboard(object):
         indent = "  "
         s = console.green + type(self).__name__ + console.reset + "\n"
         s += console.white + indent + "Client Data" + console.reset + "\n"
-        keys = ["unique_identifier", "read", "write"]
+        keys = ["name", "unique_identifier", "read", "write"]
         s += self.stringify_key_value_pairs(keys, self.__dict__, 2 * indent)
         s += console.white + indent + "Variables" + console.reset + "\n"
         keys = list(dict.fromkeys(self.read + self.write))  # unique list, https://www.peterbe.com/plog/fastest-way-to-uniquify-a-list-in-python-3.6
@@ -237,14 +244,11 @@ class Blackboard(object):
 
 
 def main():
-    # bb1 = Blackboard()
-    # bb1.foo = "bar"
-    # unused_result = bb1.foo
-    # bb1.introspect()
     bb2 = Blackboard(
+        name="Bob's Board",
+        unique_identifier=uuid.uuid4(),
         read=['foo', 'bar'],
         write=['foo', 'dude'],
-        unique_identifier=uuid.uuid4()
     )
     bb2.foo = "more bar"
     bb2.dude = "bob"
