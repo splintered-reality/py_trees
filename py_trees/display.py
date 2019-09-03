@@ -18,10 +18,13 @@ strings or stdout.
 # Imports
 ##############################################################################
 
+import copy
 import os
 import pydot
+import typing
 
 from . import behaviour
+from . import blackboard2
 from . import common
 from . import composites
 from . import console
@@ -29,7 +32,7 @@ from . import decorators
 from . import utilities
 
 ##############################################################################
-# Methods
+# Symbols
 ##############################################################################
 
 unicode_symbols = {
@@ -78,6 +81,10 @@ xhtml_symbols = {
     common.Status.RUNNING: '<text style="color:blue;">*</text>'
 }
 """Symbols for embedding in html."""
+
+##############################################################################
+# Trees
+##############################################################################
 
 
 def _generate_text_tree(
@@ -485,3 +492,105 @@ def render_dot_tree(root: behaviour.Behaviour,
         writer(pathname)
         filenames[extension] = pathname
     return filenames
+
+##############################################################################
+# Blackboards
+##############################################################################
+
+
+def _generate_text_blackboard(
+        indent: int=0,
+        symbols: typing.Dict[str, str]=None
+     ) -> str:
+    """
+    Generate a text blackboard.
+
+    Args:
+        indent: the number of characters to indent the blackboard
+        symbols: dictates formatting style
+            (one of :data:`py_trees.display.unicode_symbols` || :data:`py_trees.display.ascii_symbols` || :data:`py_trees.display.xhtml_symbols`),
+            defaults to unicode if stdout supports it, ascii otherwise
+
+    Returns:
+        a text-based representation of the behaviour tree
+
+    .. seealso:: :meth:`py_trees.display.unicode_blackboard`
+    """
+    if symbols is None:
+        symbols = unicode_symbols if console.has_unicode() else ascii_symbols
+
+    def style(s, font_weight=False):
+        if font_weight:
+            return symbols['bold'] + s + symbols['bold_reset']
+        else:
+            return s
+
+    def generate_lines(storage, indent):
+        def assemble_single_line(key, value, indent, key_width):
+            text_indent = symbols['space'] * (4 + indent)
+            s = ""
+            lines = ('{0}'.format(value)).split('\n')
+            if len(lines) > 1:
+                print("if")
+                s += console.cyan + text_indent + '{0: <{1}}'.format(key, key_width + 1) + console.reset + ":\n"
+                for line in lines:
+                    s += console.yellow + text_indent + "  {0}\n".format(line) + console.reset
+            else:
+                s += console.cyan + text_indent + '{0: <{1}}'.format(key, key_width + 1) + console.reset + ": " + console.yellow + '{0}\n'.format(value) + console.reset
+            return s
+        key_width = 0
+        for key in storage.keys():
+            key_width = len(key) if len(key) > key_width else key_width
+        for key in sorted(storage.keys()):
+            yield assemble_single_line(key, storage[key], indent, key_width)
+
+    blackboard_storage = copy.deepcopy(blackboard2.Blackboard.storage)
+    for variable in blackboard2.Blackboard.read.keys() | blackboard2.Blackboard.write.keys():
+        if variable not in blackboard_storage.keys():
+            blackboard_storage[variable] = "-"
+    s = ""
+    for line in generate_lines(blackboard_storage, indent):
+        s += "{}".format(line)
+    return s
+
+
+def ascii_blackboard(indent=0) -> str:
+    """
+    Graffiti your console with ascii art for your blackboard.
+
+    Args:
+        indent: the number of characters to indent the blackboard
+
+    Returns:
+        a unicoded blackboard (i.e. in string form)
+
+    .. seealso:: :meth:`py_trees.display.unicode_blackboard`
+
+    .. note:: registered variables that have not yet been set are marked with a '-'
+    """
+    lines = _generate_text_blackboard(
+        indent,
+        symbols=ascii_symbols
+    )
+    return lines
+
+
+def unicode_blackboard(indent=0) -> str:
+    """
+    Graffiti your console with unicode art for your blackboard.
+
+    Args:
+        indent: the number of characters to indent the blackboard
+
+    Returns:
+        a unicoded blackboard (i.e. in string form)
+
+    .. seealso:: :meth:`py_trees.display.ascii_blackboard`
+
+    .. note:: registered variables that have not yet been set are marked with a '-'
+    """
+    lines = _generate_text_blackboard(
+        indent,
+        symbols=None  # defaults to unicode, falls back to ascii
+    )
+    return lines
