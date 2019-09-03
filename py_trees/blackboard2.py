@@ -1,10 +1,48 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import enum
 import typing
 import uuid
 
 from . import console
+from gi.overrides.Gdk import name
+
+
+class KeyMetaData(object):
+
+    def __init__(self):
+        self.read = []
+        self.write = []
+
+
+class ActivityStream(object):
+
+    def __init__(self):
+        pass
+
+
+class Operation(enum.Enum):
+    """An enumerator representing the operation on a blackboard variable"""
+
+    READ = "READ"
+    """Behaviour check has passed, or execution of its action has finished with a successful result."""
+    WRITE = "WRITE"
+    """Behaviour check has failed, or execution of its action finished with a failed result."""
+    VALUE = "RUNNING"
+    """Behaviour is in the middle of executing some action, result still pending."""
+    INVALID = "INVALID"
+    """Behaviour is uninitialised and inactive, i.e. this is the status before first entry, and after a higher priority switch has occurred."""
+
+
+class ActivityItem(object):
+
+    def __init__(self):
+        self.key = None
+        self.who = None
+        self.operation = None
+        self.value_previous = None
+        self.value_new = None
 
 
 class Blackboard(object):
@@ -75,9 +113,9 @@ class Blackboard(object):
     .. seealso::
        * :ref:`Blackboards and Blackboard Behaviours <py-trees-demo-blackboard-program>`
     """
-    storage = {}  # key-value storage
-    read = {}     # Dict[str, List[uuid.UUID]]  / name : [unique identifier]
-    write = {}    # Dict[str, List[uuid.UUID]]  / name : [unique identifier]
+    storage = {}  # Dict[str, Any] / key-value storage
+    metadata = {}  # Dict[ str, KeyMetaData ] / key-metadata information
+    clients = {}   # Dict[ uuid.UUID, Blackboard] / id-client information
 
     def __init__(
             self, *,
@@ -98,14 +136,19 @@ class Blackboard(object):
         super().__setattr__("name", name)
         super().__setattr__("read", read)
         for key in read:
-            Blackboard.read.setdefault(key, []).append(
+            Blackboard.metadata.setdefault(key, KeyMetaData())
+            Blackboard.metadata[key].read.append(
                 super().__getattribute__("unique_identifier")
             )
         super().__setattr__("write", write)
         for key in write:
-            Blackboard.write.setdefault(key, []).append(
+            Blackboard.metadata.setdefault(key, KeyMetaData())
+            Blackboard.metadata[key].write.append(
                 super().__getattribute__("unique_identifier")
             )
+        Blackboard.clients[
+            super().__getattribute__("unique_identifier")
+        ] = self
 
     def __setattr__(self, name, value):
         """
@@ -144,8 +187,8 @@ class Blackboard(object):
         print("Introspect")
         print("-----------------")
         print("  Blackboard.storage:\n{}".format(Blackboard.storage))
-        print("  Blackboard.read:\n{}".format(Blackboard.read))
-        print("  Blackboard.write:\n{}".format(Blackboard.write))
+        print("  Blackboard.metadata:\n{}".format(Blackboard.metadata))
+        # print("  Blackboard.write:\n{}".format(Blackboard.write))
 
     def set(self, name: str, value: typing.Any, overwrite: bool=True):
         """
@@ -223,17 +266,13 @@ class Blackboard(object):
         for key in keys:
             try:
                 value = key_value_dict[key]
-                if value is None:
-                    value_string = "-"
-                    s += console.cyan + indent + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ": " + console.yellow + "{0}\n".format(value_string) + console.reset
+                lines = ('{0}'.format(value)).split('\n')
+                if len(lines) > 1:
+                    s += console.cyan + indent + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ":\n"
+                    for line in lines:
+                        s += console.yellow + indent + "  {0}\n".format(line) + console.reset
                 else:
-                    lines = ('{0}'.format(value)).split('\n')
-                    if len(lines) > 1:
-                        s += console.cyan + indent + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ":\n"
-                        for line in lines:
-                            s += console.yellow + indent + "  {0}\n".format(line) + console.reset
-                    else:
-                        s += console.cyan + indent + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ": " + console.yellow + '{0}\n'.format(value) + console.reset
+                    s += console.cyan + indent + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ": " + console.yellow + '{0}\n'.format(value) + console.reset
             except KeyError:
                 s += console.cyan + indent + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ": " + console.yellow + "-\n" + console.reset
         s += console.reset

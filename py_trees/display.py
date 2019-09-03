@@ -499,6 +499,7 @@ def render_dot_tree(root: behaviour.Behaviour,
 
 
 def _generate_text_blackboard(
+        metadata: bool=False,
         indent: int=0,
         symbols: typing.Dict[str, str]=None
      ) -> str:
@@ -525,36 +526,64 @@ def _generate_text_blackboard(
         else:
             return s
 
-    def generate_lines(storage, indent):
-        def assemble_single_line(key, value, indent, key_width):
-            text_indent = symbols['space'] * (4 + indent)
+    def generate_lines(storage, metadata, indent):
+        def assemble_value_line(key, value, indent, key_width):
             s = ""
             lines = ('{0}'.format(value)).split('\n')
             if len(lines) > 1:
-                print("if")
-                s += console.cyan + text_indent + '{0: <{1}}'.format(key, key_width + 1) + console.reset + ":\n"
+                s += console.cyan + indent + '{0: <{1}}'.format(key, key_width + 1) + console.reset + ":\n"
                 for line in lines:
-                    s += console.yellow + text_indent + "  {0}\n".format(line) + console.reset
+                    s += console.yellow + indent + "  {0}\n".format(line) + console.reset
             else:
-                s += console.cyan + text_indent + '{0: <{1}}'.format(key, key_width + 1) + console.reset + ": " + console.yellow + '{0}\n'.format(value) + console.reset
+                s += console.cyan + indent + '{0: <{1}}'.format(key, key_width + 1) + console.reset + ": " + console.yellow + '{0}\n'.format(value) + console.reset
             return s
+
+        def assemble_metadata_line(key, metadata, indent, key_width):
+            s = ""
+            s += console.cyan + indent + '{0: <{1}}'.format(key, key_width + 1) + console.reset + ": "
+            client_uuids = list(set(metadata.read) | set(metadata.write))
+            prefix = ''
+            for client_uuid in client_uuids:
+                s += prefix + console.yellow + '{0}'.format(
+                        utilities.truncate(
+                            blackboard2.Blackboard.clients[client_uuid].name, 11
+                        )
+                        # utilities.truncate(str(client_uuid), 11)
+                    )
+                metastring = ' ('
+                if client_uuid in metadata.read:
+                    metastring += 'r'
+                if client_uuid in metadata.write:
+                    metastring += 'w'
+                metastring += ')'
+                if not prefix:
+                    prefix = ''
+            s += "{}\n".format(metastring) + console.reset
+            return s
+
+        text_indent = symbols['space'] * (4 + indent)
         key_width = 0
         for key in storage.keys():
             key_width = len(key) if len(key) > key_width else key_width
         for key in sorted(storage.keys()):
-            yield assemble_single_line(key, storage[key], indent, key_width)
+            if metadata is not None:
+                yield assemble_metadata_line(key, metadata[key], text_indent, key_width)
+            else:
+                yield assemble_value_line(key, storage[key], text_indent, key_width)
 
+    blackboard_metadata = blackboard2.Blackboard.metadata if metadata else None
     blackboard_storage = copy.deepcopy(blackboard2.Blackboard.storage)
-    for variable in blackboard2.Blackboard.read.keys() | blackboard2.Blackboard.write.keys():
-        if variable not in blackboard_storage.keys():
-            blackboard_storage[variable] = "-"
-    s = ""
-    for line in generate_lines(blackboard_storage, indent):
+    all_keys = blackboard2.Blackboard.metadata.keys()
+    keys_with_values = blackboard2.Blackboard.storage.keys()
+    for variable in all_keys - keys_with_values:
+        blackboard_storage[variable] = "-"
+    s = console.green + symbols['space'] * (indent) + "Blackboard\n" + console.reset
+    for line in generate_lines(blackboard_storage, blackboard_metadata, indent):
         s += "{}".format(line)
     return s
 
 
-def ascii_blackboard(indent=0) -> str:
+def ascii_blackboard(metadata=False, indent=0) -> str:
     """
     Graffiti your console with ascii art for your blackboard.
 
@@ -569,13 +598,14 @@ def ascii_blackboard(indent=0) -> str:
     .. note:: registered variables that have not yet been set are marked with a '-'
     """
     lines = _generate_text_blackboard(
-        indent,
+        metadata=metadata,
+        indent=indent,
         symbols=ascii_symbols
     )
     return lines
 
 
-def unicode_blackboard(indent=0) -> str:
+def unicode_blackboard(metadata=False, indent=0) -> str:
     """
     Graffiti your console with unicode art for your blackboard.
 
@@ -590,7 +620,8 @@ def unicode_blackboard(indent=0) -> str:
     .. note:: registered variables that have not yet been set are marked with a '-'
     """
     lines = _generate_text_blackboard(
-        indent,
+        metadata=metadata,
+        indent=indent,
         symbols=None  # defaults to unicode, falls back to ascii
     )
     return lines
