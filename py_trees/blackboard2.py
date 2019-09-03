@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import itertools
 import typing
 import uuid
 
@@ -61,7 +60,7 @@ class Blackboard(object):
        purposes (and incidentally, access permissions).
 
     Raises:
-        TypeError: if the provided unique identifier is not uuid.UUID type
+        TypeError: if the provided name/unique identifier is not of type str/uuid.UUID
         ValueError: if the unique identifier has already been registered
 
     Attributes:
@@ -93,6 +92,8 @@ class Blackboard(object):
             raise TypeError("provided unique identifier is not of type uuid.UUID")
         if name is None or not name:
             name = str(unique_identifier)
+        if not isinstance(name, str):
+            raise TypeError("provided name is not of type str")
         super().__setattr__("unique_identifier", unique_identifier)
         super().__setattr__("name", name)
         super().__setattr__("read", read)
