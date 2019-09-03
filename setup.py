@@ -57,6 +57,7 @@ d = setup(
     tests_require=tests_require,
     entry_points={
          'console_scripts': [
+             'black = py_trees.blackboard2:main',
              'py-trees-render = py_trees.programs.render:main',
              'py-trees-demo-action-behaviour = py_trees.demos.action:main',
              'py-trees-demo-behaviour-lifecycle = py_trees.demos.lifecycle:main',
