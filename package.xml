@@ -30,9 +30,11 @@
 
   <test_depend>python3-nose</test_depend>
   <test_depend>python3-nose-yanc</test_depend>
-
-  <!-- Not a deb :/ -->
-  <!-- <test_depend>python3-nose-htmloutput</test_depend> -->
+  <!--           not available as a deb yet                     -->
+  <!-- note: don't confuse nose-htmloutput with nosehtmloutput, -->
+  <!--       the latter is a deb and doesn't work on bionic     -->
+  <!--        both are pypi packages, but different             -->
+  <!--  <test_depend>python3-nosehtmloutput</test_depend>       -->
 
   <export>
     <build_type>ament_python</build_type>

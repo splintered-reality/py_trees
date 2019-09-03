@@ -49,7 +49,7 @@ jobs:
           name: Tests
           command: |
             . venv/bin/activate
-            python setup.py nosetests
+            python setup.py nosetests --with-html
 
       - run:
           name: Linters
