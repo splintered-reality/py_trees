@@ -499,7 +499,8 @@ def render_dot_tree(root: behaviour.Behaviour,
 
 
 def _generate_text_blackboard(
-        metadata: bool=False,
+        display_key_metadata: bool=False,
+        keys_to_highlight: typing.List[str]=[],
         indent: int=0,
         symbols: typing.Dict[str, str]=None
      ) -> str:
@@ -507,6 +508,8 @@ def _generate_text_blackboard(
     Generate a text blackboard.
 
     Args:
+        display_key_metadata: (read/write access, ...) instead of values
+        keys_to_highlight: list of keys to highlight
         indent: the number of characters to indent the blackboard
         symbols: dictates formatting style
             (one of :data:`py_trees.display.unicode_symbols` || :data:`py_trees.display.ascii_symbols` || :data:`py_trees.display.xhtml_symbols`),
@@ -527,20 +530,20 @@ def _generate_text_blackboard(
             return s
 
     def generate_lines(storage, metadata, indent):
-        def assemble_value_line(key, value, indent, key_width):
+        def assemble_value_line(key, value, apply_highlight, indent, key_width):
             s = ""
             lines = ('{0}'.format(value)).split('\n')
             if len(lines) > 1:
-                s += console.cyan + indent + '{0: <{1}}'.format(key, key_width + 1) + console.reset + ":\n"
+                s += console.cyan + indent + '{0: <{1}}'.format(key, key_width + 1) + ":\n"
                 for line in lines:
-                    s += console.yellow + indent + "  {0}\n".format(line) + console.reset
+                    s += console.yellow + indent + "  {0}\n".format(line)
             else:
-                s += console.cyan + indent + '{0: <{1}}'.format(key, key_width + 1) + console.reset + ": " + console.yellow + '{0}\n'.format(value) + console.reset
-            return s
+                s += console.cyan + indent + '{0: <{1}}'.format(key, key_width + 1) + ": " + console.yellow + '{0}\n'.format(value) + console.reset
+            return style(s, apply_highlight) + console.reset
 
-        def assemble_metadata_line(key, metadata, indent, key_width):
+        def assemble_metadata_line(key, metadata, apply_highlight, indent, key_width):
             s = ""
-            s += console.cyan + indent + '{0: <{1}}'.format(key, key_width + 1) + console.reset + ": "
+            s += console.cyan + indent + '{0: <{1}}'.format(key, key_width + 1) + ": "
             client_uuids = list(set(metadata.read) | set(metadata.write))
             prefix = ''
             for client_uuid in client_uuids:
@@ -548,7 +551,6 @@ def _generate_text_blackboard(
                         utilities.truncate(
                             blackboard2.Blackboard.clients[client_uuid].name, 11
                         )
-                        # utilities.truncate(str(client_uuid), 11)
                     )
                 metastring = ' ('
                 if client_uuid in metadata.read:
@@ -558,8 +560,8 @@ def _generate_text_blackboard(
                 metastring += ')'
                 if not prefix:
                     prefix = ''
-            s += "{}\n".format(metastring) + console.reset
-            return s
+            s += "{}\n".format(metastring)
+            return style(s, apply_highlight) + console.reset
 
         text_indent = symbols['space'] * (4 + indent)
         key_width = 0
@@ -567,11 +569,21 @@ def _generate_text_blackboard(
             key_width = len(key) if len(key) > key_width else key_width
         for key in sorted(storage.keys()):
             if metadata is not None:
-                yield assemble_metadata_line(key, metadata[key], text_indent, key_width)
+                yield assemble_metadata_line(
+                    key=key,
+                    metadata=metadata[key],
+                    apply_highlight=key in keys_to_highlight,
+                    indent=text_indent,
+                    key_width=key_width)
             else:
-                yield assemble_value_line(key, storage[key], text_indent, key_width)
+                yield assemble_value_line(
+                    key=key,
+                    value=storage[key],
+                    apply_highlight=key in keys_to_highlight,
+                    indent=text_indent,
+                    key_width=key_width)
 
-    blackboard_metadata = blackboard2.Blackboard.metadata if metadata else None
+    blackboard_metadata = blackboard2.Blackboard.metadata if display_key_metadata else None
     blackboard_storage = copy.deepcopy(blackboard2.Blackboard.storage)
     all_keys = blackboard2.Blackboard.metadata.keys()
     keys_with_values = blackboard2.Blackboard.storage.keys()
@@ -583,11 +595,16 @@ def _generate_text_blackboard(
     return s
 
 
-def ascii_blackboard(metadata=False, indent=0) -> str:
+def ascii_blackboard(
+        display_key_metadata: bool=False,
+        keys_to_highlight: typing.List[str]=[],
+        indent: int=0) -> str:
     """
     Graffiti your console with ascii art for your blackboard.
 
     Args:
+        display_key_metadata: read/write access, ... instead of values
+        keys_to_highlight: list of keys to highlight
         indent: the number of characters to indent the blackboard
 
     Returns:
@@ -598,18 +615,24 @@ def ascii_blackboard(metadata=False, indent=0) -> str:
     .. note:: registered variables that have not yet been set are marked with a '-'
     """
     lines = _generate_text_blackboard(
-        metadata=metadata,
+        display_key_metadata=display_key_metadata,
+        keys_to_highlight=keys_to_highlight,
         indent=indent,
         symbols=ascii_symbols
     )
     return lines
 
 
-def unicode_blackboard(metadata=False, indent=0) -> str:
+def unicode_blackboard(
+        display_key_metadata: bool=False,
+        keys_to_highlight: typing.List[str]=[],
+        indent: int=0) -> str:
     """
     Graffiti your console with unicode art for your blackboard.
 
     Args:
+        display_key_metadata: read/write access, ... instead of values
+        keys_to_highlight: list of keys to highlight
         indent: the number of characters to indent the blackboard
 
     Returns:
@@ -620,7 +643,8 @@ def unicode_blackboard(metadata=False, indent=0) -> str:
     .. note:: registered variables that have not yet been set are marked with a '-'
     """
     lines = _generate_text_blackboard(
-        metadata=metadata,
+        display_key_metadata=display_key_metadata,
+        keys_to_highlight=keys_to_highlight,
         indent=indent,
         symbols=None  # defaults to unicode, falls back to ascii
     )
