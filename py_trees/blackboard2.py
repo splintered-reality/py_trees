@@ -1,13 +1,31 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+#
+# License: BSD
+#   https://raw.githubusercontent.com/splintered-reality/py_trees/devel/LICENSE
+#
+##############################################################################
+# Documentation
+##############################################################################
+
+"""
+Key-value storage for trees.
+"""
+
+##############################################################################
+# Imports
+##############################################################################
 
 import enum
+import re
 import typing
 import uuid
 
 from . import console
-from gi.overrides.Gdk import name
 
+##############################################################################
+# Classes
+##############################################################################
 
 class KeyMetaData(object):
 
@@ -123,7 +141,7 @@ class Blackboard(object):
             unique_identifier: uuid.UUID=None,
             read: typing.List[str]=[],
             write: typing.List[str]=[]):
-        print("__init__")
+        # print("__init__")
         if unique_identifier is None:
             unique_identifier = uuid.uuid4()
         if type(unique_identifier) != uuid.UUID:
@@ -158,7 +176,7 @@ class Blackboard(object):
         Raises:
             ValueError: if the client does not have write access to the variable
         """
-        print("__setattr__ [{}][{}]".format(name, value))
+        # print("__setattr__ [{}][{}]".format(name, value))
         if name not in super().__getattribute__("write"):
             raise ValueError("client does not have write access to '{}'".format(name))
         Blackboard.storage[name] = value
@@ -172,7 +190,7 @@ class Blackboard(object):
             ValueError: if the client does not have read access to the variable
             AttributeError: if the variable does not yet exist on the blackboard
         """
-        print("__getattr__ [{}]".format(name))
+        # print("__getattr__ [{}]".format(name))
         try:
             value = Blackboard.storage[name]
             if name not in super().__getattribute__("read"):
@@ -277,6 +295,69 @@ class Blackboard(object):
                 s += console.cyan + indent + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ": " + console.yellow + "-\n" + console.reset
         s += console.reset
         return s
+
+    def unregister(self, clear=True):
+        """
+        Unregister this blackboard and if requested, clear key-value pairs if this
+        client is the last user of those variables.
+        """
+        for key in self.read:
+            Blackboard.metadata[key].read.remove(super().__getattribute__("unique_identifier"))
+        for key in self.write:
+            Blackboard.metadata[key].write.remove(super().__getattribute__("unique_identifier"))
+        if clear:
+            for key in (set(self.read) | set(self.write)):
+                if not (set(Blackboard.metadata[key].read) | set(Blackboard.metadata[key].write)):
+                    Blackboard.storage.pop(key, None)
+
+    @staticmethod
+    def keys() -> typing.Set[str]:
+        """
+        Get the set of blackboard keys.
+
+        Returns:
+            the complete set of keys registered by clients
+        """
+        # return registered keys, those on the blackboard are not
+        # necessarily written to yet
+        return Blackboard.metadata.keys()
+
+    @staticmethod
+    def keys_filtered_by_regex(regex: str) -> typing.Set[str]:
+        """
+        Get the set of blackboard keys filtered by regex.
+
+        Args:
+            regex: a python regex string
+
+        Returns:
+            subset of keys that have been registered and match the pattern
+        """
+        pattern = re.compile(regex)
+        return [key for key in Blackboard.metadata.keys() if pattern.search(key) is not None]
+
+    @staticmethod
+    def keys_filtered_by_clients(client_ids: typing.Union[typing.List[str], typing.Set[str]]) -> typing.Set[str]:
+        """
+        Get the set of blackboard keys filtered by client ids.
+
+        Args:
+            client_ids: set of client uuid's.
+
+        Returns:
+            subset of keys that have been registered by the specified clients
+        """
+        # convenience for users
+        if type(client_ids) == list:
+            client_ids = set(client_ids)
+        keys = set()
+        for key in Blackboard.metadata.keys():
+            # for sets, | is union, & is intersection
+            key_clients = set(Blackboard.metadata[key].read) | set(Blackboard.metadata[key].write)
+            if key_clients & client_ids:
+                keys.add(key)
+        return keys
+
 
 ##############################################################################
 # Main

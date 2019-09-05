@@ -18,10 +18,10 @@ strings or stdout.
 # Imports
 ##############################################################################
 
-import copy
 import os
 import pydot
 import typing
+import uuid
 
 from . import behaviour
 from . import blackboard2
@@ -499,8 +499,11 @@ def render_dot_tree(root: behaviour.Behaviour,
 
 
 def _generate_text_blackboard(
-        display_key_metadata: bool=False,
+        key_filter: typing.Union[typing.Set[str], typing.List[str]]=None,
+        regex_filter: str=None,
+        client_filter: typing.Union[typing.Set[uuid.UUID], typing.List[uuid.UUID]]=None,
         keys_to_highlight: typing.List[str]=[],
+        display_only_key_metadata: bool=False,
         indent: int=0,
         symbols: typing.Dict[str, str]=None
      ) -> str:
@@ -508,8 +511,11 @@ def _generate_text_blackboard(
     Generate a text blackboard.
 
     Args:
-        display_key_metadata: (read/write access, ...) instead of values
+        key_filter: filter on a set/list of blackboard keys
+        regex_filter: filter on a python regex str
+        client_filter: filter on a set/list of client uuids
         keys_to_highlight: list of keys to highlight
+        display_only_key_metadata: (read/write access, ...) instead of values
         indent: the number of characters to indent the blackboard
         symbols: dictates formatting style
             (one of :data:`py_trees.display.unicode_symbols` || :data:`py_trees.display.ascii_symbols` || :data:`py_trees.display.xhtml_symbols`),
@@ -546,21 +552,21 @@ def _generate_text_blackboard(
             s += console.cyan + indent + '{0: <{1}}'.format(key, key_width + 1) + ": "
             client_uuids = list(set(metadata.read) | set(metadata.write))
             prefix = ''
+            metastrings = []
             for client_uuid in client_uuids:
-                s += prefix + console.yellow + '{0}'.format(
+                metastring = prefix + '{0}'.format(
                         utilities.truncate(
                             blackboard2.Blackboard.clients[client_uuid].name, 11
                         )
                     )
-                metastring = ' ('
+                metastring += ' ('
                 if client_uuid in metadata.read:
                     metastring += 'r'
                 if client_uuid in metadata.write:
                     metastring += 'w'
                 metastring += ')'
-                if not prefix:
-                    prefix = ''
-            s += "{}\n".format(metastring)
+                metastrings.append(metastring)
+            s += console.yellow + "{}\n".format(', '.join(metastrings))
             return style(s, apply_highlight) + console.reset
 
         text_indent = symbols['space'] * (4 + indent)
@@ -583,28 +589,53 @@ def _generate_text_blackboard(
                     indent=text_indent,
                     key_width=key_width)
 
-    blackboard_metadata = blackboard2.Blackboard.metadata if display_key_metadata else None
-    blackboard_storage = copy.deepcopy(blackboard2.Blackboard.storage)
-    all_keys = blackboard2.Blackboard.metadata.keys()
-    keys_with_values = blackboard2.Blackboard.storage.keys()
-    for variable in all_keys - keys_with_values:
-        blackboard_storage[variable] = "-"
-    s = console.green + symbols['space'] * (indent) + "Blackboard\n" + console.reset
+    blackboard_metadata = blackboard2.Blackboard.metadata if display_only_key_metadata else None
+
+    if key_filter:
+        if type(key_filter) == list:
+            key_filter = set(key_filter)
+        all_keys = blackboard2.Blackboard.keys() & key_filter
+    elif regex_filter:
+        all_keys = blackboard2.Blackboard.keys_filtered_by_regex(regex_filter)
+    elif client_filter:
+        all_keys = blackboard2.Blackboard.keys_filtered_by_clients(client_filter)
+    else:
+        all_keys = blackboard2.Blackboard.keys()
+    blackboard_storage = {}
+    for key in all_keys:
+        try:
+            blackboard_storage[key] = blackboard2.Blackboard.storage[key]
+        except KeyError:
+            blackboard_storage[key] = "-"
+
+    s = console.green + symbols['space'] * indent + "Blackboard\n" + console.reset
+    if key_filter:
+        s += symbols['space'] * (indent + 2) + "Filter: '{}'\n".format(key_filter)
+    elif regex_filter:
+        s += symbols['space'] * (indent + 2) + "Filter: '{}'\n".format(regex_filter)
+    elif client_filter:
+        s += symbols['space'] * (indent + 2) + "Filter: {}\n".format(str(client_filter))
     for line in generate_lines(blackboard_storage, blackboard_metadata, indent):
         s += "{}".format(line)
     return s
 
 
 def ascii_blackboard(
-        display_key_metadata: bool=False,
+        key_filter: typing.Union[typing.Set[str], typing.List[str]]=None,
+        regex_filter: str=None,
+        client_filter: typing.Union[typing.Set[uuid.UUID], typing.List[uuid.UUID]]=None,
         keys_to_highlight: typing.List[str]=[],
+        display_only_key_metadata: bool=False,
         indent: int=0) -> str:
     """
     Graffiti your console with ascii art for your blackboard.
 
     Args:
-        display_key_metadata: read/write access, ... instead of values
+        key_filter: filter on a set/list of blackboard keys
+        regex_filter: filter on a python regex str
+        client_filter: filter on a set/list of client uuids
         keys_to_highlight: list of keys to highlight
+        display_only_key_metadata: read/write access, ... instead of values
         indent: the number of characters to indent the blackboard
 
     Returns:
@@ -615,8 +646,11 @@ def ascii_blackboard(
     .. note:: registered variables that have not yet been set are marked with a '-'
     """
     lines = _generate_text_blackboard(
-        display_key_metadata=display_key_metadata,
+        key_filter=key_filter,
+        regex_filter=regex_filter,
+        client_filter=client_filter,
         keys_to_highlight=keys_to_highlight,
+        display_only_key_metadata=display_only_key_metadata,
         indent=indent,
         symbols=ascii_symbols
     )
@@ -624,15 +658,21 @@ def ascii_blackboard(
 
 
 def unicode_blackboard(
-        display_key_metadata: bool=False,
+        key_filter: typing.Union[typing.Set[str], typing.List[str]]=None,
+        regex_filter: str=None,
+        client_filter: typing.Union[typing.Set[uuid.UUID], typing.List[uuid.UUID]]=None,
         keys_to_highlight: typing.List[str]=[],
+        display_only_key_metadata: bool=False,
         indent: int=0) -> str:
     """
     Graffiti your console with unicode art for your blackboard.
 
     Args:
-        display_key_metadata: read/write access, ... instead of values
+        key_filter: filter on a set/list of blackboard keys
+        regex_filter: filter on a python regex str
+        client_filter: filter on a set/list of client uuids
         keys_to_highlight: list of keys to highlight
+        display_only_key_metadata: read/write access, ... instead of values
         indent: the number of characters to indent the blackboard
 
     Returns:
@@ -643,8 +683,11 @@ def unicode_blackboard(
     .. note:: registered variables that have not yet been set are marked with a '-'
     """
     lines = _generate_text_blackboard(
-        display_key_metadata=display_key_metadata,
+        key_filter=key_filter,
+        regex_filter=regex_filter,
+        client_filter=client_filter,
         keys_to_highlight=keys_to_highlight,
+        display_only_key_metadata=display_only_key_metadata,
         indent=indent,
         symbols=None  # defaults to unicode, falls back to ascii
     )
