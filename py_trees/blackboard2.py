@@ -1,10 +1,66 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+#
+# License: BSD
+#   https://raw.githubusercontent.com/splintered-reality/py_trees/devel/LICENSE
+#
+##############################################################################
+# Documentation
+##############################################################################
 
+"""
+Key-value storage for trees.
+"""
+
+##############################################################################
+# Imports
+##############################################################################
+
+import enum
+import re
 import typing
 import uuid
 
 from . import console
+
+##############################################################################
+# Classes
+##############################################################################
+
+class KeyMetaData(object):
+
+    def __init__(self):
+        self.read = []
+        self.write = []
+
+
+class ActivityStream(object):
+
+    def __init__(self):
+        pass
+
+
+class Operation(enum.Enum):
+    """An enumerator representing the operation on a blackboard variable"""
+
+    READ = "READ"
+    """Behaviour check has passed, or execution of its action has finished with a successful result."""
+    WRITE = "WRITE"
+    """Behaviour check has failed, or execution of its action finished with a failed result."""
+    VALUE = "RUNNING"
+    """Behaviour is in the middle of executing some action, result still pending."""
+    INVALID = "INVALID"
+    """Behaviour is uninitialised and inactive, i.e. this is the status before first entry, and after a higher priority switch has occurred."""
+
+
+class ActivityItem(object):
+
+    def __init__(self):
+        self.key = None
+        self.who = None
+        self.operation = None
+        self.value_previous = None
+        self.value_new = None
 
 
 class Blackboard(object):
@@ -75,9 +131,9 @@ class Blackboard(object):
     .. seealso::
        * :ref:`Blackboards and Blackboard Behaviours <py-trees-demo-blackboard-program>`
     """
-    storage = {}  # key-value storage
-    read = {}     # Dict[str, List[uuid.UUID]]  / name : [unique identifier]
-    write = {}    # Dict[str, List[uuid.UUID]]  / name : [unique identifier]
+    storage = {}  # Dict[str, Any] / key-value storage
+    metadata = {}  # Dict[ str, KeyMetaData ] / key-metadata information
+    clients = {}   # Dict[ uuid.UUID, Blackboard] / id-client information
 
     def __init__(
             self, *,
@@ -85,7 +141,7 @@ class Blackboard(object):
             unique_identifier: uuid.UUID=None,
             read: typing.List[str]=[],
             write: typing.List[str]=[]):
-        print("__init__")
+        # print("__init__")
         if unique_identifier is None:
             unique_identifier = uuid.uuid4()
         if type(unique_identifier) != uuid.UUID:
@@ -98,14 +154,19 @@ class Blackboard(object):
         super().__setattr__("name", name)
         super().__setattr__("read", read)
         for key in read:
-            Blackboard.read.setdefault(key, []).append(
+            Blackboard.metadata.setdefault(key, KeyMetaData())
+            Blackboard.metadata[key].read.append(
                 super().__getattribute__("unique_identifier")
             )
         super().__setattr__("write", write)
         for key in write:
-            Blackboard.write.setdefault(key, []).append(
+            Blackboard.metadata.setdefault(key, KeyMetaData())
+            Blackboard.metadata[key].write.append(
                 super().__getattribute__("unique_identifier")
             )
+        Blackboard.clients[
+            super().__getattribute__("unique_identifier")
+        ] = self
 
     def __setattr__(self, name, value):
         """
@@ -115,7 +176,7 @@ class Blackboard(object):
         Raises:
             ValueError: if the client does not have write access to the variable
         """
-        print("__setattr__ [{}][{}]".format(name, value))
+        # print("__setattr__ [{}][{}]".format(name, value))
         if name not in super().__getattribute__("write"):
             raise ValueError("client does not have write access to '{}'".format(name))
         Blackboard.storage[name] = value
@@ -129,7 +190,7 @@ class Blackboard(object):
             ValueError: if the client does not have read access to the variable
             AttributeError: if the variable does not yet exist on the blackboard
         """
-        print("__getattr__ [{}]".format(name))
+        # print("__getattr__ [{}]".format(name))
         try:
             value = Blackboard.storage[name]
             if name not in super().__getattribute__("read"):
@@ -144,8 +205,8 @@ class Blackboard(object):
         print("Introspect")
         print("-----------------")
         print("  Blackboard.storage:\n{}".format(Blackboard.storage))
-        print("  Blackboard.read:\n{}".format(Blackboard.read))
-        print("  Blackboard.write:\n{}".format(Blackboard.write))
+        print("  Blackboard.metadata:\n{}".format(Blackboard.metadata))
+        # print("  Blackboard.write:\n{}".format(Blackboard.write))
 
     def set(self, name: str, value: typing.Any, overwrite: bool=True):
         """
@@ -223,21 +284,80 @@ class Blackboard(object):
         for key in keys:
             try:
                 value = key_value_dict[key]
-                if value is None:
-                    value_string = "-"
-                    s += console.cyan + indent + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ": " + console.yellow + "{0}\n".format(value_string) + console.reset
+                lines = ('{0}'.format(value)).split('\n')
+                if len(lines) > 1:
+                    s += console.cyan + indent + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ":\n"
+                    for line in lines:
+                        s += console.yellow + indent + "  {0}\n".format(line) + console.reset
                 else:
-                    lines = ('{0}'.format(value)).split('\n')
-                    if len(lines) > 1:
-                        s += console.cyan + indent + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ":\n"
-                        for line in lines:
-                            s += console.yellow + indent + "  {0}\n".format(line) + console.reset
-                    else:
-                        s += console.cyan + indent + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ": " + console.yellow + '{0}\n'.format(value) + console.reset
+                    s += console.cyan + indent + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ": " + console.yellow + '{0}\n'.format(value) + console.reset
             except KeyError:
                 s += console.cyan + indent + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ": " + console.yellow + "-\n" + console.reset
         s += console.reset
         return s
+
+    def unregister(self, clear=True):
+        """
+        Unregister this blackboard and if requested, clear key-value pairs if this
+        client is the last user of those variables.
+        """
+        for key in self.read:
+            Blackboard.metadata[key].read.remove(super().__getattribute__("unique_identifier"))
+        for key in self.write:
+            Blackboard.metadata[key].write.remove(super().__getattribute__("unique_identifier"))
+        if clear:
+            for key in (set(self.read) | set(self.write)):
+                if not (set(Blackboard.metadata[key].read) | set(Blackboard.metadata[key].write)):
+                    Blackboard.storage.pop(key, None)
+
+    @staticmethod
+    def keys() -> typing.Set[str]:
+        """
+        Get the set of blackboard keys.
+
+        Returns:
+            the complete set of keys registered by clients
+        """
+        # return registered keys, those on the blackboard are not
+        # necessarily written to yet
+        return Blackboard.metadata.keys()
+
+    @staticmethod
+    def keys_filtered_by_regex(regex: str) -> typing.Set[str]:
+        """
+        Get the set of blackboard keys filtered by regex.
+
+        Args:
+            regex: a python regex string
+
+        Returns:
+            subset of keys that have been registered and match the pattern
+        """
+        pattern = re.compile(regex)
+        return [key for key in Blackboard.metadata.keys() if pattern.search(key) is not None]
+
+    @staticmethod
+    def keys_filtered_by_clients(client_ids: typing.Union[typing.List[str], typing.Set[str]]) -> typing.Set[str]:
+        """
+        Get the set of blackboard keys filtered by client ids.
+
+        Args:
+            client_ids: set of client uuid's.
+
+        Returns:
+            subset of keys that have been registered by the specified clients
+        """
+        # convenience for users
+        if type(client_ids) == list:
+            client_ids = set(client_ids)
+        keys = set()
+        for key in Blackboard.metadata.keys():
+            # for sets, | is union, & is intersection
+            key_clients = set(Blackboard.metadata[key].read) | set(Blackboard.metadata[key].write)
+            if key_clients & client_ids:
+                keys.add(key)
+        return keys
+
 
 ##############################################################################
 # Main
