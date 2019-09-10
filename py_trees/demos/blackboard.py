@@ -14,6 +14,7 @@
    :prog: py-trees-demo-blackboard
 
 .. graphviz:: dot/demo-blackboard.dot
+   :align: center
 
 .. image:: images/blackboard.gif
 """
@@ -36,10 +37,8 @@ import py_trees.console as console
 def description():
     content = "Demonstrates usage of the blackboard and related behaviours.\n"
     content += "\n"
-    content += "A sequence is populated with a default set blackboard variable\n"
-    content += "behaviour, a custom write to blackboard behaviour that writes\n"
-    content += "a more complicated structure, and finally a default check\n"
-    content += "blackboard variable beheaviour that looks for the first variable.\n"
+    content += "A sequence is populated with a few behaviours that exercise\n"
+    content += "reading and writing on the Blackboard in interesting ways.\n"
 
     if py_trees.console.has_colours:
         banner_line = console.green + "*" * 79 + "\n" + console.reset
@@ -81,6 +80,7 @@ class BlackboardWriter(py_trees.behaviour.Behaviour):
         self.logger.debug("%s.__init__()" % (self.__class__.__name__))
         self.blackboard = py_trees.blackboard2.Blackboard(
             name=self.name,
+            unique_identifier=self.id,
             write={"spaghetti"}
         )
 
@@ -120,7 +120,7 @@ def main():
     # Rendering
     ####################
     if args.render:
-        py_trees.display.render_dot_tree(root)
+        py_trees.display.render_dot_tree(root, with_blackboard_variables=True)
         sys.exit()
 
     ####################
@@ -136,4 +136,3 @@ def main():
     print(py_trees.display.unicode_blackboard())
     print("\n--------------------------\n")
     print(py_trees.display.unicode_blackboard(display_only_key_metadata=True))
-    py_trees.display.render_dot_tree(root, with_blackboard_variables=True)

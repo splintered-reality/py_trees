@@ -451,8 +451,6 @@ def dot_tree(
     def add_blackboard_nodes():
         data = blackboard2.Blackboard.storage
         metadata = blackboard2.Blackboard.metadata
-        print("Data: {}".format(data))
-        print("Keys: {}".format(blackboard2.Blackboard.keys()))
         for key in blackboard2.Blackboard.keys():
             try:
                 value = utilities.truncate(str(data[key]), 20)
