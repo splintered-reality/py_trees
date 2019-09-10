@@ -79,7 +79,10 @@ class BlackboardWriter(py_trees.behaviour.Behaviour):
     def __init__(self, name="Writer"):
         super(BlackboardWriter, self).__init__(name)
         self.logger.debug("%s.__init__()" % (self.__class__.__name__))
-        self.blackboard = py_trees.blackboard.Blackboard()
+        self.blackboard = py_trees.blackboard2.Blackboard(
+            name=self.name,
+            write={"spaghetti"}
+        )
 
     def update(self):
         """
@@ -92,9 +95,9 @@ class BlackboardWriter(py_trees.behaviour.Behaviour):
 
 def create_root():
     root = py_trees.composites.Sequence("Sequence")
-    set_blackboard_variable = py_trees.blackboard.SetBlackboardVariable(name="Set Foo", variable_name="foo", variable_value="bar")
+    set_blackboard_variable = py_trees.blackboard2.SetBlackboardVariable(name="Set Foo", variable_name="foo", variable_value="bar")
     write_blackboard_variable = BlackboardWriter(name="Writer")
-    check_blackboard_variable = py_trees.blackboard.CheckBlackboardVariable(name="Check Foo", variable_name="foo", expected_value="bar")
+    check_blackboard_variable = py_trees.blackboard2.CheckBlackboardVariable(name="Check Foo", variable_name="foo", expected_value="bar")
     root.add_children([set_blackboard_variable, write_blackboard_variable, check_blackboard_variable])
     return root
 
@@ -129,4 +132,7 @@ def main():
     print("\n")
     print(py_trees.display.unicode_tree(root, show_status=True))
     print("\n")
-    print(py_trees.blackboard.Blackboard())
+    print("\n--------------------------\n")
+    print(py_trees.display.unicode_blackboard())
+    print("\n--------------------------\n")
+    print(py_trees.display.unicode_blackboard(display_only_key_metadata=True))
