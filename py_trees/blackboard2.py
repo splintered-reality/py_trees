@@ -149,7 +149,7 @@ class Blackboard(object):
         if name is None or not name:
             name = str(unique_identifier)
         if not isinstance(name, str):
-            raise TypeError("provided name is not of type str")
+            raise TypeError("provided name is not of type str [{}]".format(type(name)))
         super().__setattr__("unique_identifier", unique_identifier)
         super().__setattr__("name", name)
         super().__setattr__("read", read)

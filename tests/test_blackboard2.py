@@ -8,6 +8,7 @@
 # Imports
 ##############################################################################
 
+import nose
 import uuid
 
 import py_trees
@@ -73,6 +74,20 @@ def test_client_print_blackboard():
         print('{0}'.format(foo))
         print('{0}'.format(bar))
     assert(True)
+
+
+def test_bad_name_exception():
+    console.banner("Bad Name Exception")
+    with nose.tools.assert_raises_regexp(TypeError, "str"):
+        print("Expecting a TypeError with substring 'str'")
+        unused_blackboard = py_trees.blackboard2.Blackboard(name=5)
+
+
+def test_bad_uuid_exception():
+    console.banner("Bad UUID Exception")
+    with nose.tools.assert_raises_regexp(TypeError, "UUID"):
+        print("Expecting a TypeError with substring 'UUID'")
+        unused_blackboard = py_trees.blackboard2.Blackboard(unique_identifier=5)
 
 
 def test_blackboard_key_accessors():
