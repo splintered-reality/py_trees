@@ -94,7 +94,7 @@ class BlackboardWriter(py_trees.behaviour.Behaviour):
 
 
 def create_root():
-    root = py_trees.composites.Sequence("Sequence")
+    root = py_trees.composites.Sequence("Blackboard Demo")
     set_blackboard_variable = py_trees.blackboard2.SetBlackboardVariable(name="Set Foo", variable_name="foo", variable_value="bar")
     write_blackboard_variable = BlackboardWriter(name="Writer")
     check_blackboard_variable = py_trees.blackboard2.CheckBlackboardVariable(name="Check Foo", variable_name="foo", expected_value="bar")
@@ -136,3 +136,4 @@ def main():
     print(py_trees.display.unicode_blackboard())
     print("\n--------------------------\n")
     print(py_trees.display.unicode_blackboard(display_only_key_metadata=True))
+    py_trees.display.render_dot_tree(root, with_blackboard_variables=True)
