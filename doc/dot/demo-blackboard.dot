@@ -1,12 +1,25 @@
-digraph sequence {
+digraph pastafarianism {
 graph [fontname="times-roman"];
 node [fontname="times-roman"];
 edge [fontname="times-roman"];
-Sequence [fillcolor=orange, fontcolor=black, fontsize=11, shape=box, style=filled];
-"Set Foo" [fillcolor=gray, fontcolor=black, fontsize=11, shape=ellipse, style=filled];
-Sequence -> "Set Foo";
-Writer [fillcolor=gray, fontcolor=black, fontsize=11, shape=ellipse, style=filled];
-Sequence -> Writer;
-"Check Foo" [fillcolor=gray, fontcolor=black, fontsize=11, shape=ellipse, style=filled];
-Sequence -> "Check Foo";
+"Blackboard Demo" [label="Blackboard Demo", shape=box, style=filled, fillcolor=orange, fontsize=9, fontcolor=black];
+"Set Foo" [label="Set Foo", shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+"Blackboard Demo" -> "Set Foo";
+Writer [label=Writer, shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+"Blackboard Demo" -> Writer;
+"Check Foo" [label="Check Foo", shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+"Blackboard Demo" -> "Check Foo";
+subgraph  {
+label="children_of_Blackboard Demo";
+rank=same;
+"Set Foo" [label="Set Foo", shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+Writer [label=Writer, shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+"Check Foo" [label="Check Foo", shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+}
+
+foo [label="foo: bar", shape=box, style=filled, fillcolor=white, fontsize=7, fontcolor=black, width=0, height=0, fixedsize=False];
+foo -> "Check Foo";
+"Set Foo" -> foo;
+spaghetti [label="spaghetti: {'type': 'Gnocchi...", shape=box, style=filled, fillcolor=white, fontsize=7, fontcolor=black, width=0, height=0, fixedsize=False];
+Writer -> spaghetti;
 }
