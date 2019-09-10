@@ -9,7 +9,38 @@
 ##############################################################################
 
 """
-Key-value storage for trees.
+Blackboards are not a necessary component of behaviour tree implementations,
+but are nonetheless, a fairly common mechanism for for sharing data between
+behaviours in the tree. See, for example, the `design notes`_
+for blackboards in Unreal Engine.
+
+.. image:: images/blackboard.jpg
+   :width: 300px
+   :align: center
+
+Implementations vary widely depending on the needs of
+the framework using them. The simplest implementations take the
+form of a key-value store with global access, while more
+rigorous implementations scope access and form a secondary
+graph overlaying the tree graph connecting data ports between behaviours.
+
+The implementation here strives to remain simple to use
+(so 'rapid development' does not become just 'development'), yet
+sufficiently featured so that the magic behind the scenes (i.e. the
+data sharing on the blackboard) is exposed and helpful in debugging
+tree applications.
+
+To be more concrete, the following is a list of features that this
+implementation either embraces or does not.
+
+* [+] Centralised key-value store
+* [+] Client based usage with declaration of read/write intentions at construction
+* [+] Activity stream that tracks read/write operations by behaviours
+* [-] Sharing between tree instances
+* [-] Locking for reading/writing
+* [-] Strict variable initialisation policies
+
+.. include:: weblinks.rst
 """
 
 ##############################################################################
@@ -70,48 +101,46 @@ class ActivityItem(object):
 
 class Blackboard(object):
     """
-    Key-value store for sharing amongst behaviours.
+    Key-value store for sharing data between behaviours.
 
     Examples:
-        You can instantiate the blackboard from anywhere in your program. Even
-        disconnected calls will get access to the same data store. For example:
+        You can instantiate a blackboard client anywhere in your program.
+        Even disconnected instantiations will discover the single global key-value store.
+        For example:
 
         .. code-block:: python
 
             def check_foo():
-                blackboard = Blackboard()
+                blackboard = Blackboard(name="Reader", read={"foo"))
                 assert(blackboard.foo, "bar")
 
             if __name__ == '__main__':
-                blackboard = Blackboard()
+                blackboard = Blackboard(name="Writer", read={"foo"))
                 blackboard.foo = "bar"
                 check_foo()
 
-        If the key value you are interested in is only known at runtime, then
-        you can set/get from the blackboard without the convenient variable style
-        access:
+        For introspection, use the methods in the display module:
 
         .. code-block:: python
 
-            blackboard = Blackboard()
-            result = blackboard.set("foo", "bar")
-            foo = blackboard.get("foo")
-
-        The blackboard can also be converted and printed (with highlighting)
-        as a string. This is useful for logging and debugging.
-
-        .. code-block:: python
-
-            print(Blackboard())
-
+            # all key-value pairs
+            print(py_trees.display.unicode_blackboard())
+            # various filtered views
+            print(py_trees.display.unicode_blackboard(key_filter={"foo"}))
+            print(py_trees.display.unicode_blackboard(regex_filter="dud*"))
+            print(py_trees.display.unicode_blackboard(client_filter={writer.id, set_foo.id}))
+            # list the clients associated with each key
+            print(py_trees.display.unicode_blackboard(display_only_key_metadata=True)
+            # a dot graph representation of tree and blackboard together
+            py_trees.display.render_dot_tree(root, root, with_blackboard_variables=True)
 
     .. warning::
 
        Be careful of key collisions. This implementation leaves this management up to the user.
 
     Args:
-        name: client's not nec. unique, but convenient identifier (stringifies the uuid if None)
-        unique_identifier: client's unique identifier for tracking (auto-generates if None)
+        name: the non-unique, but convenient identifier (stringifies the uuid if None) for the client
+        unique_identifier: client's unique identifier (auto-generates if None)
         read: list of keys this client has permission to read
         write: list of keys this client has permission to write
 
