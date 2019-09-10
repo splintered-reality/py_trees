@@ -35,8 +35,8 @@ from . import console
 class KeyMetaData(object):
 
     def __init__(self):
-        self.read = []
-        self.write = []
+        self.read = set()
+        self.write = set()
 
 
 class ActivityStream(object):
@@ -160,13 +160,13 @@ class Blackboard(object):
         super().__setattr__("read", read)
         for key in read:
             Blackboard.metadata.setdefault(key, KeyMetaData())
-            Blackboard.metadata[key].read.append(
+            Blackboard.metadata[key].read.add(
                 super().__getattribute__("unique_identifier")
             )
         super().__setattr__("write", write)
         for key in write:
             Blackboard.metadata.setdefault(key, KeyMetaData())
-            Blackboard.metadata[key].write.append(
+            Blackboard.metadata[key].write.add(
                 super().__getattribute__("unique_identifier")
             )
         Blackboard.clients[
@@ -421,13 +421,13 @@ class SetBlackboardVariable(behaviours.Success):
         super(SetBlackboardVariable, self).__init__(name)
         self.variable_name = variable_name
         self.variable_value = variable_value
-
-    def initialise(self):
         self.blackboard = Blackboard(
             name=self.name,
             unique_identifier=self.id,
             write={self.variable_name}
         )
+
+    def initialise(self):
         self.blackboard.set(self.variable_name, self.variable_value, overwrite=True)
 
 

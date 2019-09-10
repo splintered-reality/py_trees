@@ -93,8 +93,7 @@ def _generate_text_tree(
         visited={},
         previously_visited={},
         indent=0,
-        symbols=None,
-     ):
+        symbols=None):
     """
     Generate a text tree utilising the specified symbol formatter.
 
@@ -182,8 +181,7 @@ def ascii_tree(
         show_status=False,
         visited={},
         previously_visited={},
-        indent=0,
-     ):
+        indent=0):
     """
     Graffiti your console with ascii art for your trees.
 
@@ -253,8 +251,7 @@ def unicode_tree(
         show_status=False,
         visited={},
         previously_visited={},
-        indent=0,
-     ):
+        indent=0):
     """
     Graffiti your console with unicode art for your trees.
 
@@ -287,8 +284,7 @@ def xhtml_tree(
         show_status=False,
         visited={},
         previously_visited={},
-        indent=0,
-     ):
+        indent=0):
     """
     Paint your tree on an xhtml snippet.
 
@@ -335,6 +331,7 @@ def dot_tree(
         root: behaviour.Behaviour,
         visibility_level: common.VisibilityLevel=common.VisibilityLevel.DETAIL,
         collapse_decorators: bool=False,
+        with_blackboard_variables: bool=False,
         with_qualified_names: bool=False):
     """
     Paint your tree on a pydot graph.
@@ -343,9 +340,10 @@ def dot_tree(
 
     Args:
         root (:class:`~py_trees.behaviour.Behaviour`): the root of a tree, or subtree
-        visibility_level (:class`~py_trees.common.VisibilityLevel`): collapse subtrees at or under this level
-        collapse_decorators (:obj:`bool`, optional): only show the decorator (not the child), defaults to False
-        with_qualified_names: (:obj:`bool`, optional): print the class information for each behaviour in each node, defaults to False
+        visibility_level (optional): collapse subtrees at or under this level
+        collapse_decorators (optional): only show the decorator (not the child), defaults to False
+        with_blackboard_variables (optional): add nodes for the blackboard variables
+        with_qualified_names (optional): print the class information for each behaviour in each node, defaults to False
 
     Returns:
         pydot.Dot: graph
@@ -407,23 +405,30 @@ def dot_tree(
         fontsize=fontsize,
         fontcolor=node_font_colour)
     graph.add_node(node_root)
-    names = [root.name]
+    names = {root.id: root.name}
 
-    def add_edges(root, root_dot_name, visibility_level, collapse_decorators):
+    def add_children_and_edges(root, root_dot_name, visibility_level, collapse_decorators):
         if isinstance(root, decorators.Decorator) and collapse_decorators:
             return
         if visibility_level < root.blackbox_level:
+            if len(root.children) > 1:
+                subgraph = pydot.Subgraph(
+                    label="children_of_{}".format(root.name),
+                    rank="same"
+                )
+            else:
+                subgraph = None
             for c in root.children:
                 (node_shape, node_colour, node_font_colour) = get_node_attributes(c)
                 node_name = c.name
-                while node_name in names:
+                while node_name in names.values():
                     node_name += "*"
-                names.append(node_name)
+                names[c.id] = node_name
                 # Node attributes can be found on page 5 of
                 #    https://graphviz.gitlab.io/_pages/pdf/dot.1.pdf
                 # Attributes that may be useful: tooltip, xlabel
                 node = pydot.Node(
-                    node_name,
+                    name=node_name,
                     label=get_node_label(node_name, c),
                     shape=node_shape,
                     style="filled",
@@ -431,13 +436,58 @@ def dot_tree(
                     fontsize=fontsize,
                     fontcolor=node_font_colour,
                 )
+                if subgraph is not None:
+                    subgraph.add_node(node)
                 graph.add_node(node)
                 edge = pydot.Edge(root_dot_name, node_name)
                 graph.add_edge(edge)
                 if c.children != []:
-                    add_edges(c, node_name, visibility_level, collapse_decorators)
+                    add_children_and_edges(c, node_name, visibility_level, collapse_decorators)
+            if subgraph is not None:
+                graph.add_subgraph(subgraph)
 
-    add_edges(root, root.name, visibility_level, collapse_decorators)
+    add_children_and_edges(root, root.name, visibility_level, collapse_decorators)
+
+    def add_blackboard_nodes():
+        data = blackboard2.Blackboard.storage
+        metadata = blackboard2.Blackboard.metadata
+        print("Data: {}".format(data))
+        print("Keys: {}".format(blackboard2.Blackboard.keys()))
+        for key in blackboard2.Blackboard.keys():
+            try:
+                value = utilities.truncate(str(data[key]), 20)
+                label = key + ": " + "{}".format(value)
+            except KeyError:
+                label = key + ": " + "-"
+            blackboard_node = pydot.Node(
+                key,
+                label=label,
+                shape='box',
+                style="filled",
+                fillcolor='white',
+                fontsize=fontsize - 2,
+                fontcolor='black',
+                width=0, height=0, fixedsize=False,  # only big enough to fit text
+            )
+            graph.add_node(blackboard_node)
+            for unique_identifier in metadata[key].read:
+                try:
+                    edge = pydot.Edge(blackboard_node, names[unique_identifier])
+                    graph.add_edge(edge)
+                except KeyError:
+                    # something else (not a behaviour) is the client
+                    pass
+            for unique_identifier in metadata[key].write:
+                try:
+                    edge = pydot.Edge(names[unique_identifier], blackboard_node)
+                    graph.add_edge(edge)
+                except KeyError:
+                    # something else (not a behaviour) is the client
+                    pass
+
+    if with_blackboard_variables:
+        add_blackboard_nodes()
+
     return graph
 
 
@@ -446,18 +496,20 @@ def render_dot_tree(root: behaviour.Behaviour,
                     collapse_decorators: bool=False,
                     name: str=None,
                     target_directory: str=os.getcwd(),
+                    with_blackboard_variables: bool=False,
                     with_qualified_names: bool=False):
     """
     Render the dot tree to .dot, .svg, .png. files in the current
     working directory. These will be named with the root behaviour name.
 
     Args:
-        root (:class:`~py_trees.behaviour.Behaviour`): the root of a tree, or subtree
-        visibility_level (:class`~py_trees.common.VisibilityLevel`): collapse subtrees at or under this level
-        collapse_decorators (:obj:`bool`): only show the decorator (not the child)
-        name (:obj:`str`): name to use for the created files (defaults to the root behaviour name)
-        target_directory (:obj:`str`): default is to use the current working directory, set this to redirect elsewhere
-        with_qualified_names (:obj:`bool`): print the class names of each behaviour in the dot node
+        root: the root of a tree, or subtree
+        visibility_level: collapse subtrees at or under this level
+        collapse_decorators: only show the decorator (not the child)
+        name: name to use for the created files (defaults to the root behaviour name)
+        target_directory: default is to use the current working directory, set this to redirect elsewhere
+        with_blackboard_variables: add nodes for the blackboard variables
+        with_qualified_names: print the class names of each behaviour in the dot node
 
     Example:
 
@@ -481,7 +533,10 @@ def render_dot_tree(root: behaviour.Behaviour,
         A good practice is to provide a command line argument for optional rendering of a program so users
         can quickly visualise what tree the program will execute.
     """
-    graph = dot_tree(root, visibility_level, collapse_decorators, with_qualified_names=with_qualified_names)
+    graph = dot_tree(
+        root, visibility_level, collapse_decorators,
+        with_blackboard_variables=with_blackboard_variables,
+        with_qualified_names=with_qualified_names)
     filename_wo_extension_to_convert = root.name if name is None else name
     filename_wo_extension = utilities.get_valid_filename(filename_wo_extension_to_convert)
     filenames = {}
@@ -505,8 +560,7 @@ def _generate_text_blackboard(
         keys_to_highlight: typing.List[str]=[],
         display_only_key_metadata: bool=False,
         indent: int=0,
-        symbols: typing.Dict[str, str]=None
-     ) -> str:
+        symbols: typing.Dict[str, str]=None) -> str:
     """
     Generate a text blackboard.
 
@@ -555,10 +609,10 @@ def _generate_text_blackboard(
             metastrings = []
             for client_uuid in client_uuids:
                 metastring = prefix + '{0}'.format(
-                        utilities.truncate(
-                            blackboard2.Blackboard.clients[client_uuid].name, 11
-                        )
+                    utilities.truncate(
+                        blackboard2.Blackboard.clients[client_uuid].name, 11
                     )
+                )
                 metastring += ' ('
                 if client_uuid in metadata.read:
                     metastring += 'r'

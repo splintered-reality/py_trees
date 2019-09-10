@@ -35,6 +35,7 @@ import py_trees.console as console
 
 def examples():
     examples = [console.cyan + "py-trees-render" + console.yellow + " py_trees.demos.stewardship.create_tree" + console.reset,
+                console.cyan + "py-trees-render" + console.yellow + " --with-blackboard-variables" + console.reset,
                 console.cyan + "py-trees-render" + console.yellow + " --name=foo py_trees.demos.stewardship.create_tree" + console.reset,
                 console.cyan + "py-trees-render" + console.yellow + " --kwargs='{\"level\":\"all\"}' py_trees.demos.dot_graphs.create_tree" + console.reset
                 ]
@@ -88,6 +89,7 @@ def command_line_argument_parser():
                         help='visibility level')
     parser.add_argument('-n', '--name', default=None, help='name to use for the created files (defaults to the root behaviour name)')
     parser.add_argument('-k', '--kwargs', default="{}", type=json.loads, help='dictionary of keyword arguments to the method')
+    parser.add_argument('-b', '--with-blackboard-variables', default=False, action='store_true', help='add nodes for the blackboard variables')
     parser.add_argument('-v', '--verbose', default=False, action='store_true', help="embellish each node in the dot graph with extra information")
     return parser
 
@@ -117,5 +119,6 @@ def main():
         root,
         args.enum_level,
         args.name,
+        with_blackboard_variables=args.with_blackboard_variables,
         with_qualified_names=args.verbose
     )
