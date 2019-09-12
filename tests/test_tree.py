@@ -652,8 +652,8 @@ def test_pre_post_tick_activity_sequence():
 
 def test_unicode_tree_debug():
     """
-    Just check the code path through to painting ascii art via
-    tree visitors and post-tick handlers is executable
+    Just check the code path through to painting unicode art via
+    tree visitors is executable
     """
     console.banner("Tree Ascii Art")
     root = py_trees.composites.Selector("Selector")
@@ -661,14 +661,16 @@ def test_unicode_tree_debug():
         py_trees.behaviours.Count(
             name="High Priority",
             fail_until=1,
-            running_until=1,
+            running_until=3,
             success_until=10
         )
     )
     root.add_child(py_trees.behaviours.Running(name="Low Priority"))
     tree = py_trees.trees.BehaviourTree(root=root)
-    py_trees.trees.setup_tree_unicode_art_debug(tree)
+    tree.add_visitor(py_trees.visitors.DisplaySnapshotVisitor())
     tree.setup()
+    tree.tick()
+    tree.tick()
     tree.tick()
     # If we got all the way here, that suffices. If we really wished,
     # we could catch stdout and check that.

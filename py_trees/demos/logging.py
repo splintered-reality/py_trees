@@ -38,7 +38,7 @@ import py_trees.console as console
 
 def description(root):
     content = "A demonstration of logging with trees.\n\n"
-    content += "This demo utilises a WindsOfChange visitor to trigger\n"
+    content += "This demo utilises a SnapshotVisitor to trigger\n"
     content += "a post-tick handler to dump a serialisation of the\n"
     content += "tree to a json log file.\n"
     content += "\n"
@@ -81,11 +81,11 @@ def command_line_argument_parser():
     return parser
 
 
-def logger(winds_of_change_visitor, behaviour_tree):
+def logger(snapshot_visitor, behaviour_tree):
     """
     A post-tick handler that logs the tree (relevant parts thereof) to a yaml file.
     """
-    if winds_of_change_visitor.changed:
+    if snapshot_visitor.changed:
         print(console.cyan + "Logging.......................yes\n" + console.reset)
         tree_serialisation = {
             'tick': behaviour_tree.count,
@@ -109,7 +109,7 @@ def logger(winds_of_change_visitor, behaviour_tree):
                 'type': node_type_str,
                 'status': node.status.value,
                 'message': node.feedback_message,
-                'is_active': True if node.id in winds_of_change_visitor.ticked_nodes else False
+                'is_active': True if node.id in snapshot_visitor.visited else False
                 }
             tree_serialisation['nodes'].append(node_snapshot)
         if behaviour_tree.count == 0:
@@ -120,17 +120,6 @@ def logger(winds_of_change_visitor, behaviour_tree):
                 json.dump(tree_serialisation, outfile, indent=4)
     else:
         print(console.yellow + "Logging.......................no\n" + console.reset)
-
-
-def display_unicode_tree(snapshot_visitor, behaviour_tree):
-    """
-    Prints an ascii tree with the current snapshot status.
-    """
-    print("\n" + py_trees.display.unicode_tree(
-        behaviour_tree.root,
-        visited=snapshot_visitor.visited,
-        previously_visited=snapshot_visitor.previously_visited)
-    )
 
 
 def create_tree():
@@ -177,15 +166,12 @@ def main():
     behaviour_tree = py_trees.trees.BehaviourTree(tree)
 
     debug_visitor = py_trees.visitors.DebugVisitor()
-    snapshot_visitor = py_trees.visitors.SnapshotVisitor()
-    winds_of_change_visitor = py_trees.visitors.WindsOfChangeVisitor()
+    snapshot_visitor = py_trees.visitors.DisplaySnapshotVisitor()
 
     behaviour_tree.visitors.append(debug_visitor)
     behaviour_tree.visitors.append(snapshot_visitor)
-    behaviour_tree.visitors.append(winds_of_change_visitor)
 
-    behaviour_tree.add_post_tick_handler(functools.partial(display_unicode_tree, snapshot_visitor))
-    behaviour_tree.add_post_tick_handler(functools.partial(logger, winds_of_change_visitor))
+    behaviour_tree.add_post_tick_handler(functools.partial(logger, snapshot_visitor))
 
     behaviour_tree.setup(timeout=15)
 
