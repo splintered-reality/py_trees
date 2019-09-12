@@ -89,6 +89,7 @@ class BlackboardWriter(py_trees.behaviour.Behaviour):
         Write a dictionary to the blackboard and return :data:`~py_trees.common.Status.SUCCESS`.
         """
         self.logger.debug("%s.update()" % (self.__class__.__name__))
+        self.blackboard.spaghetti = {"type": "Carbonara", "quantity": 1}
         self.blackboard.spaghetti = {"type": "Gnocchi", "quantity": 2}
         return py_trees.common.Status.SUCCESS
 
@@ -113,6 +114,7 @@ def main():
     args = command_line_argument_parser().parse_args()
     print(description())
     py_trees.logging.level = py_trees.logging.Level.DEBUG
+    py_trees.blackboard2.Blackboard.enable_activity_stream(maximum_size=100)
 
     root = create_root()
 
@@ -136,3 +138,5 @@ def main():
     print(py_trees.display.unicode_blackboard())
     print("\n--------------------------\n")
     print(py_trees.display.unicode_blackboard(display_only_key_metadata=True))
+    print("\n--------------------------\n")
+    print(py_trees.display.unicode_blackboard_activity_stream())
