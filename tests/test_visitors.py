@@ -30,8 +30,8 @@ logger = py_trees.logging.Logger("Nosetest")
 ##############################################################################
 
 
-def test_winds_of_change():
-    console.banner("Winds of Change")
+def test_snapshot_visitor():
+    console.banner("Snapshot Visitor")
 
     root = py_trees.composites.Selector(name='Selector')
     a = py_trees.behaviours.Count(name="A")
@@ -44,18 +44,16 @@ def test_winds_of_change():
 
     debug_visitor = py_trees.visitors.DebugVisitor()
     snapshot_visitor = py_trees.visitors.SnapshotVisitor()
-    winds_of_change_visitor = py_trees.visitors.WindsOfChangeVisitor()
 
     for i, result in zip(range(1, 5), [True, False, False, True]):
         py_trees.tests.tick_tree(
             root, i, i,
             visitors=[debug_visitor,
-                      snapshot_visitor,
-                      winds_of_change_visitor],
+                      snapshot_visitor],
             print_snapshot=True
         )
         print("--------- Assertions ---------\n")
-        print("winds_of_change_visitor.changed == {}".format(result))
-        assert(winds_of_change_visitor.changed is result)
+        print("snapshot_visitor.changed == {}".format(result))
+        assert(snapshot_visitor.changed is result)
 
     print("Done")

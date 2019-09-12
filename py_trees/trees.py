@@ -176,7 +176,7 @@ class BehaviourTree(object):
 
         .. seealso:: :class:`~py_trees.visitors.DebugVisitor`,
             :class:`~py_trees.visitors.SnapshotVisitor`,
-            :class:`~py_trees.visitors.WindsOfChangeVisitor`
+            :class:`~py_trees.visitors.DisplaySnapshotVisitor`
         """
         self.visitors.append(visitor)
 
@@ -405,36 +405,3 @@ class BehaviourTree(object):
         # timeout mechanisms as used in setup()
         for node in self.root.iterate():
             node.shutdown()
-
-##############################################################################
-# Post Tick Handlers
-##############################################################################
-
-
-def setup_tree_unicode_art_debug(tree: BehaviourTree):
-    """
-    Convenience method for configuring a tree to paint unicode art
-    for your tree's snapshot on your console at the end of every tick.
-
-    Args:
-        tree (:class:`~py_trees.trees.BehaviourTree`): the behaviour tree that has just been ticked
-    """
-    def unicode_tree_post_tick_handler(
-        snapshot_visitor: visitors.SnapshotVisitor,
-        tree: BehaviourTree
-    ):
-        print(
-            display.unicode_tree(
-                tree.root,
-                visited=snapshot_visitor.visited,
-                previously_visited=snapshot_visitor.previously_visited
-            )
-        )
-    snapshot_visitor = visitors.SnapshotVisitor()
-    tree.add_visitor(snapshot_visitor)
-    tree.add_post_tick_handler(
-        functools.partial(
-            unicode_tree_post_tick_handler,
-            snapshot_visitor
-        )
-    )

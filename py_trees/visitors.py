@@ -21,6 +21,8 @@ runs its own method on the behaviour to do as it wishes - logging, introspecting
 # Imports
 ##############################################################################
 
+from . import display
+
 ##############################################################################
 # Visitors
 ##############################################################################
@@ -85,54 +87,14 @@ class DebugVisitor(VisitorBase):
 
 class SnapshotVisitor(VisitorBase):
     """
-    Visits the tree in tick-tock, recording the id/status of the visited set
-    of nodes. Additionally caches the last tick's visited collection for
-    comparison.
-
-    Args:
-        full (:obj:`bool`): flag to indicate whether it should be used to visit only traversed nodes or the entire tree
-
-    Attributes:
-        visited (dict): dictionary of behaviour id (uuid.UUID) and status (:class:`~py_trees.common.Status`) pairs
-        previously_visited (dict): dictionary of behaviour id's saved from the previous tree tick
-
-    .. seealso::
-
-        This visitor is used with the :class:`~py_trees.trees.BehaviourTree` class to collect
-        information and :meth:`py_trees.display.unicode_tree` to display information.
-    """
-    def __init__(self, full=False):
-        super(SnapshotVisitor, self).__init__(full=full)
-        self.visited = {}
-        self.previously_visited = {}
-
-    def initialise(self):
-        """
-        Cache the last collection of visited nodes and reset the dictionary.
-        """
-        self.previously_visited = self.visited
-        self.visited = {}
-
-    def run(self, behaviour):
-        """
-        This method gets run as each behaviour is ticked. Catch the id and status and store it.
-
-        Args:
-            behaviour (:class:`~py_trees.behaviour.Behaviour`): behaviour that is ticking
-        """
-        self.visited[behaviour.id] = behaviour.status
-
-
-class WindsOfChangeVisitor(VisitorBase):
-    """
     Visits the ticked part of a tree, checking off the status against the set of status
     results recorded in the previous tick. If there has been a change, it flags it.
     This is useful for determining when to trigger, e.g. logging.
 
     Attributes:
         changed (Bool): flagged if there is a difference in the visited path or :class:`~py_trees.common.Status` of any behaviour on the path
-        ticked_nodes (dict): dictionary of behaviour id (uuid.UUID) and status (:class:`~py_trees.common.Status`) pairs from the current tick
-        previously_ticked+nodes (dict): dictionary of behaviour id (uuid.UUID) and status (:class:`~py_trees.common.Status`) pairs from the previous tick
+        visited (dict): dictionary of behaviour id (uuid.UUID) and status (:class:`~py_trees.common.Status`) pairs from the current tick
+        previously_visited (dict): dictionary of behaviour id (uuid.UUID) and status (:class:`~py_trees.common.Status`) pairs from the previous tick
         running_nodes([uuid.UUID]): list of id's for behaviours which were traversed in the current tick
         previously_running_nodes([uuid.UUID]): list of id's for behaviours which were traversed in the last tick
 
@@ -141,8 +103,8 @@ class WindsOfChangeVisitor(VisitorBase):
     def __init__(self):
         super().__init__(full=False)
         self.changed = False
-        self.ticked_nodes = {}
-        self.previously_ticked_nodes = {}
+        self.visited = {}
+        self.previously_visited = {}
 
     def initialise(self):
         """
@@ -150,8 +112,8 @@ class WindsOfChangeVisitor(VisitorBase):
         get called before a tree ticks.
         """
         self.changed = False
-        self.previously_ticked_nodes = self.ticked_nodes
-        self.ticked_nodes = {}
+        self.previously_visited = self.visited
+        self.visited = {}
 
     def run(self, behaviour):
         """
@@ -161,9 +123,37 @@ class WindsOfChangeVisitor(VisitorBase):
         Args:
             behaviour (:class:`~py_trees.behaviour.Behaviour`): behaviour that is ticking
         """
-        self.ticked_nodes[behaviour.id] = behaviour.status
+        self.visited[behaviour.id] = behaviour.status
         try:
-            if self.ticked_nodes[behaviour.id] != self.previously_ticked_nodes[behaviour.id]:
+            if self.visited[behaviour.id] != self.previously_visited[behaviour.id]:
                 self.changed = True
         except KeyError:
             self.changed = True
+
+
+class DisplaySnapshotVisitor(SnapshotVisitor):
+    """
+    Visit the tree, capturing the visited path, it's changes since the last
+    tick and additionally print the snapshot to console.
+    """
+    def __init__(self):
+        super().__init__()
+
+    def initialise(self):
+        self.root = None
+        super().initialise()
+
+    def run(self, behaviour):
+        self.root = behaviour  # last behaviour visited will always be the root
+        super().run(behaviour)
+
+    def finalise(self):
+        print(
+            "\n" +
+            display.unicode_tree(
+                root=self.root,
+                show_status=False,
+                visited=self.visited,
+                previously_visited=self.previously_visited
+            )
+        )
