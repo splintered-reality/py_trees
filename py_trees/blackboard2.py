@@ -70,33 +70,95 @@ class KeyMetaData(object):
         self.write = set()
 
 
-class ActivityStream(object):
-
-    def __init__(self):
-        pass
-
-
-class Operation(enum.Enum):
+class ActivityType(enum.Enum):
     """An enumerator representing the operation on a blackboard variable"""
 
     READ = "READ"
-    """Behaviour check has passed, or execution of its action has finished with a successful result."""
+    """Read from the blackboard"""
+    INITIALISED = "INITIALISED"
+    """Initialised value on the blackboard"""
     WRITE = "WRITE"
-    """Behaviour check has failed, or execution of its action finished with a failed result."""
-    VALUE = "RUNNING"
-    """Behaviour is in the middle of executing some action, result still pending."""
-    INVALID = "INVALID"
-    """Behaviour is uninitialised and inactive, i.e. this is the status before first entry, and after a higher priority switch has occurred."""
+    """Wrote to the blackboard."""
+    READ_NON_EXISTING = "READ_NON_EXISTING"
+    """Tried to read a key that does not yet exist on the blackboard."""
+    READ_DENIED = "READ_DENIED"
+    """Client was denied access to read a key."""
+    WRITE_DENIED = "WRITE_DENIED"
+    """Client was denied access to write a key."""
+    RESPECTED_NO_OVERWRITE = "RESPECTED_NO_OVERWRITE"
+    """Variable already exists and a no-overwrite request was respected."""
+    UNSET = "UNSET"
+    """Key was removed from the blackboard"""
 
 
 class ActivityItem(object):
+    """
+    Recorded data pertaining to activity on the blackboard.
 
-    def __init__(self):
-        self.key = None
-        self.who = None
-        self.operation = None
-        self.value_previous = None
-        self.value_new = None
+    Args:
+        key: name of the variable on the blackboard
+        client_name: convenient name of the client performing the operation
+        client_id: unique id of the client performing the operation
+        activity_type: type of activity
+        previous_value: of the given key (None if this field is not relevant)
+        current_value: current value for the given key (None if this field is not relevant)
+    """
+    def __init__(
+            self,
+            key,
+            client_name: str,
+            client_id: uuid.UUID,
+            activity_type: ActivityType,
+            previous_value: typing.Any=None,
+            current_value: typing.Any=None):
+        # TODO validity checks for values passed/not passed on the
+        # respective activity types. Note: consider using an enum
+        # for 'no value here' since None is a perfectly acceptable
+        # value for a key
+        self.key = key
+        self.client_name = client_name
+        self.client_id = client_id
+        self.activity_type = activity_type
+        self.previous_value = previous_value
+        self.current_value = current_value
+
+
+class ActivityStream(object):
+    """
+    Storage container with convenience methods for manipulating the stored
+    activity stream.
+
+    Attributes:
+        data (typing.List[ActivityItem]: list of activity items, earliest first
+        maximum_size (int): pop items if this size is exceeded
+    """
+
+    def __init__(self, maximum_size: int=500):
+        """
+        Initialise the stream with a maximum storage limit.
+
+        Args:
+            maximum_size: pop items from the stream if this size is exceeded
+        """
+        self.data = []
+        self.maximum_size = maximum_size
+
+    def push(self, activity_item: ActivityItem):
+        """
+        Push the next activity item to the stream.
+
+        Args:
+            activity_item: new item to append to the stream
+        """
+        if len(self.data) > self.maximum_size:
+            self.data.pop()
+        self.data.append(activity_item)
+
+    def flush(self):
+        """
+        Flush all activities from the stream.
+        """
+        self.data = []
 
 
 class Blackboard(object):
@@ -119,6 +181,14 @@ class Blackboard(object):
                 blackboard.foo = "bar"
                 check_foo()
 
+        To respect an already initialised key on the blackboard:
+
+        .. code-block:: python
+
+            if __name__ == '__main__':
+                blackboard = Blackboard(name="Writer", read={"foo"))
+                result = blackboard.set("foo", "bar", overwrite=False)
+
         For introspection, use the methods in the display module:
 
         .. code-block:: python
@@ -138,36 +208,34 @@ class Blackboard(object):
 
        Be careful of key collisions. This implementation leaves this management up to the user.
 
+    .. seealso::
+       * :ref:`py-trees-demo-blackboard <py-trees-demo-blackboard-program>`
+
+    Attributes:
+        <class>.storage (typing.Dict[str, typing.Any]): key-value storage
+        <class>.read (typing.Dict[str, typing.List[uuid.UUID]]): key-client read access map
+        <class>.write (typing.Dict[str, typing.List[uuid.UUID]]): key-client write access map
+        <class>.activity_stream (ActivityStream): the activity stream (None if not enabled)
+        <instance>.name (str): client's convenient, but not necessarily unique identifier
+        <instance>.unique_identifier (uuid.UUID): client's unique identifier
+        <instance>.read (typing.List[str]): keys this client has permission to read
+        <instance>.write (typing.List[str]): keys this client has permission to write
+
     Args:
         name: the non-unique, but convenient identifier (stringifies the uuid if None) for the client
         unique_identifier: client's unique identifier (auto-generates if None)
         read: list of keys this client has permission to read
         write: list of keys this client has permission to write
 
-    .. note::
-
-       Initialisation is not handled in construction, merely registration for tracking
-       purposes (and incidentally, access permissions).
-
     Raises:
         TypeError: if the provided name/unique identifier is not of type str/uuid.UUID
         ValueError: if the unique identifier has already been registered
 
-    Attributes:
-        Blackboard.storage: key-value storage
-        Blackboard.read: # typing.Dict[str, typing.List[uuid.UUID]]  / key : [unique identifier]
-        Blackboard.write: # typing.Dict[str, typing.List[uuid.UUID]]  / key : [unique identifier]
-        name: client's, not necessarily unique, identifier for tracking
-        unique_identifier: client's unique identifier for tracking
-        read: # typing.List[str] / [key]: list of keys this client has permission to read
-        write: # typing.List[str] / [key]: list of keys this client has permission to write
-
-    .. seealso::
-       * :ref:`Blackboards and Blackboard Behaviours <py-trees-demo-blackboard-program>`
     """
     storage = {}  # Dict[str, Any] / key-value storage
     metadata = {}  # Dict[ str, KeyMetaData ] / key-metadata information
     clients = {}   # Dict[ uuid.UUID, Blackboard] / id-client information
+    activity_stream = None
 
     def __init__(
             self, *,
@@ -212,7 +280,29 @@ class Blackboard(object):
         """
         # print("__setattr__ [{}][{}]".format(name, value))
         if name not in super().__getattribute__("write"):
+            if Blackboard.activity_stream is not None:
+                Blackboard.activity_stream.push(
+                    self._generate_activity_item(name, ActivityType.WRITE_DENIED)
+                )
             raise ValueError("client '{}' does not have write access to '{}'".format(self.name, name))
+        if Blackboard.activity_stream is not None:
+            if name in Blackboard.storage.keys():
+                Blackboard.activity_stream.push(
+                    self._generate_activity_item(
+                        key=name,
+                        activity_type=ActivityType.WRITE,
+                        previous_value=Blackboard.storage[name],
+                        current_value=value
+                    )
+                )
+            else:
+                Blackboard.activity_stream.push(
+                    self._generate_activity_item(
+                        key=name,
+                        activity_type=ActivityType.INITIALISED,
+                        current_value=value
+                    )
+                )
         Blackboard.storage[name] = value
 
     def __getattr__(self, name):
@@ -226,21 +316,27 @@ class Blackboard(object):
         """
         # print("__getattr__ [{}]".format(name))
         try:
-            value = Blackboard.storage[name]
             if name not in super().__getattribute__("read"):
+                if Blackboard.activity_stream is not None:
+                    Blackboard.activity_stream.push(
+                        self._generate_activity_item(name, ActivityType.READ_DENIED)
+                    )
                 raise ValueError("client '{}' does not have read access to '{}'".format(self.name, name))
-            return value
+            if Blackboard.activity_stream is not None:
+                Blackboard.activity_stream.push(
+                    self._generate_activity_item(
+                        key=name,
+                        activity_type=ActivityType.READ,
+                        current_value=Blackboard.storage[name],
+                    )
+                )
+            return Blackboard.storage[name]
         except KeyError as e:
+            if Blackboard.activity_stream is not None:
+                Blackboard.activity_stream.push(
+                    self._generate_activity_item(name, ActivityType.READ_NON_EXISTING)
+                )
             raise AttributeError("variable '{}' does not yet exist on the blackboard".format(name)) from e
-
-    @staticmethod
-    def introspect_blackboard():
-        print("-----------------")
-        print("Introspect")
-        print("-----------------")
-        print("  Blackboard.storage:\n{}".format(Blackboard.storage))
-        print("  Blackboard.metadata:\n{}".format(Blackboard.metadata))
-        # print("  Blackboard.write:\n{}".format(Blackboard.write))
 
     def set(self, name: str, value: typing.Any, overwrite: bool=True):
         """
@@ -264,9 +360,17 @@ class Blackboard(object):
             AttributeError: if overwrite was not requested and the variable already exists
         """
         if name not in super().__getattribute__("write"):
+            if Blackboard.activity_stream is not None:
+                Blackboard.activity_stream.push(
+                    self._generate_activity_item(name, ActivityType.WRITE_DENIED)
+                )
             raise ValueError("client does not have write access to '{}'".format(name))
         if not overwrite:
             if name in Blackboard.storage:
+                if Blackboard.activity_stream is not None:
+                    Blackboard.activity_stream.push(
+                        self._generate_activity_item(name, ActivityType.RESPECTED_NO_OVERWRITE)
+                    )
                 raise AttributeError("variable already exists and overwriting was not requested")
         setattr(self, name, value)
         return True
@@ -297,6 +401,10 @@ class Blackboard(object):
         Raises:
             AttributeError: if the variable does not yet exist
         """
+        if Blackboard.activity_stream is not None:
+            Blackboard.activity_stream.push(
+                self._generate_activity_item(name, ActivityType.UNSET)
+            )
         delattr(self, name)
 
     def __str__(self):
@@ -304,13 +412,23 @@ class Blackboard(object):
         s = console.green + type(self).__name__ + console.reset + "\n"
         s += console.white + indent + "Client Data" + console.reset + "\n"
         keys = ["name", "unique_identifier", "read", "write"]
-        s += self.stringify_key_value_pairs(keys, self.__dict__, 2 * indent)
+        s += self._stringify_key_value_pairs(keys, self.__dict__, 2 * indent)
         s += console.white + indent + "Variables" + console.reset + "\n"
         keys = list(dict.fromkeys(self.read + self.write))  # unique list, https://www.peterbe.com/plog/fastest-way-to-uniquify-a-list-in-python-3.6
-        s += self.stringify_key_value_pairs(keys, Blackboard.storage, 2 * indent)
+        s += self._stringify_key_value_pairs(keys, Blackboard.storage, 2 * indent)
         return s
 
-    def stringify_key_value_pairs(self, keys, key_value_dict, indent):
+    def _generate_activity_item(self, key, activity_type, previous_value=None, current_value=None):
+        return ActivityItem(
+            key=key,
+            client_name=super().__getattribute__("name"),
+            client_id=super().__getattribute__("unique_identifier"),
+            activity_type=activity_type,
+            previous_value=previous_value,
+            current_value=current_value
+        )
+
+    def _stringify_key_value_pairs(self, keys, key_value_dict, indent):
         s = ""
         max_length = 0
         for key in keys:
@@ -391,6 +509,29 @@ class Blackboard(object):
             if key_clients & client_ids:
                 keys.add(key)
         return keys
+
+    @staticmethod
+    def enable_activity_stream(maximum_size: int=500):
+        """
+        Enable logging of activities on the blackboard.
+
+        Args:
+            maximum_size: pop items from the stream if this size is exceeded
+
+        Raises:
+            RuntimeError if the activity stream is already enabled
+        """
+        if Blackboard.activity_stream is None:
+            Blackboard.activity_stream = ActivityStream(maximum_size)
+        else:
+            RuntimeError("activity stream is already enabled for this blackboard")
+
+    @staticmethod
+    def disable_activity_stream():
+        """
+        Disable logging of activities on the blackboard
+        """
+        Blackboard.activity_stream = None
 
 ##############################################################################
 # Blackboard Behaviours
