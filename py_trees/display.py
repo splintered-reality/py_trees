@@ -744,3 +744,63 @@ def unicode_blackboard(
         symbols=None  # defaults to unicode, falls back to ascii
     )
     return lines
+
+
+def unicode_blackboard_activity_stream(
+        indent: int=0):
+    """
+    Pretty print the blackboard stream to console.
+
+    Args:
+        indent: the number of characters to indent the blackboard
+    """
+    symbols = unicode_symbols if console.has_unicode() else ascii_symbols
+    s = console.green + symbols['space'] * indent + "Activity Stream\n" + console.reset
+    if blackboard2.Blackboard.activity_stream is not None:
+        key_width = 0
+        for item in blackboard2.Blackboard.activity_stream.data:
+            key_width = len(item.key) if len(item.key) > key_width else key_width
+        value_width = 20
+        for item in blackboard2.Blackboard.activity_stream.data:
+            s += console.cyan + symbols['space'] * indent + "  {0: <{1}}: ".format(
+                item.key, key_width + 1) + console.yellow
+            if item.activity_type == blackboard2.ActivityType.READ:
+                s += "'{}' read '{}'\n".format(
+                    item.client_name,
+                    utilities.truncate(str(item.current_value), value_width)
+                )
+            elif item.activity_type == blackboard2.ActivityType.WRITE:
+                s += "'{}' updated \"{}\" -> \"{}\"\n".format(
+                    item.client_name,
+                    utilities.truncate(str(item.previous_value), value_width),
+                    utilities.truncate(str(item.current_value), value_width)
+                )
+            elif item.activity_type == blackboard2.ActivityType.READ_DENIED:
+                s += "'{}' tried to read, but does not have access\n".format(
+                    item.client_name
+                )
+            elif item.activity_type == blackboard2.ActivityType.WRITE_DENIED:
+                s += "'{}' tried to write, but does not have access\n".format(
+                    item.client_name
+                )
+            elif item.activity_type == blackboard2.ActivityType.READ_NON_EXISTING:
+                s += "'{}' tried to read, but variable does not exist\n".format(
+                    item.client_name
+                )
+            elif item.activity_type == blackboard2.ActivityType.RESPECTED_NO_OVERWRITE:
+                s += "'{}' tried to write, but variable exists and no-overwrite was requested\n".format(
+                    item.client_name
+                )
+            elif item.activity_type == blackboard2.ActivityType.UNSET:
+                s += "'{}' unset this variable\n".format(
+                    item.client_name
+                )
+            elif item.activity_type == blackboard2.ActivityType.INITIALISED:
+                s += "'{}' initialised variable to '{}'\n".format(
+                    item.client_name,
+                    utilities.truncate(str(item.current_value), value_width),
+                )
+            else:
+                s += "unknown operation\n"
+        s += "\n" + console.reset
+    return s
