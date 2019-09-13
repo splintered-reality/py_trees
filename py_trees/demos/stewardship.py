@@ -82,13 +82,6 @@ def command_line_argument_parser():
 
 
 def pre_tick_handler(behaviour_tree):
-    """
-    This prints a banner and will run immediately before every tick of the tree.
-
-    Args:
-        behaviour_tree (:class:`~py_trees.trees.BehaviourTree`): the tree custodian
-
-    """
     print("\n--------- Run %s ---------\n" % behaviour_tree.count)
 
 
@@ -133,6 +126,7 @@ def main():
     ####################
     # Tree Stewardship
     ####################
+    py_trees.blackboard2.Blackboard.enable_activity_stream(100)
     behaviour_tree = py_trees.trees.BehaviourTree(tree)
     behaviour_tree.add_pre_tick_handler(pre_tick_handler)
     behaviour_tree.visitors.append(py_trees.visitors.DebugVisitor())
