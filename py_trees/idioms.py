@@ -136,9 +136,18 @@ def eternal_guard(
         suffix = "" if len(conditions) == 1 else "_{}".format(counter)
         blackboard_variable_names.append(blackboard_variable_prefix + "_condition" + suffix)
         counter += 1
-    bb = blackboard.Blackboard()
+    bb = blackboard.Blackboard(
+        read=set(blackboard_variable_names)
+    )
     # if there is just one blackboard name already on the blackboard, switch to unique names
-    if any(bb.get(name) is not None for name in blackboard_variable_names):
+    conflict = False
+    for name in blackboard_variable_names:
+        try:
+            unused_name = bb.get(name)
+            conflict = True
+        except ValueError:
+            pass
+    if conflict:
         blackboard_variable_names = []
         counter = 1
         unique_id = uuid.uuid4()
@@ -146,6 +155,7 @@ def eternal_guard(
             suffix = "" if len(conditions) == 1 else "_{}".format(counter)
             blackboard_variable_names.append(blackboard_variable_prefix + "_" + str(unique_id) + "_condition" + suffix)
             counter += 1
+    bb.unregister()
     # build the tree
     root = composites.Parallel(
         name=name,
