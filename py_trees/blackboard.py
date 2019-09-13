@@ -257,8 +257,8 @@ class Blackboard(object):
             self, *,
             name: str=None,
             unique_identifier: uuid.UUID=None,
-            read: typing.List[str]=[],
-            write: typing.List[str]=[]):
+            read: typing.Set[str]=set(),
+            write: typing.Set[str]=set()):
         # print("__init__")
         if unique_identifier is None:
             unique_identifier = uuid.uuid4()
@@ -268,6 +268,10 @@ class Blackboard(object):
             name = str(unique_identifier)
         if not isinstance(name, str):
             raise TypeError("provided name is not of type str [{}]".format(type(name)))
+        if type(read) is list:
+            read = set(read)
+        if type(write) is list:
+            read = set(write)
         super().__setattr__("unique_identifier", unique_identifier)
         super().__setattr__("name", name)
         super().__setattr__("read", read)
@@ -408,7 +412,7 @@ class Blackboard(object):
             AttributeError: if the client does not have read access to the variable
             ValueError: if the variable does not yet exist on the blackboard
         """
-        getattr(self, name)
+        return getattr(self, name)
 
     def unset(self, name: str):
         """
@@ -436,7 +440,7 @@ class Blackboard(object):
         keys = ["name", "unique_identifier", "read", "write"]
         s += self._stringify_key_value_pairs(keys, self.__dict__, 2 * indent)
         s += console.white + indent + "Variables" + console.reset + "\n"
-        keys = list(dict.fromkeys(self.read + self.write))  # unique list, https://www.peterbe.com/plog/fastest-way-to-uniquify-a-list-in-python-3.6
+        keys = self.read | self.write
         s += self._stringify_key_value_pairs(keys, Blackboard.storage, 2 * indent)
         return s
 
@@ -661,7 +665,11 @@ class CheckBlackboardVariable(behaviour.Behaviour):
             subgoal. Use the :data:`~py_trees.common.ClearingPolicy.NEVER` flag to do this.
         """
         super(CheckBlackboardVariable, self).__init__(name)
-        self.variable_name = variable_name
+
+        name_components = variable_name.split('.')
+        self.variable_name = name_components[0]
+        self.nested_name = '.'.join(name_components[1:])  # empty string if no other parts
+
         self.blackboard = Blackboard(
             name=self.name,
             unique_identifier=self.id,
@@ -694,15 +702,23 @@ class CheckBlackboardVariable(behaviour.Behaviour):
             return self.matching_result
 
         result = None
-        check_attr = operator.attrgetter(self.variable_name)
+        # check_attr = operator.attrgetter(self.variable_name)
 
         try:
-            value = check_attr(self.blackboard)
+            # value = check_attr(self.blackboard)
+            from . import display
+            print(display.unicode_blackboard())
+            value = self.blackboard.get(self.variable_name)
+            if self.nested_name:
+                try:
+                    value = operator.attrgetter(self.nested_name)(value)
+                except AttributeError:
+                    raise ValueError()
             # if existence check required only
             if self.expected_value is None:
                 self.feedback_message = "'%s' exists on the blackboard (as required)" % self.variable_name
                 result = common.Status.SUCCESS
-        except AttributeError:
+        except ValueError:
             self.feedback_message = 'blackboard variable {0} did not exist'.format(self.variable_name)
             result = common.Status.FAILURE
 
