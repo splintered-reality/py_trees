@@ -37,6 +37,8 @@ from . import utilities
 
 unicode_symbols = {
     'space': ' ',
+    'left_arrow': console.left_arrow,
+    'right_arrow': console.right_arrow,
     'bold': console.bold,
     'bold_reset': console.reset,
     composites.Sequence: u'[-]',
@@ -53,6 +55,8 @@ unicode_symbols = {
 
 ascii_symbols = {
     'space': ' ',
+    'left_arrow': '<-',
+    'right_arrow': '->',
     'bold': console.bold,
     'bold_reset': console.reset,
     composites.Sequence: "[-]",
@@ -755,50 +759,61 @@ def unicode_blackboard_activity_stream(
         indent: the number of characters to indent the blackboard
     """
     symbols = unicode_symbols if console.has_unicode() else ascii_symbols
-    s = console.green + symbols['space'] * indent + "Activity Stream\n" + console.reset
+    space = symbols['space']
+    s = console.green + space * indent + "Activity Stream\n" + console.reset
     if blackboard2.Blackboard.activity_stream is not None:
         key_width = 0
+        client_width = 0
         for item in blackboard2.Blackboard.activity_stream.data:
             key_width = len(item.key) if len(item.key) > key_width else key_width
-        value_width = 20
+            client_width = len(item.client_name) if len(item.client_name) > client_width else client_width
+        client_width = min(client_width, 20)
+        type_width = len("NO_OVERWRITE")
+        value_width = 80 - key_width - 3 - type_width - 3 - client_width - 3
         for item in blackboard2.Blackboard.activity_stream.data:
-            s += console.cyan + symbols['space'] * indent + "  {0: <{1}}: ".format(
-                item.key, key_width + 1) + console.yellow
+            s += console.cyan + space * (4 + indent)
+            s += "{0: <{1}}:".format(item.key, key_width + 1) + space
+            s += console.yellow
+            s += "{0: <{1}}".format(item.activity_type.value, type_width) + space
+            s += console.white + "|" + space
+            s += "{0: <{1}}".format(
+                utilities.truncate(item.client_name, client_width), client_width) + space
+            s += "|" + space
             if item.activity_type == blackboard2.ActivityType.READ:
-                s += "'{}' read '{}'\n".format(
-                    item.client_name,
+                s += symbols["left_arrow"] + space + "{}\n".format(
                     utilities.truncate(str(item.current_value), value_width)
                 )
             elif item.activity_type == blackboard2.ActivityType.WRITE:
-                s += "'{}' updated \"{}\" -> \"{}\"\n".format(
-                    item.client_name,
-                    utilities.truncate(str(item.previous_value), value_width),
+                s += console.green
+                s += symbols["right_arrow"] + space
+                s += "{}\n".format(
                     utilities.truncate(str(item.current_value), value_width)
                 )
             elif item.activity_type == blackboard2.ActivityType.READ_DENIED:
-                s += "'{}' tried to read, but does not have access\n".format(
-                    item.client_name
-                )
+                s += console.red
+                s += console.multiplication_x + space
+                s += "variable grants no access to this client\n"
             elif item.activity_type == blackboard2.ActivityType.WRITE_DENIED:
-                s += "'{}' tried to write, but does not have access\n".format(
-                    item.client_name
-                )
-            elif item.activity_type == blackboard2.ActivityType.READ_NON_EXISTING:
-                s += "'{}' tried to read, but variable does not exist\n".format(
-                    item.client_name
-                )
-            elif item.activity_type == blackboard2.ActivityType.RESPECTED_NO_OVERWRITE:
-                s += "'{}' tried to write, but variable exists and no-overwrite was requested\n".format(
-                    item.client_name
+                s += console.red
+                s += console.multiplication_x + space
+                s += "variable grants no access to this client\n"
+            elif item.activity_type == blackboard2.ActivityType.READ_FAILED:
+                s += console.red
+                s += console.multiplication_x + space
+                s += "variable does not yet exist\n"
+            elif item.activity_type == blackboard2.ActivityType.NO_OVERWRITE:
+                s += console.yellow
+                s += console.forbidden_circle + space
+                s += "{}\n".format(
+                    utilities.truncate(str(item.current_value), value_width)
                 )
             elif item.activity_type == blackboard2.ActivityType.UNSET:
-                s += "'{}' unset this variable\n".format(
-                    item.client_name
-                )
+                s += "\n"
             elif item.activity_type == blackboard2.ActivityType.INITIALISED:
-                s += "'{}' initialised variable to '{}'\n".format(
-                    item.client_name,
-                    utilities.truncate(str(item.current_value), value_width),
+                s += console.green
+                s += symbols["right_arrow"] + space
+                s += "{}\n".format(
+                    utilities.truncate(str(item.current_value), value_width)
                 )
             else:
                 s += "unknown operation\n"

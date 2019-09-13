@@ -85,6 +85,9 @@ lightning_bolt = u'\u26A1'
 double_vertical_line = u'\u2016'
 check_mark = u'\u2713'
 multiplication_x = u'\u2715'
+left_arrow = u'\u2190'  # u'\u2190'
+right_arrow = u'\u2192'
+forbidden_circle = u'\u29B8'
 
 ##############################################################################
 # Keypress
@@ -324,4 +327,6 @@ if __name__ == '__main__':
     print("double_vertical_line: {}".format(double_vertical_line))
     print("check_mark: {}".format(check_mark))
     print("multiplication_x: {}".format(multiplication_x))
+    print("left_arrow: {}".format(left_arrow))
+    print("right_arrow: {}".format(right_arrow))
     # print("has unicode: {}".format(has_unicode()))

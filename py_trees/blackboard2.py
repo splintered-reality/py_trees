@@ -79,13 +79,13 @@ class ActivityType(enum.Enum):
     """Initialised value on the blackboard"""
     WRITE = "WRITE"
     """Wrote to the blackboard."""
-    READ_NON_EXISTING = "READ_NON_EXISTING"
+    READ_FAILED = "READ_FAILED"
     """Tried to read a key that does not yet exist on the blackboard."""
     READ_DENIED = "READ_DENIED"
     """Client was denied access to read a key."""
     WRITE_DENIED = "WRITE_DENIED"
     """Client was denied access to write a key."""
-    RESPECTED_NO_OVERWRITE = "RESPECTED_NO_OVERWRITE"
+    NO_OVERWRITE = "NO_OVERWRITE"
     """Variable already exists and a no-overwrite request was respected."""
     UNSET = "UNSET"
     """Key was removed from the blackboard"""
@@ -154,9 +154,9 @@ class ActivityStream(object):
             self.data.pop()
         self.data.append(activity_item)
 
-    def flush(self):
+    def clear(self):
         """
-        Flush all activities from the stream.
+        Delete all activities from the stream.
         """
         self.data = []
 
@@ -177,7 +177,7 @@ class Blackboard(object):
                 assert(blackboard.foo, "bar")
 
             if __name__ == '__main__':
-                blackboard = Blackboard(name="Writer", read={"foo"))
+                blackboard = Blackboard(name="Writer", write={"foo"))
                 blackboard.foo = "bar"
                 check_foo()
 
@@ -188,6 +188,22 @@ class Blackboard(object):
             if __name__ == '__main__':
                 blackboard = Blackboard(name="Writer", read={"foo"))
                 result = blackboard.set("foo", "bar", overwrite=False)
+
+        Log and display the activity stream:
+
+        .. code-block:: python
+
+            # all key-value pairs
+            Blackboard.enable_activity_stream(maximum_size=100)
+            blackboard = Blackboard(name="Writer", write={"foo"))
+            blackboard.foo = "bar"
+            # view the activity stream
+            print(py_trees.display.unicode_blackboard_activity_stream())
+            # output
+            Activity Stream
+                foo       : INITIALISED  | Set Foo   | → bar
+            # clear the stream (useful to do between tree ticks)
+            Blackboard.activity_stream.clear()
 
         For introspection, use the methods in the display module:
 
@@ -276,7 +292,7 @@ class Blackboard(object):
         permissions.
 
         Raises:
-            ValueError: if the client does not have write access to the variable
+            AttributeError: if the client does not have write access to the variable
         """
         # print("__setattr__ [{}][{}]".format(name, value))
         if name not in super().__getattribute__("write"):
@@ -284,7 +300,7 @@ class Blackboard(object):
                 Blackboard.activity_stream.push(
                     self._generate_activity_item(name, ActivityType.WRITE_DENIED)
                 )
-            raise ValueError("client '{}' does not have write access to '{}'".format(self.name, name))
+            raise AttributeError("client '{}' does not have write access to '{}'".format(self.name, name))
         if Blackboard.activity_stream is not None:
             if name in Blackboard.storage.keys():
                 Blackboard.activity_stream.push(
@@ -311,8 +327,8 @@ class Blackboard(object):
         permissions.
 
         Raises:
-            ValueError: if the client does not have read access to the variable
-            AttributeError: if the variable does not yet exist on the blackboard
+            AttributeError: if the client does not have read access to the variable
+            ValueError: if the variable does not yet exist on the blackboard
         """
         # print("__getattr__ [{}]".format(name))
         try:
@@ -321,7 +337,7 @@ class Blackboard(object):
                     Blackboard.activity_stream.push(
                         self._generate_activity_item(name, ActivityType.READ_DENIED)
                     )
-                raise ValueError("client '{}' does not have read access to '{}'".format(self.name, name))
+                raise AttributeError("client '{}' does not have read access to '{}'".format(self.name, name))
             if Blackboard.activity_stream is not None:
                 Blackboard.activity_stream.push(
                     self._generate_activity_item(
@@ -334,11 +350,11 @@ class Blackboard(object):
         except KeyError as e:
             if Blackboard.activity_stream is not None:
                 Blackboard.activity_stream.push(
-                    self._generate_activity_item(name, ActivityType.READ_NON_EXISTING)
+                    self._generate_activity_item(name, ActivityType.READ_FAILED)
                 )
-            raise AttributeError("variable '{}' does not yet exist on the blackboard".format(name)) from e
+            raise ValueError("variable '{}' does not yet exist on the blackboard".format(name)) from e
 
-    def set(self, name: str, value: typing.Any, overwrite: bool=True):
+    def set(self, name: str, value: typing.Any, overwrite: bool=True) -> bool:
         """
         Set, conditionally depending on whether the variable already exists or otherwise.
 
@@ -355,9 +371,11 @@ class Blackboard(object):
             value: value of the variable to set
             overwrite: do not set if the variable already exists on the blackboard
 
+        Returns:
+            success or failure (overwrite is False and variable already set)
+
         Raises:
             ValueError: if the client does not have write access to the variable
-            AttributeError: if overwrite was not requested and the variable already exists
         """
         if name not in super().__getattribute__("write"):
             if Blackboard.activity_stream is not None:
@@ -369,13 +387,16 @@ class Blackboard(object):
             if name in Blackboard.storage:
                 if Blackboard.activity_stream is not None:
                     Blackboard.activity_stream.push(
-                        self._generate_activity_item(name, ActivityType.RESPECTED_NO_OVERWRITE)
+                        self._generate_activity_item(
+                            key=name,
+                            activity_type=ActivityType.NO_OVERWRITE,
+                            current_value=Blackboard.storage[name])
                     )
-                raise AttributeError("variable already exists and overwriting was not requested")
+                return False
         setattr(self, name, value)
         return True
 
-    def get(self, name):
+    def get(self, name: str) -> typing.Any:
         """
         Method based accessor to the blackboard variables (as opposed to simply using
         '.<name>').
@@ -391,21 +412,22 @@ class Blackboard(object):
 
     def unset(self, name: str):
         """
-        For when you need to unset a blackboard variable, this provides a
-        convenient helper method. This is particularly useful for unit
-        testing behaviours.
+        For when you need to completely remove a blackboard variable,
+        this provides a convenient helper method. This is particularly
+        useful when you wish to 'erase' the blackboard between unit test
+        methods.
 
         Args:
-            name: name of the variable to unset
+            name: name of the variable to clear
 
         Raises:
-            AttributeError: if the variable does not yet exist
+            KeyError: if the variable does not yet exist
         """
         if Blackboard.activity_stream is not None:
             Blackboard.activity_stream.push(
                 self._generate_activity_item(name, ActivityType.UNSET)
             )
-        delattr(self, name)
+        del Blackboard.storage[name]
 
     def __str__(self):
         indent = "  "
