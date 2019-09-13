@@ -81,7 +81,8 @@ class BlackboardWriter(py_trees.behaviour.Behaviour):
         self.blackboard = py_trees.blackboard2.Blackboard(
             name=self.name,
             unique_identifier=self.id,
-            write={"spaghetti"}
+            write={"spaghetti"},
+            read={"dude"}
         )
 
     def update(self):
@@ -89,8 +90,24 @@ class BlackboardWriter(py_trees.behaviour.Behaviour):
         Write a dictionary to the blackboard and return :data:`~py_trees.common.Status.SUCCESS`.
         """
         self.logger.debug("%s.update()" % (self.__class__.__name__))
+        try:
+            unused = self.blackboard.dude
+        except ValueError:
+            pass
+        try:
+            unused = self.blackboard.dudette
+        except AttributeError:
+            pass
+        try:
+            self.blackboard.dudette = "Jane"
+        except AttributeError:
+            pass
         self.blackboard.spaghetti = {"type": "Carbonara", "quantity": 1}
         self.blackboard.spaghetti = {"type": "Gnocchi", "quantity": 2}
+        try:
+            self.blackboard.set("spaghetti", {"type": "Bolognese", "quantity": 3}, overwrite=False)
+        except AttributeError:
+            pass
         return py_trees.common.Status.SUCCESS
 
 
@@ -102,10 +119,10 @@ def create_root():
     root.add_children([set_blackboard_variable, write_blackboard_variable, check_blackboard_variable])
     return root
 
-
 ##############################################################################
 # Main
 ##############################################################################
+
 
 def main():
     """
@@ -133,10 +150,11 @@ def main():
     root.tick_once()
     print("\n")
     print(py_trees.display.unicode_tree(root, show_status=True))
-    print("\n")
-    print("\n--------------------------\n")
+    print("--------------------------\n")
     print(py_trees.display.unicode_blackboard())
-    print("\n--------------------------\n")
+    print("--------------------------\n")
     print(py_trees.display.unicode_blackboard(display_only_key_metadata=True))
-    print("\n--------------------------\n")
+    print("--------------------------\n")
+    blackboard = py_trees.blackboard2.Blackboard(name="Unsetter", write={"foo"})
+    blackboard.unset("foo")
     print(py_trees.display.unicode_blackboard_activity_stream())

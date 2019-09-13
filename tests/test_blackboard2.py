@@ -90,7 +90,7 @@ def test_bad_uuid_exception():
         unused_blackboard = py_trees.blackboard2.Blackboard(unique_identifier=5)
 
 
-def test_blackboard_key_accessors():
+def test_key_filters():
     console.banner("Key Accessors")
     with create_blackboards() as (foo, bar):
         no_of_keys = len(Blackboard.keys())
@@ -112,3 +112,45 @@ def test_blackboard_key_accessors():
         no_of_keys = len(Blackboard.keys_filtered_by_clients([foo.unique_identifier]))
         print("# Can pass in a list instead of a set: True")
         assert(no_of_keys == 3)
+
+
+def test_activity_stream():
+    console.banner("Activity Stream")
+    Blackboard.enable_activity_stream(100)
+    blackboard = Blackboard(
+        name="Client",
+        read={"foo", "dude"},
+        write={"spaghetti"}
+    )
+    try:
+        unused = blackboard.dude
+    except ValueError:  # READ_FAILED
+        pass
+    try:
+        unused = blackboard.dudette
+    except AttributeError:  # READ_DENIED
+        pass
+    try:
+        blackboard.dudette = "Jane"
+    except AttributeError:  # WRITE_DENIED
+        pass
+    blackboard.spaghetti = {"type": "Carbonara", "quantity": 1}  # INITIALISED
+    blackboard.spaghetti = {"type": "Gnocchi", "quantity": 2}  # WRITE
+    try:
+        # NO_OVERWRITE
+        blackboard.set("spaghetti", {"type": "Bolognese", "quantity": 3}, overwrite=False)
+    except AttributeError:
+        pass
+    blackboard.unset("spaghetti")  # UNSET
+    print(py_trees.display.unicode_blackboard_activity_stream())
+    expected_types = [
+        py_trees.blackboard2.ActivityType.READ_FAILED,
+        py_trees.blackboard2.ActivityType.READ_DENIED,
+        py_trees.blackboard2.ActivityType.WRITE_DENIED,
+        py_trees.blackboard2.ActivityType.INITIALISED,
+        py_trees.blackboard2.ActivityType.WRITE,
+        py_trees.blackboard2.ActivityType.NO_OVERWRITE,
+        py_trees.blackboard2.ActivityType.UNSET,
+    ]
+    for item, expected in zip(Blackboard.activity_stream.data, expected_types):
+        assert(item.activity_type == expected)
