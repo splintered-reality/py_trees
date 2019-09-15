@@ -229,8 +229,7 @@ class Blackboard(object):
 
     Attributes:
         <class>.storage (typing.Dict[str, typing.Any]): key-value storage
-        <class>.read (typing.Dict[str, typing.List[uuid.UUID]]): key-client read access map
-        <class>.write (typing.Dict[str, typing.List[uuid.UUID]]): key-client write access map
+        <class>.metadata (typing.Dict[str, KeyMetaData]): key-client (read/write) metadata
         <class>.activity_stream (ActivityStream): the activity stream (None if not enabled)
         <instance>.name (str): client's convenient, but not necessarily unique identifier
         <instance>.unique_identifier (uuid.UUID): client's unique identifier
@@ -271,7 +270,9 @@ class Blackboard(object):
         if type(read) is list:
             read = set(read)
         if type(write) is list:
-            read = set(write)
+            write = set(write)
+        if unique_identifier in Blackboard.clients.keys():
+            raise ValueError("this unique identifier has already been registered")
         super().__setattr__("unique_identifier", unique_identifier)
         super().__setattr__("name", name)
         super().__setattr__("read", read)
@@ -332,7 +333,7 @@ class Blackboard(object):
 
         Raises:
             AttributeError: if the client does not have read access to the variable
-            ValueError: if the variable does not yet exist on the blackboard
+            KeyError: if the variable does not yet exist on the blackboard
         """
         # print("__getattr__ [{}]".format(name))
         try:
@@ -356,7 +357,7 @@ class Blackboard(object):
                 Blackboard.activity_stream.push(
                     self._generate_activity_item(name, ActivityType.READ_FAILED)
                 )
-            raise ValueError("variable '{}' does not yet exist on the blackboard".format(name)) from e
+            raise KeyError("variable '{}' does not yet exist on the blackboard".format(name)) from e
 
     def set(self, name: str, value: typing.Any, overwrite: bool=True) -> bool:
         """
@@ -410,7 +411,7 @@ class Blackboard(object):
 
         Raises:
             AttributeError: if the client does not have read access to the variable
-            ValueError: if the variable does not yet exist on the blackboard
+            KeyError: if the variable does not yet exist on the blackboard
         """
         return getattr(self, name)
 
@@ -424,14 +425,23 @@ class Blackboard(object):
         Args:
             name: name of the variable to clear
 
-        Raises:
-            KeyError: if the variable does not yet exist
+        Returns:
+            True if the key , False otherwise
         """
         if Blackboard.activity_stream is not None:
             Blackboard.activity_stream.push(
                 self._generate_activity_item(name, ActivityType.UNSET)
             )
-        del Blackboard.storage[name]
+        # Three means of handling a non-existent key - 1) raising a KeyError, 2) catching
+        # the KeyError and passing, 3) catch the KeyError and return True/False.
+        # Option 1) is inconvenient - requires a redundant try/catch 99% of cases
+        # Option 2) hides information - bad
+        # Option 3) no extra code necessary and information is there if desired
+        try:
+            del Blackboard.storage[name]
+            return True
+        except KeyError:
+            return False
 
     def __str__(self):
         indent = "  "
@@ -702,24 +712,22 @@ class CheckBlackboardVariable(behaviour.Behaviour):
             return self.matching_result
 
         result = None
-        # check_attr = operator.attrgetter(self.variable_name)
 
         try:
             # value = check_attr(self.blackboard)
-            from . import display
-            print(display.unicode_blackboard())
             value = self.blackboard.get(self.variable_name)
             if self.nested_name:
                 try:
                     value = operator.attrgetter(self.nested_name)(value)
                 except AttributeError:
-                    raise ValueError()
+                    raise KeyError()
             # if existence check required only
             if self.expected_value is None:
                 self.feedback_message = "'%s' exists on the blackboard (as required)" % self.variable_name
                 result = common.Status.SUCCESS
-        except ValueError:
-            self.feedback_message = 'blackboard variable {0} did not exist'.format(self.variable_name)
+        except KeyError:
+            name = "{}.{}".format(self.variable_name, self.nested_name) if self.nested_name else self.variable_name
+            self.feedback_message = 'blackboard variable {0} did not exist'.format(name)
             result = common.Status.FAILURE
 
         if result is None:
@@ -788,7 +796,9 @@ class WaitForBlackboardVariable(behaviour.Behaviour):
                  clearing_policy=common.ClearingPolicy.ON_INITIALISE
                  ):
         super(WaitForBlackboardVariable, self).__init__(name)
-        self.variable_name = variable_name
+        name_components = variable_name.split('.')
+        self.variable_name = name_components[0]
+        self.nested_name = '.'.join(name_components[1:])  # empty string if no other parts
         self.blackboard = Blackboard(
             name=self.name,
             unique_identifier=self.id,
@@ -822,7 +832,12 @@ class WaitForBlackboardVariable(behaviour.Behaviour):
 
         # existence failure check
         try:
-            value = self.check_attr(self.blackboard)
+            value = self.blackboard.get(self.variable_name)
+            if self.nested_name:
+                try:
+                    value = operator.attrgetter(self.nested_name)(value)
+                except AttributeError:
+                    raise KeyError()  # type raised when no variable exists, caught below
             # if existence check required only
             if self.expected_value is None:
                 self.feedback_message = "'%s' exists on the blackboard (as required)" % self.variable_name
@@ -836,8 +851,9 @@ class WaitForBlackboardVariable(behaviour.Behaviour):
                 else:
                     self.feedback_message = "'%s' comparison failed [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
                     result = common.Status.RUNNING
-        except AttributeError:
-            self.feedback_message = 'blackboard variable {0} did not exist'.format(self.variable_name)
+        except KeyError:
+            name = "{}.{}".format(self.variable_name, self.nested_name) if self.nested_name else self.variable_name
+            self.feedback_message = 'variable {0} did not exist'.format(name)
             result = common.Status.RUNNING
 
         if result == common.Status.SUCCESS and self.clearing_policy == common.ClearingPolicy.ON_SUCCESS:

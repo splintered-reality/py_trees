@@ -36,7 +36,7 @@ def test_oneshot_with_fail_causes_reentry():
             variable_name="oneshot",
             behaviour=child,
             policy=policy
-            )
+        )
 
     for title, create_tree in [
             ("Idiom", idiom_oneshot),
@@ -47,7 +47,7 @@ def test_oneshot_with_fail_causes_reentry():
 
             # Setup
             console.banner("{} w/ Failure Causes Reentry [policy: {}]".format(title, policy.name))
-            py_trees.blackboard.Blackboard.clear()
+            py_trees.tests.clear_blackboard()
 
             # Tree
             fail_then_run = py_trees.behaviours.Count(
@@ -94,7 +94,7 @@ def test_oneshot_with_fail_causes_reentry():
                 "Idiom": {
                     py_trees.common.OneShotPolicy.ON_COMPLETION: py_trees.common.Status.INVALID,
                     py_trees.common.OneShotPolicy.ON_SUCCESSFUL_COMPLETION: py_trees.common.Status.RUNNING
-                    },
+                },
                 "Decorator": {
                     py_trees.common.OneShotPolicy.ON_COMPLETION: py_trees.common.Status.FAILURE,
                     py_trees.common.OneShotPolicy.ON_SUCCESSFUL_COMPLETION: py_trees.common.Status.RUNNING
@@ -138,7 +138,7 @@ def test_oneshot_with_subtrees_and_interrupt():
         for title, oneshot in [("Idiom", idiom_oneshot), ("Decorator", decorator_oneshot)]:
 
             console.banner("{} w/ {} and Interrupt".format(title, worker_subtree.name))
-            py_trees.blackboard.Blackboard.clear()
+            py_trees.tests.clear_blackboard()
 
             # Tree with higher priority branch
             root = py_trees.composites.Selector(name="Root")

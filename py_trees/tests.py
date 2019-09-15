@@ -66,6 +66,13 @@ def tick_tree(root,
         print(str(blackboard.Blackboard()))
 
 
+def clear_blackboard():
+    # Useful between tests
+    blackboard.Blackboard.storage = {}
+    blackboard.Blackboard.clients = {}
+    blackboard.Blackboard.metadata = {}
+
+
 def print_summary(nodes):
     print("\n--------- Summary ---------\n")
     for node in nodes:

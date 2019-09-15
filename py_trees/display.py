@@ -664,7 +664,8 @@ def _generate_text_blackboard(
         except KeyError:
             blackboard_storage[key] = "-"
 
-    s = console.green + symbols['space'] * indent + "Blackboard\n" + console.reset
+    title = "Clients" if display_only_key_metadata else "Data"
+    s = console.green + symbols['space'] * indent + "Blackboard {}\n".format(title) + console.reset
     if key_filter:
         s += symbols['space'] * (indent + 2) + "Filter: '{}'\n".format(key_filter)
     elif regex_filter:
@@ -760,7 +761,7 @@ def unicode_blackboard_activity_stream(
     """
     symbols = unicode_symbols if console.has_unicode() else ascii_symbols
     space = symbols['space']
-    s = console.green + space * indent + "Activity Stream\n" + console.reset
+    s = console.green + space * indent + "Blackboard Activity Stream\n" + console.reset
     if blackboard.Blackboard.activity_stream is not None:
         key_width = 0
         client_width = 0

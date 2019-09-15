@@ -92,7 +92,7 @@ class BlackboardWriter(py_trees.behaviour.Behaviour):
         self.logger.debug("%s.update()" % (self.__class__.__name__))
         try:
             unused = self.blackboard.dude
-        except ValueError:
+        except KeyError:
             pass
         try:
             unused = self.blackboard.dudette

@@ -54,7 +54,7 @@ def truncate(original: str, length: int) -> str:
         original: string to elide
         length: constrain the elided string to this
     """
-    s = (original[:length-3] + '...') if len(original) > length else original
+    s = (original[:length - 3] + '...') if len(original) > length else original
     return s
 
 ##############################################################################

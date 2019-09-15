@@ -282,7 +282,7 @@ def test_timeout():
 
     # Test that it times out and re-initialises properly
     for i in range(0, 2):
-        py_trees.tests.tick_tree(timeout, 2*i+1, 2*i+1, visitors=[visitor])
+        py_trees.tests.tick_tree(timeout, 2 * i + 1, 2 * i + 1, visitors=[visitor])
 
         print("\n--------- Assertions ---------\n")
         print("timeout.status == py_trees.common.Status.RUNNING")
@@ -291,7 +291,7 @@ def test_timeout():
         assert(running.status == py_trees.common.Status.RUNNING)
 
         time.sleep(0.3)
-        py_trees.tests.tick_tree(timeout, 2*i+2, 2*i+2, visitors=[visitor])
+        py_trees.tests.tick_tree(timeout, 2 * i + 2, 2 * i + 2, visitors=[visitor])
 
         print("\n--------- Assertions ---------\n")
         print("timeout.status == py_trees.common.Status.FAILURE")
@@ -417,8 +417,10 @@ def test_status_to_blackboard():
         name="Status2BB",
         child=child,
         variable_name="foo"
-        )
-    blackboard = py_trees.blackboard.Blackboard()
+    )
+    blackboard = py_trees.blackboard.Blackboard(
+        read={"foo"}
+    )
     decorator.tick_once()
 
     py_trees.tests.print_assert_banner()

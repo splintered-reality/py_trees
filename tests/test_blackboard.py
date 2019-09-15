@@ -15,6 +15,7 @@ import py_trees
 import py_trees.console as console
 
 from py_trees.blackboard import Blackboard
+from aptsources.sourceslist import uniq
 
 ##############################################################################
 # Helpers
@@ -90,6 +91,15 @@ def test_bad_uuid_exception():
         unused_blackboard = py_trees.blackboard.Blackboard(unique_identifier=5)
 
 
+def test_duplicate_uuid_exception():
+    console.banner("Duplicate UUID Exception")
+    unique_identifier = uuid.uuid4()
+    unused_one = py_trees.blackboard.Blackboard(unique_identifier=unique_identifier)
+    with nose.tools.assert_raises_regexp(ValueError, "already been registered"):
+        print("Expecting a ValueError with substring 'already been registered'")
+        unused_two = py_trees.blackboard.Blackboard(unique_identifier=unique_identifier)
+
+
 def test_key_filters():
     console.banner("Key Accessors")
     with create_blackboards() as (foo, bar):
@@ -124,15 +134,15 @@ def test_activity_stream():
     )
     try:
         unused = blackboard.dude
-    except ValueError:  # READ_FAILED
+    except KeyError:  # READ_FAILED
         pass
     try:
         unused = blackboard.dudette
-    except AttributeError:  # READ_DENIED
+    except AttributeError:  # READ_ACCESS DENIED
         pass
     try:
         blackboard.dudette = "Jane"
-    except AttributeError:  # WRITE_DENIED
+    except AttributeError:  # WRITE_ACCESS DENIED
         pass
     blackboard.spaghetti = {"type": "Carbonara", "quantity": 1}  # INITIALISED
     blackboard.spaghetti = {"type": "Gnocchi", "quantity": 2}  # WRITE
