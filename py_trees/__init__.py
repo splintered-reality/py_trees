@@ -16,7 +16,6 @@ This is the top-level namespace of the py_trees package.
 from . import behaviour  # noqa
 from . import behaviours  # noqa
 from . import blackboard  # noqa
-from . import blackboard2  # noqa
 from . import common  # noqa
 from . import composites  # noqa
 from . import console  # noqa

@@ -35,8 +35,7 @@ def pick_up_where_you_left_off(
         name="Pickup Where You Left Off Idiom",
         tasks=[behaviours.Dummy(name="Dummy1"),  # dummy behaviours to enable dot rendering with py-trees-render
                behaviours.Dummy(name="Dummy1")
-               ]
-        ):
+               ]):
     """
     Rudely interrupted while enjoying a sandwich, a caveman (just because
     they wore loincloths does not mean they were not civilised), picks
@@ -105,8 +104,7 @@ def eternal_guard(
         conditions: List[behaviour.Behaviour]=[behaviours.Dummy(name="Condition 1"),  # dummy behaviours to enable dot rendering with py-trees-render
                                                behaviours.Dummy(name="Condition 2")],
         subtree: behaviour.Behaviour=behaviours.Dummy(name="Task"),  # dummy behaviour to enable dot rendering with py-trees-render
-        blackboard_variable_prefix: str=None,
-        ) -> behaviour.Behaviour:
+        blackboard_variable_prefix: str=None) -> behaviour.Behaviour:
     """
     The eternal guard idiom implements a stronger :term:`guard` than the typical check at the
     beginning of a sequence of tasks. Here they guard continuously while the task sequence
@@ -136,9 +134,18 @@ def eternal_guard(
         suffix = "" if len(conditions) == 1 else "_{}".format(counter)
         blackboard_variable_names.append(blackboard_variable_prefix + "_condition" + suffix)
         counter += 1
-    bb = blackboard.Blackboard()
+    bb = blackboard.Blackboard(
+        read=set(blackboard_variable_names)
+    )
     # if there is just one blackboard name already on the blackboard, switch to unique names
-    if any(bb.get(name) is not None for name in blackboard_variable_names):
+    conflict = False
+    for name in blackboard_variable_names:
+        try:
+            unused_name = bb.get(name)
+            conflict = True
+        except KeyError:
+            pass
+    if conflict:
         blackboard_variable_names = []
         counter = 1
         unique_id = uuid.uuid4()
@@ -146,6 +153,7 @@ def eternal_guard(
             suffix = "" if len(conditions) == 1 else "_{}".format(counter)
             blackboard_variable_names.append(blackboard_variable_prefix + "_" + str(unique_id) + "_condition" + suffix)
             counter += 1
+    bb.unregister()
     # build the tree
     root = composites.Parallel(
         name=name,
@@ -243,10 +251,10 @@ def oneshot(name="OneShot Idiom",
         oneshot_with_guard.add_child(oneshot_handler)
 
     oneshot_result = blackboard.CheckBlackboardVariable(
-            name="Oneshot Result",
-            variable_name=variable_name,
-            expected_value=common.Status.SUCCESS,
-            clearing_policy=common.ClearingPolicy.NEVER
-        )
+        name="Oneshot Result",
+        variable_name=variable_name,
+        expected_value=common.Status.SUCCESS,
+        clearing_policy=common.ClearingPolicy.NEVER
+    )
     subtree_root.add_children([oneshot_with_guard, oneshot_result])
     return subtree_root

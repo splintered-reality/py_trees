@@ -7,6 +7,8 @@
 # Imports
 ##############################################################################
 
+import nose
+
 import py_trees
 import py_trees.console as console
 
@@ -101,8 +103,12 @@ def test_eternal_guard_idiom():
 
 
 def test_eternal_guard_unique_names():
-    blackboard = py_trees.blackboard.Blackboard()
-    blackboard.clear()
+    py_trees.tests.clear_blackboard()
+    blackboard = py_trees.blackboard.Blackboard(
+        read={"eternal_guard_condition_1",
+              "eternal_guard_condition_2"},
+        write={"eternal_guard_condition_1"}
+    )
     message = "Ha, stole it"
     blackboard.eternal_guard_condition_1 = message
     root = py_trees.composites.Selector(name="Root")
@@ -111,8 +117,10 @@ def test_eternal_guard_unique_names():
     # tick once, get variables on the blackboard
     py_trees.tests.tick_tree(root, 1, 1, print_snapshot=True)
     assert(blackboard.get("eternal_guard_condition_1") == message)  # wasn't overwritten
-    assert(blackboard.get("eternal_guard_condition_2") is None)
-    # can't assert on the uuid variables though - they could be anything
+    print(py_trees.display.unicode_blackboard())
+    with nose.tools.assert_raises_regexp(KeyError, "exist"):
+        print("Expecting a KeyError with substring 'yet exist'")
+        unused = blackboard.eternal_guard_condition_2
 
 
 def test_eternal_guard_decorator():

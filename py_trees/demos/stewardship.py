@@ -23,7 +23,6 @@
 ##############################################################################
 
 import argparse
-import functools
 import py_trees
 import sys
 import time
@@ -126,7 +125,7 @@ def main():
     ####################
     # Tree Stewardship
     ####################
-    py_trees.blackboard2.Blackboard.enable_activity_stream(100)
+    py_trees.blackboard.Blackboard.enable_activity_stream(100)
     behaviour_tree = py_trees.trees.BehaviourTree(tree)
     behaviour_tree.add_pre_tick_handler(pre_tick_handler)
     behaviour_tree.visitors.append(py_trees.visitors.DebugVisitor())

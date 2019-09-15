@@ -8,42 +8,59 @@
 # Imports
 ##############################################################################
 
+import nose
+import uuid
+
 import py_trees
 import py_trees.console as console
-import operator
 
-from py_trees.common import Status
-
-##############################################################################
-# Logging Level
-##############################################################################
-
-# py_trees.logging.level = py_trees.logging.Level.DEBUG
-# logger = py_trees.logging.Logger("Nosetest")
+from py_trees.blackboard import Blackboard
 
 ##############################################################################
 # Helpers
 ##############################################################################
 
 
-class FooBar(object):
+class create_blackboards(object):
 
-    def __init__(self):
-        self.foo = 'bar'
+    def __enter__(self):
+        self.foo = create_blackboard_foo()
+        self.bar = create_blackboard_bar()
+        return (self.foo, self.bar)
+
+    def __exit__(self, unused_type, unused_value, unused_traceback):
+        self.foo.unregister()
+        self.bar.unregister()
 
 
-def create_blackboard():
+def create_blackboard_foo():
     """
-    Create a blackboard with a few variables.
-
-    Fill with as many different types as we need to get full coverage on
-    pretty printing blackboard tests.
+    Create a blackboard client with a few variables.
     """
-    blackboard = py_trees.blackboard.Blackboard()
-    blackboard.foo = "bar"
-    blackboard.some_tuple = (1, "bar")
-    blackboard.foobar = FooBar()
-    blackboard.nothing = None
+    blackboard = Blackboard(
+        name="foo",
+        unique_identifier=uuid.uuid4(),
+        read=['foo', 'bar'],
+        write=['foo', 'dude'],
+    )
+    # blackboard.foo = "more bar"  # leave one uninitialised
+    blackboard.dude = "bob"
+    return blackboard
+
+
+def create_blackboard_bar():
+    """
+    Create another blackboard client with a few variables.
+    """
+    blackboard = Blackboard(
+        name="foo",
+        unique_identifier=uuid.uuid4(),
+        read=['dude'],
+        write=['bar', 'dudette'],
+    )
+    # blackboard.foo = "more bar"  # leave one uninitialised
+    blackboard.bar = "less bar"
+    blackboard.dudette = "Anna"
     return blackboard
 
 ##############################################################################
@@ -51,149 +68,98 @@ def create_blackboard():
 ##############################################################################
 
 
-def test_print_blackboard():
-    console.banner("Blackboard")
-    blackboard = create_blackboard()
-    print('{0}'.format(blackboard))
+def test_client_print_blackboard():
+    console.banner("Client Construction & Print")
+    with create_blackboards() as (foo, bar):
+        print('{0}'.format(foo))
+        print('{0}'.format(bar))
+    assert(True)
 
 
-def test_variable_exists():
-    console.banner("Check Existence of Variable")
-    create_blackboard()
-    tuples = []
-    tuples.append((py_trees.blackboard.CheckBlackboardVariable(
-        name="check_foo_exists", variable_name="foo"), Status.SUCCESS))
-    tuples.append((py_trees.blackboard.CheckBlackboardVariable(
-        name="check_bar_exists", variable_name="bar"), Status.FAILURE))
-    tuples.append((py_trees.blackboard.CheckBlackboardVariable(
-        name="check_nested_foo_exists", variable_name="foobar.foo"), Status.SUCCESS))
-    tuples.append((py_trees.blackboard.CheckBlackboardVariable(
-        name="check_nested_bar_exists", variable_name="foobar.bar"), Status.FAILURE))
-    for b, unused in tuples:
-        b.tick_once()
-    for b, asserted_result in tuples:
-        print("%s: %s [%s]" % (b.name, b.status, asserted_result))
-        assert(b.status == asserted_result)
+def test_bad_name_exception():
+    console.banner("Bad Name Exception")
+    with nose.tools.assert_raises_regexp(TypeError, "str"):
+        print("Expecting a TypeError with substring 'str'")
+        unused_blackboard = py_trees.blackboard.Blackboard(name=5)
 
 
-def test_expected_value():
-    console.banner("Check Expected Value")
-    create_blackboard()
-    tuples = []
-    tuples.append((py_trees.blackboard.CheckBlackboardVariable(
-        name="check_foo_equals_bar", variable_name="foo", expected_value="bar"), Status.SUCCESS))
-    tuples.append((py_trees.blackboard.CheckBlackboardVariable(
-        name="check_foo_equals_foo", variable_name="foo", expected_value="foo"), Status.FAILURE))
-    tuples.append((py_trees.blackboard.CheckBlackboardVariable(
-        name="check_bar_equals_bar", variable_name="bar", expected_value="bar"), Status.FAILURE))
-    tuples.append((py_trees.blackboard.CheckBlackboardVariable(
-        name="check_bar_equals_foo", variable_name="bar", expected_value="foo"), Status.FAILURE))
-    tuples.append((py_trees.blackboard.CheckBlackboardVariable(
-        name="check_nested_foo_equals_bar", variable_name="foobar.foo", expected_value="bar"),
-        Status.SUCCESS))
-    tuples.append((py_trees.blackboard.CheckBlackboardVariable(
-        name="check_nested_foo_equals_foo", variable_name="foobar.foo", expected_value="foo"),
-        Status.FAILURE))
-    for b, unused in tuples:
-        b.tick_once()
-    for b, asserted_result in tuples:
-        print("{0}: {1} [{2}]".format(b.name, b.status, asserted_result))
-        assert(b.status == asserted_result)
+def test_bad_uuid_exception():
+    console.banner("Bad UUID Exception")
+    with nose.tools.assert_raises_regexp(TypeError, "UUID"):
+        print("Expecting a TypeError with substring 'UUID'")
+        unused_blackboard = py_trees.blackboard.Blackboard(unique_identifier=5)
 
 
-def test_expected_value_inverted():
-    console.banner("heck Not Expected Value")
-    create_blackboard()
-
-    tuples = []
-    tuples.append((py_trees.blackboard.CheckBlackboardVariable(
-        name="check_foo_not_equals_bar", variable_name="foo", expected_value="bar",
-        comparison_operator=operator.ne), Status.FAILURE))
-    tuples.append((py_trees.blackboard.CheckBlackboardVariable(
-        name="check_foo_not_equals_foo", variable_name="foo", expected_value="foo",
-        comparison_operator=operator.ne), Status.SUCCESS))
-    tuples.append((py_trees.blackboard.CheckBlackboardVariable(
-        name="check_bar_not_equals_bar", variable_name="bar", expected_value="bar",
-        comparison_operator=operator.ne), Status.FAILURE))
-    tuples.append((py_trees.blackboard.CheckBlackboardVariable(
-        name="check_bar_not_equals_foo", variable_name="bar", expected_value="foo",
-        comparison_operator=operator.ne), Status.FAILURE))
-    tuples.append((py_trees.blackboard.CheckBlackboardVariable(
-        name="check_nested_foo_not_equals_bar", variable_name="foobar.foo", expected_value="bar",
-        comparison_operator=operator.ne), Status.FAILURE))
-    tuples.append((py_trees.blackboard.CheckBlackboardVariable(
-        name="check_nested_foo_not_equals_foo", variable_name="foobar.foo", expected_value="foo",
-        comparison_operator=operator.ne), Status.SUCCESS))
-    for b, unused in tuples:
-        b.tick_once()
-    for b, asserted_result in tuples:
-        print("%s: %s [%s]" % (b.name, b.status, asserted_result))
-        assert(b.status == asserted_result)
+def test_duplicate_uuid_exception():
+    console.banner("Duplicate UUID Exception")
+    unique_identifier = uuid.uuid4()
+    unused_one = py_trees.blackboard.Blackboard(unique_identifier=unique_identifier)
+    with nose.tools.assert_raises_regexp(ValueError, "already been registered"):
+        print("Expecting a ValueError with substring 'already been registered'")
+        unused_two = py_trees.blackboard.Blackboard(unique_identifier=unique_identifier)
 
 
-def test_wait_for_blackboard_variable():
-    console.banner("Wait for Blackboard Variable")
-    create_blackboard()
-
-    tuples = []
-    tuples.append((py_trees.blackboard.WaitForBlackboardVariable(
-        name="check_foo_exists", variable_name="foo"), Status.SUCCESS))
-    tuples.append((py_trees.blackboard.WaitForBlackboardVariable(
-        name="check_bar_exists", variable_name="bar"), Status.RUNNING))
-    tuples.append((py_trees.blackboard.WaitForBlackboardVariable(
-        name="check_nested_foo_exists", variable_name="foobar.foo"), Status.SUCCESS))
-    tuples.append((py_trees.blackboard.WaitForBlackboardVariable(
-        name="check_nested_bar_exists", variable_name="foobar.bar"), Status.RUNNING))
-    tuples.append((py_trees.blackboard.WaitForBlackboardVariable(
-        name="check_foo_equals_bar", variable_name="foo", expected_value="bar"), Status.SUCCESS))
-    tuples.append((py_trees.blackboard.WaitForBlackboardVariable(
-        name="check_foo_equals_foo", variable_name="foo", expected_value="foo"), Status.RUNNING))
-    tuples.append((py_trees.blackboard.WaitForBlackboardVariable(
-        name="check_bar_equals_bar", variable_name="bar", expected_value="bar"), Status.RUNNING))
-    tuples.append((py_trees.blackboard.WaitForBlackboardVariable(
-        name="check_bar_equals_foo", variable_name="bar", expected_value="foo"), Status.RUNNING))
-    tuples.append((py_trees.blackboard.WaitForBlackboardVariable(
-        name="check_nested_foo_equals_bar", variable_name="foobar.foo", expected_value="bar"),
-        Status.SUCCESS))
-    tuples.append((py_trees.blackboard.WaitForBlackboardVariable(
-        name="check_nested_foo_equals_foo", variable_name="foobar.foo", expected_value="foo"),
-        Status.RUNNING))
-    for b, unused in tuples:
-        b.tick_once()
-    for b, asserted_result in tuples:
-        print("%s: %s [%s]" % (b.name, b.status, asserted_result))
-        assert(b.status == asserted_result)
+def test_key_filters():
+    console.banner("Key Accessors")
+    with create_blackboards() as (foo, bar):
+        no_of_keys = len(Blackboard.keys())
+        print("# Registered keys: {} [{}]".format(no_of_keys, 4))
+        assert(no_of_keys == 4)
+        no_of_keys = len(Blackboard.keys_filtered_by_regex("dud"))
+        print("# Keys by regex 'dud': {} [{}]".format(no_of_keys, 2))
+        assert(no_of_keys == 2)
+        no_of_keys = len(Blackboard.keys_filtered_by_clients({foo.unique_identifier}))
+        print("# Keys by id [foo.id] {} [{}]".format(no_of_keys, 3))
+        assert(no_of_keys == 3)
+        no_of_keys = len(Blackboard.keys_filtered_by_clients({bar.unique_identifier}))
+        print("# Keys by id [bar.id] {} [{}]".format(no_of_keys, 3))
+        assert(no_of_keys == 3)
+        no_of_keys = len(Blackboard.keys_filtered_by_clients({foo.unique_identifier, bar.unique_identifier}))
+        print("# Keys by id [foo.id, bar.id] {} [{}]".format(no_of_keys, 4))
+        assert(no_of_keys == 4)
+        # show the convenience list -> set helper is ok
+        no_of_keys = len(Blackboard.keys_filtered_by_clients([foo.unique_identifier]))
+        print("# Can pass in a list instead of a set: True")
+        assert(no_of_keys == 3)
 
 
-def test_clear_blackboard_variable():
-    console.banner("Clear Blackboard Variable")
-    blackboard = create_blackboard()
-    blackboard.foo = "bar"
-    clear_foo = py_trees.blackboard.ClearBlackboardVariable(name="Clear Foo", variable_name="foo")
-    clear_bar = py_trees.blackboard.ClearBlackboardVariable(name="Clear Bar", variable_name="bar")
-    print("%s" % blackboard)
-    print(" - Assert blackboard has attribute 'foo'")
-    assert(hasattr(blackboard, "foo"))
-    print(" - Clearing 'foo'")
-    clear_foo.tick_once()
-    print(" - Assert blackboard does not have attribute 'foo'")
-    assert(not hasattr(blackboard, "foo"))
-    print(" - Clearing 'bar'")
-    clear_bar.tick_once()
-    print(" - Asserting nothing wierd happened")
-    assert(not hasattr(blackboard, "foo"))
-
-
-def test_set_blackboard_variable():
-    console.banner("Set Blackboard Variable")
-    blackboard = create_blackboard()
-    set_foo = py_trees.blackboard.SetBlackboardVariable(
-        name="Set Foo", variable_name="foo", variable_value="bar")
-    print(" - Set 'foo'")
-    set_foo.tick_once()
-    print("\n%s" % blackboard)
-    print(" - Assert blackboard.foo='bar'")
-    assert(hasattr(blackboard, "foo"))
-    assert(blackboard.foo == "bar")
-    print(" - Assert set_foo.status == SUCCESS")
-    assert(set_foo.status == Status.SUCCESS)
+def test_activity_stream():
+    console.banner("Activity Stream")
+    Blackboard.enable_activity_stream(100)
+    blackboard = Blackboard(
+        name="Client",
+        read={"foo", "dude"},
+        write={"spaghetti"}
+    )
+    try:
+        unused = blackboard.dude
+    except KeyError:  # READ_FAILED
+        pass
+    try:
+        unused = blackboard.dudette
+    except AttributeError:  # READ_ACCESS DENIED
+        pass
+    try:
+        blackboard.dudette = "Jane"
+    except AttributeError:  # WRITE_ACCESS DENIED
+        pass
+    blackboard.spaghetti = {"type": "Carbonara", "quantity": 1}  # INITIALISED
+    blackboard.spaghetti = {"type": "Gnocchi", "quantity": 2}  # WRITE
+    try:
+        # NO_OVERWRITE
+        blackboard.set("spaghetti", {"type": "Bolognese", "quantity": 3}, overwrite=False)
+    except AttributeError:
+        pass
+    blackboard.unset("spaghetti")  # UNSET
+    print(py_trees.display.unicode_blackboard_activity_stream())
+    expected_types = [
+        py_trees.blackboard.ActivityType.READ_FAILED,
+        py_trees.blackboard.ActivityType.READ_DENIED,
+        py_trees.blackboard.ActivityType.WRITE_DENIED,
+        py_trees.blackboard.ActivityType.INITIALISED,
+        py_trees.blackboard.ActivityType.WRITE,
+        py_trees.blackboard.ActivityType.NO_OVERWRITE,
+        py_trees.blackboard.ActivityType.UNSET,
+    ]
+    for item, expected in zip(Blackboard.activity_stream.data, expected_types):
+        assert(item.activity_type == expected)

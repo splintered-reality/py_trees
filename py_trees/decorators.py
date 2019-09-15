@@ -197,7 +197,11 @@ class StatusToBlackboard(Decorator):
     ):
         super().__init__(name=name, child=child)
         self.blackboard_variable_name = variable_name
-        self.blackboard = blackboard.Blackboard()
+        self.blackboard = blackboard.Blackboard(
+            name=self.name,
+            unique_identifier=self.id,
+            write={variable_name}
+        )
 
     def update(self):
         """

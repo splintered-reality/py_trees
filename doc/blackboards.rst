@@ -3,9 +3,9 @@
 Blackboards
 ===========
 
-.. automodule:: py_trees.blackboard2
+.. automodule:: py_trees.blackboard
     :noindex:
 
-.. autoclass:: py_trees.blackboard2.Blackboard
+.. autoclass:: py_trees.blackboard.Blackboard
     :noindex:
 

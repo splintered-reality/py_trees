@@ -24,7 +24,7 @@ import typing
 import uuid
 
 from . import behaviour
-from . import blackboard2
+from . import blackboard
 from . import common
 from . import composites
 from . import console
@@ -453,9 +453,9 @@ def dot_tree(
     add_children_and_edges(root, root.name, visibility_level, collapse_decorators)
 
     def add_blackboard_nodes():
-        data = blackboard2.Blackboard.storage
-        metadata = blackboard2.Blackboard.metadata
-        for key in blackboard2.Blackboard.keys():
+        data = blackboard.Blackboard.storage
+        metadata = blackboard.Blackboard.metadata
+        for key in blackboard.Blackboard.keys():
             try:
                 value = utilities.truncate(str(data[key]), 20)
                 label = key + ": " + "{}".format(value)
@@ -612,7 +612,7 @@ def _generate_text_blackboard(
             for client_uuid in client_uuids:
                 metastring = prefix + '{0}'.format(
                     utilities.truncate(
-                        blackboard2.Blackboard.clients[client_uuid].name, 11
+                        blackboard.Blackboard.clients[client_uuid].name, 11
                     )
                 )
                 metastring += ' ('
@@ -645,26 +645,27 @@ def _generate_text_blackboard(
                     indent=text_indent,
                     key_width=key_width)
 
-    blackboard_metadata = blackboard2.Blackboard.metadata if display_only_key_metadata else None
+    blackboard_metadata = blackboard.Blackboard.metadata if display_only_key_metadata else None
 
     if key_filter:
         if type(key_filter) == list:
             key_filter = set(key_filter)
-        all_keys = blackboard2.Blackboard.keys() & key_filter
+        all_keys = blackboard.Blackboard.keys() & key_filter
     elif regex_filter:
-        all_keys = blackboard2.Blackboard.keys_filtered_by_regex(regex_filter)
+        all_keys = blackboard.Blackboard.keys_filtered_by_regex(regex_filter)
     elif client_filter:
-        all_keys = blackboard2.Blackboard.keys_filtered_by_clients(client_filter)
+        all_keys = blackboard.Blackboard.keys_filtered_by_clients(client_filter)
     else:
-        all_keys = blackboard2.Blackboard.keys()
+        all_keys = blackboard.Blackboard.keys()
     blackboard_storage = {}
     for key in all_keys:
         try:
-            blackboard_storage[key] = blackboard2.Blackboard.storage[key]
+            blackboard_storage[key] = blackboard.Blackboard.storage[key]
         except KeyError:
             blackboard_storage[key] = "-"
 
-    s = console.green + symbols['space'] * indent + "Blackboard\n" + console.reset
+    title = "Clients" if display_only_key_metadata else "Data"
+    s = console.green + symbols['space'] * indent + "Blackboard {}\n".format(title) + console.reset
     if key_filter:
         s += symbols['space'] * (indent + 2) + "Filter: '{}'\n".format(key_filter)
     elif regex_filter:
@@ -760,17 +761,17 @@ def unicode_blackboard_activity_stream(
     """
     symbols = unicode_symbols if console.has_unicode() else ascii_symbols
     space = symbols['space']
-    s = console.green + space * indent + "Activity Stream\n" + console.reset
-    if blackboard2.Blackboard.activity_stream is not None:
+    s = console.green + space * indent + "Blackboard Activity Stream\n" + console.reset
+    if blackboard.Blackboard.activity_stream is not None:
         key_width = 0
         client_width = 0
-        for item in blackboard2.Blackboard.activity_stream.data:
+        for item in blackboard.Blackboard.activity_stream.data:
             key_width = len(item.key) if len(item.key) > key_width else key_width
             client_width = len(item.client_name) if len(item.client_name) > client_width else client_width
         client_width = min(client_width, 20)
         type_width = len("NO_OVERWRITE")
         value_width = 80 - key_width - 3 - type_width - 3 - client_width - 3
-        for item in blackboard2.Blackboard.activity_stream.data:
+        for item in blackboard.Blackboard.activity_stream.data:
             s += console.cyan + space * (4 + indent)
             s += "{0: <{1}}:".format(item.key, key_width + 1) + space
             s += console.yellow
@@ -779,37 +780,37 @@ def unicode_blackboard_activity_stream(
             s += "{0: <{1}}".format(
                 utilities.truncate(item.client_name, client_width), client_width) + space
             s += "|" + space
-            if item.activity_type == blackboard2.ActivityType.READ:
+            if item.activity_type == blackboard.ActivityType.READ:
                 s += symbols["left_arrow"] + space + "{}\n".format(
                     utilities.truncate(str(item.current_value), value_width)
                 )
-            elif item.activity_type == blackboard2.ActivityType.WRITE:
+            elif item.activity_type == blackboard.ActivityType.WRITE:
                 s += console.green
                 s += symbols["right_arrow"] + space
                 s += "{}\n".format(
                     utilities.truncate(str(item.current_value), value_width)
                 )
-            elif item.activity_type == blackboard2.ActivityType.READ_DENIED:
+            elif item.activity_type == blackboard.ActivityType.READ_DENIED:
                 s += console.red
                 s += console.multiplication_x + space
                 s += "variable grants no access to this client\n"
-            elif item.activity_type == blackboard2.ActivityType.WRITE_DENIED:
+            elif item.activity_type == blackboard.ActivityType.WRITE_DENIED:
                 s += console.red
                 s += console.multiplication_x + space
                 s += "variable grants no access to this client\n"
-            elif item.activity_type == blackboard2.ActivityType.READ_FAILED:
+            elif item.activity_type == blackboard.ActivityType.READ_FAILED:
                 s += console.red
                 s += console.multiplication_x + space
                 s += "variable does not yet exist\n"
-            elif item.activity_type == blackboard2.ActivityType.NO_OVERWRITE:
+            elif item.activity_type == blackboard.ActivityType.NO_OVERWRITE:
                 s += console.yellow
                 s += console.forbidden_circle + space
                 s += "{}\n".format(
                     utilities.truncate(str(item.current_value), value_width)
                 )
-            elif item.activity_type == blackboard2.ActivityType.UNSET:
+            elif item.activity_type == blackboard.ActivityType.UNSET:
                 s += "\n"
-            elif item.activity_type == blackboard2.ActivityType.INITIALISED:
+            elif item.activity_type == blackboard.ActivityType.INITIALISED:
                 s += console.green
                 s += symbols["right_arrow"] + space
                 s += "{}\n".format(
