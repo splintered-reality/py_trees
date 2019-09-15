@@ -15,7 +15,6 @@ import py_trees
 import py_trees.console as console
 
 from py_trees.blackboard import Blackboard
-from aptsources.sourceslist import uniq
 
 ##############################################################################
 # Helpers
