@@ -92,17 +92,6 @@ def pre_tick_handler(behaviour_tree):
     print("\n--------- Run %s ---------\n" % behaviour_tree.count)
 
 
-def post_tick_handler(snapshot_visitor, behaviour_tree):
-    """
-    Prints an ascii tree with the current snapshot status.
-    """
-    print("\n" + py_trees.display.unicode_tree(
-        root=behaviour_tree.root,
-        visited=snapshot_visitor.visited,
-        previously_visited=snapshot_visitor.visited)
-    )
-
-
 def create_tree():
     every_n_success = py_trees.behaviours.SuccessEveryN("EveryN", 5)
     sequence = py_trees.composites.Sequence(name="Sequence")
@@ -147,9 +136,7 @@ def main():
     behaviour_tree = py_trees.trees.BehaviourTree(tree)
     behaviour_tree.add_pre_tick_handler(pre_tick_handler)
     behaviour_tree.visitors.append(py_trees.visitors.DebugVisitor())
-    snapshot_visitor = py_trees.visitors.SnapshotVisitor()
-    behaviour_tree.add_post_tick_handler(functools.partial(post_tick_handler, snapshot_visitor))
-    behaviour_tree.visitors.append(snapshot_visitor)
+    behaviour_tree.visitors.append(py_trees.visitors.DisplaySnapshotVisitor())
     behaviour_tree.setup(timeout=15)
 
     ####################

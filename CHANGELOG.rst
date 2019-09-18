@@ -4,6 +4,17 @@ Release Notes
 Forthcoming
 -----------
 
+1.3.x (2019-??-??)
+------------------
+
+**Breaking API**
+
+* [visitors] collapsed ``SnapshotVisitor`` and ``WindsOfChangeVisitor`` functionality, `#228 <https://github.com/splintered-reality/py_trees/pull/228>`_
+
+**New Features**
+
+* [visitors] new ``DisplaySnapshotVisitor`` to simplify collection/printing the tree to console, `#228 <https://github.com/splintered-reality/py_trees/pull/228>`_
+
 1.2.2 (2019-08-06)
 ------------------
 * [trees] standalone ``setup()`` method with timer for use on unmanaged trees, `#198 <https://github.com/splintered-reality/py_trees/pull/198>`_
