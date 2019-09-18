@@ -15,6 +15,10 @@ Forthcoming
 
 * [visitors] new ``DisplaySnapshotVisitor`` to simplify collection/printing the tree to console, `#228 <https://github.com/splintered-reality/py_trees/pull/228>`_
 
+**Bugfixes**
+
+* [infra] only require test html reports on circle ci builds (saves a dependency requirement), `#229 <https://github.com/splintered-reality/py_trees/pull/229>`_
+
 1.2.2 (2019-08-06)
 ------------------
 * [trees] standalone ``setup()`` method with timer for use on unmanaged trees, `#198 <https://github.com/splintered-reality/py_trees/pull/198>`_
