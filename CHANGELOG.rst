@@ -17,7 +17,7 @@ Forthcoming
 
 **Bugfixes**
 
-* [infra] only require test html reports on circle ci builds (saves a dependency requirement)
+* [infra] only require test html reports on circle ci builds (saves a dependency requirement), `#229 <https://github.com/splintered-reality/py_trees/pull/229>`_
 
 1.2.2 (2019-08-06)
 ------------------
