@@ -47,6 +47,7 @@ implementation either embraces or does not.
 # Imports
 ##############################################################################
 
+import copy
 import enum
 import re
 import operator
@@ -76,17 +77,17 @@ class ActivityType(enum.Enum):
     READ = "READ"
     """Read from the blackboard"""
     INITIALISED = "INITIALISED"
-    """Initialised value on the blackboard"""
+    """Initialised a key-value pair on the blackboard"""
     WRITE = "WRITE"
     """Wrote to the blackboard."""
-    READ_FAILED = "READ_FAILED"
-    """Tried to read a key that does not yet exist on the blackboard."""
-    READ_DENIED = "READ_DENIED"
-    """Client was denied access to read a key."""
-    WRITE_DENIED = "WRITE_DENIED"
-    """Client was denied access to write a key."""
+    ACCESSED = "ACCESSED"
+    """Key accessed, either for reading, or modification of the value's internal attributes (e.g. foo.bar)."""
+    ACCESS_DENIED = "ACCESS_DENIED"
+    """Client did not have access to read/write a key."""
+    NO_KEY = "NO_KEY"
+    """Tried to access a key that does not yet exist on the blackboard."""
     NO_OVERWRITE = "NO_OVERWRITE"
-    """Variable already exists and a no-overwrite request was respected."""
+    """Tried to write but variable already exists and a no-overwrite request was respected."""
     UNSET = "UNSET"
     """Key was removed from the blackboard"""
 
@@ -303,7 +304,7 @@ class Blackboard(object):
         if name not in super().__getattribute__("write"):
             if Blackboard.activity_stream is not None:
                 Blackboard.activity_stream.push(
-                    self._generate_activity_item(name, ActivityType.WRITE_DENIED)
+                    self._generate_activity_item(name, ActivityType.ACCESS_DENIED)
                 )
             raise AttributeError("client '{}' does not have write access to '{}'".format(self.name, name))
         if Blackboard.activity_stream is not None:
@@ -335,27 +336,38 @@ class Blackboard(object):
             AttributeError: if the client does not have read access to the variable
             KeyError: if the variable does not yet exist on the blackboard
         """
-        # print("__getattr__ [{}]".format(name))
-        try:
-            if name not in super().__getattribute__("read"):
-                if Blackboard.activity_stream is not None:
-                    Blackboard.activity_stream.push(
-                        self._generate_activity_item(name, ActivityType.READ_DENIED)
-                    )
-                raise AttributeError("client '{}' does not have read access to '{}'".format(self.name, name))
+        print("__getattr__ [{}]".format(name))
+        if name not in (super().__getattribute__("read") | super().__getattribute__("write")):
             if Blackboard.activity_stream is not None:
                 Blackboard.activity_stream.push(
-                    self._generate_activity_item(
-                        key=name,
-                        activity_type=ActivityType.READ,
-                        current_value=Blackboard.storage[name],
-                    )
+                    self._generate_activity_item(name, ActivityType.ACCESS_DENIED)
                 )
-            return Blackboard.storage[name]
+            raise AttributeError("client '{}' does not have read/write access to '{}'".format(self.name, name))
+        try:
+            if name in super().__getattribute__("write"):
+                if Blackboard.activity_stream is not None:
+                    Blackboard.activity_stream.push(
+                        self._generate_activity_item(
+                            key=name,
+                            activity_type=ActivityType.ACCESSED,
+                            current_value=Blackboard.storage[name],
+                        )
+                    )
+                return Blackboard.storage[name]
+            if name in super().__getattribute__("read"):
+                if Blackboard.activity_stream is not None:
+                    Blackboard.activity_stream.push(
+                        self._generate_activity_item(
+                            key=name,
+                            activity_type=ActivityType.ACCESSED,
+                            current_value=Blackboard.storage[name],
+                        )
+                    )
+                return copy.deepcopy(Blackboard.storage[name])
         except KeyError as e:
             if Blackboard.activity_stream is not None:
                 Blackboard.activity_stream.push(
-                    self._generate_activity_item(name, ActivityType.READ_FAILED)
+                    self._generate_activity_item(name, ActivityType.NO_KEY)
                 )
             raise KeyError("variable '{}' does not yet exist on the blackboard".format(name)) from e
 
@@ -385,7 +397,7 @@ class Blackboard(object):
         if name not in super().__getattribute__("write"):
             if Blackboard.activity_stream is not None:
                 Blackboard.activity_stream.push(
-                    self._generate_activity_item(name, ActivityType.WRITE_DENIED)
+                    self._generate_activity_item(name, ActivityType.ACCESS_DENIED)
                 )
             raise AttributeError("client does not have write access to '{}'".format(name))
         if not overwrite:

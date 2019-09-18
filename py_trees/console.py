@@ -87,6 +87,7 @@ check_mark = u'\u2713'
 multiplication_x = u'\u2715'
 left_arrow = u'\u2190'  # u'\u2190'
 right_arrow = u'\u2192'
+left_right_arrow = u'\u2194'
 forbidden_circle = u'\u29B8'
 
 ##############################################################################

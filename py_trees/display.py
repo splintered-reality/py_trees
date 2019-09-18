@@ -39,6 +39,7 @@ unicode_symbols = {
     'space': ' ',
     'left_arrow': console.left_arrow,
     'right_arrow': console.right_arrow,
+    'left_right_arrow': console.left_right_arrow,
     'bold': console.bold,
     'bold_reset': console.reset,
     composites.Sequence: u'[-]',
@@ -57,6 +58,7 @@ ascii_symbols = {
     'space': ' ',
     'left_arrow': '<-',
     'right_arrow': '->',
+    'left_right_arrow': '<->',
     'bold': console.bold,
     'bold_reset': console.reset,
     composites.Sequence: "[-]",
@@ -72,6 +74,9 @@ ascii_symbols = {
 """Symbols for a non-unicode, non-escape sequence capable console."""
 xhtml_symbols = {
     'space': '<text>&#xa0;</text>',  # &nbsp; is not valid xhtml, see http://www.fileformat.info/info/unicode/char/00a0/index.htm
+    'left_arrow': '<text>&#x2190;</text>',
+    'right_arrow': '<text>&#x2192;</text>',
+    'left_right_arrow': '<text>&#x2194;</text>',
     'bold': '<b>',
     'bold_reset': '</b>',
     composites.Sequence: '<text>[-]</text>',
@@ -769,7 +774,7 @@ def unicode_blackboard_activity_stream(
             key_width = len(item.key) if len(item.key) > key_width else key_width
             client_width = len(item.client_name) if len(item.client_name) > client_width else client_width
         client_width = min(client_width, 20)
-        type_width = len("NO_OVERWRITE")
+        type_width = len("ACCESS_DENIED")
         value_width = 80 - key_width - 3 - type_width - 3 - client_width - 3
         for item in blackboard.Blackboard.activity_stream.data:
             s += console.cyan + space * (4 + indent)
@@ -790,18 +795,20 @@ def unicode_blackboard_activity_stream(
                 s += "{}\n".format(
                     utilities.truncate(str(item.current_value), value_width)
                 )
-            elif item.activity_type == blackboard.ActivityType.READ_DENIED:
+            elif item.activity_type == blackboard.ActivityType.ACCESSED:
+                s += console.yellow
+                s += symbols["left_right_arrow"] + space
+                s += "{}\n".format(
+                    utilities.truncate(str(item.current_value), value_width)
+                )
+            elif item.activity_type == blackboard.ActivityType.ACCESS_DENIED:
                 s += console.red
                 s += console.multiplication_x + space
-                s += "variable grants no access to this client\n"
-            elif item.activity_type == blackboard.ActivityType.WRITE_DENIED:
+                s += "client has no read/write access\n"
+            elif item.activity_type == blackboard.ActivityType.NO_KEY:
                 s += console.red
                 s += console.multiplication_x + space
-                s += "variable grants no access to this client\n"
-            elif item.activity_type == blackboard.ActivityType.READ_FAILED:
-                s += console.red
-                s += console.multiplication_x + space
-                s += "variable does not yet exist\n"
+                s += "key does not yet exist\n"
             elif item.activity_type == blackboard.ActivityType.NO_OVERWRITE:
                 s += console.yellow
                 s += console.forbidden_circle + space
