@@ -50,13 +50,9 @@ implementation either embraces or does not.
 import copy
 import enum
 import re
-import operator
 import typing
 import uuid
 
-from . import behaviour
-from . import behaviours
-from . import common
 from . import console
 
 ##############################################################################
@@ -336,7 +332,7 @@ class Blackboard(object):
             AttributeError: if the client does not have read access to the variable
             KeyError: if the variable does not yet exist on the blackboard
         """
-        print("__getattr__ [{}]".format(name))
+        # print("__getattr__ [{}]".format(name))
         if name not in (super().__getattribute__("read") | super().__getattribute__("write")):
             if Blackboard.activity_stream is not None:
                 Blackboard.activity_stream.push(
@@ -427,22 +423,20 @@ class Blackboard(object):
         """
         return getattr(self, name)
 
-    def unset(self, name: str):
+    def unset(self, key: str):
         """
-        For when you need to completely remove a blackboard variable,
-        this provides a convenient helper method. This is particularly
-        useful when you wish to 'erase' the blackboard between unit test
-        methods.
+        For when you need to completely remove a blackboard variable (key-value pair),
+        this provides a convenient helper method.
 
         Args:
-            name: name of the variable to clear
+            key: name of the variable to remove
 
         Returns:
-            True if the key , False otherwise
+            True if the variable was removed, False if it was already absent
         """
         if Blackboard.activity_stream is not None:
             Blackboard.activity_stream.push(
-                self._generate_activity_item(name, ActivityType.UNSET)
+                self._generate_activity_item(key, ActivityType.UNSET)
             )
         # Three means of handling a non-existent key - 1) raising a KeyError, 2) catching
         # the KeyError and passing, 3) catch the KeyError and return True/False.
@@ -450,7 +444,7 @@ class Blackboard(object):
         # Option 2) hides information - bad
         # Option 3) no extra code necessary and information is there if desired
         try:
-            del Blackboard.storage[name]
+            del Blackboard.storage[key]
             return True
         except KeyError:
             return False
@@ -581,362 +575,3 @@ class Blackboard(object):
         """
         Blackboard.activity_stream = None
 
-##############################################################################
-# Blackboard Behaviours
-##############################################################################
-
-
-class ClearBlackboardVariable(behaviours.Success):
-    """
-    Clear the specified value from the blackboard.
-
-    Args:
-        name (:obj:`str`): name of the behaviour
-        variable_name (:obj:`str`): name of the variable to clear
-    """
-    def __init__(self,
-                 name="Clear Blackboard Variable",
-                 variable_name="dummy",
-                 ):
-        super(ClearBlackboardVariable, self).__init__(name)
-        self.variable_name = variable_name
-        self.blackboard = Blackboard(
-            name=self.name,
-            write={self.variable_name}
-        )
-
-    def initialise(self):
-        """
-        Delete the variable from the blackboard.
-        """
-        self.blackboard.unset(self.variable_name)
-
-
-class SetBlackboardVariable(behaviours.Success):
-    """
-    Set the specified variable on the blackboard.
-    Usually we set variables from inside other behaviours, but can
-    be convenient to set them from a behaviour of their own sometimes so you
-    don't get blackboard logic mixed up with more atomic behaviours.
-
-    Args:
-        name (:obj:`str`): name of the behaviour
-        variable_name (:obj:`str`): name of the variable to set
-        variable_value (:obj:`any`): value of the variable to set
-
-    .. todo:: overwrite option, leading to possible failure/success logic.
-    """
-    def __init__(self,
-                 name="Set Blackboard Variable",
-                 variable_name="dummy",
-                 variable_value=None
-                 ):
-        """
-        :param name: name of the behaviour
-        :param variable_name: name of the variable to set
-        :param value_name: value of the variable to set
-        """
-        super(SetBlackboardVariable, self).__init__(name)
-        self.variable_name = variable_name
-        self.variable_value = variable_value
-        self.blackboard = Blackboard(
-            name=self.name,
-            unique_identifier=self.id,
-            write={self.variable_name}
-        )
-
-    def initialise(self):
-        self.blackboard.set(self.variable_name, self.variable_value, overwrite=True)
-
-
-class CheckBlackboardVariable(behaviour.Behaviour):
-    """
-    Check the blackboard to see if it has a specific variable
-    and optionally whether that variable has an expected value.
-    It is a binary behaviour, always updating it's status
-    with either :data:`~py_trees.common.Status.SUCCESS` or
-    :data:`~py_trees.common.Status.FAILURE` at each tick.
-    """
-    def __init__(self,
-                 name,
-                 variable_name="dummy",
-                 expected_value=None,
-                 comparison_operator=operator.eq,
-                 clearing_policy=common.ClearingPolicy.ON_INITIALISE,
-                 debug_feedback_message=False
-                 ):
-        """
-        Initialise the behaviour. It's worth noting that there are a few
-        combinations to the configuration that serve different use cases.
-
-        Args:
-            name (:obj:`str`): name of the behaviour
-            variable_name (:obj:`str`): name of the variable to set
-            expected_value (:obj:`any`): expected value to find (if `None`, check for existence only)
-            comparison_operator (:obj:`func`): one from the python `operator module`_
-            clearing_policy (:obj:`any`): when to clear the match result, see :py:class:`~py_trees.common.ClearingPolicy`
-            debug_feedback_message (:obj:`bool`): provide additional detail in behaviour feedback messages for debugging
-
-        .. tip::
-            If just checking for existence, use the default argument
-            on construction, `expected_value=None`.
-
-        .. tip::
-            There are times when you want to get the expected match once and then save
-            that result thereafter. For example, to flag once a system has reached a
-            subgoal. Use the :data:`~py_trees.common.ClearingPolicy.NEVER` flag to do this.
-        """
-        super(CheckBlackboardVariable, self).__init__(name)
-
-        name_components = variable_name.split('.')
-        self.variable_name = name_components[0]
-        self.nested_name = '.'.join(name_components[1:])  # empty string if no other parts
-
-        self.blackboard = Blackboard(
-            name=self.name,
-            unique_identifier=self.id,
-            read={self.variable_name}
-        )
-        self.expected_value = expected_value
-        self.comparison_operator = comparison_operator
-        self.matching_result = None
-        self.clearing_policy = clearing_policy
-        self.debug_feedback_message = debug_feedback_message
-
-    def initialise(self):
-        """
-        Clears the internally stored message ready for a new run
-        if ``old_data_is_valid`` wasn't set.
-        """
-        self.logger.debug("%s.initialise()" % self.__class__.__name__)
-        if self.clearing_policy == common.ClearingPolicy.ON_INITIALISE:
-            self.matching_result = None
-
-    def update(self):
-        """
-        Check for existence, or the appropriate match on the expected value.
-
-        Returns:
-             :class:`~py_trees.common.Status`: :data:`~py_trees.common.Status.FAILURE` if not matched, :data:`~py_trees.common.Status.SUCCESS` otherwise.
-        """
-        self.logger.debug("%s.update()" % self.__class__.__name__)
-        if self.matching_result is not None:
-            return self.matching_result
-
-        result = None
-
-        try:
-            # value = check_attr(self.blackboard)
-            value = self.blackboard.get(self.variable_name)
-            if self.nested_name:
-                try:
-                    value = operator.attrgetter(self.nested_name)(value)
-                except AttributeError:
-                    raise KeyError()
-            # if existence check required only
-            if self.expected_value is None:
-                self.feedback_message = "'%s' exists on the blackboard (as required)" % self.variable_name
-                result = common.Status.SUCCESS
-        except KeyError:
-            name = "{}.{}".format(self.variable_name, self.nested_name) if self.nested_name else self.variable_name
-            self.feedback_message = 'blackboard variable {0} did not exist'.format(name)
-            result = common.Status.FAILURE
-
-        if result is None:
-            # expected value matching
-            # value = getattr(self.blackboard, self.variable_name)
-            success = self.comparison_operator(value, self.expected_value)
-
-            if success:
-                if self.debug_feedback_message:  # costly
-                    self.feedback_message = "'%s' comparison succeeded [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
-                else:
-                    self.feedback_message = "'%s' comparison succeeded" % (self.variable_name)
-                result = common.Status.SUCCESS
-            else:
-                if self.debug_feedback_message:  # costly
-                    self.feedback_message = "'%s' comparison failed [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
-                else:
-                    self.feedback_message = "'%s' comparison failed" % (self.variable_name)
-                result = common.Status.FAILURE
-
-        if result == common.Status.SUCCESS and self.clearing_policy == common.ClearingPolicy.ON_SUCCESS:
-            self.matching_result = None
-        else:
-            self.matching_result = result
-        return result
-
-    def terminate(self, new_status):
-        """
-        Always discard the matching result if it was invalidated by a parent or
-        higher priority interrupt.
-        """
-        self.logger.debug("%s.terminate(%s)" % (self.__class__.__name__, "%s->%s" % (self.status, new_status) if self.status != new_status else "%s" % new_status))
-        if new_status == common.Status.INVALID:
-            self.matching_result = None
-
-
-class WaitForBlackboardVariable(behaviour.Behaviour):
-    """
-    Check the blackboard to see if it has a specific variable
-    and optionally whether that variable has a specific value.
-    Unlike :py:class:`~py_trees.blackboard.CheckBlackboardVariable`
-    this class will be in a :data:`~py_trees.common.Status.RUNNING` state until the variable appears
-    and (optionally) is matched.
-
-    Args:
-        name (:obj:`str`): name of the behaviour
-        variable_name (:obj:`str`): name of the variable to check
-        expected_value (:obj:`any`): expected value to find (if `None`, check for existence only)
-        comparison_operator (:obj:`func`): one from the python `operator module`_
-        clearing_policy (:obj:`any`): when to clear the match result, see :py:class:`~py_trees.common.ClearingPolicy`
-
-    .. tip::
-        There are times when you want to get the expected match once and then save
-        that result thereafter. For example, to flag once a system has reached a
-        subgoal. Use the :data:`~py_trees.common.ClearingPolicy.NEVER` flag to do this.
-
-    .. seealso:: :class:`~py_trees.blackboard.CheckBlackboardVariable`
-
-    .. include:: weblinks.rst
-    """
-    def __init__(self,
-                 name,
-                 variable_name="dummy",
-                 expected_value=None,
-                 comparison_operator=operator.eq,
-                 clearing_policy=common.ClearingPolicy.ON_INITIALISE
-                 ):
-        super(WaitForBlackboardVariable, self).__init__(name)
-        name_components = variable_name.split('.')
-        self.variable_name = name_components[0]
-        self.nested_name = '.'.join(name_components[1:])  # empty string if no other parts
-        self.blackboard = Blackboard(
-            name=self.name,
-            unique_identifier=self.id,
-            read={self.variable_name}
-        )
-        self.expected_value = expected_value
-        self.comparison_operator = comparison_operator
-        self.clearing_policy = clearing_policy
-        self.matching_result = None
-
-    def initialise(self):
-        """
-        Clears the internally stored message ready for a new run
-        if ``old_data_is_valid`` wasn't set.
-        """
-        self.logger.debug("%s.initialise()" % self.__class__.__name__)
-        if self.clearing_policy == common.ClearingPolicy.ON_INITIALISE:
-            self.matching_result = None
-        self.check_attr = operator.attrgetter(self.variable_name)
-
-    def update(self):
-        """
-        Check for existence, or the appropriate match on the expected value.
-
-        Returns:
-             :class:`~py_trees.common.Status`: :data:`~py_trees.common.Status.FAILURE` if not matched, :data:`~py_trees.common.Status.SUCCESS` otherwise.
-        """
-        self.logger.debug("%s.update()" % self.__class__.__name__)
-        if self.matching_result is not None:
-            return self.matching_result
-
-        # existence failure check
-        try:
-            value = self.blackboard.get(self.variable_name)
-            if self.nested_name:
-                try:
-                    value = operator.attrgetter(self.nested_name)(value)
-                except AttributeError:
-                    raise KeyError()  # type raised when no variable exists, caught below
-            # if existence check required only
-            if self.expected_value is None:
-                self.feedback_message = "'%s' exists on the blackboard (as required)" % self.variable_name
-                result = common.Status.SUCCESS
-            # expected value matching
-            else:
-                success = self.comparison_operator(value, self.expected_value)
-                if success:
-                    self.feedback_message = "'%s' comparison succeeded [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
-                    result = common.Status.SUCCESS
-                else:
-                    self.feedback_message = "'%s' comparison failed [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
-                    result = common.Status.RUNNING
-        except KeyError:
-            name = "{}.{}".format(self.variable_name, self.nested_name) if self.nested_name else self.variable_name
-            self.feedback_message = 'variable {0} did not exist'.format(name)
-            result = common.Status.RUNNING
-
-        if result == common.Status.SUCCESS and self.clearing_policy == common.ClearingPolicy.ON_SUCCESS:
-            self.matching_result = None
-        elif result != common.Status.RUNNING:  # will fall in here if clearing ON_INITIALISE, or NEVER
-            self.matching_result = result
-        return result
-
-    def terminate(self, new_status):
-        """
-        Always discard the matching result if it was invalidated by a parent or
-        higher priority interrupt.
-        """
-        self.logger.debug("%s.terminate(%s)" % (self.__class__.__name__, "%s->%s" % (self.status, new_status) if self.status != new_status else "%s" % new_status))
-        if new_status == common.Status.INVALID:
-            self.matching_result = None
-
-
-##############################################################################
-# Main
-##############################################################################
-
-
-def main():
-    bb2 = Blackboard(
-        name="Bob's Board",
-        unique_identifier=uuid.uuid4(),
-        read=['foo', 'bar'],
-        write=['foo', 'dude'],
-    )
-    bb2.foo = "more bar"
-    bb2.dude = "bob"
-    unused_myfoo = bb2.foo
-    bb2.introspect_blackboard()
-    print("-----------------")
-    print("{}".format(str(bb2)))
-    print("-----------------")
-    print(console.green + "Exceptions\n" + console.reset)
-    try:
-        print(console.green + "  get(<key>): doesn't exist on the blackboard" + console.reset)
-        print("bar: {}".format(bb2.get('bar')))
-    except Exception as e:
-        print("    {}: {}".format(type(e), str(e)))
-    try:
-        print(console.green + "  get(<key>): doesn't have read access..." + console.reset)
-        print("dude: {}".format(bb2.get('dude')))
-    except Exception as e:
-        print("    {}: {}".format(type(e), str(e)))
-    try:
-        print(console.green + "  .<key>: doesn't exist on the blackboard" + console.reset)
-        print("bar: {}".format(bb2.bar))
-    except Exception as e:
-        print("    {}: {}".format(type(e), str(e)))
-    try:
-        print(console.green + "  .<key>: doesn't have read access..." + console.reset)
-        print("dude: {}".format(bb2.dude))
-    except Exception as e:
-        print("    {}: {}".format(type(e), str(e)))
-    # set
-    try:
-        print(console.green + "  set(<key>): doesn't have write permissions" + console.reset)
-        bb2.set('foobar', 3)
-    except Exception as e:
-        print("    {}: {}".format(type(e), str(e)))
-    try:
-        print(console.green + "  set(<key>): could not overwrite existing variable" + console.reset)
-        bb2.set('foo', 3, overwrite=False)
-    except Exception as e:
-        print("    {}: {}".format(type(e), str(e)))
-    try:
-        print(console.green + "  .<key>=...: doesn't have write permissions" + console.reset)
-        bb2.foobar = 3
-    except Exception as e:
-        print("    {}: {}".format(type(e), str(e)))

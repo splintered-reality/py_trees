@@ -75,14 +75,14 @@ def pick_up_where_you_left_off(
     root = composites.Sequence(name=name)
     for task in tasks:
         task_selector = composites.Selector(name="Do or Don't")
-        task_guard = blackboard.CheckBlackboardVariable(
+        task_guard = behaviours.CheckBlackboardVariable(
             name="Done?",
             variable_name=task.name.lower().replace(" ", "_") + "_done",
             expected_value=True,
             clearing_policy=common.ClearingPolicy.NEVER
         )
         sequence = composites.Sequence(name="Worker")
-        mark_task_done = blackboard.SetBlackboardVariable(
+        mark_task_done = behaviours.SetBlackboardVariable(
             name="Mark\n" + task.name.lower().replace(" ", "_") + "_done",
             variable_name=task.name.lower().replace(" ", "_") + "_done",
             variable_value=True
@@ -91,7 +91,7 @@ def pick_up_where_you_left_off(
         task_selector.add_children([task_guard, sequence])
         root.add_child(task_selector)
     for task in tasks:
-        clear_mark_done = blackboard.ClearBlackboardVariable(
+        clear_mark_done = behaviours.ClearBlackboardVariable(
             name="Clear\n" + task.name.lower().replace(" ", "_") + "_done",
             variable_name=task.name.lower().replace(" ", "_") + "_done"
         )

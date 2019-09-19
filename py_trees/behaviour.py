@@ -17,12 +17,12 @@ from this class.
 ##############################################################################
 
 import re
+import typing
 import uuid
 
-from . import logging
+from . import blackboard
 from . import common
-
-from .common import Status
+from . import logging
 
 ##############################################################################
 # Behaviour BluePrint
@@ -36,7 +36,9 @@ class Behaviour(object):
     subclass this class.
 
     Args:
-        name (:obj:`str`, optional): the behaviour name, defaults to auto-generating from the class name
+        name: the behaviour name, defaults to auto-generating from the class name
+        blackboard_read: blackboard keys this behaviour has permission to read
+        blackboard_write: blackboard keys this behaviour has permission to write
 
     Raises:
         TypeError: if the provided name is not a string
@@ -44,6 +46,7 @@ class Behaviour(object):
     Attributes:
         id (:class:`uuid.UUID`): automagically generated unique identifier for the behaviour
         name (:obj:`str`): the behaviour name
+        blackboard (:class:`~py_trees.blackboard.Blackboard`): key-value store for sharing data between behaviours
         status (:class:`~py_trees.common.Status`): the behaviour status (:data:`~py_trees.common.Status.INVALID`, :data:`~py_trees.common.Status.RUNNING`, :data:`~py_trees.common.Status.FAILURE`, :data:`~py_trees.common.Status.SUCCESS`)
         parent (:class:`~py_trees.behaviour.Behaviour`): a :class:`~py_trees.composites.Composite` instance if nested in a tree, otherwise None
         children ([:class:`~py_trees.behaviour.Behaviour`]): empty for regular behaviours, populated for composites
@@ -57,15 +60,24 @@ class Behaviour(object):
        * :ref:`The Action Behaviour Demo <py-trees-demo-action-behaviour-program>`
 
     """
-    def __init__(self, name=common.Name.AUTO_GENERATED):
+    def __init__(self,
+                 name: str=common.Name.AUTO_GENERATED,
+                 blackboard_read: typing.Set[str]=set(),
+                 blackboard_write: typing.Set[str]=set()):
         if not name or name == common.Name.AUTO_GENERATED:
             name = self.__class__.__name__
         if not isinstance(name, str):
             raise TypeError("a behaviour name should be a string, but you passed in {}".format(type(name)))
         self.id = uuid.uuid4()  # used to uniquely identify this node (helps with removing children from a tree)
         self.name = name
+        self.blackboard = blackboard.Blackboard(
+            name=self.name,
+            unique_identifier=self.id,
+            read=blackboard_read,
+            write=blackboard_write
+        )
         self.qualified_name = "{}/{}".format(self.__class__.__qualname__, self.name)  # convenience
-        self.status = Status.INVALID
+        self.status = common.Status.INVALID
         self.iterator = self.tick()
         self.parent = None  # will get set if a behaviour is added to a composite
         self.children = []  # only set by composite behaviours
@@ -167,7 +179,7 @@ class Behaviour(object):
         .. tip:: This method should be almost instantaneous and non-blocking
 
         """
-        return Status.INVALID
+        return common.Status.INVALID
 
     ############################################
     # User Methods
@@ -242,7 +254,7 @@ class Behaviour(object):
         Returns:
             :class:`~py_trees.behaviour.Behaviour` or :obj:`None`: child behaviour, itself or :obj:`None` if its status is :data:`~py_trees.common.Status.INVALID`
         """
-        return self if self.status != Status.INVALID else None
+        return self if self.status != common.Status.INVALID else None
 
     ############################################
     # Advanced Methods
@@ -286,14 +298,14 @@ class Behaviour(object):
 
         """
         self.logger.debug("%s.tick()" % (self.__class__.__name__))
-        if self.status != Status.RUNNING:
+        if self.status != common.Status.RUNNING:
             self.initialise()
         # don't set self.status yet, terminate() may need to check what the current state is first
         new_status = self.update()
-        if new_status not in list(Status):
+        if new_status not in list(common.Status):
             self.logger.error("A behaviour returned an invalid status, setting to INVALID [%s][%s]" % (new_status, self.name))
-            new_status = Status.INVALID
-        if new_status != Status.RUNNING:
+            new_status = common.Status.INVALID
+        if new_status != common.Status.RUNNING:
             self.stop(new_status)
         self.status = new_status
         yield self
@@ -322,7 +334,7 @@ class Behaviour(object):
                 yield child
         yield self
 
-    def stop(self, new_status=Status.INVALID):
+    def stop(self, new_status=common.Status.INVALID):
         """
         Args:
             new_status (:class:`~py_trees.common.Status`): the behaviour is transitioning to this new status
