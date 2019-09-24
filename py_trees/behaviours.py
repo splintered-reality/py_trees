@@ -377,7 +377,7 @@ class SetBlackboardVariable(behaviour.Behaviour):
             return common.Status.FAILURE
 
 
-class ExpectBlackboardVariableValue(behaviour.Behaviour):
+class CheckBlackboardVariableValue(behaviour.Behaviour):
     """
     Check the blackboard to see if it has a specific variable
     and whether that variable has an expected value.
@@ -400,7 +400,7 @@ class ExpectBlackboardVariableValue(behaviour.Behaviour):
     """
     def __init__(self,
                  key: str,
-                 expected_value: typing.Any=None,
+                 expected_value: typing.Any,
                  comparison_operator: typing.Any=operator.eq,
                  clearing_policy: common.ClearingPolicy=common.ClearingPolicy.ON_INITIALISE,
                  name: str=common.Name.AUTO_GENERATED,
@@ -411,7 +411,7 @@ class ExpectBlackboardVariableValue(behaviour.Behaviour):
 
         super().__init__(
             name=name,
-            blackboard_read={key}
+            blackboard_read={self.variable_name}
         )
 
         self.expected_value = expected_value
