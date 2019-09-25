@@ -379,8 +379,8 @@ class SetBlackboardVariable(behaviour.Behaviour):
 
 class CheckBlackboardVariableValue(behaviour.Behaviour):
     """
-    Inspect a blackboard variable and if it exists, check to
-    determine if it's value matches the specified expected value.
+    Inspect a blackboard variable and if it exists, check that it
+    meets the specified criteria (given by operation type and expected value).
     This is non-blocking, so it will always tick with
     :data:`~py_trees.common.Status.SUCCESS` or
     :data:`~py_trees.common.Status.FAILURE`.
@@ -403,14 +403,6 @@ class CheckBlackboardVariableValue(behaviour.Behaviour):
     .. tip::
         The python `operator module`_ includes many useful comparison operations.
 
-    .. tip::
-        To match on every tick, use the
-        :data:`py_trees.common.ClearingPolicy.ON_INITIALISE`
-        policy. To match once and retain the result, use the
-        :data:`py_trees.common.ClearingPolicy.NEVER` policy. The
-        :data:`py_trees.common.ClearingPolicy.ON_SUCCESS` policy is not used
-        for this behaviour.
-
     .. _`operator module`: https://docs.python.org/2/library/operator.html
     """
     def __init__(
@@ -418,11 +410,8 @@ class CheckBlackboardVariableValue(behaviour.Behaviour):
             variable_name: str,
             expected_value: typing.Any,
             comparison_operator: typing.Callable[[typing.Any, typing.Any], bool]=operator.eq,
-            clearing_policy: common.ClearingPolicy=common.ClearingPolicy.ON_INITIALISE,
             name: str=common.Name.AUTO_GENERATED
     ):
-        if clearing_policy == common.ClearingPolicy.ON_SUCCESS:
-            raise ValueError("ON_SUCCESS is not an applicable clearing policy for this behaviour")
         self.variable_name = variable_name
         name_components = variable_name.split('.')
         self.key = name_components[0]
@@ -436,16 +425,6 @@ class CheckBlackboardVariableValue(behaviour.Behaviour):
         self.expected_value = expected_value
         self.comparison_operator = comparison_operator
         self.matching_result = None
-        self.clearing_policy = clearing_policy
-
-    def initialise(self):
-        """
-        Clears the internally stored message ready for a new run
-        if ``old_data_is_valid`` wasn't set.
-        """
-        self.logger.debug("%s.initialise()" % self.__class__.__name__)
-        if self.clearing_policy == common.ClearingPolicy.ON_INITIALISE:
-            self.matching_result = None
 
     def update(self):
         """
@@ -455,68 +434,43 @@ class CheckBlackboardVariableValue(behaviour.Behaviour):
              :class:`~py_trees.common.Status`: :data:`~py_trees.common.Status.FAILURE` if not matched, :data:`~py_trees.common.Status.SUCCESS` otherwise.
         """
         self.logger.debug("%s.update()" % self.__class__.__name__)
-        if self.matching_result is not None:
-            return self.matching_result
-
+        self.matching_result = None
         try:
-            value = self.blackboard.get(self.variable_name)
-            if self.nested_name:
+            value = self.blackboard.get(self.key)
+            if self.key_attributes:
                 try:
-                    value = operator.attrgetter(self.nested_name)(value)
+                    value = operator.attrgetter(self.key_attributes)(value)
                 except AttributeError:
-                    raise KeyError()
-            # if existence check required only
-            if self.expected_value is None:
-                self.feedback_message = "'%s' exists on the blackboard (as required)" % self.variable_name
-                self.matching_result = common.Status.SUCCESS
+                    self.feedback_message = 'blackboard key-value pair exists, but the value does not have the requested nested attributes [{}]'.format(self.variable_name)
+                    self.matching_result = common.Status.FAILURE
         except KeyError:
-            name = "{}.{}".format(self.variable_name, self.nested_name) if self.nested_name else self.variable_name
-            self.feedback_message = 'blackboard variable {0} did not exist'.format(name)
+            self.feedback_message = "key '{}' does not yet exist on the blackboard".format(self.variable_name)
             self.matching_result = common.Status.FAILURE
 
         if self.matching_result is None:
-            # expected value matching
-            # value = getattr(self.blackboard, self.variable_name)
             success = self.comparison_operator(value, self.expected_value)
 
             if success:
-                if self.debug_feedback_message:  # costly
-                    self.feedback_message = "'%s' comparison succeeded [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
-                else:
-                    self.feedback_message = "'%s' comparison succeeded" % (self.variable_name)
+                self.feedback_message = "'%s' comparison succeeded [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
                 self.matching_result = common.Status.SUCCESS
             else:
-                if self.debug_feedback_message:  # costly
-                    self.feedback_message = "'%s' comparison failed [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
-                else:
-                    self.feedback_message = "'%s' comparison failed" % (self.variable_name)
+                self.feedback_message = "'%s' comparison failed [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
                 self.matching_result = common.Status.FAILURE
         return self.matching_result
 
 
-class WaitForBlackboardVariable2(behaviour.Behaviour):
+class WaitForBlackboardVariableValue(behaviour.Behaviour):
     """
-    It will return 
-    and optionally whether that variable has a specific value.
-    Unlike :py:class:`~py_trees.blackboard.CheckBlackboardVariable`
-    this class will be in a :data:`~py_trees.common.Status.RUNNING` state until the variable appears
-    and (optionally) is matched.
+    Inspect a blackboard variable and if it exists, check that it
+    meets the specified criteria (given by operation type and expected value).
+    This is blocking, so it will always tick with
+    :data:`~py_trees.common.Status.SUCCESS` or
+    :data:`~py_trees.common.Status.RUNNING`.
 
-    Args:
-        variable_name (:obj:`str`): name of the variable to check
-        expected_value (:obj:`any`): expected value to find (if `None`, check for existence only)
-        comparison_operator (:obj:`func`): one from the python `operator module`_
-        name: name of the behaviour
-        clearing_policy: when to clear the match result, see :py:class:`~py_trees.common.ClearingPolicy`
+    .. seealso::
 
-    .. tip::
-        There are times when you want to get the expected match once and then save
-        that result thereafter. For example, to flag once a system has reached a
-        subgoal. Use the :data:`~py_trees.common.ClearingPolicy.NEVER` flag to do this.
-
-    .. seealso:: :class:`~py_trees.blackboard.CheckBlackboardVariable`
-
-    .. include:: weblinks.rst
+       :class:`~py_trees.behaviours.CheckBlackboardVariableValue` for
+       the non-blocking counterpart to this behaviour.
     """
     def __init__(self,
                  variable_name: str,
