@@ -379,39 +379,58 @@ class SetBlackboardVariable(behaviour.Behaviour):
 
 class CheckBlackboardVariableValue(behaviour.Behaviour):
     """
-    Check the blackboard to see if it has a specific variable
-    and whether that variable has an expected value.
+    Inspect a blackboard variable and if it exists, check to
+    determine if it's value matches the specified expected value.
     This is non-blocking, so it will always tick with
     :data:`~py_trees.common.Status.SUCCESS` or
-    :data:`~py_trees.common.Status.FAILURE` depending on the
-    result of the expection check.
+    :data:`~py_trees.common.Status.FAILURE`.
 
     Args:
-        key: name of the variable to check
-        expected_value: expected value to find (if `None`, check for existence only)
-        comparison_operator: one from the python `operator module`_
-        clearing_policy: when to clear the match result, see :py:class:`~py_trees.common.ClearingPolicy`
+        variable_name: name of the variable to check, may be nested, e.g. battery.percentage
+        expected_value: expected value
+        comparison_operator: any method that can compare the value against the expected value
+        clearing_policy: when to clear the result of a comparison operation
         name: name of the behaviour
 
+    Raises:
+        ValueError if :data:`py_trees.common.ClearingPolicy.ON_SUCCESS` was specified
+           for the clearing policy
+
+    .. note::
+        If the variable does not yet exist on the blackboard, the behaviour will
+        return with status :data:`~py_trees.common.Status.FAILURE`.
+
     .. tip::
-        There are times when you want to get the expected match once and then save
-        that result thereafter. For example, to flag once a system has reached a
-        subgoal. Use the :data:`~py_trees.common.ClearingPolicy.NEVER` flag to do this.
+        The python `operator module`_ includes many useful comparison operations.
+
+    .. tip::
+        To match on every tick, use the
+        :data:`py_trees.common.ClearingPolicy.ON_INITIALISE`
+        policy. To match once and retain the result, use the
+        :data:`py_trees.common.ClearingPolicy.NEVER` policy. The
+        :data:`py_trees.common.ClearingPolicy.ON_SUCCESS` policy is not used
+        for this behaviour.
+
+    .. _`operator module`: https://docs.python.org/2/library/operator.html
     """
-    def __init__(self,
-                 key: str,
-                 expected_value: typing.Any,
-                 comparison_operator: typing.Any=operator.eq,
-                 clearing_policy: common.ClearingPolicy=common.ClearingPolicy.ON_INITIALISE,
-                 name: str=common.Name.AUTO_GENERATED,
-                 ):
-        name_components = key.split('.')
-        self.variable_name = name_components[0]
-        self.nested_name = '.'.join(name_components[1:])  # empty string if no other parts
+    def __init__(
+            self,
+            variable_name: str,
+            expected_value: typing.Any,
+            comparison_operator: typing.Callable[[typing.Any, typing.Any], bool]=operator.eq,
+            clearing_policy: common.ClearingPolicy=common.ClearingPolicy.ON_INITIALISE,
+            name: str=common.Name.AUTO_GENERATED
+    ):
+        if clearing_policy == common.ClearingPolicy.ON_SUCCESS:
+            raise ValueError("ON_SUCCESS is not an applicable clearing policy for this behaviour")
+        self.variable_name = variable_name
+        name_components = variable_name.split('.')
+        self.key = name_components[0]
+        self.key_attributes = '.'.join(name_components[1:])  # empty string if no other parts
 
         super().__init__(
             name=name,
-            blackboard_read={self.variable_name}
+            blackboard_read={self.key}
         )
 
         self.expected_value = expected_value
@@ -439,10 +458,7 @@ class CheckBlackboardVariableValue(behaviour.Behaviour):
         if self.matching_result is not None:
             return self.matching_result
 
-        result = None
-
         try:
-            # value = check_attr(self.blackboard)
             value = self.blackboard.get(self.variable_name)
             if self.nested_name:
                 try:
@@ -452,13 +468,13 @@ class CheckBlackboardVariableValue(behaviour.Behaviour):
             # if existence check required only
             if self.expected_value is None:
                 self.feedback_message = "'%s' exists on the blackboard (as required)" % self.variable_name
-                result = common.Status.SUCCESS
+                self.matching_result = common.Status.SUCCESS
         except KeyError:
             name = "{}.{}".format(self.variable_name, self.nested_name) if self.nested_name else self.variable_name
             self.feedback_message = 'blackboard variable {0} did not exist'.format(name)
-            result = common.Status.FAILURE
+            self.matching_result = common.Status.FAILURE
 
-        if result is None:
+        if self.matching_result is None:
             # expected value matching
             # value = getattr(self.blackboard, self.variable_name)
             success = self.comparison_operator(value, self.expected_value)
@@ -468,28 +484,14 @@ class CheckBlackboardVariableValue(behaviour.Behaviour):
                     self.feedback_message = "'%s' comparison succeeded [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
                 else:
                     self.feedback_message = "'%s' comparison succeeded" % (self.variable_name)
-                result = common.Status.SUCCESS
+                self.matching_result = common.Status.SUCCESS
             else:
                 if self.debug_feedback_message:  # costly
                     self.feedback_message = "'%s' comparison failed [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
                 else:
                     self.feedback_message = "'%s' comparison failed" % (self.variable_name)
-                result = common.Status.FAILURE
-
-        if result == common.Status.SUCCESS and self.clearing_policy == common.ClearingPolicy.ON_SUCCESS:
-            self.matching_result = None
-        else:
-            self.matching_result = result
-        return result
-
-    def terminate(self, new_status):
-        """
-        Always discard the matching result if it was invalidated by a parent or
-        higher priority interrupt.
-        """
-        self.logger.debug("%s.terminate(%s)" % (self.__class__.__name__, "%s->%s" % (self.status, new_status) if self.status != new_status else "%s" % new_status))
-        if new_status == common.Status.INVALID:
-            self.matching_result = None
+                self.matching_result = common.Status.FAILURE
+        return self.matching_result
 
 
 class WaitForBlackboardVariable2(behaviour.Behaviour):

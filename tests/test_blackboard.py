@@ -113,7 +113,20 @@ def test_nested_read():
     with create_blackboards() as (foo, unused_bar):
         result = foo.motley.nested
         print("Read foo.motley.nested {} [{}]".format(result, "nested"))
-        assert(result, "nested")
+        assert(result == "nested")
+        result = foo.get('motley.nested')
+        print("Read foo.get('motley.nested') {} [{}]".format(result, "nested"))
+        assert(result == "nested")
+        with nose.tools.assert_raises_regexp(KeyError, "nested attributes"):
+            print("foo.get('motley.huzzah_not_here') ...")
+            print("Expecting a KeyError with substring 'nested attributes'")
+            foo.get('motley.huzzah_not_here')
+        foo.unset('motley')
+        with nose.tools.assert_raises_regexp(KeyError, "does not yet exist"):
+            print("foo.unset('motley')")
+            print("foo.get('motley.not_here') ...")
+            print("Expecting a KeyError with substring 'does not yet exist'")
+            foo.get('motley.not_here')
 
 
 def test_nested_write():
@@ -121,9 +134,23 @@ def test_nested_write():
     with create_blackboards() as (foo, bar):
         print("Write bar.motley.nested [{}]".format("overwritten"))
         bar.motley.nested = "overwritten"
-        result = foo.motley.nested
-        print("Read foo.motley.nested {} [{}]".format(result, "overwritten"))
-        assert(result, "overwritten")
+        print("  'foo.motley.nested' == {} [{}]".format("overwritten", foo.motley.nested))
+        assert(foo.motley.nested == "overwritten")
+        print("Write bar.set('motley.nested', {})".format("via_set_overwrite"))
+        bar.set('motley.nested', "via_set_overwrite")
+        print("  'foo.motley.nested' == {} [{}]".format("via_set_overwrite", foo.motley.nested))
+        assert(foo.motley.nested == "via_set_overwrite")
+        print("Write bar.set('motley.nested', '{}', overwrite=False)".format("try_to_overwrite"))
+        result = bar.set('motley.nested', "try_to_overwrite", overwrite=False)
+        print("  'result' == {} [{}]".format(False, result))
+        print("  'foo.motley.nested' == {} [{}]".format("via_set_overwrite", foo.motley.nested))
+        assert(foo.motley.nested == "via_set_overwrite")
+        with nose.tools.assert_raises_regexp(KeyError, "does not yet exist"):
+            print("bar.unset('motley')")
+            bar.unset('motley')
+            print("bar.set('motley.nested', 'on_unset') ...")
+            print("Expecting a KeyError with substring 'does not yet exist'")
+            bar.set('motley.nested', "on_unset")
 
 
 def test_key_filters():

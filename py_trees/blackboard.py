@@ -49,6 +49,7 @@ implementation either embraces or does not.
 
 import copy
 import enum
+import operator
 import re
 import typing
 import uuid
@@ -389,25 +390,34 @@ class Blackboard(object):
 
         Raises:
             AttributeError: if the client does not have write access to the variable
+            KeyError: if the variable does not yet exist on the blackboard
         """
-        if name not in super().__getattribute__("write"):
+        name_components = name.split('.')
+        key = name_components[0]
+        key_attributes = '.'.join(name_components[1:])
+        if key not in super().__getattribute__("write"):
             if Blackboard.activity_stream is not None:
                 Blackboard.activity_stream.push(
                     self._generate_activity_item(name, ActivityType.ACCESS_DENIED)
                 )
             raise AttributeError("client does not have write access to '{}'".format(name))
         if not overwrite:
-            if name in Blackboard.storage:
+            if key in Blackboard.storage:
                 if Blackboard.activity_stream is not None:
                     Blackboard.activity_stream.push(
                         self._generate_activity_item(
-                            key=name,
+                            key=key,
                             activity_type=ActivityType.NO_OVERWRITE,
                             current_value=Blackboard.storage[name])
                     )
                 return False
-        setattr(self, name, value)
-        return True
+        if not key_attributes:
+            setattr(self, name, value)
+            return True
+        else:
+            blackboard_object = getattr(self, key)
+            setattr(blackboard_object, key_attributes, value)
+            return True
 
     def get(self, name: str) -> typing.Any:
         """
@@ -415,13 +425,23 @@ class Blackboard(object):
         '.<name>').
 
         Args:
-            name: name of the variable to get
+            name: name of the variable to get, can be nested, e.g. battery.percentage
 
         Raises:
             AttributeError: if the client does not have read access to the variable
-            KeyError: if the variable does not yet exist on the blackboard
+            KeyError: if the variable or it's nested attributes do not yet exist on the blackboard
         """
-        return getattr(self, name)
+        # key attributes is an empty string if not a nested variable name
+        name_components = name.split('.')
+        key = name_components[0]
+        key_attributes = '.'.join(name_components[1:])
+        value = getattr(self, key)
+        if key_attributes:
+            try:
+                value = operator.attrgetter(key_attributes)(value)
+            except AttributeError:
+                raise KeyError("Key exists, but does not have the specified nested attributes [{}]".format(name))
+        return value
 
     def unset(self, key: str):
         """
