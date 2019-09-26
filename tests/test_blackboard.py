@@ -37,8 +37,8 @@ class create_blackboards(object):
         return (self.foo, self.bar)
 
     def __exit__(self, unused_type, unused_value, unused_traceback):
-        self.foo.unregister()
-        self.bar.unregister()
+        self.foo.unregister(clear=True)
+        self.bar.unregister(clear=True)
 
 
 def create_blackboard_foo():
@@ -61,7 +61,7 @@ def create_blackboard_bar():
     Create another blackboard client with a few variables.
     """
     blackboard = Blackboard(
-        name="foo",
+        name="bar",
         unique_identifier=uuid.uuid4(),
         read=['dude'],
         write=['bar', 'dudette', 'motley'],
@@ -106,6 +106,29 @@ def test_duplicate_uuid_exception():
     with nose.tools.assert_raises_regexp(ValueError, "already been registered"):
         print("Expecting a ValueError with substring 'already been registered'")
         unused_two = py_trees.blackboard.Blackboard(unique_identifier=unique_identifier)
+
+
+def test_delayed_register_key():
+    with create_blackboards() as (foo, bar):
+        with nose.tools.assert_raises_regexp(AttributeError, "does not have read/write access"):
+            print("Expecting Attribute Error with substring 'does not have read/write access'")
+            print(foo.other)
+        with nose.tools.assert_raises_regexp(AttributeError, "does not have write access"):
+            print("Expecting Attribute Error with substring 'does not have write access'")
+            foo.other = 1
+        print("register other for writing")
+        foo.register_key(key="other", write=True)
+        print(str(foo))
+        print("foo.other = 1")
+        foo.other = 1
+        print("Attempting to read 'other'...")
+        with nose.tools.assert_raises_regexp(AttributeError, "does not have read/write access"):
+            print("Expecting Attribute Error with substring 'does not have read/write access'")
+            unused_result = bar.other
+        print("register other for reading")
+        bar.register_key(key="other", read=True)
+        print(str(bar))
+        assert(bar.other == 1)
 
 
 def test_nested_read():
@@ -157,6 +180,7 @@ def test_key_filters():
     console.banner("Key Accessors")
     with create_blackboards() as (foo, bar):
         no_of_keys = len(Blackboard.keys())
+        print("{}".format(Blackboard.keys()))
         print("# Registered keys: {} [{}]".format(no_of_keys, 5))
         assert(no_of_keys == 5)
         no_of_keys = len(Blackboard.keys_filtered_by_regex("dud"))

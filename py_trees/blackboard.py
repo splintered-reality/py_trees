@@ -515,9 +515,10 @@ class Blackboard(object):
 
     def unregister(self, clear=True):
         """
-        Unregister this blackboard and if requested, clear key-value pairs if this
+        Unregister this blackboard client and if requested, clear key-value pairs if this
         client is the last user of those variables.
         """
+        print("Name: {}".format(self.name))
         for key in self.read:
             Blackboard.metadata[key].read.remove(super().__getattribute__("unique_identifier"))
         for key in self.write:
@@ -526,6 +527,23 @@ class Blackboard(object):
             for key in (set(self.read) | set(self.write)):
                 if not (set(Blackboard.metadata[key].read) | set(Blackboard.metadata[key].write)):
                     Blackboard.storage.pop(key, None)
+
+    def register_key(self, key: str, read: bool=False, write: bool=False):
+        """
+        Register a key on the blackboard to associate with this client.
+
+        Args:
+            key: key to register
+            read: permit/track read access
+            write: permit/track write access
+        """
+        Blackboard.metadata.setdefault(key, KeyMetaData())
+        if read:
+            super().__getattribute__("read").add(key)
+            Blackboard.metadata[key].read.add(super().__getattribute__("unique_identifier"))
+        if write:
+            super().__getattribute__("write").add(key)
+            Blackboard.metadata[key].write.add(super().__getattribute__("unique_identifier"))
 
     @staticmethod
     def keys() -> typing.Set[str]:
@@ -597,4 +615,3 @@ class Blackboard(object):
         Disable logging of activities on the blackboard
         """
         Blackboard.activity_stream = None
-
