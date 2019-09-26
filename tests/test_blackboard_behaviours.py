@@ -235,33 +235,70 @@ def test_check_variable_value():
         assert(b.status == asserted_result)
 
 
-def untest_expected_value_inverted():
-    console.banner("Check Not Expected Value")
-    create_blackboard()
-
+def test_check_variable_value_inverted():
+    console.banner("Check Variable Value Neq")
+    unused_client = create_blackboard()
     tuples = []
-    tuples.append((py_trees.behaviours.CheckBlackboardVariable(
+    print(py_trees.display.unicode_blackboard())
+    tuples.append((py_trees.behaviours.CheckBlackboardVariableValue(
         name="check_foo_not_equals_bar", variable_name="foo", expected_value="bar",
         comparison_operator=operator.ne), Status.FAILURE))
-    tuples.append((py_trees.behaviours.CheckBlackboardVariable(
+    tuples.append((py_trees.behaviours.CheckBlackboardVariableValue(
         name="check_foo_not_equals_foo", variable_name="foo", expected_value="foo",
         comparison_operator=operator.ne), Status.SUCCESS))
-    tuples.append((py_trees.behaviours.CheckBlackboardVariable(
-        name="check_bar_not_equals_bar", variable_name="bar", expected_value="bar",
+    tuples.append((py_trees.behaviours.CheckBlackboardVariableValue(
+        name="check_non_existant_bar_not_equals_bar", variable_name="bar", expected_value="bar",
         comparison_operator=operator.ne), Status.FAILURE))
-    tuples.append((py_trees.behaviours.CheckBlackboardVariable(
-        name="check_bar_not_equals_foo", variable_name="bar", expected_value="foo",
-        comparison_operator=operator.ne), Status.FAILURE))
-    tuples.append((py_trees.behaviours.CheckBlackboardVariable(
+    tuples.append((py_trees.behaviours.CheckBlackboardVariableValue(
         name="check_nested_foo_not_equals_bar", variable_name="nested.foo", expected_value="bar",
-        comparison_operator=operator.ne), Status.FAILURE))
-    tuples.append((py_trees.behaviours.CheckBlackboardVariable(
+        comparison_operator=operator.ne),
+        Status.FAILURE))
+    tuples.append((py_trees.behaviours.CheckBlackboardVariableValue(
         name="check_nested_foo_not_equals_foo", variable_name="nested.foo", expected_value="foo",
-        comparison_operator=operator.ne), Status.SUCCESS))
+        comparison_operator=operator.ne),
+        Status.SUCCESS))
     for b, unused in tuples:
         b.tick_once()
+        print("Feedback message {}".format(b.feedback_message))
+    print("")
+    assert_banner()
     for b, asserted_result in tuples:
-        print("%s: %s [%s]" % (b.name, b.status, asserted_result))
+        assert_details(
+            text=b.name,
+            expected=asserted_result,
+            result=b.status
+        )
+        assert(b.status == asserted_result)
+
+
+def test_wait_for_variable_value():
+    console.banner("Wait for Variable Value")
+    unused_client = create_blackboard()
+    tuples = []
+    print(py_trees.display.unicode_blackboard())
+    tuples.append((py_trees.behaviours.WaitForBlackboardVariableValue(
+        name="check_foo_equals_bar", variable_name="foo", expected_value="bar"), Status.SUCCESS))
+    tuples.append((py_trees.behaviours.WaitForBlackboardVariableValue(
+        name="check_foo_equals_foo", variable_name="foo", expected_value="foo"), Status.RUNNING))
+    tuples.append((py_trees.behaviours.WaitForBlackboardVariableValue(
+        name="check_non_existant_bar_equals_bar", variable_name="bar", expected_value="bar"), Status.RUNNING))
+    tuples.append((py_trees.behaviours.WaitForBlackboardVariableValue(
+        name="check_nested_foo_equals_bar", variable_name="nested.foo", expected_value="bar"),
+        Status.SUCCESS))
+    tuples.append((py_trees.behaviours.WaitForBlackboardVariableValue(
+        name="check_nested_foo_equals_foo", variable_name="nested.foo", expected_value="foo"),
+        Status.RUNNING))
+    for b, unused in tuples:
+        b.tick_once()
+        print("Feedback message {}".format(b.feedback_message))
+    print("")
+    assert_banner()
+    for b, asserted_result in tuples:
+        assert_details(
+            text=b.name,
+            expected=asserted_result,
+            result=b.status
+        )
         assert(b.status == asserted_result)
 
 
