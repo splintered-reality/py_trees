@@ -75,11 +75,10 @@ def pick_up_where_you_left_off(
     root = composites.Sequence(name=name)
     for task in tasks:
         task_selector = composites.Selector(name="Do or Don't")
-        task_guard = behaviours.CheckBlackboardVariable(
+        task_guard = behaviours.CheckBlackboardVariableValue(
             name="Done?",
             variable_name=task.name.lower().replace(" ", "_") + "_done",
-            expected_value=True,
-            clearing_policy=common.ClearingPolicy.NEVER
+            expected_value=True
         )
         sequence = composites.Sequence(name="Worker")
         mark_task_done = behaviours.SetBlackboardVariable(
@@ -91,9 +90,9 @@ def pick_up_where_you_left_off(
         task_selector.add_children([task_guard, sequence])
         root.add_child(task_selector)
     for task in tasks:
-        clear_mark_done = behaviours.ClearBlackboardVariable(
+        clear_mark_done = behaviours.UnsetBlackboardVariable(
             name="Clear\n" + task.name.lower().replace(" ", "_") + "_done",
-            variable_name=task.name.lower().replace(" ", "_") + "_done"
+            key=task.name.lower().replace(" ", "_") + "_done"
         )
         root.add_child(clear_mark_done)
     return root
@@ -168,11 +167,10 @@ def eternal_guard(
         )
         root.add_child(decorated_condition)
         guarded_tasks.add_child(
-            blackboard.CheckBlackboardVariable(
+            behaviours.CheckBlackboardVariableValue(
                 name="Abort on\n{}".format(condition.name),
                 variable_name=blackboard_variable_name,
-                expected_value=common.Status.FAILURE,
-                clearing_policy=common.ClearingPolicy.ON_INITIALISE
+                expected_value=common.Status.FAILURE
             )
         )
     guarded_tasks.add_child(subtree)
@@ -180,27 +178,28 @@ def eternal_guard(
     return root
 
 
-def oneshot(name="OneShot Idiom",
-            variable_name="oneshot",
-            behaviour=behaviours.Dummy(),  # dummy behaviour to enable dot rendering with py-trees-render
-            policy=common.OneShotPolicy.ON_SUCCESSFUL_COMPLETION):
+def oneshot(
+        variable_name: str="oneshot",
+        behaviour: behaviour.Behaviour=behaviours.Dummy(),  # dummy behaviour to enable dot rendering with py-trees-render
+        policy: common.OneShotPolicy=common.OneShotPolicy.ON_SUCCESSFUL_COMPLETION,
+        name: str=common.Name.AUTO_GENERATED):
     """
     Ensure that a particular pattern is executed through to
-    completion just once. Thereafter it will just rebound with success.
+    completion just once. Thereafter it will just rebound with the completion status.
 
     .. graphviz:: dot/oneshot.dot
 
     .. note::
 
-       Completion on :data:`~py_trees.common.Status.SUCCESS`||:data:`~py_trees.common.Status.FAILURE`
-       or on :data:`~py_trees.common.Status.SUCCESS` only (permits retries if it fails) is
-       determined by the policy.
+       Set the policy to configure the oneshot to keep trying if failing, or to abort
+       further attempts regardless of whether it finished with status
+       :data:`~py_trees.common.Status.SUCCESS`||:data:`~py_trees.common.Status.FAILURE`.
 
     Args:
-        name (:obj:`str`): the name to use for the oneshot root (selector)
-        variable_name (:obj:`str`): name for the flag used on the blackboard (ensure it is unique)
-        behaviour (:class:`~py_trees.behaviour.Behaviour`): single behaviour or composited subtree to oneshot
-        policy (:class:`~py_trees.common.OneShotPolicy`): policy determining when the oneshot should activate
+        variable_name: name for the variable used on the blackboard, may be nested
+        behaviour: single behaviour or composited subtree to oneshot
+        policy: execute just once regardless of success or failure, or keep trying if failing
+        name: the name to use for the oneshot root (selector)
 
     Returns:
         :class:`~py_trees.behaviour.Behaviour`: the root of the oneshot subtree
@@ -212,14 +211,12 @@ def oneshot(name="OneShot Idiom",
         name="Oneshot w/ Guard")
     check_not_done = decorators.Inverter(
         name="Not Completed?",
-        child=blackboard.CheckBlackboardVariable(
+        child=behaviours.CheckBlackboardVariableExists(
             name="Completed?",
-            variable_name=variable_name,
-            expected_value=None,
-            clearing_policy=common.ClearingPolicy.ON_INITIALISE
+            variable_name=variable_name
         )
     )
-    set_flag_on_success = blackboard.SetBlackboardVariable(
+    set_flag_on_success = behaviours.SetBlackboardVariable(
         name="Mark Done\n[SUCCESS]",
         variable_name=variable_name,
         variable_value=common.Status.SUCCESS
@@ -238,7 +235,7 @@ def oneshot(name="OneShot Idiom",
     else:  # ON_COMPLETION (SUCCESS || FAILURE)
         oneshot_handler = composites.Selector(name="Oneshot Handler")
         bookkeeping = composites.Sequence(name="Bookkeeping")
-        set_flag_on_failure = blackboard.SetBlackboardVariable(
+        set_flag_on_failure = behaviours.SetBlackboardVariable(
             name="Mark Done\n[FAILURE]",
             variable_name=variable_name,
             variable_value=common.Status.FAILURE
@@ -250,11 +247,10 @@ def oneshot(name="OneShot Idiom",
         oneshot_handler.add_children([sequence, bookkeeping])
         oneshot_with_guard.add_child(oneshot_handler)
 
-    oneshot_result = blackboard.CheckBlackboardVariable(
+    oneshot_result = behaviours.CheckBlackboardVariableValue(
         name="Oneshot Result",
         variable_name=variable_name,
         expected_value=common.Status.SUCCESS,
-        clearing_policy=common.ClearingPolicy.NEVER
     )
     subtree_root.add_children([oneshot_with_guard, oneshot_result])
     return subtree_root

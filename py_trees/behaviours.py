@@ -6,8 +6,6 @@
 ##############################################################################
 # Documentation
 ##############################################################################
-from gi.overrides.Gdk import name
-
 """
 A library of fundamental behaviours for use.
 """
@@ -234,16 +232,19 @@ class CheckBlackboardVariableExists(behaviour.Behaviour):
        the blocking counterpart to this behaviour.
 
     Args:
-        key: check for this key's existence on the blackboard
+        variable_name: name of the variable look for, may be nested, e.g. battery.percentage
         name: name of the behaviour
     """
     def __init__(
             self,
-            key: str,
+            variable_name: str,
             name: str=common.Name.AUTO_GENERATED
     ):
-        super().__init__(name=name, blackboard_read={key})
-        self.key = key
+        self.variable_name = variable_name
+        name_components = variable_name.split('.')
+        self.key = name_components[0]
+        self.key_attributes = '.'.join(name_components[1:])  # empty string if no other parts
+        super().__init__(name=name, blackboard_read={self.key})
 
     def update(self) -> common.Status:
         """
@@ -254,15 +255,15 @@ class CheckBlackboardVariableExists(behaviour.Behaviour):
         """
         self.logger.debug("%s.update()" % self.__class__.__name__)
         try:
-            unused_value = self.blackboard.get(self.key)
-            self.feedback_message = "key '{}' found".format(self.key)
+            unused_value = self.blackboard.get(self.variable_name)
+            self.feedback_message = "variable '{}' found".format(self.variable_name)
             return common.Status.SUCCESS
         except KeyError:
-            self.feedback_message = "key '{}' not found".format(self.key)
+            self.feedback_message = "variable '{}' not found".format(self.variable_name)
             return common.Status.FAILURE
 
 
-class WaitForBlackboardVariable(behaviour.Behaviour):
+class WaitForBlackboardVariable(CheckBlackboardVariableExists):
     """
     Wait for the blackboard variable to become available on the blackboard.
     This is blocking, so it will tick with
@@ -275,16 +276,15 @@ class WaitForBlackboardVariable(behaviour.Behaviour):
        the non-blocking counterpart to this behaviour.
 
     Args:
-        key: check for this key's existence on the blackboard
+        variable_name: name of the variable to wait for, may be nested, e.g. battery.percentage
         name: name of the behaviour
     """
     def __init__(
             self,
-            key: str,
+            variable_name: str,
             name: str=common.Name.AUTO_GENERATED
     ):
-        super().__init__(name=name, blackboard_read={key})
-        self.key = key
+        super().__init__(name=name, variable_name=variable_name)
 
     def update(self) -> common.Status:
         """
@@ -294,11 +294,11 @@ class WaitForBlackboardVariable(behaviour.Behaviour):
              :data:`~py_trees.common.Status.SUCCESS` if key found, :data:`~py_trees.common.Status.RUNNING` otherwise.
         """
         self.logger.debug("%s.update()" % self.__class__.__name__)
-        try:
-            unused_value = self.blackboard.get(self.key)
+        new_status = super().update()
+        if new_status == common.Status.SUCCESS:
             self.feedback_message = "'{}' found".format(self.key)
             return common.Status.SUCCESS
-        except KeyError:
+        elif new_status == common.Status.FAILURE:
             self.feedback_message = "waiting for key '{}'...".format(self.key)
             return common.Status.RUNNING
 
@@ -341,28 +341,27 @@ class SetBlackboardVariable(behaviour.Behaviour):
     Set the specified variable on the blackboard.
 
     Args:
-        key: name of the variable to set
-        value: value of the variable to set
+        variable_name: name of the variable to set, may be nested, e.g. battery.percentage
+        variable_value: value of the variable to set
         overwrite: when False, do not set the variable if it already exists
         name: name of the behaviour
     """
-    def __init__(self,
-                 key: str,
-                 value: typing.Any,
-                 overwrite: bool = True,
-                 name: str=common.Name.AUTO_GENERATED,
-                 ):
-        """
-        :param name: name of the behaviour
-        :param variable_name: name of the variable to set
-        :param value_name: value of the variable to set
-        """
+    def __init__(
+            self,
+            variable_name: str,
+            variable_value: typing.Any,
+            overwrite: bool = True,
+            name: str=common.Name.AUTO_GENERATED,
+    ):
+        self.variable_name = variable_name
+        name_components = variable_name.split('.')
+        self.key = name_components[0]
+        self.key_attributes = '.'.join(name_components[1:])  # empty string if no other parts
         super().__init__(
             name=name,
-            blackboard_write={key}
+            blackboard_write={self.key}
         )
-        self.key = key
-        self.value = value
+        self.variable_value = variable_value
         self.overwrite = overwrite
 
     def update(self) -> common.Status:
@@ -372,7 +371,11 @@ class SetBlackboardVariable(behaviour.Behaviour):
         Returns:
              :data:`~py_trees.common.Status.FAILURE` if no overwrite requested and the variable exists,  :data:`~py_trees.common.Status.SUCCESS` otherwise
         """
-        if self.blackboard.set(self.key, self.value, overwrite=self.overwrite):
+        if self.blackboard.set(
+            self.variable_name,
+            self.variable_value,
+            overwrite=self.overwrite
+        ):
             return common.Status.SUCCESS
         else:
             return common.Status.FAILURE

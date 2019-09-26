@@ -81,8 +81,8 @@ import time
 from typing import Callable, Union  # noqa
 
 from . import behaviour
-from . import blackboard
 from . import common
+import typing
 
 ##############################################################################
 # Classes
@@ -94,14 +94,22 @@ class Decorator(behaviour.Behaviour):
     A decorator is responsible for handling the lifecycle of a single
     child beneath
     """
-    def __init__(self, child, name=common.Name.AUTO_GENERATED):
+    def __init__(
+            self,
+            child: behaviour.Behaviour,
+            name=common.Name.AUTO_GENERATED,
+            blackboard_read: typing.Set[str]=set(),
+            blackboard_write: typing.Set[str]=set()
+    ):
         """
         Common initialisation steps for a decorator - type checks and
         name construction (if None is given).
 
         Args:
-            name (:obj:`str`): the decorator name
-            child (:class:`~py_trees.behaviour.Behaviour`): the child to be decorated
+            child: the child to be decorated
+            name: the decorator name
+            blackboard_read: blackboard keys this behaviour has permission to read
+            blackboard_write: blackboard keys this behaviour has permission to write
 
         Raises:
             TypeError: if the child is not an instance of :class:`~py_trees.behaviour.Behaviour`
@@ -110,7 +118,11 @@ class Decorator(behaviour.Behaviour):
         if not isinstance(child, behaviour.Behaviour):
             raise TypeError("A decorator's child must be an instance of py_trees.behaviours.Behaviour")
         # Initialise
-        super(Decorator, self).__init__(name=name)
+        super().__init__(
+            name=name,
+            blackboard_read=blackboard_read,
+            blackboard_write=blackboard_write
+        )
         self.children.append(child)
         # Give a convenient alias
         self.decorated = self.children[0]
@@ -185,7 +197,7 @@ class StatusToBlackboard(Decorator):
 
     Args:
         child: the child behaviour or subtree
-        variable_name: name of the variable to set
+        variable_name: name of the blackboard variable, may be nested, e.g. foo.status
         name: the decorator name
     """
     def __init__(
@@ -195,13 +207,12 @@ class StatusToBlackboard(Decorator):
             variable_name: str,
             name: str=common.Name.AUTO_GENERATED,
     ):
-        super().__init__(name=name, child=child)
-        self.blackboard_variable_name = variable_name
-        self.blackboard = blackboard.Blackboard(
-            name=self.name,
-            unique_identifier=self.id,
-            write={variable_name}
+        super().__init__(
+            child=child,
+            name=name,
+            blackboard_write={variable_name}
         )
+        self.variable_name = variable_name
 
     def update(self):
         """
@@ -210,7 +221,7 @@ class StatusToBlackboard(Decorator):
         Returns: the decorated child's status
         """
         self.blackboard.set(
-            name=self.blackboard_variable_name,
+            name=self.variable_name,
             value=self.decorated.status,
             overwrite=True
         )

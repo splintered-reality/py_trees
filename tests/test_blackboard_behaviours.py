@@ -77,15 +77,19 @@ def test_variable_exists():
     unused_client = create_blackboard()
     tuples = []
     tuples.append((CheckBlackboardVariableExists(
-        name="check_foo_exists", key="foo"), Status.SUCCESS))
+        name="check_foo_exists", variable_name="foo"), Status.SUCCESS))
     tuples.append((CheckBlackboardVariableExists(
-        name="check_bar_exists", key="bar"), Status.FAILURE))
+        name="check_bar_exists", variable_name="bar"), Status.FAILURE))
+    tuples.append((CheckBlackboardVariableExists(
+        name="check_nested_foo_exists", variable_name="nested.foo"), Status.SUCCESS))
+    tuples.append((CheckBlackboardVariableExists(
+        name="check_nested_bar_exists", variable_name="nested.bar"), Status.FAILURE))
     for b, unused in tuples:
         b.tick_once()
     assert_banner()
     for b, asserted_result in tuples:
         assert_details(
-            text="looking for '{}'".format(b.key),
+            text="looking for '{}'".format(b.variable_name),
             expected=asserted_result,
             result=b.status
         )
@@ -97,15 +101,19 @@ def test_wait_for_variable():
     unused_client = create_blackboard()
     tuples = []
     tuples.append((WaitForBlackboardVariable(
-        name="Wait for Foo", key="foo"), Status.SUCCESS))
+        name="Wait for Foo", variable_name="foo"), Status.SUCCESS))
     tuples.append((WaitForBlackboardVariable(
-        name="Wait for Bar", key="bar"), Status.RUNNING))
+        name="Wait for Bar", variable_name="bar"), Status.RUNNING))
+    tuples.append((WaitForBlackboardVariable(
+        name="Wait for nested.foo", variable_name="nested.foo"), Status.SUCCESS))
+    tuples.append((WaitForBlackboardVariable(
+        name="Wait for nested.bar", variable_name="nested.bar"), Status.RUNNING))
     for b, unused in tuples:
         b.tick_once()
     assert_banner()
     for b, asserted_result in tuples:
         assert_details(
-            text="looking for '{}'".format(b.key),
+            text="waiting for '{}'".format(b.variable_name),
             expected=asserted_result,
             result=b.status
         )
@@ -153,10 +161,15 @@ def test_set_blackboard_variable():
     console.banner("Set Blackboard Variable")
     blackboard = create_blackboard()
     set_foo = py_trees.behaviours.SetBlackboardVariable(
-        name="Set Foo", key="foo", value="bar"
+        name="Set Foo",
+        variable_name="foo",
+        variable_value="bar"
     )
     conservative_set_foo = py_trees.behaviours.SetBlackboardVariable(
-        name="Conservative Set Foo", key="foo", value="bar", overwrite=False
+        name="Conservative Set Foo",
+        variable_name="foo",
+        variable_value="bar",
+        overwrite=False
     )
     blackboard.unset("foo")
     assert_banner()
@@ -202,6 +215,31 @@ def test_set_blackboard_variable():
         result=conservative_set_foo.status
     )
     assert(conservative_set_foo.status == Status.FAILURE)
+
+    nested_set_foo = py_trees.behaviours.SetBlackboardVariable(
+        name="Nested Set Foo",
+        variable_name="nested.foo",
+        variable_value="dude",
+        overwrite=True
+    )
+    nested_set_foo.tick_once()
+    assert_details(
+        text="Nested set foo (value)",
+        expected="dude",
+        result=blackboard.nested.foo
+    )
+    assert_details(
+        text="Nested set foo (status)",
+        expected=py_trees.common.Status.SUCCESS,
+        result=nested_set_foo.status
+    )
+    blackboard.nested = 5
+    nested_set_foo.tick_once()
+    assert_details(
+        text="Nested set foo, no nested attribute (status)",
+        expected=py_trees.common.Status.FAILURE,
+        result=nested_set_foo.status
+    )
 
 
 def test_check_variable_value():

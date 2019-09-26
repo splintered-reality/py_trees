@@ -76,14 +76,12 @@ class BlackboardWriter(py_trees.behaviour.Behaviour):
     Custom writer that submits a more complicated variable to the blackboard.
     """
     def __init__(self, name="Writer"):
-        super(BlackboardWriter, self).__init__(name)
-        self.logger.debug("%s.__init__()" % (self.__class__.__name__))
-        self.blackboard = py_trees.blackboard.Blackboard(
-            name=self.name,
-            unique_identifier=self.id,
-            write={"spaghetti"},
-            read={"dude"}
+        super().__init__(
+            name=name,
+            blackboard_read={"dude"},
+            blackboard_write={"spaghetti"}
         )
+        self.logger.debug("%s.__init__()" % (self.__class__.__name__))
 
     def update(self):
         """
@@ -113,9 +111,13 @@ class BlackboardWriter(py_trees.behaviour.Behaviour):
 
 def create_root():
     root = py_trees.composites.Sequence("Blackboard Demo")
-    set_blackboard_variable = py_trees.blackboard.SetBlackboardVariable(name="Set Foo", variable_name="foo", variable_value="bar")
+    set_blackboard_variable = py_trees.behaviours.SetBlackboardVariable(
+        name="Set Foo", variable_name="foo", variable_value="bar"
+    )
     write_blackboard_variable = BlackboardWriter(name="Writer")
-    check_blackboard_variable = py_trees.blackboard.CheckBlackboardVariable(name="Check Foo", variable_name="foo", expected_value="bar")
+    check_blackboard_variable = py_trees.behaviours.CheckBlackboardVariableValue(
+        name="Check Foo", variable_name="foo", expected_value="bar"
+    )
     root.add_children([set_blackboard_variable, write_blackboard_variable, check_blackboard_variable])
     return root
 

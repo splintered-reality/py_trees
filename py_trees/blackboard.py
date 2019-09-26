@@ -416,8 +416,11 @@ class Blackboard(object):
             return True
         else:
             blackboard_object = getattr(self, key)
-            setattr(blackboard_object, key_attributes, value)
-            return True
+            try:
+                setattr(blackboard_object, key_attributes, value)
+                return True
+            except AttributeError:  # when the object doesn't have the attributes
+                return False
 
     def get(self, name: str) -> typing.Any:
         """
