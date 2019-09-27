@@ -109,6 +109,7 @@ def test_duplicate_uuid_exception():
 
 
 def test_delayed_register_key():
+    console.banner("Delayed Register Key")
     with create_blackboards() as (foo, bar):
         with nose.tools.assert_raises_regexp(AttributeError, "does not have read/write access"):
             print("Expecting Attribute Error with substring 'does not have read/write access'")

@@ -527,6 +527,7 @@ class Blackboard(object):
             for key in (set(self.read) | set(self.write)):
                 if not (set(Blackboard.metadata[key].read) | set(Blackboard.metadata[key].write)):
                     Blackboard.storage.pop(key, None)
+                    Blackboard.metadata.pop(key, None)
 
     def register_key(self, key: str, read: bool=False, write: bool=False):
         """

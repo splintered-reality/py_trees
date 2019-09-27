@@ -601,11 +601,11 @@ def _generate_text_blackboard(
             s = ""
             lines = ('{0}'.format(value)).split('\n')
             if len(lines) > 1:
-                s += console.cyan + indent + '{0: <{1}}'.format(key, key_width + 1) + ":\n"
+                s += console.cyan + indent + '{0: <{1}}'.format(key, key_width) + console.white + ":\n"
                 for line in lines:
                     s += console.yellow + indent + "  {0}\n".format(line)
             else:
-                s += console.cyan + indent + '{0: <{1}}'.format(key, key_width + 1) + ": " + console.yellow + '{0}\n'.format(value) + console.reset
+                s += console.cyan + indent + '{0: <{1}}'.format(key, key_width) + console.white + ": " + console.yellow + '{0}\n'.format(value) + console.reset
             return style(s, apply_highlight) + console.reset
 
         def assemble_metadata_line(key, metadata, apply_highlight, indent, key_width):
