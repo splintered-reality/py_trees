@@ -61,9 +61,7 @@ class Behaviour(object):
 
     """
     def __init__(self,
-                 name: str=common.Name.AUTO_GENERATED,
-                 blackboard_read: typing.Set[str]=set(),
-                 blackboard_write: typing.Set[str]=set()):
+                 name: str=common.Name.AUTO_GENERATED):
         if not name or name == common.Name.AUTO_GENERATED:
             name = self.__class__.__name__
         if not isinstance(name, str):
@@ -72,9 +70,7 @@ class Behaviour(object):
         self.name = name
         self.blackboard = blackboard.Blackboard(
             name=self.name,
-            unique_identifier=self.id,
-            read=blackboard_read,
-            write=blackboard_write
+            unique_identifier=self.id
         )
         self.qualified_name = "{}/{}".format(self.__class__.__qualname__, self.name)  # convenience
         self.status = common.Status.INVALID

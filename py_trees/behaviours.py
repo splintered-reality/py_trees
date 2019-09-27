@@ -240,11 +240,12 @@ class CheckBlackboardVariableExists(behaviour.Behaviour):
             variable_name: str,
             name: str=common.Name.AUTO_GENERATED
     ):
+        super().__init__(name=name)
         self.variable_name = variable_name
         name_components = variable_name.split('.')
         self.key = name_components[0]
         self.key_attributes = '.'.join(name_components[1:])  # empty string if no other parts
-        super().__init__(name=name, blackboard_read={self.key})
+        self.blackboard.register_key(key=self.key, read=True)
 
     def update(self) -> common.Status:
         """
@@ -319,8 +320,9 @@ class UnsetBlackboardVariable(behaviour.Behaviour):
                  key: str,
                  name: str=common.Name.AUTO_GENERATED,
                  ):
-        super().__init__(name=name, blackboard_write={key})
+        super().__init__(name=name)
         self.key = key
+        self.blackboard.register_key(key=self.key, write=True)
 
     def update(self) -> common.Status:
         """
@@ -353,14 +355,12 @@ class SetBlackboardVariable(behaviour.Behaviour):
             overwrite: bool = True,
             name: str=common.Name.AUTO_GENERATED,
     ):
+        super().__init__(name=name)
         self.variable_name = variable_name
         name_components = variable_name.split('.')
         self.key = name_components[0]
         self.key_attributes = '.'.join(name_components[1:])  # empty string if no other parts
-        super().__init__(
-            name=name,
-            blackboard_write={self.key}
-        )
+        self.blackboard.register_key(key=self.key, write=True)
         self.variable_value = variable_value
         self.overwrite = overwrite
 
@@ -411,15 +411,12 @@ class CheckBlackboardVariableValue(behaviour.Behaviour):
             comparison_operator: typing.Callable[[typing.Any, typing.Any], bool]=operator.eq,
             name: str=common.Name.AUTO_GENERATED
     ):
+        super().__init__(name=name)
         self.variable_name = variable_name
         name_components = variable_name.split('.')
         self.key = name_components[0]
         self.key_attributes = '.'.join(name_components[1:])  # empty string if no other parts
-
-        super().__init__(
-            name=name,
-            blackboard_read={self.key}
-        )
+        self.blackboard.register_key(key=self.key, read=True)
 
         self.expected_value = expected_value
         self.comparison_operator = comparison_operator

@@ -97,9 +97,7 @@ class Decorator(behaviour.Behaviour):
     def __init__(
             self,
             child: behaviour.Behaviour,
-            name=common.Name.AUTO_GENERATED,
-            blackboard_read: typing.Set[str]=set(),
-            blackboard_write: typing.Set[str]=set()
+            name=common.Name.AUTO_GENERATED
     ):
         """
         Common initialisation steps for a decorator - type checks and
@@ -108,8 +106,6 @@ class Decorator(behaviour.Behaviour):
         Args:
             child: the child to be decorated
             name: the decorator name
-            blackboard_read: blackboard keys this behaviour has permission to read
-            blackboard_write: blackboard keys this behaviour has permission to write
 
         Raises:
             TypeError: if the child is not an instance of :class:`~py_trees.behaviour.Behaviour`
@@ -118,11 +114,7 @@ class Decorator(behaviour.Behaviour):
         if not isinstance(child, behaviour.Behaviour):
             raise TypeError("A decorator's child must be an instance of py_trees.behaviours.Behaviour")
         # Initialise
-        super().__init__(
-            name=name,
-            blackboard_read=blackboard_read,
-            blackboard_write=blackboard_write
-        )
+        super().__init__(name=name)
         self.children.append(child)
         # Give a convenient alias
         self.decorated = self.children[0]
@@ -207,12 +199,12 @@ class StatusToBlackboard(Decorator):
             variable_name: str,
             name: str=common.Name.AUTO_GENERATED,
     ):
-        super().__init__(
-            child=child,
-            name=name,
-            blackboard_write={variable_name}
-        )
+        super().__init__(child=child, name=name)
         self.variable_name = variable_name
+        name_components = variable_name.split('.')
+        self.key = name_components[0]
+        self.key_attributes = '.'.join(name_components[1:])  # empty string if no other parts
+        self.blackboard.register_key(key=self.key, write=True)
 
     def update(self):
         """

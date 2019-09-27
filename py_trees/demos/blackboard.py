@@ -76,11 +76,10 @@ class BlackboardWriter(py_trees.behaviour.Behaviour):
     Custom writer that submits a more complicated variable to the blackboard.
     """
     def __init__(self, name="Writer"):
-        super().__init__(
-            name=name,
-            blackboard_read={"dude"},
-            blackboard_write={"spaghetti"}
-        )
+        super().__init__(name=name)
+        self.blackboard.register_key(key="dude", read=True)
+        self.blackboard.register_key(key="spaghetti", write=True)
+
         self.logger.debug("%s.__init__()" % (self.__class__.__name__))
 
     def update(self):
