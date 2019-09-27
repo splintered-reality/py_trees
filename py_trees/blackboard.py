@@ -254,33 +254,48 @@ class Blackboard(object):
             self, *,
             name: str=None,
             unique_identifier: uuid.UUID=None,
-            read: typing.Set[str]=set(),
-            write: typing.Set[str]=set()):
-        # print("__init__")
+            read: typing.Set[str]=None,
+            write: typing.Set[str]=None):
+
+        # unique identifier
         if unique_identifier is None:
-            unique_identifier = uuid.uuid4()
-        if type(unique_identifier) != uuid.UUID:
-            raise TypeError("provided unique identifier is not of type uuid.UUID")
-        if name is None or not name:
-            name = str(unique_identifier)
-        if not isinstance(name, str):
-            raise TypeError("provided name is not of type str [{}]".format(type(name)))
-        if type(read) is list:
-            read = set(read)
-        if type(write) is list:
-            write = set(write)
-        if unique_identifier in Blackboard.clients.keys():
+            super().__setattr__("unique_identifier", uuid.uuid4())
+        else:
+            if type(unique_identifier) != uuid.UUID:
+                raise TypeError("provided unique identifier is not of type uuid.UUID")
+            super().__setattr__("unique_identifier", unique_identifier)
+        if super().__getattribute__("unique_identifier") in Blackboard.clients.keys():
             raise ValueError("this unique identifier has already been registered")
-        super().__setattr__("unique_identifier", unique_identifier)
-        super().__setattr__("name", name)
-        super().__setattr__("read", read)
-        for key in read:
+
+        # name
+        if name is None or not name:
+            super().__setattr__("name", str(unique_identifier))
+        else:
+            if not isinstance(name, str):
+                raise TypeError("provided name is not of type str [{}]".format(type(name)))
+            super().__setattr__("name", name)
+
+        # read
+        if read is None:
+            super().__setattr__("read", set())
+        elif type(read) is list:
+            super().__setattr__("read", set(read))
+        else:
+            super().__setattr__("read", read)
+        for key in super().__getattribute__("read"):
             Blackboard.metadata.setdefault(key, KeyMetaData())
             Blackboard.metadata[key].read.add(
                 super().__getattribute__("unique_identifier")
             )
-        super().__setattr__("write", write)
-        for key in write:
+
+        # write
+        if write is None:
+            super().__setattr__("write", set())
+        elif type(write) is list:
+            super().__setattr__("write", set(write))
+        else:
+            super().__setattr__("write", write)
+        for key in super().__getattribute__("write"):
             Blackboard.metadata.setdefault(key, KeyMetaData())
             Blackboard.metadata[key].write.add(
                 super().__getattribute__("unique_identifier")
@@ -481,6 +496,10 @@ class Blackboard(object):
         s += console.white + indent + "Variables" + console.reset + "\n"
         keys = self.read | self.write
         s += self._stringify_key_value_pairs(keys, Blackboard.storage, 2 * indent)
+        s += console.white + indent + "Metadata" + console.reset + "\n"
+        for key, value in Blackboard.metadata.items():
+            s += console.cyan + key + "(r): " + console.yellow + str(value.read) + console.reset + "\n"
+            s += console.cyan + key + "(w): " + console.yellow + str(value.write) + console.reset + "\n"
         return s
 
     def _generate_activity_item(self, key, activity_type, previous_value=None, current_value=None):

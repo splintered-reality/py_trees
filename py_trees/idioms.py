@@ -33,9 +33,7 @@ from . import decorators
 
 def pick_up_where_you_left_off(
         name="Pickup Where You Left Off Idiom",
-        tasks=[behaviours.Dummy(name="Dummy1"),  # dummy behaviours to enable dot rendering with py-trees-render
-               behaviours.Dummy(name="Dummy1")
-               ]):
+        tasks=[]):
     """
     Rudely interrupted while enjoying a sandwich, a caveman (just because
     they wore loincloths does not mean they were not civilised), picks
@@ -99,10 +97,9 @@ def pick_up_where_you_left_off(
 
 
 def eternal_guard(
+        subtree: behaviour.Behaviour,
         name: str="Eternal Guard",
-        conditions: List[behaviour.Behaviour]=[behaviours.Dummy(name="Condition 1"),  # dummy behaviours to enable dot rendering with py-trees-render
-                                               behaviours.Dummy(name="Condition 2")],
-        subtree: behaviour.Behaviour=behaviours.Dummy(name="Task"),  # dummy behaviour to enable dot rendering with py-trees-render
+        conditions: List[behaviour.Behaviour]=[],
         blackboard_variable_prefix: str=None) -> behaviour.Behaviour:
     """
     The eternal guard idiom implements a stronger :term:`guard` than the typical check at the
@@ -114,9 +111,9 @@ def eternal_guard(
         :align: center
 
     Args:
+        subtree: behaviour(s) that actually do the work
         name: the name to use on the root behaviour of the idiom subtree
         conditions: behaviours on which tasks are conditional
-        subtree: behaviour(s) that actually do the work
         blackboard_variable_prefix: applied to condition variable results stored on the blackboard (default: derived from the idiom name)
 
     Returns:
@@ -179,10 +176,11 @@ def eternal_guard(
 
 
 def oneshot(
+        behaviour: behaviour.Behaviour,
+        name: str="Oneshot",
         variable_name: str="oneshot",
-        behaviour: behaviour.Behaviour=behaviours.Dummy(),  # dummy behaviour to enable dot rendering with py-trees-render
-        policy: common.OneShotPolicy=common.OneShotPolicy.ON_SUCCESSFUL_COMPLETION,
-        name: str=common.Name.AUTO_GENERATED):
+        policy: common.OneShotPolicy=common.OneShotPolicy.ON_SUCCESSFUL_COMPLETION
+        ):
     """
     Ensure that a particular pattern is executed through to
     completion just once. Thereafter it will just rebound with the completion status.
@@ -196,10 +194,10 @@ def oneshot(
        :data:`~py_trees.common.Status.SUCCESS`||:data:`~py_trees.common.Status.FAILURE`.
 
     Args:
-        variable_name: name for the variable used on the blackboard, may be nested
         behaviour: single behaviour or composited subtree to oneshot
-        policy: execute just once regardless of success or failure, or keep trying if failing
         name: the name to use for the oneshot root (selector)
+        variable_name: name for the variable used on the blackboard, may be nested
+        policy: execute just once regardless of success or failure, or keep trying if failing
 
     Returns:
         :class:`~py_trees.behaviour.Behaviour`: the root of the oneshot subtree

@@ -147,6 +147,7 @@ def main():
     # Execute
     ####################
     root.setup_with_descendants()
+    blackboard = py_trees.blackboard.Blackboard(name="Unsetter", write={"foo"})
     print("\n--------- Tick 0 ---------\n")
     root.tick_once()
     print("\n")
@@ -156,6 +157,5 @@ def main():
     print("--------------------------\n")
     print(py_trees.display.unicode_blackboard(display_only_key_metadata=True))
     print("--------------------------\n")
-    blackboard = py_trees.blackboard.Blackboard(name="Unsetter", write={"foo"})
     blackboard.unset("foo")
     print(py_trees.display.unicode_blackboard_activity_stream())
