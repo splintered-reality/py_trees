@@ -76,13 +76,15 @@ combination of behaviours to affect the non-blocking characteristics.
 # Imports
 ##############################################################################
 
+import functools
+import inspect
 import time
 
-from typing import Callable, Union  # noqa
+from typing import Callable, List, Union  # noqa
 
 from . import behaviour
+from . import blackboard
 from . import common
-import typing
 
 ##############################################################################
 # Classes
@@ -235,6 +237,7 @@ class EternalGuard(Decorator):
     Args:
         child: the child behaviour or subtree
         condition: a functional check that determines execution or not of the subtree
+        register_blackboard_keys: configure blackboard access for the conditional function
         name: the decorator name
 
     .. seealso:: :meth:`py_trees.idioms.eternal_guard`
@@ -243,11 +246,22 @@ class EternalGuard(Decorator):
             self,
             *,
             child: behaviour.Behaviour,
-            condition: Union[Callable[[], bool], Callable[[], common.Status]],
+            condition: Union[Callable[[blackboard.Blackboard], bool], Callable[[blackboard.Blackboard], common.Status]],
+            register_blackboard_keys: List[blackboard.KeyRegistrationData]=[],
             name: str=common.Name.AUTO_GENERATED,
     ):
         super().__init__(name=name, child=child)
-        self.condition = condition
+        for data in register_blackboard_keys:
+            self.blackboard.register_key(
+                key=data.name,
+                read=data.read,
+                write=data.write
+            )
+        condition_signature = inspect.signature(condition)
+        if "blackboard" in [p.name for p in condition_signature.parameters.values()]:
+            self.condition = functools.partial(condition, self.blackboard)
+        else:
+            self.condition = condition
 
     def tick(self):
         """

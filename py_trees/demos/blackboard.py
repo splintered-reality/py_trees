@@ -67,7 +67,13 @@ def command_line_argument_parser():
                                      epilog=epilog(),
                                      formatter_class=argparse.RawDescriptionHelpFormatter,
                                      )
-    parser.add_argument('-r', '--render', action='store_true', help='render dot tree to file')
+    render_group = parser.add_mutually_exclusive_group()
+    render_group.add_argument('-r', '--render', action='store_true', help='render dot tree to file')
+    render_group.add_argument(
+        '--render-with-blackboard-variables',
+        action='store_true',
+        help='render dot tree to file with blackboard variables'
+    )
     return parser
 
 
@@ -133,6 +139,11 @@ def main():
     print(description())
     py_trees.logging.level = py_trees.logging.Level.DEBUG
     py_trees.blackboard.Blackboard.enable_activity_stream(maximum_size=100)
+    standalone_blackboard = py_trees.blackboard.Blackboard(
+        name="Standalone Blackboard Client",
+        write={"dude"}
+    )
+    standalone_blackboard.dude = "Bob"
 
     root = create_root()
 
@@ -140,6 +151,9 @@ def main():
     # Rendering
     ####################
     if args.render:
+        py_trees.display.render_dot_tree(root, with_blackboard_variables=False)
+        sys.exit()
+    if args.render_with_blackboard_variables:
         py_trees.display.render_dot_tree(root, with_blackboard_variables=True)
         sys.exit()
 

@@ -55,6 +55,7 @@ import typing
 import uuid
 
 from . import console
+from . import utilities
 
 ##############################################################################
 # Classes
@@ -62,10 +63,29 @@ from . import console
 
 
 class KeyMetaData(object):
-
+    """
+    Stores the aggregated metadata for a key on the blackboard.
+    """
     def __init__(self):
         self.read = set()
         self.write = set()
+
+
+class KeyRegistrationData(object):
+    """
+    Stores metadata for a key being registered by a client on the blackboard.
+    This is a temporary structure that eventually gets aggregated with information
+    from other client registrations in a :class:`KeyMetaData` object.
+
+    Args:
+        name: key name
+        read: read access
+        write: write access
+    """
+    def __init__(self, name: str, read: bool=False, write: bool=False):
+        self.name = name
+        self.read = read
+        self.write = write
 
 
 class ActivityType(enum.Enum):
@@ -226,6 +246,7 @@ class Blackboard(object):
        * :ref:`py-trees-demo-blackboard <py-trees-demo-blackboard-program>`
 
     Attributes:
+        <class>.clients (typing.Dict[uuid.UUID, Blackboard]: clients, gathered by uuid
         <class>.storage (typing.Dict[str, typing.Any]): key-value storage
         <class>.metadata (typing.Dict[str, KeyMetaData]): key-client (read/write) metadata
         <class>.activity_stream (ActivityStream): the activity stream (None if not enabled)
@@ -269,7 +290,11 @@ class Blackboard(object):
 
         # name
         if name is None or not name:
-            super().__setattr__("name", str(unique_identifier))
+            name = utilities.truncate(
+                original=str(super().__getattribute__("unique_identifier")).replace('-', '_'),
+                length=7
+            )
+            super().__setattr__("name", name)
         else:
             if not isinstance(name, str):
                 raise TypeError("provided name is not of type str [{}]".format(type(name)))
@@ -489,17 +514,13 @@ class Blackboard(object):
 
     def __str__(self):
         indent = "  "
-        s = console.green + type(self).__name__ + console.reset + "\n"
+        s = console.green + "Blackboard Client" + console.reset + "\n"
         s += console.white + indent + "Client Data" + console.reset + "\n"
         keys = ["name", "unique_identifier", "read", "write"]
         s += self._stringify_key_value_pairs(keys, self.__dict__, 2 * indent)
         s += console.white + indent + "Variables" + console.reset + "\n"
         keys = self.read | self.write
         s += self._stringify_key_value_pairs(keys, Blackboard.storage, 2 * indent)
-        s += console.white + indent + "Metadata" + console.reset + "\n"
-        for key, value in Blackboard.metadata.items():
-            s += console.cyan + key + "(r): " + console.yellow + str(value.read) + console.reset + "\n"
-            s += console.cyan + key + "(w): " + console.yellow + str(value.write) + console.reset + "\n"
         return s
 
     def _generate_activity_item(self, key, activity_type, previous_value=None, current_value=None):
