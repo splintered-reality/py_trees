@@ -17,9 +17,13 @@ Writer [label=Writer, shape=ellipse, style=filled, fillcolor=gray, fontsize=9, f
 "Check Foo" [label="Check Foo", shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
 }
 
-foo [label="foo: bar", shape=box, style=filled, fillcolor=white, fontsize=7, fontcolor=black, width=0, height=0, fixedsize=False];
-foo -> "Check Foo";
-"Set Foo" -> foo;
-spaghetti [label="spaghetti: {'type': 'Gnocchi...", shape=box, style=filled, fillcolor=white, fontsize=7, fontcolor=black, width=0, height=0, fixedsize=False];
-Writer -> spaghetti;
+"Standalone Blackboard Client" [label="Standalone Blackboard Client", shape=ellipse, style=filled, color=blue, fillcolor=gray, fontsize=7, fontcolor=blue];
+dude [label="dude: Bob", shape=box, style=filled, color=blue, fillcolor=white, fontsize=8, fontcolor=blue, width=0, height=0, fixedsize=False];
+dude -> Writer  [color=blue, constraint=False];
+"Standalone Blackboard Client" -> dude  [color=blue, constraint=False];
+foo [label="foo: -", shape=box, style=filled, color=blue, fillcolor=white, fontsize=8, fontcolor=blue, width=0, height=0, fixedsize=False];
+foo -> "Check Foo"  [color=blue, constraint=False];
+"Set Foo" -> foo  [color=blue, constraint=True];
+spaghetti [label="spaghetti: -", shape=box, style=filled, color=blue, fillcolor=white, fontsize=8, fontcolor=blue, width=0, height=0, fixedsize=False];
+Writer -> spaghetti  [color=blue, constraint=True];
 }
