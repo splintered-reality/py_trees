@@ -396,7 +396,7 @@ class Blackboard(object):
                     Blackboard.activity_stream.push(
                         self._generate_activity_item(
                             key=name,
-                            activity_type=ActivityType.ACCESSED,
+                            activity_type=ActivityType.READ,
                             current_value=Blackboard.storage[name],
                         )
                     )

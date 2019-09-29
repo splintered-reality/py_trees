@@ -120,7 +120,7 @@ class Finisher(py_trees.behaviour.Behaviour):
     def update(self):
         print(console.green + "---------------------------" + console.reset)
         print(console.bold + "        Finisher" + console.reset)
-        print(console.green + "  Count: {}".format(self.blackboard.count) + console.reset)
+        print(console.green + "  Count : {}".format(self.blackboard.count) + console.reset)
         print(console.green + "  Period: {}".format(self.blackboard.period) + console.reset)
         print(console.green + "---------------------------" + console.reset)
         return py_trees.common.Status.SUCCESS
@@ -174,7 +174,11 @@ def main():
     behaviour_tree = py_trees.trees.BehaviourTree(tree)
     behaviour_tree.add_pre_tick_handler(pre_tick_handler)
     behaviour_tree.visitors.append(py_trees.visitors.DebugVisitor())
-    behaviour_tree.visitors.append(py_trees.visitors.DisplaySnapshotVisitor())
+    behaviour_tree.visitors.append(
+        py_trees.visitors.DisplaySnapshotVisitor(
+            display_blackboard=True,
+            display_activity_stream=True)
+    )
     behaviour_tree.setup(timeout=15)
 
     ####################
