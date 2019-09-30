@@ -67,7 +67,13 @@ def command_line_argument_parser():
                                      epilog=epilog(),
                                      formatter_class=argparse.RawDescriptionHelpFormatter,
                                      )
-    parser.add_argument('-r', '--render', action='store_true', help='render dot tree to file')
+    render_group = parser.add_mutually_exclusive_group()
+    render_group.add_argument('-r', '--render', action='store_true', help='render dot tree to file')
+    render_group.add_argument(
+        '--render-with-blackboard-variables',
+        action='store_true',
+        help='render dot tree to file with blackboard variables'
+    )
     return parser
 
 
@@ -76,14 +82,11 @@ class BlackboardWriter(py_trees.behaviour.Behaviour):
     Custom writer that submits a more complicated variable to the blackboard.
     """
     def __init__(self, name="Writer"):
-        super(BlackboardWriter, self).__init__(name)
+        super().__init__(name=name)
+        self.blackboard.register_key(key="dude", read=True)
+        self.blackboard.register_key(key="spaghetti", write=True)
+
         self.logger.debug("%s.__init__()" % (self.__class__.__name__))
-        self.blackboard = py_trees.blackboard.Blackboard(
-            name=self.name,
-            unique_identifier=self.id,
-            write={"spaghetti"},
-            read={"dude"}
-        )
 
     def update(self):
         """
@@ -113,9 +116,13 @@ class BlackboardWriter(py_trees.behaviour.Behaviour):
 
 def create_root():
     root = py_trees.composites.Sequence("Blackboard Demo")
-    set_blackboard_variable = py_trees.blackboard.SetBlackboardVariable(name="Set Foo", variable_name="foo", variable_value="bar")
+    set_blackboard_variable = py_trees.behaviours.SetBlackboardVariable(
+        name="Set Foo", variable_name="foo", variable_value="bar"
+    )
     write_blackboard_variable = BlackboardWriter(name="Writer")
-    check_blackboard_variable = py_trees.blackboard.CheckBlackboardVariable(name="Check Foo", variable_name="foo", expected_value="bar")
+    check_blackboard_variable = py_trees.behaviours.CheckBlackboardVariableValue(
+        name="Check Foo", variable_name="foo", expected_value="bar"
+    )
     root.add_children([set_blackboard_variable, write_blackboard_variable, check_blackboard_variable])
     return root
 
@@ -132,6 +139,11 @@ def main():
     print(description())
     py_trees.logging.level = py_trees.logging.Level.DEBUG
     py_trees.blackboard.Blackboard.enable_activity_stream(maximum_size=100)
+    standalone_blackboard = py_trees.blackboard.Blackboard(
+        name="Standalone Blackboard Client",
+        write={"dude"}
+    )
+    standalone_blackboard.dude = "Bob"
 
     root = create_root()
 
@@ -139,6 +151,9 @@ def main():
     # Rendering
     ####################
     if args.render:
+        py_trees.display.render_dot_tree(root, with_blackboard_variables=False)
+        sys.exit()
+    if args.render_with_blackboard_variables:
         py_trees.display.render_dot_tree(root, with_blackboard_variables=True)
         sys.exit()
 
@@ -146,6 +161,7 @@ def main():
     # Execute
     ####################
     root.setup_with_descendants()
+    blackboard = py_trees.blackboard.Blackboard(name="Unsetter", write={"foo"})
     print("\n--------- Tick 0 ---------\n")
     root.tick_once()
     print("\n")
@@ -155,6 +171,5 @@ def main():
     print("--------------------------\n")
     print(py_trees.display.unicode_blackboard(display_only_key_metadata=True))
     print("--------------------------\n")
-    blackboard = py_trees.blackboard.Blackboard(name="Unsetter", write={"foo"})
     blackboard.unset("foo")
     print(py_trees.display.unicode_blackboard_activity_stream())

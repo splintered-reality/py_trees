@@ -39,6 +39,7 @@ unicode_symbols = {
     'space': ' ',
     'left_arrow': console.left_arrow,
     'right_arrow': console.right_arrow,
+    'left_right_arrow': console.left_right_arrow,
     'bold': console.bold,
     'bold_reset': console.reset,
     composites.Sequence: u'[-]',
@@ -57,6 +58,7 @@ ascii_symbols = {
     'space': ' ',
     'left_arrow': '<-',
     'right_arrow': '->',
+    'left_right_arrow': '<->',
     'bold': console.bold,
     'bold_reset': console.reset,
     composites.Sequence: "[-]",
@@ -72,6 +74,9 @@ ascii_symbols = {
 """Symbols for a non-unicode, non-escape sequence capable console."""
 xhtml_symbols = {
     'space': '<text>&#xa0;</text>',  # &nbsp; is not valid xhtml, see http://www.fileformat.info/info/unicode/char/00a0/index.htm
+    'left_arrow': '<text>&#x2190;</text>',
+    'right_arrow': '<text>&#x2192;</text>',
+    'left_right_arrow': '<text>&#x2194;</text>',
     'bold': '<b>',
     'bold_reset': '</b>',
     composites.Sequence: '<text>[-]</text>',
@@ -376,8 +381,12 @@ def dot_tree(
             attributes = ('ellipse', 'ghostwhite', 'black')
         else:
             attributes = ('ellipse', 'gray', 'black')
-        if node.blackbox_level != common.BlackBoxLevel.NOT_A_BLACKBOX:
-            attributes = (attributes[0], 'gray20', blackbox_font_colours[node.blackbox_level])
+        try:
+            if node.blackbox_level != common.BlackBoxLevel.NOT_A_BLACKBOX:
+                attributes = (attributes[0], 'gray20', blackbox_font_colours[node.blackbox_level])
+        except AttributeError:
+            # it's a blackboard client, not a behaviour, just pass
+            pass
         return attributes
 
     def get_node_label(node_name, behaviour):
@@ -393,6 +402,7 @@ def dot_tree(
         return node_label
 
     fontsize = 9
+    blackboard_colour = "blue"  # "dimgray"
     graph = pydot.Dot(graph_type='digraph')
     graph.set_name("pastafarianism")  # consider making this unique to the tree sometime, e.g. based on the root name
     # fonts: helvetica, times-bold, arial (times-roman is the default, but this helps some viewers, like kgraphviewer)
@@ -452,9 +462,29 @@ def dot_tree(
 
     add_children_and_edges(root, root.name, visibility_level, collapse_decorators)
 
-    def add_blackboard_nodes():
+    def create_blackboard_client_node(blackboard_client: blackboard.Blackboard):
+        return pydot.Node(
+            name=blackboard_client.name,
+            label=blackboard_client.name,
+            shape="ellipse",
+            style="filled",
+            color=blackboard_colour,
+            fillcolor="gray",
+            fontsize=fontsize - 2,
+            fontcolor=blackboard_colour,
+        )
+
+    def add_blackboard_nodes(behaviour_names_by_id: typing.Dict[uuid.UUID, str]):
         data = blackboard.Blackboard.storage
         metadata = blackboard.Blackboard.metadata
+        clients = blackboard.Blackboard.clients
+        # add client (that are not behaviour) nodes
+        for unique_identifier, client in clients.items():
+            if unique_identifier not in behaviour_names_by_id:
+                graph.add_node(
+                    create_blackboard_client_node(client)
+                )
+        # add key nodes
         for key in blackboard.Blackboard.keys():
             try:
                 value = utilities.truncate(str(data[key]), 20)
@@ -466,29 +496,48 @@ def dot_tree(
                 label=label,
                 shape='box',
                 style="filled",
+                color=blackboard_colour,
                 fillcolor='white',
-                fontsize=fontsize - 2,
-                fontcolor='black',
+                fontsize=fontsize - 1,
+                fontcolor=blackboard_colour,
                 width=0, height=0, fixedsize=False,  # only big enough to fit text
             )
             graph.add_node(blackboard_node)
             for unique_identifier in metadata[key].read:
                 try:
-                    edge = pydot.Edge(blackboard_node, names[unique_identifier])
-                    graph.add_edge(edge)
+                    edge = pydot.Edge(
+                        blackboard_node,
+                        behaviour_names_by_id[unique_identifier],
+                        color=blackboard_colour,
+                        constraint=False
+                    )
                 except KeyError:
-                    # something else (not a behaviour) is the client
-                    pass
+                    edge = pydot.Edge(
+                        blackboard_node,
+                        clients[unique_identifier].__getattribute__("name"),
+                        color=blackboard_colour,
+                        constraint=False
+                    )
+                graph.add_edge(edge)
             for unique_identifier in metadata[key].write:
                 try:
-                    edge = pydot.Edge(names[unique_identifier], blackboard_node)
-                    graph.add_edge(edge)
+                    edge = pydot.Edge(
+                        behaviour_names_by_id[unique_identifier],
+                        blackboard_node,
+                        color=blackboard_colour,
+                        constraint=True
+                    )
                 except KeyError:
-                    # something else (not a behaviour) is the client
-                    pass
+                    edge = pydot.Edge(
+                        clients[unique_identifier].__getattribute__("name"),
+                        blackboard_node,
+                        color=blackboard_colour,
+                        constraint=False
+                    )
+                graph.add_edge(edge)
 
     if with_blackboard_variables:
-        add_blackboard_nodes()
+        add_blackboard_nodes(names)
 
     return graph
 
@@ -596,11 +645,11 @@ def _generate_text_blackboard(
             s = ""
             lines = ('{0}'.format(value)).split('\n')
             if len(lines) > 1:
-                s += console.cyan + indent + '{0: <{1}}'.format(key, key_width + 1) + ":\n"
+                s += console.cyan + indent + '{0: <{1}}'.format(key, key_width) + console.white + ":\n"
                 for line in lines:
                     s += console.yellow + indent + "  {0}\n".format(line)
             else:
-                s += console.cyan + indent + '{0: <{1}}'.format(key, key_width + 1) + ": " + console.yellow + '{0}\n'.format(value) + console.reset
+                s += console.cyan + indent + '{0: <{1}}'.format(key, key_width) + console.white + ": " + console.yellow + '{0}\n'.format(value) + console.reset
             return style(s, apply_highlight) + console.reset
 
         def assemble_metadata_line(key, metadata, apply_highlight, indent, key_width):
@@ -769,7 +818,7 @@ def unicode_blackboard_activity_stream(
             key_width = len(item.key) if len(item.key) > key_width else key_width
             client_width = len(item.client_name) if len(item.client_name) > client_width else client_width
         client_width = min(client_width, 20)
-        type_width = len("NO_OVERWRITE")
+        type_width = len("ACCESS_DENIED")
         value_width = 80 - key_width - 3 - type_width - 3 - client_width - 3
         for item in blackboard.Blackboard.activity_stream.data:
             s += console.cyan + space * (4 + indent)
@@ -790,18 +839,20 @@ def unicode_blackboard_activity_stream(
                 s += "{}\n".format(
                     utilities.truncate(str(item.current_value), value_width)
                 )
-            elif item.activity_type == blackboard.ActivityType.READ_DENIED:
+            elif item.activity_type == blackboard.ActivityType.ACCESSED:
+                s += console.yellow
+                s += symbols["left_right_arrow"] + space
+                s += "{}\n".format(
+                    utilities.truncate(str(item.current_value), value_width)
+                )
+            elif item.activity_type == blackboard.ActivityType.ACCESS_DENIED:
                 s += console.red
                 s += console.multiplication_x + space
-                s += "variable grants no access to this client\n"
-            elif item.activity_type == blackboard.ActivityType.WRITE_DENIED:
+                s += "client has no read/write access\n"
+            elif item.activity_type == blackboard.ActivityType.NO_KEY:
                 s += console.red
                 s += console.multiplication_x + space
-                s += "variable grants no access to this client\n"
-            elif item.activity_type == blackboard.ActivityType.READ_FAILED:
-                s += console.red
-                s += console.multiplication_x + space
-                s += "variable does not yet exist\n"
+                s += "key does not yet exist\n"
             elif item.activity_type == blackboard.ActivityType.NO_OVERWRITE:
                 s += console.yellow
                 s += console.forbidden_circle + space

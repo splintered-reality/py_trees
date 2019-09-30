@@ -76,9 +76,11 @@ combination of behaviours to affect the non-blocking characteristics.
 # Imports
 ##############################################################################
 
+import functools
+import inspect
 import time
 
-from typing import Callable, Union  # noqa
+from typing import Callable, List, Set, Union  # noqa
 
 from . import behaviour
 from . import blackboard
@@ -93,24 +95,24 @@ class Decorator(behaviour.Behaviour):
     """
     A decorator is responsible for handling the lifecycle of a single
     child beneath
+
+    Args:
+        child: the child to be decorated
+        name: the decorator name
+
+    Raises:
+        TypeError: if the child is not an instance of :class:`~py_trees.behaviour.Behaviour`
     """
-    def __init__(self, child, name=common.Name.AUTO_GENERATED):
-        """
-        Common initialisation steps for a decorator - type checks and
-        name construction (if None is given).
-
-        Args:
-            name (:obj:`str`): the decorator name
-            child (:class:`~py_trees.behaviour.Behaviour`): the child to be decorated
-
-        Raises:
-            TypeError: if the child is not an instance of :class:`~py_trees.behaviour.Behaviour`
-        """
+    def __init__(
+            self,
+            child: behaviour.Behaviour,
+            name=common.Name.AUTO_GENERATED
+    ):
         # Checks
         if not isinstance(child, behaviour.Behaviour):
             raise TypeError("A decorator's child must be an instance of py_trees.behaviours.Behaviour")
         # Initialise
-        super(Decorator, self).__init__(name=name)
+        super().__init__(name=name)
         self.children.append(child)
         # Give a convenient alias
         self.decorated = self.children[0]
@@ -185,7 +187,7 @@ class StatusToBlackboard(Decorator):
 
     Args:
         child: the child behaviour or subtree
-        variable_name: name of the variable to set
+        variable_name: name of the blackboard variable, may be nested, e.g. foo.status
         name: the decorator name
     """
     def __init__(
@@ -195,13 +197,12 @@ class StatusToBlackboard(Decorator):
             variable_name: str,
             name: str=common.Name.AUTO_GENERATED,
     ):
-        super().__init__(name=name, child=child)
-        self.blackboard_variable_name = variable_name
-        self.blackboard = blackboard.Blackboard(
-            name=self.name,
-            unique_identifier=self.id,
-            write={variable_name}
-        )
+        super().__init__(child=child, name=name)
+        self.variable_name = variable_name
+        name_components = variable_name.split('.')
+        self.key = name_components[0]
+        self.key_attributes = '.'.join(name_components[1:])  # empty string if no other parts
+        self.blackboard.register_key(key=self.key, write=True)
 
     def update(self):
         """
@@ -210,7 +211,7 @@ class StatusToBlackboard(Decorator):
         Returns: the decorated child's status
         """
         self.blackboard.set(
-            name=self.blackboard_variable_name,
+            name=self.variable_name,
             value=self.decorated.status,
             overwrite=True
         )
@@ -220,9 +221,8 @@ class StatusToBlackboard(Decorator):
 class EternalGuard(Decorator):
     """
     A decorator that continually guards the execution of a subtree.
-    If at any time the guard's condition check fails (returns False or
-    :attr:~py_trees.common.Status.FAILURE), then the child behaviour/subtree
-    is invalidated.
+    If at any time the guard's condition check fails, then the child
+    behaviour/subtree is invalidated.
 
     .. note:: This decorator's behaviour is stronger than the
        :term:`guard` typical of a conditional check at the beginning of a
@@ -232,7 +232,55 @@ class EternalGuard(Decorator):
     Args:
         child: the child behaviour or subtree
         condition: a functional check that determines execution or not of the subtree
+        blackboard_keys: provide read access for the conditional function to these keys
         name: the decorator name
+
+    Examples:
+
+    Simple conditional function returning True/False:
+
+    .. code-block:: python
+
+        def check():
+             return True
+
+        foo = py_trees.behaviours.Foo()
+        eternal_guard = py_trees.decorators.EternalGuard(
+            name="Eternal Guard,
+            condition=check,
+            child=foo
+        )
+
+    Simple conditional function returning SUCCESS/FAILURE:
+
+    .. code-block:: python
+
+        def check():
+             return py_trees.common.Status.SUCCESS
+
+        foo = py_trees.behaviours.Foo()
+        eternal_guard = py_trees.decorators.EternalGuard(
+            name="Eternal Guard,
+            condition=check,
+            child=foo
+        )
+
+    Conditional function that makes checks against data on the blackboard (the
+    blackboard client with pre-configured access is provided by the EternalGuard
+    instance):
+
+    .. code-block:: python
+
+        def check(blackboard):
+             return blackboard.velocity > 3.0
+
+        foo = py_trees.behaviours.Foo()
+        eternal_guard = py_trees.decorators.EternalGuard(
+            name="Eternal Guard,
+            condition=check,
+            blackboard_keys={"velocity"},
+            child=foo
+        )
 
     .. seealso:: :meth:`py_trees.idioms.eternal_guard`
     """
@@ -240,11 +288,18 @@ class EternalGuard(Decorator):
             self,
             *,
             child: behaviour.Behaviour,
-            condition: Union[Callable[[], bool], Callable[[], common.Status]],
+            condition: Union[Callable[[blackboard.Blackboard], bool], Callable[[blackboard.Blackboard], common.Status]],
+            blackboard_keys: Set[str]=[],
             name: str=common.Name.AUTO_GENERATED,
     ):
         super().__init__(name=name, child=child)
-        self.condition = condition
+        for key in blackboard_keys:
+            self.blackboard.register_key(key=key, read=True)
+        condition_signature = inspect.signature(condition)
+        if "blackboard" in [p.name for p in condition_signature.parameters.values()]:
+            self.condition = functools.partial(condition, self.blackboard)
+        else:
+            self.condition = condition
 
     def tick(self):
         """

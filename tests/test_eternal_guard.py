@@ -142,7 +142,7 @@ def test_eternal_guard_decorator():
                 py_trees.common.Status.FAILURE,
             ]
 
-        def condition(self):
+        def condition(self, blackboard):
             try:
                 new_result = self.results.pop(0)
                 return new_result

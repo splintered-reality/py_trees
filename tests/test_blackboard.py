@@ -21,6 +21,14 @@ from py_trees.blackboard import Blackboard
 ##############################################################################
 
 
+class Motley(object):
+    """
+    To test nested access on the blackboard
+    """
+    def __init__(self):
+        self.nested = "nested"
+
+
 class create_blackboards(object):
 
     def __enter__(self):
@@ -29,8 +37,8 @@ class create_blackboards(object):
         return (self.foo, self.bar)
 
     def __exit__(self, unused_type, unused_value, unused_traceback):
-        self.foo.unregister()
-        self.bar.unregister()
+        self.foo.unregister(clear=True)
+        self.bar.unregister(clear=True)
 
 
 def create_blackboard_foo():
@@ -40,7 +48,7 @@ def create_blackboard_foo():
     blackboard = Blackboard(
         name="foo",
         unique_identifier=uuid.uuid4(),
-        read=['foo', 'bar'],
+        read=['foo', 'bar', 'motley'],
         write=['foo', 'dude'],
     )
     # blackboard.foo = "more bar"  # leave one uninitialised
@@ -53,14 +61,15 @@ def create_blackboard_bar():
     Create another blackboard client with a few variables.
     """
     blackboard = Blackboard(
-        name="foo",
+        name="bar",
         unique_identifier=uuid.uuid4(),
         read=['dude'],
-        write=['bar', 'dudette'],
+        write=['bar', 'dudette', 'motley'],
     )
     # blackboard.foo = "more bar"  # leave one uninitialised
     blackboard.bar = "less bar"
     blackboard.dudette = "Anna"
+    blackboard.motley = Motley()
     return blackboard
 
 ##############################################################################
@@ -99,28 +108,98 @@ def test_duplicate_uuid_exception():
         unused_two = py_trees.blackboard.Blackboard(unique_identifier=unique_identifier)
 
 
+def test_delayed_register_key():
+    console.banner("Delayed Register Key")
+    with create_blackboards() as (foo, bar):
+        with nose.tools.assert_raises_regexp(AttributeError, "does not have read/write access"):
+            print("Expecting Attribute Error with substring 'does not have read/write access'")
+            print(foo.other)
+        with nose.tools.assert_raises_regexp(AttributeError, "does not have write access"):
+            print("Expecting Attribute Error with substring 'does not have write access'")
+            foo.other = 1
+        print("register other for writing")
+        foo.register_key(key="other", write=True)
+        print(str(foo))
+        print("foo.other = 1")
+        foo.other = 1
+        print("Attempting to read 'other'...")
+        with nose.tools.assert_raises_regexp(AttributeError, "does not have read/write access"):
+            print("Expecting Attribute Error with substring 'does not have read/write access'")
+            unused_result = bar.other
+        print("register other for reading")
+        bar.register_key(key="other", read=True)
+        print(str(bar))
+        assert(bar.other == 1)
+
+
+def test_nested_read():
+    console.banner("Nested Read")
+    with create_blackboards() as (foo, unused_bar):
+        result = foo.motley.nested
+        print("Read foo.motley.nested {} [{}]".format(result, "nested"))
+        assert(result == "nested")
+        result = foo.get('motley.nested')
+        print("Read foo.get('motley.nested') {} [{}]".format(result, "nested"))
+        assert(result == "nested")
+        with nose.tools.assert_raises_regexp(KeyError, "nested attributes"):
+            print("foo.get('motley.huzzah_not_here') ...")
+            print("Expecting a KeyError with substring 'nested attributes'")
+            foo.get('motley.huzzah_not_here')
+        foo.unset('motley')
+        with nose.tools.assert_raises_regexp(KeyError, "does not yet exist"):
+            print("foo.unset('motley')")
+            print("foo.get('motley.not_here') ...")
+            print("Expecting a KeyError with substring 'does not yet exist'")
+            foo.get('motley.not_here')
+
+
+def test_nested_write():
+    console.banner("Nested Write")
+    with create_blackboards() as (foo, bar):
+        print("Write bar.motley.nested [{}]".format("overwritten"))
+        bar.motley.nested = "overwritten"
+        print("  'foo.motley.nested' == {} [{}]".format("overwritten", foo.motley.nested))
+        assert(foo.motley.nested == "overwritten")
+        print("Write bar.set('motley.nested', {})".format("via_set_overwrite"))
+        bar.set('motley.nested', "via_set_overwrite")
+        print("  'foo.motley.nested' == {} [{}]".format("via_set_overwrite", foo.motley.nested))
+        assert(foo.motley.nested == "via_set_overwrite")
+        print("Write bar.set('motley.nested', '{}', overwrite=False)".format("try_to_overwrite"))
+        result = bar.set('motley.nested', "try_to_overwrite", overwrite=False)
+        print("  'result' == {} [{}]".format(False, result))
+        print("  'foo.motley.nested' == {} [{}]".format("via_set_overwrite", foo.motley.nested))
+        assert(foo.motley.nested == "via_set_overwrite")
+        with nose.tools.assert_raises_regexp(KeyError, "does not yet exist"):
+            print("bar.unset('motley')")
+            bar.unset('motley')
+            print("bar.set('motley.nested', 'on_unset') ...")
+            print("Expecting a KeyError with substring 'does not yet exist'")
+            bar.set('motley.nested', "on_unset")
+
+
 def test_key_filters():
     console.banner("Key Accessors")
     with create_blackboards() as (foo, bar):
         no_of_keys = len(Blackboard.keys())
-        print("# Registered keys: {} [{}]".format(no_of_keys, 4))
-        assert(no_of_keys == 4)
+        print("{}".format(Blackboard.keys()))
+        print("# Registered keys: {} [{}]".format(no_of_keys, 5))
+        assert(no_of_keys == 5)
         no_of_keys = len(Blackboard.keys_filtered_by_regex("dud"))
         print("# Keys by regex 'dud': {} [{}]".format(no_of_keys, 2))
         assert(no_of_keys == 2)
         no_of_keys = len(Blackboard.keys_filtered_by_clients({foo.unique_identifier}))
-        print("# Keys by id [foo.id] {} [{}]".format(no_of_keys, 3))
-        assert(no_of_keys == 3)
-        no_of_keys = len(Blackboard.keys_filtered_by_clients({bar.unique_identifier}))
-        print("# Keys by id [bar.id] {} [{}]".format(no_of_keys, 3))
-        assert(no_of_keys == 3)
-        no_of_keys = len(Blackboard.keys_filtered_by_clients({foo.unique_identifier, bar.unique_identifier}))
-        print("# Keys by id [foo.id, bar.id] {} [{}]".format(no_of_keys, 4))
+        print("# Keys by id [foo.id] {} [{}]".format(no_of_keys, 4))
         assert(no_of_keys == 4)
+        no_of_keys = len(Blackboard.keys_filtered_by_clients({bar.unique_identifier}))
+        print("# Keys by id [bar.id] {} [{}]".format(no_of_keys, 4))
+        assert(no_of_keys == 4)
+        no_of_keys = len(Blackboard.keys_filtered_by_clients({foo.unique_identifier, bar.unique_identifier}))
+        print("# Keys by id [foo.id, bar.id] {} [{}]".format(no_of_keys, 5))
+        assert(no_of_keys == 5)
         # show the convenience list -> set helper is ok
         no_of_keys = len(Blackboard.keys_filtered_by_clients([foo.unique_identifier]))
         print("# Can pass in a list instead of a set: True")
-        assert(no_of_keys == 3)
+        assert(no_of_keys == 4)
 
 
 def test_activity_stream():
@@ -129,22 +208,25 @@ def test_activity_stream():
     blackboard = Blackboard(
         name="Client",
         read={"foo", "dude"},
-        write={"spaghetti"}
+        write={"spaghetti", "motley"}
     )
     try:
         unused = blackboard.dude
-    except KeyError:  # READ_FAILED
+    except KeyError:  # NO_KEY
         pass
     try:
         unused = blackboard.dudette
-    except AttributeError:  # READ_ACCESS DENIED
+    except AttributeError:  # ACCESS_DENIED
         pass
     try:
         blackboard.dudette = "Jane"
-    except AttributeError:  # WRITE_ACCESS DENIED
+    except AttributeError:  # ACCESS_DENIED
         pass
     blackboard.spaghetti = {"type": "Carbonara", "quantity": 1}  # INITIALISED
     blackboard.spaghetti = {"type": "Gnocchi", "quantity": 2}  # WRITE
+    blackboard.motley = Motley()
+    blackboard.motley.nested = "mutt"
+    unused_result = blackboard.motley.nested
     try:
         # NO_OVERWRITE
         blackboard.set("spaghetti", {"type": "Bolognese", "quantity": 3}, overwrite=False)
@@ -153,13 +235,34 @@ def test_activity_stream():
     blackboard.unset("spaghetti")  # UNSET
     print(py_trees.display.unicode_blackboard_activity_stream())
     expected_types = [
-        py_trees.blackboard.ActivityType.READ_FAILED,
-        py_trees.blackboard.ActivityType.READ_DENIED,
-        py_trees.blackboard.ActivityType.WRITE_DENIED,
+        py_trees.blackboard.ActivityType.NO_KEY,
+        py_trees.blackboard.ActivityType.ACCESS_DENIED,
+        py_trees.blackboard.ActivityType.ACCESS_DENIED,
         py_trees.blackboard.ActivityType.INITIALISED,
         py_trees.blackboard.ActivityType.WRITE,
+        py_trees.blackboard.ActivityType.INITIALISED,
+        py_trees.blackboard.ActivityType.ACCESSED,
+        py_trees.blackboard.ActivityType.ACCESSED,
         py_trees.blackboard.ActivityType.NO_OVERWRITE,
         py_trees.blackboard.ActivityType.UNSET,
     ]
     for item, expected in zip(Blackboard.activity_stream.data, expected_types):
         assert(item.activity_type == expected)
+
+
+def test_lists():
+    console.banner("Lists")
+    with create_blackboards() as (foo, bar):
+        foo.dude = ["Bob", "Bill"]
+        name = bar.dude[0]
+        print("Read first element of the list: {} [{}]".format(name, "Bob"))
+        assert(name, "Bob")
+
+
+def test_dicts():
+    console.banner("Dicts")
+    with create_blackboards() as (foo, bar):
+        foo.dude = {"Bob": 5, "Bill": 3}
+        value = bar.dude["Bob"]
+        print("Read Bob's score: {} [{}]".format(value, 5))
+        assert(value, 5)

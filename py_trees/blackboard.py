@@ -34,11 +34,11 @@ To be more concrete, the following is a list of features that this
 implementation either embraces or does not.
 
 * [+] Centralised key-value store
-* [+] Client based usage with declaration of read/write intentions at construction
+* [+] Client based usage with registration of read/write intentions at construction
 * [+] Activity stream that tracks read/write operations by behaviours
 * [-] Sharing between tree instances
-* [-] Locking for reading/writing
-* [-] Strict variable initialisation policies
+* [-] Exclusive locks for reading/writing
+* [-] Priority policies for variable instantiations
 
 .. include:: weblinks.rst
 """
@@ -47,16 +47,15 @@ implementation either embraces or does not.
 # Imports
 ##############################################################################
 
+import copy
 import enum
-import re
 import operator
+import re
 import typing
 import uuid
 
-from . import behaviour
-from . import behaviours
-from . import common
 from . import console
+from . import utilities
 
 ##############################################################################
 # Classes
@@ -64,7 +63,9 @@ from . import console
 
 
 class KeyMetaData(object):
-
+    """
+    Stores the aggregated metadata for a key on the blackboard.
+    """
     def __init__(self):
         self.read = set()
         self.write = set()
@@ -76,17 +77,17 @@ class ActivityType(enum.Enum):
     READ = "READ"
     """Read from the blackboard"""
     INITIALISED = "INITIALISED"
-    """Initialised value on the blackboard"""
+    """Initialised a key-value pair on the blackboard"""
     WRITE = "WRITE"
     """Wrote to the blackboard."""
-    READ_FAILED = "READ_FAILED"
-    """Tried to read a key that does not yet exist on the blackboard."""
-    READ_DENIED = "READ_DENIED"
-    """Client was denied access to read a key."""
-    WRITE_DENIED = "WRITE_DENIED"
-    """Client was denied access to write a key."""
+    ACCESSED = "ACCESSED"
+    """Key accessed, either for reading, or modification of the value's internal attributes (e.g. foo.bar)."""
+    ACCESS_DENIED = "ACCESS_DENIED"
+    """Client did not have access to read/write a key."""
+    NO_KEY = "NO_KEY"
+    """Tried to access a key that does not yet exist on the blackboard."""
     NO_OVERWRITE = "NO_OVERWRITE"
-    """Variable already exists and a no-overwrite request was respected."""
+    """Tried to write but variable already exists and a no-overwrite request was respected."""
     UNSET = "UNSET"
     """Key was removed from the blackboard"""
 
@@ -165,87 +166,199 @@ class Blackboard(object):
     """
     Key-value store for sharing data between behaviours.
 
-    Examples:
-        You can instantiate a blackboard client anywhere in your program.
-        Even disconnected instantiations will discover the single global key-value store.
-        For example:
+    **Examples**
 
-        .. code-block:: python
+    Blackboard clients will accept a user-friendly name / unique identifier for
+    registration on the centralised store or create them for you if none is provided.
 
-            def check_foo():
-                blackboard = Blackboard(name="Reader", read={"foo"))
-                assert(blackboard.foo, "bar")
+    .. code-block:: python
 
-            if __name__ == '__main__':
-                blackboard = Blackboard(name="Writer", write={"foo"))
-                blackboard.foo = "bar"
-                check_foo()
+        provided = py_trees.blackboard.Blackboard(
+            name="Provided",
+            unique_identifier=uuid.uuid4()
+        )
+        print(provided)
+        generated = py_trees.blackboard.Blackboard()
+        print(generated)
 
-        To respect an already initialised key on the blackboard:
+    .. figure:: images/blackboard_client_instantiation.png
+       :align: center
 
-        .. code-block:: python
+       Client Instantiation
 
-            if __name__ == '__main__':
-                blackboard = Blackboard(name="Writer", read={"foo"))
-                result = blackboard.set("foo", "bar", overwrite=False)
+    Register read/write access for keys on the blackboard. Note, registration is
+    not initialisation.
 
-        Log and display the activity stream:
+    .. code-block:: python
 
-        .. code-block:: python
+        blackboard = py_trees.blackboard.Blackboard(
+            name="Client",
+            read={"foo"},
+            write={"bar"}
+        )
+        blackboard.register_key(key="foo", write=True)
+        blackboard.foo = "foo"
+        print(blackboard)
 
-            # all key-value pairs
-            Blackboard.enable_activity_stream(maximum_size=100)
-            blackboard = Blackboard(name="Writer", write={"foo"))
-            blackboard.foo = "bar"
-            # view the activity stream
-            print(py_trees.display.unicode_blackboard_activity_stream())
-            # output
-            Activity Stream
-                foo       : INITIALISED  | Set Foo   | → bar
-            # clear the stream (useful to do between tree ticks)
-            Blackboard.activity_stream.clear()
+    .. figure:: images/blackboard_read_write.png
+       :align: center
 
-        For introspection, use the methods in the display module:
+       Variable Read/Write Registration
 
-        .. code-block:: python
+    Disconnected instances will discover the centralised
+    key-value store.
 
-            # all key-value pairs
-            print(py_trees.display.unicode_blackboard())
-            # various filtered views
-            print(py_trees.display.unicode_blackboard(key_filter={"foo"}))
-            print(py_trees.display.unicode_blackboard(regex_filter="dud*"))
-            print(py_trees.display.unicode_blackboard(client_filter={writer.id, set_foo.id}))
-            # list the clients associated with each key
-            print(py_trees.display.unicode_blackboard(display_only_key_metadata=True)
-            # a dot graph representation of tree and blackboard together
-            py_trees.display.render_dot_tree(root, root, with_blackboard_variables=True)
+    .. code-block:: python
 
-    .. warning::
+        def check_foo():
+            blackboard = py_trees.blackboard.Blackboard(name="Reader", read={"foo"})
+            print("Foo: {}".format(blackboard.foo))
 
-       Be careful of key collisions. This implementation leaves this management up to the user.
+
+        blackboard = py_trees.blackboard.Blackboard(name="Writer", write={"foo"})
+        blackboard.foo = "bar"
+        check_foo()
+
+    To respect an already initialised key on the blackboard:
+
+    .. code-block:: python
+
+        blackboard = Blackboard(name="Writer", read={"foo"))
+        result = blackboard.set("foo", "bar", overwrite=False)
+
+    Store complex objects on the blackboard:
+
+    .. code-block:: python
+
+        class Nested(object):
+            def __init__(self):
+                self.foo = None
+                self.bar = None
+
+            def __str__(self):
+                return str(self.__dict__)
+
+
+        writer = py_trees.blackboard.Blackboard(
+            name="Writer",
+            write={"nested"}
+        )
+        reader = py_trees.blackboard.Blackboard(
+            name="Reader",
+            read={"nested"}
+        )
+        writer.nested = Nested()
+        writer.nested.foo = "foo"
+        writer.nested.bar = "bar"
+
+        foo = reader.nested.foo
+        print(writer)
+        print(reader)
+
+    .. figure:: images/blackboard_nested.png
+       :align: center
+
+    Log and display the activity stream:
+
+    .. code-block:: python
+
+        py_trees.blackboard.Blackboard.enable_activity_stream(maximum_size=100)
+        blackboard_reader = py_trees.blackboard.Blackboard(name="Reader", read={"foo"})
+        blackboard_writer = py_trees.blackboard.Blackboard(name="Writer", write={"foo"})
+        blackboard_writer.foo = "bar"
+        blackboard_writer.foo = "foobar"
+        unused_result = blackboard_reader.foo
+        print(py_trees.display.unicode_blackboard_activity_stream())
+        py_trees.blackboard.Blackboard.activity_stream.clear()
+
+    .. figure:: images/blackboard_activity_stream.png
+       :align: center
+
+    Display the blackboard on the console, or part thereof:
+
+    .. code-block:: python
+
+        writer = py_trees.blackboard.Blackboard(
+            name="Writer",
+            write={"foo", "bar", "dude", "dudette"}
+        )
+        reader = py_trees.blackboard.Blackboard(
+            name="Reader",
+            read={"foo", "bar"}
+        )
+        writer.foo = "foo"
+        writer.bar = "bar"
+        writer.dude = "bob"
+
+        # all key-value pairs
+        print(py_trees.display.unicode_blackboard())
+        # various filtered views
+        print(py_trees.display.unicode_blackboard(key_filter={"foo"}))
+        print(py_trees.display.unicode_blackboard(regex_filter="dud*"))
+        print(py_trees.display.unicode_blackboard(client_filter={reader.unique_identifier}))
+        # list the clients associated with each key
+        print(py_trees.display.unicode_blackboard(display_only_key_metadata=True))
+
+    .. figure:: images/blackboard_display.png
+       :align: center
+
+    Behaviours register their own blackboard clients with the same name/id as the
+    behaviour itself. This helps associate blackboard variables with behaviours, enabling
+    various introspection and debugging capabilities on the behaviour trees.
+
+    Creating a custom behaviour with blackboard variables:
+
+    .. code-block:: python
+
+        class Foo(py_trees.behaviours.Behaviour):
+
+        def __init__(self, name):
+            super().__init__(name=name)
+            self.blackboard.register_key("foo", read=True)
+
+        def update(self):
+            self.feedback_message = self.blackboard.foo
+            return py_trees.common.Status.Success
+
+    Rendering a dot graph for a behaviour tree, complete with blackboard variables:
+
+    .. code-block:: python
+
+        # in code
+        py_trees.display.render_dot_tree(py_trees.demos.blackboard.create_root())
+        # command line tools
+        py-trees-render --with-blackboard-variables py_trees.demos.blackboard.create_root
+
+    .. graphviz:: dot/demo-blackboard.dot
+       :align: center
+
+    With judicious use of the display methods / activity stream around the ticks
+    of a tree (refer to :class:`py_trees.visitors.DisplaySnapshotVisitor` for
+    examplar code):
+
+    .. figure:: images/blackboard_trees.png
+       :align: center
 
     .. seealso::
+
        * :ref:`py-trees-demo-blackboard <py-trees-demo-blackboard-program>`
+       * :class:`py_trees.visitors.DisplaySnapshotVisitor`
+       * :class:`py_trees.behaviours.SetBlackboardVariable`
+       * :class:`py_trees.behaviours.UnsetBlackboardVariable`
+       * :class:`py_trees.behaviours.CheckBlackboardVariableExists`
+       * :class:`py_trees.behaviours.WaitForBlackboardVariable`
+       * :class:`py_trees.behaviours.CheckBlackboardVariableValue`
+       * :class:`py_trees.behaviours.WaitForBlackboardVariableValue`
 
     Attributes:
-        <class>.storage (typing.Dict[str, typing.Any]): key-value storage
-        <class>.metadata (typing.Dict[str, KeyMetaData]): key-client (read/write) metadata
-        <class>.activity_stream (ActivityStream): the activity stream (None if not enabled)
-        <instance>.name (str): client's convenient, but not necessarily unique identifier
-        <instance>.unique_identifier (uuid.UUID): client's unique identifier
-        <instance>.read (typing.List[str]): keys this client has permission to read
-        <instance>.write (typing.List[str]): keys this client has permission to write
-
-    Args:
-        name: the non-unique, but convenient identifier (stringifies the uuid if None) for the client
-        unique_identifier: client's unique identifier (auto-generates if None)
-        read: list of keys this client has permission to read
-        write: list of keys this client has permission to write
-
-    Raises:
-        TypeError: if the provided name/unique identifier is not of type str/uuid.UUID
-        ValueError: if the unique identifier has already been registered
-
+        Blackboard.clients (typing.Dict[uuid.UUID, Blackboard]): clients, gathered by uuid
+        Blackboard.storage (typing.Dict[str, typing.Any]): key-value data store
+        Blackboard.metadata (typing.Dict[str, KeyMetaData]): key associated metadata
+        Blackboard.activity_stream (ActivityStream): logged activity
+        name (str): client's convenient, but not necessarily unique identifier
+        unique_identifier (uuid.UUID): client's unique identifier
+        read (typing.List[str]): keys this client has permission to read
+        write (typing.List[str]): keys this client has permission to write
     """
     storage = {}  # Dict[str, Any] / key-value storage
     metadata = {}  # Dict[ str, KeyMetaData ] / key-metadata information
@@ -256,33 +369,63 @@ class Blackboard(object):
             self, *,
             name: str=None,
             unique_identifier: uuid.UUID=None,
-            read: typing.Set[str]=set(),
-            write: typing.Set[str]=set()):
-        # print("__init__")
+            read: typing.Set[str]=None,
+            write: typing.Set[str]=None):
+        """
+        Args:
+            name: client's convenient identifier (stringifies the uuid if None)
+            unique_identifier: client's unique identifier (auto-generates if None)
+            read: list of keys this client has permission to read
+            write: list of keys this client has permission to write
+
+        Raises:
+            TypeError: if the provided name/unique identifier is not of type str/uuid.UUID
+            ValueError: if the unique identifier has already been registered
+        """
+
+        # unique identifier
         if unique_identifier is None:
-            unique_identifier = uuid.uuid4()
-        if type(unique_identifier) != uuid.UUID:
-            raise TypeError("provided unique identifier is not of type uuid.UUID")
-        if name is None or not name:
-            name = str(unique_identifier)
-        if not isinstance(name, str):
-            raise TypeError("provided name is not of type str [{}]".format(type(name)))
-        if type(read) is list:
-            read = set(read)
-        if type(write) is list:
-            write = set(write)
-        if unique_identifier in Blackboard.clients.keys():
+            super().__setattr__("unique_identifier", uuid.uuid4())
+        else:
+            if type(unique_identifier) != uuid.UUID:
+                raise TypeError("provided unique identifier is not of type uuid.UUID")
+            super().__setattr__("unique_identifier", unique_identifier)
+        if super().__getattribute__("unique_identifier") in Blackboard.clients.keys():
             raise ValueError("this unique identifier has already been registered")
-        super().__setattr__("unique_identifier", unique_identifier)
-        super().__setattr__("name", name)
-        super().__setattr__("read", read)
-        for key in read:
+
+        # name
+        if name is None or not name:
+            name = utilities.truncate(
+                original=str(super().__getattribute__("unique_identifier")).replace('-', '_'),
+                length=7
+            )
+            super().__setattr__("name", name)
+        else:
+            if not isinstance(name, str):
+                raise TypeError("provided name is not of type str [{}]".format(type(name)))
+            super().__setattr__("name", name)
+
+        # read
+        if read is None:
+            super().__setattr__("read", set())
+        elif type(read) is list:
+            super().__setattr__("read", set(read))
+        else:
+            super().__setattr__("read", read)
+        for key in super().__getattribute__("read"):
             Blackboard.metadata.setdefault(key, KeyMetaData())
             Blackboard.metadata[key].read.add(
                 super().__getattribute__("unique_identifier")
             )
-        super().__setattr__("write", write)
-        for key in write:
+
+        # write
+        if write is None:
+            super().__setattr__("write", set())
+        elif type(write) is list:
+            super().__setattr__("write", set(write))
+        else:
+            super().__setattr__("write", write)
+        for key in super().__getattribute__("write"):
             Blackboard.metadata.setdefault(key, KeyMetaData())
             Blackboard.metadata[key].write.add(
                 super().__getattribute__("unique_identifier")
@@ -291,7 +434,7 @@ class Blackboard(object):
             super().__getattribute__("unique_identifier")
         ] = self
 
-    def __setattr__(self, name, value):
+    def __setattr__(self, name: str, value: typing.Any):
         """
         Convenience attribute style referencing with checking against
         permissions.
@@ -303,7 +446,7 @@ class Blackboard(object):
         if name not in super().__getattribute__("write"):
             if Blackboard.activity_stream is not None:
                 Blackboard.activity_stream.push(
-                    self._generate_activity_item(name, ActivityType.WRITE_DENIED)
+                    self._generate_activity_item(name, ActivityType.ACCESS_DENIED)
                 )
             raise AttributeError("client '{}' does not have write access to '{}'".format(self.name, name))
         if Blackboard.activity_stream is not None:
@@ -326,7 +469,7 @@ class Blackboard(object):
                 )
         Blackboard.storage[name] = value
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str):
         """
         Convenience attribute style referencing with checking against
         permissions.
@@ -336,26 +479,37 @@ class Blackboard(object):
             KeyError: if the variable does not yet exist on the blackboard
         """
         # print("__getattr__ [{}]".format(name))
-        try:
-            if name not in super().__getattribute__("read"):
-                if Blackboard.activity_stream is not None:
-                    Blackboard.activity_stream.push(
-                        self._generate_activity_item(name, ActivityType.READ_DENIED)
-                    )
-                raise AttributeError("client '{}' does not have read access to '{}'".format(self.name, name))
+        if name not in (super().__getattribute__("read") | super().__getattribute__("write")):
             if Blackboard.activity_stream is not None:
                 Blackboard.activity_stream.push(
-                    self._generate_activity_item(
-                        key=name,
-                        activity_type=ActivityType.READ,
-                        current_value=Blackboard.storage[name],
-                    )
+                    self._generate_activity_item(name, ActivityType.ACCESS_DENIED)
                 )
-            return Blackboard.storage[name]
+            raise AttributeError("client '{}' does not have read/write access to '{}'".format(self.name, name))
+        try:
+            if name in super().__getattribute__("write"):
+                if Blackboard.activity_stream is not None:
+                    Blackboard.activity_stream.push(
+                        self._generate_activity_item(
+                            key=name,
+                            activity_type=ActivityType.ACCESSED,
+                            current_value=Blackboard.storage[name],
+                        )
+                    )
+                return Blackboard.storage[name]
+            if name in super().__getattribute__("read"):
+                if Blackboard.activity_stream is not None:
+                    Blackboard.activity_stream.push(
+                        self._generate_activity_item(
+                            key=name,
+                            activity_type=ActivityType.READ,
+                            current_value=Blackboard.storage[name],
+                        )
+                    )
+                return copy.deepcopy(Blackboard.storage[name])
         except KeyError as e:
             if Blackboard.activity_stream is not None:
                 Blackboard.activity_stream.push(
-                    self._generate_activity_item(name, ActivityType.READ_FAILED)
+                    self._generate_activity_item(name, ActivityType.NO_KEY)
                 )
             raise KeyError("variable '{}' does not yet exist on the blackboard".format(name)) from e
 
@@ -381,25 +535,37 @@ class Blackboard(object):
 
         Raises:
             AttributeError: if the client does not have write access to the variable
+            KeyError: if the variable does not yet exist on the blackboard
         """
-        if name not in super().__getattribute__("write"):
+        name_components = name.split('.')
+        key = name_components[0]
+        key_attributes = '.'.join(name_components[1:])
+        if key not in super().__getattribute__("write"):
             if Blackboard.activity_stream is not None:
                 Blackboard.activity_stream.push(
-                    self._generate_activity_item(name, ActivityType.WRITE_DENIED)
+                    self._generate_activity_item(name, ActivityType.ACCESS_DENIED)
                 )
             raise AttributeError("client does not have write access to '{}'".format(name))
         if not overwrite:
-            if name in Blackboard.storage:
+            if key in Blackboard.storage:
                 if Blackboard.activity_stream is not None:
                     Blackboard.activity_stream.push(
                         self._generate_activity_item(
-                            key=name,
+                            key=key,
                             activity_type=ActivityType.NO_OVERWRITE,
                             current_value=Blackboard.storage[name])
                     )
                 return False
-        setattr(self, name, value)
-        return True
+        if not key_attributes:
+            setattr(self, name, value)
+            return True
+        else:
+            blackboard_object = getattr(self, key)
+            try:
+                setattr(blackboard_object, key_attributes, value)
+                return True
+            except AttributeError:  # when the object doesn't have the attributes
+                return False
 
     def get(self, name: str) -> typing.Any:
         """
@@ -407,30 +573,38 @@ class Blackboard(object):
         '.<name>').
 
         Args:
-            name: name of the variable to get
+            name: name of the variable to get, can be nested, e.g. battery.percentage
 
         Raises:
             AttributeError: if the client does not have read access to the variable
-            KeyError: if the variable does not yet exist on the blackboard
+            KeyError: if the variable or it's nested attributes do not yet exist on the blackboard
         """
-        return getattr(self, name)
+        # key attributes is an empty string if not a nested variable name
+        name_components = name.split('.')
+        key = name_components[0]
+        key_attributes = '.'.join(name_components[1:])
+        value = getattr(self, key)
+        if key_attributes:
+            try:
+                value = operator.attrgetter(key_attributes)(value)
+            except AttributeError:
+                raise KeyError("Key exists, but does not have the specified nested attributes [{}]".format(name))
+        return value
 
-    def unset(self, name: str):
+    def unset(self, key: str):
         """
-        For when you need to completely remove a blackboard variable,
-        this provides a convenient helper method. This is particularly
-        useful when you wish to 'erase' the blackboard between unit test
-        methods.
+        For when you need to completely remove a blackboard variable (key-value pair),
+        this provides a convenient helper method.
 
         Args:
-            name: name of the variable to clear
+            key: name of the variable to remove
 
         Returns:
-            True if the key , False otherwise
+            True if the variable was removed, False if it was already absent
         """
         if Blackboard.activity_stream is not None:
             Blackboard.activity_stream.push(
-                self._generate_activity_item(name, ActivityType.UNSET)
+                self._generate_activity_item(key, ActivityType.UNSET)
             )
         # Three means of handling a non-existent key - 1) raising a KeyError, 2) catching
         # the KeyError and passing, 3) catch the KeyError and return True/False.
@@ -438,14 +612,14 @@ class Blackboard(object):
         # Option 2) hides information - bad
         # Option 3) no extra code necessary and information is there if desired
         try:
-            del Blackboard.storage[name]
+            del Blackboard.storage[key]
             return True
         except KeyError:
             return False
 
     def __str__(self):
         indent = "  "
-        s = console.green + type(self).__name__ + console.reset + "\n"
+        s = console.green + "Blackboard Client" + console.reset + "\n"
         s += console.white + indent + "Client Data" + console.reset + "\n"
         keys = ["name", "unique_identifier", "read", "write"]
         s += self._stringify_key_value_pairs(keys, self.__dict__, 2 * indent)
@@ -486,9 +660,10 @@ class Blackboard(object):
 
     def unregister(self, clear=True):
         """
-        Unregister this blackboard and if requested, clear key-value pairs if this
+        Unregister this blackboard client and if requested, clear key-value pairs if this
         client is the last user of those variables.
         """
+        print("Name: {}".format(self.name))
         for key in self.read:
             Blackboard.metadata[key].read.remove(super().__getattribute__("unique_identifier"))
         for key in self.write:
@@ -497,6 +672,24 @@ class Blackboard(object):
             for key in (set(self.read) | set(self.write)):
                 if not (set(Blackboard.metadata[key].read) | set(Blackboard.metadata[key].write)):
                     Blackboard.storage.pop(key, None)
+                    Blackboard.metadata.pop(key, None)
+
+    def register_key(self, key: str, read: bool=False, write: bool=False):
+        """
+        Register a key on the blackboard to associate with this client.
+
+        Args:
+            key: key to register
+            read: permit/track read access
+            write: permit/track write access
+        """
+        Blackboard.metadata.setdefault(key, KeyMetaData())
+        if read:
+            super().__getattribute__("read").add(key)
+            Blackboard.metadata[key].read.add(super().__getattribute__("unique_identifier"))
+        if write:
+            super().__getattribute__("write").add(key)
+            Blackboard.metadata[key].write.add(super().__getattribute__("unique_identifier"))
 
     @staticmethod
     def keys() -> typing.Set[str]:
@@ -568,363 +761,3 @@ class Blackboard(object):
         Disable logging of activities on the blackboard
         """
         Blackboard.activity_stream = None
-
-##############################################################################
-# Blackboard Behaviours
-##############################################################################
-
-
-class ClearBlackboardVariable(behaviours.Success):
-    """
-    Clear the specified value from the blackboard.
-
-    Args:
-        name (:obj:`str`): name of the behaviour
-        variable_name (:obj:`str`): name of the variable to clear
-    """
-    def __init__(self,
-                 name="Clear Blackboard Variable",
-                 variable_name="dummy",
-                 ):
-        super(ClearBlackboardVariable, self).__init__(name)
-        self.variable_name = variable_name
-        self.blackboard = Blackboard(
-            name=self.name,
-            write={self.variable_name}
-        )
-
-    def initialise(self):
-        """
-        Delete the variable from the blackboard.
-        """
-        self.blackboard.unset(self.variable_name)
-
-
-class SetBlackboardVariable(behaviours.Success):
-    """
-    Set the specified variable on the blackboard.
-    Usually we set variables from inside other behaviours, but can
-    be convenient to set them from a behaviour of their own sometimes so you
-    don't get blackboard logic mixed up with more atomic behaviours.
-
-    Args:
-        name (:obj:`str`): name of the behaviour
-        variable_name (:obj:`str`): name of the variable to set
-        variable_value (:obj:`any`): value of the variable to set
-
-    .. todo:: overwrite option, leading to possible failure/success logic.
-    """
-    def __init__(self,
-                 name="Set Blackboard Variable",
-                 variable_name="dummy",
-                 variable_value=None
-                 ):
-        """
-        :param name: name of the behaviour
-        :param variable_name: name of the variable to set
-        :param value_name: value of the variable to set
-        """
-        super(SetBlackboardVariable, self).__init__(name)
-        self.variable_name = variable_name
-        self.variable_value = variable_value
-        self.blackboard = Blackboard(
-            name=self.name,
-            unique_identifier=self.id,
-            write={self.variable_name}
-        )
-
-    def initialise(self):
-        self.blackboard.set(self.variable_name, self.variable_value, overwrite=True)
-
-
-class CheckBlackboardVariable(behaviour.Behaviour):
-    """
-    Check the blackboard to see if it has a specific variable
-    and optionally whether that variable has an expected value.
-    It is a binary behaviour, always updating it's status
-    with either :data:`~py_trees.common.Status.SUCCESS` or
-    :data:`~py_trees.common.Status.FAILURE` at each tick.
-    """
-    def __init__(self,
-                 name,
-                 variable_name="dummy",
-                 expected_value=None,
-                 comparison_operator=operator.eq,
-                 clearing_policy=common.ClearingPolicy.ON_INITIALISE,
-                 debug_feedback_message=False
-                 ):
-        """
-        Initialise the behaviour. It's worth noting that there are a few
-        combinations to the configuration that serve different use cases.
-
-        Args:
-            name (:obj:`str`): name of the behaviour
-            variable_name (:obj:`str`): name of the variable to set
-            expected_value (:obj:`any`): expected value to find (if `None`, check for existence only)
-            comparison_operator (:obj:`func`): one from the python `operator module`_
-            clearing_policy (:obj:`any`): when to clear the match result, see :py:class:`~py_trees.common.ClearingPolicy`
-            debug_feedback_message (:obj:`bool`): provide additional detail in behaviour feedback messages for debugging
-
-        .. tip::
-            If just checking for existence, use the default argument
-            on construction, `expected_value=None`.
-
-        .. tip::
-            There are times when you want to get the expected match once and then save
-            that result thereafter. For example, to flag once a system has reached a
-            subgoal. Use the :data:`~py_trees.common.ClearingPolicy.NEVER` flag to do this.
-        """
-        super(CheckBlackboardVariable, self).__init__(name)
-
-        name_components = variable_name.split('.')
-        self.variable_name = name_components[0]
-        self.nested_name = '.'.join(name_components[1:])  # empty string if no other parts
-
-        self.blackboard = Blackboard(
-            name=self.name,
-            unique_identifier=self.id,
-            read={self.variable_name}
-        )
-        self.expected_value = expected_value
-        self.comparison_operator = comparison_operator
-        self.matching_result = None
-        self.clearing_policy = clearing_policy
-        self.debug_feedback_message = debug_feedback_message
-
-    def initialise(self):
-        """
-        Clears the internally stored message ready for a new run
-        if ``old_data_is_valid`` wasn't set.
-        """
-        self.logger.debug("%s.initialise()" % self.__class__.__name__)
-        if self.clearing_policy == common.ClearingPolicy.ON_INITIALISE:
-            self.matching_result = None
-
-    def update(self):
-        """
-        Check for existence, or the appropriate match on the expected value.
-
-        Returns:
-             :class:`~py_trees.common.Status`: :data:`~py_trees.common.Status.FAILURE` if not matched, :data:`~py_trees.common.Status.SUCCESS` otherwise.
-        """
-        self.logger.debug("%s.update()" % self.__class__.__name__)
-        if self.matching_result is not None:
-            return self.matching_result
-
-        result = None
-
-        try:
-            # value = check_attr(self.blackboard)
-            value = self.blackboard.get(self.variable_name)
-            if self.nested_name:
-                try:
-                    value = operator.attrgetter(self.nested_name)(value)
-                except AttributeError:
-                    raise KeyError()
-            # if existence check required only
-            if self.expected_value is None:
-                self.feedback_message = "'%s' exists on the blackboard (as required)" % self.variable_name
-                result = common.Status.SUCCESS
-        except KeyError:
-            name = "{}.{}".format(self.variable_name, self.nested_name) if self.nested_name else self.variable_name
-            self.feedback_message = 'blackboard variable {0} did not exist'.format(name)
-            result = common.Status.FAILURE
-
-        if result is None:
-            # expected value matching
-            # value = getattr(self.blackboard, self.variable_name)
-            success = self.comparison_operator(value, self.expected_value)
-
-            if success:
-                if self.debug_feedback_message:  # costly
-                    self.feedback_message = "'%s' comparison succeeded [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
-                else:
-                    self.feedback_message = "'%s' comparison succeeded" % (self.variable_name)
-                result = common.Status.SUCCESS
-            else:
-                if self.debug_feedback_message:  # costly
-                    self.feedback_message = "'%s' comparison failed [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
-                else:
-                    self.feedback_message = "'%s' comparison failed" % (self.variable_name)
-                result = common.Status.FAILURE
-
-        if result == common.Status.SUCCESS and self.clearing_policy == common.ClearingPolicy.ON_SUCCESS:
-            self.matching_result = None
-        else:
-            self.matching_result = result
-        return result
-
-    def terminate(self, new_status):
-        """
-        Always discard the matching result if it was invalidated by a parent or
-        higher priority interrupt.
-        """
-        self.logger.debug("%s.terminate(%s)" % (self.__class__.__name__, "%s->%s" % (self.status, new_status) if self.status != new_status else "%s" % new_status))
-        if new_status == common.Status.INVALID:
-            self.matching_result = None
-
-
-class WaitForBlackboardVariable(behaviour.Behaviour):
-    """
-    Check the blackboard to see if it has a specific variable
-    and optionally whether that variable has a specific value.
-    Unlike :py:class:`~py_trees.blackboard.CheckBlackboardVariable`
-    this class will be in a :data:`~py_trees.common.Status.RUNNING` state until the variable appears
-    and (optionally) is matched.
-
-    Args:
-        name (:obj:`str`): name of the behaviour
-        variable_name (:obj:`str`): name of the variable to check
-        expected_value (:obj:`any`): expected value to find (if `None`, check for existence only)
-        comparison_operator (:obj:`func`): one from the python `operator module`_
-        clearing_policy (:obj:`any`): when to clear the match result, see :py:class:`~py_trees.common.ClearingPolicy`
-
-    .. tip::
-        There are times when you want to get the expected match once and then save
-        that result thereafter. For example, to flag once a system has reached a
-        subgoal. Use the :data:`~py_trees.common.ClearingPolicy.NEVER` flag to do this.
-
-    .. seealso:: :class:`~py_trees.blackboard.CheckBlackboardVariable`
-
-    .. include:: weblinks.rst
-    """
-    def __init__(self,
-                 name,
-                 variable_name="dummy",
-                 expected_value=None,
-                 comparison_operator=operator.eq,
-                 clearing_policy=common.ClearingPolicy.ON_INITIALISE
-                 ):
-        super(WaitForBlackboardVariable, self).__init__(name)
-        name_components = variable_name.split('.')
-        self.variable_name = name_components[0]
-        self.nested_name = '.'.join(name_components[1:])  # empty string if no other parts
-        self.blackboard = Blackboard(
-            name=self.name,
-            unique_identifier=self.id,
-            read={self.variable_name}
-        )
-        self.expected_value = expected_value
-        self.comparison_operator = comparison_operator
-        self.clearing_policy = clearing_policy
-        self.matching_result = None
-
-    def initialise(self):
-        """
-        Clears the internally stored message ready for a new run
-        if ``old_data_is_valid`` wasn't set.
-        """
-        self.logger.debug("%s.initialise()" % self.__class__.__name__)
-        if self.clearing_policy == common.ClearingPolicy.ON_INITIALISE:
-            self.matching_result = None
-        self.check_attr = operator.attrgetter(self.variable_name)
-
-    def update(self):
-        """
-        Check for existence, or the appropriate match on the expected value.
-
-        Returns:
-             :class:`~py_trees.common.Status`: :data:`~py_trees.common.Status.FAILURE` if not matched, :data:`~py_trees.common.Status.SUCCESS` otherwise.
-        """
-        self.logger.debug("%s.update()" % self.__class__.__name__)
-        if self.matching_result is not None:
-            return self.matching_result
-
-        # existence failure check
-        try:
-            value = self.blackboard.get(self.variable_name)
-            if self.nested_name:
-                try:
-                    value = operator.attrgetter(self.nested_name)(value)
-                except AttributeError:
-                    raise KeyError()  # type raised when no variable exists, caught below
-            # if existence check required only
-            if self.expected_value is None:
-                self.feedback_message = "'%s' exists on the blackboard (as required)" % self.variable_name
-                result = common.Status.SUCCESS
-            # expected value matching
-            else:
-                success = self.comparison_operator(value, self.expected_value)
-                if success:
-                    self.feedback_message = "'%s' comparison succeeded [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
-                    result = common.Status.SUCCESS
-                else:
-                    self.feedback_message = "'%s' comparison failed [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
-                    result = common.Status.RUNNING
-        except KeyError:
-            name = "{}.{}".format(self.variable_name, self.nested_name) if self.nested_name else self.variable_name
-            self.feedback_message = 'variable {0} did not exist'.format(name)
-            result = common.Status.RUNNING
-
-        if result == common.Status.SUCCESS and self.clearing_policy == common.ClearingPolicy.ON_SUCCESS:
-            self.matching_result = None
-        elif result != common.Status.RUNNING:  # will fall in here if clearing ON_INITIALISE, or NEVER
-            self.matching_result = result
-        return result
-
-    def terminate(self, new_status):
-        """
-        Always discard the matching result if it was invalidated by a parent or
-        higher priority interrupt.
-        """
-        self.logger.debug("%s.terminate(%s)" % (self.__class__.__name__, "%s->%s" % (self.status, new_status) if self.status != new_status else "%s" % new_status))
-        if new_status == common.Status.INVALID:
-            self.matching_result = None
-
-
-##############################################################################
-# Main
-##############################################################################
-
-
-def main():
-    bb2 = Blackboard(
-        name="Bob's Board",
-        unique_identifier=uuid.uuid4(),
-        read=['foo', 'bar'],
-        write=['foo', 'dude'],
-    )
-    bb2.foo = "more bar"
-    bb2.dude = "bob"
-    unused_myfoo = bb2.foo
-    bb2.introspect_blackboard()
-    print("-----------------")
-    print("{}".format(str(bb2)))
-    print("-----------------")
-    print(console.green + "Exceptions\n" + console.reset)
-    try:
-        print(console.green + "  get(<key>): doesn't exist on the blackboard" + console.reset)
-        print("bar: {}".format(bb2.get('bar')))
-    except Exception as e:
-        print("    {}: {}".format(type(e), str(e)))
-    try:
-        print(console.green + "  get(<key>): doesn't have read access..." + console.reset)
-        print("dude: {}".format(bb2.get('dude')))
-    except Exception as e:
-        print("    {}: {}".format(type(e), str(e)))
-    try:
-        print(console.green + "  .<key>: doesn't exist on the blackboard" + console.reset)
-        print("bar: {}".format(bb2.bar))
-    except Exception as e:
-        print("    {}: {}".format(type(e), str(e)))
-    try:
-        print(console.green + "  .<key>: doesn't have read access..." + console.reset)
-        print("dude: {}".format(bb2.dude))
-    except Exception as e:
-        print("    {}: {}".format(type(e), str(e)))
-    # set
-    try:
-        print(console.green + "  set(<key>): doesn't have write permissions" + console.reset)
-        bb2.set('foobar', 3)
-    except Exception as e:
-        print("    {}: {}".format(type(e), str(e)))
-    try:
-        print(console.green + "  set(<key>): could not overwrite existing variable" + console.reset)
-        bb2.set('foo', 3, overwrite=False)
-    except Exception as e:
-        print("    {}: {}".format(type(e), str(e)))
-    try:
-        print(console.green + "  .<key>=...: doesn't have write permissions" + console.reset)
-        bb2.foobar = 3
-    except Exception as e:
-        print("    {}: {}".format(type(e), str(e)))

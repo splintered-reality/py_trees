@@ -9,10 +9,19 @@ Forthcoming
 
 **Breaking API**
 
+* [decorators] updated ``EternalGuard`` to accommodate new blackboard variable tracking mechanisms
+* [behaviours] blackboard behaviours decoupled - ``CheckBlackboardVariableExists``, ``WaitForBlackboardVariable``
+* [behaviours] blackboard behaviours decoupled - ``CheckBlackboardVariableValue``, ``WaitForBlackboardVariableValue``
+* [behaviours] blackboard behaviours dropped use of the largely redundant ``ClearingPolicy``
 * [visitors] collapsed ``SnapshotVisitor`` and ``WindsOfChangeVisitor`` functionality, `#228 <https://github.com/splintered-reality/py_trees/pull/228>`_
 
 **New Features**
 
+* [blackboard] read/write access configuration for clients on blackboard keys
+* [blackboard] log the activity on the blackboard
+* [display] dot graphs now have an option to display blackboard variables
+* [display] unicode to console the entire blackboard key-value store
+* [display] unicode to console the blackboard activity stream
 * [visitors] new ``DisplaySnapshotVisitor`` to simplify collection/printing the tree to console, `#228 <https://github.com/splintered-reality/py_trees/pull/228>`_
 
 **Bugfixes**
