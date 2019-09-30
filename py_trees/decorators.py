@@ -80,7 +80,7 @@ import functools
 import inspect
 import time
 
-from typing import Callable, List, Union  # noqa
+from typing import Callable, List, Set, Union  # noqa
 
 from . import behaviour
 from . import blackboard
@@ -95,23 +95,19 @@ class Decorator(behaviour.Behaviour):
     """
     A decorator is responsible for handling the lifecycle of a single
     child beneath
+
+    Args:
+        child: the child to be decorated
+        name: the decorator name
+
+    Raises:
+        TypeError: if the child is not an instance of :class:`~py_trees.behaviour.Behaviour`
     """
     def __init__(
             self,
             child: behaviour.Behaviour,
             name=common.Name.AUTO_GENERATED
     ):
-        """
-        Common initialisation steps for a decorator - type checks and
-        name construction (if None is given).
-
-        Args:
-            child: the child to be decorated
-            name: the decorator name
-
-        Raises:
-            TypeError: if the child is not an instance of :class:`~py_trees.behaviour.Behaviour`
-        """
         # Checks
         if not isinstance(child, behaviour.Behaviour):
             raise TypeError("A decorator's child must be an instance of py_trees.behaviours.Behaviour")
@@ -225,9 +221,8 @@ class StatusToBlackboard(Decorator):
 class EternalGuard(Decorator):
     """
     A decorator that continually guards the execution of a subtree.
-    If at any time the guard's condition check fails (returns False or
-    :attr:~py_trees.common.Status.FAILURE), then the child behaviour/subtree
-    is invalidated.
+    If at any time the guard's condition check fails, then the child
+    behaviour/subtree is invalidated.
 
     .. note:: This decorator's behaviour is stronger than the
        :term:`guard` typical of a conditional check at the beginning of a
@@ -237,8 +232,55 @@ class EternalGuard(Decorator):
     Args:
         child: the child behaviour or subtree
         condition: a functional check that determines execution or not of the subtree
-        register_blackboard_keys: configure blackboard access for the conditional function
+        blackboard_keys: provide read access for the conditional function to these keys
         name: the decorator name
+
+    Examples:
+
+    Simple conditional function returning True/False:
+
+    .. code-block:: python
+
+        def check():
+             return True
+
+        foo = py_trees.behaviours.Foo()
+        eternal_guard = py_trees.decorators.EternalGuard(
+            name="Eternal Guard,
+            condition=check,
+            child=foo
+        )
+
+    Simple conditional function returning SUCCESS/FAILURE:
+
+    .. code-block:: python
+
+        def check():
+             return py_trees.common.Status.SUCCESS
+
+        foo = py_trees.behaviours.Foo()
+        eternal_guard = py_trees.decorators.EternalGuard(
+            name="Eternal Guard,
+            condition=check,
+            child=foo
+        )
+
+    Conditional function that makes checks against data on the blackboard (the
+    blackboard client with pre-configured access is provided by the EternalGuard
+    instance):
+
+    .. code-block:: python
+
+        def check(blackboard):
+             return blackboard.velocity > 3.0
+
+        foo = py_trees.behaviours.Foo()
+        eternal_guard = py_trees.decorators.EternalGuard(
+            name="Eternal Guard,
+            condition=check,
+            blackboard_keys={"velocity"},
+            child=foo
+        )
 
     .. seealso:: :meth:`py_trees.idioms.eternal_guard`
     """
@@ -247,16 +289,12 @@ class EternalGuard(Decorator):
             *,
             child: behaviour.Behaviour,
             condition: Union[Callable[[blackboard.Blackboard], bool], Callable[[blackboard.Blackboard], common.Status]],
-            register_blackboard_keys: List[blackboard.KeyRegistrationData]=[],
+            blackboard_keys: Set[str]=[],
             name: str=common.Name.AUTO_GENERATED,
     ):
         super().__init__(name=name, child=child)
-        for data in register_blackboard_keys:
-            self.blackboard.register_key(
-                key=data.name,
-                read=data.read,
-                write=data.write
-            )
+        for key in blackboard_keys:
+            self.blackboard.register_key(key=key, read=True)
         condition_signature = inspect.signature(condition)
         if "blackboard" in [p.name for p in condition_signature.parameters.values()]:
             self.condition = functools.partial(condition, self.blackboard)

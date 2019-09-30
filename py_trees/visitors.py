@@ -137,6 +137,10 @@ class DisplaySnapshotVisitor(SnapshotVisitor):
     """
     Visit the tree, capturing the visited path, it's changes since the last
     tick and additionally print the snapshot to console.
+
+    Args:
+        display_blackboard: print to the console the relevant part of the blackboard associated with behaviours on the visited path
+        display_activity_stream: print to the console a log of the activity on the blackboard over the last tick
     """
     def __init__(
             self,

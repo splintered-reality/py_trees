@@ -30,6 +30,7 @@ py_trees.blackboard
 
 .. automodule:: py_trees.blackboard
     :members:
+    :special-members:
     :show-inheritance:
     :synopsis: shared data store and related behaviours
 
@@ -91,7 +92,6 @@ py_trees.decorators
 
 .. automodule:: py_trees.decorators
     :members:
-    :special-members:
     :show-inheritance:
     :synopsis: hats for behaviours
 

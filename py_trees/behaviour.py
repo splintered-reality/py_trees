@@ -17,7 +17,6 @@ from this class.
 ##############################################################################
 
 import re
-import typing
 import uuid
 
 from . import blackboard
@@ -37,22 +36,20 @@ class Behaviour(object):
 
     Args:
         name: the behaviour name, defaults to auto-generating from the class name
-        blackboard_read: blackboard keys this behaviour has permission to read
-        blackboard_write: blackboard keys this behaviour has permission to write
 
     Raises:
         TypeError: if the provided name is not a string
 
     Attributes:
-        id (:class:`uuid.UUID`): automagically generated unique identifier for the behaviour
-        name (:obj:`str`): the behaviour name
-        blackboard (:class:`~py_trees.blackboard.Blackboard`): key-value store for sharing data between behaviours
-        status (:class:`~py_trees.common.Status`): the behaviour status (:data:`~py_trees.common.Status.INVALID`, :data:`~py_trees.common.Status.RUNNING`, :data:`~py_trees.common.Status.FAILURE`, :data:`~py_trees.common.Status.SUCCESS`)
-        parent (:class:`~py_trees.behaviour.Behaviour`): a :class:`~py_trees.composites.Composite` instance if nested in a tree, otherwise None
-        children ([:class:`~py_trees.behaviour.Behaviour`]): empty for regular behaviours, populated for composites
-        logger (:class:`logging.Logger`): a simple logging mechanism
-        feedback_message(:obj:`str`): a simple message used to notify of significant happenings
-        blackbox_level (:class:`~py_trees.common.BlackBoxLevel`): a helper variable for dot graphs and runtime gui's to collapse/explode entire subtrees dependent upon the blackbox level.
+        ~py_trees.behaviours.Behaviour.id (:class:`uuid.UUID`): automagically generated unique identifier for the behaviour
+        ~py_trees.behaviours.Behaviour.name (:obj:`str`): the behaviour name
+        ~py_trees.behaviours.Behaviour.blackboard (:class:`~py_trees.blackboard.Blackboard`): key-value store for sharing data between behaviours
+        ~py_trees.behaviours.Behaviour.status (:class:`~py_trees.common.Status`): the behaviour status (:data:`~py_trees.common.Status.INVALID`, :data:`~py_trees.common.Status.RUNNING`, :data:`~py_trees.common.Status.FAILURE`, :data:`~py_trees.common.Status.SUCCESS`)
+        ~py_trees.behaviours.Behaviour.parent (:class:`~py_trees.behaviour.Behaviour`): a :class:`~py_trees.composites.Composite` instance if nested in a tree, otherwise None
+        ~py_trees.behaviours.Behaviour.children ([:class:`~py_trees.behaviour.Behaviour`]): empty for regular behaviours, populated for composites
+        ~py_trees.behaviours.Behaviour.logger (:class:`logging.Logger`): a simple logging mechanism
+        ~py_trees.behaviours.Behaviour.feedback_message(:obj:`str`): improve debugging with a simple message
+        ~py_trees.behaviours.Behaviour.blackbox_level (:class:`~py_trees.common.BlackBoxLevel`): a helper variable for dot graphs and runtime gui's to collapse/explode entire subtrees dependent upon the blackbox level.
 
     .. seealso::
        * :ref:`Skeleton Behaviour Template <skeleton-behaviour-include>`

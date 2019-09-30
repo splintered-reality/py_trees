@@ -105,7 +105,7 @@ def eternal_guard(
     The eternal guard idiom implements a stronger :term:`guard` than the typical check at the
     beginning of a sequence of tasks. Here they guard continuously while the task sequence
     is being executed. While executing, if any of the guards should update with
-    status :attr:`~common.Status.FAILURE`, then the task sequence is terminated.
+    status :data:`~common.Status.FAILURE`, then the task sequence is terminated.
 
     .. graphviz:: dot/idiom-eternal-guard.dot
         :align: center

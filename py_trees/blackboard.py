@@ -34,11 +34,11 @@ To be more concrete, the following is a list of features that this
 implementation either embraces or does not.
 
 * [+] Centralised key-value store
-* [+] Client based usage with declaration of read/write intentions at construction
+* [+] Client based usage with registration of read/write intentions at construction
 * [+] Activity stream that tracks read/write operations by behaviours
 * [-] Sharing between tree instances
-* [-] Locking for reading/writing
-* [-] Strict variable initialisation policies
+* [-] Exclusive locks for reading/writing
+* [-] Priority policies for variable instantiations
 
 .. include:: weblinks.rst
 """
@@ -69,23 +69,6 @@ class KeyMetaData(object):
     def __init__(self):
         self.read = set()
         self.write = set()
-
-
-class KeyRegistrationData(object):
-    """
-    Stores metadata for a key being registered by a client on the blackboard.
-    This is a temporary structure that eventually gets aggregated with information
-    from other client registrations in a :class:`KeyMetaData` object.
-
-    Args:
-        name: key name
-        read: read access
-        write: write access
-    """
-    def __init__(self, name: str, read: bool=False, write: bool=False):
-        self.name = name
-        self.read = read
-        self.write = write
 
 
 class ActivityType(enum.Enum):
@@ -183,88 +166,199 @@ class Blackboard(object):
     """
     Key-value store for sharing data between behaviours.
 
-    Examples:
-        You can instantiate a blackboard client anywhere in your program.
-        Even disconnected instantiations will discover the single global key-value store.
-        For example:
+    **Examples**
 
-        .. code-block:: python
+    Blackboard clients will accept a user-friendly name / unique identifier for
+    registration on the centralised store or create them for you if none is provided.
 
-            def check_foo():
-                blackboard = Blackboard(name="Reader", read={"foo"))
-                assert(blackboard.foo, "bar")
+    .. code-block:: python
 
-            if __name__ == '__main__':
-                blackboard = Blackboard(name="Writer", write={"foo"))
-                blackboard.foo = "bar"
-                check_foo()
+        provided = py_trees.blackboard.Blackboard(
+            name="Provided",
+            unique_identifier=uuid.uuid4()
+        )
+        print(provided)
+        generated = py_trees.blackboard.Blackboard()
+        print(generated)
 
-        To respect an already initialised key on the blackboard:
+    .. figure:: images/blackboard_client_instantiation.png
+       :align: center
 
-        .. code-block:: python
+       Client Instantiation
 
-            if __name__ == '__main__':
-                blackboard = Blackboard(name="Writer", read={"foo"))
-                result = blackboard.set("foo", "bar", overwrite=False)
+    Register read/write access for keys on the blackboard. Note, registration is
+    not initialisation.
 
-        Log and display the activity stream:
+    .. code-block:: python
 
-        .. code-block:: python
+        blackboard = py_trees.blackboard.Blackboard(
+            name="Client",
+            read={"foo"},
+            write={"bar"}
+        )
+        blackboard.register_key(key="foo", write=True)
+        blackboard.foo = "foo"
+        print(blackboard)
 
-            # all key-value pairs
-            Blackboard.enable_activity_stream(maximum_size=100)
-            blackboard = Blackboard(name="Writer", write={"foo"))
-            blackboard.foo = "bar"
-            # view the activity stream
-            print(py_trees.display.unicode_blackboard_activity_stream())
-            # output
-            Activity Stream
-                foo       : INITIALISED  | Set Foo   | → bar
-            # clear the stream (useful to do between tree ticks)
-            Blackboard.activity_stream.clear()
+    .. figure:: images/blackboard_read_write.png
+       :align: center
 
-        For introspection, use the methods in the display module:
+       Variable Read/Write Registration
 
-        .. code-block:: python
+    Disconnected instances will discover the centralised
+    key-value store.
 
-            # all key-value pairs
-            print(py_trees.display.unicode_blackboard())
-            # various filtered views
-            print(py_trees.display.unicode_blackboard(key_filter={"foo"}))
-            print(py_trees.display.unicode_blackboard(regex_filter="dud*"))
-            print(py_trees.display.unicode_blackboard(client_filter={writer.id, set_foo.id}))
-            # list the clients associated with each key
-            print(py_trees.display.unicode_blackboard(display_only_key_metadata=True)
-            # a dot graph representation of tree and blackboard together
-            py_trees.display.render_dot_tree(root, root, with_blackboard_variables=True)
+    .. code-block:: python
 
-    .. warning::
+        def check_foo():
+            blackboard = py_trees.blackboard.Blackboard(name="Reader", read={"foo"})
+            print("Foo: {}".format(blackboard.foo))
 
-       Be careful of key collisions. This implementation leaves this management up to the user.
+
+        blackboard = py_trees.blackboard.Blackboard(name="Writer", write={"foo"})
+        blackboard.foo = "bar"
+        check_foo()
+
+    To respect an already initialised key on the blackboard:
+
+    .. code-block:: python
+
+        blackboard = Blackboard(name="Writer", read={"foo"))
+        result = blackboard.set("foo", "bar", overwrite=False)
+
+    Store complex objects on the blackboard:
+
+    .. code-block:: python
+
+        class Nested(object):
+            def __init__(self):
+                self.foo = None
+                self.bar = None
+
+            def __str__(self):
+                return str(self.__dict__)
+
+
+        writer = py_trees.blackboard.Blackboard(
+            name="Writer",
+            write={"nested"}
+        )
+        reader = py_trees.blackboard.Blackboard(
+            name="Reader",
+            read={"nested"}
+        )
+        writer.nested = Nested()
+        writer.nested.foo = "foo"
+        writer.nested.bar = "bar"
+
+        foo = reader.nested.foo
+        print(writer)
+        print(reader)
+
+    .. figure:: images/blackboard_nested.png
+       :align: center
+
+    Log and display the activity stream:
+
+    .. code-block:: python
+
+        py_trees.blackboard.Blackboard.enable_activity_stream(maximum_size=100)
+        blackboard_reader = py_trees.blackboard.Blackboard(name="Reader", read={"foo"})
+        blackboard_writer = py_trees.blackboard.Blackboard(name="Writer", write={"foo"})
+        blackboard_writer.foo = "bar"
+        blackboard_writer.foo = "foobar"
+        unused_result = blackboard_reader.foo
+        print(py_trees.display.unicode_blackboard_activity_stream())
+        py_trees.blackboard.Blackboard.activity_stream.clear()
+
+    .. figure:: images/blackboard_activity_stream.png
+       :align: center
+
+    Display the blackboard on the console, or part thereof:
+
+    .. code-block:: python
+
+        writer = py_trees.blackboard.Blackboard(
+            name="Writer",
+            write={"foo", "bar", "dude", "dudette"}
+        )
+        reader = py_trees.blackboard.Blackboard(
+            name="Reader",
+            read={"foo", "bar"}
+        )
+        writer.foo = "foo"
+        writer.bar = "bar"
+        writer.dude = "bob"
+
+        # all key-value pairs
+        print(py_trees.display.unicode_blackboard())
+        # various filtered views
+        print(py_trees.display.unicode_blackboard(key_filter={"foo"}))
+        print(py_trees.display.unicode_blackboard(regex_filter="dud*"))
+        print(py_trees.display.unicode_blackboard(client_filter={reader.unique_identifier}))
+        # list the clients associated with each key
+        print(py_trees.display.unicode_blackboard(display_only_key_metadata=True))
+
+    .. figure:: images/blackboard_display.png
+       :align: center
+
+    Behaviours register their own blackboard clients with the same name/id as the
+    behaviour itself. This helps associate blackboard variables with behaviours, enabling
+    various introspection and debugging capabilities on the behaviour trees.
+
+    Creating a custom behaviour with blackboard variables:
+
+    .. code-block:: python
+
+        class Foo(py_trees.behaviours.Behaviour):
+
+        def __init__(self, name):
+            super().__init__(name=name)
+            self.blackboard.register_key("foo", read=True)
+
+        def update(self):
+            self.feedback_message = self.blackboard.foo
+            return py_trees.common.Status.Success
+
+    Rendering a dot graph for a behaviour tree, complete with blackboard variables:
+
+    .. code-block:: python
+
+        # in code
+        py_trees.display.render_dot_tree(py_trees.demos.blackboard.create_root())
+        # command line tools
+        py-trees-render --with-blackboard-variables py_trees.demos.blackboard.create_root
+
+    .. graphviz:: dot/demo-blackboard.dot
+       :align: center
+
+    With judicious use of the display methods / activity stream around the ticks
+    of a tree (refer to :class:`py_trees.visitors.DisplaySnapshotVisitor` for
+    examplar code):
+
+    .. figure:: images/blackboard_trees.png
+       :align: center
 
     .. seealso::
+
        * :ref:`py-trees-demo-blackboard <py-trees-demo-blackboard-program>`
+       * :class:`py_trees.visitors.DisplaySnapshotVisitor`
+       * :class:`py_trees.behaviours.SetBlackboardVariable`
+       * :class:`py_trees.behaviours.UnsetBlackboardVariable`
+       * :class:`py_trees.behaviours.CheckBlackboardVariableExists`
+       * :class:`py_trees.behaviours.WaitForBlackboardVariable`
+       * :class:`py_trees.behaviours.CheckBlackboardVariableValue`
+       * :class:`py_trees.behaviours.WaitForBlackboardVariableValue`
 
     Attributes:
-        <class>.clients (typing.Dict[uuid.UUID, Blackboard]: clients, gathered by uuid
-        <class>.storage (typing.Dict[str, typing.Any]): key-value storage
-        <class>.metadata (typing.Dict[str, KeyMetaData]): key-client (read/write) metadata
-        <class>.activity_stream (ActivityStream): the activity stream (None if not enabled)
-        <instance>.name (str): client's convenient, but not necessarily unique identifier
-        <instance>.unique_identifier (uuid.UUID): client's unique identifier
-        <instance>.read (typing.List[str]): keys this client has permission to read
-        <instance>.write (typing.List[str]): keys this client has permission to write
-
-    Args:
-        name: the non-unique, but convenient identifier (stringifies the uuid if None) for the client
-        unique_identifier: client's unique identifier (auto-generates if None)
-        read: list of keys this client has permission to read
-        write: list of keys this client has permission to write
-
-    Raises:
-        TypeError: if the provided name/unique identifier is not of type str/uuid.UUID
-        ValueError: if the unique identifier has already been registered
-
+        Blackboard.clients (typing.Dict[uuid.UUID, Blackboard]): clients, gathered by uuid
+        Blackboard.storage (typing.Dict[str, typing.Any]): key-value data store
+        Blackboard.metadata (typing.Dict[str, KeyMetaData]): key associated metadata
+        Blackboard.activity_stream (ActivityStream): logged activity
+        name (str): client's convenient, but not necessarily unique identifier
+        unique_identifier (uuid.UUID): client's unique identifier
+        read (typing.List[str]): keys this client has permission to read
+        write (typing.List[str]): keys this client has permission to write
     """
     storage = {}  # Dict[str, Any] / key-value storage
     metadata = {}  # Dict[ str, KeyMetaData ] / key-metadata information
@@ -277,6 +371,17 @@ class Blackboard(object):
             unique_identifier: uuid.UUID=None,
             read: typing.Set[str]=None,
             write: typing.Set[str]=None):
+        """
+        Args:
+            name: client's convenient identifier (stringifies the uuid if None)
+            unique_identifier: client's unique identifier (auto-generates if None)
+            read: list of keys this client has permission to read
+            write: list of keys this client has permission to write
+
+        Raises:
+            TypeError: if the provided name/unique identifier is not of type str/uuid.UUID
+            ValueError: if the unique identifier has already been registered
+        """
 
         # unique identifier
         if unique_identifier is None:
@@ -329,7 +434,7 @@ class Blackboard(object):
             super().__getattribute__("unique_identifier")
         ] = self
 
-    def __setattr__(self, name, value):
+    def __setattr__(self, name: str, value: typing.Any):
         """
         Convenience attribute style referencing with checking against
         permissions.
@@ -364,7 +469,7 @@ class Blackboard(object):
                 )
         Blackboard.storage[name] = value
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str):
         """
         Convenience attribute style referencing with checking against
         permissions.

@@ -479,17 +479,11 @@ def dot_tree(
         metadata = blackboard.Blackboard.metadata
         clients = blackboard.Blackboard.clients
         # add client (that are not behaviour) nodes
-        print("Behaviour Names by Id\n   : {}".format(behaviour_names_by_id))
         for unique_identifier, client in clients.items():
-            print("Unique identifier: {}".format(unique_identifier))
-            print("Client: {}".format(client.name))
             if unique_identifier not in behaviour_names_by_id:
-                print("  Not")
                 graph.add_node(
                     create_blackboard_client_node(client)
                 )
-            else:
-                print("  In: {}".format(behaviour_names_by_id[unique_identifier]))
         # add key nodes
         for key in blackboard.Blackboard.keys():
             try:
