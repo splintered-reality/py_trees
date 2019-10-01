@@ -50,6 +50,7 @@ implementation either embraces or does not.
 import copy
 import enum
 import operator
+import pickle
 import re
 import typing
 import uuid
@@ -583,7 +584,7 @@ class Blackboard(object):
         name_components = name.split('.')
         key = name_components[0]
         key_attributes = '.'.join(name_components[1:])
-        value = getattr(self, key)
+        value = getattr(self, key)  # will run through client access checks in __getattr__
         if key_attributes:
             try:
                 value = operator.attrgetter(key_attributes)(value)
@@ -704,6 +705,39 @@ class Blackboard(object):
         return Blackboard.metadata.keys()
 
     @staticmethod
+    def get_value_without_client_access_checks(variable_name: str) -> typing.Any:
+        """
+        Extract the value associated with the given a variable name,
+        can be nested, e.g. battery.percentage. This differs from the
+        client get method in that it doesn't pass through the client access
+        checks. To be used for utility tooling (e.g. display methods) and not by
+        users directly.
+
+        Args:
+            variable_name: of the variable to get, can be nested, e.g. battery.percentage
+
+        Raises:
+            KeyError: if the variable or it's nested attributes do not yet exist on the blackboard
+
+        Return:
+            The stored value for the given variable
+        """
+        # convenience, just in case they used slashes instead of .'s
+        if '/' in variable_name:
+            variable_name = ".".join(variable_name.split('/'))
+        name_components = variable_name.split('.')
+        key = name_components[0]
+        key_attributes = '.'.join(name_components[1:])
+        # can raise KeyError
+        value = Blackboard.storage[key]
+        if key_attributes:
+            try:
+                value = operator.attrgetter(key_attributes)(value)
+            except AttributeError:
+                raise KeyError("Key exists, but does not have the specified nested attributes [{}]".format(variable_name))
+        return value
+
+    @staticmethod
     def keys_filtered_by_regex(regex: str) -> typing.Set[str]:
         """
         Get the set of blackboard keys filtered by regex.
@@ -761,3 +795,71 @@ class Blackboard(object):
         Disable logging of activities on the blackboard
         """
         Blackboard.activity_stream = None
+
+
+class SubBlackboard(object):
+    """
+    Dynamically track the entire blackboard or part thereof and
+    flag when there have been changes. This is a useful class for
+    building introspection tools around the blackboard.
+    """
+    def __init__(self):
+        self.is_changed = False
+        self.variable_names = set()
+        self.pickled_storage = None
+
+    def update(self, variable_names: typing.Set[str]):
+        """
+        Check for changes to the blackboard scoped to the provided set of
+        variable names (may be nested, e.g. battery.percentage). Checks
+        the entire blackboard when the variable name set is empty.
+
+        Args:
+            variable_names: constrain the scope to track for changes
+        """
+        # TODO: can we pickle without doing a copy?
+        # TODO: can we use __repr__ as a means of not being prone to pickle
+        #       i.e. put the work back on the user
+        # TODO: catch exceptions thrown by bad pickles
+        # TODO: use a better structure in the blackboard (e.g. JSON) so
+        #       that this isn't brittle w.r.t. pickle failures
+        if not variable_names:
+            storage = copy.deepcopy(Blackboard.storage)
+            self.variable_names = Blackboard.keys()
+        else:
+            storage = {}
+            for variable_name in variable_names:
+                try:
+                    storage[variable_name] = copy.deepcopy(
+                        Blackboard.get_value_without_client_access_checks(variable_name)
+                    )
+                except KeyError:
+                    pass  # silently just ignore the request
+            self.variable_names = variable_names
+        pickled_storage = pickle.dumps(storage, -1)
+        self.is_changed = pickled_storage != self.pickled_storage
+        self.pickled_storage = pickled_storage
+
+    def __str__(self):
+        """
+        Convenient printed representation of the sub-blackboard that this
+        instance is currently tracking.
+        """
+        s = ""
+        max_length = 0
+        for name in self.variable_names:
+            max_length = len(name) if len(name) > max_length else max_length
+        for name in sorted(self.variable_names):
+            try:
+                value = Blackboard.get_value_without_client_access_checks(name)
+                lines = ("%s" % value).split('\n')
+                if len(lines) > 1:
+                    s += console.cyan + "  " + '{0: <{1}}'.format(name, max_length + 1) + console.reset + ":\n"
+                    for line in lines:
+                        s += console.yellow + "    %s" % line + console.reset + "\n"
+                else:
+                    s += console.cyan + "  " + '{0: <{1}}'.format(name, max_length + 1) + console.reset + ": " + console.yellow + "%s" % (value) + console.reset + "\n"
+            except KeyError:
+                value_string = "-"
+                s += console.cyan + "  " + '{0: <{1}}'.format(name, max_length + 1) + console.reset + ": " + console.yellow + "%s" % (value_string) + console.reset + "\n"
+        return s.rstrip()  # get rid of the trailing newline...print will take care of adding a new line

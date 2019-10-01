@@ -77,6 +77,17 @@ def command_line_argument_parser():
     return parser
 
 
+class Nested(object):
+    """
+    A more complex object to interact with on the blackboard.
+    """
+    def __init__(self):
+        self.foo = "bar"
+
+    def __str__(self):
+        return str({"foo": self.foo})
+
+
 class BlackboardWriter(py_trees.behaviour.Behaviour):
     """
     Custom writer that submits a more complicated variable to the blackboard.
@@ -117,11 +128,11 @@ class BlackboardWriter(py_trees.behaviour.Behaviour):
 def create_root():
     root = py_trees.composites.Sequence("Blackboard Demo")
     set_blackboard_variable = py_trees.behaviours.SetBlackboardVariable(
-        name="Set Foo", variable_name="foo", variable_value="bar"
+        name="Set Nested", variable_name="nested", variable_value=Nested()
     )
     write_blackboard_variable = BlackboardWriter(name="Writer")
     check_blackboard_variable = py_trees.behaviours.CheckBlackboardVariableValue(
-        name="Check Foo", variable_name="foo", expected_value="bar"
+        name="Check Nested Foo", variable_name="nested.foo", expected_value="bar"
     )
     root.add_children([set_blackboard_variable, write_blackboard_variable, check_blackboard_variable])
     return root
