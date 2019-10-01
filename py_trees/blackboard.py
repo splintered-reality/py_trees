@@ -457,6 +457,12 @@ class BlackboardClient(object):
     .. graphviz:: dot/demo-blackboard.dot
        :align: center
 
+    And to demonstrate that it doesn't become a tangled nightmare at scale, an example of
+    a more complex tree:
+
+    .. graphviz:: dot/blackboard-with-variables.dot
+       :align: center
+
     With judicious use of the display methods / activity stream around the ticks
     of a tree (refer to :class:`py_trees.visitors.DisplaySnapshotVisitor` for
     examplar code):
