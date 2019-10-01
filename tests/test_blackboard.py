@@ -14,7 +14,7 @@ import uuid
 import py_trees
 import py_trees.console as console
 
-from py_trees.blackboard import Blackboard
+from py_trees.blackboard import Blackboard, BlackboardClient
 
 ##############################################################################
 # Helpers
@@ -45,7 +45,7 @@ def create_blackboard_foo():
     """
     Create a blackboard client with a few variables.
     """
-    blackboard = Blackboard(
+    blackboard = BlackboardClient(
         name="foo",
         unique_identifier=uuid.uuid4(),
         read=['foo', 'bar', 'motley'],
@@ -60,7 +60,7 @@ def create_blackboard_bar():
     """
     Create another blackboard client with a few variables.
     """
-    blackboard = Blackboard(
+    blackboard = BlackboardClient(
         name="bar",
         unique_identifier=uuid.uuid4(),
         read=['dude'],
@@ -89,23 +89,23 @@ def test_bad_name_exception():
     console.banner("Bad Name Exception")
     with nose.tools.assert_raises_regexp(TypeError, "str"):
         print("Expecting a TypeError with substring 'str'")
-        unused_blackboard = py_trees.blackboard.Blackboard(name=5)
+        unused_blackboard = py_trees.blackboard.BlackboardClient(name=5)
 
 
 def test_bad_uuid_exception():
     console.banner("Bad UUID Exception")
     with nose.tools.assert_raises_regexp(TypeError, "UUID"):
         print("Expecting a TypeError with substring 'UUID'")
-        unused_blackboard = py_trees.blackboard.Blackboard(unique_identifier=5)
+        unused_blackboard = py_trees.blackboard.BlackboardClient(unique_identifier=5)
 
 
 def test_duplicate_uuid_exception():
     console.banner("Duplicate UUID Exception")
     unique_identifier = uuid.uuid4()
-    unused_one = py_trees.blackboard.Blackboard(unique_identifier=unique_identifier)
+    unused_one = py_trees.blackboard.BlackboardClient(unique_identifier=unique_identifier)
     with nose.tools.assert_raises_regexp(ValueError, "already been registered"):
         print("Expecting a ValueError with substring 'already been registered'")
-        unused_two = py_trees.blackboard.Blackboard(unique_identifier=unique_identifier)
+        unused_two = py_trees.blackboard.BlackboardClient(unique_identifier=unique_identifier)
 
 
 def test_delayed_register_key():
@@ -205,7 +205,7 @@ def test_key_filters():
 def test_activity_stream():
     console.banner("Activity Stream")
     Blackboard.enable_activity_stream(100)
-    blackboard = Blackboard(
+    blackboard = BlackboardClient(
         name="Client",
         read={"foo", "dude"},
         write={"spaghetti", "motley"}

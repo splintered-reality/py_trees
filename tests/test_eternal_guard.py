@@ -104,7 +104,7 @@ def test_eternal_guard_idiom():
 
 def test_eternal_guard_unique_names():
     py_trees.tests.clear_blackboard()
-    blackboard = py_trees.blackboard.Blackboard(
+    blackboard = py_trees.blackboard.BlackboardClient(
         read={"eternal_guard_condition_1",
               "eternal_guard_condition_2"},
         write={"eternal_guard_condition_1"}

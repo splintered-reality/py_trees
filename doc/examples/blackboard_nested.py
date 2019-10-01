@@ -12,11 +12,11 @@ class Nested(object):
         return str(self.__dict__)
 
 
-writer = py_trees.blackboard.Blackboard(
+writer = py_trees.blackboard.BlackboardClient(
     name="Writer",
     write={"nested"}
 )
-reader = py_trees.blackboard.Blackboard(
+reader = py_trees.blackboard.BlackboardClient(
     name="Reader",
     read={"nested"}
 )

@@ -2,11 +2,11 @@
 
 import py_trees
 
-writer = py_trees.blackboard.Blackboard(
+writer = py_trees.blackboard.BlackboardClient(
     name="Writer",
     write={"foo", "bar", "dude", "dudette"}
 )
-reader = py_trees.blackboard.Blackboard(
+reader = py_trees.blackboard.BlackboardClient(
     name="Reader",
     read={"foo", "bar"}
 )

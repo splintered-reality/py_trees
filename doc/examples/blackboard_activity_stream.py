@@ -3,8 +3,8 @@
 import py_trees
 
 py_trees.blackboard.Blackboard.enable_activity_stream(maximum_size=100)
-blackboard_reader = py_trees.blackboard.Blackboard(name="Reader", read={"foo"})
-blackboard_writer = py_trees.blackboard.Blackboard(name="Writer", write={"foo"})
+blackboard_reader = py_trees.blackboard.BlackboardClient(name="Reader", read={"foo"})
+blackboard_writer = py_trees.blackboard.BlackboardClient(name="Writer", write={"foo"})
 blackboard_writer.foo = "bar"
 blackboard_writer.foo = "foobar"
 unused_result = blackboard_reader.foo

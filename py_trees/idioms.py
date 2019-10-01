@@ -130,7 +130,7 @@ def eternal_guard(
         suffix = "" if len(conditions) == 1 else "_{}".format(counter)
         blackboard_variable_names.append(blackboard_variable_prefix + "_condition" + suffix)
         counter += 1
-    bb = blackboard.Blackboard(
+    bb = blackboard.BlackboardClient(
         read=set(blackboard_variable_names)
     )
     # if there is just one blackboard name already on the blackboard, switch to unique names

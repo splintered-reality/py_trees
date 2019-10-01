@@ -418,7 +418,7 @@ def test_status_to_blackboard():
         child=child,
         variable_name="foo"
     )
-    blackboard = py_trees.blackboard.Blackboard(
+    blackboard = py_trees.blackboard.BlackboardClient(
         read={"foo"}
     )
     decorator.tick_once()
