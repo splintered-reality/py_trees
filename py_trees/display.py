@@ -801,33 +801,40 @@ def unicode_blackboard(
 
 
 def unicode_blackboard_activity_stream(
+        activity_stream: typing.List[blackboard.ActivityItem]=None,
         indent: int=0):
     """
     Pretty print the blackboard stream to console.
 
     Args:
+        activity_stream: the log of activity, if None, get the entire activity stream
         indent: the number of characters to indent the blackboard
     """
     symbols = unicode_symbols if console.has_unicode() else ascii_symbols
     space = symbols['space']
-    s = console.green + space * indent + "Blackboard Activity Stream\n" + console.reset
-    if blackboard.Blackboard.activity_stream is not None:
+    if activity_stream is None:
+        activity_stream = blackboard.Blackboard.activity_stream
+    s = space * indent + console.green + "Blackboard Activity Stream" + console.reset + "\n"
+    if activity_stream is not None:
         key_width = 0
         client_width = 0
-        for item in blackboard.Blackboard.activity_stream.data:
+        for item in activity_stream.data:
             key_width = len(item.key) if len(item.key) > key_width else key_width
             client_width = len(item.client_name) if len(item.client_name) > client_width else client_width
         client_width = min(client_width, 20)
         type_width = len("ACCESS_DENIED")
         value_width = 80 - key_width - 3 - type_width - 3 - client_width - 3
-        for item in blackboard.Blackboard.activity_stream.data:
+        for item in activity_stream.data:
             s += console.cyan + space * (4 + indent)
             s += "{0: <{1}}:".format(item.key, key_width + 1) + space
             s += console.yellow
             s += "{0: <{1}}".format(item.activity_type.value, type_width) + space
             s += console.white + "|" + space
             s += "{0: <{1}}".format(
-                utilities.truncate(item.client_name, client_width), client_width) + space
+                utilities.truncate(
+                    item.client_name.replace('\n', '_'),
+                    client_width),
+                client_width) + space
             s += "|" + space
             if item.activity_type == blackboard.ActivityType.READ:
                 s += symbols["left_arrow"] + space + "{}\n".format(
@@ -869,5 +876,6 @@ def unicode_blackboard_activity_stream(
                 )
             else:
                 s += "unknown operation\n"
-        s += "\n" + console.reset
+        s = s.rstrip("\n")
+        s += console.reset
     return s
