@@ -165,7 +165,132 @@ class ActivityStream(object):
 
 class Blackboard(object):
     """
-    Key-value store for sharing data between behaviours.
+    Centralised key-value store for sharing data between behaviours.
+    This class is a coat-hanger for the centralised data store, metadata
+    for it's administration and static methods for interacting with it.
+
+    This api is intended for authors of debugging and introspection
+    tools on the blackboard. Users should make use of the :class:`BlackboardClient`.
+
+    Attributes:
+        Blackboard.clients (typing.Dict[uuid.UUID, Blackboard]): clients, gathered by uuid
+        Blackboard.storage (typing.Dict[str, typing.Any]): key-value data store
+        Blackboard.metadata (typing.Dict[str, KeyMetaData]): key associated metadata
+        Blackboard.activity_stream (ActivityStream): logged activity
+    """
+    storage = {}  # Dict[str, Any] / key-value storage
+    metadata = {}  # Dict[ str, KeyMetaData ] / key-metadata information
+    clients = {}   # Dict[ uuid.UUID, Blackboard] / id-client information
+    activity_stream = None
+
+    @staticmethod
+    def keys() -> typing.Set[str]:
+        """
+        Get the set of blackboard keys.
+
+        Returns:
+            the complete set of keys registered by clients
+        """
+        # return registered keys, those on the blackboard are not
+        # necessarily written to yet
+        return Blackboard.metadata.keys()
+
+    @staticmethod
+    def get(variable_name: str) -> typing.Any:
+        """
+        Extract the value associated with the given a variable name,
+        can be nested, e.g. battery.percentage. This differs from the
+        client get method in that it doesn't pass through the client access
+        checks. To be used for utility tooling (e.g. display methods) and not by
+        users directly.
+
+        Args:
+            variable_name: of the variable to get, can be nested, e.g. battery.percentage
+
+        Raises:
+            KeyError: if the variable or it's nested attributes do not yet exist on the blackboard
+
+        Return:
+            The stored value for the given variable
+        """
+        # convenience, just in case they used slashes instead of .'s
+        if '/' in variable_name:
+            variable_name = ".".join(variable_name.split('/'))
+        name_components = variable_name.split('.')
+        key = name_components[0]
+        key_attributes = '.'.join(name_components[1:])
+        # can raise KeyError
+        value = Blackboard.storage[key]
+        if key_attributes:
+            try:
+                value = operator.attrgetter(key_attributes)(value)
+            except AttributeError:
+                raise KeyError("Key exists, but does not have the specified nested attributes [{}]".format(variable_name))
+        return value
+
+    @staticmethod
+    def keys_filtered_by_regex(regex: str) -> typing.Set[str]:
+        """
+        Get the set of blackboard keys filtered by regex.
+
+        Args:
+            regex: a python regex string
+
+        Returns:
+            subset of keys that have been registered and match the pattern
+        """
+        pattern = re.compile(regex)
+        return [key for key in Blackboard.metadata.keys() if pattern.search(key) is not None]
+
+    @staticmethod
+    def keys_filtered_by_clients(client_ids: typing.Union[typing.List[str], typing.Set[str]]) -> typing.Set[str]:
+        """
+        Get the set of blackboard keys filtered by client ids.
+
+        Args:
+            client_ids: set of client uuid's.
+
+        Returns:
+            subset of keys that have been registered by the specified clients
+        """
+        # convenience for users
+        if type(client_ids) == list:
+            client_ids = set(client_ids)
+        keys = set()
+        for key in Blackboard.metadata.keys():
+            # for sets, | is union, & is intersection
+            key_clients = set(Blackboard.metadata[key].read) | set(Blackboard.metadata[key].write)
+            if key_clients & client_ids:
+                keys.add(key)
+        return keys
+
+    @staticmethod
+    def enable_activity_stream(maximum_size: int=500):
+        """
+        Enable logging of activities on the blackboard.
+
+        Args:
+            maximum_size: pop items from the stream if this size is exceeded
+
+        Raises:
+            RuntimeError if the activity stream is already enabled
+        """
+        if Blackboard.activity_stream is None:
+            Blackboard.activity_stream = ActivityStream(maximum_size)
+        else:
+            RuntimeError("activity stream is already enabled for this blackboard")
+
+    @staticmethod
+    def disable_activity_stream():
+        """
+        Disable logging of activities on the blackboard
+        """
+        Blackboard.activity_stream = None
+
+
+class BlackboardClient(object):
+    """
+    Client to the key-value store for sharing data between behaviours.
 
     **Examples**
 
@@ -174,12 +299,12 @@ class Blackboard(object):
 
     .. code-block:: python
 
-        provided = py_trees.blackboard.Blackboard(
+        provided = py_trees.blackboard.BlackboardClient(
             name="Provided",
             unique_identifier=uuid.uuid4()
         )
         print(provided)
-        generated = py_trees.blackboard.Blackboard()
+        generated = py_trees.blackboard.BlackboardClient()
         print(generated)
 
     .. figure:: images/blackboard_client_instantiation.png
@@ -192,7 +317,7 @@ class Blackboard(object):
 
     .. code-block:: python
 
-        blackboard = py_trees.blackboard.Blackboard(
+        blackboard = py_trees.blackboard.BlackboardClient(
             name="Client",
             read={"foo"},
             write={"bar"}
@@ -212,11 +337,11 @@ class Blackboard(object):
     .. code-block:: python
 
         def check_foo():
-            blackboard = py_trees.blackboard.Blackboard(name="Reader", read={"foo"})
+            blackboard = py_trees.blackboard.BlackboardClient(name="Reader", read={"foo"})
             print("Foo: {}".format(blackboard.foo))
 
 
-        blackboard = py_trees.blackboard.Blackboard(name="Writer", write={"foo"})
+        blackboard = py_trees.blackboard.BlackboardClient(name="Writer", write={"foo"})
         blackboard.foo = "bar"
         check_foo()
 
@@ -224,7 +349,7 @@ class Blackboard(object):
 
     .. code-block:: python
 
-        blackboard = Blackboard(name="Writer", read={"foo"))
+        blackboard = BlackboardClient(name="Writer", read={"foo"))
         result = blackboard.set("foo", "bar", overwrite=False)
 
     Store complex objects on the blackboard:
@@ -240,11 +365,11 @@ class Blackboard(object):
                 return str(self.__dict__)
 
 
-        writer = py_trees.blackboard.Blackboard(
+        writer = py_trees.blackboard.BlackboardClient(
             name="Writer",
             write={"nested"}
         )
-        reader = py_trees.blackboard.Blackboard(
+        reader = py_trees.blackboard.BlackboardClient(
             name="Reader",
             read={"nested"}
         )
@@ -264,8 +389,8 @@ class Blackboard(object):
     .. code-block:: python
 
         py_trees.blackboard.Blackboard.enable_activity_stream(maximum_size=100)
-        blackboard_reader = py_trees.blackboard.Blackboard(name="Reader", read={"foo"})
-        blackboard_writer = py_trees.blackboard.Blackboard(name="Writer", write={"foo"})
+        blackboard_reader = py_trees.blackboard.BlackboardClient(name="Reader", read={"foo"})
+        blackboard_writer = py_trees.blackboard.BlackboardClient(name="Writer", write={"foo"})
         blackboard_writer.foo = "bar"
         blackboard_writer.foo = "foobar"
         unused_result = blackboard_reader.foo
@@ -279,14 +404,13 @@ class Blackboard(object):
 
     .. code-block:: python
 
-        writer = py_trees.blackboard.Blackboard(
+        writer = py_trees.blackboard.BlackboardClient(
             name="Writer",
             write={"foo", "bar", "dude", "dudette"}
         )
-        reader = py_trees.blackboard.Blackboard(
+        reader = py_trees.blackboard.BlackboardClient(
             name="Reader",
-            read={"foo", "bar"}
-        )
+            read={"foo", "bBlackboardClient(  )
         writer.foo = "foo"
         writer.bar = "bar"
         writer.dude = "bob"
@@ -352,20 +476,11 @@ class Blackboard(object):
        * :class:`py_trees.behaviours.WaitForBlackboardVariableValue`
 
     Attributes:
-        Blackboard.clients (typing.Dict[uuid.UUID, Blackboard]): clients, gathered by uuid
-        Blackboard.storage (typing.Dict[str, typing.Any]): key-value data store
-        Blackboard.metadata (typing.Dict[str, KeyMetaData]): key associated metadata
-        Blackboard.activity_stream (ActivityStream): logged activity
         name (str): client's convenient, but not necessarily unique identifier
         unique_identifier (uuid.UUID): client's unique identifier
         read (typing.List[str]): keys this client has permission to read
         write (typing.List[str]): keys this client has permission to write
     """
-    storage = {}  # Dict[str, Any] / key-value storage
-    metadata = {}  # Dict[ str, KeyMetaData ] / key-metadata information
-    clients = {}   # Dict[ uuid.UUID, Blackboard] / id-client information
-    activity_stream = None
-
     def __init__(
             self, *,
             name: str=None,
@@ -692,110 +807,6 @@ class Blackboard(object):
             super().__getattribute__("write").add(key)
             Blackboard.metadata[key].write.add(super().__getattribute__("unique_identifier"))
 
-    @staticmethod
-    def keys() -> typing.Set[str]:
-        """
-        Get the set of blackboard keys.
-
-        Returns:
-            the complete set of keys registered by clients
-        """
-        # return registered keys, those on the blackboard are not
-        # necessarily written to yet
-        return Blackboard.metadata.keys()
-
-    @staticmethod
-    def get_value_without_client_access_checks(variable_name: str) -> typing.Any:
-        """
-        Extract the value associated with the given a variable name,
-        can be nested, e.g. battery.percentage. This differs from the
-        client get method in that it doesn't pass through the client access
-        checks. To be used for utility tooling (e.g. display methods) and not by
-        users directly.
-
-        Args:
-            variable_name: of the variable to get, can be nested, e.g. battery.percentage
-
-        Raises:
-            KeyError: if the variable or it's nested attributes do not yet exist on the blackboard
-
-        Return:
-            The stored value for the given variable
-        """
-        # convenience, just in case they used slashes instead of .'s
-        if '/' in variable_name:
-            variable_name = ".".join(variable_name.split('/'))
-        name_components = variable_name.split('.')
-        key = name_components[0]
-        key_attributes = '.'.join(name_components[1:])
-        # can raise KeyError
-        value = Blackboard.storage[key]
-        if key_attributes:
-            try:
-                value = operator.attrgetter(key_attributes)(value)
-            except AttributeError:
-                raise KeyError("Key exists, but does not have the specified nested attributes [{}]".format(variable_name))
-        return value
-
-    @staticmethod
-    def keys_filtered_by_regex(regex: str) -> typing.Set[str]:
-        """
-        Get the set of blackboard keys filtered by regex.
-
-        Args:
-            regex: a python regex string
-
-        Returns:
-            subset of keys that have been registered and match the pattern
-        """
-        pattern = re.compile(regex)
-        return [key for key in Blackboard.metadata.keys() if pattern.search(key) is not None]
-
-    @staticmethod
-    def keys_filtered_by_clients(client_ids: typing.Union[typing.List[str], typing.Set[str]]) -> typing.Set[str]:
-        """
-        Get the set of blackboard keys filtered by client ids.
-
-        Args:
-            client_ids: set of client uuid's.
-
-        Returns:
-            subset of keys that have been registered by the specified clients
-        """
-        # convenience for users
-        if type(client_ids) == list:
-            client_ids = set(client_ids)
-        keys = set()
-        for key in Blackboard.metadata.keys():
-            # for sets, | is union, & is intersection
-            key_clients = set(Blackboard.metadata[key].read) | set(Blackboard.metadata[key].write)
-            if key_clients & client_ids:
-                keys.add(key)
-        return keys
-
-    @staticmethod
-    def enable_activity_stream(maximum_size: int=500):
-        """
-        Enable logging of activities on the blackboard.
-
-        Args:
-            maximum_size: pop items from the stream if this size is exceeded
-
-        Raises:
-            RuntimeError if the activity stream is already enabled
-        """
-        if Blackboard.activity_stream is None:
-            Blackboard.activity_stream = ActivityStream(maximum_size)
-        else:
-            RuntimeError("activity stream is already enabled for this blackboard")
-
-    @staticmethod
-    def disable_activity_stream():
-        """
-        Disable logging of activities on the blackboard
-        """
-        Blackboard.activity_stream = None
-
 
 class SubBlackboard(object):
     """
@@ -831,7 +842,7 @@ class SubBlackboard(object):
             for variable_name in variable_names:
                 try:
                     storage[variable_name] = copy.deepcopy(
-                        Blackboard.get_value_without_client_access_checks(variable_name)
+                        Blackboard.get(variable_name)
                     )
                 except KeyError:
                     pass  # silently just ignore the request
@@ -852,7 +863,7 @@ class SubBlackboard(object):
             max_length = len(name) if len(name) > max_length else max_length
         for name in sorted(self.variable_names):
             try:
-                value = Blackboard.get_value_without_client_access_checks(name)
+                value = Blackboard.get(name)
                 lines = ("%s" % value).split('\n')
                 if len(lines) > 1:
                     s += console.cyan + indent + '{0: <{1}}'.format(name, max_length + 1) + console.reset + ":\n"

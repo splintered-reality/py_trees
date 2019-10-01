@@ -65,7 +65,7 @@ class Behaviour(object):
             raise TypeError("a behaviour name should be a string, but you passed in {}".format(type(name)))
         self.id = uuid.uuid4()  # used to uniquely identify this node (helps with removing children from a tree)
         self.name = name
-        self.blackboard = blackboard.Blackboard(
+        self.blackboard = blackboard.BlackboardClient(
             name=self.name,
             unique_identifier=self.id
         )

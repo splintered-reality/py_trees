@@ -150,7 +150,7 @@ def main():
     print(description())
     py_trees.logging.level = py_trees.logging.Level.DEBUG
     py_trees.blackboard.Blackboard.enable_activity_stream(maximum_size=100)
-    standalone_blackboard = py_trees.blackboard.Blackboard(
+    standalone_blackboard = py_trees.blackboard.BlackboardClient(
         name="Standalone Blackboard Client",
         write={"dude"}
     )
@@ -172,7 +172,7 @@ def main():
     # Execute
     ####################
     root.setup_with_descendants()
-    blackboard = py_trees.blackboard.Blackboard(name="Unsetter", write={"foo"})
+    blackboard = py_trees.blackboard.BlackboardClient(name="Unsetter", write={"foo"})
     print("\n--------- Tick 0 ---------\n")
     root.tick_once()
     print("\n")
