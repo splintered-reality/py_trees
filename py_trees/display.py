@@ -814,7 +814,7 @@ def unicode_blackboard_activity_stream(
     space = symbols['space']
     if activity_stream is None:
         activity_stream = blackboard.Blackboard.activity_stream
-    s = ""
+    s = space * indent + console.green + "Blackboard Activity Stream" + console.reset + "\n"
     if activity_stream is not None:
         key_width = 0
         client_width = 0
@@ -825,13 +825,16 @@ def unicode_blackboard_activity_stream(
         type_width = len("ACCESS_DENIED")
         value_width = 80 - key_width - 3 - type_width - 3 - client_width - 3
         for item in activity_stream.data:
-            s += console.cyan + space * (2 + indent)
+            s += console.cyan + space * (4 + indent)
             s += "{0: <{1}}:".format(item.key, key_width + 1) + space
             s += console.yellow
             s += "{0: <{1}}".format(item.activity_type.value, type_width) + space
             s += console.white + "|" + space
             s += "{0: <{1}}".format(
-                utilities.truncate(item.client_name, client_width), client_width) + space
+                utilities.truncate(
+                    item.client_name.replace('\n', '_'),
+                    client_width),
+                client_width) + space
             s += "|" + space
             if item.activity_type == blackboard.ActivityType.READ:
                 s += symbols["left_arrow"] + space + "{}\n".format(

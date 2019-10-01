@@ -812,7 +812,7 @@ class SubBlackboard(object):
         """
         Check for changes to the blackboard scoped to the provided set of
         variable names (may be nested, e.g. battery.percentage). Checks
-        the entire blackboard when the variable name set is empty.
+        the entire blackboard when variable_names is None.
 
         Args:
             variable_names: constrain the scope to track for changes
@@ -823,7 +823,7 @@ class SubBlackboard(object):
         # TODO: catch exceptions thrown by bad pickles
         # TODO: use a better structure in the blackboard (e.g. JSON) so
         #       that this isn't brittle w.r.t. pickle failures
-        if not variable_names:
+        if variable_names is None:
             storage = copy.deepcopy(Blackboard.storage)
             self.variable_names = Blackboard.keys()
         else:
@@ -845,8 +845,9 @@ class SubBlackboard(object):
         Convenient printed representation of the sub-blackboard that this
         instance is currently tracking.
         """
-        s = ""
         max_length = 0
+        indent = " " * 4
+        s = ""
         for name in self.variable_names:
             max_length = len(name) if len(name) > max_length else max_length
         for name in sorted(self.variable_names):
@@ -854,12 +855,12 @@ class SubBlackboard(object):
                 value = Blackboard.get_value_without_client_access_checks(name)
                 lines = ("%s" % value).split('\n')
                 if len(lines) > 1:
-                    s += console.cyan + "  " + '{0: <{1}}'.format(name, max_length + 1) + console.reset + ":\n"
+                    s += console.cyan + indent + '{0: <{1}}'.format(name, max_length + 1) + console.reset + ":\n"
                     for line in lines:
                         s += console.yellow + "    %s" % line + console.reset + "\n"
                 else:
-                    s += console.cyan + "  " + '{0: <{1}}'.format(name, max_length + 1) + console.reset + ": " + console.yellow + "%s" % (value) + console.reset + "\n"
+                    s += console.cyan + indent + '{0: <{1}}'.format(name, max_length + 1) + console.reset + ": " + console.yellow + "%s" % (value) + console.reset + "\n"
             except KeyError:
                 value_string = "-"
-                s += console.cyan + "  " + '{0: <{1}}'.format(name, max_length + 1) + console.reset + ": " + console.yellow + "%s" % (value_string) + console.reset + "\n"
+                s += console.cyan + indent + '{0: <{1}}'.format(name, max_length + 1) + console.reset + ": " + console.yellow + "%s" % (value_string) + console.reset + "\n"
         return s.rstrip()  # get rid of the trailing newline...print will take care of adding a new line
