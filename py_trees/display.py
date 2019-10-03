@@ -20,8 +20,11 @@ strings or stdout.
 
 import os
 import pydot
+import typing
+import uuid
 
 from . import behaviour
+from . import blackboard
 from . import common
 from . import composites
 from . import console
@@ -29,11 +32,14 @@ from . import decorators
 from . import utilities
 
 ##############################################################################
-# Methods
+# Symbols
 ##############################################################################
 
 unicode_symbols = {
     'space': ' ',
+    'left_arrow': console.left_arrow,
+    'right_arrow': console.right_arrow,
+    'left_right_arrow': console.left_right_arrow,
     'bold': console.bold,
     'bold_reset': console.reset,
     composites.Sequence: u'[-]',
@@ -50,6 +56,9 @@ unicode_symbols = {
 
 ascii_symbols = {
     'space': ' ',
+    'left_arrow': '<-',
+    'right_arrow': '->',
+    'left_right_arrow': '<->',
     'bold': console.bold,
     'bold_reset': console.reset,
     composites.Sequence: "[-]",
@@ -65,6 +74,9 @@ ascii_symbols = {
 """Symbols for a non-unicode, non-escape sequence capable console."""
 xhtml_symbols = {
     'space': '<text>&#xa0;</text>',  # &nbsp; is not valid xhtml, see http://www.fileformat.info/info/unicode/char/00a0/index.htm
+    'left_arrow': '<text>&#x2190;</text>',
+    'right_arrow': '<text>&#x2192;</text>',
+    'left_right_arrow': '<text>&#x2194;</text>',
     'bold': '<b>',
     'bold_reset': '</b>',
     composites.Sequence: '<text>[-]</text>',
@@ -79,6 +91,10 @@ xhtml_symbols = {
 }
 """Symbols for embedding in html."""
 
+##############################################################################
+# Trees
+##############################################################################
+
 
 def _generate_text_tree(
         root,
@@ -86,8 +102,7 @@ def _generate_text_tree(
         visited={},
         previously_visited={},
         indent=0,
-        symbols=None,
-     ):
+        symbols=None):
     """
     Generate a text tree utilising the specified symbol formatter.
 
@@ -175,8 +190,7 @@ def ascii_tree(
         show_status=False,
         visited={},
         previously_visited={},
-        indent=0,
-     ):
+        indent=0):
     """
     Graffiti your console with ascii art for your trees.
 
@@ -246,8 +260,7 @@ def unicode_tree(
         show_status=False,
         visited={},
         previously_visited={},
-        indent=0,
-     ):
+        indent=0):
     """
     Graffiti your console with unicode art for your trees.
 
@@ -280,8 +293,7 @@ def xhtml_tree(
         show_status=False,
         visited={},
         previously_visited={},
-        indent=0,
-     ):
+        indent=0):
     """
     Paint your tree on an xhtml snippet.
 
@@ -328,6 +340,7 @@ def dot_tree(
         root: behaviour.Behaviour,
         visibility_level: common.VisibilityLevel=common.VisibilityLevel.DETAIL,
         collapse_decorators: bool=False,
+        with_blackboard_variables: bool=False,
         with_qualified_names: bool=False):
     """
     Paint your tree on a pydot graph.
@@ -336,9 +349,10 @@ def dot_tree(
 
     Args:
         root (:class:`~py_trees.behaviour.Behaviour`): the root of a tree, or subtree
-        visibility_level (:class`~py_trees.common.VisibilityLevel`): collapse subtrees at or under this level
-        collapse_decorators (:obj:`bool`, optional): only show the decorator (not the child), defaults to False
-        with_qualified_names: (:obj:`bool`, optional): print the class information for each behaviour in each node, defaults to False
+        visibility_level (optional): collapse subtrees at or under this level
+        collapse_decorators (optional): only show the decorator (not the child), defaults to False
+        with_blackboard_variables (optional): add nodes for the blackboard variables
+        with_qualified_names (optional): print the class information for each behaviour in each node, defaults to False
 
     Returns:
         pydot.Dot: graph
@@ -367,8 +381,12 @@ def dot_tree(
             attributes = ('ellipse', 'ghostwhite', 'black')
         else:
             attributes = ('ellipse', 'gray', 'black')
-        if node.blackbox_level != common.BlackBoxLevel.NOT_A_BLACKBOX:
-            attributes = (attributes[0], 'gray20', blackbox_font_colours[node.blackbox_level])
+        try:
+            if node.blackbox_level != common.BlackBoxLevel.NOT_A_BLACKBOX:
+                attributes = (attributes[0], 'gray20', blackbox_font_colours[node.blackbox_level])
+        except AttributeError:
+            # it's a blackboard client, not a behaviour, just pass
+            pass
         return attributes
 
     def get_node_label(node_name, behaviour):
@@ -384,6 +402,7 @@ def dot_tree(
         return node_label
 
     fontsize = 9
+    blackboard_colour = "blue"  # "dimgray"
     graph = pydot.Dot(graph_type='digraph')
     graph.set_name("pastafarianism")  # consider making this unique to the tree sometime, e.g. based on the root name
     # fonts: helvetica, times-bold, arial (times-roman is the default, but this helps some viewers, like kgraphviewer)
@@ -400,23 +419,30 @@ def dot_tree(
         fontsize=fontsize,
         fontcolor=node_font_colour)
     graph.add_node(node_root)
-    names = [root.name]
+    names = {root.id: root.name}
 
-    def add_edges(root, root_dot_name, visibility_level, collapse_decorators):
+    def add_children_and_edges(root, root_dot_name, visibility_level, collapse_decorators):
         if isinstance(root, decorators.Decorator) and collapse_decorators:
             return
         if visibility_level < root.blackbox_level:
+            if len(root.children) > 1:
+                subgraph = pydot.Subgraph(
+                    label="children_of_{}".format(root.name),
+                    rank="same"
+                )
+            else:
+                subgraph = None
             for c in root.children:
                 (node_shape, node_colour, node_font_colour) = get_node_attributes(c)
                 node_name = c.name
-                while node_name in names:
+                while node_name in names.values():
                     node_name += "*"
-                names.append(node_name)
+                names[c.id] = node_name
                 # Node attributes can be found on page 5 of
                 #    https://graphviz.gitlab.io/_pages/pdf/dot.1.pdf
                 # Attributes that may be useful: tooltip, xlabel
                 node = pydot.Node(
-                    node_name,
+                    name=node_name,
                     label=get_node_label(node_name, c),
                     shape=node_shape,
                     style="filled",
@@ -424,13 +450,95 @@ def dot_tree(
                     fontsize=fontsize,
                     fontcolor=node_font_colour,
                 )
+                if subgraph is not None:
+                    subgraph.add_node(node)
                 graph.add_node(node)
                 edge = pydot.Edge(root_dot_name, node_name)
                 graph.add_edge(edge)
                 if c.children != []:
-                    add_edges(c, node_name, visibility_level, collapse_decorators)
+                    add_children_and_edges(c, node_name, visibility_level, collapse_decorators)
+            if subgraph is not None:
+                graph.add_subgraph(subgraph)
 
-    add_edges(root, root.name, visibility_level, collapse_decorators)
+    add_children_and_edges(root, root.name, visibility_level, collapse_decorators)
+
+    def create_blackboard_client_node(blackboard_client: blackboard.Blackboard):
+        return pydot.Node(
+            name=blackboard_client.name,
+            label=blackboard_client.name,
+            shape="ellipse",
+            style="filled",
+            color=blackboard_colour,
+            fillcolor="gray",
+            fontsize=fontsize - 2,
+            fontcolor=blackboard_colour,
+        )
+
+    def add_blackboard_nodes(behaviour_names_by_id: typing.Dict[uuid.UUID, str]):
+        data = blackboard.Blackboard.storage
+        metadata = blackboard.Blackboard.metadata
+        clients = blackboard.Blackboard.clients
+        # add client (that are not behaviour) nodes
+        for unique_identifier, client in clients.items():
+            if unique_identifier not in behaviour_names_by_id:
+                graph.add_node(
+                    create_blackboard_client_node(client)
+                )
+        # add key nodes
+        for key in blackboard.Blackboard.keys():
+            try:
+                value = utilities.truncate(str(data[key]), 20)
+                label = key + ": " + "{}".format(value)
+            except KeyError:
+                label = key + ": " + "-"
+            blackboard_node = pydot.Node(
+                key,
+                label=label,
+                shape='box',
+                style="filled",
+                color=blackboard_colour,
+                fillcolor='white',
+                fontsize=fontsize - 1,
+                fontcolor=blackboard_colour,
+                width=0, height=0, fixedsize=False,  # only big enough to fit text
+            )
+            graph.add_node(blackboard_node)
+            for unique_identifier in metadata[key].read:
+                try:
+                    edge = pydot.Edge(
+                        blackboard_node,
+                        behaviour_names_by_id[unique_identifier],
+                        color=blackboard_colour,
+                        constraint=False
+                    )
+                except KeyError:
+                    edge = pydot.Edge(
+                        blackboard_node,
+                        clients[unique_identifier].__getattribute__("name"),
+                        color=blackboard_colour,
+                        constraint=False
+                    )
+                graph.add_edge(edge)
+            for unique_identifier in metadata[key].write:
+                try:
+                    edge = pydot.Edge(
+                        behaviour_names_by_id[unique_identifier],
+                        blackboard_node,
+                        color=blackboard_colour,
+                        constraint=True
+                    )
+                except KeyError:
+                    edge = pydot.Edge(
+                        clients[unique_identifier].__getattribute__("name"),
+                        blackboard_node,
+                        color=blackboard_colour,
+                        constraint=False
+                    )
+                graph.add_edge(edge)
+
+    if with_blackboard_variables:
+        add_blackboard_nodes(names)
+
     return graph
 
 
@@ -439,18 +547,20 @@ def render_dot_tree(root: behaviour.Behaviour,
                     collapse_decorators: bool=False,
                     name: str=None,
                     target_directory: str=os.getcwd(),
+                    with_blackboard_variables: bool=False,
                     with_qualified_names: bool=False):
     """
     Render the dot tree to .dot, .svg, .png. files in the current
     working directory. These will be named with the root behaviour name.
 
     Args:
-        root (:class:`~py_trees.behaviour.Behaviour`): the root of a tree, or subtree
-        visibility_level (:class`~py_trees.common.VisibilityLevel`): collapse subtrees at or under this level
-        collapse_decorators (:obj:`bool`): only show the decorator (not the child)
-        name (:obj:`str`): name to use for the created files (defaults to the root behaviour name)
-        target_directory (:obj:`str`): default is to use the current working directory, set this to redirect elsewhere
-        with_qualified_names (:obj:`bool`): print the class names of each behaviour in the dot node
+        root: the root of a tree, or subtree
+        visibility_level: collapse subtrees at or under this level
+        collapse_decorators: only show the decorator (not the child)
+        name: name to use for the created files (defaults to the root behaviour name)
+        target_directory: default is to use the current working directory, set this to redirect elsewhere
+        with_blackboard_variables: add nodes for the blackboard variables
+        with_qualified_names: print the class names of each behaviour in the dot node
 
     Example:
 
@@ -474,7 +584,10 @@ def render_dot_tree(root: behaviour.Behaviour,
         A good practice is to provide a command line argument for optional rendering of a program so users
         can quickly visualise what tree the program will execute.
     """
-    graph = dot_tree(root, visibility_level, collapse_decorators, with_qualified_names=with_qualified_names)
+    graph = dot_tree(
+        root, visibility_level, collapse_decorators,
+        with_blackboard_variables=with_blackboard_variables,
+        with_qualified_names=with_qualified_names)
     filename_wo_extension_to_convert = root.name if name is None else name
     filename_wo_extension = utilities.get_valid_filename(filename_wo_extension_to_convert)
     filenames = {}
@@ -485,3 +598,284 @@ def render_dot_tree(root: behaviour.Behaviour,
         writer(pathname)
         filenames[extension] = pathname
     return filenames
+
+##############################################################################
+# Blackboards
+##############################################################################
+
+
+def _generate_text_blackboard(
+        key_filter: typing.Union[typing.Set[str], typing.List[str]]=None,
+        regex_filter: str=None,
+        client_filter: typing.Union[typing.Set[uuid.UUID], typing.List[uuid.UUID]]=None,
+        keys_to_highlight: typing.List[str]=[],
+        display_only_key_metadata: bool=False,
+        indent: int=0,
+        symbols: typing.Dict[str, str]=None) -> str:
+    """
+    Generate a text blackboard.
+
+    Args:
+        key_filter: filter on a set/list of blackboard keys
+        regex_filter: filter on a python regex str
+        client_filter: filter on a set/list of client uuids
+        keys_to_highlight: list of keys to highlight
+        display_only_key_metadata: (read/write access, ...) instead of values
+        indent: the number of characters to indent the blackboard
+        symbols: dictates formatting style
+            (one of :data:`py_trees.display.unicode_symbols` || :data:`py_trees.display.ascii_symbols` || :data:`py_trees.display.xhtml_symbols`),
+            defaults to unicode if stdout supports it, ascii otherwise
+
+    Returns:
+        a text-based representation of the behaviour tree
+
+    .. seealso:: :meth:`py_trees.display.unicode_blackboard`
+    """
+    if symbols is None:
+        symbols = unicode_symbols if console.has_unicode() else ascii_symbols
+
+    def style(s, font_weight=False):
+        if font_weight:
+            return symbols['bold'] + s + symbols['bold_reset']
+        else:
+            return s
+
+    def generate_lines(storage, metadata, indent):
+        def assemble_value_line(key, value, apply_highlight, indent, key_width):
+            s = ""
+            lines = ('{0}'.format(value)).split('\n')
+            if len(lines) > 1:
+                s += console.cyan + indent + '{0: <{1}}'.format(key, key_width) + console.white + ":\n"
+                for line in lines:
+                    s += console.yellow + indent + "  {0}\n".format(line)
+            else:
+                s += console.cyan + indent + '{0: <{1}}'.format(key, key_width) + console.white + ": " + console.yellow + '{0}\n'.format(value) + console.reset
+            return style(s, apply_highlight) + console.reset
+
+        def assemble_metadata_line(key, metadata, apply_highlight, indent, key_width):
+            s = ""
+            s += console.cyan + indent + '{0: <{1}}'.format(key, key_width + 1) + ": "
+            client_uuids = list(set(metadata.read) | set(metadata.write))
+            prefix = ''
+            metastrings = []
+            for client_uuid in client_uuids:
+                metastring = prefix + '{0}'.format(
+                    utilities.truncate(
+                        blackboard.Blackboard.clients[client_uuid].name, 11
+                    )
+                )
+                metastring += ' ('
+                if client_uuid in metadata.read:
+                    metastring += 'r'
+                if client_uuid in metadata.write:
+                    metastring += 'w'
+                metastring += ')'
+                metastrings.append(metastring)
+            s += console.yellow + "{}\n".format(', '.join(metastrings))
+            return style(s, apply_highlight) + console.reset
+
+        text_indent = symbols['space'] * (4 + indent)
+        key_width = 0
+        for key in storage.keys():
+            key_width = len(key) if len(key) > key_width else key_width
+        for key in sorted(storage.keys()):
+            if metadata is not None:
+                yield assemble_metadata_line(
+                    key=key,
+                    metadata=metadata[key],
+                    apply_highlight=key in keys_to_highlight,
+                    indent=text_indent,
+                    key_width=key_width)
+            else:
+                yield assemble_value_line(
+                    key=key,
+                    value=storage[key],
+                    apply_highlight=key in keys_to_highlight,
+                    indent=text_indent,
+                    key_width=key_width)
+
+    blackboard_metadata = blackboard.Blackboard.metadata if display_only_key_metadata else None
+
+    if key_filter:
+        if type(key_filter) == list:
+            key_filter = set(key_filter)
+        all_keys = blackboard.Blackboard.keys() & key_filter
+    elif regex_filter:
+        all_keys = blackboard.Blackboard.keys_filtered_by_regex(regex_filter)
+    elif client_filter:
+        all_keys = blackboard.Blackboard.keys_filtered_by_clients(client_filter)
+    else:
+        all_keys = blackboard.Blackboard.keys()
+    blackboard_storage = {}
+    for key in all_keys:
+        try:
+            blackboard_storage[key] = blackboard.Blackboard.storage[key]
+        except KeyError:
+            blackboard_storage[key] = "-"
+
+    title = "Clients" if display_only_key_metadata else "Data"
+    s = console.green + symbols['space'] * indent + "Blackboard {}\n".format(title) + console.reset
+    if key_filter:
+        s += symbols['space'] * (indent + 2) + "Filter: '{}'\n".format(key_filter)
+    elif regex_filter:
+        s += symbols['space'] * (indent + 2) + "Filter: '{}'\n".format(regex_filter)
+    elif client_filter:
+        s += symbols['space'] * (indent + 2) + "Filter: {}\n".format(str(client_filter))
+    for line in generate_lines(blackboard_storage, blackboard_metadata, indent):
+        s += "{}".format(line)
+    return s
+
+
+def ascii_blackboard(
+        key_filter: typing.Union[typing.Set[str], typing.List[str]]=None,
+        regex_filter: str=None,
+        client_filter: typing.Union[typing.Set[uuid.UUID], typing.List[uuid.UUID]]=None,
+        keys_to_highlight: typing.List[str]=[],
+        display_only_key_metadata: bool=False,
+        indent: int=0) -> str:
+    """
+    Graffiti your console with ascii art for your blackboard.
+
+    Args:
+        key_filter: filter on a set/list of blackboard keys
+        regex_filter: filter on a python regex str
+        client_filter: filter on a set/list of client uuids
+        keys_to_highlight: list of keys to highlight
+        display_only_key_metadata: read/write access, ... instead of values
+        indent: the number of characters to indent the blackboard
+
+    Returns:
+        a unicoded blackboard (i.e. in string form)
+
+    .. seealso:: :meth:`py_trees.display.unicode_blackboard`
+
+    .. note:: registered variables that have not yet been set are marked with a '-'
+    """
+    lines = _generate_text_blackboard(
+        key_filter=key_filter,
+        regex_filter=regex_filter,
+        client_filter=client_filter,
+        keys_to_highlight=keys_to_highlight,
+        display_only_key_metadata=display_only_key_metadata,
+        indent=indent,
+        symbols=ascii_symbols
+    )
+    return lines
+
+
+def unicode_blackboard(
+        key_filter: typing.Union[typing.Set[str], typing.List[str]]=None,
+        regex_filter: str=None,
+        client_filter: typing.Union[typing.Set[uuid.UUID], typing.List[uuid.UUID]]=None,
+        keys_to_highlight: typing.List[str]=[],
+        display_only_key_metadata: bool=False,
+        indent: int=0) -> str:
+    """
+    Graffiti your console with unicode art for your blackboard.
+
+    Args:
+        key_filter: filter on a set/list of blackboard keys
+        regex_filter: filter on a python regex str
+        client_filter: filter on a set/list of client uuids
+        keys_to_highlight: list of keys to highlight
+        display_only_key_metadata: read/write access, ... instead of values
+        indent: the number of characters to indent the blackboard
+
+    Returns:
+        a unicoded blackboard (i.e. in string form)
+
+    .. seealso:: :meth:`py_trees.display.ascii_blackboard`
+
+    .. note:: registered variables that have not yet been set are marked with a '-'
+    """
+    lines = _generate_text_blackboard(
+        key_filter=key_filter,
+        regex_filter=regex_filter,
+        client_filter=client_filter,
+        keys_to_highlight=keys_to_highlight,
+        display_only_key_metadata=display_only_key_metadata,
+        indent=indent,
+        symbols=None  # defaults to unicode, falls back to ascii
+    )
+    return lines
+
+
+def unicode_blackboard_activity_stream(
+        activity_stream: typing.List[blackboard.ActivityItem]=None,
+        indent: int=0):
+    """
+    Pretty print the blackboard stream to console.
+
+    Args:
+        activity_stream: the log of activity, if None, get the entire activity stream
+        indent: the number of characters to indent the blackboard
+    """
+    symbols = unicode_symbols if console.has_unicode() else ascii_symbols
+    space = symbols['space']
+    if activity_stream is None:
+        activity_stream = blackboard.Blackboard.activity_stream
+    s = space * indent + console.green + "Blackboard Activity Stream" + console.reset + "\n"
+    if activity_stream is not None:
+        key_width = 0
+        client_width = 0
+        for item in activity_stream.data:
+            key_width = len(item.key) if len(item.key) > key_width else key_width
+            client_width = len(item.client_name) if len(item.client_name) > client_width else client_width
+        client_width = min(client_width, 20)
+        type_width = len("ACCESS_DENIED")
+        value_width = 80 - key_width - 3 - type_width - 3 - client_width - 3
+        for item in activity_stream.data:
+            s += console.cyan + space * (4 + indent)
+            s += "{0: <{1}}:".format(item.key, key_width + 1) + space
+            s += console.yellow
+            s += "{0: <{1}}".format(item.activity_type.value, type_width) + space
+            s += console.white + "|" + space
+            s += "{0: <{1}}".format(
+                utilities.truncate(
+                    item.client_name.replace('\n', '_'),
+                    client_width),
+                client_width) + space
+            s += "|" + space
+            if item.activity_type == blackboard.ActivityType.READ:
+                s += symbols["left_arrow"] + space + "{}\n".format(
+                    utilities.truncate(str(item.current_value), value_width)
+                )
+            elif item.activity_type == blackboard.ActivityType.WRITE:
+                s += console.green
+                s += symbols["right_arrow"] + space
+                s += "{}\n".format(
+                    utilities.truncate(str(item.current_value), value_width)
+                )
+            elif item.activity_type == blackboard.ActivityType.ACCESSED:
+                s += console.yellow
+                s += symbols["left_right_arrow"] + space
+                s += "{}\n".format(
+                    utilities.truncate(str(item.current_value), value_width)
+                )
+            elif item.activity_type == blackboard.ActivityType.ACCESS_DENIED:
+                s += console.red
+                s += console.multiplication_x + space
+                s += "client has no read/write access\n"
+            elif item.activity_type == blackboard.ActivityType.NO_KEY:
+                s += console.red
+                s += console.multiplication_x + space
+                s += "key does not yet exist\n"
+            elif item.activity_type == blackboard.ActivityType.NO_OVERWRITE:
+                s += console.yellow
+                s += console.forbidden_circle + space
+                s += "{}\n".format(
+                    utilities.truncate(str(item.current_value), value_width)
+                )
+            elif item.activity_type == blackboard.ActivityType.UNSET:
+                s += "\n"
+            elif item.activity_type == blackboard.ActivityType.INITIALISED:
+                s += console.green
+                s += symbols["right_arrow"] + space
+                s += "{}\n".format(
+                    utilities.truncate(str(item.current_value), value_width)
+                )
+            else:
+                s += "unknown operation\n"
+        s = s.rstrip("\n")
+        s += console.reset
+    return s

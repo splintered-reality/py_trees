@@ -13,5 +13,6 @@ if __name__ == '__main__':
     root = py_trees.idioms.oneshot(
         name="OneShot",
         variable_name="oneshot",
-        behaviour=sequence)
+        behaviour=sequence,
+        policy=py_trees.common.OneShotPolicy.ON_COMPLETION)
     py_trees.display.render_dot_tree(root, py_trees.common.string_to_visibility_level("all"))

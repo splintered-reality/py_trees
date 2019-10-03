@@ -12,10 +12,12 @@ it will pick up the nosetests configuration in `setup.cfg`.
 
 ```
 # All Tests via SetupTools (indirectly)
-$ python3 setup.py nosetests
+$ python setup.py nosetests
 # All Tests via Nosetest (directly)
 $ nosetests ./tests
 # A single test
 $ nosetests tests/test_oneshot.py
 ```
 
+If not in the virtualenv and in a dual python environment, e.g. Ubuntu bionic,
+replace those commands with their `python3 / nosetests3` equivalents.

@@ -23,7 +23,6 @@
 ##############################################################################
 
 import argparse
-import functools
 import py_trees
 import sys
 import time
@@ -35,7 +34,7 @@ import py_trees.console as console
 ##############################################################################
 
 
-def description(root):
+def description():
     content = "A demonstration of tree stewardship.\n\n"
     content += "A slightly less trivial tree that uses a simple stdout pre-tick handler\n"
     content += "and both the debug and snapshot visitors for logging and displaying\n"
@@ -71,37 +70,71 @@ def epilog():
 
 
 def command_line_argument_parser():
-    parser = argparse.ArgumentParser(description=description(create_tree()),
+    parser = argparse.ArgumentParser(description=description(),
                                      epilog=epilog(),
                                      formatter_class=argparse.RawDescriptionHelpFormatter,
                                      )
     group = parser.add_mutually_exclusive_group()
     group.add_argument('-r', '--render', action='store_true', help='render dot tree to file')
+    group.add_argument(
+        '--render-with-blackboard-variables',
+        action='store_true',
+        help='render dot tree to file with blackboard variables'
+    )
     group.add_argument('-i', '--interactive', action='store_true', help='pause and wait for keypress at each tick')
     return parser
 
 
 def pre_tick_handler(behaviour_tree):
-    """
-    This prints a banner and will run immediately before every tick of the tree.
-
-    Args:
-        behaviour_tree (:class:`~py_trees.trees.BehaviourTree`): the tree custodian
-
-    """
     print("\n--------- Run %s ---------\n" % behaviour_tree.count)
 
 
+class SuccessEveryN(py_trees.behaviours.SuccessEveryN):
+    def __init__(self):
+        super().__init__(name="EveryN", n=5)
+        self.blackboard.register_key("count", write=True)
+
+    def update(self):
+        status = super().update()
+        self.blackboard.count = self.count
+        return status
+
+
+class PeriodicSuccess(py_trees.behaviours.Periodic):
+    def __init__(self):
+        super().__init__(name="Periodic", n=3)
+        self.blackboard.register_key("period", write=True)
+
+    def update(self):
+        status = super().update()
+        self.blackboard.period = self.period
+        return status
+
+
+class Finisher(py_trees.behaviour.Behaviour):
+    def __init__(self):
+        super().__init__(name="Finisher")
+        self.blackboard.register_key("count", read=True)
+        self.blackboard.register_key("period", read=True)
+
+    def update(self):
+        print(console.green + "---------------------------" + console.reset)
+        print(console.bold + "        Finisher" + console.reset)
+        print(console.green + "  Count : {}".format(self.blackboard.count) + console.reset)
+        print(console.green + "  Period: {}".format(self.blackboard.period) + console.reset)
+        print(console.green + "---------------------------" + console.reset)
+        return py_trees.common.Status.SUCCESS
+
+
 def create_tree():
-    every_n_success = py_trees.behaviours.SuccessEveryN("EveryN", 5)
+    every_n_success = SuccessEveryN()
     sequence = py_trees.composites.Sequence(name="Sequence")
     guard = py_trees.behaviours.Success("Guard")
-    periodic_success = py_trees.behaviours.Periodic("Periodic", 3)
-    finisher = py_trees.behaviours.Success("Finisher")
+    periodic_success = PeriodicSuccess()
+    finisher = Finisher()
     sequence.add_child(guard)
     sequence.add_child(periodic_success)
     sequence.add_child(finisher)
-    sequence.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
     idle = py_trees.behaviours.Success("Idle")
     root = py_trees.composites.Selector(name="Demo Tree")
     root.add_child(every_n_success)
@@ -121,7 +154,7 @@ def main():
     args = command_line_argument_parser().parse_args()
     py_trees.logging.level = py_trees.logging.Level.DEBUG
     tree = create_tree()
-    print(description(tree))
+    print(description())
 
     ####################
     # Rendering
@@ -130,13 +163,22 @@ def main():
         py_trees.display.render_dot_tree(tree)
         sys.exit()
 
+    if args.render_with_blackboard_variables:
+        py_trees.display.render_dot_tree(tree, with_blackboard_variables=True)
+        sys.exit()
+
     ####################
     # Tree Stewardship
     ####################
+    py_trees.blackboard.Blackboard.enable_activity_stream(100)
     behaviour_tree = py_trees.trees.BehaviourTree(tree)
     behaviour_tree.add_pre_tick_handler(pre_tick_handler)
     behaviour_tree.visitors.append(py_trees.visitors.DebugVisitor())
-    behaviour_tree.visitors.append(py_trees.visitors.DisplaySnapshotVisitor())
+    behaviour_tree.visitors.append(
+        py_trees.visitors.DisplaySnapshotVisitor(
+            display_blackboard=True,
+            display_activity_stream=True)
+    )
     behaviour_tree.setup(timeout=15)
 
     ####################

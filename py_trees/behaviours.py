@@ -6,7 +6,6 @@
 ##############################################################################
 # Documentation
 ##############################################################################
-
 """
 A library of fundamental behaviours for use.
 """
@@ -14,6 +13,9 @@ A library of fundamental behaviours for use.
 ##############################################################################
 # Imports
 ##############################################################################
+
+import operator
+import typing
 
 from . import behaviour
 from . import common
@@ -211,3 +213,290 @@ class Count(behaviour.Behaviour):
         s += "  Resets : %s\n" % self.number_count_resets
         s += "  Updates: %s\n" % self.number_updated
         return s
+
+##############################################################################
+# Blackboard Behaviours
+##############################################################################
+
+
+class CheckBlackboardVariableExists(behaviour.Behaviour):
+    """
+    Check the blackboard to verify if a specific variable (key-value pair)
+    exists. This is non-blocking, so will always tick with
+    status :data:`~py_trees.common.Status.FAILURE`
+    :data:`~py_trees.common.Status.SUCCESS`.
+
+    .. seealso::
+
+       :class:`~py_trees.behaviours.WaitForBlackboardVariable` for
+       the blocking counterpart to this behaviour.
+
+    Args:
+        variable_name: name of the variable look for, may be nested, e.g. battery.percentage
+        name: name of the behaviour
+    """
+    def __init__(
+            self,
+            variable_name: str,
+            name: str=common.Name.AUTO_GENERATED
+    ):
+        super().__init__(name=name)
+        self.variable_name = variable_name
+        name_components = variable_name.split('.')
+        self.key = name_components[0]
+        self.key_attributes = '.'.join(name_components[1:])  # empty string if no other parts
+        self.blackboard.register_key(key=self.key, read=True)
+
+    def update(self) -> common.Status:
+        """
+        Check for existence.
+
+        Returns:
+             :data:`~py_trees.common.Status.SUCCESS` if key found, :data:`~py_trees.common.Status.FAILURE` otherwise.
+        """
+        self.logger.debug("%s.update()" % self.__class__.__name__)
+        try:
+            unused_value = self.blackboard.get(self.variable_name)
+            self.feedback_message = "variable '{}' found".format(self.variable_name)
+            return common.Status.SUCCESS
+        except KeyError:
+            self.feedback_message = "variable '{}' not found".format(self.variable_name)
+            return common.Status.FAILURE
+
+
+class WaitForBlackboardVariable(CheckBlackboardVariableExists):
+    """
+    Wait for the blackboard variable to become available on the blackboard.
+    This is blocking, so it will tick with
+    status :data:`~py_trees.common.Status.SUCCESS` if the variable is found,
+    and :data:`~py_trees.common.Status.RUNNING` otherwise.
+
+    .. seealso::
+
+       :class:`~py_trees.behaviours.CheckBlackboardVariableExists` for
+       the non-blocking counterpart to this behaviour.
+
+    Args:
+        variable_name: name of the variable to wait for, may be nested, e.g. battery.percentage
+        name: name of the behaviour
+    """
+    def __init__(
+            self,
+            variable_name: str,
+            name: str=common.Name.AUTO_GENERATED
+    ):
+        super().__init__(name=name, variable_name=variable_name)
+
+    def update(self) -> common.Status:
+        """
+        Check for existence, wait otherwise.
+
+        Returns:
+             :data:`~py_trees.common.Status.SUCCESS` if key found, :data:`~py_trees.common.Status.RUNNING` otherwise.
+        """
+        self.logger.debug("%s.update()" % self.__class__.__name__)
+        new_status = super().update()
+        if new_status == common.Status.SUCCESS:
+            self.feedback_message = "'{}' found".format(self.key)
+            return common.Status.SUCCESS
+        elif new_status == common.Status.FAILURE:
+            self.feedback_message = "waiting for key '{}'...".format(self.key)
+            return common.Status.RUNNING
+
+
+class UnsetBlackboardVariable(behaviour.Behaviour):
+    """
+    Unset the specified variable (key-value pair) from the blackboard.
+
+    This always returns
+    :data:`~py_trees.common.Status.SUCCESS` regardless of whether
+    the variable was already present or not.
+
+    Args:
+        key: unset this key-value pair
+        name: name of the behaviour
+    """
+    def __init__(self,
+                 key: str,
+                 name: str=common.Name.AUTO_GENERATED,
+                 ):
+        super().__init__(name=name)
+        self.key = key
+        self.blackboard.register_key(key=self.key, write=True)
+
+    def update(self) -> common.Status:
+        """
+        Unset and always return success.
+
+        Returns:
+             :data:`~py_trees.common.Status.SUCCESS`
+        """
+        if self.blackboard.unset(self.key):
+            self.feedback_message = "'{}' found and removed".format(self.key)
+        else:
+            self.feedback_message = "'{}' not found, nothing to remove"
+        return common.Status.SUCCESS
+
+
+class SetBlackboardVariable(behaviour.Behaviour):
+    """
+    Set the specified variable on the blackboard.
+
+    Args:
+        variable_name: name of the variable to set, may be nested, e.g. battery.percentage
+        variable_value: value of the variable to set
+        overwrite: when False, do not set the variable if it already exists
+        name: name of the behaviour
+    """
+    def __init__(
+            self,
+            variable_name: str,
+            variable_value: typing.Any,
+            overwrite: bool = True,
+            name: str=common.Name.AUTO_GENERATED,
+    ):
+        super().__init__(name=name)
+        self.variable_name = variable_name
+        name_components = variable_name.split('.')
+        self.key = name_components[0]
+        self.key_attributes = '.'.join(name_components[1:])  # empty string if no other parts
+        self.blackboard.register_key(key=self.key, write=True)
+        self.variable_value = variable_value
+        self.overwrite = overwrite
+
+    def update(self) -> common.Status:
+        """
+        Always return success.
+
+        Returns:
+             :data:`~py_trees.common.Status.FAILURE` if no overwrite requested and the variable exists,  :data:`~py_trees.common.Status.SUCCESS` otherwise
+        """
+        if self.blackboard.set(
+            self.variable_name,
+            self.variable_value,
+            overwrite=self.overwrite
+        ):
+            return common.Status.SUCCESS
+        else:
+            return common.Status.FAILURE
+
+
+class CheckBlackboardVariableValue(behaviour.Behaviour):
+    """
+    Inspect a blackboard variable and if it exists, check that it
+    meets the specified criteria (given by operation type and expected value).
+    This is non-blocking, so it will always tick with
+    :data:`~py_trees.common.Status.SUCCESS` or
+    :data:`~py_trees.common.Status.FAILURE`.
+
+    Args:
+        variable_name: name of the variable to check, may be nested, e.g. battery.percentage
+        expected_value: expected value
+        comparison_operator: any method that can compare the value against the expected value
+        name: name of the behaviour
+
+    .. note::
+        If the variable does not yet exist on the blackboard, the behaviour will
+        return with status :data:`~py_trees.common.Status.FAILURE`.
+
+    .. tip::
+        The python `operator module`_ includes many useful comparison operations.
+
+    .. _`operator module`: https://docs.python.org/2/library/operator.html
+    """
+    def __init__(
+            self,
+            variable_name: str,
+            expected_value: typing.Any,
+            comparison_operator: typing.Callable[[typing.Any, typing.Any], bool]=operator.eq,
+            name: str=common.Name.AUTO_GENERATED
+    ):
+        super().__init__(name=name)
+        self.variable_name = variable_name
+        name_components = variable_name.split('.')
+        self.key = name_components[0]
+        self.key_attributes = '.'.join(name_components[1:])  # empty string if no other parts
+        self.blackboard.register_key(key=self.key, read=True)
+
+        self.expected_value = expected_value
+        self.comparison_operator = comparison_operator
+
+    def update(self):
+        """
+        Check for existence, or the appropriate match on the expected value.
+
+        Returns:
+             :class:`~py_trees.common.Status`: :data:`~py_trees.common.Status.FAILURE` if not matched, :data:`~py_trees.common.Status.SUCCESS` otherwise.
+        """
+        self.logger.debug("%s.update()" % self.__class__.__name__)
+        try:
+            value = self.blackboard.get(self.key)
+            if self.key_attributes:
+                try:
+                    value = operator.attrgetter(self.key_attributes)(value)
+                except AttributeError:
+                    self.feedback_message = 'blackboard key-value pair exists, but the value does not have the requested nested attributes [{}]'.format(self.variable_name)
+                    return common.Status.FAILURE
+        except KeyError:
+            self.feedback_message = "key '{}' does not yet exist on the blackboard".format(self.variable_name)
+            return common.Status.FAILURE
+
+        success = self.comparison_operator(value, self.expected_value)
+
+        if success:
+            self.feedback_message = "'%s' comparison succeeded [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
+            return common.Status.SUCCESS
+        else:
+            self.feedback_message = "'%s' comparison failed [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
+            return common.Status.FAILURE
+
+
+class WaitForBlackboardVariableValue(CheckBlackboardVariableValue):
+    """
+    Inspect a blackboard variable and if it exists, check that it
+    meets the specified criteria (given by operation type and expected value).
+    This is blocking, so it will always tick with
+    :data:`~py_trees.common.Status.SUCCESS` or
+    :data:`~py_trees.common.Status.RUNNING`.
+
+    .. seealso::
+
+       :class:`~py_trees.behaviours.CheckBlackboardVariableValue` for
+       the non-blocking counterpart to this behaviour.
+
+    .. note::
+        If the variable does not yet exist on the blackboard, the behaviour will
+        return with status :data:`~py_trees.common.Status.RUNNING`.
+
+    Args:
+        variable_name: name of the variable to check, may be nested, e.g. battery.percentage
+        expected_value: expected value
+        comparison_operator: any method that can compare the value against the expected value
+        name: name of the behaviour
+    """
+    def __init__(
+            self,
+            variable_name: str,
+            expected_value: typing.Any,
+            comparison_operator: typing.Callable[[typing.Any, typing.Any], bool]=operator.eq,
+            name: str=common.Name.AUTO_GENERATED
+    ):
+        super().__init__(
+            variable_name=variable_name,
+            expected_value=expected_value,
+            comparison_operator=comparison_operator,
+            name=name
+        )
+
+    def update(self):
+        """
+        Check for existence, or the appropriate match on the expected value.
+
+        Returns:
+             :class:`~py_trees.common.Status`: :data:`~py_trees.common.Status.FAILURE` if not matched, :data:`~py_trees.common.Status.SUCCESS` otherwise.
+        """
+        new_status = super().update()
+        if new_status == common.Status.FAILURE:
+            return common.Status.RUNNING
+        else:
+            return new_status

@@ -33,10 +33,7 @@ from . import decorators
 
 def pick_up_where_you_left_off(
         name="Pickup Where You Left Off Idiom",
-        tasks=[behaviours.Dummy(name="Dummy1"),  # dummy behaviours to enable dot rendering with py-trees-render
-               behaviours.Dummy(name="Dummy1")
-               ]
-        ):
+        tasks=[]):
     """
     Rudely interrupted while enjoying a sandwich, a caveman (just because
     they wore loincloths does not mean they were not civilised), picks
@@ -76,14 +73,13 @@ def pick_up_where_you_left_off(
     root = composites.Sequence(name=name)
     for task in tasks:
         task_selector = composites.Selector(name="Do or Don't")
-        task_guard = blackboard.CheckBlackboardVariable(
+        task_guard = behaviours.CheckBlackboardVariableValue(
             name="Done?",
             variable_name=task.name.lower().replace(" ", "_") + "_done",
-            expected_value=True,
-            clearing_policy=common.ClearingPolicy.NEVER
+            expected_value=True
         )
         sequence = composites.Sequence(name="Worker")
-        mark_task_done = blackboard.SetBlackboardVariable(
+        mark_task_done = behaviours.SetBlackboardVariable(
             name="Mark\n" + task.name.lower().replace(" ", "_") + "_done",
             variable_name=task.name.lower().replace(" ", "_") + "_done",
             variable_value=True
@@ -92,34 +88,32 @@ def pick_up_where_you_left_off(
         task_selector.add_children([task_guard, sequence])
         root.add_child(task_selector)
     for task in tasks:
-        clear_mark_done = blackboard.ClearBlackboardVariable(
+        clear_mark_done = behaviours.UnsetBlackboardVariable(
             name="Clear\n" + task.name.lower().replace(" ", "_") + "_done",
-            variable_name=task.name.lower().replace(" ", "_") + "_done"
+            key=task.name.lower().replace(" ", "_") + "_done"
         )
         root.add_child(clear_mark_done)
     return root
 
 
 def eternal_guard(
+        subtree: behaviour.Behaviour,
         name: str="Eternal Guard",
-        conditions: List[behaviour.Behaviour]=[behaviours.Dummy(name="Condition 1"),  # dummy behaviours to enable dot rendering with py-trees-render
-                                               behaviours.Dummy(name="Condition 2")],
-        subtree: behaviour.Behaviour=behaviours.Dummy(name="Task"),  # dummy behaviour to enable dot rendering with py-trees-render
-        blackboard_variable_prefix: str=None,
-        ) -> behaviour.Behaviour:
+        conditions: List[behaviour.Behaviour]=[],
+        blackboard_variable_prefix: str=None) -> behaviour.Behaviour:
     """
     The eternal guard idiom implements a stronger :term:`guard` than the typical check at the
     beginning of a sequence of tasks. Here they guard continuously while the task sequence
     is being executed. While executing, if any of the guards should update with
-    status :attr:`~common.Status.FAILURE`, then the task sequence is terminated.
+    status :data:`~common.Status.FAILURE`, then the task sequence is terminated.
 
     .. graphviz:: dot/idiom-eternal-guard.dot
         :align: center
 
     Args:
+        subtree: behaviour(s) that actually do the work
         name: the name to use on the root behaviour of the idiom subtree
         conditions: behaviours on which tasks are conditional
-        subtree: behaviour(s) that actually do the work
         blackboard_variable_prefix: applied to condition variable results stored on the blackboard (default: derived from the idiom name)
 
     Returns:
@@ -136,9 +130,18 @@ def eternal_guard(
         suffix = "" if len(conditions) == 1 else "_{}".format(counter)
         blackboard_variable_names.append(blackboard_variable_prefix + "_condition" + suffix)
         counter += 1
-    bb = blackboard.Blackboard()
+    bb = blackboard.BlackboardClient(
+        read=set(blackboard_variable_names)
+    )
     # if there is just one blackboard name already on the blackboard, switch to unique names
-    if any(bb.get(name) is not None for name in blackboard_variable_names):
+    conflict = False
+    for name in blackboard_variable_names:
+        try:
+            unused_name = bb.get(name)
+            conflict = True
+        except KeyError:
+            pass
+    if conflict:
         blackboard_variable_names = []
         counter = 1
         unique_id = uuid.uuid4()
@@ -146,6 +149,7 @@ def eternal_guard(
             suffix = "" if len(conditions) == 1 else "_{}".format(counter)
             blackboard_variable_names.append(blackboard_variable_prefix + "_" + str(unique_id) + "_condition" + suffix)
             counter += 1
+    bb.unregister()
     # build the tree
     root = composites.Parallel(
         name=name,
@@ -160,11 +164,10 @@ def eternal_guard(
         )
         root.add_child(decorated_condition)
         guarded_tasks.add_child(
-            blackboard.CheckBlackboardVariable(
+            behaviours.CheckBlackboardVariableValue(
                 name="Abort on\n{}".format(condition.name),
                 variable_name=blackboard_variable_name,
-                expected_value=common.Status.FAILURE,
-                clearing_policy=common.ClearingPolicy.ON_INITIALISE
+                expected_value=common.Status.FAILURE
             )
         )
     guarded_tasks.add_child(subtree)
@@ -172,27 +175,29 @@ def eternal_guard(
     return root
 
 
-def oneshot(name="OneShot Idiom",
-            variable_name="oneshot",
-            behaviour=behaviours.Dummy(),  # dummy behaviour to enable dot rendering with py-trees-render
-            policy=common.OneShotPolicy.ON_SUCCESSFUL_COMPLETION):
+def oneshot(
+        behaviour: behaviour.Behaviour,
+        name: str="Oneshot",
+        variable_name: str="oneshot",
+        policy: common.OneShotPolicy=common.OneShotPolicy.ON_SUCCESSFUL_COMPLETION
+        ):
     """
     Ensure that a particular pattern is executed through to
-    completion just once. Thereafter it will just rebound with success.
+    completion just once. Thereafter it will just rebound with the completion status.
 
     .. graphviz:: dot/oneshot.dot
 
     .. note::
 
-       Completion on :data:`~py_trees.common.Status.SUCCESS`||:data:`~py_trees.common.Status.FAILURE`
-       or on :data:`~py_trees.common.Status.SUCCESS` only (permits retries if it fails) is
-       determined by the policy.
+       Set the policy to configure the oneshot to keep trying if failing, or to abort
+       further attempts regardless of whether it finished with status
+       :data:`~py_trees.common.Status.SUCCESS`||:data:`~py_trees.common.Status.FAILURE`.
 
     Args:
-        name (:obj:`str`): the name to use for the oneshot root (selector)
-        variable_name (:obj:`str`): name for the flag used on the blackboard (ensure it is unique)
-        behaviour (:class:`~py_trees.behaviour.Behaviour`): single behaviour or composited subtree to oneshot
-        policy (:class:`~py_trees.common.OneShotPolicy`): policy determining when the oneshot should activate
+        behaviour: single behaviour or composited subtree to oneshot
+        name: the name to use for the oneshot root (selector)
+        variable_name: name for the variable used on the blackboard, may be nested
+        policy: execute just once regardless of success or failure, or keep trying if failing
 
     Returns:
         :class:`~py_trees.behaviour.Behaviour`: the root of the oneshot subtree
@@ -204,14 +209,12 @@ def oneshot(name="OneShot Idiom",
         name="Oneshot w/ Guard")
     check_not_done = decorators.Inverter(
         name="Not Completed?",
-        child=blackboard.CheckBlackboardVariable(
+        child=behaviours.CheckBlackboardVariableExists(
             name="Completed?",
-            variable_name=variable_name,
-            expected_value=None,
-            clearing_policy=common.ClearingPolicy.ON_INITIALISE
+            variable_name=variable_name
         )
     )
-    set_flag_on_success = blackboard.SetBlackboardVariable(
+    set_flag_on_success = behaviours.SetBlackboardVariable(
         name="Mark Done\n[SUCCESS]",
         variable_name=variable_name,
         variable_value=common.Status.SUCCESS
@@ -230,7 +233,7 @@ def oneshot(name="OneShot Idiom",
     else:  # ON_COMPLETION (SUCCESS || FAILURE)
         oneshot_handler = composites.Selector(name="Oneshot Handler")
         bookkeeping = composites.Sequence(name="Bookkeeping")
-        set_flag_on_failure = blackboard.SetBlackboardVariable(
+        set_flag_on_failure = behaviours.SetBlackboardVariable(
             name="Mark Done\n[FAILURE]",
             variable_name=variable_name,
             variable_value=common.Status.FAILURE
@@ -242,11 +245,10 @@ def oneshot(name="OneShot Idiom",
         oneshot_handler.add_children([sequence, bookkeeping])
         oneshot_with_guard.add_child(oneshot_handler)
 
-    oneshot_result = blackboard.CheckBlackboardVariable(
-            name="Oneshot Result",
-            variable_name=variable_name,
-            expected_value=common.Status.SUCCESS,
-            clearing_policy=common.ClearingPolicy.NEVER
-        )
+    oneshot_result = behaviours.CheckBlackboardVariableValue(
+        name="Oneshot Result",
+        variable_name=variable_name,
+        expected_value=common.Status.SUCCESS,
+    )
     subtree_root.add_children([oneshot_with_guard, oneshot_result])
     return subtree_root

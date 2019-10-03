@@ -44,6 +44,24 @@ def static_variables(**kwargs):
     return decorate
 
 
+def truncate(original: str, length: int) -> str:
+    """
+    Provide an elided version of the string for which the last three
+    characters are dots if the original string does not fit within the
+    specified length.
+
+    Args:
+        original: string to elide
+        length: constrain the elided string to this
+    """
+    s = (original[:length - 3] + '...') if len(original) > length else original
+    return s
+
+##############################################################################
+# System Tools
+##############################################################################
+
+
 class Process(multiprocessing.Process):
     def __init__(self, *args, **kwargs):
         multiprocessing.Process.__init__(self, *args, **kwargs)
@@ -63,10 +81,6 @@ class Process(multiprocessing.Process):
         if self._pconn.poll():
             self._exception = self._pconn.recv()
         return self._exception
-
-##############################################################################
-# System Tools
-##############################################################################
 
 
 def which(program):

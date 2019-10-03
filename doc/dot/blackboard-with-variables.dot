@@ -1,0 +1,190 @@
+digraph pastafarianism {
+graph [fontname="times-roman"];
+node [fontname="times-roman"];
+edge [fontname="times-roman"];
+"Tutorial Eight" [label="Tutorial Eight\n--SuccessOnAll(-)--", shape=parallelogram, style=filled, fillcolor=gold, fontsize=9, fontcolor=black];
+Topics2BB [label=Topics2BB, shape=box, style=filled, fillcolor=orange, fontsize=9, fontcolor=black];
+"Tutorial Eight" -> Topics2BB;
+Scan2BB [label=Scan2BB, shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+Topics2BB -> Scan2BB;
+Cancel2BB [label=Cancel2BB, shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+Topics2BB -> Cancel2BB;
+Battery2BB [label=Battery2BB, shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+Topics2BB -> Battery2BB;
+subgraph  {
+label=children_of_Topics2BB;
+rank=same;
+Scan2BB [label=Scan2BB, shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+Cancel2BB [label=Cancel2BB, shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+Battery2BB [label=Battery2BB, shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+}
+
+Tasks [label=Tasks, shape=octagon, style=filled, fillcolor=cyan, fontsize=9, fontcolor=black];
+"Tutorial Eight" -> Tasks;
+"Battery Low?" [label="Battery Low?", shape=ellipse, style=filled, fillcolor=ghostwhite, fontsize=9, fontcolor=black];
+Tasks -> "Battery Low?";
+"Flash Red" [label="Flash Red", shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+"Battery Low?" -> "Flash Red";
+Scan [label=Scan, shape=box, style=filled, fillcolor=orange, fontsize=9, fontcolor=black];
+Tasks -> Scan;
+"Scan or Die" [label="Scan or Die", shape=octagon, style=filled, fillcolor=cyan, fontsize=9, fontcolor=black];
+Scan -> "Scan or Die";
+"Ere we Go" [label="Ere we Go", shape=box, style=filled, fillcolor=orange, fontsize=9, fontcolor=black];
+"Scan or Die" -> "Ere we Go";
+UnDock [label=UnDock, shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+"Ere we Go" -> UnDock;
+"Scan or Be Cancelled" [label="Scan or Be Cancelled", shape=octagon, style=filled, fillcolor=cyan, fontsize=9, fontcolor=black];
+"Ere we Go" -> "Scan or Be Cancelled";
+"Cancelling?" [label="Cancelling?", shape=box, style=filled, fillcolor=orange, fontsize=9, fontcolor=black];
+"Scan or Be Cancelled" -> "Cancelling?";
+"Cancel?" [label="Cancel?", shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+"Cancelling?" -> "Cancel?";
+"Move Home" [label="Move Home", shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+"Cancelling?" -> "Move Home";
+"Result2BB\n'cancelled'" [label="Result2BB\n'cancelled'", shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+"Cancelling?" -> "Result2BB\n'cancelled'";
+subgraph  {
+label="children_of_Cancelling?";
+rank=same;
+"Cancel?" [label="Cancel?", shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+"Move Home" [label="Move Home", shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+"Result2BB\n'cancelled'" [label="Result2BB\n'cancelled'", shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+}
+
+"Move Out and Scan" [label="Move Out and Scan", shape=box, style=filled, fillcolor=orange, fontsize=9, fontcolor=black];
+"Scan or Be Cancelled" -> "Move Out and Scan";
+"Move Out" [label="Move Out", shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+"Move Out and Scan" -> "Move Out";
+Scanning [label="Scanning\n--SuccessOnOne--", shape=parallelogram, style=filled, fillcolor=gold, fontsize=9, fontcolor=black];
+"Move Out and Scan" -> Scanning;
+"Context Switch" [label="Context Switch", shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+Scanning -> "Context Switch";
+Rotate [label=Rotate, shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+Scanning -> Rotate;
+"Flash Blue" [label="Flash Blue", shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+Scanning -> "Flash Blue";
+subgraph  {
+label=children_of_Scanning;
+rank=same;
+"Context Switch" [label="Context Switch", shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+Rotate [label=Rotate, shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+"Flash Blue" [label="Flash Blue", shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+}
+
+"Move Home*" [label="Move Home*", shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+"Move Out and Scan" -> "Move Home*";
+"Result2BB\n'succeeded'" [label="Result2BB\n'succeeded'", shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+"Move Out and Scan" -> "Result2BB\n'succeeded'";
+subgraph  {
+label="children_of_Move Out and Scan";
+rank=same;
+"Move Out" [label="Move Out", shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+Scanning [label="Scanning\n--SuccessOnOne--", shape=parallelogram, style=filled, fillcolor=gold, fontsize=9, fontcolor=black];
+"Move Home*" [label="Move Home*", shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+"Result2BB\n'succeeded'" [label="Result2BB\n'succeeded'", shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+}
+
+subgraph  {
+label="children_of_Scan or Be Cancelled";
+rank=same;
+"Cancelling?" [label="Cancelling?", shape=box, style=filled, fillcolor=orange, fontsize=9, fontcolor=black];
+"Move Out and Scan" [label="Move Out and Scan", shape=box, style=filled, fillcolor=orange, fontsize=9, fontcolor=black];
+}
+
+Dock [label=Dock, shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+"Ere we Go" -> Dock;
+Celebrate [label="Celebrate\n--SuccessOnOne--", shape=parallelogram, style=filled, fillcolor=gold, fontsize=9, fontcolor=black];
+"Ere we Go" -> Celebrate;
+"Flash Green" [label="Flash Green", shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+Celebrate -> "Flash Green";
+Pause [label=Pause, shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+Celebrate -> Pause;
+subgraph  {
+label=children_of_Celebrate;
+rank=same;
+"Flash Green" [label="Flash Green", shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+Pause [label=Pause, shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+}
+
+subgraph  {
+label="children_of_Ere we Go";
+rank=same;
+UnDock [label=UnDock, shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+"Scan or Be Cancelled" [label="Scan or Be Cancelled", shape=octagon, style=filled, fillcolor=cyan, fontsize=9, fontcolor=black];
+Dock [label=Dock, shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+Celebrate [label="Celebrate\n--SuccessOnOne--", shape=parallelogram, style=filled, fillcolor=gold, fontsize=9, fontcolor=black];
+}
+
+Die [label=Die, shape=box, style=filled, fillcolor=orange, fontsize=9, fontcolor=black];
+"Scan or Die" -> Die;
+Notification [label="Notification\n--SuccessOnOne--", shape=parallelogram, style=filled, fillcolor=gold, fontsize=9, fontcolor=black];
+Die -> Notification;
+"Flash Red*" [label="Flash Red*", shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+Notification -> "Flash Red*";
+"Pause*" [label="Pause*", shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+Notification -> "Pause*";
+subgraph  {
+label=children_of_Notification;
+rank=same;
+"Flash Red*" [label="Flash Red*", shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+"Pause*" [label="Pause*", shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+}
+
+"Result2BB\n'failed'" [label="Result2BB\n'failed'", shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+Die -> "Result2BB\n'failed'";
+subgraph  {
+label=children_of_Die;
+rank=same;
+Notification [label="Notification\n--SuccessOnOne--", shape=parallelogram, style=filled, fillcolor=gold, fontsize=9, fontcolor=black];
+"Result2BB\n'failed'" [label="Result2BB\n'failed'", shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+}
+
+subgraph  {
+label="children_of_Scan or Die";
+rank=same;
+"Ere we Go" [label="Ere we Go", shape=box, style=filled, fillcolor=orange, fontsize=9, fontcolor=black];
+Die [label=Die, shape=box, style=filled, fillcolor=orange, fontsize=9, fontcolor=black];
+}
+
+"Send Result" [label="Send Result", shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+Scan -> "Send Result";
+subgraph  {
+label=children_of_Scan;
+rank=same;
+"Scan or Die" [label="Scan or Die", shape=octagon, style=filled, fillcolor=cyan, fontsize=9, fontcolor=black];
+"Send Result" [label="Send Result", shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+}
+
+Idle [label=Idle, shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+Tasks -> Idle;
+subgraph  {
+label=children_of_Tasks;
+rank=same;
+"Battery Low?" [label="Battery Low?", shape=ellipse, style=filled, fillcolor=ghostwhite, fontsize=9, fontcolor=black];
+Scan [label=Scan, shape=box, style=filled, fillcolor=orange, fontsize=9, fontcolor=black];
+Idle [label=Idle, shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+}
+
+subgraph  {
+label="children_of_Tutorial Eight";
+rank=same;
+Topics2BB [label=Topics2BB, shape=box, style=filled, fillcolor=orange, fontsize=9, fontcolor=black];
+Tasks [label=Tasks, shape=octagon, style=filled, fillcolor=cyan, fontsize=9, fontcolor=black];
+}
+
+event_scan_button [label="event_scan_button: -", shape=box, style=filled, color=blue, fillcolor=white, fontsize=8, fontcolor=blue, width=0, height=0, fixedsize=False];
+Scan2BB -> event_scan_button  [color=blue, constraint=True];
+event_cancel_button [label="event_cancel_button: -", shape=box, style=filled, color=blue, fillcolor=white, fontsize=8, fontcolor=blue, width=0, height=0, fixedsize=False];
+event_cancel_button -> "Cancel?"  [color=blue, constraint=False];
+Cancel2BB -> event_cancel_button  [color=blue, constraint=True];
+battery [label="battery: sensor_msgs.msg.B...", shape=box, style=filled, color=blue, fillcolor=white, fontsize=8, fontcolor=blue, width=0, height=0, fixedsize=False];
+Battery2BB -> battery  [color=blue, constraint=True];
+battery_low_warning [label="battery_low_warning: False", shape=box, style=filled, color=blue, fillcolor=white, fontsize=8, fontcolor=blue, width=0, height=0, fixedsize=False];
+battery_low_warning -> "Battery Low?"  [color=blue, constraint=False];
+Battery2BB -> battery_low_warning  [color=blue, constraint=True];
+scan_result [label="scan_result: -", shape=box, style=filled, color=blue, fillcolor=white, fontsize=8, fontcolor=blue, width=0, height=0, fixedsize=False];
+scan_result -> "Send Result"  [color=blue, constraint=False];
+"Result2BB\n'cancelled'" -> scan_result  [color=blue, constraint=True];
+"Result2BB\n'succeeded'" -> scan_result  [color=blue, constraint=True];
+"Result2BB\n'failed'" -> scan_result  [color=blue, constraint=True];
+}

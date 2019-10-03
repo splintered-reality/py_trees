@@ -21,6 +21,8 @@ runs its own method on the behaviour to do as it wishes - logging, introspecting
 # Imports
 ##############################################################################
 
+from . import blackboard
+from . import console
 from . import display
 
 ##############################################################################
@@ -135,17 +137,34 @@ class DisplaySnapshotVisitor(SnapshotVisitor):
     """
     Visit the tree, capturing the visited path, it's changes since the last
     tick and additionally print the snapshot to console.
+
+    Args:
+        display_blackboard: print to the console the relevant part of the blackboard associated with behaviours on the visited path
+        display_activity_stream: print to the console a log of the activity on the blackboard over the last tick
     """
-    def __init__(self):
+    def __init__(
+            self,
+            display_blackboard: bool=False,
+            display_activity_stream: bool=False
+    ):
         super().__init__()
+        self.display_blackboard = display_blackboard
+        self.display_activity_stream = display_activity_stream
+        if self.display_activity_stream:
+            blackboard.Blackboard.enable_activity_stream()
 
     def initialise(self):
         self.root = None
         super().initialise()
+        self.visited_keys = set()
+        if self.display_activity_stream:
+            blackboard.Blackboard.activity_stream.clear()
 
     def run(self, behaviour):
         self.root = behaviour  # last behaviour visited will always be the root
         super().run(behaviour)
+        if self.display_blackboard:
+            self.visited_keys = self.visited_keys | behaviour.blackboard.read | behaviour.blackboard.write
 
     def finalise(self):
         print(
@@ -157,3 +176,7 @@ class DisplaySnapshotVisitor(SnapshotVisitor):
                 previously_visited=self.previously_visited
             )
         )
+        if self.display_blackboard:
+            print(display.unicode_blackboard(key_filter=self.visited_keys))
+        if self.display_activity_stream:
+            print(display.unicode_blackboard_activity_stream())

@@ -1,12 +1,29 @@
-digraph sequence {
+digraph pastafarianism {
 graph [fontname="times-roman"];
 node [fontname="times-roman"];
 edge [fontname="times-roman"];
-Sequence [fillcolor=orange, fontcolor=black, fontsize=11, shape=box, style=filled];
-"Set Foo" [fillcolor=gray, fontcolor=black, fontsize=11, shape=ellipse, style=filled];
-Sequence -> "Set Foo";
-Writer [fillcolor=gray, fontcolor=black, fontsize=11, shape=ellipse, style=filled];
-Sequence -> Writer;
-"Check Foo" [fillcolor=gray, fontcolor=black, fontsize=11, shape=ellipse, style=filled];
-Sequence -> "Check Foo";
+"Blackboard Demo" [label="Blackboard Demo", shape=box, style=filled, fillcolor=orange, fontsize=9, fontcolor=black];
+"Set Foo" [label="Set Foo", shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+"Blackboard Demo" -> "Set Foo";
+Writer [label=Writer, shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+"Blackboard Demo" -> Writer;
+"Check Foo" [label="Check Foo", shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+"Blackboard Demo" -> "Check Foo";
+subgraph  {
+label="children_of_Blackboard Demo";
+rank=same;
+"Set Foo" [label="Set Foo", shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+Writer [label=Writer, shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+"Check Foo" [label="Check Foo", shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+}
+
+"Standalone Blackboard Client" [label="Standalone Blackboard Client", shape=ellipse, style=filled, color=blue, fillcolor=gray, fontsize=7, fontcolor=blue];
+dude [label="dude: Bob", shape=box, style=filled, color=blue, fillcolor=white, fontsize=8, fontcolor=blue, width=0, height=0, fixedsize=False];
+dude -> Writer  [color=blue, constraint=False];
+"Standalone Blackboard Client" -> dude  [color=blue, constraint=False];
+foo [label="foo: -", shape=box, style=filled, color=blue, fillcolor=white, fontsize=8, fontcolor=blue, width=0, height=0, fixedsize=False];
+foo -> "Check Foo"  [color=blue, constraint=False];
+"Set Foo" -> foo  [color=blue, constraint=True];
+spaghetti [label="spaghetti: -", shape=box, style=filled, color=blue, fillcolor=white, fontsize=8, fontcolor=blue, width=0, height=0, fixedsize=False];
+Writer -> spaghetti  [color=blue, constraint=True];
 }
