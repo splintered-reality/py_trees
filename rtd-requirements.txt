@@ -11,14 +11,13 @@
 ##############################################################################
 
 # install_requires
-enum34;python_version<"3.4"
 pydot
 
 # extras_require[docs]
-Sphinx
-sphinx-argparse
-sphinx_rtd_theme
-sphinx-autodoc-annotation
+Sphinx<2
+sphinx-argparse<0.3
+sphinx_rtd_theme<0.5
+sphinx-autodoc-typehints==1.6.0
 
 # extras_require[test] || tests_require
 nose
