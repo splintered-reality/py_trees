@@ -49,7 +49,7 @@ extensions = [
     'sphinx.ext.todo',
     'sphinx.ext.viewcode',
     'sphinxarg.ext',
-    'sphinx_autodoc_annotation',  # type hinting will cause errors without this
+    'sphinx_autodoc_typehints',  # type hinting will cause errors without this
 ]
 ##############################################################################
 # Napolean
