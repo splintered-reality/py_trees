@@ -22,6 +22,7 @@
 
 import argparse
 import importlib
+import inspect
 import json
 import py_trees
 import sys
@@ -104,17 +105,38 @@ def main():
     """
     args = command_line_argument_parser().parse_args()
     args.enum_level = py_trees.common.string_to_visibility_level(args.level)
-    (module_name, method_name) = args.method.rsplit(".", 1)
+    (module_or_class_name, method_name) = args.method.rsplit(".", 1)
+    class_name = None
 
     try:
-        module_itself = importlib.import_module(module_name)
+        module_itself = importlib.import_module(module_or_class_name)
+        module_name = module_or_class_name
     except ImportError:
-        console.logerror("Could not import module [{0}]".format(module_name))
-        sys.exit(1)
-    method_itself = getattr(module_itself, method_name)
+        # maybe it's a class?
+        (module_name, class_name) = module_or_class_name.rsplit(".", 1)
+        try:
+            module_itself = importlib.import_module(module_name)
+        except ImportError:
+            console.logerror("Could not import module [{0}]".format(module_or_class_name))
+            sys.exit(1)
+    if class_name is not None:
+        class_type = getattr(module_itself, class_name)
+        # first guess - it's a static method
+        method_itself = getattr(class_type, method_name)
+        try:
+            root = method_itself(**(args.kwargs))
+        except TypeError:  # oops, it's an instance method
+            try:
+                method_itself = getattr(class_type(), method_name)
+            except TypeError:
+                console.logerror("Can only instantiate class methods if the class __init__ has no non-default arguments")
+                sys.exit(1)
+            root = method_itself(**(args.kwargs))
+    else:
+        method_itself = getattr(module_itself, method_name)
+        root = method_itself(**(args.kwargs))
 
     # TODO figure out how to insert keyword arguments
-    root = method_itself(**(args.kwargs))
     py_trees.display.render_dot_tree(
         root,
         args.enum_level,
