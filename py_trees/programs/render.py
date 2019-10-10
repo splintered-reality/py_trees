@@ -22,7 +22,6 @@
 
 import argparse
 import importlib
-import inspect
 import json
 import py_trees
 import sys
