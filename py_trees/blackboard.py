@@ -252,6 +252,24 @@ class Blackboard(object):
             setattr(Blackboard.storage[key], key_attributes, value)
 
     @staticmethod
+    def unset(key: str):
+        """
+        For when you need to completely remove a blackboard variable (key-value pair),
+        this provides a convenient helper method.
+
+        Args:
+            key: name of the variable to remove
+
+        Returns:
+            True if the variable was removed, False if it was already absent
+        """
+        try:
+            del Blackboard.storage[key]
+            return True
+        except KeyError:
+            return False
+
+    @staticmethod
     def keys_filtered_by_regex(regex: str) -> typing.Set[str]:
         """
         Get the set of blackboard keys filtered by regex.

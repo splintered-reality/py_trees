@@ -292,7 +292,12 @@ def test_static_get_set():
     console.banner("Blackboard get/set")
     print("Set foo: 5")
     Blackboard.set("foo", 5)
-    print("Get foo")
+    print("Unset foo")
+    Blackboard.unset("foo")
+    with nose.tools.assert_raises_regexp(KeyError, "foo"):
+        print(" - Expecting a KeyError")
+        unused_value = Blackboard.get("foo")
+    print("Get bar")
     with nose.tools.assert_raises_regexp(KeyError, "bar"):
         print(" - Expecting a KeyError")
         unused_value = Blackboard.get("bar")
