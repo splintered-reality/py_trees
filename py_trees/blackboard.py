@@ -712,6 +712,22 @@ class BlackboardClient(object):
             except AttributeError:  # when the object doesn't have the attributes
                 return False
 
+    def exists(self, name: str) -> bool:
+        """
+        Check if the specified variable exists on the blackboard.
+
+        Args:
+            name: name of the variable to get, can be nested, e.g. battery.percentage
+
+        Raises:
+            AttributeError: if the client does not have read access to the variable
+        """
+        try:
+            unused_value = self.get(name)
+            return True
+        except KeyError:
+            return False
+
     def get(self, name: str) -> typing.Any:
         """
         Method based accessor to the blackboard variables (as opposed to simply using

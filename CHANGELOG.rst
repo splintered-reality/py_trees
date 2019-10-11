@@ -4,6 +4,7 @@ Release Notes
 Forthcoming
 -----------
 * [blackboard] global ``Blackboard.set`` staticmethod
+* [blackboard] client ``exists()`` method, `#238 <https://github.com/splintered-reality/py_trees/pull/238>`_
 
 1.3.x (2019-10-03)
 ------------------
