@@ -132,6 +132,26 @@ def test_delayed_register_key():
         assert(bar.other == 1)
 
 
+def test_key_exists():
+    console.banner("Nested Read")
+    with create_blackboards() as (foo, unused_bar):
+        print("foo.exists('dude') [{}][{}]".format(foo.exists("dude"), True))
+        assert(foo.exists("dude"), True)
+        with nose.tools.assert_raises_regexp(AttributeError, "does not have read/write access"):
+            print("Expecting Attribute Error with substring 'does not have read/write access'")
+            print("foo.exists('dude_not_here') [{}][{}]".format(foo.exists("dude_not_here"), False))
+            assert(foo.exists("dude_not_here"), False)
+
+
+def test_nested_exists():
+    console.banner("Nested Read")
+    with create_blackboards() as (foo, unused_bar):
+        print("foo.exists('motley.nested') [{}][{}]".format(foo.exists("foo.nested"), True))
+        assert(foo.exists("motley.nested"), True)
+        print("foo.exists('motley.not_here') [{}][{}]".format(foo.exists("foo.not_here"), False))
+        assert(foo.exists("motley.not_here"), False)
+
+
 def test_nested_read():
     console.banner("Nested Read")
     with create_blackboards() as (foo, unused_bar):
