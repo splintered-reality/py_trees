@@ -3,6 +3,7 @@ Release Notes
 
 Forthcoming
 -----------
+* [blackboard] global ``Blackboard.set`` staticmethod
 
 1.3.x (2019-10-03)
 ------------------

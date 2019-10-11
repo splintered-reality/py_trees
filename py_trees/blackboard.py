@@ -229,6 +229,29 @@ class Blackboard(object):
         return value
 
     @staticmethod
+    def set(variable_name: str, value: typing.Any):
+        """
+        Set the value associated with the given a variable name,
+        can be nested, e.g. battery.percentage. This differs from the
+        client get method in that it doesn't pass through the client access
+        checks. To be used for utility tooling (e.g. display methods) and not by
+        users directly.
+
+        Args:
+            variable_name: of the variable to set, can be nested, e.g. battery.percentage
+
+        Raises:
+            AttributeError: if it is attempting to set a nested attribute tha does not exist.
+        """
+        name_components = variable_name.split('.')
+        key = name_components[0]
+        key_attributes = '.'.join(name_components[1:])
+        if not key_attributes:
+            Blackboard.storage[key] = value
+        else:
+            setattr(Blackboard.storage[key], key_attributes, value)
+
+    @staticmethod
     def keys_filtered_by_regex(regex: str) -> typing.Set[str]:
         """
         Get the set of blackboard keys filtered by regex.

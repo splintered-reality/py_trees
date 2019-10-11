@@ -266,3 +266,29 @@ def test_dicts():
         value = bar.dude["Bob"]
         print("Read Bob's score: {} [{}]".format(value, 5))
         assert(value, 5)
+
+
+def test_static_get_set():
+    console.banner("Blackboard get/set")
+    print("Set foo: 5")
+    Blackboard.set("foo", 5)
+    print("Get foo")
+    with nose.tools.assert_raises_regexp(KeyError, "bar"):
+        print(" - Expecting a KeyError")
+        unused_value = Blackboard.get("bar")
+    print("Set motley: Motley()")
+    Blackboard.set("motley", Motley())
+    print("Set motley.nested: nooo")
+    Blackboard.set("motley.nested", "nooo")
+    assert(Blackboard.get("motley.nested"), "nooo")
+    print("Get motley.foo")
+    with nose.tools.assert_raises_regexp(KeyError, "nested attributes"):
+        print(" - Expecting a KeyError")
+        unused_value = Blackboard.get("motley.foo")
+    print("Set motley.other: floosie")
+    Blackboard.set("motley.other", "floosie")
+    assert(Blackboard.get("motley.other"), "floosie")
+    print("Get missing")
+    with nose.tools.assert_raises_regexp(KeyError, "missing"):
+        print(" - Expecting a KeyError")
+        unused_value = Blackboard.get("missing")
