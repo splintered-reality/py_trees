@@ -340,7 +340,7 @@ def test_wait_for_variable_value():
         assert(b.status == asserted_result)
 
 
-def untest_wait_for_blackboard_variable():
+def test_wait_for_blackboard_variable():
     console.banner("Wait for Blackboard Variable")
     create_blackboard()
 

@@ -136,20 +136,20 @@ def test_key_exists():
     console.banner("Nested Read")
     with create_blackboards() as (foo, unused_bar):
         print("foo.exists('dude') [{}][{}]".format(foo.exists("dude"), True))
-        assert(foo.exists("dude"), True)
+        assert(foo.exists("dude"))
         with nose.tools.assert_raises_regexp(AttributeError, "does not have read/write access"):
             print("Expecting Attribute Error with substring 'does not have read/write access'")
             print("foo.exists('dude_not_here') [{}][{}]".format(foo.exists("dude_not_here"), False))
-            assert(foo.exists("dude_not_here"), False)
+            assert(not foo.exists("dude_not_here"))
 
 
 def test_nested_exists():
     console.banner("Nested Read")
     with create_blackboards() as (foo, unused_bar):
         print("foo.exists('motley.nested') [{}][{}]".format(foo.exists("foo.nested"), True))
-        assert(foo.exists("motley.nested"), True)
+        assert(foo.exists("motley.nested"))
         print("foo.exists('motley.not_here') [{}][{}]".format(foo.exists("foo.not_here"), False))
-        assert(foo.exists("motley.not_here"), False)
+        assert(not foo.exists("motley.not_here"))
 
 
 def test_nested_read():
@@ -276,7 +276,7 @@ def test_lists():
         foo.dude = ["Bob", "Bill"]
         name = bar.dude[0]
         print("Read first element of the list: {} [{}]".format(name, "Bob"))
-        assert(name, "Bob")
+        assert(name == "Bob")
 
 
 def test_dicts():
@@ -285,7 +285,7 @@ def test_dicts():
         foo.dude = {"Bob": 5, "Bill": 3}
         value = bar.dude["Bob"]
         print("Read Bob's score: {} [{}]".format(value, 5))
-        assert(value, 5)
+        assert(value == 5)
 
 
 def test_static_get_set():
@@ -305,15 +305,32 @@ def test_static_get_set():
     Blackboard.set("motley", Motley())
     print("Set motley.nested: nooo")
     Blackboard.set("motley.nested", "nooo")
-    assert(Blackboard.get("motley.nested"), "nooo")
+    assert(Blackboard.get("motley.nested") == "nooo")
     print("Get motley.foo")
     with nose.tools.assert_raises_regexp(KeyError, "nested attributes"):
         print(" - Expecting a KeyError")
         unused_value = Blackboard.get("motley.foo")
     print("Set motley.other: floosie")
     Blackboard.set("motley.other", "floosie")
-    assert(Blackboard.get("motley.other"), "floosie")
+    assert(Blackboard.get("motley.other") == "floosie")
     print("Get missing")
     with nose.tools.assert_raises_regexp(KeyError, "missing"):
         print(" - Expecting a KeyError")
         unused_value = Blackboard.get("missing")
+
+
+def test_unregister_key():
+    console.banner("Unregister Keys")
+    with create_blackboards() as (foo, bar):
+        print("'foo' in foo.write")
+        assert ("foo" in foo.write)
+        print("Foo unregisters 'foo'")
+        foo.unregister_key("foo")
+        print("'foo' not in foo.write")
+        assert ("foo" not in foo.write)
+        print("Bar unregisters 'dudette' with clearing")
+        print("'dudette' not in bar.write")
+        bar.unregister_key("dudette", clear=True)
+        assert("dudette" not in bar.write)
+        print("'dudette' not on the blackboard")
+        assert("dudette" not in Blackboard.storage)

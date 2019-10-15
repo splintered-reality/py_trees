@@ -848,12 +848,25 @@ class BlackboardClient(object):
         s += console.reset
         return s
 
-    def unregister(self, clear=True):
+    def unregister(self, clear: bool=True):
         """
         Unregister this blackboard client and if requested, clear key-value pairs if this
         client is the last user of those variables.
+
+        Args:
+            clear: remove key-values pairs from the blackboard
         """
-        print("Name: {}".format(self.name))
+        self.unregister_all_keys(clear)
+        del Blackboard.clients[super().__getattribute__("unique_identifier")]
+
+    def unregister_all_keys(self, clear: bool=True):
+        """
+        Unregister all keys currently registered by this blackboard client and if requested,
+        clear key-value pairs if this client is the last user of those variables.
+
+        Args:
+            clear: remove key-values pairs from the blackboard
+        """
         for key in self.read:
             Blackboard.metadata[key].read.remove(super().__getattribute__("unique_identifier"))
         for key in self.write:
@@ -861,8 +874,11 @@ class BlackboardClient(object):
         if clear:
             for key in (set(self.read) | set(self.write)):
                 if not (set(Blackboard.metadata[key].read) | set(Blackboard.metadata[key].write)):
-                    Blackboard.storage.pop(key, None)
-                    Blackboard.metadata.pop(key, None)
+                    try:
+                        del Blackboard.storage[key]
+                    except KeyError:
+                        pass  # perfectly acceptal for a key to not exist on the blackboard yet
+                    del Blackboard.metadata[key]
 
     def register_key(self, key: str, read: bool=False, write: bool=False):
         """
@@ -880,6 +896,29 @@ class BlackboardClient(object):
         if write:
             super().__getattribute__("write").add(key)
             Blackboard.metadata[key].write.add(super().__getattribute__("unique_identifier"))
+
+    def unregister_key(self, key: str, clear: bool=True):
+        """
+        Unegister a key associated with this client.
+
+        Args:
+            key: key to unregister
+            clear: remove key-values pairs from the blackboard
+
+        Raises:
+            KeyError if the key has not been previously registered
+        """
+        super().__getattribute__("read").discard(key)  # doesn't throw exceptions if it not present
+        super().__getattribute__("write").discard(key)
+        Blackboard.metadata[key].read.discard(super().__getattribute__("unique_identifier"))
+        Blackboard.metadata[key].write.discard(super().__getattribute__("unique_identifier"))
+        if not (Blackboard.metadata[key].read | Blackboard.metadata[key].write):
+            del Blackboard.metadata[key]
+            if clear:
+                try:
+                    del Blackboard.storage[key]
+                except KeyError:
+                    pass  # perfectly legitimate for a registered key to not exist on the blackboard
 
 
 class SubBlackboard(object):
