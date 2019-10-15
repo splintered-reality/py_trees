@@ -3,6 +3,14 @@ Release Notes
 
 Forthcoming
 -----------
+* ...
+
+1.3.1 (2019-10-15)
+------------------
+* [blackboard] don't do any copying, just pass handles around, `#239 <https://github.com/splintered-reality/py_trees/pull/239>`_
+* [blackboard] client ``exists()`` method, `#238 <https://github.com/splintered-reality/py_trees/pull/238>`_
+* [blackboard] global ``Blackboard.set()`` method
+* [blackboard] client ``Blackboard.unset()`` method, `#239 <https://github.com/splintered-reality/py_trees/pull/239>`_
 
 1.3.x (2019-10-03)
 ------------------

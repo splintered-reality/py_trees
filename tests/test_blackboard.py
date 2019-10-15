@@ -132,6 +132,26 @@ def test_delayed_register_key():
         assert(bar.other == 1)
 
 
+def test_key_exists():
+    console.banner("Nested Read")
+    with create_blackboards() as (foo, unused_bar):
+        print("foo.exists('dude') [{}][{}]".format(foo.exists("dude"), True))
+        assert(foo.exists("dude"), True)
+        with nose.tools.assert_raises_regexp(AttributeError, "does not have read/write access"):
+            print("Expecting Attribute Error with substring 'does not have read/write access'")
+            print("foo.exists('dude_not_here') [{}][{}]".format(foo.exists("dude_not_here"), False))
+            assert(foo.exists("dude_not_here"), False)
+
+
+def test_nested_exists():
+    console.banner("Nested Read")
+    with create_blackboards() as (foo, unused_bar):
+        print("foo.exists('motley.nested') [{}][{}]".format(foo.exists("foo.nested"), True))
+        assert(foo.exists("motley.nested"), True)
+        print("foo.exists('motley.not_here') [{}][{}]".format(foo.exists("foo.not_here"), False))
+        assert(foo.exists("motley.not_here"), False)
+
+
 def test_nested_read():
     console.banner("Nested Read")
     with create_blackboards() as (foo, unused_bar):
@@ -266,3 +286,34 @@ def test_dicts():
         value = bar.dude["Bob"]
         print("Read Bob's score: {} [{}]".format(value, 5))
         assert(value, 5)
+
+
+def test_static_get_set():
+    console.banner("Blackboard get/set")
+    print("Set foo: 5")
+    Blackboard.set("foo", 5)
+    print("Unset foo")
+    Blackboard.unset("foo")
+    with nose.tools.assert_raises_regexp(KeyError, "foo"):
+        print(" - Expecting a KeyError")
+        unused_value = Blackboard.get("foo")
+    print("Get bar")
+    with nose.tools.assert_raises_regexp(KeyError, "bar"):
+        print(" - Expecting a KeyError")
+        unused_value = Blackboard.get("bar")
+    print("Set motley: Motley()")
+    Blackboard.set("motley", Motley())
+    print("Set motley.nested: nooo")
+    Blackboard.set("motley.nested", "nooo")
+    assert(Blackboard.get("motley.nested"), "nooo")
+    print("Get motley.foo")
+    with nose.tools.assert_raises_regexp(KeyError, "nested attributes"):
+        print(" - Expecting a KeyError")
+        unused_value = Blackboard.get("motley.foo")
+    print("Set motley.other: floosie")
+    Blackboard.set("motley.other", "floosie")
+    assert(Blackboard.get("motley.other"), "floosie")
+    print("Get missing")
+    with nose.tools.assert_raises_regexp(KeyError, "missing"):
+        print(" - Expecting a KeyError")
+        unused_value = Blackboard.get("missing")

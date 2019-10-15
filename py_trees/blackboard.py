@@ -229,6 +229,47 @@ class Blackboard(object):
         return value
 
     @staticmethod
+    def set(variable_name: str, value: typing.Any):
+        """
+        Set the value associated with the given a variable name,
+        can be nested, e.g. battery.percentage. This differs from the
+        client get method in that it doesn't pass through the client access
+        checks. To be used for utility tooling (e.g. display methods) and not by
+        users directly.
+
+        Args:
+            variable_name: of the variable to set, can be nested, e.g. battery.percentage
+
+        Raises:
+            AttributeError: if it is attempting to set a nested attribute tha does not exist.
+        """
+        name_components = variable_name.split('.')
+        key = name_components[0]
+        key_attributes = '.'.join(name_components[1:])
+        if not key_attributes:
+            Blackboard.storage[key] = value
+        else:
+            setattr(Blackboard.storage[key], key_attributes, value)
+
+    @staticmethod
+    def unset(key: str):
+        """
+        For when you need to completely remove a blackboard variable (key-value pair),
+        this provides a convenient helper method.
+
+        Args:
+            key: name of the variable to remove
+
+        Returns:
+            True if the variable was removed, False if it was already absent
+        """
+        try:
+            del Blackboard.storage[key]
+            return True
+        except KeyError:
+            return False
+
+    @staticmethod
     def keys_filtered_by_regex(regex: str) -> typing.Set[str]:
         """
         Get the set of blackboard keys filtered by regex.
@@ -627,13 +668,13 @@ class BlackboardClient(object):
                             current_value=Blackboard.storage[name],
                         )
                     )
-                return copy.deepcopy(Blackboard.storage[name])
+                return Blackboard.storage[name]
         except KeyError as e:
             if Blackboard.activity_stream is not None:
                 Blackboard.activity_stream.push(
                     self._generate_activity_item(name, ActivityType.NO_KEY)
                 )
-            raise KeyError("variable '{}' does not yet exist on the blackboard".format(name)) from e
+            raise KeyError("client '{}' tried to access '{}' but it does not yet exist on the blackboard".format(self.name, name)) from e
 
     def set(self, name: str, value: typing.Any, overwrite: bool=True) -> bool:
         """
@@ -667,7 +708,7 @@ class BlackboardClient(object):
                 Blackboard.activity_stream.push(
                     self._generate_activity_item(name, ActivityType.ACCESS_DENIED)
                 )
-            raise AttributeError("client does not have write access to '{}'".format(name))
+            raise AttributeError("client '{}' does not have write access to '{}'".format(self.name, name))
         if not overwrite:
             if key in Blackboard.storage:
                 if Blackboard.activity_stream is not None:
@@ -688,6 +729,22 @@ class BlackboardClient(object):
                 return True
             except AttributeError:  # when the object doesn't have the attributes
                 return False
+
+    def exists(self, name: str) -> bool:
+        """
+        Check if the specified variable exists on the blackboard.
+
+        Args:
+            name: name of the variable to get, can be nested, e.g. battery.percentage
+
+        Raises:
+            AttributeError: if the client does not have read access to the variable
+        """
+        try:
+            unused_value = self.get(name)
+            return True
+        except KeyError:
+            return False
 
     def get(self, name: str) -> typing.Any:
         """

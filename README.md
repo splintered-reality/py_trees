@@ -16,16 +16,16 @@ PyTrees is a python implementation of behaviour trees designed to facilitate the
 
 ## Docs and Demos
 
-[![devel][docs-devel-image]][docs-devel] [![1.2.x][docs-1.2.x-image]][docs-1.2.x] [![0.6.x][docs-0.6.x-image]][docs-0.6.x]
+[![devel][docs-devel-image]][docs-devel] [![1.3.x][docs-1.3.x-image]][docs-1.3.x] [![0.6.x][docs-0.6.x-image]][docs-0.6.x]
 
 ## Status
 
-| | Devel | 1.2.x | 0.6.x | 0.5.x |
-|:---:|:---:|:---:|:---:|:---:|
-| Sources | [![devel][sources-devel-image]][sources-devel] | [![1.2.x][sources-1.2.x-image]][sources-1.2.x] | [![0.6.x][sources-0.6.x-image]][sources-0.6.x] | [![0.5.x][sources-0.5.x-image]][sources-0.5.x]
-| Compatibility | [![Python 3.6][python36-image]][python36-docs] | [![Python 3.6][python36-image]][python36-docs] | [![Python 2.7][python27-image]][python27-docs] | [![Python 2.7][python27-image]][python27-docs] |
-| Continuous Integration | [![devel-Status][devel-build-status-image]][devel-build-status] | [![1.2.x-Status][1.2.x-build-status-image]][1.2.x-build-status] | [![melodic-Status][melodic-build-status-image]][melodic-build-status] | [![kinetic-Status][kinetic-build-status-image]][kinetic-build-status] | |
-| Documentation | [![devel-Docs][rtd-devel-image]][docs-devel] | [![1.2.x-Docs][rtd-1.2.x-image]][docs-1.2.x] | [![0.6.x-Docs][rtd-0.6.x-image]][docs-0.6.x] | ![0.5.x-Docs][not-available-docs-image] | |
+| | Devel | 1.3.x | 1.2.x | 0.6.x | 0.5.x |
+|:---:|:---:|:---:|:---:|:---:|:---:|
+| Sources | [![devel][sources-devel-image]][sources-devel] | [![1.3.x][sources-1.3.x-image]][sources-1.3.x] | [![1.2.x][sources-1.2.x-image]][sources-1.2.x] | [![0.6.x][sources-0.6.x-image]][sources-0.6.x] | [![0.5.x][sources-0.5.x-image]][sources-0.5.x]
+| Compatibility | [![Python 3.6][python36-image]][python36-docs] | [![Python 3.6][python36-image]][python36-docs] | [![Python 3.6][python36-image]][python36-docs] | [![Python 2.7][python27-image]][python27-docs] | [![Python 2.7][python27-image]][python27-docs] |
+| Continuous Integration | [![devel-Status][devel-build-status-image]][devel-build-status] | [![1.3.x-Status][1.3.x-build-status-image]][1.3.x-build-status] | [![1.2.x-Status][1.2.x-build-status-image]][1.2.x-build-status] | [![melodic-Status][melodic-build-status-image]][melodic-build-status] | [![kinetic-Status][kinetic-build-status-image]][kinetic-build-status] | |
+| Documentation | [![devel-Docs][rtd-devel-image]][docs-devel] | [![1.3.x-Docs][rtd-1.3.x-image]][docs-1.3.x] | [![1.2.x-Docs][rtd-1.2.x-image]][docs-1.2.x] | [![0.6.x-Docs][rtd-0.6.x-image]][docs-0.6.x] | ![0.5.x-Docs][not-available-docs-image] | |
 
 ## Installation
 
@@ -79,6 +79,8 @@ See the `py_trees_ros` [README](https://github.com/splintered-reality/py_trees_r
 
 [devel-build-status-image]: http://build.ros.org/job/Mbin_uB64__py_trees__ubuntu_bionic_amd64__binary/badge/icon?style=plastic
 [devel-build-status]: https://circleci.com/gh/splintered-reality/py_trees/tree/devel
+[1.3.x-build-status-image]: http://build.ros.org/job/Mbin_uB64__py_trees__ubuntu_bionic_amd64__binary/badge/icon?style=plastic
+[1.3.x-build-status]: https://circleci.com/gh/splintered-reality/py_trees/tree/release/1.3.x
 [1.2.x-build-status-image]: http://build.ros.org/job/Mbin_uB64__py_trees__ubuntu_bionic_amd64__binary/badge/icon?style=plastic
 [1.2.x-build-status]: https://circleci.com/gh/splintered-reality/py_trees/tree/release/1.2.x
 [crystal-build-status-image]: http://build.ros2.org/view/Cbin_uB64/job/Cbin_uB64__py_trees__ubuntu_bionic_amd64__binary/badge/icon?style=plastic 
@@ -89,27 +91,32 @@ See the `py_trees_ros` [README](https://github.com/splintered-reality/py_trees_r
 [kinetic-build-status]: http://build.ros.org/job/Kbin_uX64__py_trees__ubuntu_xenial_amd64__binary
 
 [docs-devel]: http://py-trees.readthedocs.io/
+[docs-1.3.x]: http://py-trees.readthedocs.io/en/release-1.3.x/
 [docs-1.2.x]: http://py-trees.readthedocs.io/en/release-1.2.x/
 [docs-0.6.x]: http://py-trees.readthedocs.io/en/release-0.6.x/
 [docs-0.5.x]: http://docs.ros.org/kinetic/api/py_trees/html/
 
 [docs-devel-image]: http://img.shields.io/badge/docs-devel-brightgreen.svg?style=plastic
+[docs-1.3.x-image]: http://img.shields.io/badge/docs-1.3.x-brightgreen.svg?style=plastic
 [docs-1.2.x-image]: http://img.shields.io/badge/docs-1.2.x-brightgreen.svg?style=plastic
 [docs-0.6.x-image]: http://img.shields.io/badge/docs-0.6.x-brightgreen.svg?style=plastic
 [docs-0.5.x-image]: http://img.shields.io/badge/docs-0.5.x-brightgreen.svg?style=plastic
 
 [rtd-devel-image]: https://readthedocs.org/projects/py-trees/badge/?version=devel&style=plastic
+[rtd-1.3.x-image]: https://readthedocs.org/projects/py-trees/badge/?version=release-1.3.x&style=plastic
 [rtd-1.2.x-image]: https://readthedocs.org/projects/py-trees/badge/?version=release-1.2.x&style=plastic
 [rtd-0.6.x-image]: https://readthedocs.org/projects/py-trees/badge/?version=release-0.6.x&style=plastic
 [rtd-0.5.x-image]: https://readthedocs.org/projects/py-trees/badge/?version=release-0.5.x&style=plastic
 [not-available-docs-image]: http://img.shields.io/badge/docs-n/a-yellow.svg?style=plastic
 
 [sources-devel]: https://github.com/splintered-reality/py_trees/tree/devel
+[sources-1.3.x]: https://github.com/splintered-reality/py_trees/tree/release/1.2.x
 [sources-1.2.x]: https://github.com/splintered-reality/py_trees/tree/release/1.2.x
 [sources-0.6.x]: https://github.com/splintered-reality/py_trees/tree/release/0.6.x
 [sources-0.5.x]: https://github.com/splintered-reality/py_trees/tree/release/0.5.x
 
 [sources-devel-image]: http://img.shields.io/badge/sources-devel-blue.svg?style=plastic
+[sources-1.3.x-image]: http://img.shields.io/badge/sources-1.3.x-blue.svg?style=plastic
 [sources-1.2.x-image]: http://img.shields.io/badge/sources-1.2.x-blue.svg?style=plastic
 [sources-0.6.x-image]: http://img.shields.io/badge/sources-0.6.x-blue.svg?style=plastic
 [sources-0.5.x-image]: http://img.shields.io/badge/sources-0.5.x-blue.svg?style=plastic
