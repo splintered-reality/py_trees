@@ -5,6 +5,10 @@ Forthcoming
 -----------
 * ...
 
+1.3.2 (2019-10-15)
+------------------
+* [blackboard] global ``Blackboard.clear()`` method
+
 1.3.1 (2019-10-15)
 ------------------
 * [blackboard] don't do any copying, just pass handles around, `#239 <https://github.com/splintered-reality/py_trees/pull/239>`_
