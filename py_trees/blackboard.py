@@ -668,13 +668,13 @@ class BlackboardClient(object):
                             current_value=Blackboard.storage[name],
                         )
                     )
-                return copy.deepcopy(Blackboard.storage[name])
+                return Blackboard.storage[name]
         except KeyError as e:
             if Blackboard.activity_stream is not None:
                 Blackboard.activity_stream.push(
                     self._generate_activity_item(name, ActivityType.NO_KEY)
                 )
-            raise KeyError("variable '{}' does not yet exist on the blackboard".format(name)) from e
+            raise KeyError("client '{}' tried to access '{}' but it does not yet exist on the blackboard".format(self.name, name)) from e
 
     def set(self, name: str, value: typing.Any, overwrite: bool=True) -> bool:
         """
@@ -708,7 +708,7 @@ class BlackboardClient(object):
                 Blackboard.activity_stream.push(
                     self._generate_activity_item(name, ActivityType.ACCESS_DENIED)
                 )
-            raise AttributeError("client does not have write access to '{}'".format(name))
+            raise AttributeError("client '{}' does not have write access to '{}'".format(self.name, name))
         if not overwrite:
             if key in Blackboard.storage:
                 if Blackboard.activity_stream is not None:
