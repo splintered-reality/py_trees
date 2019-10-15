@@ -591,10 +591,12 @@ class Parallel(Composite):
         self.logger.debug("%s.tick()" % self.__class__.__name__)
         self.validate_policy_configuration()
         if self.status != common.Status.RUNNING:
-            # invalidate all the children so synchronisation starts with a clean slate
             self.logger.debug("%s.tick(): re-initialising" % self.__class__.__name__)
             for child in self.children:
-                child.stop(common.Status.INVALID)
+                # reset the children, this ensures old SUCCESS/FAILURE status flags
+                # don't break the synchronisation logic below
+                if child.status != Status.INVALID:
+                    child.stop(Status.INVALID)
             # subclass (user) handling
             self.initialise()
         # process them all first
@@ -622,13 +624,22 @@ class Parallel(Composite):
         # so if the parallel itself has reached a final status, then
         # these running children need to be terminated so they don't dangle
         if new_status != common.Status.RUNNING:
-            for child in self.children:
-                if child.status == common.Status.RUNNING:
-                    # interrupt it (exactly as if it was interrupted by a higher priority)
-                    child.stop(common.Status.INVALID)
             self.stop(new_status)
         self.status = new_status
         yield self
+
+    def stop(self, new_status: common.Status=Status.INVALID):
+        """
+        For interrupts or any of the termination conditions, ensure that any
+        running children are stopped.
+
+        Args:
+            new_status : the composite is transitioning to this new status
+        """
+        for child in self.children:
+            if child.status == common.Status.RUNNING:
+                # interrupt it (exactly as if it was interrupted by a higher priority)
+                child.stop(common.Status.INVALID)
 
     @property
     def current_child(self):
