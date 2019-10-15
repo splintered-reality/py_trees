@@ -5,6 +5,10 @@ Forthcoming
 -----------
 * ...
 
+1.3.3 (2019-10-15)
+------------------
+* [blackboard] client ``Blackboard.unregister_key()`` method
+
 1.3.2 (2019-10-15)
 ------------------
 * [blackboard] global ``Blackboard.clear()`` method
