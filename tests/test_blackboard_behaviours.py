@@ -353,18 +353,18 @@ def test_wait_for_blackboard_variable():
         name="check_nested_foo_exists", variable_name="nested.foo"), Status.SUCCESS))
     tuples.append((py_trees.behaviours.WaitForBlackboardVariable(
         name="check_nested_bar_exists", variable_name="nested.bar"), Status.RUNNING))
-    tuples.append((py_trees.behaviours.WaitForBlackboardVariable(
+    tuples.append((py_trees.behaviours.WaitForBlackboardVariableValue(
         name="check_foo_equals_bar", variable_name="foo", expected_value="bar"), Status.SUCCESS))
-    tuples.append((py_trees.behaviours.WaitForBlackboardVariable(
+    tuples.append((py_trees.behaviours.WaitForBlackboardVariableValue(
         name="check_foo_equals_foo", variable_name="foo", expected_value="foo"), Status.RUNNING))
-    tuples.append((py_trees.behaviours.WaitForBlackboardVariable(
+    tuples.append((py_trees.behaviours.WaitForBlackboardVariableValue(
         name="check_bar_equals_bar", variable_name="bar", expected_value="bar"), Status.RUNNING))
-    tuples.append((py_trees.behaviours.WaitForBlackboardVariable(
+    tuples.append((py_trees.behaviours.WaitForBlackboardVariableValue(
         name="check_bar_equals_foo", variable_name="bar", expected_value="foo"), Status.RUNNING))
-    tuples.append((py_trees.behaviours.WaitForBlackboardVariable(
+    tuples.append((py_trees.behaviours.WaitForBlackboardVariableValue(
         name="check_nested_foo_equals_bar", variable_name="nested.foo", expected_value="bar"),
         Status.SUCCESS))
-    tuples.append((py_trees.behaviours.WaitForBlackboardVariable(
+    tuples.append((py_trees.behaviours.WaitForBlackboardVariableValue(
         name="check_nested_foo_equals_foo", variable_name="nested.foo", expected_value="foo"),
         Status.RUNNING))
     for b, unused in tuples:
