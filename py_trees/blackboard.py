@@ -328,6 +328,17 @@ class Blackboard(object):
         """
         Blackboard.activity_stream = None
 
+    @staticmethod
+    def clear():
+        """
+        Completely clear all key, value and client information from the blackboard.
+        Also deletes the activity stream.
+        """
+        Blackboard.storage.clear()
+        Blackboard.metadata.clear()
+        Blackboard.clients.clear()
+        Blackboard.activity_stream = None
+
 
 class BlackboardClient(object):
     """
