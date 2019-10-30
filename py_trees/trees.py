@@ -26,7 +26,6 @@ can also be easily used as inspiration for your own tree custodians.
 # Imports
 ##############################################################################
 
-import functools
 import os
 import signal
 import threading

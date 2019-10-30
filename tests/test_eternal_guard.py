@@ -104,11 +104,11 @@ def test_eternal_guard_idiom():
 
 def test_eternal_guard_unique_names():
     py_trees.tests.clear_blackboard()
-    blackboard = py_trees.blackboard.BlackboardClient(
-        read={"eternal_guard_condition_1",
-              "eternal_guard_condition_2"},
-        write={"eternal_guard_condition_1"}
-    )
+    blackboard = py_trees.blackboard.Client()
+    for key in {"eternal_guard_condition_1", "eternal_guard_condition_2"}:
+        blackboard.register_key(key=key, access=py_trees.common.Access.READ)
+    for key in {"eternal_guard_condition_1"}:
+        blackboard.register_key(key=key, access=py_trees.common.Access.WRITE)
     message = "Ha, stole it"
     blackboard.eternal_guard_condition_1 = message
     root = py_trees.composites.Selector(name="Root")

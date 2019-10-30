@@ -94,8 +94,9 @@ class BlackboardWriter(py_trees.behaviour.Behaviour):
     """
     def __init__(self, name="Writer"):
         super().__init__(name=name)
-        self.blackboard.register_key(key="dude", read=True)
-        self.blackboard.register_key(key="spaghetti", write=True)
+        self.blackboard = self.attach_blackboard_client()
+        self.blackboard.register_key(key="dude", access=py_trees.common.Access.READ)
+        self.blackboard.register_key(key="spaghetti", access=py_trees.common.Access.WRITE)
 
         self.logger.debug("%s.__init__()" % (self.__class__.__name__))
 
@@ -150,10 +151,8 @@ def main():
     print(description())
     py_trees.logging.level = py_trees.logging.Level.DEBUG
     py_trees.blackboard.Blackboard.enable_activity_stream(maximum_size=100)
-    standalone_blackboard = py_trees.blackboard.BlackboardClient(
-        name="Standalone Blackboard Client",
-        write={"dude"}
-    )
+    standalone_blackboard = py_trees.blackboard.Client(name="Standalone")
+    standalone_blackboard.register_key(key="dude", access=py_trees.common.Access.WRITE)
     standalone_blackboard.dude = "Bob"
 
     root = create_root()
@@ -172,7 +171,8 @@ def main():
     # Execute
     ####################
     root.setup_with_descendants()
-    blackboard = py_trees.blackboard.BlackboardClient(name="Unsetter", write={"foo"})
+    blackboard = py_trees.blackboard.Client(name="Unsetter")
+    blackboard.register_key(key="foo", access=py_trees.common.Access.WRITE)
     print("\n--------- Tick 0 ---------\n")
     root.tick_once()
     print("\n")

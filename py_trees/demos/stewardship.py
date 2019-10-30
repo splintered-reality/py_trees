@@ -92,7 +92,8 @@ def pre_tick_handler(behaviour_tree):
 class SuccessEveryN(py_trees.behaviours.SuccessEveryN):
     def __init__(self):
         super().__init__(name="EveryN", n=5)
-        self.blackboard.register_key("count", write=True)
+        self.blackboard = self.attach_blackboard_client(name=self.name)
+        self.blackboard.register_key("count", access=py_trees.common.Access.WRITE)
 
     def update(self):
         status = super().update()
@@ -103,7 +104,8 @@ class SuccessEveryN(py_trees.behaviours.SuccessEveryN):
 class PeriodicSuccess(py_trees.behaviours.Periodic):
     def __init__(self):
         super().__init__(name="Periodic", n=3)
-        self.blackboard.register_key("period", write=True)
+        self.blackboard = self.attach_blackboard_client(name=self.name)
+        self.blackboard.register_key("period", access=py_trees.common.Access.WRITE)
 
     def update(self):
         status = super().update()
@@ -114,8 +116,9 @@ class PeriodicSuccess(py_trees.behaviours.Periodic):
 class Finisher(py_trees.behaviour.Behaviour):
     def __init__(self):
         super().__init__(name="Finisher")
-        self.blackboard.register_key("count", read=True)
-        self.blackboard.register_key("period", read=True)
+        self.blackboard = self.attach_blackboard_client(name=self.name)
+        self.blackboard.register_key("count", access=py_trees.common.Access.READ)
+        self.blackboard.register_key("period", access=py_trees.common.Access.READ)
 
     def update(self):
         print(console.green + "---------------------------" + console.reset)

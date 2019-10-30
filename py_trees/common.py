@@ -162,6 +162,19 @@ class ClearingPolicy(enum.IntEnum):
     """Never clear the data"""
 
 
+class Access(enum.Enum):
+    """
+    Use to declare the type of access required / granted to, for example, variables on
+    a blackboard.
+    """
+
+    READ = "READ"
+    """Read access."""
+    WRITE = "WRITE"
+    """Write access, implicitly also grants read access"""
+    # TODO: EXCLUSIVE_WRITE
+
+
 class BlackBoxLevel(enum.IntEnum):
     """
     Whether a behaviour is a blackbox entity that may be considered collapsible

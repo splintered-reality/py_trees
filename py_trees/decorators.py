@@ -202,7 +202,8 @@ class StatusToBlackboard(Decorator):
         name_components = variable_name.split('.')
         self.key = name_components[0]
         self.key_attributes = '.'.join(name_components[1:])  # empty string if no other parts
-        self.blackboard.register_key(key=self.key, write=True)
+        self.blackboard = self.attach_blackboard_client(self.name)
+        self.blackboard.register_key(key=self.key, access=common.Access.WRITE)
 
     def update(self):
         """
@@ -293,8 +294,9 @@ class EternalGuard(Decorator):
             name: str=common.Name.AUTO_GENERATED,
     ):
         super().__init__(name=name, child=child)
+        self.blackboard = self.attach_blackboard_client(self.name)
         for key in blackboard_keys:
-            self.blackboard.register_key(key=key, read=True)
+            self.blackboard.register_key(key=key, access=common.Access.READ)
         condition_signature = inspect.signature(condition)
         if "blackboard" in [p.name for p in condition_signature.parameters.values()]:
             self.condition = functools.partial(condition, self.blackboard)
