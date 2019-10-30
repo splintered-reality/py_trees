@@ -917,3 +917,139 @@ class BlackboardClient(object):
                     del Blackboard.storage[key]
                 except KeyError:
                     pass  # perfectly legitimate for a registered key to not exist on the blackboard
+
+
+class BlackboardClientFacade(object):
+    """
+    """
+    def __init__(
+        self,
+        prefix: str,
+        blackboard: BlackboardClient=None
+    ):
+        super().__setattr__("_prefix", prefix)
+        if blackboard is None:
+            unique_identifier = uuid.uuid4()
+            super().__setattr__(
+                "_blackboard",
+                BlackboardClient(
+                    name=self.prefix + "_" + utilities.truncate(
+                        original=str(unique_identifier).replace('-', '_'),
+                        length=7
+                    ),
+                    unique_identifier=unique_identifier,
+                )
+            )
+        else:
+            super().__setattr__("_blackboard", blackboard)
+
+    def prefix(self):
+        return super().__getattribute__("_prefix")
+
+    def blackboard(self):
+        return super().__getattribute__("_blackboard")
+
+    def __setattr__(self, name: str, value: typing.Any):
+        """
+        Localised attribute style setting of blackboard variables.
+
+        Raises:
+            AttributeError: if the client does not have write access to the variable
+        """
+        self.blackboard().__setattr__(self.prefix() + name, value)
+
+    def __getattr__(self, name: str):
+        """
+        Localised attribute style referencing of blackboard variables.
+
+        Raises:
+            AttributeError: if the client does not have read access to the variable
+            KeyError: if the variable does not yet exist on the blackboard
+        """
+        return self.blackboard().__getattr__(self.prefix() + name)
+
+    def set(self, name: str, value: typing.Any, overwrite: bool=True) -> bool:
+        """
+        Localised setter method.
+
+        Args:
+            name: name of the variable to set
+            value: value of the variable to set
+            overwrite: do not set if the variable already exists on the blackboard
+
+        Returns:
+            success or failure (overwrite is False and variable already set)
+
+        Raises:
+            AttributeError: if the client does not have write access to the variable
+            KeyError: if the variable does not yet exist on the blackboard
+        """
+        return self.blackboard().set(name, value, overwrite)
+
+    def exists(self, name: str) -> bool:
+        """
+        Localised existence checker.
+
+        Args:
+            name: name of the variable to get, can be nested, e.g. battery.percentage
+
+        Raises:
+            AttributeError: if the client does not have read access to the variable
+        """
+        return self.blackboard().exists(self.prefix() + name)
+
+    def get(self, name: str) -> typing.Any:
+        """
+        Localised accessor method.
+
+        Args:
+            name: name of the variable to get, can be nested, e.g. battery.percentage
+
+        Raises:
+            AttributeError: if the client does not have read access to the variable
+            KeyError: if the variable or it's nested attributes do not yet exist on the blackboard
+        """
+        return self.blackboard().get(self.prefix() + name)
+
+    def unset(self, key: str):
+        """
+        For when you need to completely remove a blackboard variable (key-value pair),
+        this provides a convenient helper method.
+
+        Args:
+            key: name of the variable to remove
+
+        Returns:
+            True if the variable was removed, False if it was already absent
+        """
+        return self.blackboard().unset(self.prefix() + key)
+
+    def register_key(self, key: str, read: bool=False, write: bool=False):
+        """
+        Register a key on the blackboard to associate with this client.
+
+        Args:
+            key: key to register
+            read: permit/track read access
+            write: permit/track write access
+        """
+        return self.blackboard().register_key(self.prefix() + key, read, write)
+
+    def unregister_key(self, key: str, clear: bool=True):
+        """
+        Unegister a key associated with this client.
+
+        Args:
+            key: key to unregister
+            clear: remove key-values pairs from the blackboard
+
+        Raises:
+            KeyError if the key has not been previously registered
+        """
+        return self.blackboard().unregister_key(self.prefix() + key, clear)
+
+    def __str__(self):
+        s = console.green + "Blackboard Facade" + console.reset + "\n"
+        s += "Prefix: {}".format(self.prefix())
+        s += str(self.blackboard())
+        return s
