@@ -3,7 +3,7 @@ Release Notes
 
 Forthcoming
 -----------
-* ...
+* [blackboard] drop ``SubBlackboard``, it has problems,  `#249 <https://github.com/splintered-reality/py_trees/pull/249>`_
 
 1.3.3 (2019-10-15)
 ------------------
