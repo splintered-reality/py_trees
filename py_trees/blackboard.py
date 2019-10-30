@@ -47,10 +47,8 @@ implementation either embraces or does not.
 # Imports
 ##############################################################################
 
-import copy
 import enum
 import operator
-import pickle
 import re
 import typing
 import uuid
@@ -919,72 +917,3 @@ class BlackboardClient(object):
                     del Blackboard.storage[key]
                 except KeyError:
                     pass  # perfectly legitimate for a registered key to not exist on the blackboard
-
-
-class SubBlackboard(object):
-    """
-    Dynamically track the entire blackboard or part thereof and
-    flag when there have been changes. This is a useful class for
-    building introspection tools around the blackboard.
-    """
-    def __init__(self):
-        self.is_changed = False
-        self.variable_names = set()
-        self.pickled_storage = None
-
-    def update(self, variable_names: typing.Set[str]):
-        """
-        Check for changes to the blackboard scoped to the provided set of
-        variable names (may be nested, e.g. battery.percentage). Checks
-        the entire blackboard when variable_names is None.
-
-        Args:
-            variable_names: constrain the scope to track for changes
-        """
-        # TODO: can we pickle without doing a copy?
-        # TODO: can we use __repr__ as a means of not being prone to pickle
-        #       i.e. put the work back on the user
-        # TODO: catch exceptions thrown by bad pickles
-        # TODO: use a better structure in the blackboard (e.g. JSON) so
-        #       that this isn't brittle w.r.t. pickle failures
-        if variable_names is None:
-            storage = copy.deepcopy(Blackboard.storage)
-            self.variable_names = Blackboard.keys()
-        else:
-            storage = {}
-            for variable_name in variable_names:
-                try:
-                    storage[variable_name] = copy.deepcopy(
-                        Blackboard.get(variable_name)
-                    )
-                except KeyError:
-                    pass  # silently just ignore the request
-            self.variable_names = variable_names
-        pickled_storage = pickle.dumps(storage, -1)
-        self.is_changed = pickled_storage != self.pickled_storage
-        self.pickled_storage = pickled_storage
-
-    def __str__(self):
-        """
-        Convenient printed representation of the sub-blackboard that this
-        instance is currently tracking.
-        """
-        max_length = 0
-        indent = " " * 4
-        s = ""
-        for name in self.variable_names:
-            max_length = len(name) if len(name) > max_length else max_length
-        for name in sorted(self.variable_names):
-            try:
-                value = Blackboard.get(name)
-                lines = ("%s" % value).split('\n')
-                if len(lines) > 1:
-                    s += console.cyan + indent + '{0: <{1}}'.format(name, max_length + 1) + console.reset + ":\n"
-                    for line in lines:
-                        s += console.yellow + "    %s" % line + console.reset + "\n"
-                else:
-                    s += console.cyan + indent + '{0: <{1}}'.format(name, max_length + 1) + console.reset + ": " + console.yellow + "%s" % (value) + console.reset + "\n"
-            except KeyError:
-                value_string = "-"
-                s += console.cyan + indent + '{0: <{1}}'.format(name, max_length + 1) + console.reset + ": " + console.yellow + "%s" % (value_string) + console.reset + "\n"
-        return s.rstrip()  # get rid of the trailing newline...print will take care of adding a new line
