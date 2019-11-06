@@ -622,6 +622,7 @@ class Client(object):
 
         super().__setattr__("read", set())
         super().__setattr__("write", set())
+        super().__setattr__("required", set())
         Blackboard.clients[
             super().__getattribute__("unique_identifier")
         ] = self
@@ -916,13 +917,34 @@ class Client(object):
                         pass  # perfectly acceptal for a key to not exist on the blackboard yet
                     del Blackboard.metadata[key]
 
-    def register_key(self, key: str, access: common.Access):
+    def validate_required_keys_exist(self):
+        """
+        En-masse check of existence on the blackboard for all keys that were hitherto
+        registered as 'required'.
+
+        Raises: KeyError if any of the required keys do not exist on the blackboard
+        """
+        absent = set()
+        for local_key in super().__getattribute__("required"):
+            if not self.exists(local_key):
+                absent.add(local_key)
+        if absent:
+            raise KeyError("keys required, but not yet on the blackboard [{}]".format(absent))
+
+    def register_key(
+            self,
+            key: str,
+            access: common.Access,
+            required: bool=False
+    ):
         """
         Register a key on the blackboard to associate with this client.
 
         Args:
             key: key to register
             access: access level (read, write, exclusive write)
+            required: if true, check key exists when calling
+                :meth:`~validate_required_keys_exist`
 
         Raises:
             TypeError if the access argument is of incorrect type
@@ -938,6 +960,8 @@ class Client(object):
             Blackboard.metadata[key].write.add(super().__getattribute__("unique_identifier"))
         else:
             raise TypeError("access argument is of incorrect type [{}]".format(type(access)))
+        if required:
+            super().__getattribute__("required").add(local_key)
 
     def unregister_key(self, key: str, clear: bool=True):
         """
