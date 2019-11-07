@@ -55,6 +55,10 @@ def has_unicode(encoding: str=sys.stdout.encoding) -> bool:
     """
     try:
         u'\u26A1'.encode(encoding)
+    except TypeError:
+        # if sys.stdout.encoding is not available, it is None
+        # this will occur if you run nosetests3 without -s
+        return False
     except UnicodeError:
         return False
     return True

@@ -245,7 +245,8 @@ class CheckBlackboardVariableExists(behaviour.Behaviour):
         name_components = variable_name.split('.')
         self.key = name_components[0]
         self.key_attributes = '.'.join(name_components[1:])  # empty string if no other parts
-        self.blackboard.register_key(key=self.key, read=True)
+        self.blackboard = self.attach_blackboard_client()
+        self.blackboard.register_key(key=self.key, access=common.Access.READ)
 
     def update(self) -> common.Status:
         """
@@ -322,7 +323,8 @@ class UnsetBlackboardVariable(behaviour.Behaviour):
                  ):
         super().__init__(name=name)
         self.key = key
-        self.blackboard.register_key(key=self.key, write=True)
+        self.blackboard = self.attach_blackboard_client()
+        self.blackboard.register_key(key=self.key, access=common.Access.WRITE)
 
     def update(self) -> common.Status:
         """
@@ -360,7 +362,8 @@ class SetBlackboardVariable(behaviour.Behaviour):
         name_components = variable_name.split('.')
         self.key = name_components[0]
         self.key_attributes = '.'.join(name_components[1:])  # empty string if no other parts
-        self.blackboard.register_key(key=self.key, write=True)
+        self.blackboard = self.attach_blackboard_client()
+        self.blackboard.register_key(key=self.key, access=common.Access.WRITE)
         self.variable_value = variable_value
         self.overwrite = overwrite
 
@@ -416,7 +419,8 @@ class CheckBlackboardVariableValue(behaviour.Behaviour):
         name_components = variable_name.split('.')
         self.key = name_components[0]
         self.key_attributes = '.'.join(name_components[1:])  # empty string if no other parts
-        self.blackboard.register_key(key=self.key, read=True)
+        self.blackboard = self.attach_blackboard_client()
+        self.blackboard.register_key(key=self.key, access=common.Access.READ)
 
         self.expected_value = expected_value
         self.comparison_operator = comparison_operator

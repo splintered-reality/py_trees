@@ -418,9 +418,8 @@ def test_status_to_blackboard():
         child=child,
         variable_name="foo"
     )
-    blackboard = py_trees.blackboard.BlackboardClient(
-        read={"foo"}
-    )
+    blackboard = py_trees.blackboard.Client()
+    blackboard.register_key(key="foo", access=py_trees.common.Access.READ)
     decorator.tick_once()
 
     py_trees.tests.print_assert_banner()

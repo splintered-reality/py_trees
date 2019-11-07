@@ -419,7 +419,7 @@ def dot_tree(
         fontsize=fontsize,
         fontcolor=node_font_colour)
     graph.add_node(node_root)
-    names = {root.id: root.name}
+    behaviour_id_name_map = {root.id: root.name}
 
     def add_children_and_edges(root, root_dot_name, visibility_level, collapse_decorators):
         if isinstance(root, decorators.Decorator) and collapse_decorators:
@@ -435,9 +435,9 @@ def dot_tree(
             for c in root.children:
                 (node_shape, node_colour, node_font_colour) = get_node_attributes(c)
                 node_name = c.name
-                while node_name in names.values():
+                while node_name in behaviour_id_name_map.values():
                     node_name += "*"
-                names[c.id] = node_name
+                behaviour_id_name_map[c.id] = node_name
                 # Node attributes can be found on page 5 of
                 #    https://graphviz.gitlab.io/_pages/pdf/dot.1.pdf
                 # Attributes that may be useful: tooltip, xlabel
@@ -474,13 +474,13 @@ def dot_tree(
             fontcolor=blackboard_colour,
         )
 
-    def add_blackboard_nodes(behaviour_names_by_id: typing.Dict[uuid.UUID, str]):
+    def add_blackboard_nodes(blackboard_id_name_map: typing.Dict[uuid.UUID, str]):
         data = blackboard.Blackboard.storage
         metadata = blackboard.Blackboard.metadata
         clients = blackboard.Blackboard.clients
         # add client (that are not behaviour) nodes
         for unique_identifier, client in clients.items():
-            if unique_identifier not in behaviour_names_by_id:
+            if unique_identifier not in blackboard_id_name_map:
                 graph.add_node(
                     create_blackboard_client_node(client)
                 )
@@ -507,7 +507,7 @@ def dot_tree(
                 try:
                     edge = pydot.Edge(
                         blackboard_node,
-                        behaviour_names_by_id[unique_identifier],
+                        blackboard_id_name_map[unique_identifier],
                         color=blackboard_colour,
                         constraint=False
                     )
@@ -522,7 +522,7 @@ def dot_tree(
             for unique_identifier in metadata[key].write:
                 try:
                     edge = pydot.Edge(
-                        behaviour_names_by_id[unique_identifier],
+                        blackboard_id_name_map[unique_identifier],
                         blackboard_node,
                         color=blackboard_colour,
                         constraint=True
@@ -537,7 +537,11 @@ def dot_tree(
                 graph.add_edge(edge)
 
     if with_blackboard_variables:
-        add_blackboard_nodes(names)
+        blackboard_id_name_map = {}
+        for b in root.iterate():
+            for bb in b.blackboards:
+                blackboard_id_name_map[bb.id()] = behaviour_id_name_map[b.id]
+        add_blackboard_nodes(blackboard_id_name_map)
 
     return graph
 

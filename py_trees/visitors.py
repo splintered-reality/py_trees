@@ -99,6 +99,8 @@ class SnapshotVisitor(VisitorBase):
         previously_visited (dict): dictionary of behaviour id (uuid.UUID) and status (:class:`~py_trees.common.Status`) pairs from the previous tick
         running_nodes([uuid.UUID]): list of id's for behaviours which were traversed in the current tick
         previously_running_nodes([uuid.UUID]): list of id's for behaviours which were traversed in the last tick
+        visited_blackboard_ids(typing.Set[uuid.UUID]): blackboard client id's on the visited path
+        visited_blackboard_keys(typing.Set[str]): blackboard variable keys on the visited path
 
     .. seealso:: The :ref:`py-trees-demo-logging-program` program demonstrates use of this visitor to trigger logging of a tree serialisation.
     """
@@ -107,6 +109,8 @@ class SnapshotVisitor(VisitorBase):
         self.changed = False
         self.visited = {}
         self.previously_visited = {}
+        self.visited_blackboard_keys = set()
+        self.visited_blackboard_client_ids = set()
 
     def initialise(self):
         """
@@ -116,6 +120,8 @@ class SnapshotVisitor(VisitorBase):
         self.changed = False
         self.previously_visited = self.visited
         self.visited = {}
+        self.visited_blackboard_keys = set()
+        self.visited_blackboard_client_ids = set()
 
     def run(self, behaviour):
         """
@@ -125,12 +131,17 @@ class SnapshotVisitor(VisitorBase):
         Args:
             behaviour (:class:`~py_trees.behaviour.Behaviour`): behaviour that is ticking
         """
+        # behaviour status
         self.visited[behaviour.id] = behaviour.status
         try:
             if self.visited[behaviour.id] != self.previously_visited[behaviour.id]:
                 self.changed = True
         except KeyError:
             self.changed = True
+        # blackboards
+        for blackboard in behaviour.blackboards:
+            self.visited_blackboard_client_ids.add(blackboard.id())
+            self.visited_blackboard_keys = self.visited_blackboard_keys | blackboard.read | blackboard.write
 
 
 class DisplaySnapshotVisitor(SnapshotVisitor):
@@ -156,15 +167,12 @@ class DisplaySnapshotVisitor(SnapshotVisitor):
     def initialise(self):
         self.root = None
         super().initialise()
-        self.visited_keys = set()
         if self.display_activity_stream:
             blackboard.Blackboard.activity_stream.clear()
 
     def run(self, behaviour):
         self.root = behaviour  # last behaviour visited will always be the root
         super().run(behaviour)
-        if self.display_blackboard:
-            self.visited_keys = self.visited_keys | behaviour.blackboard.read | behaviour.blackboard.write
 
     def finalise(self):
         print(
@@ -177,6 +185,6 @@ class DisplaySnapshotVisitor(SnapshotVisitor):
             )
         )
         if self.display_blackboard:
-            print(display.unicode_blackboard(key_filter=self.visited_keys))
+            print(display.unicode_blackboard(key_filter=self.visited_blackboard_keys))
         if self.display_activity_stream:
             print(display.unicode_blackboard_activity_stream())

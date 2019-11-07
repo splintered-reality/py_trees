@@ -130,14 +130,11 @@ def eternal_guard(
         suffix = "" if len(conditions) == 1 else "_{}".format(counter)
         blackboard_variable_names.append(blackboard_variable_prefix + "_condition" + suffix)
         counter += 1
-    bb = blackboard.BlackboardClient(
-        read=set(blackboard_variable_names)
-    )
     # if there is just one blackboard name already on the blackboard, switch to unique names
     conflict = False
     for name in blackboard_variable_names:
         try:
-            unused_name = bb.get(name)
+            unused_name = blackboard.Blackboard.get(name)
             conflict = True
         except KeyError:
             pass
@@ -149,7 +146,6 @@ def eternal_guard(
             suffix = "" if len(conditions) == 1 else "_{}".format(counter)
             blackboard_variable_names.append(blackboard_variable_prefix + "_" + str(unique_id) + "_condition" + suffix)
             counter += 1
-    bb.unregister()
     # build the tree
     root = composites.Parallel(
         name=name,
@@ -180,7 +176,7 @@ def oneshot(
         name: str="Oneshot",
         variable_name: str="oneshot",
         policy: common.OneShotPolicy=common.OneShotPolicy.ON_SUCCESSFUL_COMPLETION
-        ):
+) -> behaviour.Behaviour:
     """
     Ensure that a particular pattern is executed through to
     completion just once. Thereafter it will just rebound with the completion status.

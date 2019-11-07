@@ -17,7 +17,7 @@ from py_trees.behaviours import (
     CheckBlackboardVariableExists,
     WaitForBlackboardVariable
 )
-from py_trees.blackboard import Blackboard, BlackboardClient
+from py_trees.blackboard import Blackboard, Client
 
 ##############################################################################
 # Logging Level
@@ -56,11 +56,17 @@ def create_blackboard():
     Fill with as many different types as we need to get full coverage on
     pretty printing blackboard tests.
     """
-    blackboard = BlackboardClient(
-        name="Tester",
-        read={"foo", "some_tuple", "nested", "nothing"},
-        write={"foo", "some_tuple", "nested", "nothing"}
-    )
+    blackboard = Client(name="Tester")
+    for key in {"foo", "some_tuple", "nested", "nothing"}:
+        blackboard.register_key(
+            key=key,
+            access=py_trees.common.Access.READ
+        )
+    for key in {"foo", "some_tuple", "nested", "nothing"}:
+        blackboard.register_key(
+            key=key,
+            access=py_trees.common.Access.WRITE
+        )
     blackboard.foo = "bar"
     blackboard.some_tuple = (1, "bar")
     blackboard.nested = Nested()

@@ -34,10 +34,11 @@ To be more concrete, the following is a list of features that this
 implementation either embraces or does not.
 
 * [+] Centralised key-value store
-* [+] Client based usage with registration of read/write intentions at construction
-* [+] Activity stream that tracks read/write operations by behaviours
+* [+] Client style usage with registration of read/write access
+* [+] Activity stream that logs read/write operations by clients
+* [+] Integration with behaviors for key-behaviour associations (debugging)
+* [-] Exclusive locks for writing
 * [-] Sharing between tree instances
-* [-] Exclusive locks for reading/writing
 * [-] Priority policies for variable instantiations
 
 .. include:: weblinks.rst
@@ -53,6 +54,7 @@ import re
 import typing
 import uuid
 
+from . import common
 from . import console
 from . import utilities
 
@@ -168,7 +170,7 @@ class Blackboard(object):
     for it's administration and static methods for interacting with it.
 
     This api is intended for authors of debugging and introspection
-    tools on the blackboard. Users should make use of the :class:`BlackboardClient`.
+    tools on the blackboard. Users should make use of the :class:`Client`.
 
     Attributes:
         Blackboard.clients (typing.Dict[uuid.UUID, Blackboard]): clients, gathered by uuid
@@ -268,6 +270,23 @@ class Blackboard(object):
             return False
 
     @staticmethod
+    def exists(name: str) -> bool:
+        """
+        Check if the specified variable exists on the blackboard.
+
+        Args:
+            name: name of the variable, can be nested, e.g. battery.percentage
+
+        Raises:
+            AttributeError: if the client does not have read access to the variable
+        """
+        try:
+            unused_value = Blackboard.get(name)
+            return True
+        except KeyError:
+            return False
+
+    @staticmethod
     def keys_filtered_by_regex(regex: str) -> typing.Set[str]:
         """
         Get the set of blackboard keys filtered by regex.
@@ -338,7 +357,7 @@ class Blackboard(object):
         Blackboard.activity_stream = None
 
 
-class BlackboardClient(object):
+class Client(object):
     """
     Client to the key-value store for sharing data between behaviours.
 
@@ -349,12 +368,9 @@ class BlackboardClient(object):
 
     .. code-block:: python
 
-        provided = py_trees.blackboard.BlackboardClient(
-            name="Provided",
-            unique_identifier=uuid.uuid4()
-        )
+        provided = py_trees.blackboard.Client(name="Provided")
         print(provided)
-        generated = py_trees.blackboard.BlackboardClient()
+        generated = py_trees.blackboard.Client()
         print(generated)
 
     .. figure:: images/blackboard_client_instantiation.png
@@ -367,12 +383,9 @@ class BlackboardClient(object):
 
     .. code-block:: python
 
-        blackboard = py_trees.blackboard.BlackboardClient(
-            name="Client",
-            read={"foo"},
-            write={"bar"}
-        )
-        blackboard.register_key(key="foo", write=True)
+        blackboard = py_trees.blackboard.Client(name="Client")
+        blackboard.register_key(key="foo", access=py_trees.common.Access.WRITE)
+        blackboard.register_key(key="bar", access=py_trees.common.Access.READ)
         blackboard.foo = "foo"
         print(blackboard)
 
@@ -387,11 +400,13 @@ class BlackboardClient(object):
     .. code-block:: python
 
         def check_foo():
-            blackboard = py_trees.blackboard.BlackboardClient(name="Reader", read={"foo"})
+            blackboard = py_trees.blackboard.Client(name="Reader")
+            blackboard.register_key(key="foo", access=py_trees.common.Access.READ)
             print("Foo: {}".format(blackboard.foo))
 
 
-        blackboard = py_trees.blackboard.BlackboardClient(name="Writer", write={"foo"})
+        blackboard = py_trees.blackboard.Client(name="Writer")
+        blackboard.register_key(key="foo", access=py_trees.common.Access.WRITE)
         blackboard.foo = "bar"
         check_foo()
 
@@ -399,7 +414,8 @@ class BlackboardClient(object):
 
     .. code-block:: python
 
-        blackboard = BlackboardClient(name="Writer", read={"foo"))
+        blackboard = Client(name="Writer")
+        blackboard.register_key(key="foo", access=py_trees.common.Access.READ)
         result = blackboard.set("foo", "bar", overwrite=False)
 
     Store complex objects on the blackboard:
@@ -415,17 +431,14 @@ class BlackboardClient(object):
                 return str(self.__dict__)
 
 
-        writer = py_trees.blackboard.BlackboardClient(
-            name="Writer",
-            write={"nested"}
-        )
-        reader = py_trees.blackboard.BlackboardClient(
-            name="Reader",
-            read={"nested"}
-        )
+        writer = py_trees.blackboard.Client(name="Writer")
+        writer.register_key(key="nested", access=py_trees.common.Access.WRITE)
+        reader = py_trees.blackboard.Client(name="Reader")
+        reader.register_key(key="nested", access=py_trees.common.Access.READ)
+
         writer.nested = Nested()
-        writer.nested.foo = "foo"
-        writer.nested.bar = "bar"
+        writer.nested.foo = "I am foo"
+        writer.nested.bar = "I am bar"
 
         foo = reader.nested.foo
         print(writer)
@@ -439,11 +452,13 @@ class BlackboardClient(object):
     .. code-block:: python
 
         py_trees.blackboard.Blackboard.enable_activity_stream(maximum_size=100)
-        blackboard_reader = py_trees.blackboard.BlackboardClient(name="Reader", read={"foo"})
-        blackboard_writer = py_trees.blackboard.BlackboardClient(name="Writer", write={"foo"})
-        blackboard_writer.foo = "bar"
-        blackboard_writer.foo = "foobar"
-        unused_result = blackboard_reader.foo
+        reader = py_trees.blackboard.Client(name="Reader")
+        reader.register_key(key="foo", access=py_trees.common.Access.READ)
+        writer = py_trees.blackboard.Client(name="Writer")
+        writer.register_key(key="foo", access=py_trees.common.Access.WRITE)
+        writer.foo = "bar"
+        writer.foo = "foobar"
+        unused_result = reader.foo
         print(py_trees.display.unicode_blackboard_activity_stream())
         py_trees.blackboard.Blackboard.activity_stream.clear()
 
@@ -454,13 +469,14 @@ class BlackboardClient(object):
 
     .. code-block:: python
 
-        writer = py_trees.blackboard.BlackboardClient(
-            name="Writer",
-            write={"foo", "bar", "dude", "dudette"}
-        )
-        reader = py_trees.blackboard.BlackboardClient(
-            name="Reader",
-            read={"foo", "bBlackboardClient(  )
+        writer = py_trees.blackboard.Client(name="Writer")
+        for key in {"foo", "bar", "dude", "dudette"}:
+            writer.register_key(key=key, access=py_trees.common.Access.WRITE)
+
+        reader = py_trees.blackboard.Client(name="Reader")
+        for key in {"foo", "bar"}:
+            reader.register_key(key="key", access=py_trees.common.Access.READ)
+
         writer.foo = "foo"
         writer.bar = "bar"
         writer.dude = "bob"
@@ -477,23 +493,50 @@ class BlackboardClient(object):
     .. figure:: images/blackboard_display.png
        :align: center
 
-    Behaviours register their own blackboard clients with the same name/id as the
-    behaviour itself. This helps associate blackboard variables with behaviours, enabling
-    various introspection and debugging capabilities on the behaviour trees.
+    Behaviours are not automagically connected to the blackboard but you may
+    manually attach one or more clients so that associations between behaviours
+    and variables can be tracked - this is very useful for introspection and
+    debugging.
 
     Creating a custom behaviour with blackboard variables:
 
     .. code-block:: python
 
-        class Foo(py_trees.behaviours.Behaviour):
+        class Foo(py_trees.behaviour.Behaviour):
 
-        def __init__(self, name):
-            super().__init__(name=name)
-            self.blackboard.register_key("foo", read=True)
+            def __init__(self, name):
+                super().__init__(name=name)
+                self.blackboard = self.attach_blackboard_client(name="Foo Global")
+                self.parameters = self.attach_blackboard_client(name="Foo Params", namespace="foo_parameters_")
+                self.state = self.attach_blackboard_client(name="Foo State", namespace="foo_state_")
 
-        def update(self):
-            self.feedback_message = self.blackboard.foo
-            return py_trees.common.Status.Success
+                # create a key 'foo_parameters_init' on the blackboard
+                self.parameters.register_key("init", access=py_trees.common.Access.READ)
+                # create a key 'foo_state_number_of_noodles' on the blackboard
+                self.state.register_key("number_of_noodles", access=py_trees.common.Access.WRITE)
+
+            def initialise(self):
+                self.state.number_of_noodles = self.parameters.init
+
+            def update(self):
+                self.state.number_of_noodles += 1
+                self.feedback_message = self.state.number_of_noodles
+                if self.state.number_of_noodles > 5:
+                    return py_trees.common.Status.SUCCESS
+                else:
+                    return py_trees.common.Status.RUNNING
+
+
+        # could equivalently do directly via the Blackboard static methods if
+        # not interested in tracking / visualising the application configuration
+        configuration = py_trees.blackboard.Client(name="App Config")
+        configuration.register_key("foo_parameters_init", access=py_trees.common.Access.WRITE)
+        configuration.foo_parameters_init = 3
+
+        foo = Foo(name="The Foo")
+        for i in range(1, 8):
+            foo.tick_once()
+            print("Number of Noodles: {}".format(foo.feedback_message))
 
     Rendering a dot graph for a behaviour tree, complete with blackboard variables:
 
@@ -506,19 +549,23 @@ class BlackboardClient(object):
 
     .. graphviz:: dot/demo-blackboard.dot
        :align: center
+       :caption: Tree with Blackboard Variables
 
     And to demonstrate that it doesn't become a tangled nightmare at scale, an example of
     a more complex tree:
 
     .. graphviz:: dot/blackboard-with-variables.dot
        :align: center
+       :caption: A more complex tree
 
-    With judicious use of the display methods / activity stream around the ticks
-    of a tree (refer to :class:`py_trees.visitors.DisplaySnapshotVisitor` for
-    examplar code):
+    Debug deeper with judicious application of the tree, blackboard and activity stream
+    display methods around the tree tick (refer to
+    :class:`py_trees.visitors.DisplaySnapshotVisitor` for examplar code):
 
     .. figure:: images/blackboard_trees.png
        :align: center
+
+       Tree level debugging
 
     .. seealso::
 
@@ -533,35 +580,27 @@ class BlackboardClient(object):
 
     Attributes:
         name (str): client's convenient, but not necessarily unique identifier
+        namespace (str): apply this as a prefix to any key/variable name operations
         unique_identifier (uuid.UUID): client's unique identifier
-        read (typing.List[str]): keys this client has permission to read
-        write (typing.List[str]): keys this client has permission to write
     """
     def __init__(
             self, *,
             name: str=None,
-            unique_identifier: uuid.UUID=None,
-            read: typing.Set[str]=None,
-            write: typing.Set[str]=None):
+            namespace: str=None):
         """
         Args:
             name: client's convenient identifier (stringifies the uuid if None)
-            unique_identifier: client's unique identifier (auto-generates if None)
-            read: list of keys this client has permission to read
-            write: list of keys this client has permission to write
+            namespace: prefix to apply to key/variable name operations
+            read: list of keys for which this client has read access
+            write: list of keys for which this client has write access
 
         Raises:
-            TypeError: if the provided name/unique identifier is not of type str/uuid.UUID
+            TypeError: if the provided name is not of type str
             ValueError: if the unique identifier has already been registered
         """
 
         # unique identifier
-        if unique_identifier is None:
-            super().__setattr__("unique_identifier", uuid.uuid4())
-        else:
-            if type(unique_identifier) != uuid.UUID:
-                raise TypeError("provided unique identifier is not of type uuid.UUID")
-            super().__setattr__("unique_identifier", unique_identifier)
+        super().__setattr__("unique_identifier", uuid.uuid4())
         if super().__getattribute__("unique_identifier") in Blackboard.clients.keys():
             raise ValueError("this unique identifier has already been registered")
 
@@ -577,34 +616,24 @@ class BlackboardClient(object):
                 raise TypeError("provided name is not of type str [{}]".format(type(name)))
             super().__setattr__("name", name)
 
-        # read
-        if read is None:
-            super().__setattr__("read", set())
-        elif type(read) is list:
-            super().__setattr__("read", set(read))
-        else:
-            super().__setattr__("read", read)
-        for key in super().__getattribute__("read"):
-            Blackboard.metadata.setdefault(key, KeyMetaData())
-            Blackboard.metadata[key].read.add(
-                super().__getattribute__("unique_identifier")
-            )
+        # namespace
+        namespace = "" if namespace is None else namespace
+        super().__setattr__("namespace", namespace)
 
-        # write
-        if write is None:
-            super().__setattr__("write", set())
-        elif type(write) is list:
-            super().__setattr__("write", set(write))
-        else:
-            super().__setattr__("write", write)
-        for key in super().__getattribute__("write"):
-            Blackboard.metadata.setdefault(key, KeyMetaData())
-            Blackboard.metadata[key].write.add(
-                super().__getattribute__("unique_identifier")
-            )
+        super().__setattr__("read", set())
+        super().__setattr__("write", set())
         Blackboard.clients[
             super().__getattribute__("unique_identifier")
         ] = self
+
+    def id(self) -> uuid.UUID:
+        """
+        The unique identifier for this client.
+
+        Returns:
+            The uuid.UUID object
+        """
+        return super().__getattribute__("unique_identifier")
 
     def __setattr__(self, name: str, value: typing.Any):
         """
@@ -615,7 +644,9 @@ class BlackboardClient(object):
             AttributeError: if the client does not have write access to the variable
         """
         # print("__setattr__ [{}][{}]".format(name, value))
-        if name not in super().__getattribute__("write"):
+        local_name = name
+        name = super().__getattribute__("namespace") + name
+        if local_name not in super().__getattribute__("write"):
             if Blackboard.activity_stream is not None:
                 Blackboard.activity_stream.push(
                     self._generate_activity_item(name, ActivityType.ACCESS_DENIED)
@@ -651,14 +682,16 @@ class BlackboardClient(object):
             KeyError: if the variable does not yet exist on the blackboard
         """
         # print("__getattr__ [{}]".format(name))
-        if name not in (super().__getattribute__("read") | super().__getattribute__("write")):
+        local_name = name
+        name = super().__getattribute__("namespace") + name
+        if local_name not in (super().__getattribute__("read") | super().__getattribute__("write")):
             if Blackboard.activity_stream is not None:
                 Blackboard.activity_stream.push(
                     self._generate_activity_item(name, ActivityType.ACCESS_DENIED)
                 )
             raise AttributeError("client '{}' does not have read/write access to '{}'".format(self.name, name))
         try:
-            if name in super().__getattribute__("write"):
+            if local_name in super().__getattribute__("write"):
                 if Blackboard.activity_stream is not None:
                     Blackboard.activity_stream.push(
                         self._generate_activity_item(
@@ -668,7 +701,7 @@ class BlackboardClient(object):
                         )
                     )
                 return Blackboard.storage[name]
-            if name in super().__getattribute__("read"):
+            if local_name in super().__getattribute__("read"):
                 if Blackboard.activity_stream is not None:
                     Blackboard.activity_stream.push(
                         self._generate_activity_item(
@@ -711,6 +744,7 @@ class BlackboardClient(object):
         """
         name_components = name.split('.')
         key = name_components[0]
+        namespaced_key = super().__getattribute__("namespace") + key
         key_attributes = '.'.join(name_components[1:])
         if key not in super().__getattribute__("write"):
             if Blackboard.activity_stream is not None:
@@ -719,13 +753,13 @@ class BlackboardClient(object):
                 )
             raise AttributeError("client '{}' does not have write access to '{}'".format(self.name, name))
         if not overwrite:
-            if key in Blackboard.storage:
+            if namespaced_key in Blackboard.storage:
                 if Blackboard.activity_stream is not None:
                     Blackboard.activity_stream.push(
                         self._generate_activity_item(
                             key=key,
                             activity_type=ActivityType.NO_OVERWRITE,
-                            current_value=Blackboard.storage[name])
+                            current_value=Blackboard.storage[namespaced_key])
                     )
                 return False
         if not key_attributes:
@@ -790,6 +824,7 @@ class BlackboardClient(object):
         Returns:
             True if the variable was removed, False if it was already absent
         """
+        key = super().__getattribute__("namespace") + key
         if Blackboard.activity_stream is not None:
             Blackboard.activity_stream.push(
                 self._generate_activity_item(key, ActivityType.UNSET)
@@ -809,7 +844,7 @@ class BlackboardClient(object):
         indent = "  "
         s = console.green + "Blackboard Client" + console.reset + "\n"
         s += console.white + indent + "Client Data" + console.reset + "\n"
-        keys = ["name", "unique_identifier", "read", "write"]
+        keys = ["name", "namespace", "unique_identifier", "read", "write"]
         s += self._stringify_key_value_pairs(keys, self.__dict__, 2 * indent)
         s += console.white + indent + "Variables" + console.reset + "\n"
         keys = self.read | self.write
@@ -865,12 +900,15 @@ class BlackboardClient(object):
         Args:
             clear: remove key-values pairs from the blackboard
         """
-        for key in self.read:
+        for local_key in self.read:
+            key = super().__getattribute__("namespace") + local_key
             Blackboard.metadata[key].read.remove(super().__getattribute__("unique_identifier"))
-        for key in self.write:
+        for local_key in self.write:
+            key = super().__getattribute__("namespace") + local_key
             Blackboard.metadata[key].write.remove(super().__getattribute__("unique_identifier"))
         if clear:
-            for key in (set(self.read) | set(self.write)):
+            for local_key in (set(self.read) | set(self.write)):
+                key = super().__getattribute__("namespace") + local_key
                 if not (set(Blackboard.metadata[key].read) | set(Blackboard.metadata[key].write)):
                     try:
                         del Blackboard.storage[key]
@@ -878,22 +916,28 @@ class BlackboardClient(object):
                         pass  # perfectly acceptal for a key to not exist on the blackboard yet
                     del Blackboard.metadata[key]
 
-    def register_key(self, key: str, read: bool=False, write: bool=False):
+    def register_key(self, key: str, access: common.Access):
         """
         Register a key on the blackboard to associate with this client.
 
         Args:
             key: key to register
-            read: permit/track read access
-            write: permit/track write access
+            access: access level (read, write, exclusive write)
+
+        Raises:
+            TypeError if the access argument is of incorrect type
         """
+        local_key = key
+        key = super().__getattribute__("namespace") + key
         Blackboard.metadata.setdefault(key, KeyMetaData())
-        if read:
-            super().__getattribute__("read").add(key)
+        if access == common.Access.READ:
+            super().__getattribute__("read").add(local_key)
             Blackboard.metadata[key].read.add(super().__getattribute__("unique_identifier"))
-        if write:
-            super().__getattribute__("write").add(key)
+        elif access == common.Access.WRITE:
+            super().__getattribute__("write").add(local_key)
             Blackboard.metadata[key].write.add(super().__getattribute__("unique_identifier"))
+        else:
+            raise TypeError("access argument is of incorrect type [{}]".format(type(access)))
 
     def unregister_key(self, key: str, clear: bool=True):
         """
@@ -906,8 +950,10 @@ class BlackboardClient(object):
         Raises:
             KeyError if the key has not been previously registered
         """
-        super().__getattribute__("read").discard(key)  # doesn't throw exceptions if it not present
-        super().__getattribute__("write").discard(key)
+        local_key = key
+        key = super().__getattribute__("namespace") + key
+        super().__getattribute__("read").discard(local_key)  # doesn't throw exceptions if it not present
+        super().__getattribute__("write").discard(local_key)
         Blackboard.metadata[key].read.discard(super().__getattribute__("unique_identifier"))
         Blackboard.metadata[key].write.discard(super().__getattribute__("unique_identifier"))
         if not (Blackboard.metadata[key].read | Blackboard.metadata[key].write):

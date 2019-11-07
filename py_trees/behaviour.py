@@ -43,7 +43,7 @@ class Behaviour(object):
     Attributes:
         ~py_trees.behaviours.Behaviour.id (:class:`uuid.UUID`): automagically generated unique identifier for the behaviour
         ~py_trees.behaviours.Behaviour.name (:obj:`str`): the behaviour name
-        ~py_trees.behaviours.Behaviour.blackboard (:class:`~py_trees.blackboard.Blackboard`): key-value store for sharing data between behaviours
+        ~py_trees.behaviours.Behaviour.blackboards (typing.List[py_trees.blackboard.Client]): collection of attached blackboard clients
         ~py_trees.behaviours.Behaviour.status (:class:`~py_trees.common.Status`): the behaviour status (:data:`~py_trees.common.Status.INVALID`, :data:`~py_trees.common.Status.RUNNING`, :data:`~py_trees.common.Status.FAILURE`, :data:`~py_trees.common.Status.SUCCESS`)
         ~py_trees.behaviours.Behaviour.parent (:class:`~py_trees.behaviour.Behaviour`): a :class:`~py_trees.composites.Composite` instance if nested in a tree, otherwise None
         ~py_trees.behaviours.Behaviour.children ([:class:`~py_trees.behaviour.Behaviour`]): empty for regular behaviours, populated for composites
@@ -65,10 +65,7 @@ class Behaviour(object):
             raise TypeError("a behaviour name should be a string, but you passed in {}".format(type(name)))
         self.id = uuid.uuid4()  # used to uniquely identify this node (helps with removing children from a tree)
         self.name = name
-        self.blackboard = blackboard.BlackboardClient(
-            name=self.name,
-            unique_identifier=self.id
-        )
+        self.blackboards = []
         self.qualified_name = "{}/{}".format(self.__class__.__qualname__, self.name)  # convenience
         self.status = common.Status.INVALID
         self.iterator = self.tick()
@@ -174,18 +171,52 @@ class Behaviour(object):
         """
         return common.Status.INVALID
 
+    def shutdown(self):
+        """
+        .. note:: User Customisable Callback
+
+        Subclasses may override this method for any custom destruction of infrastructure
+        usually brought into being in :meth:`~py_trees.behaviour.Behaviour.setup`.
+
+        Raises:
+            Exception: of whatever flavour the child raises when errors occur on destruction
+
+        .. seealso:: :meth:`py_trees.behaviour.Behaviour.setup`
+        """
+        pass
+
     ############################################
-    # User Methods
+    # Private Methods - use inside a behaviour
     ############################################
 
-    def tick_once(self):
+    def attach_blackboard_client(
+            self,
+            name: str=None,
+            namespace: str=None
+    ) -> blackboard.Client:
         """
-        A direct means of calling tick on this object without
-        using the generator mechanism.
+        Create and attach a blackboard to this behaviour.
+
+        Args:
+            name: human-readable (not necessarily unique) name for the client
+            namespace: sandbox the client to variables behind this namespace
+
+        Returns:
+            a handle to the attached blackboard client
         """
-        # no logger necessary here...it directly relays to tick
-        for unused in self.tick():
-            pass
+        if name is None:
+            count = len(self.blackboards)
+            name = self.name if (count == 0) else self.name + "-{}".format(count)
+        new_blackboard = blackboard.Client(
+            name=name,
+            namespace=namespace
+        )
+        self.blackboards.append(new_blackboard)
+        return new_blackboard
+
+    ############################################
+    # Public - lifecycle API
+    ############################################
 
     def setup_with_descendants(self):
         """
@@ -198,71 +229,14 @@ class Behaviour(object):
                 node.setup()
         self.setup()
 
-    ############################################
-    # Introspection
-    ############################################
-    def has_parent_with_name(self, name):
+    def tick_once(self):
         """
-        Searches through this behaviour's parents, and their parents, looking for
-        a behaviour with the same name as that specified.
-
-        Args:
-            name (:obj:`str`): name of the parent to match, can be a regular expression
-
-        Returns:
-            bool: whether a parent was found or not
+        A direct means of calling tick on this object without
+        using the generator mechanism.
         """
-        pattern = re.compile(name)
-        b = self
-        while b.parent is not None:
-            if pattern.match(b.parent.name) is not None:
-                return True
-            b = b.parent
-        return False
-
-    def has_parent_with_instance_type(self, instance_type):
-        """
-        Moves up through this behaviour's parents looking for
-        a behaviour with the same instance type as that specified.
-
-        Args:
-            instance_type (:obj:`str`): instance type of the parent to match
-
-        Returns:
-            bool: whether a parent was found or not
-        """
-        b = self
-        while b.parent is not None:
-            if isinstance(b.parent, instance_type):
-                return True
-            b = b.parent
-        return False
-
-    def tip(self):
-        """
-        Get the *tip* of this behaviour's subtree (if it has one) after it's last
-        tick. This corresponds to the the deepest node that was running before the
-        subtree traversal reversed direction and headed back to this node.
-
-        Returns:
-            :class:`~py_trees.behaviour.Behaviour` or :obj:`None`: child behaviour, itself or :obj:`None` if its status is :data:`~py_trees.common.Status.INVALID`
-        """
-        return self if self.status != common.Status.INVALID else None
-
-    ############################################
-    # Advanced Methods
-    # (oft indirectly used from a TreeManager)
-    ############################################
-
-    def visit(self, visitor):
-        """
-        This is functionality that enables external introspection into the behaviour. It gets used
-        by the tree manager classes to collect information as ticking traverses a tree.
-
-        Args:
-            visitor (:obj:`object`): the visiting class, must have a run(:class:`~py_trees.behaviour.Behaviour`) method.
-        """
-        visitor.run(self)
+        # no logger necessary here...it directly relays to tick
+        for unused in self.tick():
+            pass
 
     def tick(self):
         """
@@ -327,6 +301,16 @@ class Behaviour(object):
                 yield child
         yield self
 
+    def visit(self, visitor):
+        """
+        This is functionality that enables external introspection into the behaviour. It gets used
+        by the tree manager classes to collect information as ticking traverses a tree.
+
+        Args:
+            visitor (:obj:`object`): the visiting class, must have a run(:class:`~py_trees.behaviour.Behaviour`) method.
+        """
+        visitor.run(self)
+
     def stop(self, new_status=common.Status.INVALID):
         """
         Args:
@@ -343,19 +327,56 @@ class Behaviour(object):
         self.status = new_status
         self.iterator = self.tick()
 
-    def shutdown(self):
+    ############################################
+    # Public - introspection API
+    ############################################
+    def has_parent_with_name(self, name):
         """
-        .. note:: User Customisable Callback
+        Searches through this behaviour's parents, and their parents, looking for
+        a behaviour with the same name as that specified.
 
-        Subclasses may override this method for any custom destruction of infrastructure
-        usually brought into being in :meth:`~py_trees.behaviour.Behaviour.setup`.
+        Args:
+            name (:obj:`str`): name of the parent to match, can be a regular expression
 
-        Raises:
-            Exception: of whatever flavour the child raises when errors occur on destruction
-
-        .. seealso:: :meth:`py_trees.behaviour.Behaviour.setup`
+        Returns:
+            bool: whether a parent was found or not
         """
-        pass
+        pattern = re.compile(name)
+        b = self
+        while b.parent is not None:
+            if pattern.match(b.parent.name) is not None:
+                return True
+            b = b.parent
+        return False
+
+    def has_parent_with_instance_type(self, instance_type):
+        """
+        Moves up through this behaviour's parents looking for
+        a behaviour with the same instance type as that specified.
+
+        Args:
+            instance_type (:obj:`str`): instance type of the parent to match
+
+        Returns:
+            bool: whether a parent was found or not
+        """
+        b = self
+        while b.parent is not None:
+            if isinstance(b.parent, instance_type):
+                return True
+            b = b.parent
+        return False
+
+    def tip(self):
+        """
+        Get the *tip* of this behaviour's subtree (if it has one) after it's last
+        tick. This corresponds to the the deepest node that was running before the
+        subtree traversal reversed direction and headed back to this node.
+
+        Returns:
+            :class:`~py_trees.behaviour.Behaviour` or :obj:`None`: child behaviour, itself or :obj:`None` if its status is :data:`~py_trees.common.Status.INVALID`
+        """
+        return self if self.status != common.Status.INVALID else None
 
     def verbose_info_string(self):
         """

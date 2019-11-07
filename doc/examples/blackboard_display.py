@@ -2,14 +2,14 @@
 
 import py_trees
 
-writer = py_trees.blackboard.BlackboardClient(
-    name="Writer",
-    write={"foo", "bar", "dude", "dudette"}
-)
-reader = py_trees.blackboard.BlackboardClient(
-    name="Reader",
-    read={"foo", "bar"}
-)
+writer = py_trees.blackboard.Client(name="Writer")
+for key in {"foo", "bar", "dude", "dudette"}:
+    writer.register_key(key=key, access=py_trees.common.Access.WRITE)
+
+reader = py_trees.blackboard.Client(name="Reader")
+for key in {"foo", "bar"}:
+    reader.register_key(key="key", access=py_trees.common.Access.READ)
+
 writer.foo = "foo"
 writer.bar = "bar"
 writer.dude = "bob"

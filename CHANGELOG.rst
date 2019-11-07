@@ -3,7 +3,52 @@ Release Notes
 
 Forthcoming
 -----------
-* [blackboard] drop ``SubBlackboard``, it has problems,  `#249 <https://github.com/splintered-reality/py_trees/pull/249>`_
+
+**Breaking API**
+
+* [blackboard] fixed read/write ambiguity, now use ``py_trees.common.Access``, `#250 <https://github.com/splintered-reality/py_trees/pull/250>`_
+
+.. code-block:: python
+
+    # Previously
+    self.blackboard.register_key(key="foo", write=True)
+    # Now
+    self.blackboard.register_key(key="foo", access=py_trees.common.Access.WRITE)
+
+* [blackboard] drop ``SubBlackboard``, it has problems, `#249 <https://github.com/splintered-reality/py_trees/pull/249>`_
+
+**New Features**
+
+* [blackboard] namespaced blackboard clients, `#250 <https://github.com/splintered-reality/py_trees/pull/250>`_
+
+.. code-block:: python
+
+    # Previously, a single blackboard client exists per behaviour
+    # Now, no blackboard client on construction, instead attach on demand:
+    self.blackboard = self.attach_blackboard_client(name="Foo")
+    self.parameters = self.attach_blackboard_client(
+        name="FooParams",
+        namespace="parameters_foo_"
+    )
+    self.state = self.attach_blackboard_client(
+        name="FooState",
+        namespace="state_foo_"
+    )
+    # create a local key 'speed' that maps to 'state_foo_speed' on the blackboard
+    self.state.register_key(key="speed", access=py_trees.common.Access.WRITE)
+    self.state.speed = 30.0
+
+* [visitors] ``SnapshotVisitor`` tracking blackboards on the visited path, `#250 <https://github.com/splintered-reality/py_trees/pull/250>`_
+
+.. code-block:: python
+
+    # Previously tangled in DisplaySnapshotVisitor:
+    display_snapshot_visitor.visited.keys()  # blackboard client uuid's (also behaviour uuid's), typing.Set[uuid.UUID]
+    display_snapshot_visitor.visited_keys  # blackboard keys, typing.Set[str]
+    # Now in SnapshotVisitor:
+    snapshot_visitor.visited_blackboard_client_ids  # typing.Set[uuid.UUID]
+    snapshot_visitor.visited_blackboard_keys  # typing.Set[str]
+
 
 1.3.3 (2019-10-15)
 ------------------
