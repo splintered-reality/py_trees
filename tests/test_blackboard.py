@@ -393,7 +393,7 @@ def test_required_keys():
     )
     with nose.tools.assert_raises_regexp(KeyError, "but not yet on the blackboard"):
         print("Key does not exist - expecting a KeyError")
-        blackboard.validate_required_keys_exist()
+        blackboard.verify_required_keys_exist()
 
     py_trees.blackboard.Blackboard.set(
         variable_name="bar",
@@ -402,6 +402,6 @@ def test_required_keys():
 
     try:
         print("Key exists - expecting no KeyError")
-        blackboard.validate_required_keys_exist()
+        blackboard.verify_required_keys_exist()
     except KeyError:
         assert(False)

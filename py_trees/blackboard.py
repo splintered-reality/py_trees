@@ -917,7 +917,7 @@ class Client(object):
                         pass  # perfectly acceptal for a key to not exist on the blackboard yet
                     del Blackboard.metadata[key]
 
-    def validate_required_keys_exist(self):
+    def verify_required_keys_exist(self):
         """
         En-masse check of existence on the blackboard for all keys that were hitherto
         registered as 'required'.
@@ -944,7 +944,7 @@ class Client(object):
             key: key to register
             access: access level (read, write, exclusive write)
             required: if true, check key exists when calling
-                :meth:`~validate_required_keys_exist`
+                :meth:`~verify_required_keys_exist`
 
         Raises:
             TypeError if the access argument is of incorrect type
