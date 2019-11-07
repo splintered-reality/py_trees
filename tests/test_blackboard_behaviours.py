@@ -56,6 +56,7 @@ def create_blackboard():
     Fill with as many different types as we need to get full coverage on
     pretty printing blackboard tests.
     """
+    Blackboard.clear()
     blackboard = Client(name="Tester")
     for key in {"foo", "some_tuple", "nested", "nothing"}:
         blackboard.register_key(
@@ -345,36 +346,3 @@ def test_wait_for_variable_value():
         )
         assert(b.status == asserted_result)
 
-
-def test_wait_for_blackboard_variable():
-    console.banner("Wait for Blackboard Variable")
-    create_blackboard()
-
-    tuples = []
-    tuples.append((py_trees.behaviours.WaitForBlackboardVariable(
-        name="check_foo_exists", variable_name="foo"), Status.SUCCESS))
-    tuples.append((py_trees.behaviours.WaitForBlackboardVariable(
-        name="check_bar_exists", variable_name="bar"), Status.RUNNING))
-    tuples.append((py_trees.behaviours.WaitForBlackboardVariable(
-        name="check_nested_foo_exists", variable_name="nested.foo"), Status.SUCCESS))
-    tuples.append((py_trees.behaviours.WaitForBlackboardVariable(
-        name="check_nested_bar_exists", variable_name="nested.bar"), Status.RUNNING))
-    tuples.append((py_trees.behaviours.WaitForBlackboardVariableValue(
-        name="check_foo_equals_bar", variable_name="foo", expected_value="bar"), Status.SUCCESS))
-    tuples.append((py_trees.behaviours.WaitForBlackboardVariableValue(
-        name="check_foo_equals_foo", variable_name="foo", expected_value="foo"), Status.RUNNING))
-    tuples.append((py_trees.behaviours.WaitForBlackboardVariableValue(
-        name="check_bar_equals_bar", variable_name="bar", expected_value="bar"), Status.RUNNING))
-    tuples.append((py_trees.behaviours.WaitForBlackboardVariableValue(
-        name="check_bar_equals_foo", variable_name="bar", expected_value="foo"), Status.RUNNING))
-    tuples.append((py_trees.behaviours.WaitForBlackboardVariableValue(
-        name="check_nested_foo_equals_bar", variable_name="nested.foo", expected_value="bar"),
-        Status.SUCCESS))
-    tuples.append((py_trees.behaviours.WaitForBlackboardVariableValue(
-        name="check_nested_foo_equals_foo", variable_name="nested.foo", expected_value="foo"),
-        Status.RUNNING))
-    for b, unused in tuples:
-        b.tick_once()
-    for b, asserted_result in tuples:
-        print("%s: %s [%s]" % (b.name, b.status, asserted_result))
-        assert(b.status == asserted_result)
