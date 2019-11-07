@@ -377,3 +377,31 @@ def test_unregister_key():
             assert("dudette" not in bar.write)
             print("'dudette' not on the blackboard")
             assert("dudette" not in Blackboard.storage)
+
+
+def test_required_keys():
+    console.banner("Required")
+    blackboard = py_trees.blackboard.Client(name="Reader")
+    blackboard.register_key(
+        key="foo",
+        access=py_trees.common.Access.READ
+    )
+    blackboard.register_key(
+        key="bar",
+        access=py_trees.common.Access.READ,
+        required=True
+    )
+    with nose.tools.assert_raises_regexp(KeyError, "but not yet on the blackboard"):
+        print("Key does not exist - expecting a KeyError")
+        blackboard.verify_required_keys_exist()
+
+    py_trees.blackboard.Blackboard.set(
+        variable_name="bar",
+        value="boom"
+    )
+
+    try:
+        print("Key exists - expecting no KeyError")
+        blackboard.verify_required_keys_exist()
+    except KeyError:
+        assert(False)
