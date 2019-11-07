@@ -3,6 +3,10 @@ Release Notes
 
 Forthcoming
 -----------
+* ...
+
+1.4.x (2019-11-07)
+------------------
 
 **Breaking API**
 
