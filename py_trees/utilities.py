@@ -19,6 +19,7 @@ import multiprocessing
 import os
 import re
 import traceback
+import typing
 
 ##############################################################################
 # Python Helpers
@@ -42,6 +43,20 @@ def static_variables(**kwargs):
             setattr(func, k, kwargs[k])
         return func
     return decorate
+
+
+@static_variables(primitives={bool, str, int, float})
+def is_primitive(incoming: typing.Any) -> bool:
+    """
+    Check if an incoming argument is a primitive type with no esoteric
+    accessors (e.g. class attributes or container [] accessors.
+
+    Args:
+        incoming: the instance to check
+    Returns:
+        True or false, depending on the check against the reserved primitives
+    """
+    return type(incoming) in is_primitive.primitives
 
 
 def truncate(original: str, length: int) -> str:

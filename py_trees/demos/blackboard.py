@@ -126,6 +126,39 @@ class BlackboardWriter(py_trees.behaviour.Behaviour):
         return py_trees.common.Status.SUCCESS
 
 
+class ParamsAndState(py_trees.behaviour.Behaviour):
+    """
+    A more esotoric use of multiple blackboards in a behaviour to represent
+    storage of parameters and state.
+    """
+    def __init__(self, name="ParamsAndState"):
+        super().__init__(name=name)
+        # namespaces can include the separator or may leave it out
+        # they can also be nested, e.g. /agent/state, /agent/parameters
+        self.parameters = self.attach_blackboard_client("Params", "parameters_")
+        self.state = self.attach_blackboard_client("State", "state_")
+        self.parameters.register_key(
+            key="default_speed",
+            access=py_trees.common.Access.WRITE
+        )
+        self.state.register_key(
+            key="current_speed",
+            access=py_trees.common.Access.WRITE
+        )
+        if not self.parameters.exists("default_speed"):
+            self.parameters.default_speed = 30.0
+
+    def initialise(self):
+        self.state.current_speed = self.parameters.default_speed
+
+    def update(self):
+        if self.state.current_speed > 40.0:
+            return py_trees.common.Status.SUCCESS
+        else:
+            self.state.current_speed += 1.0
+            return py_trees.common.Status.RUNNING
+
+
 def create_root():
     root = py_trees.composites.Sequence("Blackboard Demo")
     set_blackboard_variable = py_trees.behaviours.SetBlackboardVariable(
@@ -135,7 +168,13 @@ def create_root():
     check_blackboard_variable = py_trees.behaviours.CheckBlackboardVariableValue(
         name="Check Nested Foo", variable_name="nested.foo", expected_value="bar"
     )
-    root.add_children([set_blackboard_variable, write_blackboard_variable, check_blackboard_variable])
+    params_and_state = ParamsAndState()
+    root.add_children([
+        set_blackboard_variable,
+        write_blackboard_variable,
+        check_blackboard_variable,
+        params_and_state
+    ])
     return root
 
 ##############################################################################
