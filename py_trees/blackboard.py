@@ -21,25 +21,39 @@ for blackboards in Unreal Engine.
 Implementations vary widely depending on the needs of
 the framework using them. The simplest implementations take the
 form of a key-value store with global access, while more
-rigorous implementations scope access and form a secondary
-graph overlaying the tree graph connecting data ports between behaviours.
+rigorous implementations scope access or form a secondary
+graph overlaying the tree connecting data ports between behaviours.
 
-The implementation here strives to remain simple to use
-(so 'rapid development' does not become just 'development'), yet
-sufficiently featured so that the magic behind the scenes (i.e. the
-data sharing on the blackboard) is exposed and helpful in debugging
-tree applications.
+The *'Zen of PyTrees'* is to enable rapid development, yet be rich
+enough so that *all* of the magic is exposed for debugging purposes.
+The first implementation of a blackboard was merely a global key-value
+store with an api that lended itself to ease of use, but did not
+expose the data sharing between behaviours which meant any tooling
+used to introspect or visualise the tree, only told half the story.
 
-To be more concrete, the following is a list of features that this
-implementation either embraces or does not.
+The current implementation adopts a strategy similar to that of a
+filesystem. Each client (subsequently behaviour) registers itself
+for read/write access to keys on the blackboard. This is less to
+do with permissions and more to do with tracking users of keys
+on the blackboard - extremely helpful with debugging.
+
+The alternative approach of layering a secondary data graph
+with parameter and input-output ports on each behaviour was
+discarded as being too heavy for the zen requirements of py_trees.
+This is in part due to the wiring costs, but also due to
+complexity arising from a tree's partial graph execution
+(a feature which makes trees different to most computational
+graph frameworks) and not to regress on py_trees' capability to
+dynamically insert and prune subtrees on the fly.
+
+A high-level list of existing / planned features:
 
 * [+] Centralised key-value store
-* [+] Client style usage with registration of read/write access
+* [+] Client connections with namespaced read/write access to the store
+* [+] Integration with behaviours for key-behaviour associations (debugging)
 * [+] Activity stream that logs read/write operations by clients
-* [+] Integration with behaviors for key-behaviour associations (debugging)
 * [-] Exclusive locks for writing
-* [-] Sharing between tree instances
-* [-] Priority policies for variable instantiations
+* [-] Framework for key remappings
 
 .. include:: weblinks.rst
 """
@@ -363,8 +377,9 @@ class Client(object):
 
     **Examples**
 
-    Blackboard clients will accept a user-friendly name / unique identifier for
-    registration on the centralised store or create them for you if none is provided.
+    Blackboard clients will accept a user-friendly name or create one
+    for you if none is provided. Regardless of what name is chosen, clients
+    are always uniquely identified via a uuid generated on construction.
 
     .. code-block:: python
 
