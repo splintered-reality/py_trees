@@ -694,10 +694,14 @@ class Client(object):
         try:
             if local_name in super().__getattribute__("write"):
                 if Blackboard.activity_stream is not None:
+                    if utilities.is_primitive(Blackboard.storage[name]):
+                        activity_type = ActivityType.READ
+                    else:  # could be a nested class object being accessed to write an attribute
+                        activity_type = ActivityType.ACCESSED
                     Blackboard.activity_stream.push(
                         self._generate_activity_item(
                             key=name,
-                            activity_type=ActivityType.ACCESSED,
+                            activity_type=activity_type,
                             current_value=Blackboard.storage[name],
                         )
                     )
