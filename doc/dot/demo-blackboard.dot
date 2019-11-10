@@ -9,21 +9,29 @@ Writer [label=Writer, shape=ellipse, style=filled, fillcolor=gray, fontsize=9, f
 "Blackboard Demo" -> Writer;
 "Check Nested Foo" [label="Check Nested Foo", shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
 "Blackboard Demo" -> "Check Nested Foo";
+ParamsAndState [label=ParamsAndState, shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+"Blackboard Demo" -> ParamsAndState;
 subgraph  {
 label="children_of_Blackboard Demo";
 rank=same;
 "Set Nested" [label="Set Nested", shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
 Writer [label=Writer, shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
 "Check Nested Foo" [label="Check Nested Foo", shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+ParamsAndState [label=ParamsAndState, shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
 }
 
-Standalone [label=Standalone, shape=ellipse, style=filled, color=blue, fillcolor=gray, fontsize=7, fontcolor=blue];
+Configuration [label=Configuration, shape=ellipse, style=filled, color=blue, fillcolor=gray, fontsize=7, fontcolor=blue];
 dude [label="dude: Bob", shape=box, style=filled, color=blue, fillcolor=white, fontsize=8, fontcolor=blue, width=0, height=0, fixedsize=False];
 dude -> Writer  [color=blue, constraint=False];
-Standalone -> dude  [color=blue, constraint=False];
+Configuration -> dude  [color=blue, constraint=False];
+parameters_default_speed [label="parameters_default_speed: 30.0", shape=box, style=filled, color=blue, fillcolor=white, fontsize=8, fontcolor=blue, width=0, height=0, fixedsize=False];
+parameters_default_speed -> ParamsAndState  [color=blue, constraint=False];
+Configuration -> parameters_default_speed  [color=blue, constraint=False];
 nested [label="nested: -", shape=box, style=filled, color=blue, fillcolor=white, fontsize=8, fontcolor=blue, width=0, height=0, fixedsize=False];
 nested -> "Check Nested Foo"  [color=blue, constraint=False];
 "Set Nested" -> nested  [color=blue, constraint=True];
 spaghetti [label="spaghetti: -", shape=box, style=filled, color=blue, fillcolor=white, fontsize=8, fontcolor=blue, width=0, height=0, fixedsize=False];
 Writer -> spaghetti  [color=blue, constraint=True];
+state_current_speed [label="state_current_speed: -", shape=box, style=filled, color=blue, fillcolor=white, fontsize=8, fontcolor=blue, width=0, height=0, fixedsize=False];
+ParamsAndState -> state_current_speed  [color=blue, constraint=True];
 }

@@ -15,8 +15,12 @@
 
 .. graphviz:: dot/demo-blackboard.dot
    :align: center
+   :caption: Dot Graph
 
-.. image:: images/blackboard.gif
+.. figure:: images/blackboard_demo.png
+   :align: center
+
+   Console Screenshot
 """
 
 ##############################################################################
@@ -139,17 +143,18 @@ class ParamsAndState(py_trees.behaviour.Behaviour):
         self.state = self.attach_blackboard_client("State", "state_")
         self.parameters.register_key(
             key="default_speed",
-            access=py_trees.common.Access.WRITE
+            access=py_trees.common.Access.READ
         )
         self.state.register_key(
             key="current_speed",
             access=py_trees.common.Access.WRITE
         )
-        if not self.parameters.exists("default_speed"):
-            self.parameters.default_speed = 30.0
 
     def initialise(self):
-        self.state.current_speed = self.parameters.default_speed
+        try:
+            self.state.current_speed = self.parameters.default_speed
+        except KeyError as e:
+            raise RuntimeError("parameter 'default_speed' not found [{}]".format(str(e)))
 
     def update(self):
         if self.state.current_speed > 40.0:
@@ -190,9 +195,11 @@ def main():
     print(description())
     py_trees.logging.level = py_trees.logging.Level.DEBUG
     py_trees.blackboard.Blackboard.enable_activity_stream(maximum_size=100)
-    standalone_blackboard = py_trees.blackboard.Client(name="Standalone")
+    standalone_blackboard = py_trees.blackboard.Client(name="Configuration")
     standalone_blackboard.register_key(key="dude", access=py_trees.common.Access.WRITE)
+    standalone_blackboard.register_key(key="parameters_default_speed", access=py_trees.common.Access.WRITE)
     standalone_blackboard.dude = "Bob"
+    standalone_blackboard.parameters_default_speed = 30.0
 
     root = create_root()
 
