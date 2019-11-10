@@ -3,7 +3,7 @@ Release Notes
 
 Forthcoming
 -----------
-* ...
+* [blackboards] distinguish primitives vs nested for refined read activity detection, `#255 <https://github.com/splintered-reality/py_trees/pull/255>`_ 
 
 1.4.x (2019-11-07)
 ------------------
