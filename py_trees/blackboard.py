@@ -191,11 +191,13 @@ class Blackboard(object):
         Blackboard.storage (typing.Dict[str, typing.Any]): key-value data store
         Blackboard.metadata (typing.Dict[str, KeyMetaData]): key associated metadata
         Blackboard.activity_stream (ActivityStream): logged activity
+        Blackboard.separator (char): namespace separator character
     """
     storage = {}  # Dict[str, Any] / key-value storage
     metadata = {}  # Dict[ str, KeyMetaData ] / key-metadata information
     clients = {}   # Dict[ uuid.UUID, Blackboard] / id-client information
     activity_stream = None
+    separator = "/"
 
     @staticmethod
     def keys() -> typing.Set[str]:
@@ -369,6 +371,19 @@ class Blackboard(object):
         Blackboard.metadata.clear()
         Blackboard.clients.clear()
         Blackboard.activity_stream = None
+
+    @staticmethod
+    def absolute_name(namespace: str, name: str) -> str:
+        # assumptions (that expedite checks)
+        #  - namespace already starts with "/"
+
+        # it's already absolute
+        if name.startswith(namespace):
+            return name
+        # remove leading and trailing separators
+        namespace = namespace if namespace.endswith(Blackboard.separator) else namespace + Blackboard.separator
+        name = name.strip(Blackboard.separator)
+        return "{}{}".format(namespace, name)
 
 
 class Client(object):
@@ -631,9 +646,12 @@ class Client(object):
                 raise TypeError("provided name is not of type str [{}]".format(type(name)))
             super().__setattr__("name", name)
 
-        # namespace
+        # namespaces
         namespace = "" if namespace is None else namespace
+        if not namespace.startswith(Blackboard.separator):
+            namespace = Blackboard.separator + namespace
         super().__setattr__("namespace", namespace)
+        super().__setattr__("namespaces", set())
 
         super().__setattr__("read", set())
         super().__setattr__("write", set())
@@ -660,9 +678,8 @@ class Client(object):
             AttributeError: if the client does not have write access to the variable
         """
         # print("__setattr__ [{}][{}]".format(name, value))
-        local_name = name
-        name = super().__getattribute__("namespace") + name
-        if local_name not in super().__getattribute__("write"):
+        name = Blackboard.absolute_name(super().__getattribute__("namespace"), name)
+        if name not in super().__getattribute__("write"):
             if Blackboard.activity_stream is not None:
                 Blackboard.activity_stream.push(
                     self._generate_activity_item(name, ActivityType.ACCESS_DENIED)
@@ -698,16 +715,17 @@ class Client(object):
             KeyError: if the variable does not yet exist on the blackboard
         """
         # print("__getattr__ [{}]".format(name))
-        local_name = name
-        name = super().__getattribute__("namespace") + name
-        if local_name not in (super().__getattribute__("read") | super().__getattribute__("write")):
+        name = Blackboard.absolute_name(super().__getattribute__("namespace"), name)
+        if name not in (super().__getattribute__("read") | super().__getattribute__("write")):
+            if name in super().__getattribute__("namespaces"):
+                return IntermediateVariableFetcher(blackboard=self, namespace=name)
             if Blackboard.activity_stream is not None:
                 Blackboard.activity_stream.push(
                     self._generate_activity_item(name, ActivityType.ACCESS_DENIED)
                 )
             raise AttributeError("client '{}' does not have read/write access to '{}'".format(self.name, name))
         try:
-            if local_name in super().__getattribute__("write"):
+            if name in super().__getattribute__("write"):
                 if Blackboard.activity_stream is not None:
                     if utilities.is_primitive(Blackboard.storage[name]):
                         activity_type = ActivityType.READ
@@ -721,7 +739,7 @@ class Client(object):
                         )
                     )
                 return Blackboard.storage[name]
-            if local_name in super().__getattribute__("read"):
+            if name in super().__getattribute__("read"):
                 if Blackboard.activity_stream is not None:
                     Blackboard.activity_stream.push(
                         self._generate_activity_item(
@@ -881,6 +899,15 @@ class Client(object):
             current_value=current_value
         )
 
+    def _update_namespaces(self):
+        super().__getattribute__("namespaces").clear()
+        for key in super().__getattribute__("read") | super().__getattribute__("write"):
+            separated_namespaces = key.split("/")[:-1]
+            if len(separated_namespaces) > 1:
+                for index in range(2, len(separated_namespaces) + 1):
+                    namespace = "/".join(separated_namespaces[0:index])
+                    super().__getattribute__("namespaces").add(namespace)
+
     def _stringify_key_value_pairs(self, keys, key_value_dict, indent):
         s = ""
         max_length = 0
@@ -968,19 +995,19 @@ class Client(object):
         Raises:
             TypeError if the access argument is of incorrect type
         """
-        local_key = key
-        key = super().__getattribute__("namespace") + key
+        key = Blackboard.absolute_name(super().__getattribute__("namespace"), key)
         Blackboard.metadata.setdefault(key, KeyMetaData())
         if access == common.Access.READ:
-            super().__getattribute__("read").add(local_key)
+            super().__getattribute__("read").add(key)
             Blackboard.metadata[key].read.add(super().__getattribute__("unique_identifier"))
         elif access == common.Access.WRITE:
-            super().__getattribute__("write").add(local_key)
+            super().__getattribute__("write").add(key)
             Blackboard.metadata[key].write.add(super().__getattribute__("unique_identifier"))
         else:
             raise TypeError("access argument is of incorrect type [{}]".format(type(access)))
         if required:
-            super().__getattribute__("required").add(local_key)
+            super().__getattribute__("required").add(key)
+        self._update_namespaces()
 
     def unregister_key(self, key: str, clear: bool=True):
         """
@@ -993,10 +1020,9 @@ class Client(object):
         Raises:
             KeyError if the key has not been previously registered
         """
-        local_key = key
-        key = super().__getattribute__("namespace") + key
-        super().__getattribute__("read").discard(local_key)  # doesn't throw exceptions if it not present
-        super().__getattribute__("write").discard(local_key)
+        key = Blackboard.absolute_name(super().__getattribute__("namespace"), key)
+        super().__getattribute__("read").discard(key)  # doesn't throw exceptions if it not present
+        super().__getattribute__("write").discard(key)
         Blackboard.metadata[key].read.discard(super().__getattribute__("unique_identifier"))
         Blackboard.metadata[key].write.discard(super().__getattribute__("unique_identifier"))
         if not (Blackboard.metadata[key].read | Blackboard.metadata[key].write):
@@ -1006,3 +1032,20 @@ class Client(object):
                     del Blackboard.storage[key]
                 except KeyError:
                     pass  # perfectly legitimate for a registered key to not exist on the blackboard
+        self._update_namespaces()
+
+
+class IntermediateVariableFetcher(object):
+    def __init__(self, blackboard, namespace):
+        super().__setattr__("blackboard", blackboard)
+        super().__setattr__("namespace", namespace)
+
+    def __getattr__(self, name: str):
+        # print("Fetcher:__getattr__ [{}]".format(name))
+        name = Blackboard.absolute_name(self.namespace, name)
+        return self.blackboard.get(name)
+
+    def __setattr__(self, name: str, value: typing.Any):
+        # print("Fetcher:__setattr__ [{}][{}]".format(name, value))
+        name = Blackboard.absolute_name(self.namespace, name)
+        return self.blackboard.set(name, value)

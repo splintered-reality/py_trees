@@ -405,3 +405,28 @@ def test_required_keys():
         blackboard.verify_required_keys_exist()
     except KeyError:
         assert(False)
+
+
+def test_absolute_name():
+    console.banner("Absolute Names")
+    # should use Blackboard.separator here, but it's a pita - long and unreadable
+    # just update this if the separator ever changes
+    test_tuples = [
+        # namespace, name, absolute name
+        ("/", "foo", "/foo"),
+        ("/", "/foo", "/foo"),
+        ("/foo", "bar", "/foo/bar"),
+        ("/foo/", "bar", "/foo/bar"),
+        ("/foo", "/bar", "/foo/bar"),
+        ("/foo/", "/bar", "/foo/bar"),
+        ("/foo/", "/foo/bar", "/foo/bar"),
+        ("/foo/", "foo/bar", "/foo/foo/bar"),
+    ]
+    for (namespace, name, absolute_name) in test_tuples:
+        print("[{}][{}]..........[{}][{}]".format(
+            namespace,
+            name,
+            absolute_name,
+            Blackboard.absolute_name(namespace, name)
+        ))
+        assert(absolute_name == Blackboard.absolute_name(namespace, name))
