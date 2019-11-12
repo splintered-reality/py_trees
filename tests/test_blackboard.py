@@ -9,7 +9,6 @@
 ##############################################################################
 
 import nose
-import sys
 
 import py_trees
 import py_trees.console as console
@@ -45,7 +44,7 @@ class create_blackboards(object):
 class create_namespaced_blackboards(object):
 
     def __enter__(self):
-        self.namespace = "woohoo_"
+        self.namespace = "/woohoo"
         self.foo = create_blackboard_foo(namespace=self.namespace)
         self.bar = create_blackboard_bar(namespace=self.namespace)
         return (self.foo, self.bar, self.namespace)
@@ -158,12 +157,12 @@ def test_key_exists():
             print("foo.exists('dude') [{}][{}]".format(foo.exists("dude"), True))
             assert(foo.exists("dude"))
             if namespace:
-                print("Blackboard.exists('{}dude') [{}][{}]".format(
+                print("Blackboard.exists('{}/dude') [{}][{}]".format(
                     namespace,
-                    Blackboard.exists(name="{}dude".format(namespace)),
+                    Blackboard.exists(name="{}/dude".format(namespace)),
                     True)
                 )
-                assert(Blackboard.exists(name="{}dude".format(namespace)))
+                assert(Blackboard.exists(name="{}/dude".format(namespace)))
             with nose.tools.assert_raises_regexp(AttributeError, "does not have read/write access"):
                 print("Expecting Attribute Error with substring 'does not have read/write access'")
                 print("foo.exists('dude_not_here') [{}][{}]".format(foo.exists("dude_not_here"), False))
@@ -179,7 +178,7 @@ def test_nested_exists():
             print("foo.exists('motley.not_here') [{}][{}]".format(foo.exists("motley.not_here"), False))
             assert(not foo.exists("motley.not_here"))
 
-            namespaced_name = "{}motley.nested".format(namespace)
+            namespaced_name = "{}/motley.nested".format(namespace)
             print("Blackboard.exists({}) [{}][{}]".format(
                 namespaced_name,
                 Blackboard.exists(namespaced_name),
@@ -202,9 +201,9 @@ def test_nested_read():
                 print("foo.get('motley.huzzah_not_here') ...")
                 print("Expecting a KeyError with substring 'nested attributes'")
                 foo.get('motley.huzzah_not_here')
+            print("foo.unset('motley')")
             foo.unset('motley')
             with nose.tools.assert_raises_regexp(KeyError, "does not yet exist"):
-                print("foo.unset('motley')")
                 print("foo.get('motley.not_here') ...")
                 print("Expecting a KeyError with substring 'does not yet exist'")
                 foo.get('motley.not_here')
@@ -364,19 +363,19 @@ def test_static_get_set():
 def test_unregister_key():
     console.banner("Unregister Keys")
     for create in [create_blackboards, create_namespaced_blackboards]:
-        with create() as (foo, bar, unused_namespace):
-            print("'foo' in foo.write")
-            assert ("foo" in foo.write)
+        with create() as (foo, bar, namespace):
+            print("'{}/foo' in foo.write".format(namespace))
+            assert ("{}/foo".format(namespace) in foo.write)
             print("Foo unregisters 'foo'")
             foo.unregister_key("foo")
-            print("'foo' not in foo.write")
-            assert ("foo" not in foo.write)
+            print("'{}/foo' not in foo.write".format(namespace))
+            assert ("{}/foo".format(namespace) not in foo.write)
             print("Bar unregisters 'dudette' with clearing")
-            print("'dudette' not in bar.write")
+            print("'{}/dudette' not in bar.write".format(namespace))
             bar.unregister_key("dudette", clear=True)
-            assert("dudette" not in bar.write)
-            print("'dudette' not on the blackboard")
-            assert("dudette" not in Blackboard.storage)
+            assert("{}/dudette".format(namespace) not in bar.write)
+            print("'{}/dudette' not on the blackboard".format(namespace))
+            assert("{}/dudette".format(namespace) not in Blackboard.storage)
 
 
 def test_required_keys():
@@ -396,10 +395,9 @@ def test_required_keys():
         blackboard.verify_required_keys_exist()
 
     py_trees.blackboard.Blackboard.set(
-        variable_name="bar",
+        variable_name="/bar",
         value="boom"
     )
-
     try:
         print("Key exists - expecting no KeyError")
         blackboard.verify_required_keys_exist()
@@ -430,3 +428,22 @@ def test_absolute_name():
             Blackboard.absolute_name(namespace, name)
         ))
         assert(absolute_name == Blackboard.absolute_name(namespace, name))
+
+
+def test_namespaced_dot_access():
+    console.banner("Namespaced Dot Access")
+    blackboard = py_trees.blackboard.Client(name="Blackboard")
+    blackboard.register_key(key="dude", access=py_trees.common.Access.WRITE)
+    blackboard.register_key(key="/dudette", access=py_trees.common.Access.WRITE)
+    blackboard.register_key(key="/foo/bar/wow", access=py_trees.common.Access.WRITE)
+    print("Trying....'blackboard.dude = True'")
+    blackboard.dude = True
+    assert(blackboard.dude)
+    print("Trying....'blackboard.dude = True'")
+    blackboard.dudette = True
+    assert(blackboard.dudette)
+    print("Trying....'blackboard.foo.bar.wow = True'")
+    blackboard.foo.bar.wow = True
+    assert(Blackboard.exists("/foo/bar/wow"))
+    assert(blackboard.foo.bar.wow)
+

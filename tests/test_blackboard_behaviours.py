@@ -136,32 +136,33 @@ def test_unset_blackboard_variable():
     py_trees.display.unicode_blackboard()
     assert_banner()
     assert_details(
-        text="'foo' exists",
+        text="'/foo' exists",
         expected=True,
-        result="foo" in Blackboard.storage.keys()
+        result="/foo" in Blackboard.storage.keys()
     )
-    assert("foo" in Blackboard.storage.keys())
+    assert("/foo" in Blackboard.storage.keys())
     print("Ticking 'Clear Foo' once...")
     clear_foo.tick_once()
     assert_details(
-        text="'foo' does not exist",
+        text="'/foo' does not exist",
         expected=True,
-        result="foo" not in Blackboard.storage.keys()
+        result="/foo" not in Blackboard.storage.keys()
     )
-    assert("foo" not in Blackboard.storage.keys())
+    assert("/foo" not in Blackboard.storage.keys())
     print("Ticking 'Clear Bar' once...")
     clear_bar.tick_once()
     assert_details(
-        text="'bar' does not exist",
+        text="'/bar' does not exist",
         expected=True,
-        result="bar" not in Blackboard.storage.keys()
+        result="/bar" not in Blackboard.storage.keys()
     )
+    assert("/bar" not in Blackboard.storage.keys())
     assert_details(
-        text="'foo' still does not exist",
+        text="'/foo' still does not exist",
         expected=True,
-        result="foo" not in Blackboard.storage.keys()
+        result="/foo" not in Blackboard.storage.keys()
     )
-    assert("foo" not in Blackboard.storage.keys())
+    assert("/foo" not in Blackboard.storage.keys())
 
 
 def test_set_blackboard_variable():

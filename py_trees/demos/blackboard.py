@@ -139,8 +139,8 @@ class ParamsAndState(py_trees.behaviour.Behaviour):
         super().__init__(name=name)
         # namespaces can include the separator or may leave it out
         # they can also be nested, e.g. /agent/state, /agent/parameters
-        self.parameters = self.attach_blackboard_client("Params", "parameters_")
-        self.state = self.attach_blackboard_client("State", "state_")
+        self.parameters = self.attach_blackboard_client("Params", "parameters")
+        self.state = self.attach_blackboard_client("State", "state")
         self.parameters.register_key(
             key="default_speed",
             access=py_trees.common.Access.READ
@@ -195,11 +195,11 @@ def main():
     print(description())
     py_trees.logging.level = py_trees.logging.Level.DEBUG
     py_trees.blackboard.Blackboard.enable_activity_stream(maximum_size=100)
-    standalone_blackboard = py_trees.blackboard.Client(name="Configuration")
-    standalone_blackboard.register_key(key="dude", access=py_trees.common.Access.WRITE)
-    standalone_blackboard.register_key(key="parameters_default_speed", access=py_trees.common.Access.WRITE)
-    standalone_blackboard.dude = "Bob"
-    standalone_blackboard.parameters_default_speed = 30.0
+    blackboard = py_trees.blackboard.Client(name="Configuration")
+    blackboard.register_key(key="dude", access=py_trees.common.Access.WRITE)
+    blackboard.register_key(key="/parameters/default_speed", access=py_trees.common.Access.WRITE)
+    blackboard.dude = "Bob"
+    blackboard.parameters.default_speed = 30.0
 
     root = create_root()
 
@@ -217,8 +217,8 @@ def main():
     # Execute
     ####################
     root.setup_with_descendants()
-    blackboard = py_trees.blackboard.Client(name="Unsetter")
-    blackboard.register_key(key="foo", access=py_trees.common.Access.WRITE)
+    unset_blackboard = py_trees.blackboard.Client(name="Unsetter")
+    unset_blackboard.register_key(key="foo", access=py_trees.common.Access.WRITE)
     print("\n--------- Tick 0 ---------\n")
     root.tick_once()
     print("\n")
@@ -228,5 +228,5 @@ def main():
     print("--------------------------\n")
     print(py_trees.display.unicode_blackboard(display_only_key_metadata=True))
     print("--------------------------\n")
-    blackboard.unset("foo")
+    unset_blackboard.unset("foo")
     print(py_trees.display.unicode_blackboard_activity_stream())

@@ -229,9 +229,6 @@ class Blackboard(object):
         Return:
             The stored value for the given variable
         """
-        # convenience, just in case they used slashes instead of .'s
-        if '/' in variable_name:
-            variable_name = ".".join(variable_name.split('/'))
         name_components = variable_name.split('.')
         key = name_components[0]
         key_attributes = '.'.join(name_components[1:])
@@ -780,9 +777,9 @@ class Client(object):
             AttributeError: if the client does not have write access to the variable
             KeyError: if the variable does not yet exist on the blackboard
         """
+        name = Blackboard.absolute_name(super().__getattribute__("namespace"), name)
         name_components = name.split('.')
         key = name_components[0]
-        namespaced_key = super().__getattribute__("namespace") + key
         key_attributes = '.'.join(name_components[1:])
         if key not in super().__getattribute__("write"):
             if Blackboard.activity_stream is not None:
@@ -791,13 +788,13 @@ class Client(object):
                 )
             raise AttributeError("client '{}' does not have write access to '{}'".format(self.name, name))
         if not overwrite:
-            if namespaced_key in Blackboard.storage:
+            if key in Blackboard.storage:
                 if Blackboard.activity_stream is not None:
                     Blackboard.activity_stream.push(
                         self._generate_activity_item(
                             key=key,
                             activity_type=ActivityType.NO_OVERWRITE,
-                            current_value=Blackboard.storage[namespaced_key])
+                            current_value=Blackboard.storage[key])
                     )
                 return False
         if not key_attributes:
@@ -862,7 +859,7 @@ class Client(object):
         Returns:
             True if the variable was removed, False if it was already absent
         """
-        key = super().__getattribute__("namespace") + key
+        key = Blackboard.absolute_name(super().__getattribute__("namespace"), key)
         if Blackboard.activity_stream is not None:
             Blackboard.activity_stream.push(
                 self._generate_activity_item(key, ActivityType.UNSET)
@@ -947,15 +944,13 @@ class Client(object):
         Args:
             clear: remove key-values pairs from the blackboard
         """
-        for local_key in self.read:
-            key = super().__getattribute__("namespace") + local_key
+        for key in self.read:
             Blackboard.metadata[key].read.remove(super().__getattribute__("unique_identifier"))
-        for local_key in self.write:
-            key = super().__getattribute__("namespace") + local_key
+        for key in self.write:
             Blackboard.metadata[key].write.remove(super().__getattribute__("unique_identifier"))
+        super().__getattribute__("namespaces").clear()
         if clear:
-            for local_key in (set(self.read) | set(self.write)):
-                key = super().__getattribute__("namespace") + local_key
+            for key in (set(self.read) | set(self.write)):
                 if not (set(Blackboard.metadata[key].read) | set(Blackboard.metadata[key].write)):
                     try:
                         del Blackboard.storage[key]
@@ -971,9 +966,9 @@ class Client(object):
         Raises: KeyError if any of the required keys do not exist on the blackboard
         """
         absent = set()
-        for local_key in super().__getattribute__("required"):
-            if not self.exists(local_key):
-                absent.add(local_key)
+        for key in super().__getattribute__("required"):
+            if not self.exists(key):
+                absent.add(key)
         if absent:
             raise KeyError("keys required, but not yet on the blackboard [{}]".format(absent))
 
