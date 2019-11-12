@@ -128,7 +128,12 @@ def eternal_guard(
     counter = 1
     for condition in conditions:
         suffix = "" if len(conditions) == 1 else "_{}".format(counter)
-        blackboard_variable_names.append(blackboard_variable_prefix + "_condition" + suffix)
+        blackboard_variable_names.append(
+            blackboard.Blackboard.separator +
+            blackboard_variable_prefix +
+            "_condition" +
+            suffix
+        )
         counter += 1
     # if there is just one blackboard name already on the blackboard, switch to unique names
     conflict = False
