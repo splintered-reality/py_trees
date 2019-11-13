@@ -639,6 +639,11 @@ class Client(object):
         name (str): client's convenient, but not necessarily unique identifier
         namespace (str): apply this as a prefix to any key/variable name operations
         unique_identifier (uuid.UUID): client's unique identifier
+        read (typing.Set[str]): set of absolute key names with read access
+        write (typing.Set[str]): set of absolute key names with write access
+        required (typing.Set[str]): set of absolute key names required to have data present
+        remappings (typing.Dict[str, str]: absolute key names with their remappings
+        namespaces (typing.Set[str]: a cached list of namespaces this client accesses
     """
     def __init__(
             self, *,
@@ -683,6 +688,7 @@ class Client(object):
         super().__setattr__("read", set())
         super().__setattr__("write", set())
         super().__setattr__("required", set())
+        super().__setattr__("remappings", {})
         Blackboard.clients[
             super().__getattribute__("unique_identifier")
         ] = self
@@ -976,8 +982,10 @@ class Client(object):
         """
         for key in self.read:
             Blackboard.metadata[key].read.remove(super().__getattribute__("unique_identifier"))
+            del super().__getattribute__("remappings")[key]
         for key in self.write:
             Blackboard.metadata[key].write.remove(super().__getattribute__("unique_identifier"))
+            del super().__getattribute__("remappings")[key]
         super().__getattribute__("namespaces").clear()
         if clear:
             for key in (set(self.read) | set(self.write)):
@@ -1006,7 +1014,8 @@ class Client(object):
             self,
             key: str,
             access: common.Access,
-            required: bool=False
+            required: bool=False,
+            remap: str=None,
     ):
         """
         Register a key on the blackboard to associate with this client.
@@ -1021,6 +1030,7 @@ class Client(object):
             TypeError if the access argument is of incorrect type
         """
         key = Blackboard.absolute_name(super().__getattribute__("namespace"), key)
+        super().__getattribute__("remappings")[key] = key if remap is None else remap
         Blackboard.metadata.setdefault(key, KeyMetaData())
         if access == common.Access.READ:
             super().__getattribute__("read").add(key)
@@ -1046,6 +1056,7 @@ class Client(object):
             KeyError if the key has not been previously registered
         """
         key = Blackboard.absolute_name(super().__getattribute__("namespace"), key)
+        del super().__getattribute__("remappings")[key]
         super().__getattribute__("read").discard(key)  # doesn't throw exceptions if it not present
         super().__getattribute__("write").discard(key)
         Blackboard.metadata[key].read.discard(super().__getattribute__("unique_identifier"))

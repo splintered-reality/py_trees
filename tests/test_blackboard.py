@@ -447,3 +447,16 @@ def test_namespaced_dot_access():
     assert(Blackboard.exists("/foo/bar/wow"))
     assert(blackboard.foo.bar.wow)
 
+
+def test_remappings():
+    console.banner("Remappings")
+    blackboard = py_trees.blackboard.Client(name="Blackboard")
+    blackboard.register_key(key="dude", access=py_trees.common.Access.WRITE)
+    blackboard.register_key(key="/dudette", access=py_trees.common.Access.WRITE)
+    blackboard.register_key(
+        key="/foo/bar/wow",
+        access=py_trees.common.Access.WRITE,
+        remap="/parameters/anticipation"
+    )
+    print(blackboard)
+    assert(True)
