@@ -8,7 +8,7 @@ for key in {"foo", "bar", "dude", "dudette"}:
 
 reader = py_trees.blackboard.Client(name="Reader")
 for key in {"foo", "bar"}:
-    reader.register_key(key="key", access=py_trees.common.Access.READ)
+    reader.register_key(key=key, access=py_trees.common.Access.READ)
 
 writer.foo = "foo"
 writer.bar = "bar"

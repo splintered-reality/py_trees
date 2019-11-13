@@ -117,7 +117,6 @@ def test_eternal_guard_unique_names():
     # tick once, get variables on the blackboard
     py_trees.tests.tick_tree(root, 1, 1, print_snapshot=True)
     assert(blackboard.get("eternal_guard_condition_1") == message)  # wasn't overwritten
-    print(py_trees.display.unicode_blackboard())
     with nose.tools.assert_raises_regexp(KeyError, "exist"):
         print("Expecting a KeyError with substring 'yet exist'")
         unused = blackboard.eternal_guard_condition_2

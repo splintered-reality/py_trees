@@ -21,17 +21,17 @@ ParamsAndState [label=ParamsAndState, shape=ellipse, style=filled, fillcolor=gra
 }
 
 Configuration [label=Configuration, shape=ellipse, style=filled, color=blue, fillcolor=gray, fontsize=7, fontcolor=blue];
-dude [label="dude: Bob", shape=box, style=filled, color=blue, fillcolor=white, fontsize=8, fontcolor=blue, width=0, height=0, fixedsize=False];
-dude -> Writer  [color=blue, constraint=False];
-Configuration -> dude  [color=blue, constraint=False];
-parameters_default_speed [label="parameters_default_speed: 30.0", shape=box, style=filled, color=blue, fillcolor=white, fontsize=8, fontcolor=blue, width=0, height=0, fixedsize=False];
-parameters_default_speed -> ParamsAndState  [color=blue, constraint=False];
-Configuration -> parameters_default_speed  [color=blue, constraint=False];
-nested [label="nested: -", shape=box, style=filled, color=blue, fillcolor=white, fontsize=8, fontcolor=blue, width=0, height=0, fixedsize=False];
-nested -> "Check Nested Foo"  [color=blue, constraint=False];
-"Set Nested" -> nested  [color=blue, constraint=True];
-spaghetti [label="spaghetti: -", shape=box, style=filled, color=blue, fillcolor=white, fontsize=8, fontcolor=blue, width=0, height=0, fixedsize=False];
-Writer -> spaghetti  [color=blue, constraint=True];
-state_current_speed [label="state_current_speed: -", shape=box, style=filled, color=blue, fillcolor=white, fontsize=8, fontcolor=blue, width=0, height=0, fixedsize=False];
-ParamsAndState -> state_current_speed  [color=blue, constraint=True];
+"/dude" [label="/dude: Bob", shape=box, style=filled, color=blue, fillcolor=white, fontsize=8, fontcolor=blue, width=0, height=0, fixedsize=False];
+"/dude" -> Writer  [color=blue, constraint=False];
+Configuration -> "/dude"  [color=blue, constraint=False];
+"/parameters/default_speed" [label="/parameters/default_speed: 30.0", shape=box, style=filled, color=blue, fillcolor=white, fontsize=8, fontcolor=blue, width=0, height=0, fixedsize=False];
+"/parameters/default_speed" -> ParamsAndState  [color=blue, constraint=False];
+Configuration -> "/parameters/default_speed"  [color=blue, constraint=False];
+"/nested" [label="/nested: -", shape=box, style=filled, color=blue, fillcolor=white, fontsize=8, fontcolor=blue, width=0, height=0, fixedsize=False];
+"/nested" -> "Check Nested Foo"  [color=blue, constraint=False];
+"Set Nested" -> "/nested"  [color=blue, constraint=True];
+"/spaghetti" [label="/spaghetti: -", shape=box, style=filled, color=blue, fillcolor=white, fontsize=8, fontcolor=blue, width=0, height=0, fixedsize=False];
+Writer -> "/spaghetti"  [color=blue, constraint=True];
+"/state/current_speed" [label="/state/current_speed: -", shape=box, style=filled, color=blue, fillcolor=white, fontsize=8, fontcolor=blue, width=0, height=0, fixedsize=False];
+ParamsAndState -> "/state/current_speed"  [color=blue, constraint=True];
 }
