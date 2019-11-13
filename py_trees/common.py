@@ -58,7 +58,9 @@ class ParallelPolicy(object):
     class SuccessOnAll(Base):
         """
         Return :py:data:`~py_trees.common.Status.SUCCESS` only when each and every child returns
-        :py:data:`~py_trees.common.Status.SUCCESS`.
+        :py:data:`~py_trees.common.Status.SUCCESS`. If synchronisation is requested, any children that
+        tick with :data:`~py_trees.common.Status.SUCCESS` will be skipped on subsequent ticks until
+        the policy criteria is met, or one of the children returns status :data:`~py_trees.common.Status.FAILURE`.
         """
         def __init__(self, synchronise=True):
             """
@@ -97,8 +99,10 @@ class ParallelPolicy(object):
 
     class SuccessOnSelected(Base):
         """
-        Retrun :py:data:`~py_trees.common.Status.SUCCESS` so long as each child in a specified list returns
-        :py:data:`~py_trees.common.Status.SUCCESS`.
+        Return :py:data:`~py_trees.common.Status.SUCCESS` so long as each child in a specified list returns
+        :py:data:`~py_trees.common.Status.SUCCESS`. If synchronisation is requested, any children that
+        tick with :data:`~py_trees.common.Status.SUCCESS` will be skipped on subsequent ticks until
+        the policy criteria is met, or one of the children returns status :data:`~py_trees.common.Status.FAILURE`.
         """
         def __init__(self, children, synchronise=True):
             """

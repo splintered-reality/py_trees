@@ -539,12 +539,17 @@ class Parallel(Composite):
       only returns :py:data:`~py_trees.common.Status.SUCCESS` if a **specified subset**
       of children return :py:data:`~py_trees.common.Status.SUCCESS`
 
+    Policies :class:`~py_trees.common.ParallelPolicy.SuccessOnAll` and
+    :class:`~py_trees.common.ParallelPolicy.SuccessOnSelected` may be configured to be
+    *synchronised* in which case children that tick with
+    :data:`~py_trees.common.Status.SUCCESS` will be skipped on subsequent ticks until
+    the policy criteria is met, or one of the children returns
+    status :data:`~py_trees.common.Status.FAILURE`.
+
     Parallels with policy :class:`~py_trees.common.ParallelPolicy.SuccessOnSelected` will
-    validate themselves just-in-time in the :meth:`~py_trees.behaviour.Behaviour.setup` and
-    :meth:`~py_trees.behaviour.Behaviour.tick` methods to check if the policy's
-    selected set of children is a subset of the children of this parallel. Doing this
-    just-in-time is due to the fact that the parallel's children may change after
-    construction and even dynamically between ticks.
+    check in both the :meth:`~py_trees.behaviour.Behaviour.setup` and
+    :meth:`~py_trees.behaviour.Behaviour.tick` methods to to verify the
+    selected set of children is actually a subset of the children of this parallel.
 
     .. seealso::
        * :ref:`Context Switching Demo <py-trees-demo-context-switching-program>`
