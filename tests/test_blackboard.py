@@ -62,7 +62,7 @@ def create_blackboard_foo(namespace=None):
         name="foo",
         namespace=namespace
     )
-    for key in {'foo', 'bar', 'motley'}:
+    for key in {'bar', 'motley'}:
         blackboard.register_key(key=key, access=py_trees.common.Access.READ)
     for key in {'foo', 'dude'}:
         blackboard.register_key(key=key, access=py_trees.common.Access.WRITE)
@@ -447,3 +447,46 @@ def test_namespaced_dot_access():
     assert(Blackboard.exists("/foo/bar/wow"))
     assert(blackboard.foo.bar.wow)
 
+
+def test_remappings():
+    console.banner("Remappings")
+    blackboard = py_trees.blackboard.Client(name="Blackboard")
+    blackboard.register_key(key="dude", access=py_trees.common.Access.WRITE)
+    blackboard.register_key(key="/dudette", access=py_trees.common.Access.WRITE)
+    blackboard.register_key(
+        key="/foo/bar/wow",
+        access=py_trees.common.Access.WRITE,
+        remap_to="/parameters/anticipation"
+    )
+    print("setters & getters...")
+    blackboard.set("/foo/bar/wow", "set")
+    assert(Blackboard.storage["/parameters/anticipation"] == "set")
+    blackboard.foo.bar.wow = "pythonic"
+    print("  blackboard.foo.bar.wow == 'pythonic'")
+    assert(blackboard.foo.bar.wow == "pythonic")
+    print("  blackboard.get('/foo/bar/wow') == 'pythonic'")
+    assert(blackboard.get("/foo/bar/wow") == "pythonic")
+    print("  Blackboard.storage['/parameters/anticipation'] == 'pythonic'")
+    assert(Blackboard.storage["/parameters/anticipation"] == "pythonic")
+
+    print("exists....")
+    print("  blackboard.exists('/foo/bar/wow')")
+    assert(blackboard.exists('/foo/bar/wow'))
+    print("  Blackboard.exists('/parameters/anticipation')")
+    assert(Blackboard.exists("/parameters/anticipation"))
+
+    print("unset...")
+    blackboard.unset("/foo/bar/wow")
+    print("  not blackboard.exists('/foo/bar/wow')")
+    assert(not blackboard.exists('/foo/bar/wow'))
+    print("  not Blackboard.exists('/parameters/anticipation')")
+    assert(not Blackboard.exists("/parameters/anticipation"))
+
+    print("unregister_key...")
+    blackboard.foo.bar.wow = "pythonic"
+    blackboard.unregister_key("/foo/bar/wow", clear=True)
+    print("  not Blackboard.exists('/parameters/anticipation')")
+    assert(not Blackboard.exists("/parameters/anticipation"))
+
+    print(py_trees.display.unicode_blackboard())
+    print(blackboard)

@@ -627,6 +627,8 @@ class Client(object):
     .. seealso::
 
        * :ref:`py-trees-demo-blackboard <py-trees-demo-blackboard-program>`
+       * :ref:`py-trees-demo-namespaces <py-trees-demo-blackboard-namespaces-program>`
+       * :ref:`py-trees-demo-remappings <py-trees-demo-blackboard-remappings-program>`
        * :class:`py_trees.visitors.DisplaySnapshotVisitor`
        * :class:`py_trees.behaviours.SetBlackboardVariable`
        * :class:`py_trees.behaviours.UnsetBlackboardVariable`
@@ -639,6 +641,11 @@ class Client(object):
         name (str): client's convenient, but not necessarily unique identifier
         namespace (str): apply this as a prefix to any key/variable name operations
         unique_identifier (uuid.UUID): client's unique identifier
+        read (typing.Set[str]): set of absolute key names with read access
+        write (typing.Set[str]): set of absolute key names with write access
+        required (typing.Set[str]): set of absolute key names required to have data present
+        remappings (typing.Dict[str, str]: client key names with blackboard remappings
+        namespaces (typing.Set[str]: a cached list of namespaces this client accesses
     """
     def __init__(
             self, *,
@@ -683,6 +690,7 @@ class Client(object):
         super().__setattr__("read", set())
         super().__setattr__("write", set())
         super().__setattr__("required", set())
+        super().__setattr__("remappings", {})
         Blackboard.clients[
             super().__getattribute__("unique_identifier")
         ] = self
@@ -712,25 +720,26 @@ class Client(object):
                     self._generate_activity_item(name, ActivityType.ACCESS_DENIED)
                 )
             raise AttributeError("client '{}' does not have write access to '{}'".format(self.name, name))
+        remapped_name = super().__getattribute__("remappings")[name]
         if Blackboard.activity_stream is not None:
-            if name in Blackboard.storage.keys():
+            if remapped_name in Blackboard.storage.keys():
                 Blackboard.activity_stream.push(
                     self._generate_activity_item(
-                        key=name,
+                        key=remapped_name,
                         activity_type=ActivityType.WRITE,
-                        previous_value=Blackboard.storage[name],
+                        previous_value=Blackboard.storage[remapped_name],
                         current_value=value
                     )
                 )
             else:
                 Blackboard.activity_stream.push(
                     self._generate_activity_item(
-                        key=name,
+                        key=remapped_name,
                         activity_type=ActivityType.INITIALISED,
                         current_value=value
                     )
                 )
-        Blackboard.storage[name] = value
+        Blackboard.storage[remapped_name] = value
 
     def __getattr__(self, name: str):
         """
@@ -751,37 +760,38 @@ class Client(object):
                     self._generate_activity_item(name, ActivityType.ACCESS_DENIED)
                 )
             raise AttributeError("client '{}' does not have read/write access to '{}'".format(self.name, name))
+        remapped_name = super().__getattribute__("remappings")[name]
         try:
             if name in super().__getattribute__("write"):
                 if Blackboard.activity_stream is not None:
-                    if utilities.is_primitive(Blackboard.storage[name]):
+                    if utilities.is_primitive(Blackboard.storage[remapped_name]):
                         activity_type = ActivityType.READ
                     else:  # could be a nested class object being accessed to write an attribute
                         activity_type = ActivityType.ACCESSED
                     Blackboard.activity_stream.push(
                         self._generate_activity_item(
-                            key=name,
+                            key=remapped_name,
                             activity_type=activity_type,
-                            current_value=Blackboard.storage[name],
+                            current_value=Blackboard.storage[remapped_name],
                         )
                     )
-                return Blackboard.storage[name]
+                return Blackboard.storage[remapped_name]
             if name in super().__getattribute__("read"):
                 if Blackboard.activity_stream is not None:
                     Blackboard.activity_stream.push(
                         self._generate_activity_item(
-                            key=name,
+                            key=remapped_name,
                             activity_type=ActivityType.READ,
-                            current_value=Blackboard.storage[name],
+                            current_value=Blackboard.storage[remapped_name],
                         )
                     )
-                return Blackboard.storage[name]
+                return Blackboard.storage[remapped_name]
         except KeyError as e:
             if Blackboard.activity_stream is not None:
                 Blackboard.activity_stream.push(
-                    self._generate_activity_item(name, ActivityType.NO_KEY)
+                    self._generate_activity_item(remapped_name, ActivityType.NO_KEY)
                 )
-            raise KeyError("client '{}' tried to access '{}' but it does not yet exist on the blackboard".format(self.name, name)) from e
+            raise KeyError("client '{}' tried to access '{}' but it does not yet exist on the blackboard".format(self.name, remapped_name)) from e
 
     def set(self, name: str, value: typing.Any, overwrite: bool=True) -> bool:
         """
@@ -814,21 +824,22 @@ class Client(object):
         if key not in super().__getattribute__("write"):
             if Blackboard.activity_stream is not None:
                 Blackboard.activity_stream.push(
-                    self._generate_activity_item(name, ActivityType.ACCESS_DENIED)
+                    self._generate_activity_item(key, ActivityType.ACCESS_DENIED)
                 )
             raise AttributeError("client '{}' does not have write access to '{}'".format(self.name, name))
+        remapped_key = super().__getattribute__("remappings")[key]
         if not overwrite:
-            if key in Blackboard.storage:
+            if remapped_key in Blackboard.storage:
                 if Blackboard.activity_stream is not None:
                     Blackboard.activity_stream.push(
                         self._generate_activity_item(
-                            key=key,
+                            key=remapped_key,
                             activity_type=ActivityType.NO_OVERWRITE,
-                            current_value=Blackboard.storage[key])
+                            current_value=Blackboard.storage[remapped_key])
                     )
                 return False
         if not key_attributes:
-            setattr(self, name, value)
+            setattr(self, key, value)
             return True
         else:
             blackboard_object = getattr(self, key)
@@ -890,9 +901,10 @@ class Client(object):
             True if the variable was removed, False if it was already absent
         """
         key = Blackboard.absolute_name(super().__getattribute__("namespace"), key)
+        remapped_key = super().__getattribute__("remappings")[key]
         if Blackboard.activity_stream is not None:
             Blackboard.activity_stream.push(
-                self._generate_activity_item(key, ActivityType.UNSET)
+                self._generate_activity_item(remapped_key, ActivityType.UNSET)
             )
         # Three means of handling a non-existent key - 1) raising a KeyError, 2) catching
         # the KeyError and passing, 3) catch the KeyError and return True/False.
@@ -900,21 +912,10 @@ class Client(object):
         # Option 2) hides information - bad
         # Option 3) no extra code necessary and information is there if desired
         try:
-            del Blackboard.storage[key]
+            del Blackboard.storage[remapped_key]
             return True
         except KeyError:
             return False
-
-    def __str__(self):
-        indent = "  "
-        s = console.green + "Blackboard Client" + console.reset + "\n"
-        s += console.white + indent + "Client Data" + console.reset + "\n"
-        keys = ["name", "namespace", "unique_identifier", "read", "write"]
-        s += self._stringify_key_value_pairs(keys, self.__dict__, 2 * indent)
-        s += console.white + indent + "Variables" + console.reset + "\n"
-        keys = self.read | self.write
-        s += self._stringify_key_value_pairs(keys, Blackboard.storage, 2 * indent)
-        return s
 
     def _generate_activity_item(self, key, activity_type, previous_value=None, current_value=None):
         return ActivityItem(
@@ -935,7 +936,27 @@ class Client(object):
                     namespace = "/".join(separated_namespaces[0:index])
                     super().__getattribute__("namespaces").add(namespace)
 
-    def _stringify_key_value_pairs(self, keys, key_value_dict, indent):
+    def __str__(self):
+        indent = "  "
+        s = console.green + "Blackboard Client" + console.reset + "\n"
+        s += console.white + indent + "Client Data" + console.reset + "\n"
+        keys = ["name", "namespace", "unique_identifier", "read", "write"]
+        s += self._stringify_key_value_pairs(keys, self.__dict__, 2 * indent)
+        keys = {k for k, v in self.remappings.items() if k != v}
+        if keys:
+            s += console.white + indent + "Remappings" + console.reset + "\n"
+            s += self._stringify_key_value_pairs(
+                keys=keys,
+                key_value_dict=self.remappings,
+                indent=2*indent,
+                separator=console.right_arrow
+            )
+        s += console.white + indent + "Variables" + console.reset + "\n"
+        keys = self.remappings.values()
+        s += self._stringify_key_value_pairs(keys, Blackboard.storage, 2 * indent)
+        return s
+
+    def _stringify_key_value_pairs(self, keys, key_value_dict, indent, separator=":"):
         s = ""
         max_length = 0
         for key in keys:
@@ -945,13 +966,13 @@ class Client(object):
                 value = key_value_dict[key]
                 lines = ('{0}'.format(value)).split('\n')
                 if len(lines) > 1:
-                    s += console.cyan + indent + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ":\n"
+                    s += console.cyan + indent + '{0: <{1}}'.format(key, max_length + 1) + console.reset + separator + "\n"
                     for line in lines:
                         s += console.yellow + indent + "  {0}\n".format(line) + console.reset
                 else:
-                    s += console.cyan + indent + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ": " + console.yellow + '{0}\n'.format(value) + console.reset
+                    s += console.cyan + indent + '{0: <{1}}'.format(key, max_length + 1) + console.reset + separator + " " + console.yellow + '{0}\n'.format(value) + console.reset
             except KeyError:
-                s += console.cyan + indent + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ": " + console.yellow + "-\n" + console.reset
+                s += console.cyan + indent + '{0: <{1}}'.format(key, max_length + 1) + console.reset + separator + " " + console.yellow + "-\n" + console.reset
         s += console.reset
         return s
 
@@ -974,19 +995,8 @@ class Client(object):
         Args:
             clear: remove key-values pairs from the blackboard
         """
-        for key in self.read:
-            Blackboard.metadata[key].read.remove(super().__getattribute__("unique_identifier"))
-        for key in self.write:
-            Blackboard.metadata[key].write.remove(super().__getattribute__("unique_identifier"))
-        super().__getattribute__("namespaces").clear()
-        if clear:
-            for key in (set(self.read) | set(self.write)):
-                if not (set(Blackboard.metadata[key].read) | set(Blackboard.metadata[key].write)):
-                    try:
-                        del Blackboard.storage[key]
-                    except KeyError:
-                        pass  # perfectly acceptal for a key to not exist on the blackboard yet
-                    del Blackboard.metadata[key]
+        for key in (set(self.read) | set(self.write)):
+            self.unregister_key(key=key, clear=clear)
 
     def verify_required_keys_exist(self):
         """
@@ -1006,7 +1016,8 @@ class Client(object):
             self,
             key: str,
             access: common.Access,
-            required: bool=False
+            required: bool=False,
+            remap_to: str=None,
     ):
         """
         Register a key on the blackboard to associate with this client.
@@ -1016,18 +1027,24 @@ class Client(object):
             access: access level (read, write, exclusive write)
             required: if true, check key exists when calling
                 :meth:`~verify_required_keys_exist`
+            remap_to: remap the key to this location on the blackboard
+
+        Note the remap simply changes the storage location. From the perspective of
+        the client, access via the specified 'key' remains the same.
 
         Raises:
             TypeError if the access argument is of incorrect type
         """
         key = Blackboard.absolute_name(super().__getattribute__("namespace"), key)
-        Blackboard.metadata.setdefault(key, KeyMetaData())
+        super().__getattribute__("remappings")[key] = key if remap_to is None else remap_to
+        remapped_key = super().__getattribute__("remappings")[key]
+        Blackboard.metadata.setdefault(remapped_key, KeyMetaData())
         if access == common.Access.READ:
             super().__getattribute__("read").add(key)
-            Blackboard.metadata[key].read.add(super().__getattribute__("unique_identifier"))
+            Blackboard.metadata[remapped_key].read.add(super().__getattribute__("unique_identifier"))
         elif access == common.Access.WRITE:
             super().__getattribute__("write").add(key)
-            Blackboard.metadata[key].write.add(super().__getattribute__("unique_identifier"))
+            Blackboard.metadata[remapped_key].write.add(super().__getattribute__("unique_identifier"))
         else:
             raise TypeError("access argument is of incorrect type [{}]".format(type(access)))
         if required:
@@ -1046,17 +1063,19 @@ class Client(object):
             KeyError if the key has not been previously registered
         """
         key = Blackboard.absolute_name(super().__getattribute__("namespace"), key)
+        remapped_key = super().__getattribute__("remappings")[key]
         super().__getattribute__("read").discard(key)  # doesn't throw exceptions if it not present
         super().__getattribute__("write").discard(key)
-        Blackboard.metadata[key].read.discard(super().__getattribute__("unique_identifier"))
-        Blackboard.metadata[key].write.discard(super().__getattribute__("unique_identifier"))
-        if not (Blackboard.metadata[key].read | Blackboard.metadata[key].write):
-            del Blackboard.metadata[key]
+        Blackboard.metadata[remapped_key].read.discard(super().__getattribute__("unique_identifier"))
+        Blackboard.metadata[remapped_key].write.discard(super().__getattribute__("unique_identifier"))
+        if not (Blackboard.metadata[remapped_key].read | Blackboard.metadata[remapped_key].write):
+            del Blackboard.metadata[remapped_key]
             if clear:
                 try:
-                    del Blackboard.storage[key]
+                    del Blackboard.storage[remapped_key]
                 except KeyError:
                     pass  # perfectly legitimate for a registered key to not exist on the blackboard
+        del super().__getattribute__("remappings")[key]
         self._update_namespaces()
 
 

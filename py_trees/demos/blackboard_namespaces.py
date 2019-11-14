@@ -9,14 +9,14 @@
 
 """
 .. argparse::
-   :module: py_trees.demos.namespaces
+   :module: py_trees.demos.blackboard_namespaces
    :func: command_line_argument_parser
    :prog: py-trees-demo-blackboard-namespaces
 
-.. graphviz:: dot/demo-namespaces.dot
+.. figure:: images/blackboard_namespaces.png
    :align: center
 
-.. image:: images/namespaces.gif
+   Console Screenshot
 """
 
 ##############################################################################
@@ -25,7 +25,6 @@
 
 import argparse
 import py_trees
-import sys
 
 import py_trees.console as console
 
@@ -68,17 +67,6 @@ def command_line_argument_parser():
                                      formatter_class=argparse.RawDescriptionHelpFormatter,
                                      )
     return parser
-
-
-class Nested(object):
-    """
-    A more complex object to interact with on the blackboard.
-    """
-    def __init__(self):
-        self.foo = "bar"
-
-    def __str__(self):
-        return str({"foo": self.foo})
 
 
 ##############################################################################
