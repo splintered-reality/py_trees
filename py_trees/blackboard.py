@@ -642,7 +642,7 @@ class Client(object):
         read (typing.Set[str]): set of absolute key names with read access
         write (typing.Set[str]): set of absolute key names with write access
         required (typing.Set[str]): set of absolute key names required to have data present
-        remappings (typing.Dict[str, str]: absolute key names with their remappings
+        remappings (typing.Dict[str, str]: client key names with blackboard remappings
         namespaces (typing.Set[str]: a cached list of namespaces this client accesses
     """
     def __init__(
@@ -911,17 +911,6 @@ class Client(object):
         except KeyError:
             return False
 
-    def __str__(self):
-        indent = "  "
-        s = console.green + "Blackboard Client" + console.reset + "\n"
-        s += console.white + indent + "Client Data" + console.reset + "\n"
-        keys = ["name", "namespace", "unique_identifier", "read", "write"]
-        s += self._stringify_key_value_pairs(keys, self.__dict__, 2 * indent)
-        s += console.white + indent + "Variables" + console.reset + "\n"
-        keys = self.read | self.write
-        s += self._stringify_key_value_pairs(keys, Blackboard.storage, 2 * indent)
-        return s
-
     def _generate_activity_item(self, key, activity_type, previous_value=None, current_value=None):
         return ActivityItem(
             key=key,
@@ -941,7 +930,27 @@ class Client(object):
                     namespace = "/".join(separated_namespaces[0:index])
                     super().__getattribute__("namespaces").add(namespace)
 
-    def _stringify_key_value_pairs(self, keys, key_value_dict, indent):
+    def __str__(self):
+        indent = "  "
+        s = console.green + "Blackboard Client" + console.reset + "\n"
+        s += console.white + indent + "Client Data" + console.reset + "\n"
+        keys = ["name", "namespace", "unique_identifier", "read", "write"]
+        s += self._stringify_key_value_pairs(keys, self.__dict__, 2 * indent)
+        keys = {k for k, v in self.remappings.items() if k != v}
+        if keys:
+            s += console.white + indent + "Remappings" + console.reset + "\n"
+            s += self._stringify_key_value_pairs(
+                keys=keys,
+                key_value_dict=self.remappings,
+                indent=2*indent,
+                separator=console.right_arrow
+            )
+        s += console.white + indent + "Variables" + console.reset + "\n"
+        keys = self.remappings.values()
+        s += self._stringify_key_value_pairs(keys, Blackboard.storage, 2 * indent)
+        return s
+
+    def _stringify_key_value_pairs(self, keys, key_value_dict, indent, separator=":"):
         s = ""
         max_length = 0
         for key in keys:
@@ -951,13 +960,13 @@ class Client(object):
                 value = key_value_dict[key]
                 lines = ('{0}'.format(value)).split('\n')
                 if len(lines) > 1:
-                    s += console.cyan + indent + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ":\n"
+                    s += console.cyan + indent + '{0: <{1}}'.format(key, max_length + 1) + console.reset + separator + "\n"
                     for line in lines:
                         s += console.yellow + indent + "  {0}\n".format(line) + console.reset
                 else:
-                    s += console.cyan + indent + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ": " + console.yellow + '{0}\n'.format(value) + console.reset
+                    s += console.cyan + indent + '{0: <{1}}'.format(key, max_length + 1) + console.reset + separator + " " + console.yellow + '{0}\n'.format(value) + console.reset
             except KeyError:
-                s += console.cyan + indent + '{0: <{1}}'.format(key, max_length + 1) + console.reset + ": " + console.yellow + "-\n" + console.reset
+                s += console.cyan + indent + '{0: <{1}}'.format(key, max_length + 1) + console.reset + separator + " " + console.yellow + "-\n" + console.reset
         s += console.reset
         return s
 
@@ -1015,7 +1024,7 @@ class Client(object):
             key: str,
             access: common.Access,
             required: bool=False,
-            remap: str=None,
+            remap_to: str=None,
     ):
         """
         Register a key on the blackboard to associate with this client.
@@ -1030,7 +1039,7 @@ class Client(object):
             TypeError if the access argument is of incorrect type
         """
         key = Blackboard.absolute_name(super().__getattribute__("namespace"), key)
-        super().__getattribute__("remappings")[key] = key if remap is None else remap
+        super().__getattribute__("remappings")[key] = key if remap_to is None else remap_to
         Blackboard.metadata.setdefault(key, KeyMetaData())
         if access == common.Access.READ:
             super().__getattribute__("read").add(key)

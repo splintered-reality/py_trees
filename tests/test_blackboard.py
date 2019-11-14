@@ -456,7 +456,7 @@ def test_remappings():
     blackboard.register_key(
         key="/foo/bar/wow",
         access=py_trees.common.Access.WRITE,
-        remap="/parameters/anticipation"
+        remap_to="/parameters/anticipation"
     )
     print(blackboard)
     assert(True)
