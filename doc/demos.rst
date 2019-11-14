@@ -51,6 +51,38 @@ py-trees-demo-blackboard
    :linenos:
    :caption: py_trees/demos/blackboard.py
 
+.. _py-trees-demo-blackboard-namespaces-program:
+
+py-trees-demo-blackboard_namespaces
+-----------------------------------
+
+.. automodule:: py_trees.demos.blackboard_namespaces
+    :members:
+    :special-members:
+    :show-inheritance:
+    :synopsis: demo blackboard namespacing concepts
+
+.. literalinclude:: ../py_trees/demos/blackboard_namespaces.py
+   :language: python
+   :linenos:
+   :caption: py_trees/demos/blackboard_namespaces.py
+
+.. _py-trees-demo-blackboard-remappings-program:
+
+py-trees-demo-blackboard-remappings
+-----------------------------------
+
+.. automodule:: py_trees.demos.blackboard_remappings
+    :members:
+    :special-members:
+    :show-inheritance:
+    :synopsis: demo blackboard key remappings
+
+.. literalinclude:: ../py_trees/demos/blackboard_remappings.py
+   :language: python
+   :linenos:
+   :caption: py_trees/demos/blackboard_remappings.py
+
 .. _py-trees-demo-context-switching-program:
 
 py-trees-demo-context-switching
