@@ -659,7 +659,7 @@ def _generate_text_blackboard(
         def assemble_metadata_line(key, metadata, apply_highlight, indent, key_width):
             s = ""
             s += console.cyan + indent + '{0: <{1}}'.format(key, key_width + 1) + ": "
-            client_uuids = list(set(metadata.read) | set(metadata.write))
+            client_uuids = list(set(metadata.read) | set(metadata.write) | set(metadata.exclusive))
             prefix = ''
             metastrings = []
             for client_uuid in client_uuids:
@@ -673,6 +673,8 @@ def _generate_text_blackboard(
                     metastring += 'r'
                 if client_uuid in metadata.write:
                     metastring += 'w'
+                if client_uuid in metadata.exclusive:
+                    metastring += 'x'
                 metastring += ')'
                 metastrings.append(metastring)
             s += console.yellow + "{}\n".format(', '.join(metastrings))

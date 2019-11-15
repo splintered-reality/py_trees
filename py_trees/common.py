@@ -176,7 +176,8 @@ class Access(enum.Enum):
     """Read access."""
     WRITE = "WRITE"
     """Write access, implicitly also grants read access"""
-    # TODO: EXCLUSIVE_WRITE
+    EXCLUSIVE_WRITE = "EXCLUSIVE_WRITE"
+    """Exclusive lock for writing on the associated key"""
 
 
 class BlackBoxLevel(enum.IntEnum):
