@@ -18,7 +18,7 @@ PyTrees is a python implementation of behaviour trees designed to facilitate the
 
 [![devel][docs-devel-image]][docs-devel] [![2.0.x][docs-2.0.x-image]][docs-2.0.x] [![1.2.x][docs-1.2.x-image]][docs-1.2.x] [![0.6.x][docs-0.6.x-image]][docs-0.6.x]
 
-## Status
+## Releases
 
 * `0.5.x`/`0.6.x` - first open source releases
 * `1.0.x` - first stable release
