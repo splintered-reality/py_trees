@@ -5,15 +5,20 @@ Forthcoming
 -----------
 * ...
 
+2.0.x (2019-11-15) - Blackboards v2!
+------------------------------------
+
 The `2.0.x` release wraps up the experimental blackboard improvements being rolled out
 in `1.3.x` and `1.4.x`. At this point, the changes to the blackboard framework are so
 extensive it makes sense to release it with a major version bump and to consider the
 `1.2.x` release as the official goto release for the `1.x.y` series.
 
+* [blackboard] exclusive write access, `#260 <https://github.com/splintered-reality/py_trees/pull/260>`_
 * [blackboard] key remappings, `#259 <https://github.com/splintered-reality/py_trees/pull/259>`_
 * [blackboard] formalise namespaces with separators, `#256 <https://github.com/splintered-reality/py_trees/pull/256>`_
 * [blackboard] distinguish primitives vs nested for refined read activity detection, `#255 <https://github.com/splintered-reality/py_trees/pull/255>`_
 
+See the 1.3.x and 1.4.x changelog notes for additional details.
 
 1.4.x (2019-11-07)
 ------------------
