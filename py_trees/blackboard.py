@@ -84,6 +84,7 @@ class KeyMetaData(object):
     def __init__(self):
         self.read = set()
         self.write = set()
+        self.exclusive = set()
 
 
 class ActivityType(enum.Enum):
@@ -195,7 +196,7 @@ class Blackboard(object):
     """
     storage = {}  # Dict[str, Any] / key-value storage
     metadata = {}  # Dict[ str, KeyMetaData ] / key-metadata information
-    clients = {}   # Dict[ uuid.UUID, Blackboard] / id-client information
+    clients = {}   # Dict[ uuid.UUID, Client] / id-client information
     activity_stream = None
     separator = "/"
 
@@ -330,7 +331,11 @@ class Blackboard(object):
         keys = set()
         for key in Blackboard.metadata.keys():
             # for sets, | is union, & is intersection
-            key_clients = set(Blackboard.metadata[key].read) | set(Blackboard.metadata[key].write)
+            key_clients = (
+                set(Blackboard.metadata[key].read) |
+                set(Blackboard.metadata[key].write) |
+                set(Blackboard.metadata[key].exclusive)
+            )
             if key_clients & client_ids:
                 keys.add(key)
         return keys
@@ -643,6 +648,7 @@ class Client(object):
         unique_identifier (uuid.UUID): client's unique identifier
         read (typing.Set[str]): set of absolute key names with read access
         write (typing.Set[str]): set of absolute key names with write access
+        exclusive (typing.Set[str]): set of absolute key names with exclusive write access
         required (typing.Set[str]): set of absolute key names required to have data present
         remappings (typing.Dict[str, str]: client key names with blackboard remappings
         namespaces (typing.Set[str]: a cached list of namespaces this client accesses
@@ -689,6 +695,7 @@ class Client(object):
 
         super().__setattr__("read", set())
         super().__setattr__("write", set())
+        super().__setattr__("exclusive", set())
         super().__setattr__("required", set())
         super().__setattr__("remappings", {})
         Blackboard.clients[
@@ -714,7 +721,7 @@ class Client(object):
         """
         # print("__setattr__ [{}][{}]".format(name, value))
         name = Blackboard.absolute_name(super().__getattribute__("namespace"), name)
-        if name not in super().__getattribute__("write"):
+        if name not in super().__getattribute__("write") | super().__getattribute__("exclusive"):
             if Blackboard.activity_stream is not None:
                 Blackboard.activity_stream.push(
                     self._generate_activity_item(name, ActivityType.ACCESS_DENIED)
@@ -752,7 +759,16 @@ class Client(object):
         """
         # print("__getattr__ [{}]".format(name))
         name = Blackboard.absolute_name(super().__getattribute__("namespace"), name)
-        if name not in (super().__getattribute__("read") | super().__getattribute__("write")):
+        all_keys = (
+            super().__getattribute__("read") |
+            super().__getattribute__("write") |
+            super().__getattribute__("exclusive")
+        )
+        write_keys = (
+            super().__getattribute__("write") |
+            super().__getattribute__("exclusive")
+        )
+        if name not in all_keys:
             if name in super().__getattribute__("namespaces"):
                 return IntermediateVariableFetcher(blackboard=self, namespace=name)
             if Blackboard.activity_stream is not None:
@@ -762,7 +778,7 @@ class Client(object):
             raise AttributeError("client '{}' does not have read/write access to '{}'".format(self.name, name))
         remapped_name = super().__getattribute__("remappings")[name]
         try:
-            if name in super().__getattribute__("write"):
+            if name in write_keys:
                 if Blackboard.activity_stream is not None:
                     if utilities.is_primitive(Blackboard.storage[remapped_name]):
                         activity_type = ActivityType.READ
@@ -817,11 +833,15 @@ class Client(object):
             AttributeError: if the client does not have write access to the variable
             KeyError: if the variable does not yet exist on the blackboard
         """
+        write_keys = (
+            super().__getattribute__("write") |
+            super().__getattribute__("exclusive")
+        )
         name = Blackboard.absolute_name(super().__getattribute__("namespace"), name)
         name_components = name.split('.')
         key = name_components[0]
         key_attributes = '.'.join(name_components[1:])
-        if key not in super().__getattribute__("write"):
+        if key not in write_keys:
             if Blackboard.activity_stream is not None:
                 Blackboard.activity_stream.push(
                     self._generate_activity_item(key, ActivityType.ACCESS_DENIED)
@@ -929,7 +949,12 @@ class Client(object):
 
     def _update_namespaces(self):
         super().__getattribute__("namespaces").clear()
-        for key in super().__getattribute__("read") | super().__getattribute__("write"):
+        all_keys = (
+            super().__getattribute__("read") |
+            super().__getattribute__("write") |
+            super().__getattribute__("exclusive")
+        )
+        for key in all_keys:
             separated_namespaces = key.split("/")[:-1]
             if len(separated_namespaces) > 1:
                 for index in range(2, len(separated_namespaces) + 1):
@@ -940,7 +965,7 @@ class Client(object):
         indent = "  "
         s = console.green + "Blackboard Client" + console.reset + "\n"
         s += console.white + indent + "Client Data" + console.reset + "\n"
-        keys = ["name", "namespace", "unique_identifier", "read", "write"]
+        keys = ["name", "namespace", "unique_identifier", "read", "write", "exclusive"]
         s += self._stringify_key_value_pairs(keys, self.__dict__, 2 * indent)
         keys = {k for k, v in self.remappings.items() if k != v}
         if keys:
@@ -995,7 +1020,7 @@ class Client(object):
         Args:
             clear: remove key-values pairs from the blackboard
         """
-        for key in (set(self.read) | set(self.write)):
+        for key in (set(self.read) | set(self.write) | set(self.exclusive)):
             self.unregister_key(key=key, clear=clear)
 
     def verify_required_keys_exist(self):
@@ -1033,6 +1058,7 @@ class Client(object):
         the client, access via the specified 'key' remains the same.
 
         Raises:
+            AttributeError if exclusive write access is requested, but write access has already been given to another client
             TypeError if the access argument is of incorrect type
         """
         key = Blackboard.absolute_name(super().__getattribute__("namespace"), key)
@@ -1044,7 +1070,35 @@ class Client(object):
             Blackboard.metadata[remapped_key].read.add(super().__getattribute__("unique_identifier"))
         elif access == common.Access.WRITE:
             super().__getattribute__("write").add(key)
+            conflicts = set()
+            try:
+                for unique_identifier in Blackboard.metadata[remapped_key].exclusive:
+                    conflicts.add(Blackboard.clients[unique_identifier].name)
+                    if conflicts:
+                        raise AttributeError("'{}' requested write on key '{}', but this key already associated with an exclusive writer[{}]".format(
+                            super().__getattribute__("name"),
+                            remapped_key,
+                            conflicts)
+                        )
+            except KeyError:
+                pass  # no readers or writers on the key yet
             Blackboard.metadata[remapped_key].write.add(super().__getattribute__("unique_identifier"))
+        elif access == common.Access.EXCLUSIVE_WRITE:
+            super().__getattribute__("exclusive").add(key)
+            try:
+                key_metadata = Blackboard.metadata[remapped_key]
+                conflicts = set()
+                for unique_identifier in (key_metadata.write | key_metadata.exclusive):
+                    conflicts.add(Blackboard.clients[unique_identifier].name)
+                if conflicts:
+                    raise AttributeError("'{}' requested exclusive write on key '{}', but this key is already associated [{}]".format(
+                        super().__getattribute__("name"),
+                        remapped_key,
+                        conflicts)
+                    )
+            except KeyError:
+                pass  # no readers or writers on the key yet
+            Blackboard.metadata[remapped_key].exclusive.add(super().__getattribute__("unique_identifier"))
         else:
             raise TypeError("access argument is of incorrect type [{}]".format(type(access)))
         if required:
@@ -1066,9 +1120,15 @@ class Client(object):
         remapped_key = super().__getattribute__("remappings")[key]
         super().__getattribute__("read").discard(key)  # doesn't throw exceptions if it not present
         super().__getattribute__("write").discard(key)
+        super().__getattribute__("exclusive").discard(key)
         Blackboard.metadata[remapped_key].read.discard(super().__getattribute__("unique_identifier"))
         Blackboard.metadata[remapped_key].write.discard(super().__getattribute__("unique_identifier"))
-        if not (Blackboard.metadata[remapped_key].read | Blackboard.metadata[remapped_key].write):
+        Blackboard.metadata[remapped_key].exclusive.discard(super().__getattribute__("unique_identifier"))
+        if not (
+            Blackboard.metadata[remapped_key].read |
+            Blackboard.metadata[remapped_key].write |
+            Blackboard.metadata[remapped_key].exclusive
+        ):
             del Blackboard.metadata[remapped_key]
             if clear:
                 try:

@@ -403,6 +403,7 @@ def test_required_keys():
         blackboard.verify_required_keys_exist()
     except KeyError:
         assert(False)
+    blackboard.unregister()
 
 
 def test_absolute_name():
@@ -446,6 +447,7 @@ def test_namespaced_dot_access():
     blackboard.foo.bar.wow = True
     assert(Blackboard.exists("/foo/bar/wow"))
     assert(blackboard.foo.bar.wow)
+    blackboard.unregister()
 
 
 def test_remappings():
@@ -490,3 +492,30 @@ def test_remappings():
 
     print(py_trees.display.unicode_blackboard())
     print(blackboard)
+    blackboard.unregister()
+
+
+def test_exclusive_write():
+    console.banner("Exclusive Write")
+    blackboard = py_trees.blackboard.Client(name="Blackboard")
+    blackboard.register_key(key="dude", access=py_trees.common.Access.EXCLUSIVE_WRITE)
+    print("setters & getters...")
+    blackboard.dude = "Bob"
+    print("  blackboard.dude == 'Bob'")
+    assert(blackboard.dude == "Bob")
+    blackboard.unregister(clear=True)
+
+    print("exclusive fail...")
+    blackboard = py_trees.blackboard.Client(name="Blackboard")
+    blackboard.register_key(key="dude", access=py_trees.common.Access.WRITE)
+    blackboard.register_key(key="dudette", access=py_trees.common.Access.EXCLUSIVE_WRITE)
+    blackboard_exclusive = py_trees.blackboard.Client(name="Blackboard X")
+    with nose.tools.assert_raises_regexp(AttributeError, "requested exclusive write"):
+        print("Exclusive write requested, but already has a writer - expecting an AttributeError")
+        blackboard_exclusive.register_key(key="dude", access=py_trees.common.Access.EXCLUSIVE_WRITE)
+    with nose.tools.assert_raises_regexp(AttributeError, "requested exclusive write"):
+        print("Exclusive write requested, but already has a writer - expecting an AttributeError")
+        blackboard_exclusive.register_key(key="dudette", access=py_trees.common.Access.EXCLUSIVE_WRITE)
+    with nose.tools.assert_raises_regexp(AttributeError, "requested write on"):
+        print("Write requested, but already has an exclusive writer - expecting an AttributeError")
+        blackboard_exclusive.register_key(key="dudette", access=py_trees.common.Access.WRITE)
