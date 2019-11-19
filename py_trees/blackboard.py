@@ -1068,12 +1068,11 @@ class Client(object):
         key = Blackboard.absolute_name(super().__getattribute__("namespace"), key)
         super().__getattribute__("remappings")[key] = key if remap_to is None else remap_to
         remapped_key = super().__getattribute__("remappings")[key]
-        Blackboard.metadata.setdefault(remapped_key, KeyMetaData())
         if access == common.Access.READ:
             super().__getattribute__("read").add(key)
+            Blackboard.metadata.setdefault(remapped_key, KeyMetaData())
             Blackboard.metadata[remapped_key].read.add(super().__getattribute__("unique_identifier"))
         elif access == common.Access.WRITE:
-            super().__getattribute__("write").add(key)
             conflicts = set()
             try:
                 for unique_identifier in Blackboard.metadata[remapped_key].exclusive:
@@ -1086,9 +1085,10 @@ class Client(object):
                         )
             except KeyError:
                 pass  # no readers or writers on the key yet
+            super().__getattribute__("write").add(key)
+            Blackboard.metadata.setdefault(remapped_key, KeyMetaData())
             Blackboard.metadata[remapped_key].write.add(super().__getattribute__("unique_identifier"))
         elif access == common.Access.EXCLUSIVE_WRITE:
-            super().__getattribute__("exclusive").add(key)
             try:
                 key_metadata = Blackboard.metadata[remapped_key]
                 conflicts = set()
@@ -1102,6 +1102,8 @@ class Client(object):
                     )
             except KeyError:
                 pass  # no readers or writers on the key yet
+            super().__getattribute__("exclusive").add(key)
+            Blackboard.metadata.setdefault(remapped_key, KeyMetaData())
             Blackboard.metadata[remapped_key].exclusive.add(super().__getattribute__("unique_identifier"))
         else:
             raise TypeError("access argument is of incorrect type [{}]".format(type(access)))
@@ -1120,8 +1122,12 @@ class Client(object):
         Raises:
             KeyError if the key has not been previously registered
         """
+        print("DJS: Unregister Key")
+        print("DJS: Unregister Key: {}".format(key))
         key = Blackboard.absolute_name(super().__getattribute__("namespace"), key)
+        print("DJS: Unregister Key: {}".format(key))
         remapped_key = super().__getattribute__("remappings")[key]
+        print("DJS: Unregister Remapped Key: {}".format(remapped_key))
         super().__getattribute__("read").discard(key)  # doesn't throw exceptions if it not present
         super().__getattribute__("write").discard(key)
         super().__getattribute__("exclusive").discard(key)

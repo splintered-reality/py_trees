@@ -509,7 +509,7 @@ def test_exclusive_write():
     blackboard = py_trees.blackboard.Client(name="Blackboard")
     blackboard.register_key(key="dude", access=py_trees.common.Access.WRITE)
     blackboard.register_key(key="dudette", access=py_trees.common.Access.EXCLUSIVE_WRITE)
-    blackboard_exclusive = py_trees.blackboard.Client(name="Blackboard X")
+    blackboard_exclusive = py_trees.blackboard.Client(name="BlackboardX")
     with nose.tools.assert_raises_regexp(AttributeError, "requested exclusive write"):
         print("Exclusive write requested, but already has a writer - expecting an AttributeError")
         blackboard_exclusive.register_key(key="dude", access=py_trees.common.Access.EXCLUSIVE_WRITE)
