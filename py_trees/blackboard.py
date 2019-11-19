@@ -230,6 +230,7 @@ class Blackboard(object):
         Return:
             The stored value for the given variable
         """
+        variable_name = Blackboard.absolute_name(Blackboard.separator, variable_name)
         name_components = variable_name.split('.')
         key = name_components[0]
         key_attributes = '.'.join(name_components[1:])
@@ -257,6 +258,7 @@ class Blackboard(object):
         Raises:
             AttributeError: if it is attempting to set a nested attribute tha does not exist.
         """
+        variable_name = Blackboard.absolute_name(Blackboard.separator, variable_name)
         name_components = variable_name.split('.')
         key = name_components[0]
         key_attributes = '.'.join(name_components[1:])
@@ -278,6 +280,7 @@ class Blackboard(object):
             True if the variable was removed, False if it was already absent
         """
         try:
+            key = Blackboard.absolute_name(Blackboard.separator, key)
             del Blackboard.storage[key]
             return True
         except KeyError:
@@ -295,6 +298,7 @@ class Blackboard(object):
             AttributeError: if the client does not have read access to the variable
         """
         try:
+            name = Blackboard.absolute_name(Blackboard.separator, name)
             unused_value = Blackboard.get(name)
             return True
         except KeyError:
