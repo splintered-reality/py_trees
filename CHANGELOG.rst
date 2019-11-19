@@ -5,6 +5,11 @@ Forthcoming
 -----------
 * ...
 
+2.0.1 (2019-11-19)
+------------------
+* [blackboard] static methods have a namespace too (root), use absolute names, `#261 <https://github.com/splintered-reality/py_trees/pull/261>`_
+* [blackboard] do not register keys on the client when xclusive write aborts the process, `#261 <https://github.com/splintered-reality/py_trees/pull/261>`_
+
 2.0.x (2019-11-15) - Blackboards v2!
 ------------------------------------
 
@@ -12,6 +17,8 @@ The `2.0.x` release wraps up the experimental blackboard improvements being roll
 in `1.3.x` and `1.4.x`. At this point, the changes to the blackboard framework are so
 extensive it makes sense to release it with a major version bump and to consider the
 `1.2.x` release as the official goto release for the `1.x.y` series.
+
+**New Features**
 
 * [blackboard] exclusive write access, `#260 <https://github.com/splintered-reality/py_trees/pull/260>`_
 * [blackboard] key remappings, `#259 <https://github.com/splintered-reality/py_trees/pull/259>`_
