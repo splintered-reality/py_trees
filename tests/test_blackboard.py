@@ -492,7 +492,7 @@ def test_remappings():
 
     print(py_trees.display.unicode_blackboard())
     print(blackboard)
-    blackboard.unregister()
+    blackboard.unregister(clear=True)
 
 
 def test_exclusive_write():
@@ -509,7 +509,7 @@ def test_exclusive_write():
     blackboard = py_trees.blackboard.Client(name="Blackboard")
     blackboard.register_key(key="dude", access=py_trees.common.Access.WRITE)
     blackboard.register_key(key="dudette", access=py_trees.common.Access.EXCLUSIVE_WRITE)
-    blackboard_exclusive = py_trees.blackboard.Client(name="Blackboard X")
+    blackboard_exclusive = py_trees.blackboard.Client(name="BlackboardX")
     with nose.tools.assert_raises_regexp(AttributeError, "requested exclusive write"):
         print("Exclusive write requested, but already has a writer - expecting an AttributeError")
         blackboard_exclusive.register_key(key="dude", access=py_trees.common.Access.EXCLUSIVE_WRITE)
@@ -519,3 +519,20 @@ def test_exclusive_write():
     with nose.tools.assert_raises_regexp(AttributeError, "requested write on"):
         print("Write requested, but already has an exclusive writer - expecting an AttributeError")
         blackboard_exclusive.register_key(key="dudette", access=py_trees.common.Access.WRITE)
+
+    blackboard.unregister(clear=True)
+    blackboard_exclusive.unregister(clear=True)
+
+
+def test_blackboard_static_names():
+    console.banner("Test Absolute Names with Static Methods")
+    print("Set 'foo'")
+    Blackboard.set("foo", "foo")
+    print("Get 'foo' [{}]".format(Blackboard.get("foo")))
+    assert(Blackboard.get("foo") == "foo")
+    assert(Blackboard.get("/foo") == "foo")
+    print("Set '/bar'")
+    Blackboard.set("/bar", "bar")
+    print("Get 'bar' [{}]".format(Blackboard.get("bar")))
+    assert(Blackboard.get("bar") == "bar")
+    assert(Blackboard.get("/bar") == "bar")
