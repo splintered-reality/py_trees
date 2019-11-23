@@ -3,7 +3,7 @@ Release Notes
 
 Forthcoming
 -----------
-* ...
+* [trees] play nicely, reset signal handlers after setup, `#262 <https://github.com/splintered-reality/py_trees/pull/262>`_
 
 2.0.1 (2019-11-19)
 ------------------
