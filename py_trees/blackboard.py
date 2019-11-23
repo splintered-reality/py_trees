@@ -1122,12 +1122,8 @@ class Client(object):
         Raises:
             KeyError if the key has not been previously registered
         """
-        print("DJS: Unregister Key")
-        print("DJS: Unregister Key: {}".format(key))
         key = Blackboard.absolute_name(super().__getattribute__("namespace"), key)
-        print("DJS: Unregister Key: {}".format(key))
         remapped_key = super().__getattribute__("remappings")[key]
-        print("DJS: Unregister Remapped Key: {}".format(remapped_key))
         super().__getattribute__("read").discard(key)  # doesn't throw exceptions if it not present
         super().__getattribute__("write").discard(key)
         super().__getattribute__("exclusive").discard(key)

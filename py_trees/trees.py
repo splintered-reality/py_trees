@@ -71,27 +71,23 @@ def setup(root: behaviour.Behaviour,
     # SIGUSR1 is a better choice since it's a user defined operation, but these
     # are not available on windows, so overload one of the standard definitions
     _SIGNAL = signal.SIGINT
-    print("DJS: PyTrees setup")
 
     def on_timer_timed_out():
         os.kill(os.getpid(), _SIGNAL)
 
     def signal_handler(unused_signum, unused_frame, original_signal_handler):
         signal.signal(_SIGNAL, original_signal_handler)
-        # signal.signal(_SIGNAL, signal.SIG_DFL)
-        raise RuntimeError("tree setup timed out")
+        raise RuntimeError("tree setup interrupted or timed out")
 
     def visited_setup():
         for node in root.iterate():
             node.setup(**kwargs)
-            print("Node Name: {}".format(node.name))
             if visitor is not None:
                 node.visit(visitor)
 
     if timeout == common.Duration.INFINITE:
         visited_setup()
     else:
-        print("DJS: PyTrees setup timeout: {}".format(timeout))
         original_signal_handler = signal.getsignal(_SIGNAL)
         signal.signal(
             _SIGNAL,
