@@ -667,6 +667,7 @@ class Client(object):
             namespace: prefix to apply to key/variable name operations
             read: list of keys for which this client has read access
             write: list of keys for which this client has write access
+            exclusive: list of keys for which this client has exclusive write access
 
         Raises:
             TypeError: if the provided name is not of type str

@@ -4,6 +4,7 @@ Release Notes
 Forthcoming
 -----------
 * [trees] play nicely, reset signal handlers after setup, `#262 <https://github.com/splintered-reality/py_trees/pull/262>`_
+* [visitors] bugfix the snapshot visitor to look for exclusive write keys as well
 
 2.0.1 (2019-11-19)
 ------------------

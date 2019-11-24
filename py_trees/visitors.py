@@ -141,7 +141,7 @@ class SnapshotVisitor(VisitorBase):
         # blackboards
         for blackboard in behaviour.blackboards:
             self.visited_blackboard_client_ids.add(blackboard.id())
-            self.visited_blackboard_keys = self.visited_blackboard_keys | blackboard.read | blackboard.write
+            self.visited_blackboard_keys = self.visited_blackboard_keys | blackboard.read | blackboard.write | blackboard.exclusive
 
 
 class DisplaySnapshotVisitor(SnapshotVisitor):
