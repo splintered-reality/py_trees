@@ -70,7 +70,14 @@ def setup(root: behaviour.Behaviour,
     """
     # SIGUSR1 is a better choice since it's a user defined operation, but these
     # are not available on windows, so overload one of the standard definitions
-    _SIGNAL = signal.SIGINT
+    try:
+        _SIGNAL = signal.SIGUSR1
+    except AttributeError:  # windows...
+        # SIGINT can get you into trouble if for example, you are using a
+        # process manager that plays shenanigans with SIGINT. Nonetheless,
+        # it will work in most situations. If a windows user is running into
+        # problems, work with them to resolve it.
+        _SIGNAL = signal.SIGINT
 
     def on_timer_timed_out():
         os.kill(os.getpid(), _SIGNAL)

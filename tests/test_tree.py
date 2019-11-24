@@ -556,7 +556,7 @@ def test_tree_setup():
     print("\n--------- Assertions ---------\n")
     print(console.cyan + "Short Timeout: " + console.yellow + "No Visitor" + console.reset)
     with nose.tools.assert_raises(RuntimeError) as context:
-        tree.setup(timeout=2*duration)
+        tree.setup(timeout=2 * duration)
     print("RuntimeError has message with substring 'timed out'")
     assert("timed out" in str(context.exception))
     active_threads = threading.active_count()
@@ -565,7 +565,7 @@ def test_tree_setup():
     print("\n--------- Assertions ---------\n")
     print(console.cyan + "Short timeout: " + console.yellow + "No Visitor" + console.reset)
     try:
-        tree.setup(timeout=4*duration)
+        tree.setup(timeout=4 * duration)
     except RuntimeError:
         assert False, "should not have timed out"
     active_threads = threading.active_count()
@@ -575,7 +575,7 @@ def test_tree_setup():
     print(console.cyan + "Long Timeout: " + console.yellow + "With Visitor" + console.reset)
     visitor = SetupVisitor()
     with nose.tools.assert_raises(RuntimeError) as context:
-        tree.setup(timeout=2*duration, visitor=visitor)
+        tree.setup(timeout=2 * duration, visitor=visitor)
     print("RuntimeError has message with substring 'timed out'")
     assert("timed out" in str(context.exception))
     active_threads = threading.active_count()
@@ -585,7 +585,7 @@ def test_tree_setup():
     print(console.cyan + "Long timeout: " + console.yellow + "With Visitor" + console.reset)
     visitor = SetupVisitor()
     try:
-        tree.setup(timeout=4*duration, visitor=visitor)
+        tree.setup(timeout=4 * duration, visitor=visitor)
     except RuntimeError:
         assert False, "should not have timed out"
     active_threads = threading.active_count()
@@ -638,7 +638,7 @@ def test_pre_post_tick_activity_sequence():
         "visitor.finalise()",
         "post_tick_handler",
         "one_shot_post_tick_handler"
-        ]
+    ]
     print("")
     assert(len(breadcrumbs) == len(expected_breadcrumbs))
     for expected, actual in zip(expected_breadcrumbs, breadcrumbs):
