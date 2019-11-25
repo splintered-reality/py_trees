@@ -87,10 +87,14 @@ def setup(root: behaviour.Behaviour,
         raise RuntimeError("tree setup interrupted or timed out")
 
     def visited_setup():
+        if visitor is not None:
+            visitor.initialise()
         for node in root.iterate():
             node.setup(**kwargs)
             if visitor is not None:
                 node.visit(visitor)
+        if visitor is not None:
+            visitor.finalise()
 
     if timeout == common.Duration.INFINITE:
         visited_setup()
@@ -102,11 +106,13 @@ def setup(root: behaviour.Behaviour,
                 signal_handler,
                 original_signal_handler=original_signal_handler)
         )
-        timer = threading.Timer(interval=timeout, function=on_timer_timed_out)
-        timer.start()
-        visited_setup()
-        timer.cancel()  # this only works if the timer is still waiting
-        signal.signal(_SIGNAL, original_signal_handler)
+        try:
+            timer = threading.Timer(interval=timeout, function=on_timer_timed_out)
+            timer.start()
+            visited_setup()
+        finally:
+            timer.cancel()  # this only works if the timer is still waiting
+            signal.signal(_SIGNAL, original_signal_handler)
 
 ##############################################################################
 # Trees
