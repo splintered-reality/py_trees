@@ -5,7 +5,7 @@ Forthcoming
 -----------
 * ...
 
-2.0.2 (2019-11-24)
+2.0.3 (2019-11-24)
 ------------------
 * [trees] revert to using user signals if available to avoid shenanigans with SIGINT, `#264 <https://github.com/splintered-reality/py_trees/pull/264>`_
 * [trees] play nicely, reset signal handlers after setup, `#262 <https://github.com/splintered-reality/py_trees/pull/262>`_
