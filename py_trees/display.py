@@ -808,19 +808,24 @@ def unicode_blackboard(
 
 def unicode_blackboard_activity_stream(
         activity_stream: typing.List[blackboard.ActivityItem]=None,
-        indent: int=0):
+        indent: int=0,
+        show_title: bool=True):
     """
     Pretty print the blackboard stream to console.
 
     Args:
         activity_stream: the log of activity, if None, get the entire activity stream
         indent: the number of characters to indent the blackboard
+        show_title: include the title in the output
     """
     symbols = unicode_symbols if console.has_unicode() else ascii_symbols
     space = symbols['space']
     if activity_stream is None:
         activity_stream = blackboard.Blackboard.activity_stream
-    s = space * indent + console.green + "Blackboard Activity Stream" + console.reset + "\n"
+    if show_title:
+        s = space * indent + console.green + "Blackboard Activity Stream" + console.reset + "\n"
+    else:
+        s = ""
     if activity_stream is not None:
         key_width = 0
         client_width = 0

@@ -3,7 +3,7 @@ Release Notes
 
 Forthcoming
 -----------
-* ...
+* [display] optional show_title in unicode_blackboard_activity_stream
 
 2.0.3 (2019-11-24)
 ------------------
