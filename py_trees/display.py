@@ -806,22 +806,23 @@ def unicode_blackboard(
     return lines
 
 
-def unicode_blackboard_activity_stream(
-        activity_stream: typing.List[blackboard.ActivityItem]=None,
-        indent: int=0,
-        show_title: bool=True):
+def _generate_text_activity(
+    activity_stream: typing.List[blackboard.ActivityItem]=None,
+    show_title: bool=True,
+    indent: int=0,
+    symbols: typing.Dict[str, str]=None
+) -> str:
     """
-    Pretty print the blackboard stream to console.
+    Generator for the various formatted outputs (ascii, unicode, xhtml).
 
     Args:
         activity_stream: the log of activity, if None, get the entire activity stream
         indent: the number of characters to indent the blackboard
         show_title: include the title in the output
     """
-    symbols = unicode_symbols if console.has_unicode() else ascii_symbols
     space = symbols['space']
     if activity_stream is None:
-        activity_stream = blackboard.Blackboard.activity_stream
+        activity_stream = blackboard.Blackboard.activity_stream.data
     if show_title:
         s = space * indent + console.green + "Blackboard Activity Stream" + console.reset + "\n"
     else:
@@ -829,17 +830,17 @@ def unicode_blackboard_activity_stream(
     if activity_stream is not None:
         key_width = 0
         client_width = 0
-        for item in activity_stream.data:
+        for item in activity_stream:
             key_width = len(item.key) if len(item.key) > key_width else key_width
             client_width = len(item.client_name) if len(item.client_name) > client_width else client_width
         client_width = min(client_width, 20)
         type_width = len("ACCESS_DENIED")
         value_width = 80 - key_width - 3 - type_width - 3 - client_width - 3
-        for item in activity_stream.data:
+        for item in activity_stream:
             s += console.cyan + space * (4 + indent)
             s += "{0: <{1}}:".format(item.key, key_width + 1) + space
             s += console.yellow
-            s += "{0: <{1}}".format(item.activity_type.value, type_width) + space
+            s += "{0: <{1}}".format(item.activity_type, type_width) + space
             s += console.white + "|" + space
             s += "{0: <{1}}".format(
                 utilities.truncate(
@@ -847,39 +848,39 @@ def unicode_blackboard_activity_stream(
                     client_width),
                 client_width) + space
             s += "|" + space
-            if item.activity_type == blackboard.ActivityType.READ:
+            if item.activity_type == blackboard.ActivityType.READ.value:
                 s += symbols["left_arrow"] + space + "{}\n".format(
                     utilities.truncate(str(item.current_value), value_width)
                 )
-            elif item.activity_type == blackboard.ActivityType.WRITE:
+            elif item.activity_type == blackboard.ActivityType.WRITE.value:
                 s += console.green
                 s += symbols["right_arrow"] + space
                 s += "{}\n".format(
                     utilities.truncate(str(item.current_value), value_width)
                 )
-            elif item.activity_type == blackboard.ActivityType.ACCESSED:
+            elif item.activity_type == blackboard.ActivityType.ACCESSED.value:
                 s += console.yellow
                 s += symbols["left_right_arrow"] + space
                 s += "{}\n".format(
                     utilities.truncate(str(item.current_value), value_width)
                 )
-            elif item.activity_type == blackboard.ActivityType.ACCESS_DENIED:
+            elif item.activity_type == blackboard.ActivityType.ACCESS_DENIED.value:
                 s += console.red
                 s += console.multiplication_x + space
                 s += "client has no read/write access\n"
-            elif item.activity_type == blackboard.ActivityType.NO_KEY:
+            elif item.activity_type == blackboard.ActivityType.NO_KEY.value:
                 s += console.red
                 s += console.multiplication_x + space
                 s += "key does not yet exist\n"
-            elif item.activity_type == blackboard.ActivityType.NO_OVERWRITE:
+            elif item.activity_type == blackboard.ActivityType.NO_OVERWRITE.value:
                 s += console.yellow
                 s += console.forbidden_circle + space
                 s += "{}\n".format(
                     utilities.truncate(str(item.current_value), value_width)
                 )
-            elif item.activity_type == blackboard.ActivityType.UNSET:
+            elif item.activity_type == blackboard.ActivityType.UNSET.value:
                 s += "\n"
-            elif item.activity_type == blackboard.ActivityType.INITIALISED:
+            elif item.activity_type == blackboard.ActivityType.INITIALISED.value:
                 s += console.green
                 s += symbols["right_arrow"] + space
                 s += "{}\n".format(
@@ -889,4 +890,25 @@ def unicode_blackboard_activity_stream(
                 s += "unknown operation\n"
         s = s.rstrip("\n")
         s += console.reset
-    return s
+        return s
+
+
+def unicode_blackboard_activity_stream(
+    activity_stream: typing.List[blackboard.ActivityItem]=None,
+    indent: int=0,
+    show_title: bool=True
+):
+    """
+    Pretty print the blackboard stream to console.
+
+    Args:
+        activity_stream: the log of activity, if None, get the entire activity stream
+        indent: the number of characters to indent the blackboard
+        show_title: include the title in the output
+    """
+    return _generate_text_activity(
+        activity_stream=activity_stream,
+        show_title=show_title,
+        indent=indent,
+        symbols=unicode_symbols if console.has_unicode() else ascii_symbols
+    )
