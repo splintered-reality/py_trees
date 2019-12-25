@@ -305,7 +305,7 @@ def test_activity_stream():
         py_trees.blackboard.ActivityType.UNSET,
     ]
     for item, expected in zip(Blackboard.activity_stream.data, expected_types):
-        assert(item.activity_type == expected)
+        assert(item.activity_type == expected.value)
     blackboard.unregister(clear=True)
 
 

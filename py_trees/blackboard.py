@@ -125,7 +125,7 @@ class ActivityItem(object):
             key,
             client_name: str,
             client_id: uuid.UUID,
-            activity_type: ActivityType,
+            activity_type: str,
             previous_value: typing.Any=None,
             current_value: typing.Any=None):
         # TODO validity checks for values passed/not passed on the
@@ -947,7 +947,8 @@ class Client(object):
             key=key,
             client_name=super().__getattribute__("name"),
             client_id=super().__getattribute__("unique_identifier"),
-            activity_type=activity_type,
+            # use strings here, so displaying the streams is agnostic of the enum
+            activity_type=activity_type.value,
             previous_value=previous_value,
             current_value=current_value
         )
