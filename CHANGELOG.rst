@@ -5,6 +5,10 @@ Forthcoming
 -----------
 * ...
 
+2.0.5 (2019-12-25)
+------------------
+* [display] enum agnostic display for local and remote activity view displays
+
 2.0.4 (2019-11-25)
 ------------------
 * [display] optional show_title in unicode_blackboard_activity_stream
