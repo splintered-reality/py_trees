@@ -1025,17 +1025,30 @@ class Client(object):
             current_value=current_value
         )
 
-    def _update_namespaces(self):
-        super().__getattribute__("namespaces").clear()
-        for key in itertools.chain(
-            super().__getattribute__("read"),
-            super().__getattribute__("write"),
-            super().__getattribute__("exclusive")
-        ):
-            namespace = key.rsplit("/", 1)[0]
+    def _update_namespaces(self, added_key=None):
+        """
+        Update the namespace cache.
+
+        Args:
+            added_key: hint on the most recent operation to enable an smart check/rebuild
+        """
+        if added_key is not None:
+            namespace = added_key.rsplit("/", 1)[0]
             while namespace:
                 super().__getattribute__("namespaces").add(namespace)
                 namespace = namespace.rsplit("/", 1)[0]
+        else:
+            # completely rebuild
+            super().__getattribute__("namespaces").clear()
+            for key in itertools.chain(
+                super().__getattribute__("read"),
+                super().__getattribute__("write"),
+                super().__getattribute__("exclusive")
+            ):
+                namespace = key.rsplit("/", 1)[0]
+                while namespace:
+                    super().__getattribute__("namespaces").add(namespace)
+                    namespace = namespace.rsplit("/", 1)[0]
 
     def __str__(self):
         indent = "  "
@@ -1213,7 +1226,7 @@ class Client(object):
             raise TypeError("access argument is of incorrect type [{}]".format(type(access)))
         if required:
             super().__getattribute__("required").add(key)
-        self._update_namespaces()
+        self._update_namespaces(added_key=key)
 
     def unregister_key(
             self,
