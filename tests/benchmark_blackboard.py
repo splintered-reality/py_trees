@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # License: BSD
 #   https://raw.githubusercontent.com/splintered-reality/py_trees/devel/LICENSE
@@ -8,7 +8,6 @@
 # Imports
 ##############################################################################
 
-import nose
 import time
 
 import py_trees
@@ -49,7 +48,7 @@ class create_blackboards(object):
 ##############################################################################
 
 
-def test_registration():
+def benchmark_registration():
     console.banner("Registration Benchmarks (x1000)")
     print("No Remaps")
     with create_blackboards() as (root, parameters):
@@ -77,10 +76,9 @@ def test_registration():
                 )
             duration = time.monotonic() - start_time
             print(" - " + console.cyan + "{0: <{1}}".format(blackboard.name, width) + console.reset + ": " + console.yellow + "{0:.3f}".format(duration) + console.reset)
-    assert(True)
 
 
-def test_read():
+def benchmark_read():
     console.banner("Read Benchmarks (x1000)")
 
     def _impl(with_remaps=False):
@@ -134,10 +132,9 @@ def test_read():
                 print(" - " + console.cyan + "{0: <{1}}".format(blackboard.name, width) + console.reset + ": " + console.yellow + "{0:.3f}".format(duration) + console.reset)
     _impl(with_remaps=False)
     _impl(with_remaps=True)
-    assert(True)
 
 
-def test_write():
+def benchmark_write():
     console.banner("Write Benchmarks (x1000)")
 
     def _impl(with_remaps=False):
@@ -184,4 +181,13 @@ def test_write():
                 print(" - " + console.cyan + "{0: <{1}}".format(blackboard.name, width) + console.reset + ": " + console.yellow + "{0:.3f}".format(duration) + console.reset)
     _impl(with_remaps=False)
     _impl(with_remaps=True)
-    assert(True)
+
+##############################################################################
+# Main
+##############################################################################
+
+
+if __name__ == '__main__':
+    benchmark_registration()
+    benchmark_read()
+    benchmark_write()

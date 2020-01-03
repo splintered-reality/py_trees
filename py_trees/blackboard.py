@@ -391,7 +391,8 @@ class Blackboard(object):
             '/' + '/foo' = '/foo'
             '/foo' + 'bar' = '/foo/bar'
             '/foo/' + 'bar' = '/foo/bar'
-            '/foo' + '/bar' = '/foo/bar'
+            '/foo' + '/foo/bar' = '/foo/bar'
+            '/foo' + '/bar' => ValueError
             '/foo' + 'foo/bar' = '/foo/foo/bar'
 
         Args:
@@ -401,6 +402,9 @@ class Blackboard(object):
         Returns:
             the absolute name
 
+        Raises:
+            ValueError if name is absolute and isn't rooted in the namespace
+
         .. warning::
 
             To expedite the method call (it's used with high frequency
@@ -408,8 +412,13 @@ class Blackboard(object):
             the namespace argument leads with a "/"
         """
         # it's already absolute
-        if name.startswith(namespace):
-            return name
+        if name.startswith(Blackboard.separator):
+            if name.startswith(namespace):
+                return name
+            else:
+                raise ValueError("name '{}' is absolute, but not rooted in namespace '{}'".format(
+                    name, namespace)
+                )
         # remove leading and trailing separators
         namespace = namespace if namespace.endswith(Blackboard.separator) else namespace + Blackboard.separator
         name = name.strip(Blackboard.separator)
@@ -1045,7 +1054,7 @@ class Client(object):
             s += self._stringify_key_value_pairs(
                 keys=keys,
                 key_value_dict=self.remappings,
-                indent=2*indent,
+                indent=2 * indent,
                 separator=console.right_arrow
             )
         s += console.white + indent + "Variables" + console.reset + "\n"
@@ -1108,6 +1117,37 @@ class Client(object):
                 absent.add(key)
         if absent:
             raise KeyError("keys required, but not yet on the blackboard [{}]".format(absent))
+
+    def is_registered(
+        self,
+        key: str,
+        access: typing.Union[None, common.Access]=None
+    ) -> bool:
+        """
+        Check to see if the specified key is registered.
+
+        Args:
+           key: in either relative or absolute form
+           access: access property, if None, just checks for registration, regardless of property
+
+        Returns:
+           if registered, True otherwise False
+
+        Raises:
+            ValueError if key is in absolute form, but not rooted in the client's namespace
+        """
+        absolute_name = Blackboard.absolute_name(
+            super().__getattribute__("namespace"),
+            key
+        )
+        if access == common.Access.READ:
+            return absolute_name in self.read
+        elif access == common.Access.WRITE:
+            return absolute_name in self.write
+        elif access == common.Access.EXCLUSIVE_WRITE:
+            return absolute_name in self.exclusive
+        else:
+            return absolute_name in self.read | self.write | self.exclusive
 
     def register_key(
             self,
