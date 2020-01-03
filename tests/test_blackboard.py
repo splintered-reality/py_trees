@@ -177,9 +177,9 @@ def test_is_registered():
         print("is_registered({}).......[{}][False]".format(key, result))
         assert(result is False)
     for key in {'/foo', '/dude'}:
-        with nose.tools.assert_raises(ValueError):
-            print("[{}][{}]..........Expecting ValueError".format(key, "/aha"))
-            blackboard.is_registered(key)
+        result = blackboard.is_registered(key)
+        print("is_registered({}).......[{}][False]".format(key, result))
+        assert(result is False)
     blackboard.unregister(clear=True)
 
 
@@ -447,6 +447,7 @@ def test_absolute_name():
         # namespace, name, absolute name
         ("/", "foo", "/foo"),
         ("/", "/foo", "/foo"),
+        ("/foo", "/bar", "/bar"),  # ignores the namespace
         ("/foo", "bar", "/foo/bar"),
         ("/foo/", "bar", "/foo/bar"),
         ("/foo/", "/foo/bar", "/foo/bar"),
@@ -460,12 +461,6 @@ def test_absolute_name():
             Blackboard.absolute_name(namespace, name)
         ))
         assert(absolute_name == Blackboard.absolute_name(namespace, name))
-
-    namespace = "/foo"
-    name = "/bar"
-    with nose.tools.assert_raises(ValueError):
-        print("[{}][{}]..........Expecting ValueError".format(namespace, name))
-        Blackboard.absolute_name(namespace, name)
 
 
 def test_relative_name():

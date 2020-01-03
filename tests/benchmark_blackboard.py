@@ -50,9 +50,10 @@ class create_blackboards(object):
 
 def benchmark_registration():
     console.banner("Registration Benchmarks (x1000)")
+    start_time = None
     print("No Remaps")
     with create_blackboards() as (root, parameters):
-        width = max(len(root.name), len(parameters.name))
+        width = max(len(root.name), len(parameters.name), len("Unregister"))
         for blackboard in (root, parameters):
             start_time = time.monotonic()
             for i in range(0, 1000):
@@ -62,6 +63,9 @@ def benchmark_registration():
                 )
             duration = time.monotonic() - start_time
             print(" - " + console.cyan + "{0: <{1}}".format(blackboard.name, width) + console.reset + ": " + console.yellow + "{0:.3f}".format(duration) + console.reset)
+        start_time = time.monotonic()
+    duration = time.monotonic() - start_time
+    print(" - " + console.cyan + "{0: <{1}}".format("Unregister", width) + console.reset + ": " + console.yellow + "{0:.3f}".format(duration) + console.reset)
 
     with create_blackboards() as (root, parameters):
         remaps = {i: "/state/{}".format(i) for i in range(0, 1000)}
@@ -76,6 +80,9 @@ def benchmark_registration():
                 )
             duration = time.monotonic() - start_time
             print(" - " + console.cyan + "{0: <{1}}".format(blackboard.name, width) + console.reset + ": " + console.yellow + "{0:.3f}".format(duration) + console.reset)
+        start_time = time.monotonic()
+    duration = time.monotonic() - start_time
+    print(" - " + console.cyan + "{0: <{1}}".format("Unregister", width) + console.reset + ": " + console.yellow + "{0:.3f}".format(duration) + console.reset)
 
 
 def benchmark_read():
@@ -87,32 +94,32 @@ def benchmark_read():
             for blackboard in (root, parameters):
                 for i in range(0, 1000):
                     if with_remaps:
-                        remaps = {i: "/state/{}/{}".format(blackboard.name.lower(), i) for i in range(0, 1000)}
+                        remaps = {i: "/state/{}/colander_{}".format(blackboard.name.lower(), i) for i in range(0, 1000)}
                         suffix = " with Remaps"
                         blackboard.register_key(
-                            key=str(i),
+                            key="colander_{}".format(i),
                             access=py_trees.common.Access.READ,
                             remap_to=remaps[i]
                         )
                     else:
                         suffix = ""
                         blackboard.register_key(
-                            key=str(i),
+                            key="colander_{}".format(i),
                             access=py_trees.common.Access.READ,
                         )
             for i in range(0, 1000):
                 if with_remaps:
                     for blackboard in (root, parameters):
-                        py_trees.blackboard.Blackboard.set("/state/{}/{}".format(blackboard.name.lower(), i), i)
+                        py_trees.blackboard.Blackboard.set("/state/{}/colander_{}".format(blackboard.name.lower(), i), i)
                 else:
-                    py_trees.blackboard.Blackboard.set("/{}".format(i), i)
-                    py_trees.blackboard.Blackboard.set("/parameters/{}".format(i), i)
+                    py_trees.blackboard.Blackboard.set("/colander_{}".format(i), i)
+                    py_trees.blackboard.Blackboard.set("/parameters/colander_{}".format(i), i)
             relative_names = {}
             absolute_names = {"Root": {}, "Namespaced": {}}
             for i in range(0, 1000):
-                relative_names[i] = str(i)
-                absolute_names["Root"][i] = "/{}".format(str(i))
-                absolute_names["Namespaced"][i] = "/parameters/{}".format(str(i))
+                relative_names[i] = "colander_{}".format(i)
+                absolute_names["Root"][i] = "/colander_{}".format(i)
+                absolute_names["Namespaced"][i] = "/parameters/colander_{}".format(i)
             print("Relative Names" + suffix)
             for blackboard in (root, parameters):
                 start_time = time.monotonic()
@@ -131,7 +138,7 @@ def benchmark_read():
                 duration = time.monotonic() - start_time
                 print(" - " + console.cyan + "{0: <{1}}".format(blackboard.name, width) + console.reset + ": " + console.yellow + "{0:.3f}".format(duration) + console.reset)
     _impl(with_remaps=False)
-    _impl(with_remaps=True)
+    # _impl(with_remaps=True)
 
 
 def benchmark_write():
@@ -185,6 +192,9 @@ def benchmark_write():
 ##############################################################################
 # Main
 ##############################################################################
+
+# To profile this code:
+#   python -m cProfile -s cumtime benchmark_blackboard.py
 
 
 if __name__ == '__main__':

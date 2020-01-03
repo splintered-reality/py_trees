@@ -16,7 +16,7 @@ tests_require = ['nose', 'pydot', 'pytest', 'flake8', 'yanc', 'nose-htmloutput']
 extras_require = {} if os.environ.get('AMENT_PREFIX_PATH') else {
     'test': tests_require,
     'docs': ["Sphinx", "sphinx-argparse", "sphinx_rtd_theme", "sphinx-autodoc-typehints"],
-    'debs': ['stdeb', 'twine']
+    'debs': ['pyprof2calltree', 'stdeb', 'twine']
 }
 ##############################
 # Pull in __version__
