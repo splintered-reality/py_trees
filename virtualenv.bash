@@ -69,6 +69,7 @@ install_package ()
 ##############################################################################
 
 install_package virtualenvwrapper || return
+install_package kcachegrind || return
 
 # To use the installed python3
 VERSION="--python=/usr/bin/python3"

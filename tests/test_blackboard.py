@@ -150,6 +150,39 @@ def test_delayed_register_key():
             assert(bar.other == 1)
 
 
+def test_is_registered():
+    console.banner("Is Registered")
+    blackboard = create_blackboard_foo(namespace="aha")
+    print(blackboard)
+    for key, access in {
+        ('bar', py_trees.common.Access.READ),
+        ('foo', py_trees.common.Access.WRITE),
+        ('dude', py_trees.common.Access.WRITE),
+        ('/aha/bar', py_trees.common.Access.READ),
+        ('/aha/foo', py_trees.common.Access.WRITE),
+        ('/aha/dude', py_trees.common.Access.WRITE),
+    }:
+        result = blackboard.is_registered(key)
+        print("is_registered({}).......[{}][True]".format(key, result))
+        assert(result is True)
+        result = blackboard.is_registered(key, access)
+        print("is_registered({}, {}).......[{}][True]".format(key, access, result))
+        assert(result is True)
+        access = py_trees.common.Access.READ if access == py_trees.common.Access.WRITE else py_trees.common.Access.WRITE
+        result = blackboard.is_registered(key, access)
+        print("is_registered({}, {}).......[{}][False]".format(key, access, result))
+        assert(result is False)
+    for key in {'/aha/foobar', '/aha/dudette'}:
+        result = blackboard.is_registered(key)
+        print("is_registered({}).......[{}][False]".format(key, result))
+        assert(result is False)
+    for key in {'/foo', '/dude'}:
+        result = blackboard.is_registered(key)
+        print("is_registered({}).......[{}][False]".format(key, result))
+        assert(result is False)
+    blackboard.unregister(clear=True)
+
+
 def test_key_exists():
     console.banner("Key Exists")
     for create in [create_blackboards, create_namespaced_blackboards]:
@@ -414,10 +447,9 @@ def test_absolute_name():
         # namespace, name, absolute name
         ("/", "foo", "/foo"),
         ("/", "/foo", "/foo"),
+        ("/foo", "/bar", "/bar"),  # ignores the namespace
         ("/foo", "bar", "/foo/bar"),
         ("/foo/", "bar", "/foo/bar"),
-        ("/foo", "/bar", "/foo/bar"),
-        ("/foo/", "/bar", "/foo/bar"),
         ("/foo/", "/foo/bar", "/foo/bar"),
         ("/foo/", "foo/bar", "/foo/foo/bar"),
     ]
@@ -429,6 +461,39 @@ def test_absolute_name():
             Blackboard.absolute_name(namespace, name)
         ))
         assert(absolute_name == Blackboard.absolute_name(namespace, name))
+
+
+def test_relative_name():
+    console.banner("Relative Names")
+    # should use Blackboard.separator here, but it's a pita - long and unreadable
+    # just update this if the separator ever changes
+    test_tuples = [
+        # namespace, name, relative name
+        ("/", "foo", "foo"),
+        ("/", "/foo", "foo"),
+        ("/foo", "bar", "bar"),
+        ("/foo/", "bar", "bar"),
+        ("/foo", "/foo/bar", "bar"),
+        ("/foo/", "/foo/bar", "bar"),
+    ]
+    for (namespace, name, absolute_name) in test_tuples:
+        print("[{}][{}]..........[{}][{}]".format(
+            namespace,
+            name,
+            absolute_name,
+            Blackboard.absolute_name(namespace, name)
+        ))
+        assert(absolute_name == Blackboard.relative_name(namespace, name))
+
+    namespace = "/bar"
+    name = "/foo/bar"
+    print("[{}][{}]..........ValueError".format(namespace, name))
+    nose.tools.assert_raises(
+        ValueError, Blackboard.relative_name, namespace, name
+    )
+    with nose.tools.assert_raises(ValueError):
+        print("[{}][{}]..........Expecting ValueError".format(namespace, name))
+        Blackboard.relative_name(namespace, name)
 
 
 def test_namespaced_dot_access():
