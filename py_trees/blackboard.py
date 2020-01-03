@@ -1032,11 +1032,10 @@ class Client(object):
             super().__getattribute__("write"),
             super().__getattribute__("exclusive")
         ):
-            separated_namespaces = key.split("/")[:-1]
-            if len(separated_namespaces) > 1:
-                for index in range(2, len(separated_namespaces) + 1):
-                    namespace = "/".join(separated_namespaces[0:index])
-                    super().__getattribute__("namespaces").add(namespace)
+            namespace = key.rsplit("/", 1)[0]
+            while namespace:
+                super().__getattribute__("namespaces").add(namespace)
+                namespace = namespace.rsplit("/", 1)[0]
 
     def __str__(self):
         indent = "  "
