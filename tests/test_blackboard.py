@@ -431,6 +431,39 @@ def test_absolute_name():
         assert(absolute_name == Blackboard.absolute_name(namespace, name))
 
 
+def test_relative_name():
+    console.banner("Relative Names")
+    # should use Blackboard.separator here, but it's a pita - long and unreadable
+    # just update this if the separator ever changes
+    test_tuples = [
+        # namespace, name, relative name
+        ("/", "foo", "foo"),
+        ("/", "/foo", "foo"),
+        ("/foo", "bar", "bar"),
+        ("/foo/", "bar", "bar"),
+        ("/foo", "/foo/bar", "bar"),
+        ("/foo/", "/foo/bar", "bar"),
+    ]
+    for (namespace, name, absolute_name) in test_tuples:
+        print("[{}][{}]..........[{}][{}]".format(
+            namespace,
+            name,
+            absolute_name,
+            Blackboard.absolute_name(namespace, name)
+        ))
+        assert(absolute_name == Blackboard.relative_name(namespace, name))
+
+    namespace = "/bar"
+    name = "/foo/bar"
+    print("[{}][{}]..........ValueError".format(namespace, name))
+    nose.tools.assert_raises(
+        ValueError, Blackboard.relative_name, namespace, name
+    )
+    with nose.tools.assert_raises(ValueError):
+        print("[{}][{}]..........Expecting ValueError".format(namespace, name))
+        Blackboard.relative_name(namespace, name)
+
+
 def test_namespaced_dot_access():
     console.banner("Namespaced Dot Access")
     blackboard = py_trees.blackboard.Client(name="Blackboard")

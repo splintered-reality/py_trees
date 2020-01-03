@@ -380,9 +380,33 @@ class Blackboard(object):
 
     @staticmethod
     def absolute_name(namespace: str, name: str) -> str:
-        # assumptions (that expedite checks)
-        #  - namespace already starts with "/"
+        """
+        Generate the fully qualified key name from namespace and name arguments.
 
+        **Examples**
+
+        .. code-block:: python
+
+            '/' + 'foo'  = '/foo'
+            '/' + '/foo' = '/foo'
+            '/foo' + 'bar' = '/foo/bar'
+            '/foo/' + 'bar' = '/foo/bar'
+            '/foo' + '/bar' = '/foo/bar'
+            '/foo' + 'foo/bar' = '/foo/foo/bar'
+
+        Args:
+            namespace: namespace the key should be embedded in
+            name: key name (relative or absolute)
+
+        Returns:
+            the absolute name
+
+        .. warning::
+
+            To expedite the method call (it's used with high frequency
+            in blackboard key lookups), no checks are made to ensure
+            the namespace argument leads with a "/"
+        """
         # it's already absolute
         if name.startswith(namespace):
             return name
@@ -390,6 +414,48 @@ class Blackboard(object):
         namespace = namespace if namespace.endswith(Blackboard.separator) else namespace + Blackboard.separator
         name = name.strip(Blackboard.separator)
         return "{}{}".format(namespace, name)
+
+    @staticmethod
+    def relative_name(namespace: str, name: str) -> str:
+        """
+        **Examples**
+
+        .. code-block:: python
+
+            '/' + 'foo'  = '/foo'
+            '/' + '/foo' = '/foo'
+            '/foo' + 'bar' = '/foo/bar'
+            '/foo/' + 'bar' = '/foo/bar'
+            '/foo' + '/bar' = '/foo/bar'
+            '/foo' + 'foo/bar' = '/foo/foo/bar'
+
+        Args:
+            namespace: namespace the key should be embedded in
+            name: key name (relative or absolute)
+
+        Returns:
+            the absolute name
+
+        Raises:
+            ValueError if the key is not in the specified namespace
+
+        .. warning::
+
+            To expedite the method call (it's used with high frequency
+            in blackboard key lookups), no checks are made to ensure
+            the namespace argument leads with a "/"
+        """
+        # it's already relative
+        if not name.startswith(Blackboard.separator):
+            return name
+        # remove leading and trailing separators
+        namespace = namespace if namespace.endswith(Blackboard.separator) else namespace + Blackboard.separator
+        if name.startswith(namespace):
+            return name.lstrip(namespace)
+        else:
+            raise ValueError("key '{}' is not in namespace '{}'".format(
+                name, namespace)
+            )
 
 
 class Client(object):
