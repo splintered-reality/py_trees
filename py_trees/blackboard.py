@@ -1097,7 +1097,8 @@ class Client(object):
             clear: remove key-values pairs from the blackboard
         """
         for key in itertools.chain(set(self.read), set(self.write), set(self.exclusive)):
-            self.unregister_key(key=key, clear=clear)
+            self.unregister_key(key=key, clear=clear, update_namespace_cache=False)
+        self._update_namespaces()
 
     def verify_required_keys_exist(self):
         """
@@ -1214,13 +1215,20 @@ class Client(object):
             super().__getattribute__("required").add(key)
         self._update_namespaces()
 
-    def unregister_key(self, key: str, clear: bool=True):
+    def unregister_key(
+            self,
+            key: str,
+            clear: bool=True,
+            update_namespace_cache: bool=True):
         """
         Unegister a key associated with this client.
 
         Args:
             key: key to unregister
             clear: remove key-values pairs from the blackboard
+            update_namespace_cache: disable if you are batching
+
+        A method that batches calls to this method is :meth:`unregister_all_keys()`.
 
         Raises:
             KeyError if the key has not been previously registered
@@ -1245,7 +1253,8 @@ class Client(object):
                 except KeyError:
                     pass  # perfectly legitimate for a registered key to not exist on the blackboard
         del super().__getattribute__("remappings")[key]
-        self._update_namespaces()
+        if update_namespace_cache:
+            self._update_namespaces()
 
 
 class IntermediateVariableFetcher(object):
