@@ -63,6 +63,7 @@ A high-level list of existing / planned features:
 ##############################################################################
 
 import enum
+import itertools
 import operator
 import re
 import typing
@@ -402,23 +403,18 @@ class Blackboard(object):
         Returns:
             the absolute name
 
-        Raises:
-            ValueError if name is absolute and isn't rooted in the namespace
-
         .. warning::
 
             To expedite the method call (it's used with high frequency
             in blackboard key lookups), no checks are made to ensure
-            the namespace argument leads with a "/"
+            the namespace argument leads with a "/". Nor does it check
+            that a name in absolute form is actually embedded in the
+            specified namespace, it just returns the given (absolute)
+            name directly.
         """
         # it's already absolute
         if name.startswith(Blackboard.separator):
-            if name.startswith(namespace):
-                return name
-            else:
-                raise ValueError("name '{}' is absolute, but not rooted in namespace '{}'".format(
-                    name, namespace)
-                )
+            return name
         # remove leading and trailing separators
         namespace = namespace if namespace.endswith(Blackboard.separator) else namespace + Blackboard.separator
         name = name.strip(Blackboard.separator)
@@ -801,7 +797,10 @@ class Client(object):
         """
         # print("__setattr__ [{}][{}]".format(name, value))
         name = Blackboard.absolute_name(super().__getattribute__("namespace"), name)
-        if name not in super().__getattribute__("write") | super().__getattribute__("exclusive"):
+        if (
+            (name not in super().__getattribute__("write")) and
+            (name not in super().__getattribute__("exclusive"))
+        ):
             if Blackboard.activity_stream is not None:
                 Blackboard.activity_stream.push(
                     self._generate_activity_item(name, ActivityType.ACCESS_DENIED)
@@ -839,16 +838,15 @@ class Client(object):
         """
         # print("__getattr__ [{}]".format(name))
         name = Blackboard.absolute_name(super().__getattribute__("namespace"), name)
-        all_keys = (
-            super().__getattribute__("read") |
-            super().__getattribute__("write") |
-            super().__getattribute__("exclusive")
-        )
-        write_keys = (
-            super().__getattribute__("write") |
-            super().__getattribute__("exclusive")
-        )
-        if name not in all_keys:
+        read_key = False
+        write_key = False
+        if name in super().__getattribute__("read"):
+            read_key = True
+        elif name in super().__getattribute__("write"):
+            write_key = True
+        elif name in super().__getattribute__("exclusive"):
+            write_key = True
+        else:
             if name in super().__getattribute__("namespaces"):
                 return IntermediateVariableFetcher(blackboard=self, namespace=name)
             if Blackboard.activity_stream is not None:
@@ -858,7 +856,7 @@ class Client(object):
             raise AttributeError("client '{}' does not have read/write access to '{}'".format(self.name, name))
         remapped_name = super().__getattribute__("remappings")[name]
         try:
-            if name in write_keys:
+            if write_key:
                 if Blackboard.activity_stream is not None:
                     if utilities.is_primitive(Blackboard.storage[remapped_name]):
                         activity_type = ActivityType.READ
@@ -872,7 +870,7 @@ class Client(object):
                         )
                     )
                 return Blackboard.storage[remapped_name]
-            if name in super().__getattribute__("read"):
+            if read_key:
                 if Blackboard.activity_stream is not None:
                     Blackboard.activity_stream.push(
                         self._generate_activity_item(
@@ -913,15 +911,14 @@ class Client(object):
             AttributeError: if the client does not have write access to the variable
             KeyError: if the variable does not yet exist on the blackboard
         """
-        write_keys = (
-            super().__getattribute__("write") |
-            super().__getattribute__("exclusive")
-        )
         name = Blackboard.absolute_name(super().__getattribute__("namespace"), name)
         name_components = name.split('.')
         key = name_components[0]
         key_attributes = '.'.join(name_components[1:])
-        if key not in write_keys:
+        if (
+            (key not in super().__getattribute__("write")) and
+            (key not in super().__getattribute__("exclusive"))
+        ):
             if Blackboard.activity_stream is not None:
                 Blackboard.activity_stream.push(
                     self._generate_activity_item(key, ActivityType.ACCESS_DENIED)
@@ -1030,12 +1027,11 @@ class Client(object):
 
     def _update_namespaces(self):
         super().__getattribute__("namespaces").clear()
-        all_keys = (
-            super().__getattribute__("read") |
-            super().__getattribute__("write") |
+        for key in itertools.chain(
+            super().__getattribute__("read"),
+            super().__getattribute__("write"),
             super().__getattribute__("exclusive")
-        )
-        for key in all_keys:
+        ):
             separated_namespaces = key.split("/")[:-1]
             if len(separated_namespaces) > 1:
                 for index in range(2, len(separated_namespaces) + 1):
@@ -1101,7 +1097,7 @@ class Client(object):
         Args:
             clear: remove key-values pairs from the blackboard
         """
-        for key in (set(self.read) | set(self.write) | set(self.exclusive)):
+        for key in itertools.chain(set(self.read), set(self.write), set(self.exclusive)):
             self.unregister_key(key=key, clear=clear)
 
     def verify_required_keys_exist(self):
@@ -1238,10 +1234,10 @@ class Client(object):
         Blackboard.metadata[remapped_key].read.discard(super().__getattribute__("unique_identifier"))
         Blackboard.metadata[remapped_key].write.discard(super().__getattribute__("unique_identifier"))
         Blackboard.metadata[remapped_key].exclusive.discard(super().__getattribute__("unique_identifier"))
-        if not (
-            Blackboard.metadata[remapped_key].read |
-            Blackboard.metadata[remapped_key].write |
-            Blackboard.metadata[remapped_key].exclusive
+        if (
+            (not Blackboard.metadata[remapped_key].read) and
+            (not Blackboard.metadata[remapped_key].write) and
+            (not Blackboard.metadata[remapped_key].exclusive)
         ):
             del Blackboard.metadata[remapped_key]
             if clear:
