@@ -52,8 +52,8 @@ A high-level list of existing / planned features:
 * [+] Client connections with namespaced read/write access to the store
 * [+] Integration with behaviours for key-behaviour associations (debugging)
 * [+] Activity stream that logs read/write operations by clients
-* [-] Exclusive locks for writing
-* [-] Framework for key remappings
+* [+] Exclusive locks for writing
+* [+] Framework for key remappings
 
 .. include:: weblinks.rst
 """
