@@ -289,7 +289,16 @@ class Selector(Composite):
             # run subclass (user) handles
             self.initialise()
         # run any work designated by a customised instance of this class
-        self.update()
+        new_status = self.update()
+        if new_status not in list(common.Status):
+            self.logger.error(
+                "A Selector returned an invalid status, setting to INVALID [%s][%s]" % (new_status, self.name))
+            new_status = common.Status.INVALID
+        if new_status != common.Status.RUNNING:
+            self.stop(new_status)
+        self.status = new_status
+        yield self
+        # iterate through children
         previous = self.current_child
         for child in self.children:
             for node in child.tick():
@@ -397,7 +406,16 @@ class Chooser(Selector):
             # run subclass (user) initialisation
             self.initialise()
         # run any work designated by a customised instance of this class
-        self.update()
+        new_status = self.update()
+        if new_status not in list(common.Status):
+            self.logger.error(
+                "A Selector returned an invalid status, setting to INVALID [%s][%s]" % (new_status, self.name))
+            new_status = common.Status.INVALID
+        if new_status != common.Status.RUNNING:
+            self.stop(new_status)
+        self.status = new_status
+        yield self
+        # iterate through children
         if self.current_child is not None:
             # run our child, and invalidate anyone else who may have been ticked last run
             # (bit wasteful always checking for the latter)
@@ -470,7 +488,16 @@ class Sequence(Composite):
             # subclass (user) handling
             self.initialise()
         # run any work designated by a customised instance of this class
-        self.update()
+        new_status = self.update()
+        if new_status not in list(common.Status):
+            self.logger.error(
+                "A Selector returned an invalid status, setting to INVALID [%s][%s]" % (new_status, self.name))
+            new_status = common.Status.INVALID
+        if new_status != common.Status.RUNNING:
+            self.stop(new_status)
+        self.status = new_status
+        yield self
+        # iterate through children
         for child in itertools.islice(self.children, self.current_index, None):
             for node in child.tick():
                 yield node
