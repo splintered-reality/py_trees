@@ -5,6 +5,10 @@ Forthcoming
 -----------
 * ...
 
+2.0.7 (2020-01-24)
+------------------
+* [display] option for only visited behaviours in text tree snapshot displays, `#272 <https://github.com/splintered-reality/py_trees/pull/272>`_
+
 2.0.5 (2019-12-25)
 ------------------
 * [display] enum agnostic display for local and remote activity view displays
