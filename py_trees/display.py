@@ -98,6 +98,7 @@ xhtml_symbols = {
 
 def _generate_text_tree(
         root,
+        show_only_visited=False,
         show_status=False,
         visited={},
         previously_visited={},
@@ -108,6 +109,7 @@ def _generate_text_tree(
 
     Args:
         root (:class:`~py_trees.behaviour.Behaviour`): the root of the tree, or subtree you want to show
+        show_only_visited (:obj:`bool`): show only visited behaviours
         show_status (:obj:`bool`): always show status and feedback message (i.e. for every element,
             not just those visited)
         visited (dict): dictionary of (uuid.UUID) and status (:class:`~py_trees.common.Status`) pairs
@@ -151,9 +153,11 @@ def _generate_text_tree(
 
         def assemble_single_line(b):
             font_weight = True if b.id == tip_id else False
-            s = symbols['space'] * 4 * internal_indent
-            s += style(symbols[get_behaviour_type(b)], font_weight)
-            s += " "
+            s = ""
+            if not show_only_visited or b.id in visited.keys():
+                s += symbols['space'] * 4 * internal_indent
+                s += style(symbols[get_behaviour_type(b)], font_weight)
+                s += " "
 
             if show_status or b.id in visited.keys():
                 s += style("{} [".format(b.name.replace('\n', ' ')), font_weight)
@@ -166,7 +170,7 @@ def _generate_text_tree(
                 s += style("{} [".format(b.name.replace('\n', ' ')), font_weight)
                 s += style("{}".format(symbols[b.status]), font_weight)
                 s += style("]", font_weight)
-            else:
+            elif not show_only_visited:
                 s += style("{}".format(b.name.replace('\n', ' ')), font_weight)
             return s
 
@@ -181,12 +185,14 @@ def _generate_text_tree(
                     yield line
     s = ""
     for line in generate_lines(root, indent):
-        s += "%s\n" % line
+        if line:
+            s += "%s\n" % line
     return s
 
 
 def ascii_tree(
         root,
+        show_only_visited=False,
         show_status=False,
         visited={},
         previously_visited={},
@@ -196,6 +202,7 @@ def ascii_tree(
 
     Args:
         root (:class:`~py_trees.behaviour.Behaviour`): the root of the tree, or subtree you want to show
+        show_only_visited (:obj:`bool`) : show only visited behaviours
         show_status (:obj:`bool`): always show status and feedback message (i.e. for every element, not just those visited)
         visited (dict): dictionary of (uuid.UUID) and status (:class:`~py_trees.common.Status`) pairs for behaviours visited on the current tick
         previously_visited (dict): dictionary of behaviour id/status pairs from the previous tree tick
@@ -246,6 +253,7 @@ def ascii_tree(
     """
     lines = _generate_text_tree(
         root,
+        show_only_visited,
         show_status,
         visited,
         previously_visited,
@@ -257,6 +265,7 @@ def ascii_tree(
 
 def unicode_tree(
         root,
+        show_only_visited=False,
         show_status=False,
         visited={},
         previously_visited={},
@@ -266,6 +275,7 @@ def unicode_tree(
 
     Args:
         root (:class:`~py_trees.behaviour.Behaviour`): the root of the tree, or subtree you want to show
+        show_only_visited (:obj:`bool`) : show only visited behaviours
         show_status (:obj:`bool`): always show status and feedback message (i.e. for every element, not just those visited)
         visited (dict): dictionary of (uuid.UUID) and status (:class:`~py_trees.common.Status`) pairs for behaviours visited on the current tick
         previously_visited (dict): dictionary of behaviour id/status pairs from the previous tree tick
@@ -279,6 +289,7 @@ def unicode_tree(
     """
     lines = _generate_text_tree(
         root,
+        show_only_visited,
         show_status,
         visited,
         previously_visited,
@@ -290,6 +301,7 @@ def unicode_tree(
 
 def xhtml_tree(
         root,
+        show_only_visited=False,
         show_status=False,
         visited={},
         previously_visited={},
@@ -299,6 +311,7 @@ def xhtml_tree(
 
     Args:
         root (:class:`~py_trees.behaviour.Behaviour`): the root of the tree, or subtree you want to show
+        show_only_visited (:obj:`bool`) : show only visited behaviours
         show_status (:obj:`bool`): always show status and feedback message (i.e. for every element, not just those visited)
         visited (dict): dictionary of (uuid.UUID) and status (:class:`~py_trees.common.Status`) pairs for behaviours visited on the current tick
         previously_visited (dict): dictionary of behaviour id/status pairs from the previous tree tick
@@ -326,6 +339,7 @@ def xhtml_tree(
     """
     lines = _generate_text_tree(
         root,
+        show_only_visited,
         show_status,
         visited,
         previously_visited,

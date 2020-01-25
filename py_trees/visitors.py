@@ -155,10 +155,12 @@ class DisplaySnapshotVisitor(SnapshotVisitor):
     """
     def __init__(
             self,
+            display_only_visited_behaviours=False,
             display_blackboard: bool=False,
             display_activity_stream: bool=False
     ):
         super().__init__()
+        self.display_only_visited_behaviours = display_only_visited_behaviours
         self.display_blackboard = display_blackboard
         self.display_activity_stream = display_activity_stream
         if self.display_activity_stream:
@@ -179,6 +181,7 @@ class DisplaySnapshotVisitor(SnapshotVisitor):
             "\n" +
             display.unicode_tree(
                 root=self.root,
+                show_only_visited=self.display_only_visited_behaviours,
                 show_status=False,
                 visited=self.visited,
                 previously_visited=self.previously_visited
