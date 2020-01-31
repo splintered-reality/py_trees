@@ -5,6 +5,10 @@ Forthcoming
 -----------
 * ...
 
+2.0.8 (2020-02-01)
+------------------
+* [display] bugfix and use elipsis on ascii visited only display modes, `#273 <https://github.com/splintered-reality/py_trees/pull/273>`_
+
 2.0.7 (2020-01-24)
 ------------------
 * [display] option for only visited behaviours in text tree snapshot displays, `#272 <https://github.com/splintered-reality/py_trees/pull/272>`_
