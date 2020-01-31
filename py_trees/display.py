@@ -154,10 +154,9 @@ def _generate_text_tree(
         def assemble_single_line(b):
             font_weight = True if b.id == tip_id else False
             s = ""
-            if not show_only_visited or b.id in visited.keys():
-                s += symbols['space'] * 4 * internal_indent
-                s += style(symbols[get_behaviour_type(b)], font_weight)
-                s += " "
+            s += symbols['space'] * 4 * internal_indent
+            s += style(symbols[get_behaviour_type(b)], font_weight)
+            s += " "
 
             if show_status or b.id in visited.keys():
                 s += style("{} [".format(b.name.replace('\n', ' ')), font_weight)
@@ -170,7 +169,7 @@ def _generate_text_tree(
                 s += style("{} [".format(b.name.replace('\n', ' ')), font_weight)
                 s += style("{}".format(symbols[b.status]), font_weight)
                 s += style("]", font_weight)
-            elif not show_only_visited:
+            else:
                 s += style("{}".format(b.name.replace('\n', ' ')), font_weight)
             return s
 
@@ -181,8 +180,11 @@ def _generate_text_tree(
         for child in root.children:
             yield assemble_single_line(child)
             if child.children != []:
-                for line in generate_lines(child, internal_indent + 1):
-                    yield line
+                if not show_only_visited or child.id in visited.keys():
+                    for line in generate_lines(child, internal_indent + 1):
+                        yield line
+                else:
+                    yield "{}...".format(symbols['space'] * 4 * (internal_indent + 1))
     s = ""
     for line in generate_lines(root, indent):
         if line:
