@@ -18,6 +18,7 @@ from . import blackboard  # noqa
 from . import blackboard_namespaces  # noqa
 from . import blackboard_remappings  # noqa
 from . import context_switching  # noqa
+from . import display_modes  # noqa
 from . import dot_graphs  # noqa
 from . import lifecycle  # noqa
 from . import selector  # noqa

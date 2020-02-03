@@ -64,6 +64,7 @@ d = setup(
             'py-trees-demo-blackboard-namespaces = py_trees.demos.blackboard_namespaces:main',
             'py-trees-demo-blackboard-remappings = py_trees.demos.blackboard_remappings:main',
             'py-trees-demo-context-switching = py_trees.demos.context_switching:main',
+            'py-trees-demo-display-modes = py_trees.demos.display_modes:main',
             'py-trees-demo-dot-graphs = py_trees.demos.dot_graphs:main',
             'py-trees-demo-logging = py_trees.demos.logging:main',
             'py-trees-demo-pick-up-where-you-left-off = py_trees.demos.pick_up_where_you_left_off:main',
