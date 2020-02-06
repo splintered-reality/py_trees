@@ -111,6 +111,7 @@ def main():
     print("-------------------------------------------------------------------------------")
     foo = py_trees.blackboard.Client(name="Foo", namespace="foo")
     foo.register_key(key="awesome", access=py_trees.common.Access.WRITE)
+    # TODO: should /brilliant be namespaced or go directly to root?
     foo.register_key(key="/brilliant", access=py_trees.common.Access.WRITE)
     # absolute names are ok, so long as they include the namespace
     foo.register_key(key="/foo/clever", access=py_trees.common.Access.WRITE)
@@ -121,6 +122,7 @@ def main():
     print("$ foo.clever = True")
     print("-------------------------------------------------------------------------------")
     foo.awesome = True
-    foo.brilliant = False
+    # TODO: currently fails as it goes to root
+    # foo.brilliant = False
     foo.clever = True
     print(py_trees.display.unicode_blackboard())
