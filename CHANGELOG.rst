@@ -3,8 +3,12 @@ Release Notes
 
 Forthcoming
 -----------
+* ...
+
+2.0.9 (2020-02-14)
+------------------
 * [demos] display modes demonstrating usage of various options, `#275 <https://github.com/splintered-reality/py_trees/pull/275>`_
-* [display] enforce left to right ordering of children in dot graphs, `#276 <https://github.com/splintered-reality/py_trees/pull/276>`_
+* [display] enforce left to right ordering of children in dot graphs
 
 2.0.8 (2020-02-01)
 ------------------
