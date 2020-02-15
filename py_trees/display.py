@@ -448,6 +448,7 @@ def dot_tree(
                 )
             else:
                 subgraph = None
+            node_names = []
             for c in root.children:
                 (node_shape, node_colour, node_font_colour) = get_node_attributes(c)
                 node_name = c.name
@@ -466,6 +467,7 @@ def dot_tree(
                     fontsize=fontsize,
                     fontcolor=node_font_colour,
                 )
+                node_names.append(node_name)
                 if subgraph is not None:
                     subgraph.add_node(node)
                 graph.add_node(node)
@@ -474,6 +476,13 @@ def dot_tree(
                 if c.children != []:
                     add_children_and_edges(c, node_name, visibility_level, collapse_decorators)
             if subgraph is not None:
+                # force left to right ordering by putting in some invisible edges
+                for index in range(0, len(node_names) - 1):
+                    edge = pydot.Edge(node_names[index], node_names[index + 1], style="invis")
+                    # why can't add to the subgraph? get the following error:
+                    #   TypeError: '<' not supported between instances of 'dict' and 'dict'
+                    # adding to the graph this works though
+                    graph.add_edge(edge)
                 graph.add_subgraph(subgraph)
 
     add_children_and_edges(root, root.name, visibility_level, collapse_decorators)
