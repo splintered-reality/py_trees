@@ -487,10 +487,6 @@ def test_relative_name():
 
     namespace = "/bar"
     name = "/foo/bar"
-    print("[{}][{}]..........ValueError".format(namespace, name))
-    nose.tools.assert_raises(
-        ValueError, Blackboard.relative_name, namespace, name
-    )
     with nose.tools.assert_raises(ValueError):
         print("[{}][{}]..........Expecting ValueError".format(namespace, name))
         Blackboard.relative_name(namespace, name)

@@ -393,7 +393,7 @@ class Blackboard(object):
             '/foo' + 'bar' = '/foo/bar'
             '/foo/' + 'bar' = '/foo/bar'
             '/foo' + '/foo/bar' = '/foo/bar'
-            '/foo' + '/bar' => ValueError
+            '/foo' + '/bar' = '/bar'
             '/foo' + 'foo/bar' = '/foo/foo/bar'
 
         Args:
@@ -431,7 +431,7 @@ class Blackboard(object):
             '/' + '/foo' = '/foo'
             '/foo' + 'bar' = '/foo/bar'
             '/foo/' + 'bar' = '/foo/bar'
-            '/foo' + '/bar' = '/foo/bar'
+            '/foo' + '/bar' => ValueError('/bar' is not in 'foo')
             '/foo' + 'foo/bar' = '/foo/foo/bar'
 
         Args:

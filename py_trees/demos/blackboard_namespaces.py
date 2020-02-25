@@ -118,11 +118,13 @@ def main():
     print(foo)
     print("-------------------------------------------------------------------------------")
     print("$ foo.awesome = True")
-    print("$ foo.brilliant = False")
+    print("$ foo.set('/brilliant', False)")
     print("$ foo.clever = True")
     print("-------------------------------------------------------------------------------")
     foo.awesome = True
-    # TODO: currently fails as it goes to root
+    # Only accessable via set since it's not in the namespace
+    foo.set("/brilliant", False)
+    # This will fail since it looks for the namespaced /foo/brilliant key
     # foo.brilliant = False
     foo.clever = True
     print(py_trees.display.unicode_blackboard())
