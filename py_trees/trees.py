@@ -78,18 +78,22 @@ def setup(root: behaviour.Behaviour,
         # it will work in most situations. If a windows user is running into
         # problems, work with them to resolve it.
         _SIGNAL = signal.SIGINT
+    current_behaviour_name = None
 
     def on_timer_timed_out():
         os.kill(os.getpid(), _SIGNAL)
 
     def signal_handler(unused_signum, unused_frame, original_signal_handler):
+        global current_behaviour_name
         signal.signal(_SIGNAL, original_signal_handler)
-        raise RuntimeError("tree setup interrupted or timed out")
+        raise RuntimeError("tree setup interrupted or timed out [{}]".format(current_behaviour_name))
 
     def visited_setup():
+        global current_behaviour_name
         if visitor is not None:
             visitor.initialise()
         for node in root.iterate():
+            current_behaviour_name = node.name
             node.setup(**kwargs)
             if visitor is not None:
                 node.visit(visitor)
