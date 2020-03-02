@@ -419,7 +419,7 @@ def dot_tree(
 
     fontsize = 9
     blackboard_colour = "blue"  # "dimgray"
-    graph = pydot.Dot(graph_type='digraph')
+    graph = pydot.Dot(graph_type='digraph', ordering="out")
     graph.set_name("pastafarianism")  # consider making this unique to the tree sometime, e.g. based on the root name
     # fonts: helvetica, times-bold, arial (times-roman is the default, but this helps some viewers, like kgraphviewer)
     graph.set_graph_defaults(fontname='times-roman')  # splines='curved' is buggy on 16.04, but would be nice to have
@@ -433,21 +433,15 @@ def dot_tree(
         style="filled",
         fillcolor=node_colour,
         fontsize=fontsize,
-        fontcolor=node_font_colour)
+        fontcolor=node_font_colour,
+    )
     graph.add_node(node_root)
     behaviour_id_name_map = {root.id: root.name}
 
-    def add_children_and_edges(root, root_dot_name, visibility_level, collapse_decorators):
+    def add_children_and_edges(root, root_node, root_dot_name, visibility_level, collapse_decorators):
         if isinstance(root, decorators.Decorator) and collapse_decorators:
             return
         if visibility_level < root.blackbox_level:
-            if len(root.children) > 1:
-                subgraph = pydot.Subgraph(
-                    label="children_of_{}".format(root.name),
-                    rank="same"
-                )
-            else:
-                subgraph = None
             node_names = []
             for c in root.children:
                 (node_shape, node_colour, node_font_colour) = get_node_attributes(c)
@@ -468,24 +462,13 @@ def dot_tree(
                     fontcolor=node_font_colour,
                 )
                 node_names.append(node_name)
-                if subgraph is not None:
-                    subgraph.add_node(node)
                 graph.add_node(node)
                 edge = pydot.Edge(root_dot_name, node_name)
                 graph.add_edge(edge)
                 if c.children != []:
-                    add_children_and_edges(c, node_name, visibility_level, collapse_decorators)
-            if subgraph is not None:
-                # force left to right ordering by putting in some invisible edges
-                for index in range(0, len(node_names) - 1):
-                    edge = pydot.Edge(node_names[index], node_names[index + 1], style="invis")
-                    # why can't add to the subgraph? get the following error:
-                    #   TypeError: '<' not supported between instances of 'dict' and 'dict'
-                    # adding to the graph this works though
-                    graph.add_edge(edge)
-                graph.add_subgraph(subgraph)
+                    add_children_and_edges(c, node, node_name, visibility_level, collapse_decorators)
 
-    add_children_and_edges(root, root.name, visibility_level, collapse_decorators)
+    add_children_and_edges(root, node_root, root.name, visibility_level, collapse_decorators)
 
     def create_blackboard_client_node(blackboard_client: blackboard.Blackboard):
         return pydot.Node(
@@ -504,9 +487,30 @@ def dot_tree(
         metadata = blackboard.Blackboard.metadata
         clients = blackboard.Blackboard.clients
         # add client (that are not behaviour) nodes
+        subgraph = pydot.Subgraph(
+            graph_name="Blackboard",
+            id="Blackboard",
+            label="Blackboard",
+            rank="sink",
+        )
+        blackboard_keys = pydot.Node(
+            "BlackboardKeys",
+            label="Keys",
+            shape='box'
+        )
+        root_dummy_edge = pydot.Edge(
+            root.name,
+            "BlackboardKeys",
+            color="magenta",
+            style="invis",
+            constraint=True,
+        )
+        subgraph.add_node(blackboard_keys)
+        graph.add_edge(root_dummy_edge)
+
         for unique_identifier, client in clients.items():
             if unique_identifier not in blackboard_id_name_map:
-                graph.add_node(
+                subgraph.add_node(
                     create_blackboard_client_node(client)
                 )
         # add key nodes
@@ -527,21 +531,23 @@ def dot_tree(
                 fontcolor=blackboard_colour,
                 width=0, height=0, fixedsize=False,  # only big enough to fit text
             )
-            graph.add_node(blackboard_node)
+            subgraph.add_node(blackboard_node)
             for unique_identifier in metadata[key].read:
                 try:
                     edge = pydot.Edge(
                         blackboard_node,
                         blackboard_id_name_map[unique_identifier],
-                        color=blackboard_colour,
-                        constraint=False
+                        color="green",
+                        constraint=False,
+                        weight=0,
                     )
                 except KeyError:
                     edge = pydot.Edge(
                         blackboard_node,
                         clients[unique_identifier].__getattribute__("name"),
-                        color=blackboard_colour,
-                        constraint=False
+                        color="green",
+                        constraint=False,
+                        weight=0,
                     )
                 graph.add_edge(edge)
             for unique_identifier in metadata[key].write:
@@ -550,16 +556,19 @@ def dot_tree(
                         blackboard_id_name_map[unique_identifier],
                         blackboard_node,
                         color=blackboard_colour,
-                        constraint=True
+                        constraint=False,
+                        weight=0,
                     )
                 except KeyError:
                     edge = pydot.Edge(
                         clients[unique_identifier].__getattribute__("name"),
                         blackboard_node,
                         color=blackboard_colour,
-                        constraint=False
+                        constraint=False,
+                        weight=0,
                     )
                 graph.add_edge(edge)
+        graph.add_subgraph(subgraph)
 
     if with_blackboard_variables:
         blackboard_id_name_map = {}

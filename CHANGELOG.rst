@@ -3,7 +3,7 @@ Release Notes
 
 Forthcoming
 -----------
-* ...
+* [display] completely remove blackboard variables from the dot layout, `#280 <https://github.com/splintered-reality/py_trees/pull/280>`_
 
 2.0.10 (2020-02-27)
 -------------------
