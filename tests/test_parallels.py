@@ -49,7 +49,7 @@ def test_parallel_failure():
 
     failure = py_trees.behaviours.Failure("Failure")
     success = py_trees.behaviours.Success("Success")
-    for child, synchronise  in itertools.product([success, failure], [True, False]):
+    for child, synchronise in itertools.product([success, failure], [True, False]):
         policy = py_trees.common.ParallelPolicy.SuccessOnSelected(children=[child], synchronise=synchronise)
         root = py_trees.composites.Parallel("Parallel", policy=policy)
         root.add_child(failure)
@@ -65,6 +65,10 @@ def test_parallel_failure():
         assert(failure.status == py_trees.common.Status.FAILURE)
         print("success.status == py_trees.common.Status.SUCCESS")
         assert(success.status == py_trees.common.Status.SUCCESS)
+
+        # cleanup so they can be added again
+        root.remove_child(failure)
+        root.remove_child(success)
 
 
 def test_parallel_success():
