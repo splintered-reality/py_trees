@@ -68,3 +68,15 @@ def test_composite_errors():
         root.add_child(5.0)
         print("TypeError has message with substring 'behaviours'")
         assert("behaviours" in str(context.exception))
+
+
+def test_protect_against_multiple_parents():
+    console.banner("Protect Against Multiple Parents")
+    child = py_trees.behaviours.Success()
+    first_parent = py_trees.composites.Selector()
+    second_parent = py_trees.composites.Sequence()
+    with nose.tools.assert_raises(RuntimeError):
+        print("Adding a child to two parents")
+        print("Expecting a RuntimeError")
+        for parent in [first_parent, second_parent]:
+            parent.add_child(child)
