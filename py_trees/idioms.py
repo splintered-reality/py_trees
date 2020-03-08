@@ -16,7 +16,7 @@ representing common behaviour tree idioms.
 # Imports
 ##############################################################################
 
-from typing import List
+import typing
 import uuid
 
 from . import behaviour
@@ -99,7 +99,7 @@ def pick_up_where_you_left_off(
 def eternal_guard(
         subtree: behaviour.Behaviour,
         name: str="Eternal Guard",
-        conditions: List[behaviour.Behaviour]=[],
+        conditions: typing.List[behaviour.Behaviour]=[],
         blackboard_variable_prefix: str=None) -> behaviour.Behaviour:
     """
     The eternal guard idiom implements a stronger :term:`guard` than the typical check at the
@@ -176,11 +176,29 @@ def eternal_guard(
     return root
 
 
+def either_or(
+    subtrees: typing.List[behaviour.Behaviour],
+    name="EitherOr",
+    blackboard_namespace: str=None
+) -> behaviour.Behaviour:
+    """
+    Args:
+        subtrees: list of subtrees to tick from in the either_or operation
+        name: the name to use for this idiom's root behaviour
+        blackboard_namespace: this idiom's private variables will be put behind this namespace
+
+    If no blackboard namespace is provided, a unique namespace derived from the idiom's name will be used.
+    """
+    root = composites.Sequence(name=name)
+    if blackboard_namespace is None:
+        blackboard_namespace = (name.lower().replace(" ", "_") + str(root.id)).replace("-", "_")
+
+
 def oneshot(
-        behaviour: behaviour.Behaviour,
-        name: str="Oneshot",
-        variable_name: str="oneshot",
-        policy: common.OneShotPolicy=common.OneShotPolicy.ON_SUCCESSFUL_COMPLETION
+    behaviour: behaviour.Behaviour,
+    name: str="Oneshot",
+    variable_name: str="oneshot",
+    policy: common.OneShotPolicy=common.OneShotPolicy.ON_SUCCESSFUL_COMPLETION
 ) -> behaviour.Behaviour:
     """
     Ensure that a particular pattern is executed through to

@@ -3,6 +3,7 @@ Release Notes
 
 Forthcoming
 -----------
+* [behaviours] logical check across multipole blackboard values, `#282 <https://github.com/splintered-reality/py_trees/pull/282>`_
 * [composites] protect against adding a child to multiple parents, `#281 <https://github.com/splintered-reality/py_trees/pull/281>`_
 
 2.0.11 (2020-03-01)

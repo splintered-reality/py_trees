@@ -17,12 +17,22 @@ Common definitions, methods and variables used by the py_trees library.
 
 import enum
 import math
+import operator
+import typing
 
 from . import console
 
 ##############################################################################
-# Status
+# General
 ##############################################################################
+
+
+class Name(enum.Enum):
+    """
+    Naming conventions.
+    """
+    AUTO_GENERATED = "AUTO_GENERATED"
+    """:py:data:`~py_trees.common.Name.AUTO_GENERATED` leaves it to the behaviour to generate a useful, informative name."""
 
 
 class Status(enum.Enum):
@@ -37,6 +47,33 @@ class Status(enum.Enum):
     INVALID = "INVALID"
     """Behaviour is uninitialised and inactive, i.e. this is the status before first entry, and after a higher priority switch has occurred."""
 
+
+class Duration(enum.Enum):
+    """
+    Naming conventions.
+    """
+    INFINITE = math.inf
+    """:py:data:`~py_trees.common.Duration.INFINITE` oft used for perpetually blocking operations."""
+    UNTIL_THE_BATTLE_OF_ALFREDO = math.inf
+    """:py:data:`~py_trees.common.Duration.UNTIL_THE_BATTLE_OF_ALFREDO` is an alias for :py:data:`~py_trees.common.Duration.INFINITE`."""
+
+
+class Access(enum.Enum):
+    """
+    Use to distinguish types of access to, e.g. variables on a blackboard.
+    """
+
+    READ = "READ"
+    """Read access."""
+    WRITE = "WRITE"
+    """Write access, implicitly also grants read access."""
+    EXCLUSIVE_WRITE = "EXCLUSIVE_WRITE"
+    """Exclusive lock for writing, i.e. no other writer permitted."""
+
+
+##############################################################################
+# Policies
+##############################################################################
 
 class ParallelPolicy(object):
     """
@@ -136,24 +173,6 @@ class OneShotPolicy(enum.Enum):
     """Permits the oneshot to keep trying until it's first success."""
 
 
-class Name(enum.Enum):
-    """
-    Naming conventions.
-    """
-    AUTO_GENERATED = "AUTO_GENERATED"
-    """:py:data:`~py_trees.common.Name.AUTO_GENERATED` leaves it to the behaviour to generate a useful, informative name."""
-
-
-class Duration(enum.Enum):
-    """
-    Naming conventions.
-    """
-    INFINITE = math.inf
-    """:py:data:`~py_trees.common.Duration.INFINITE` oft used for perpetually blocking operations."""
-    UNTIL_THE_BATTLE_OF_ALFREDO = math.inf
-    """:py:data:`~py_trees.common.Duration.UNTIL_THE_BATTLE_OF_ALFREDO` is an alias for :py:data:`~py_trees.common.Duration.INFINITE`."""
-
-
 class ClearingPolicy(enum.IntEnum):
     """
     Policy rules for behaviours to dictate when data should be cleared/reset.
@@ -165,20 +184,40 @@ class ClearingPolicy(enum.IntEnum):
     NEVER = 3
     """Never clear the data"""
 
+##############################################################################
+# Blackboards
+##############################################################################
 
-class Access(enum.Enum):
+
+class ComparisonExpression(object):
     """
-    Use to declare the type of access required / granted to, for example, variables on
-    a blackboard.
+    Store the parameters for a univariate comparison operation
+    (i.e. between a variable and a value).
+
+    Args:
+        variable: name of the variable to compare
+        value: value to compare against
+        operator: a callable comparison operator
+
+    .. tip::
+        The python `operator module`_ includes many useful comparison operations, e.g. operator.ne
+
+    .. _`operator module`: https://docs.python.org/3/library/operator.html
     """
+    def __init__(
+        self,
+        variable: str,
+        value: typing.Any,
+        operator: typing.Callable[[typing.Any, typing.Any], bool]
+    ):
+        self.variable = variable
+        self.value = value
+        self.operator = operator
 
-    READ = "READ"
-    """Read access."""
-    WRITE = "WRITE"
-    """Write access, implicitly also grants read access"""
-    EXCLUSIVE_WRITE = "EXCLUSIVE_WRITE"
-    """Exclusive lock for writing on the associated key"""
 
+##############################################################################
+# BlackBoxes
+##############################################################################
 
 class BlackBoxLevel(enum.IntEnum):
     """

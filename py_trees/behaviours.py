@@ -14,10 +14,12 @@ A library of fundamental behaviours for use.
 # Imports
 ##############################################################################
 
+import functools
 import operator
 import typing
 
 from . import behaviour
+from . import blackboard
 from . import common
 from . import meta
 
@@ -405,7 +407,7 @@ class CheckBlackboardVariableValue(behaviour.Behaviour):
     .. tip::
         The python `operator module`_ includes many useful comparison operations.
 
-    .. _`operator module`: https://docs.python.org/2/library/operator.html
+    .. _`operator module`: https://docs.python.org/3/library/operator.html
     """
     def __init__(
             self,
@@ -504,3 +506,71 @@ class WaitForBlackboardVariableValue(CheckBlackboardVariableValue):
             return common.Status.RUNNING
         else:
             return new_status
+
+
+class CheckBlackboardVariableValues(behaviour.Behaviour):
+    """
+    Apply a logical operation across a set of blackboard variable checks.
+    This is non-blocking, so will always tick with status
+    :data:`~py_trees.common.Status.FAILURE` or
+    :data:`~py_trees.common.Status.SUCCESS`.
+
+    Args:
+        checks: a list of comparison checks to apply to blackboard variables
+        logical_operator: a logical check to apply across the results of the blackboard variable checks
+        name: name of the behaviour
+
+    .. tip::
+        The python `operator module`_ includes many useful logical operators, e.g. operator.xor.
+
+    Raises:
+        ValueError if less than two variable checks are specified (insufficient for logical operations)
+
+    .. _`operator module`: https://docs.python.org/3/library/operator.html
+    """
+    def __init__(
+        self,
+        checks: typing.List[common.ComparisonExpression],
+        operator: typing.Callable[[bool, bool], bool],
+        name: str=common.Name.AUTO_GENERATED
+    ):
+        super().__init__(name=name)
+        self.checks = checks
+        self.operator = operator
+        self.blackboard = self.attach_blackboard_client()
+        if len(checks) < 2:
+            raise ValueError("Must be at least two variables to operate on [only {} provided]".format(len(checks)))
+        for check in self.checks:
+            self.blackboard.register_key(
+                key=blackboard.Blackboard.key(check.variable),
+                access=common.Access.READ
+            )
+
+    def update(self) -> common.Status:
+        """
+        Applies comparison checks on each variable and a logical check across the
+        complete set of variables.
+
+        Returns:
+             :data:`~py_trees.common.Status.FAILURE` if key retrieval or logical checks failed, :data:`~py_trees.common.Status.SUCCESS` otherwise.
+        """
+        self.logger.debug("%s.update()" % self.__class__.__name__)
+        results = []
+        for check in self.checks:
+            try:
+                value = self.blackboard.get(check.variable)
+            except KeyError:
+                self.feedback_message = "variable '{}' does not yet exist on the blackboard".format(self.variable_name)
+                return common.Status.FAILURE
+            results.append(check.operator(value, check.value))
+        logical_result = functools.reduce(self.operator, results)
+        if logical_result:
+            self.feedback_message = "[{}]".format(
+                "|".join(["T" if result else "F" for result in results])
+            )
+            return common.Status.SUCCESS
+        else:
+            self.feedback_message = "[{}]".format(
+                "|".join(["T" if result else "F" for result in results])
+            )
+            return common.Status.FAILURE
