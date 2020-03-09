@@ -145,6 +145,53 @@ class SuccessEveryN(behaviour.Behaviour):
             return common.Status.FAILURE
 
 
+class TickCounter(behaviour.Behaviour):
+    """
+    A useful utility behaviour for demos and tests. Simply
+    ticks with :data:`~py_trees.common.Status.RUNNING` for
+    the specified number of ticks before returning the
+    requested completion status (:data:`~py_trees.common.Status.SUCCESS`
+    or :data:`~py_trees.common.Status.FAILURE`).
+
+    This behaviour will reset the tick counter when initialising.
+
+    Args:
+        name: name of the behaviour
+        duration: number of ticks to run
+        completion_status: status to switch to once the counter has expired
+    """
+    def __init__(
+        self,
+        duration: int,
+        name=common.Name.AUTO_GENERATED,
+        completion_status: common.Status=common.Status.SUCCESS
+    ):
+        super().__init__(name=name)
+        self.completion_status = completion_status
+        self.duration = duration
+        self.counter = 0
+
+    def initialise(self):
+        """
+        Reset the tick counter.
+        """
+        self.counter = 0
+
+    def update(self):
+        """
+        Increment the tick counter and return the appropriate status for this behaviour
+        based on the tick count.
+
+        Returns
+            :data:`~py_trees.common.Status.RUNNING` while not expired, the given completion status otherwise
+        """
+        self.counter += 1
+        if self.counter <= self.duration:
+            return common.Status.RUNNING
+        else:
+            return self.completion_status
+
+
 class Count(behaviour.Behaviour):
     """
     A counting behaviour that updates its status at each tick depending on
@@ -519,6 +566,7 @@ class CheckBlackboardVariableValues(behaviour.Behaviour):
         checks: a list of comparison checks to apply to blackboard variables
         logical_operator: a logical check to apply across the results of the blackboard variable checks
         name: name of the behaviour
+        namespace: optionally store results of the checks (boolean) under this namespace
 
     .. tip::
         The python `operator module`_ includes many useful logical operators, e.g. operator.xor.
@@ -532,7 +580,8 @@ class CheckBlackboardVariableValues(behaviour.Behaviour):
         self,
         checks: typing.List[common.ComparisonExpression],
         operator: typing.Callable[[bool, bool], bool],
-        name: str=common.Name.AUTO_GENERATED
+        name: str=common.Name.AUTO_GENERATED,
+        namespace: str=None,
     ):
         super().__init__(name=name)
         self.checks = checks
@@ -545,6 +594,15 @@ class CheckBlackboardVariableValues(behaviour.Behaviour):
                 key=blackboard.Blackboard.key(check.variable),
                 access=common.Access.READ
             )
+        if namespace is not None:
+            self.blackboard_results = self.attach_blackboard_client(namespace=namespace)
+            for counter in range(1, len(self.checks) + 1):
+                self.blackboard_results.register_key(
+                    key=str(counter),
+                    access=common.Access.WRITE
+                )
+        else:
+            self.blackboard_results = None
 
     def update(self) -> common.Status:
         """
@@ -563,6 +621,9 @@ class CheckBlackboardVariableValues(behaviour.Behaviour):
                 self.feedback_message = "variable '{}' does not yet exist on the blackboard".format(self.variable_name)
                 return common.Status.FAILURE
             results.append(check.operator(value, check.value))
+        if self.blackboard_results is not None:
+            for counter in range(1, len(results) + 1):
+                self.blackboard_results.set(str(counter), results[counter - 1])
         logical_result = functools.reduce(self.operator, results)
         if logical_result:
             self.feedback_message = "[{}]".format(

@@ -364,7 +364,8 @@ def test_check_variable_values():
             py_trees.common.ComparisonExpression(variable="c", operator=operator.eq, value="c"),
             py_trees.common.ComparisonExpression(variable="d", operator=operator.eq, value="d")
         ],
-        operator=operator.and_
+        operator=operator.and_,
+        namespace="results",
     )
     datasets = [
         {'a': 'a', 'b': 'b', 'c': 'c', 'd': 'd', 'operator': operator.and_, 'text': 'AND', 'result': py_trees.common.Status.SUCCESS},
@@ -390,6 +391,3 @@ def test_check_variable_values():
             result=b.status
         )
         assert(b.status == data['result'])
-
-
-

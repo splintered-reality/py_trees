@@ -16,6 +16,7 @@ representing common behaviour tree idioms.
 # Imports
 ##############################################################################
 
+import operator
 import typing
 import uuid
 
@@ -177,21 +178,67 @@ def eternal_guard(
 
 
 def either_or(
+    conditions: typing.List[common.ComparisonExpression],
     subtrees: typing.List[behaviour.Behaviour],
     name="EitherOr",
-    blackboard_namespace: str=None
+    namespace: str=None
 ) -> behaviour.Behaviour:
     """
+    Often you need a kind of selector that doesn't implement prioritisations, i.e.
+    you would like different paths to be selected on a first-come, first-served basis.
+
+    This idiom implements such a pattern by making use of an XOR conditional check
+    at the front-end before locking in the choice internally. Once the choice is
+    locked in, the selected path is executed to completion and can only be
+    interrupted by higher priorities in the tree. That is, the different paths
+    (subtrees) within this idiom cannot interrupt each other.
+
     Args:
+        conditions: list of triggers that ultimately select the subtree to enable
         subtrees: list of subtrees to tick from in the either_or operation
         name: the name to use for this idiom's root behaviour
-        blackboard_namespace: this idiom's private variables will be put behind this namespace
+        preemptible: whether the subtrees may preempt (interrupt) each other
+        namespace: this idiom's private variables will be put behind this namespace
 
-    If no blackboard namespace is provided, a unique namespace derived from the idiom's name will be used.
+    Raises:
+        ValueError if the number of conditions does not match the number of subtrees
+
+    If no namespace is provided, a unique one is derived from the idiom's name.
+
+    .. seealso:: :ref:`py-trees-demo-either-or <py-trees-demo-either-or>`
+
+    .. todo:: a version for which other subtrees can preempt (in an unprioritised manner) the active branch
     """
+    if len(conditions) != len(subtrees):
+        raise ValueError("Must be the same number of conditions as subtrees [{} != {}]".format(
+            len(conditions, len(subtrees)))
+        )
     root = composites.Sequence(name=name)
-    if blackboard_namespace is None:
-        blackboard_namespace = (name.lower().replace(" ", "_") + str(root.id)).replace("-", "_")
+    if namespace is None:
+        namespace = blackboard.Blackboard.separator
+        namespace += name.lower().replace("-", "_").replace(" ", "_")
+        namespace += str(root.id).replace("-", "_").replace(" ", "_")
+        namespace = blackboard.Blackboard.separator
+        namespace += "conditions"
+    xor = behaviours.CheckBlackboardVariableValues(
+        name="XOR",
+        checks=conditions,
+        operator=operator.xor,
+        namespace=namespace
+    )
+    chooser = composites.Selector(name="Chooser")
+    for counter in range(1, len(conditions) + 1):
+        sequence = composites.Sequence(name="Option {}".format(str(counter)))
+        variable_name = namespace + blackboard.Blackboard.separator + str(counter)
+        disabled = behaviours.CheckBlackboardVariableValue(
+            name="Enabled?",
+            variable_name=variable_name,
+            expected_value=True,
+            comparison_operator=operator.eq)
+        sequence.add_children([disabled, subtrees[counter - 1]])
+        chooser.add_child(sequence)
+    root.add_children([xor, chooser])
+    return root
 
 
 def oneshot(
