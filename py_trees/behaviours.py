@@ -453,8 +453,6 @@ class CheckBlackboardVariableValue(behaviour.Behaviour):
 
     .. tip::
         The python `operator module`_ includes many useful comparison operations.
-
-    .. _`operator module`: https://docs.python.org/3/library/operator.html
     """
     def __init__(
             self,
@@ -573,8 +571,6 @@ class CheckBlackboardVariableValues(behaviour.Behaviour):
 
     Raises:
         ValueError if less than two variable checks are specified (insufficient for logical operations)
-
-    .. _`operator module`: https://docs.python.org/3/library/operator.html
     """
     def __init__(
         self,

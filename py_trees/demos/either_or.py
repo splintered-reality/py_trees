@@ -13,7 +13,7 @@
    :func: command_line_argument_parser
    :prog: py-trees-demo-either-or
 
-.. graphviz:: dot/idiom-either-or.dot
+.. graphviz:: dot/demo-either-or.dot
 
 .. image:: images/either_or.gif
 """
@@ -162,6 +162,7 @@ def create_root():
     tasks.add_children([either_or, idle])
     root.add_children([reset, joystick_one_events, joystick_two_events, tasks])
     return root
+
 
 ##############################################################################
 # Main

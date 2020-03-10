@@ -180,18 +180,45 @@ def eternal_guard(
 def either_or(
     conditions: typing.List[common.ComparisonExpression],
     subtrees: typing.List[behaviour.Behaviour],
-    name="EitherOr",
+    name="Either Or",
     namespace: str=None
 ) -> behaviour.Behaviour:
     """
     Often you need a kind of selector that doesn't implement prioritisations, i.e.
     you would like different paths to be selected on a first-come, first-served basis.
 
-    This idiom implements such a pattern by making use of an XOR conditional check
-    at the front-end before locking in the choice internally. Once the choice is
-    locked in, the selected path is executed to completion and can only be
-    interrupted by higher priorities in the tree. That is, the different paths
-    (subtrees) within this idiom cannot interrupt each other.
+    .. code-block:: python
+
+        task_one = py_trees.behaviours.TickCounter(name="Subtree 1", duration=2)
+        task_two = py_trees.behaviours.TickCounter(name="Subtree 2", duration=2)
+        either_or = py_trees.idioms.either_or(
+            name="EitherOr",
+            conditions=[
+                py_trees.common.ComparisonExpression("joystick_one", "enabled", operator.eq),
+                py_trees.common.ComparisonExpression("joystick_two", "enabled", operator.eq),
+            ],
+            subtrees=[task_one, task_two],
+            namespace="either_or",
+        )
+
+    .. graphviz:: dot/idiom-either-or.dot
+        :align: center
+        :caption: Idiom - Either Or
+
+    Up front is an XOR conditional check which locks in the result on the blackboard
+    under the specified namespace. Locking the result in permits the conditional
+    variables to vary in future ticks without interrupting the execution of the
+    chosen subtree (an example of a conditional variable may be one that has
+    registered joystick button presses).
+
+    Once the result is locked in, the relevant subtree is activated beneath the
+    selector. The children of the selector are, from left to right, not in any
+    order of priority since the previous xor choice has been locked in and isn't
+    revisited until the subtree executes to completion. Only one
+    may be active and it cannot be interrupted by the others.
+
+    The only means of interrupting the execution is via a higher priority in the
+    tree that this idiom is embedded in.
 
     Args:
         conditions: list of triggers that ultimately select the subtree to enable
@@ -205,7 +232,7 @@ def either_or(
 
     If no namespace is provided, a unique one is derived from the idiom's name.
 
-    .. seealso:: :ref:`py-trees-demo-either-or <py-trees-demo-either-or>`
+    .. seealso:: :ref:`py-trees-demo-either-or <py-trees-demo-either-or-program>`
 
     .. todo:: a version for which other subtrees can preempt (in an unprioritised manner) the active branch
     """

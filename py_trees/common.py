@@ -201,8 +201,6 @@ class ComparisonExpression(object):
 
     .. tip::
         The python `operator module`_ includes many useful comparison operations, e.g. operator.ne
-
-    .. _`operator module`: https://docs.python.org/3/library/operator.html
     """
     def __init__(
         self,

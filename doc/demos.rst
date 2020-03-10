@@ -115,6 +115,22 @@ py-trees-demo-dot-graphs
    :linenos:
    :caption: py_trees/demos/dot_graphs.py
 
+.. _py-trees-demo-either-or-program:
+
+py-trees-demo-either-or
+-----------------------
+
+.. automodule:: py_trees.demos.either_or
+    :members:
+    :special-members:
+    :show-inheritance:
+    :synopsis: demo use of the either_or idiom
+
+.. literalinclude:: ../py_trees/demos/either_or.py
+   :language: python
+   :linenos:
+   :caption: py_trees/demos/either_or.py
+
 .. _py-trees-demo-logging-program:
 
 py-trees-demo-logging
