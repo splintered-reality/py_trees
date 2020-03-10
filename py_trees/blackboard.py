@@ -462,6 +462,43 @@ class Blackboard(object):
                 name, namespace)
             )
 
+    @staticmethod
+    def key(variable_name: str) -> str:
+        """
+        Extract the key for an arbitrary blackboard variable, keeping in mind that blackboard variable
+        names can be pointing to a nested attribute within a key.
+
+        Example: '/foo/bar.woohoo -> /foo/bar'.
+
+        Args:
+            variable_name: blackboard variable name - can be nested, e.g. battery.percentage
+
+        Returns:
+            name of the underlying key
+        """
+        name_components = variable_name.split('.')
+        key = name_components[0]
+        return key
+
+    @staticmethod
+    def key_with_attributes(variable_name: str) -> typing.Tuple[str, str]:
+        """
+        Extract the key for an arbitrary blackboard variable, keeping in mind that blackboard variable
+        names can be pointing to a nested attribute within a key,
+
+        Example: '/foo/bar.woohoo -> (/foo/bar'. 'woohoo')
+
+        Args:
+            variable_name: blackboard variable name - can be nested, e.g. battery.percentage
+
+        Returns:
+            a tuple consisting of the key and it's attributes (in string form)
+        """
+        name_components = variable_name.split('.')
+        key = name_components[0]
+        key_attributes = '.'.join(name_components[1:])
+        return (key, key_attributes)
+
 
 class Client(object):
     """

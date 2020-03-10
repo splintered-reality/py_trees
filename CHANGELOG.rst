@@ -3,6 +3,10 @@ Release Notes
 
 Forthcoming
 -----------
+* [idioms] the either_or pattern, designed to replace the Chooser, `#283 <https://github.com/splintered-reality/py_trees/pull/283>`_
+* [behaviours] TickCounter, a timer based on tree ticks, `#283 <https://github.com/splintered-reality/py_trees/pull/283>`_
+* [behaviours] CheckBlackboardVariableValues, logical checks across multiple values, `#283 <https://github.com/splintered-reality/py_trees/pull/283>`_
+* [common] ComparisonExpression, a more concise way of storing checkers, `#283 <https://github.com/splintered-reality/py_trees/pull/283>`_
 * [composites] protect against adding a child to multiple parents, `#281 <https://github.com/splintered-reality/py_trees/pull/281>`_
 
 2.0.11 (2020-03-01)

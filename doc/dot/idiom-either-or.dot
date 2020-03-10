@@ -1,0 +1,23 @@
+digraph pastafarianism {
+ordering=out;
+graph [fontname="times-roman"];
+node [fontname="times-roman"];
+edge [fontname="times-roman"];
+EitherOr [label=EitherOr, shape=box, style=filled, fillcolor=orange, fontsize=9, fontcolor=black];
+XOR [label=XOR, shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+EitherOr -> XOR;
+Chooser [label=Chooser, shape=octagon, style=filled, fillcolor=cyan, fontsize=9, fontcolor=black];
+EitherOr -> Chooser;
+"Option 1" [label="Option 1", shape=box, style=filled, fillcolor=orange, fontsize=9, fontcolor=black];
+Chooser -> "Option 1";
+"Enabled?" [label="Enabled?", shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+"Option 1" -> "Enabled?";
+"Subtree 1" [label="Subtree 1", shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+"Option 1" -> "Subtree 1";
+"Option 2" [label="Option 2", shape=box, style=filled, fillcolor=orange, fontsize=9, fontcolor=black];
+Chooser -> "Option 2";
+"Enabled?*" [label="Enabled?*", shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+"Option 2" -> "Enabled?*";
+"Subtree 2" [label="Subtree 2", shape=ellipse, style=filled, fillcolor=gray, fontsize=9, fontcolor=black];
+"Option 2" -> "Subtree 2";
+}

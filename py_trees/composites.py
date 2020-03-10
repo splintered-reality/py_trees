@@ -389,6 +389,7 @@ class Chooser(Selector):
             :class:`~py_trees.behaviour.Behaviour`: a reference to itself or one of its children
         """
         self.logger.debug("%s.tick()" % self.__class__.__name__)
+        print("DJS: Chooser tick")
         # Required behaviour for *all* behaviours and composites is
         # for tick() to check if it isn't running and initialise
         if self.status != Status.RUNNING:
@@ -404,6 +405,7 @@ class Chooser(Selector):
         if self.current_child is not None:
             # run our child, and invalidate anyone else who may have been ticked last run
             # (bit wasteful always checking for the latter)
+            print("DJS: Current child {}".format(self.current_child.name))
             for child in self.children:
                 if child is self.current_child:
                     for node in self.current_child.tick():
@@ -411,6 +413,7 @@ class Chooser(Selector):
                 elif child.status != Status.INVALID:
                     child.stop(Status.INVALID)
         else:
+            print("DJS: No current child")
             for child in self.children:
                 for node in child.tick():
                     yield node

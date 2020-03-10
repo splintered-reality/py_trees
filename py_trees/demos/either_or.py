@@ -9,13 +9,13 @@
 
 """
 .. argparse::
-   :module: py_trees.demos.pick_up_where_you_left_off
+   :module: py_trees.demos.either_or
    :func: command_line_argument_parser
-   :prog: py-trees-demo-pick-up-where-you-left-off
+   :prog: py-trees-demo-either-or
 
-.. graphviz:: dot/pick_up_where_you_left_off.dot
+.. graphviz:: dot/demo-either-or.dot
 
-.. image:: images/pick_up_where_you_left_off.gif
+.. image:: images/either_or.gif
 """
 
 ##############################################################################
@@ -24,6 +24,7 @@
 
 import argparse
 import functools
+import operator
 import py_trees
 import sys
 import time
@@ -36,22 +37,23 @@ import py_trees.console as console
 
 
 def description(root):
-    content = "A demonstration of the 'pick up where you left off' idiom.\n\n"
-    content += "A common behaviour tree pattern that allows you to resume\n"
-    content += "work after being interrupted by a high priority interrupt.\n"
+    content = "A demonstration of the 'either_or' idiom.\n\n"
+    content += "This behaviour tree pattern enables triggering of subtrees\n"
+    content += "with equal priority (first in, first served).\n"
     content += "\n"
     content += "EVENTS\n"
     content += "\n"
-    content += " -  2 : task one done, task two running\n"
-    content += " -  3 : high priority interrupt\n"
-    content += " -  7 : task two restarts\n"
-    content += " -  9 : task two done\n"
+    content += " -  3 : joystick one enabled, task one starts\n"
+    content += " -  5 : task one finishes\n"
+    content += " -  6 : joystick two enabled, task two starts\n"
+    content += " -  7 : joystick one enabled, task one ignored, task two continues\n"
+    content += " -  8 : task two finishes\n"
     content += "\n"
     if py_trees.console.has_colours:
         banner_line = console.green + "*" * 79 + "\n" + console.reset
         s = "\n"
         s += banner_line
-        s += console.bold_white + "Pick Up Where you Left Off".center(79) + "\n" + console.reset
+        s += console.bold_white + "Either Or".center(79) + "\n" + console.reset
         s += banner_line
         s += "\n"
         s += content
@@ -81,20 +83,10 @@ def command_line_argument_parser():
 
 
 def pre_tick_handler(behaviour_tree):
-    """
-    This prints a banner and will run immediately before every tick of the tree.
-
-    Args:
-        behaviour_tree (:class:`~py_trees.trees.BehaviourTree`): the tree custodian
-
-    """
     print("\n--------- Run %s ---------\n" % behaviour_tree.count)
 
 
 def post_tick_handler(snapshot_visitor, behaviour_tree):
-    """
-    Prints an ascii tree with the current snapshot status.
-    """
     print(
         "\n" + py_trees.display.unicode_tree(
             root=behaviour_tree.root,
@@ -102,35 +94,75 @@ def post_tick_handler(snapshot_visitor, behaviour_tree):
             previously_visited=snapshot_visitor.previously_visited
         )
     )
+    print(py_trees.display.unicode_blackboard())
 
 
 def create_root():
-    task_one = py_trees.behaviours.Count(
-        name="Task 1",
-        fail_until=0,
-        running_until=2,
-        success_until=10
-    )
-    task_two = py_trees.behaviours.Count(
-        name="Task 2",
-        fail_until=0,
-        running_until=2,
-        success_until=10
-    )
-    high_priority_interrupt = py_trees.decorators.RunningIsFailure(
-        child=py_trees.behaviours.Periodic(
-            name="High Priority",
-            n=3
+    trigger_one = py_trees.decorators.FailureIsRunning(
+        name="FisR",
+        child=py_trees.behaviours.SuccessEveryN(
+            name="Joystick 1",
+            n=4
         )
     )
-    piwylo = py_trees.idioms.pick_up_where_you_left_off(
-        name="Pick Up\nWhere You\nLeft Off",
-        tasks=[task_one, task_two]
+    trigger_two = py_trees.decorators.FailureIsRunning(
+        name="FisR",
+        child=py_trees.behaviours.SuccessEveryN(
+            name="Joystick 2",
+            n=7
+        )
     )
-    root = py_trees.composites.Selector(name="Root")
-    root.add_children([high_priority_interrupt, piwylo])
-
+    enable_joystick_one = py_trees.behaviours.SetBlackboardVariable(
+        name="Joy1 - Enabled",
+        variable_name="joystick_one",
+        variable_value="enabled")
+    enable_joystick_two = py_trees.behaviours.SetBlackboardVariable(
+        name="Joy2 - Enabled",
+        variable_name="joystick_two",
+        variable_value="enabled")
+    reset_joystick_one = py_trees.behaviours.SetBlackboardVariable(
+        name="Joy1 - Disabled",
+        variable_name="joystick_one",
+        variable_value="disabled")
+    reset_joystick_two = py_trees.behaviours.SetBlackboardVariable(
+        name="Joy2 - Disabled",
+        variable_name="joystick_two",
+        variable_value="disabled")
+    task_one = py_trees.behaviours.TickCounter(
+        name="Task 1",
+        duration=2,
+        completion_status=py_trees.common.Status.SUCCESS
+    )
+    task_two = py_trees.behaviours.TickCounter(
+        name="Task 2",
+        duration=2,
+        completion_status=py_trees.common.Status.SUCCESS
+    )
+    idle = py_trees.behaviours.Running(name="Idle")
+    either_or = py_trees.idioms.either_or(
+        name="EitherOr",
+        conditions=[
+            py_trees.common.ComparisonExpression("joystick_one", "enabled", operator.eq),
+            py_trees.common.ComparisonExpression("joystick_two", "enabled", operator.eq),
+        ],
+        subtrees=[task_one, task_two],
+        namespace="either_or",
+    )
+    root = py_trees.composites.Parallel(
+        name="Root",
+        policy=py_trees.common.ParallelPolicy.SuccessOnAll(synchronise=False)
+    )
+    reset = py_trees.composites.Sequence(name="Reset")
+    reset.add_children([reset_joystick_one, reset_joystick_two])
+    joystick_one_events = py_trees.composites.Sequence(name="Joy1 Events")
+    joystick_one_events.add_children([trigger_one, enable_joystick_one])
+    joystick_two_events = py_trees.composites.Sequence(name="Joy2 Events")
+    joystick_two_events.add_children([trigger_two, enable_joystick_two])
+    tasks = py_trees.composites.Selector(name="Tasks")
+    tasks.add_children([either_or, idle])
+    root.add_children([reset, joystick_one_events, joystick_two_events, tasks])
     return root
+
 
 ##############################################################################
 # Main
@@ -142,7 +174,7 @@ def main():
     Entry point for the demo script.
     """
     args = command_line_argument_parser().parse_args()
-    py_trees.logging.level = py_trees.logging.Level.DEBUG
+    # py_trees.logging.level = py_trees.logging.Level.DEBUG
     root = create_root()
     print(description(root))
 

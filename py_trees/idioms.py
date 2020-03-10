@@ -16,7 +16,8 @@ representing common behaviour tree idioms.
 # Imports
 ##############################################################################
 
-from typing import List
+import operator
+import typing
 import uuid
 
 from . import behaviour
@@ -99,7 +100,7 @@ def pick_up_where_you_left_off(
 def eternal_guard(
         subtree: behaviour.Behaviour,
         name: str="Eternal Guard",
-        conditions: List[behaviour.Behaviour]=[],
+        conditions: typing.List[behaviour.Behaviour]=[],
         blackboard_variable_prefix: str=None) -> behaviour.Behaviour:
     """
     The eternal guard idiom implements a stronger :term:`guard` than the typical check at the
@@ -176,11 +177,102 @@ def eternal_guard(
     return root
 
 
+def either_or(
+    conditions: typing.List[common.ComparisonExpression],
+    subtrees: typing.List[behaviour.Behaviour],
+    name="Either Or",
+    namespace: str=None
+) -> behaviour.Behaviour:
+    """
+    Often you need a kind of selector that doesn't implement prioritisations, i.e.
+    you would like different paths to be selected on a first-come, first-served basis.
+
+    .. code-block:: python
+
+        task_one = py_trees.behaviours.TickCounter(name="Subtree 1", duration=2)
+        task_two = py_trees.behaviours.TickCounter(name="Subtree 2", duration=2)
+        either_or = py_trees.idioms.either_or(
+            name="EitherOr",
+            conditions=[
+                py_trees.common.ComparisonExpression("joystick_one", "enabled", operator.eq),
+                py_trees.common.ComparisonExpression("joystick_two", "enabled", operator.eq),
+            ],
+            subtrees=[task_one, task_two],
+            namespace="either_or",
+        )
+
+    .. graphviz:: dot/idiom-either-or.dot
+        :align: center
+        :caption: Idiom - Either Or
+
+    Up front is an XOR conditional check which locks in the result on the blackboard
+    under the specified namespace. Locking the result in permits the conditional
+    variables to vary in future ticks without interrupting the execution of the
+    chosen subtree (an example of a conditional variable may be one that has
+    registered joystick button presses).
+
+    Once the result is locked in, the relevant subtree is activated beneath the
+    selector. The children of the selector are, from left to right, not in any
+    order of priority since the previous xor choice has been locked in and isn't
+    revisited until the subtree executes to completion. Only one
+    may be active and it cannot be interrupted by the others.
+
+    The only means of interrupting the execution is via a higher priority in the
+    tree that this idiom is embedded in.
+
+    Args:
+        conditions: list of triggers that ultimately select the subtree to enable
+        subtrees: list of subtrees to tick from in the either_or operation
+        name: the name to use for this idiom's root behaviour
+        preemptible: whether the subtrees may preempt (interrupt) each other
+        namespace: this idiom's private variables will be put behind this namespace
+
+    Raises:
+        ValueError if the number of conditions does not match the number of subtrees
+
+    If no namespace is provided, a unique one is derived from the idiom's name.
+
+    .. seealso:: :ref:`py-trees-demo-either-or <py-trees-demo-either-or-program>`
+
+    .. todo:: a version for which other subtrees can preempt (in an unprioritised manner) the active branch
+    """
+    if len(conditions) != len(subtrees):
+        raise ValueError("Must be the same number of conditions as subtrees [{} != {}]".format(
+            len(conditions, len(subtrees)))
+        )
+    root = composites.Sequence(name=name)
+    if namespace is None:
+        namespace = blackboard.Blackboard.separator
+        namespace += name.lower().replace("-", "_").replace(" ", "_")
+        namespace += str(root.id).replace("-", "_").replace(" ", "_")
+        namespace = blackboard.Blackboard.separator
+        namespace += "conditions"
+    xor = behaviours.CheckBlackboardVariableValues(
+        name="XOR",
+        checks=conditions,
+        operator=operator.xor,
+        namespace=namespace
+    )
+    chooser = composites.Selector(name="Chooser")
+    for counter in range(1, len(conditions) + 1):
+        sequence = composites.Sequence(name="Option {}".format(str(counter)))
+        variable_name = namespace + blackboard.Blackboard.separator + str(counter)
+        disabled = behaviours.CheckBlackboardVariableValue(
+            name="Enabled?",
+            variable_name=variable_name,
+            expected_value=True,
+            comparison_operator=operator.eq)
+        sequence.add_children([disabled, subtrees[counter - 1]])
+        chooser.add_child(sequence)
+    root.add_children([xor, chooser])
+    return root
+
+
 def oneshot(
-        behaviour: behaviour.Behaviour,
-        name: str="Oneshot",
-        variable_name: str="oneshot",
-        policy: common.OneShotPolicy=common.OneShotPolicy.ON_SUCCESSFUL_COMPLETION
+    behaviour: behaviour.Behaviour,
+    name: str="Oneshot",
+    variable_name: str="oneshot",
+    policy: common.OneShotPolicy=common.OneShotPolicy.ON_SUCCESSFUL_COMPLETION
 ) -> behaviour.Behaviour:
     """
     Ensure that a particular pattern is executed through to

@@ -13,14 +13,15 @@ This package contains py_trees demo script code.
 # Imports
 ##############################################################################
 
-from . import action  # noqa
-from . import blackboard  # noqa
-from . import blackboard_namespaces  # noqa
-from . import blackboard_remappings  # noqa
-from . import context_switching  # noqa
-from . import display_modes  # noqa
-from . import dot_graphs  # noqa
-from . import lifecycle  # noqa
-from . import selector  # noqa
-from . import sequence  # noqa
-from . import stewardship  # noqa
+from . import action
+from . import blackboard
+from . import blackboard_namespaces
+from . import blackboard_remappings
+from . import context_switching
+from . import display_modes
+from . import dot_graphs
+from . import either_or
+from . import lifecycle
+from . import selector
+from . import sequence
+from . import stewardship

@@ -40,3 +40,4 @@ Indices and tables
 * :ref:`modindex`
 * :ref:`search`
 
+.. _`operator module`: https://docs.python.org/3/library/operator.html

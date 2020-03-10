@@ -37,7 +37,7 @@ def assert_banner():
 
 def assert_details(text, expected, result):
     print(console.green + text +
-          "." * (40 - len(text)) +
+          "." * (70 - len(text)) +
           console.cyan + "{}".format(expected) +
           console.yellow + " [{}]".format(result) +
           console.reset)
@@ -347,3 +347,47 @@ def test_wait_for_variable_value():
         )
         assert(b.status == asserted_result)
 
+
+def test_check_variable_values():
+    console.banner("Check Variable Values")
+    blackboard = Client(name="Blackboard")
+    for key in {"a", "b", "c", "d"}:
+        blackboard.register_key(
+            key=key,
+            access=py_trees.common.Access.WRITE
+        )
+    b = py_trees.behaviours.CheckBlackboardVariableValues(
+        name="Checks",
+        checks=[
+            py_trees.common.ComparisonExpression(variable="a", operator=operator.eq, value="a"),
+            py_trees.common.ComparisonExpression(variable="b", operator=operator.eq, value="b"),
+            py_trees.common.ComparisonExpression(variable="c", operator=operator.eq, value="c"),
+            py_trees.common.ComparisonExpression(variable="d", operator=operator.eq, value="d")
+        ],
+        operator=operator.and_,
+        namespace="results",
+    )
+    datasets = [
+        {'a': 'a', 'b': 'b', 'c': 'c', 'd': 'd', 'operator': operator.and_, 'text': 'AND', 'result': py_trees.common.Status.SUCCESS},
+        {'a': 'z', 'b': 'b', 'c': 'c', 'd': 'd', 'operator': operator.and_, 'text': 'AND', 'result': py_trees.common.Status.FAILURE},
+        {'a': 'z', 'b': 'b', 'c': 'c', 'd': 'd', 'operator': operator.or_, 'text': 'OR', 'result': py_trees.common.Status.SUCCESS},
+        {'a': 'z', 'b': 'z', 'c': 'z', 'd': 'z', 'operator': operator.or_, 'text': 'OR', 'result': py_trees.common.Status.FAILURE},
+        {'a': 'a', 'b': 'z', 'c': 'z', 'd': 'z', 'operator': operator.xor, 'text': 'XOR', 'result': py_trees.common.Status.SUCCESS},
+        {'a': 'a', 'b': 'b', 'c': 'z', 'd': 'z', 'operator': operator.xor, 'text': 'XOR', 'result': py_trees.common.Status.FAILURE},
+    ]
+    print("Comparison Operator: operator.eq")
+    print("")
+    assert_banner()
+    for data in datasets:
+        blackboard.a = data['a']
+        blackboard.b = data['b']
+        blackboard.c = data['c']
+        blackboard.d = data['d']
+        b.operator = data['operator']
+        b.tick_once()
+        assert_details(
+            text="[a:{}|b:{}|c:{}|d:{}]{} - {}".format(blackboard.a, blackboard.b, blackboard.c, blackboard.d, b.feedback_message, data['text']),
+            expected=data['result'],
+            result=b.status
+        )
+        assert(b.status == data['result'])

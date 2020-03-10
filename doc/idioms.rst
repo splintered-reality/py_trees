@@ -20,6 +20,14 @@ creating them.
 The subsections below introduce each composite briefly. For a full listing of each
 composite's methods, visit the :ref:`py-trees-idioms-module` module api documentation.
 
+.. _either-or-section:
+
+Either Or
+---------
+
+.. automethod:: py_trees.idioms.either_or
+    :noindex:
+
 .. _eternal-guard-section:
 
 Eternal Guard
