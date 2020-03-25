@@ -647,10 +647,14 @@ class Parallel(Composite):
         Args:
             new_status : the composite is transitioning to this new status
         """
+        # clean up dangling (running) children
         for child in self.children:
             if child.status == common.Status.RUNNING:
-                # interrupt it (exactly as if it was interrupted by a higher priority)
+                # interrupt it exactly as if it was interrupted by a higher priority
                 child.stop(common.Status.INVALID)
+        # only nec. thing here is to make sure the status gets set to INVALID if
+        # it was a higher priority interrupt (new_status == INVALID)
+        Composite.stop(self, new_status)
 
     @property
     def current_child(self):
