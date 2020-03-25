@@ -3,7 +3,7 @@ Release Notes
 
 Forthcoming
 -----------
-* ...
+* [composites] paralell bugfix to invalidate correctly, `#285 <https://github.com/splintered-reality/py_trees/pull/285>`_
 
 2.0.12 (2020-03-10)
 -------------------
