@@ -267,6 +267,7 @@ class Blackboard(object):
             Blackboard.storage[key] = value
         else:
             setattr(Blackboard.storage[key], key_attributes, value)
+        Blackboard.metadata.setdefault(key, KeyMetaData())
 
     @staticmethod
     def unset(key: str):
