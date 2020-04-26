@@ -3,6 +3,10 @@ Release Notes
 
 Forthcoming
 -----------
+* ...
+
+2.0.14 (2020-04-26)
+-------------------
 * [blackboard] bugfix metadata not created on static set, `#286 <https://github.com/splintered-reality/py_trees_ros/pull/286>`_
 
 2.0.13 (2020-03-24)
