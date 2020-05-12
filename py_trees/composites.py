@@ -319,6 +319,57 @@ class Selector(Composite):
             self.current_child = None
         yield self
 
+    def remove_child(self, child):
+        """
+        Remove the child behaviour from this composite.
+
+        Args:
+            child (:class:`~py_trees.behaviour.Behaviour`): child to delete
+
+        Returns:
+            :obj:`int`: index of the child that was removed
+
+        .. todo:: Error handling for when child is not in this list
+        """
+        if self.current_child is not None and (self.current_child.id == child.id):
+            self.current_child = None
+        return super().remove_child(child=child)
+
+    def remove_all_children(self):
+        """
+        Remove all children. Makes sure to stop each child if necessary.
+        """
+        self.current_child = None
+        super().remove_all_children()
+
+    def replace_child(self, child, replacement):
+        """
+        Replace the child behaviour with another.
+
+        Args:
+            child (:class:`~py_trees.behaviour.Behaviour`): child to delete
+            replacement (:class:`~py_trees.behaviour.Behaviour`): child to insert
+        """
+        if self.current_child is not None and (self.current_child.id == child.id):
+            self.current_child = None
+        super().replace_child(child=child, replacement=replacement)
+
+    def remove_child_by_id(self, child_id):
+        """
+        Remove the child with the specified id.
+
+        Args:
+            child_id (uuid.UUID): unique id of the child
+
+        Raises:
+            IndexError: if the child was not found
+        """
+        child = next((c for c in self.children if c.id == child_id), None)
+        if self.current_child is not None and child is not None:
+            if self.current_child.id == child.id:
+                self.current_child = None
+        super().remove_child_by_id(child_id=child_id)
+
     def stop(self, new_status=Status.INVALID):
         """
         Stopping a selector requires setting the current child to none. Note that it

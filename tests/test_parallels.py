@@ -383,7 +383,7 @@ def test_parallel_no_synchronisation():
     assert(root.status == py_trees.common.Status.SUCCESS)
 
 
-def test_removal_of_failing_child_with_current_child():
+def test_add_tick_remove_with_current_child():
     console.banner('Add (Failure)-Tick-Remove with Current Child')
     assert_banner()
     root = py_trees.composites.Parallel(
