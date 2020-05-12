@@ -672,15 +672,26 @@ class Parallel(Composite):
             for child in self.children:
                 if child.status == common.Status.FAILURE:
                     return child
-            # shouldn't get here
+            # might get here if the offender has been removed
+            # in this case, just return None
+            return None
         elif self.status == common.Status.SUCCESS:  # one, all or selected
             success_children = []
             for child in self.children:
                 if child.status == common.Status.SUCCESS:
                     success_children.append(child)
-            return success_children[-1]
+            try:
+                return success_children[-1]
+            except IndexError:
+                # has no children, but parallel has ticked (results in SUCCESS)
+                # SUCCESS, but children have been removed
+                return None
         else:  # RUNNING
-            return self.children[-1]
+            for child in reversed(self.children):
+                if child.status == common.Status.RUNNING:
+                    return child
+            # might get here if the running node has been removed
+            return None
 
     def verbose_info_string(self) -> str:
         """
