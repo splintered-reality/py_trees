@@ -465,7 +465,7 @@ class Sequence(Composite):
         # reset
         if self.status != Status.RUNNING:
             self.logger.debug("%s.tick() [!RUNNING->resetting child index]" % self.__class__.__name__)
-            self.current_child = self.children[0]
+            self.current_child = self.children[0] if self.children else None
             for child in self.children:
                 # reset the children
                 if child.status != Status.INVALID:
@@ -493,12 +493,10 @@ class Sequence(Composite):
                     yield self
                     return
             try:
+                # advance if there is 'next' sibling
                 self.current_child = self.children[index + 1]
             except IndexError:
-                self.current_child = None
-
-        # At this point, all children are happy with their SUCCESS, so we should be happy too
-        self.current_child = None
+                pass
 
         self.stop(Status.SUCCESS)
         yield self
