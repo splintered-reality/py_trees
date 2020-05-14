@@ -5,6 +5,10 @@ Forthcoming
 -----------
 * ...
 
+2.0.15 (2020-05-14)
+-------------------
+* [composites] fix current_child problems on dynamic child insertion/removal, `#289 <https://github.com/splintered-reality/py_trees_ros/pull/289>`_
+
 2.0.14 (2020-04-26)
 -------------------
 * [blackboard] bugfix metadata not created on static set, `#286 <https://github.com/splintered-reality/py_trees_ros/pull/286>`_
