@@ -66,6 +66,7 @@ class Composite(behaviour.Behaviour):
                 self.add_child(child)
         else:
             self.children = []
+        self.current_child = None
 
     ############################################
     # Worker Overrides
@@ -85,7 +86,9 @@ class Composite(behaviour.Behaviour):
             new_status (:class:`~py_trees.common.Status`): behaviour will transition to this new status
         """
         self.logger.debug("%s.stop()[%s]" % (self.__class__.__name__, "%s->%s" % (self.status, new_status) if self.status != new_status else "%s" % new_status))
+        # priority interrupted
         if new_status == Status.INVALID:
+            self.current_child = None
             for child in self.children:
                 child.stop(new_status)
         # This part just replicates the Behaviour.stop function. We replicate it here so that
@@ -154,6 +157,8 @@ class Composite(behaviour.Behaviour):
 
         .. todo:: Error handling for when child is not in this list
         """
+        if self.current_child is not None and (self.current_child.id == child.id):
+            self.current_child = None
         if child.status == Status.RUNNING:
             child.stop(Status.INVALID)
         child_index = self.children.index(child)
@@ -165,6 +170,7 @@ class Composite(behaviour.Behaviour):
         """
         Remove all children. Makes sure to stop each child if necessary.
         """
+        self.current_child = None
         for child in self.children:
             if child.status == Status.RUNNING:
                 child.stop(Status.INVALID)
@@ -181,13 +187,11 @@ class Composite(behaviour.Behaviour):
             child (:class:`~py_trees.behaviour.Behaviour`): child to delete
             replacement (:class:`~py_trees.behaviour.Behaviour`): child to insert
         """
-        if child.status == Status.RUNNING:
-            child.stop(Status.INVALID)
-        child_index = self.children.index(child)
         self.logger.debug("%s.replace_child()[%s->%s]" % (self.__class__.__name__, child.name, replacement.name))
-        self.children[child_index] = replacement
+        child_index = self.children.index(child)
+        self.remove_child(child)
+        self.insert_child(replacement, child_index)
         child.parent = None
-        replacement.parent = self
 
     def remove_child_by_id(self, child_id):
         """
@@ -201,10 +205,7 @@ class Composite(behaviour.Behaviour):
         """
         child = next((c for c in self.children if c.id == child_id), None)
         if child is not None:
-            if child.status == Status.RUNNING:
-                child.stop(Status.INVALID)
-            self.children.remove(child)
-            child.parent = None
+            self.remove_child(child)
         else:
             raise IndexError('child was not found with the specified id [%s]' % child_id)
 
@@ -272,7 +273,6 @@ class Selector(Composite):
 
     def __init__(self, name="Selector", children=None):
         super(Selector, self).__init__(name, children)
-        self.current_child = None
 
     def tick(self):
         """
@@ -318,57 +318,6 @@ class Selector(Composite):
         except IndexError:
             self.current_child = None
         yield self
-
-    def remove_child(self, child):
-        """
-        Remove the child behaviour from this composite.
-
-        Args:
-            child (:class:`~py_trees.behaviour.Behaviour`): child to delete
-
-        Returns:
-            :obj:`int`: index of the child that was removed
-
-        .. todo:: Error handling for when child is not in this list
-        """
-        if self.current_child is not None and (self.current_child.id == child.id):
-            self.current_child = None
-        return super().remove_child(child=child)
-
-    def remove_all_children(self):
-        """
-        Remove all children. Makes sure to stop each child if necessary.
-        """
-        self.current_child = None
-        super().remove_all_children()
-
-    def replace_child(self, child, replacement):
-        """
-        Replace the child behaviour with another.
-
-        Args:
-            child (:class:`~py_trees.behaviour.Behaviour`): child to delete
-            replacement (:class:`~py_trees.behaviour.Behaviour`): child to insert
-        """
-        if self.current_child is not None and (self.current_child.id == child.id):
-            self.current_child = None
-        super().replace_child(child=child, replacement=replacement)
-
-    def remove_child_by_id(self, child_id):
-        """
-        Remove the child with the specified id.
-
-        Args:
-            child_id (uuid.UUID): unique id of the child
-
-        Raises:
-            IndexError: if the child was not found
-        """
-        child = next((c for c in self.children if c.id == child_id), None)
-        if self.current_child is not None and child is not None:
-            if self.current_child.id == child.id:
-                self.current_child = None
-        super().remove_child_by_id(child_id=child_id)
 
     def stop(self, new_status=Status.INVALID):
         """
@@ -440,7 +389,6 @@ class Chooser(Selector):
             :class:`~py_trees.behaviour.Behaviour`: a reference to itself or one of its children
         """
         self.logger.debug("%s.tick()" % self.__class__.__name__)
-        print("DJS: Chooser tick")
         # Required behaviour for *all* behaviours and composites is
         # for tick() to check if it isn't running and initialise
         if self.status != Status.RUNNING:
@@ -456,7 +404,6 @@ class Chooser(Selector):
         if self.current_child is not None:
             # run our child, and invalidate anyone else who may have been ticked last run
             # (bit wasteful always checking for the latter)
-            print("DJS: Current child {}".format(self.current_child.name))
             for child in self.children:
                 if child is self.current_child:
                     for node in self.current_child.tick():
@@ -464,7 +411,6 @@ class Chooser(Selector):
                 elif child.status != Status.INVALID:
                     child.stop(Status.INVALID)
         else:
-            print("DJS: No current child")
             for child in self.children:
                 for node in child.tick():
                     yield node
@@ -506,7 +452,6 @@ class Sequence(Composite):
     """
     def __init__(self, name="Sequence", children=None):
         super(Sequence, self).__init__(name, children)
-        self.current_index = -1  # -1 indicates uninitialised
 
     def tick(self):
         """
@@ -516,59 +461,47 @@ class Sequence(Composite):
             :class:`~py_trees.behaviour.Behaviour`: a reference to itself or one of its children
         """
         self.logger.debug("%s.tick()" % self.__class__.__name__)
+
+        # reset
         if self.status != Status.RUNNING:
             self.logger.debug("%s.tick() [!RUNNING->resetting child index]" % self.__class__.__name__)
-            # sequence specific handling
-            self.current_index = 0
+            self.current_child = self.children[0]
             for child in self.children:
-                # reset the children, this helps when introspecting the tree
+                # reset the children
                 if child.status != Status.INVALID:
                     child.stop(Status.INVALID)
             # subclass (user) handling
             self.initialise()
-        # run any work designated by a customised instance of this class
+
+        # customised work
         self.update()
-        for child in itertools.islice(self.children, self.current_index, None):
+
+        # nothing to do
+        if not self.children:
+            self.current_child = None
+            self.stop(Status.SUCCESS)
+            yield self
+            return
+
+        # iterate through children
+        index = self.children.index(self.current_child)
+        for child in itertools.islice(self.children, index, None):
             for node in child.tick():
                 yield node
                 if node is child and node.status != Status.SUCCESS:
                     self.status = node.status
                     yield self
                     return
-            self.current_index += 1
+            try:
+                self.current_child = self.children[index + 1]
+            except IndexError:
+                self.current_child = None
+
         # At this point, all children are happy with their SUCCESS, so we should be happy too
-        self.current_index -= 1  # went off the end of the list if we got to here
+        self.current_child = None
+
         self.stop(Status.SUCCESS)
         yield self
-
-    @property
-    def current_child(self):
-        """
-        Have to check if there's anything actually running first.
-
-        Returns:
-            :class:`~py_trees.behaviour.Behaviour`: the child that is currently running, or None
-        """
-        if self.current_index == -1:
-            return None
-        return self.children[self.current_index] if self.children else None
-
-    def stop(self, new_status=Status.INVALID):
-        """
-        Stopping a sequence requires taking care of the current index. Note that
-        is important to implement this here intead of terminate, so users are free
-        to subclass this easily with their own terminate and not have to remember
-        that they need to call this function manually.
-
-        Args:
-            new_status (:class:`~py_trees.common.Status`): the composite is transitioning to this new status
-        """
-        # retain information about the last running child if the new status is
-        # SUCCESS or FAILURE
-        if new_status == Status.INVALID:
-            self.current_index = -1
-        Composite.stop(self, new_status)
-
 
 ##############################################################################
 # Parallel
@@ -652,6 +585,8 @@ class Parallel(Composite):
         """
         self.logger.debug("%s.tick()" % self.__class__.__name__)
         self.validate_policy_configuration()
+
+        # reset
         if self.status != common.Status.RUNNING:
             self.logger.debug("%s.tick(): re-initialising" % self.__class__.__name__)
             for child in self.children:
@@ -659,27 +594,45 @@ class Parallel(Composite):
                 # don't break the synchronisation logic below
                 if child.status != Status.INVALID:
                     child.stop(Status.INVALID)
+            self.current_child = None
             # subclass (user) handling
             self.initialise()
+
+        # nothing to do
+        if not self.children:
+            self.current_child = None
+            self.stop(Status.SUCCESS)
+            yield self
+            return
+
         # process them all first
         for child in self.children:
             if self.policy.synchronise and child.status == common.Status.SUCCESS:
                 continue
             for node in child.tick():
                 yield node
+
+        # determine new status
         new_status = common.Status.RUNNING
-        if any([c.status == common.Status.FAILURE for c in self.children]):
+        self.current_child = self.children[-1]
+        try:
+            failed_child = next(child for child in self.children if child.status == common.Status.FAILURE)
+            self.current_child = failed_child
             new_status = common.Status.FAILURE
-        else:
+        except StopIteration:
             if type(self.policy) is common.ParallelPolicy.SuccessOnAll:
                 if all([c.status == common.Status.SUCCESS for c in self.children]):
                     new_status = common.Status.SUCCESS
+                    self.current_child = self.children[-1]
             elif type(self.policy) is common.ParallelPolicy.SuccessOnOne:
-                if any([c.status == common.Status.SUCCESS for c in self.children]):
+                successful = [child for child in self.children if child.status == common.Status.SUCCESS]
+                if successful:
                     new_status = common.Status.SUCCESS
+                    self.current_child = successful[-1]
             elif type(self.policy) is common.ParallelPolicy.SuccessOnSelected:
                 if all([c.status == common.Status.SUCCESS for c in self.policy.children]):
                     new_status = common.Status.SUCCESS
+                    self.current_child = self.policy.children[-1]
             else:
                 raise RuntimeError("this parallel has been configured with an unrecognised policy [{}]".format(type(self.policy)))
         # this parallel may have children that are still running
@@ -706,43 +659,6 @@ class Parallel(Composite):
         # only nec. thing here is to make sure the status gets set to INVALID if
         # it was a higher priority interrupt (new_status == INVALID)
         Composite.stop(self, new_status)
-
-    @property
-    def current_child(self):
-        """
-        In some cases it's clear what the current child is, in others, there
-        is an ambiguity as multiple could exist. If the latter is true, it
-        will return the child relevant farthest down the list.
-
-        Returns:
-            :class:`~py_trees.behaviour.Behaviour`: the child that is currently running, or None
-        """
-        if self.status == common.Status.INVALID:
-            return None
-        if self.status == common.Status.FAILURE:
-            for child in self.children:
-                if child.status == common.Status.FAILURE:
-                    return child
-            # might get here if the offender has been removed
-            # in this case, just return None
-            return None
-        elif self.status == common.Status.SUCCESS:  # one, all or selected
-            success_children = []
-            for child in self.children:
-                if child.status == common.Status.SUCCESS:
-                    success_children.append(child)
-            try:
-                return success_children[-1]
-            except IndexError:
-                # has no children, but parallel has ticked (results in SUCCESS)
-                # SUCCESS, but children have been removed
-                return None
-        else:  # RUNNING
-            for child in reversed(self.children):
-                if child.status == common.Status.RUNNING:
-                    return child
-            # might get here if the running node has been removed
-            return None
 
     def verbose_info_string(self) -> str:
         """

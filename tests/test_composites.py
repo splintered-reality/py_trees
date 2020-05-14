@@ -23,6 +23,23 @@ py_trees.logging.level = py_trees.logging.Level.DEBUG
 logger = py_trees.logging.Logger("Nosetest")
 
 ##############################################################################
+# Helpers
+##############################################################################
+
+
+def assert_banner():
+    print(console.green + "----- Asserts -----" + console.reset)
+
+
+def assert_details(text, expected, result):
+    print(console.green + text +
+          "." * (70 - len(text)) +
+          console.cyan + "{}".format(expected) +
+          console.yellow + " [{}]".format(result) +
+          console.reset)
+
+
+##############################################################################
 # Tests
 ##############################################################################
 
@@ -30,10 +47,14 @@ logger = py_trees.logging.Logger("Nosetest")
 def test_replacing_children():
     console.banner("Replacing Children")
     parent = py_trees.composites.Sequence(name="Parent")
+    front = py_trees.behaviours.Success(name="Front")
+    back = py_trees.behaviours.Success(name="Back")
     old_child = py_trees.behaviours.Success(name="Old Child")
     new_child = py_trees.behaviours.Success(name="New Child")
-    parent.add_child(old_child)
+    parent.add_children([front, old_child, back])
+    print(py_trees.display.unicode_tree(parent, show_status=True))
     parent.replace_child(old_child, new_child)
+    print(py_trees.display.unicode_tree(parent, show_status=True))
     print("\n--------- Assertions ---------\n")
     print("old_child.parent is None")
     assert(old_child.parent is None)
@@ -80,3 +101,14 @@ def test_protect_against_multiple_parents():
         print("Expecting a RuntimeError")
         for parent in [first_parent, second_parent]:
             parent.add_child(child)
+
+
+def test_remove_nonexistant_child():
+    console.banner("Remove non-existant child")
+    root = py_trees.composites.Sequence(name="Sequence")
+    child = py_trees.behaviours.Success(name="Success")
+    root.add_child(child)
+    non_existant_child = py_trees.behaviours.Success(name="Ooops")
+    with nose.tools.assert_raises(IndexError):
+        print("Expecting an Index Error")
+        root.remove_child_by_id(non_existant_child.id)
