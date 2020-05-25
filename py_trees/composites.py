@@ -144,6 +144,7 @@ class Composite(behaviour.Behaviour):
         """
         for child in children:
             self.add_child(child)
+        return self
 
     def remove_child(self, child):
         """
