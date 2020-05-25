@@ -3,7 +3,7 @@ Release Notes
 
 Forthcoming
 -----------
-* ...
+* [composites] chain-able add_children for all composites, `#290 <https://github.com/splintered-reality/py_trees_ros/pull/290>`_
 
 2.0.15 (2020-05-14)
 -------------------
