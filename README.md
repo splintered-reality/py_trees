@@ -16,6 +16,8 @@ PyTrees is a python implementation of behaviour trees designed to facilitate the
 
 ## Docs and Demos
 
+Core API documentation and instructions for the demo programs:
+
 [![devel][docs-devel-image]][docs-devel] [![2.0.x][docs-2.0.x-image]][docs-2.0.x] [![1.2.x][docs-1.2.x-image]][docs-1.2.x] [![0.6.x][docs-0.6.x-image]][docs-0.6.x]
 
 If you're really looking for something more edifying than hello world examples, walk through the [ros tutorials](https://py-trees-ros-tutorials.readthedocs.io/en/release-2.0.x/index.html) which incrementally walk through the process of building a scenario handling layer for a robot.
