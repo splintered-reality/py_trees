@@ -20,7 +20,7 @@ Core API documentation and instructions for the demo programs:
 
 [![devel][docs-devel-image]][docs-devel] [![2.0.x][docs-2.0.x-image]][docs-2.0.x] [![1.2.x][docs-1.2.x-image]][docs-1.2.x] [![0.6.x][docs-0.6.x-image]][docs-0.6.x]
 
-If you're really looking for something more edifying than hello world examples, walk through the [ros tutorials](https://py-trees-ros-tutorials.readthedocs.io/en/release-2.0.x/index.html) which incrementally walk through the process of building a scenario handling layer for a robot.
+If you're really looking for something more edifying than hello world examples, walk through the [ros tutorials](https://py-trees-ros-tutorials.readthedocs.io/en/release-2.0.x/index.html) which incrementally step through the process of building a scenario handling layer for a robot.
 
 There are also runtime visualisation tools - refer to the [py_trees_ros_viewer/README](https://github.com/splintered-reality/py_trees_ros_viewer/blob/devel/README.md) as an example implementation of the underlying [py_trees_js](https://github.com/splintered-reality/py_trees_js) library. 
 
