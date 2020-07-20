@@ -50,7 +50,7 @@ $ sudo apt install python3-py-trees
 From [pypi](https://pypi.python.org/pypi/py_trees):
 
 ```
-$ pip install py_trees
+$ pip3 install py_trees
 ```
 
 In a Python Virtual Environment:
@@ -58,7 +58,7 @@ In a Python Virtual Environment:
 ```
 $ git clone https://github.com/splintered-reality/py_trees
 $ cd py_trees
-$ source ./virtualenv.bash
+$ source ./venv.bash
 ```
 
 Build your own python3 deb:
@@ -66,7 +66,7 @@ Build your own python3 deb:
 ```
 $ git clone https://github.com/splintered-reality/py_trees
 $ cd py_trees
-$ source ./virtualenv.bash
+$ source ./venv.bash
 $ make deb
 ```
 
