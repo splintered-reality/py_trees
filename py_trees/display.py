@@ -385,9 +385,7 @@ def dot_tree(
                                  common.BlackBoxLevel.COMPONENT: "lawngreen",
                                  common.BlackBoxLevel.BIG_PICTURE: "white"
                                  }
-        if isinstance(node, composites.Chooser):
-            attributes = ('doubleoctagon', 'cyan', 'black')  # octagon
-        elif isinstance(node, composites.Selector):
+        if isinstance(node, composites.Selector):
             attributes = ('octagon', 'cyan', 'black')  # octagon
         elif isinstance(node, composites.Sequence):
             attributes = ('box', 'orange', 'black')

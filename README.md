@@ -8,7 +8,7 @@
 
 PyTrees is a python implementation of behaviour trees designed to facilitate the rapid development of medium sized decision making engines for use in fields like robotics. Brief feature list:
 
-* Sequence, Selector, Parallel and Chooser composites
+* Sequence, Selector, Parallel composites
 * Blackboards for data sharing
 * Python generators for smarter ticking over the tree graph
 * Python decorators for enabling meta behaviours
