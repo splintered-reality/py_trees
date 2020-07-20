@@ -101,7 +101,7 @@ def eternal_guard(
         subtree: behaviour.Behaviour,
         name: str="Eternal Guard",
         conditions: typing.List[behaviour.Behaviour]=[],
-        blackboard_variable_prefix: str=None) -> behaviour.Behaviour:
+        blackboard_namespace: str=None) -> behaviour.Behaviour:
     """
     The eternal guard idiom implements a stronger :term:`guard` than the typical check at the
     beginning of a sequence of tasks. Here they guard continuously while the task sequence
@@ -115,15 +115,15 @@ def eternal_guard(
         subtree: behaviour(s) that actually do the work
         name: the name to use on the root behaviour of the idiom subtree
         conditions: behaviours on which tasks are conditional
-        blackboard_variable_prefix: applied to condition variable results stored on the blackboard (default: derived from the idiom name)
+        blackboard_namespace: applied to condition variable results stored on the blackboard (default: derived from the idiom name)
 
     Returns:
         the root of the idiom subtree
 
     .. seealso:: :class:`py_trees.decorators.EternalGuard`
     """
-    if blackboard_variable_prefix is None:
-        blackboard_variable_prefix = name.lower().replace(" ", "_")
+    if blackboard_namespace is None:
+        blackboard_namespace = name.lower().replace(" ", "_")
     blackboard_variable_names = []
     # construct simple, easy to read, variable names (risk of conflict)
     counter = 1
@@ -131,7 +131,7 @@ def eternal_guard(
         suffix = "" if len(conditions) == 1 else "_{}".format(counter)
         blackboard_variable_names.append(
             blackboard.Blackboard.separator +
-            blackboard_variable_prefix +
+            blackboard_namespace +
             "_condition" +
             suffix
         )
@@ -150,7 +150,7 @@ def eternal_guard(
         unique_id = uuid.uuid4()
         for condition in conditions:
             suffix = "" if len(conditions) == 1 else "_{}".format(counter)
-            blackboard_variable_names.append(blackboard_variable_prefix + "_" + str(unique_id) + "_condition" + suffix)
+            blackboard_variable_names.append(blackboard_namespace + "_" + str(unique_id) + "_condition" + suffix)
             counter += 1
     # build the tree
     root = composites.Parallel(
