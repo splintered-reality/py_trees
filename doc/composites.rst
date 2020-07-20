@@ -27,14 +27,6 @@ Selector
 .. autoclass:: py_trees.composites.Selector
     :noindex:
 
-.. _chooser-section:
-
-Chooser
--------
-
-.. autoclass:: py_trees.composites.Chooser
-    :noindex:
-
 .. _parallel-section:
 
 Parallel
