@@ -76,8 +76,11 @@ def pick_up_where_you_left_off(
         task_selector = composites.Selector(name="Do or Don't")
         task_guard = behaviours.CheckBlackboardVariableValue(
             name="Done?",
-            variable_name=task.name.lower().replace(" ", "_") + "_done",
-            expected_value=True
+            check=common.ComparisonExpression(
+                variable=task.name.lower().replace(" ", "_") + "_done",
+                value=True,
+                operator=operator.eq
+            )
         )
         sequence = composites.Sequence(name="Worker")
         mark_task_done = behaviours.SetBlackboardVariable(
@@ -168,8 +171,11 @@ def eternal_guard(
         guarded_tasks.add_child(
             behaviours.CheckBlackboardVariableValue(
                 name="Abort on\n{}".format(condition.name),
-                variable_name=blackboard_variable_name,
-                expected_value=common.Status.FAILURE
+                check=common.ComparisonExpression(
+                    variable=blackboard_variable_name,
+                    value=common.Status.FAILURE,
+                    operator=operator.eq
+                )
             )
         )
     guarded_tasks.add_child(subtree)
@@ -259,9 +265,12 @@ def either_or(
         variable_name = namespace + blackboard.Blackboard.separator + str(counter)
         disabled = behaviours.CheckBlackboardVariableValue(
             name="Enabled?",
-            variable_name=variable_name,
-            expected_value=True,
-            comparison_operator=operator.eq)
+            check=common.ComparisonExpression(
+                variable=variable_name,
+                value=True,
+                operator=operator.eq
+            )
+        )
         sequence.add_children([disabled, subtrees[counter - 1]])
         chooser.add_child(sequence)
     root.add_children([xor, chooser])
@@ -340,8 +349,11 @@ def oneshot(
 
     oneshot_result = behaviours.CheckBlackboardVariableValue(
         name="Oneshot Result",
-        variable_name=variable_name,
-        expected_value=common.Status.SUCCESS,
+        check=common.ComparisonExpression(
+            variable=variable_name,
+            value=common.Status.SUCCESS,
+            operator=operator.eq
+        )
     )
     subtree_root.add_children([oneshot_with_guard, oneshot_result])
     return subtree_root

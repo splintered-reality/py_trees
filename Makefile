@@ -31,6 +31,7 @@ clean:
 	-rm -rf ../*.build
 	-rm -rf *.tar.gz
 	-rm -rf *.egg-info
+	-rm -rf doc/html
 
 source_package:
 	python setup.py sdist

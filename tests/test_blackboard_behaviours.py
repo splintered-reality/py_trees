@@ -255,18 +255,71 @@ def test_check_variable_value():
     unused_client = create_blackboard()
     tuples = []
     print(py_trees.display.unicode_blackboard())
-    tuples.append((py_trees.behaviours.CheckBlackboardVariableValue(
-        name="check_foo_equals_bar", variable_name="foo", expected_value="bar"), Status.SUCCESS))
-    tuples.append((py_trees.behaviours.CheckBlackboardVariableValue(
-        name="check_foo_equals_foo", variable_name="foo", expected_value="foo"), Status.FAILURE))
-    tuples.append((py_trees.behaviours.CheckBlackboardVariableValue(
-        name="check_non_existant_bar_equals_bar", variable_name="bar", expected_value="bar"), Status.FAILURE))
-    tuples.append((py_trees.behaviours.CheckBlackboardVariableValue(
-        name="check_nested_foo_equals_bar", variable_name="nested.foo", expected_value="bar"),
-        Status.SUCCESS))
-    tuples.append((py_trees.behaviours.CheckBlackboardVariableValue(
-        name="check_nested_foo_equals_foo", variable_name="nested.foo", expected_value="foo"),
-        Status.FAILURE))
+    tuples.append(
+        (
+            py_trees.behaviours.CheckBlackboardVariableValue(
+                name="check_foo_equals_bar",
+                check=py_trees.common.ComparisonExpression(
+                    variable="foo",
+                    value="bar",
+                    operator=operator.eq
+                )
+            ),
+            Status.SUCCESS
+        )
+    )
+    tuples.append(
+        (
+            py_trees.behaviours.CheckBlackboardVariableValue(
+                name="check_foo_equals_foo",
+                check=py_trees.common.ComparisonExpression(
+                    variable="foo",
+                    value="foo",
+                    operator=operator.eq
+                )
+            ),
+            Status.FAILURE
+        )
+    )
+    tuples.append(
+        (
+            py_trees.behaviours.CheckBlackboardVariableValue(
+                name="check_non_existant_bar_equals_bar",
+                check=py_trees.common.ComparisonExpression(
+                    variable="bar",
+                    value="bar",
+                    operator=operator.eq
+                )
+            ),
+            Status.FAILURE
+        )
+    )
+    tuples.append(
+        (
+            py_trees.behaviours.CheckBlackboardVariableValue(
+                name="check_nested_foo_equals_bar",
+                check=py_trees.common.ComparisonExpression(
+                    variable="nested.foo",
+                    value="bar",
+                    operator=operator.eq
+                )
+            ),
+            Status.SUCCESS
+        )
+    )
+    tuples.append(
+        (
+            py_trees.behaviours.CheckBlackboardVariableValue(
+                name="check_nested_foo_equals_foo",
+                check=py_trees.common.ComparisonExpression(
+                    variable="nested.foo",
+                    value="foo",
+                    operator=operator.eq
+                )
+            ),
+            Status.FAILURE
+        )
+    )
     for b, unused in tuples:
         b.tick_once()
         print("Feedback message {}".format(b.feedback_message))
@@ -286,23 +339,71 @@ def test_check_variable_value_inverted():
     unused_client = create_blackboard()
     tuples = []
     print(py_trees.display.unicode_blackboard())
-    tuples.append((py_trees.behaviours.CheckBlackboardVariableValue(
-        name="check_foo_not_equals_bar", variable_name="foo", expected_value="bar",
-        comparison_operator=operator.ne), Status.FAILURE))
-    tuples.append((py_trees.behaviours.CheckBlackboardVariableValue(
-        name="check_foo_not_equals_foo", variable_name="foo", expected_value="foo",
-        comparison_operator=operator.ne), Status.SUCCESS))
-    tuples.append((py_trees.behaviours.CheckBlackboardVariableValue(
-        name="check_non_existant_bar_not_equals_bar", variable_name="bar", expected_value="bar",
-        comparison_operator=operator.ne), Status.FAILURE))
-    tuples.append((py_trees.behaviours.CheckBlackboardVariableValue(
-        name="check_nested_foo_not_equals_bar", variable_name="nested.foo", expected_value="bar",
-        comparison_operator=operator.ne),
-        Status.FAILURE))
-    tuples.append((py_trees.behaviours.CheckBlackboardVariableValue(
-        name="check_nested_foo_not_equals_foo", variable_name="nested.foo", expected_value="foo",
-        comparison_operator=operator.ne),
-        Status.SUCCESS))
+    tuples.append(
+        (
+            py_trees.behaviours.CheckBlackboardVariableValue(
+                name="check_foo_not_equals_bar",
+                check=py_trees.common.ComparisonExpression(
+                    variable="foo",
+                    value="bar",
+                    operator=operator.ne
+                )
+            ),
+            Status.FAILURE
+        )
+    )
+    tuples.append(
+        (
+            py_trees.behaviours.CheckBlackboardVariableValue(
+                name="check_foo_not_equals_foo",
+                check=py_trees.common.ComparisonExpression(
+                    variable="foo",
+                    value="foo",
+                    operator=operator.ne
+                )
+            ),
+            Status.SUCCESS
+        )
+    )
+    tuples.append(
+        (
+            py_trees.behaviours.CheckBlackboardVariableValue(
+                name="check_non_existant_bar_not_equals_bar",
+                check=py_trees.common.ComparisonExpression(
+                    variable="bar",
+                    value="bar",
+                    operator=operator.ne
+                )
+            ),
+            Status.FAILURE
+        )
+    )
+    tuples.append(
+        (
+            py_trees.behaviours.CheckBlackboardVariableValue(
+                name="check_nested_foo_not_equals_bar",
+                check=py_trees.common.ComparisonExpression(
+                    variable="nested.foo",
+                    value="bar",
+                    operator=operator.ne
+                )
+            ),
+            Status.FAILURE
+        )
+    )
+    tuples.append(
+        (
+            py_trees.behaviours.CheckBlackboardVariableValue(
+                name="check_nested_foo_not_equals_foo",
+                check=py_trees.common.ComparisonExpression(
+                    variable="nested.foo",
+                    value="foo",
+                    operator=operator.ne
+                )
+            ),
+            Status.SUCCESS
+        )
+    )
     for b, unused in tuples:
         b.tick_once()
         print("Feedback message {}".format(b.feedback_message))
@@ -322,18 +423,71 @@ def test_wait_for_variable_value():
     unused_client = create_blackboard()
     tuples = []
     print(py_trees.display.unicode_blackboard())
-    tuples.append((py_trees.behaviours.WaitForBlackboardVariableValue(
-        name="check_foo_equals_bar", variable_name="foo", expected_value="bar"), Status.SUCCESS))
-    tuples.append((py_trees.behaviours.WaitForBlackboardVariableValue(
-        name="check_foo_equals_foo", variable_name="foo", expected_value="foo"), Status.RUNNING))
-    tuples.append((py_trees.behaviours.WaitForBlackboardVariableValue(
-        name="check_non_existant_bar_equals_bar", variable_name="bar", expected_value="bar"), Status.RUNNING))
-    tuples.append((py_trees.behaviours.WaitForBlackboardVariableValue(
-        name="check_nested_foo_equals_bar", variable_name="nested.foo", expected_value="bar"),
-        Status.SUCCESS))
-    tuples.append((py_trees.behaviours.WaitForBlackboardVariableValue(
-        name="check_nested_foo_equals_foo", variable_name="nested.foo", expected_value="foo"),
-        Status.RUNNING))
+    tuples.append(
+        (
+            py_trees.behaviours.WaitForBlackboardVariableValue(
+                name="check_foo_equals_bar",
+                check=py_trees.common.ComparisonExpression(
+                    variable="foo",
+                    value="bar",
+                    operator=operator.eq
+                )
+            ),
+            Status.SUCCESS
+        )
+    )
+    tuples.append(
+        (
+            py_trees.behaviours.WaitForBlackboardVariableValue(
+                name="check_foo_equals_foo",
+                check=py_trees.common.ComparisonExpression(
+                    variable="foo",
+                    value="foo",
+                    operator=operator.eq
+                )
+            ),
+            Status.RUNNING
+        )
+    )
+    tuples.append(
+        (
+            py_trees.behaviours.WaitForBlackboardVariableValue(
+                name="check_non_existant_bar_equals_bar",
+                check=py_trees.common.ComparisonExpression(
+                    variable="bar",
+                    value="bar",
+                    operator=operator.eq
+                )
+            ),
+            Status.RUNNING
+        )
+    )
+    tuples.append(
+        (
+            py_trees.behaviours.WaitForBlackboardVariableValue(
+                name="check_nested_foo_equals_bar",
+                check=py_trees.common.ComparisonExpression(
+                    variable="nested.foo",
+                    value="bar",
+                    operator=operator.eq
+                )
+            ),
+            Status.SUCCESS
+        )
+    )
+    tuples.append(
+        (
+            py_trees.behaviours.WaitForBlackboardVariableValue(
+                name="check_nested_foo_equals_foo",
+                check=py_trees.common.ComparisonExpression(
+                    variable="nested.foo",
+                    value="foo",
+                    operator=operator.eq
+                )
+            ),
+            Status.RUNNING
+        )
+    )
     for b, unused in tuples:
         b.tick_once()
         print("Feedback message {}".format(b.feedback_message))

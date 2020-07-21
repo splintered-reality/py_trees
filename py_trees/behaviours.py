@@ -442,9 +442,7 @@ class CheckBlackboardVariableValue(behaviour.Behaviour):
     :data:`~py_trees.common.Status.FAILURE`.
 
     Args:
-        variable_name: name of the variable to check, may be nested, e.g. battery.percentage
-        expected_value: expected value
-        comparison_operator: any method that can compare the value against the expected value
+        check: a comparison expression to check against
         name: name of the behaviour
 
     .. note::
@@ -456,21 +454,16 @@ class CheckBlackboardVariableValue(behaviour.Behaviour):
     """
     def __init__(
             self,
-            variable_name: str,
-            expected_value: typing.Any,
-            comparison_operator: typing.Callable[[typing.Any, typing.Any], bool]=operator.eq,
+            check: common.ComparisonExpression,
             name: str=common.Name.AUTO_GENERATED
     ):
         super().__init__(name=name)
-        self.variable_name = variable_name
-        name_components = variable_name.split('.')
+        self.check = check
+        name_components = self.check.variable.split('.')
         self.key = name_components[0]
         self.key_attributes = '.'.join(name_components[1:])  # empty string if no other parts
         self.blackboard = self.attach_blackboard_client()
         self.blackboard.register_key(key=self.key, access=common.Access.READ)
-
-        self.expected_value = expected_value
-        self.comparison_operator = comparison_operator
 
     def update(self):
         """
@@ -489,16 +482,16 @@ class CheckBlackboardVariableValue(behaviour.Behaviour):
                     self.feedback_message = 'blackboard key-value pair exists, but the value does not have the requested nested attributes [{}]'.format(self.variable_name)
                     return common.Status.FAILURE
         except KeyError:
-            self.feedback_message = "key '{}' does not yet exist on the blackboard".format(self.variable_name)
+            self.feedback_message = "key '{}' does not yet exist on the blackboard".format(self.check.variable)
             return common.Status.FAILURE
 
-        success = self.comparison_operator(value, self.expected_value)
+        success = self.check.operator(value, self.check.value)
 
         if success:
-            self.feedback_message = "'%s' comparison succeeded [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
+            self.feedback_message = "'%s' comparison succeeded [v: %s][e: %s]" % (self.check.variable, value, self.check.value)
             return common.Status.SUCCESS
         else:
-            self.feedback_message = "'%s' comparison failed [v: %s][e: %s]" % (self.variable_name, value, self.expected_value)
+            self.feedback_message = "'%s' comparison failed [v: %s][e: %s]" % (self.check.variable, value, self.check.value)
             return common.Status.FAILURE
 
 
@@ -520,22 +513,16 @@ class WaitForBlackboardVariableValue(CheckBlackboardVariableValue):
         return with status :data:`~py_trees.common.Status.RUNNING`.
 
     Args:
-        variable_name: name of the variable to check, may be nested, e.g. battery.percentage
-        expected_value: expected value
-        comparison_operator: any method that can compare the value against the expected value
+        check: a comparison expression to check against
         name: name of the behaviour
     """
     def __init__(
             self,
-            variable_name: str,
-            expected_value: typing.Any,
-            comparison_operator: typing.Callable[[typing.Any, typing.Any], bool]=operator.eq,
+            check: common.ComparisonExpression,
             name: str=common.Name.AUTO_GENERATED
     ):
         super().__init__(
-            variable_name=variable_name,
-            expected_value=expected_value,
-            comparison_operator=comparison_operator,
+            check=check,
             name=name
         )
 

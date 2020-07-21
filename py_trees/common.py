@@ -17,7 +17,6 @@ Common definitions, methods and variables used by the py_trees library.
 
 import enum
 import math
-import operator
 import typing
 
 from . import console
