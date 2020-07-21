@@ -28,6 +28,7 @@
 ##############################################################################
 
 import argparse
+import operator
 import py_trees
 import sys
 
@@ -171,7 +172,12 @@ def create_root():
     )
     write_blackboard_variable = BlackboardWriter(name="Writer")
     check_blackboard_variable = py_trees.behaviours.CheckBlackboardVariableValue(
-        name="Check Nested Foo", variable_name="nested.foo", expected_value="bar"
+        name="Check Nested Foo",
+        check=py_trees.common.ComparisonExpression(
+            variable="nested.foo",
+            value="bar",
+            operator=operator.eq
+        )
     )
     params_and_state = ParamsAndState()
     root.add_children([
