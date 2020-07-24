@@ -90,14 +90,15 @@ See the `py_trees_ros` [README](https://github.com/splintered-reality/py_trees_r
 [python27-image]: https://img.shields.io/badge/python-2.7-green.svg?style=plastic
 [python27-docs]: https://docs.python.org/2.7/
 
-[devel-build-status-image]: http://build.ros.org/job/Mbin_uB64__py_trees__ubuntu_bionic_amd64__binary/badge/icon?style=plastic
+[devel-build-status-image]: https://img.shields.io/circleci/build/github/splintered-reality/py_trees?branch=devel&style=plastic
 [devel-build-status]: https://circleci.com/gh/splintered-reality/py_trees/tree/devel
-[2.1.x-build-status-image]: http://build.ros.org/job/Mbin_uB64__py_trees__ubuntu_focal_amd64__binary/badge/icon?style=plastic
-[2.0.x-build-status-image]: http://build.ros.org/job/Mbin_uB64__py_trees__ubuntu_bionic_amd64__binary/badge/icon?style=plastic
+[2.1.x-build-status-image]: https://img.shields.io/circleci/build/github/splintered-reality/py_trees?branch=release%2F2.1.x&style=plastic
+[2.1.x-build-status]: https://circleci.com/gh/splintered-reality/py_trees/tree/release/2.1.x
+[2.0.x-build-status-image]: https://img.shields.io/circleci/build/github/splintered-reality/py_trees?branch=release%2F2.0.x&style=plastic
 [2.0.x-build-status]: https://circleci.com/gh/splintered-reality/py_trees/tree/release/2.0.x
-[1.3.x-build-status-image]: http://build.ros.org/job/Mbin_uB64__py_trees__ubuntu_bionic_amd64__binary/badge/icon?style=plastic
+[1.3.x-build-status-image]: https://img.shields.io/circleci/build/github/splintered-reality/py_trees?branch=release%2F1.3.x&style=plastic
 [1.3.x-build-status]: https://circleci.com/gh/splintered-reality/py_trees/tree/release/1.3.x
-[1.2.x-build-status-image]: http://build.ros.org/job/Mbin_uB64__py_trees__ubuntu_bionic_amd64__binary/badge/icon?style=plastic
+[1.2.x-build-status-image]: https://img.shields.io/circleci/build/github/splintered-reality/py_trees?branch=release%2F1.2.x&style=plastic
 [1.2.x-build-status]: https://circleci.com/gh/splintered-reality/py_trees/tree/release/1.2.x
 [crystal-build-status-image]: http://build.ros2.org/view/Cbin_uB64/job/Cbin_uB64__py_trees__ubuntu_bionic_amd64__binary/badge/icon?style=plastic
 [crystal-build-status]: http://build.ros2.org/view/Cbin_uB64/job/Cbin_uB64__py_trees__ubuntu_bionic_amd64__binary/
