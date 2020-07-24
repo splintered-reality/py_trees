@@ -92,7 +92,8 @@ See the `py_trees_ros` [README](https://github.com/splintered-reality/py_trees_r
 
 [devel-build-status-image]: http://build.ros.org/job/Mbin_uB64__py_trees__ubuntu_bionic_amd64__binary/badge/icon?style=plastic
 [devel-build-status]: https://circleci.com/gh/splintered-reality/py_trees/tree/devel
-[2.1.x-build-status-image]: http://build.ros.org/job/Mbin_uB64__py_trees__ubuntu_focal_amd64__binary/badge/icon?style=plastic
+[2.1.x-build-status-image]: https://circleci.com/gh/splintered-reality/py_trees/tree/devel.svg?style=shield
+[2.1.x-build-status]: https://circleci.com/gh/splintered-reality/py_trees/tree/release/2.1.x
 [2.0.x-build-status-image]: http://build.ros.org/job/Mbin_uB64__py_trees__ubuntu_bionic_amd64__binary/badge/icon?style=plastic
 [2.0.x-build-status]: https://circleci.com/gh/splintered-reality/py_trees/tree/release/2.0.x
 [1.3.x-build-status-image]: http://build.ros.org/job/Mbin_uB64__py_trees__ubuntu_bionic_amd64__binary/badge/icon?style=plastic
