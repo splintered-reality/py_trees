@@ -1,10 +1,19 @@
-Background
-==========
-
-.. _introduction-section:
-
 Introduction
-------------
+============
+
+Quick Start
+-----------
+
+If you'd like to fast forward to some action, browse the :ref:`demos-section-label` or
+read through the `ROS2 Robotics Tutorials`_ which incrementally create a significantly
+more complex behaviour tree for a robotics scenario (ROS2 knowledge not needed).
+
+.. _`ROS2 Robotics Tutorials`: https://py-trees-ros-tutorials.readthedocs.io/en/release-2.0.x/tutorials.html
+
+.. _background-section:
+
+Background
+----------
 
 .. note:: Behaviour trees are a decision making engine often used in the gaming industry.
 
@@ -26,16 +35,6 @@ Some standout features of behaviour trees that makes them very attractive:
 * **Simplicity** - very few core components, making it easy for designers to work with it
 * **Dynamic** - change the graph on the fly, between ticks or from parent behaviours themselves
 
-.. _motivation-section:
-
-Motivation
-----------
-
-The driving use case for this package was to implement a higher level decision making layer in robotics, i.e.
-scenarios with some overlap into the control layer. Behaviour trees turned out to be a much more
-apt fit to handle the many concurrent processes in a robot after attempts with finite state machines
-became entangled in wiring complexity as the problem grew in scope.
-
 .. note:: There are very few open behaviour tree implementations.
 
 Most of these have either not progressed significantly (e.g. `Owyl`_), or are
@@ -48,6 +47,26 @@ the developments of the last ten years from an industry expert. It also
 walks you through a simple c++ implementation. His advice? If you can't find one that fits, roll your own.
 It is relatively simple and this way you can flexibly cater for your own needs.
 
+.. _motivation-section:
+
+Motivation
+----------
+
+The use case that drove the early development of py_trees was robotics. In particular, the higher level
+decision making for a single robot, i.e. the scenario layer. For example, the scenario that enables a
+robot to navigate through a building to deliver a parcel and return to it's homebase safely.
+
+In scope was any decision making that did not need a low-latency response (typically reactive safety
+control measures). This included docking/undocking processes, the initial localisation dance,
+topological path planning, navigation context switching, LED and sound interactions, elevator
+entry/exit decisions.
+
+Also driving requirements was the need to offload scenario development to non-control engineers
+(juniors, interns, SWE's) and ensure they could develop and debug as rapidly as possible.
+
+Behaviour trees turned out to be a perfect fit after attempts with finite state machines
+became entangled in wiring complexity as the problem grew in scope.
+
 .. _design-section:
 
 Design
@@ -55,14 +74,21 @@ Design
 
 The requirements for the previously discussed robotics use case match that of the more general:
 
-.. note:: Rapid development of medium scale decision engines that don't need to be real time reactive.
+.. note:: **Rapid development** of **medium scale** decision engines that do **not need to be real time reactive**.
 
-Developers should expect to be able to get up to speed and write their own trees with enough
-power and flexibility to adapt the library to their needs. Robotics is a good fit.
-The decision making layer typically does not grow too large (~ hundreds of behaviours) and does not
-need to handle the reactive decision making that is usually directly incorporated into the controller subsystems.
-On the other hand, it is not scoped to enable an NPC gaming engine with hundreds of characters and thousands
-of behaviours for each character.
+**Rapid Development**: Python was chosen as the language of choice since it enables a faster a cycle of development as
+well as a shorter learning curve (critical if you would like to shift the burden away from c++ control engineers
+to juniors/interns/software engineers).
+
+**Medium Scale**: Robotic scenarios for a single robot tend to be, maximally in the order of hundreds of behaviours. This is
+in contrast to game NPC's which need to be executing thousands of behaviours and/or trees and consequently, frequently
+run into problems of scale. This tends to influence the language of choice (c++) and the tree design. Our requirements
+are somewhat more modest, so this permits some flexibility in the design, e.g. python as a language of choice.
+
+**Not Real Time Reactive**: If low latency control measures, particularly for safety are needed, they are best handled
+directly inside the control layer, or even better, at an embedded level. This is not dissimilar to the way the
+human nervous system operates. All other decision making needs only to operate at a latency of ~50-200ms
+to negate any discernable delay observed by humans interacting with the robot.
 
 This implementation uses all the whizbang tricks (generators, decorators)
 that python has to offer. Some design constraints that have been assumed to enable a practical, easy to use framework:

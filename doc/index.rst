@@ -12,7 +12,8 @@ Py Trees
    :maxdepth: 1
    :caption: Guide
 
-   background
+  
+   introduction
    behaviours
    composites
    decorators
