@@ -6,6 +6,10 @@ Forthcoming
 * [docs] fix some warnings
 
 
+0.7.0 (2019-02-13)
+------------------
+* [infra] python3 ROS environment support (if using virtualenvs, was already python3 compatible)
+
 0.6.7 (2019-02-13)
 ------------------
 * [decorators] default option for collapsing decorators (resolves py_trees_ros bug)
