@@ -26,7 +26,7 @@ There are also runtime visualisation tools - refer to the [py_trees_ros_viewer/R
 
 ## Releases
 
-* `0.x.y` - first open source releases
+* `0.y.x` - first open source releases
 * `1.0.x` - first stable release
 * `1.1.x` - improvements
 * `1.2.x` - improvements
