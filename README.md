@@ -16,9 +16,9 @@ PyTrees is a python implementation of behaviour trees designed to facilitate the
 
 ## Docs and Demos
 
-Core API documentation and instructions for the demo programs:
+Core API documentation (also includes some explanation concerning the demo scripts):
 
-[![devel][docs-devel-image]][docs-devel] [![2.1.x][docs-2.1.x-image]][docs-2.1.x] [![1.2.x][docs-1.2.x-image]][docs-1.2.x] [![0.6.x][docs-0.6.x-image]][docs-0.6.x]
+[![devel][docs-devel-image]][docs-devel] [![2.1.x][docs-2.1.x-image]][docs-2.1.x] [![0.7.x][docs-0.7.x-image]][docs-0.7.x] [![0.6.x][docs-0.6.x-image]][docs-0.6.x]
 
 If you're really looking for something more edifying than hello world examples, walk through the [ros tutorials](https://py-trees-ros-tutorials.readthedocs.io/en/release-2.0.x/index.html) which incrementally step through the process of building a scenario handling layer for a robot.
 
@@ -33,12 +33,12 @@ There are also runtime visualisation tools - refer to the [py_trees_ros_viewer/R
 * `2.0.x` - blackboards v2 with namespaces, access permissions and key tracking
 * `2.1.x` - Chooser deprecated, api housekeeping
 
-| | Devel | 2.1.x | 2.0.x | 1.2.x | 0.6.x |
-|:---:|:---:|:---:|:---:|:---:|:---:|
-| Sources | [![devel][sources-devel-image]][sources-devel] | [![2.1.x][sources-2.1.x-image]][sources-2.1.x] | [![2.0.x][sources-2.0.x-image]][sources-2.0.x] | [![1.2.x][sources-1.2.x-image]][sources-1.2.x] | [![0.6.x][sources-0.6.x-image]][sources-0.6.x]
-| Compatibility | [![Python 3.6][python36-image]][python36-docs] | [![Python 3.6][python36-image]][python36-docs] | [![Python 3.6][python36-image]][python36-docs] | [![Python 3.6][python36-image]][python36-docs] | [![Python 2.7][python27-image]][python27-docs]
-| CI | [![devel-Status][devel-build-status-image]][devel-build-status] | [![2.1.x-Status][2.1.x-build-status-image]][2.1.x-build-status] | [![2.0.x-Status][2.0.x-build-status-image]][2.0.x-build-status] | [![1.2.x-Status][1.2.x-build-status-image]][1.2.x-build-status] | [![melodic-Status][melodic-build-status-image]][melodic-build-status]
-| Documentation | [![devel-Docs][rtd-devel-image]][docs-devel] | [![2.1.x-Docs][rtd-2.1.x-image]][docs-2.1.x] | [![2.0.x-Docs][rtd-2.0.x-image]][docs-2.0.x] | [![1.2.x-Docs][rtd-1.2.x-image]][docs-1.2.x] | [![0.6.x-Docs][rtd-0.6.x-image]][docs-0.6.x]
+| | Devel | 2.1.x | 2.0.x | 1.2.x | 0.7.x | 0.6.x |
+|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| Sources | [![devel][sources-devel-image]][sources-devel] | [![2.1.x][sources-2.1.x-image]][sources-2.1.x] | [![2.0.x][sources-2.0.x-image]][sources-2.0.x] | [![1.2.x][sources-1.2.x-image]][sources-1.2.x] | [![0.7.x][sources-0.7.x-image]][sources-0.7.x] | [![0.6.x][sources-0.6.x-image]][sources-0.6.x]
+| Compatibility | [![Python 3.6][python36-image]][python36-docs] | [![Python 3.6][python36-image]][python36-docs] | [![Python 3.6][python36-image]][python36-docs] | [![Python 3.6][python36-image]][python36-docs] | [![Python 3.6][python36-image]][python36-docs] | [![Python 2.7][python27-image]][python27-docs]
+| CI | [![devel-Status][devel-build-status-image]][devel-build-status] | [![2.1.x-Status][2.1.x-build-status-image]][2.1.x-build-status] | [![2.0.x-Status][2.0.x-build-status-image]][2.0.x-build-status] | [![1.2.x-Status][1.2.x-build-status-image]][1.2.x-build-status] | [![0.7.x-Status][0.7.x-build-status-image]][0.7.x-build-status] | [![0.6.x-Status][0.6.x-build-status-image]][0.6.x-build-status] 
+| Documentation | [![devel-Docs][rtd-devel-image]][docs-devel] | [![2.1.x-Docs][rtd-2.1.x-image]][docs-2.1.x] | [![2.0.x-Docs][rtd-2.0.x-image]][docs-2.0.x] | [![1.2.x-Docs][rtd-1.2.x-image]][docs-1.2.x] | [![0.7.x-Docs][rtd-0.7.x-image]][docs-0.7.x] | [![0.6.x-Docs][rtd-0.6.x-image]][docs-0.6.x]
 
 ## Installation
 
@@ -100,18 +100,17 @@ See the `py_trees_ros` [README](https://github.com/splintered-reality/py_trees_r
 [1.3.x-build-status]: https://circleci.com/gh/splintered-reality/py_trees/tree/release/1.3.x
 [1.2.x-build-status-image]: https://img.shields.io/circleci/build/github/splintered-reality/py_trees?branch=release%2F1.2.x&style=plastic
 [1.2.x-build-status]: https://circleci.com/gh/splintered-reality/py_trees/tree/release/1.2.x
-[crystal-build-status-image]: http://build.ros2.org/view/Cbin_uB64/job/Cbin_uB64__py_trees__ubuntu_bionic_amd64__binary/badge/icon?style=plastic
-[crystal-build-status]: http://build.ros2.org/view/Cbin_uB64/job/Cbin_uB64__py_trees__ubuntu_bionic_amd64__binary/
-[melodic-build-status-image]: http://build.ros.org/job/Mbin_uB64__py_trees__ubuntu_bionic_amd64__binary/badge/icon?style=plastic
-[melodic-build-status]: http://build.ros.org/job/Mbin_uX64__py_trees__ubuntu_bionic_amd64__binary
-[kinetic-build-status-image]: http://build.ros.org/job/Kbin_uX64__py_trees__ubuntu_xenial_amd64__binary/badge/icon?style=plastic
-[kinetic-build-status]: http://build.ros.org/job/Kbin_uX64__py_trees__ubuntu_xenial_amd64__binary
+[0.7.x-build-status-image]: https://img.shields.io/circleci/build/github/splintered-reality/py_trees?branch=release%2F0.7.x&style=plastic
+[0.7.x-build-status]: https://circleci.com/gh/splintered-reality/py_trees/tree/release/0.7.x
+[0.6.x-build-status-image]: https://img.shields.io/circleci/build/github/splintered-reality/py_trees?branch=release%2F0.6x&style=plastic
+[0.6.x-build-status]: https://circleci.com/gh/splintered-reality/py_trees/tree/release/0.6.x
 
 [docs-devel]: http://py-trees.readthedocs.io/
 [docs-2.1.x]: http://py-trees.readthedocs.io/en/release-2.1.x/
 [docs-2.0.x]: http://py-trees.readthedocs.io/en/release-2.0.x/
 [docs-1.3.x]: http://py-trees.readthedocs.io/en/release-1.3.x/
 [docs-1.2.x]: http://py-trees.readthedocs.io/en/release-1.2.x/
+[docs-0.7.x]: http://py-trees.readthedocs.io/en/release-0.7.x/
 [docs-0.6.x]: http://py-trees.readthedocs.io/en/release-0.6.x/
 [docs-0.5.x]: http://docs.ros.org/kinetic/api/py_trees/html/
 
@@ -120,6 +119,7 @@ See the `py_trees_ros` [README](https://github.com/splintered-reality/py_trees_r
 [docs-2.0.x-image]: http://img.shields.io/badge/docs-2.0.x-brightgreen.svg?style=plastic
 [docs-1.3.x-image]: http://img.shields.io/badge/docs-1.3.x-brightgreen.svg?style=plastic
 [docs-1.2.x-image]: http://img.shields.io/badge/docs-1.2.x-brightgreen.svg?style=plastic
+[docs-0.7.x-image]: http://img.shields.io/badge/docs-0.7.x-brightgreen.svg?style=plastic
 [docs-0.6.x-image]: http://img.shields.io/badge/docs-0.6.x-brightgreen.svg?style=plastic
 [docs-0.5.x-image]: http://img.shields.io/badge/docs-0.5.x-brightgreen.svg?style=plastic
 
@@ -128,6 +128,7 @@ See the `py_trees_ros` [README](https://github.com/splintered-reality/py_trees_r
 [rtd-2.0.x-image]: https://readthedocs.org/projects/py-trees/badge/?version=release-2.0.x&style=plastic
 [rtd-1.3.x-image]: https://readthedocs.org/projects/py-trees/badge/?version=release-1.3.x&style=plastic
 [rtd-1.2.x-image]: https://readthedocs.org/projects/py-trees/badge/?version=release-1.2.x&style=plastic
+[rtd-0.7.x-image]: https://readthedocs.org/projects/py-trees/badge/?version=release-0.7.x&style=plastic
 [rtd-0.6.x-image]: https://readthedocs.org/projects/py-trees/badge/?version=release-0.6.x&style=plastic
 [rtd-0.5.x-image]: https://readthedocs.org/projects/py-trees/badge/?version=release-0.5.x&style=plastic
 [not-available-docs-image]: http://img.shields.io/badge/docs-n/a-yellow.svg?style=plastic
@@ -137,6 +138,7 @@ See the `py_trees_ros` [README](https://github.com/splintered-reality/py_trees_r
 [sources-2.0.x]: https://github.com/splintered-reality/py_trees/tree/release/2.0.x
 [sources-1.3.x]: https://github.com/splintered-reality/py_trees/tree/release/1.3.x
 [sources-1.2.x]: https://github.com/splintered-reality/py_trees/tree/release/1.2.x
+[sources-0.7.x]: https://github.com/splintered-reality/py_trees/tree/release/0.7.x
 [sources-0.6.x]: https://github.com/splintered-reality/py_trees/tree/release/0.6.x
 [sources-0.5.x]: https://github.com/splintered-reality/py_trees/tree/release/0.5.x
 
@@ -145,5 +147,6 @@ See the `py_trees_ros` [README](https://github.com/splintered-reality/py_trees_r
 [sources-2.0.x-image]: http://img.shields.io/badge/sources-2.0.x-blue.svg?style=plastic
 [sources-1.3.x-image]: http://img.shields.io/badge/sources-1.3.x-blue.svg?style=plastic
 [sources-1.2.x-image]: http://img.shields.io/badge/sources-1.2.x-blue.svg?style=plastic
+[sources-0.7.x-image]: http://img.shields.io/badge/sources-0.7.x-blue.svg?style=plastic
 [sources-0.6.x-image]: http://img.shields.io/badge/sources-0.6.x-blue.svg?style=plastic
 [sources-0.5.x-image]: http://img.shields.io/badge/sources-0.5.x-blue.svg?style=plastic
