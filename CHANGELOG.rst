@@ -6,11 +6,11 @@ Forthcoming
 * [docs] fix some warnings
 
 0.7.1 (202019-07-28)
-------------------
+--------------------
 * [infra] scripts using python3
 
 0.7.0 (202019-07-28)
-------------------
+--------------------
 * [infra] python3 ROS environment support (if using virtualenvs, was already python3 compatible)
 
 0.6.7 (2019-02-13)
