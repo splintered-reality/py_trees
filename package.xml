@@ -23,16 +23,15 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <build_depend>python-setuptools</build_depend>
+  <build_depend>python3-setuptools</build_depend>
 
-  <doc_depend>python-sphinx</doc_depend>
-  <doc_depend>python-sphinx-argparse</doc_depend>
-  <doc_depend>python-sphinx-rtd-theme</doc_depend>
-  <doc_depend>python-enum34</doc_depend>
-  <doc_depend>python-pydot</doc_depend>
+  <doc_depend>python3-sphinx</doc_depend>
+  <doc_depend>python3-sphinx-argparse</doc_depend>
+  <doc_depend>python3-sphinx-rtd-theme</doc_depend>
+  <doc_depend>python3-enum34</doc_depend>
+  <doc_depend>python3-pydot</doc_depend>
 
-  <exec_depend>python-enum34</exec_depend>
-  <exec_depend>python-pydot</exec_depend>
+  <exec_depend>python3-pydot</exec_depend>
 
   <export>
     <rosdoc config="rosdoc.yaml"/>

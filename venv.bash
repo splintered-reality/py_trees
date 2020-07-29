@@ -3,7 +3,9 @@
 # Script for setting up the development environment.
 #source /usr/share/virtualenvwrapper/virtualenvwrapper.sh
 
-NAME=py_trees_0_5
+PROJECT=py_trees
+SRC_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+VENV_DIR=${SRC_DIR}/.venv
 
 ##############################################################################
 # Colours
@@ -68,30 +70,63 @@ install_package ()
 
 ##############################################################################
 
-install_package virtualenvwrapper || return
+#############################
+# Checks
+#############################
 
-# To use the installed python
-VERSION="--python=/usr/bin/python"
-# To use a specific version
-# VERSION="--python=python2.7"
-
-if [ "${VIRTUAL_ENV}" == "" ]; then
-  workon ${NAME}
-  if [ $? -ne 0 ]; then
-    mkvirtualenv ${VERSION} ${NAME}
-  fi
+[[ "${BASH_SOURCE[0]}" != "${0}" ]] && SOURCED=1
+if [ -z "$SOURCED" ]; then
+  pretty_error "This script needs to be sourced, i.e. source './setup.bash', not './setup.bash'"
+  exit 1
 fi
 
+#############################
+# System Dependencies
+#############################
+
+pretty_header "System Dependencies"
+install_package python3-dev || return
+install_package python3-venv || return
+
+#############################
+# Virtual Env
+#############################
+
+pretty_header "Virtual Environment"
+
+if [ -x ${VENV_DIR}/bin/pip3 ]; then
+    pretty_print "  $(padded_message "virtual_environment" "found [${VENV_DIR}]")"
+else
+    python3 -m venv ${VENV_DIR}
+    pretty_warning "  $(padded_message "virtual_environment" "created [${VENV_DIR}]")"
+fi
+
+source ${VENV_DIR}/bin/activate
+
+#############################
+# Pypi Dependencies
+#############################
+
+pretty_header "PyPi Dependencies"
+
+# build environment depedencies
+pip3 install wheel
+pip3 install "setuptools==45.2"
+
 # Get all dependencies for testing, doc generation
-pip install -e .[docs]
-pip install -e .[test]
-pip install -e .[debs]
+
+# pip install -e .[docs]
+# we have to restrict versions because of bleeding edge incompatibilities
+pip3 install -r rtd-requirements.txt
+pip3 install -e .[test]
+pip3 install -e .[debs]
 
 # NB: this automagically nabs install_requires
-python setup.py develop
+python3 setup.py develop
 
 echo ""
 echo "Leave the virtual environment with 'deactivate'"
 echo ""
 echo "I'm grooty, you should be too."
 echo ""
+
