@@ -5,7 +5,11 @@ Forthcoming
 -----------
 * ...
 
-0.7.2 (202019-09-02)
+0.7.3 (202019-08-02)
+--------------------
+* [infra] fix cmake version, zip_safe build warnings for catkin
+
+0.7.2 (202019-08-02)
 --------------------
 * [docs] fix some warnings
 
