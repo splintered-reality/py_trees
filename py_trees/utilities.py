@@ -57,11 +57,13 @@ def static_variables(**kwargs):
     """
     This is a decorator that can be used with python methods to attach 
     initialised static variables to the method.
-     .. code-block:: python
-        @static_variables(counter=0)
-        def foo():
-            foo.counter += 1
-            print("Counter: {}".format(foo.counter))
+
+    .. code-block:: python
+
+       @static_variables(counter=0)
+       def foo():
+           foo.counter += 1
+           print("Counter: {}".format(foo.counter))
     """
     def decorate(func):
         for k in kwargs:
