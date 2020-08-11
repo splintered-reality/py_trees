@@ -179,6 +179,7 @@ def test_set_blackboard_variable():
         variable_value="bar",
         overwrite=False
     )
+
     blackboard.unset("foo")
     assert_banner()
     set_foo.tick_once()
@@ -236,11 +237,13 @@ def test_set_blackboard_variable():
         expected="dude",
         result=blackboard.nested.foo
     )
+    assert(blackboard.nested.foo == "dude")
     assert_details(
         text="Nested set foo (status)",
         expected=py_trees.common.Status.SUCCESS,
         result=nested_set_foo.status
     )
+    assert(nested_set_foo.status == py_trees.common.Status.SUCCESS)
     blackboard.nested = 5
     nested_set_foo.tick_once()
     assert_details(
@@ -248,6 +251,33 @@ def test_set_blackboard_variable():
         expected=py_trees.common.Status.FAILURE,
         result=nested_set_foo.status
     )
+    assert(nested_set_foo.status == py_trees.common.Status.FAILURE)
+
+    @py_trees.utilities.static_variables(counter=0)
+    def generator():
+        generator.counter += 1
+        return generator.counter
+
+    blackboard.unset("foo")
+    set_blackboard_variable_from_generator = py_trees.behaviours.SetBlackboardVariable(
+        name="Generator Set",
+        variable_name="foo",
+        variable_value=generator,
+    )
+    set_blackboard_variable_from_generator.tick_once()
+    assert_details(
+        text="Generated Foo",
+        expected=1,
+        result=blackboard.foo
+    )
+    assert(blackboard.foo == 1)
+    set_blackboard_variable_from_generator.tick_once()
+    assert_details(
+        text="Generated Foo",
+        expected=2,
+        result=blackboard.foo
+    )
+    assert(blackboard.foo == 2)
 
 
 def test_check_variable_value():
