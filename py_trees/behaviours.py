@@ -402,7 +402,7 @@ class SetBlackboardVariable(behaviour.Behaviour):
     def __init__(
             self,
             variable_name: str,
-            variable_value: typing.Any,
+            variable_value: typing.Union[typing.Any, typing.Callable[[], typing.Any]],
             overwrite: bool = True,
             name: str=common.Name.AUTO_GENERATED,
     ):
@@ -413,7 +413,7 @@ class SetBlackboardVariable(behaviour.Behaviour):
         self.key_attributes = '.'.join(name_components[1:])  # empty string if no other parts
         self.blackboard = self.attach_blackboard_client()
         self.blackboard.register_key(key=self.key, access=common.Access.WRITE)
-        self.variable_value = variable_value
+        self.variable_value_generator = variable_value if callable(variable_value) else lambda: variable_value
         self.overwrite = overwrite
 
     def update(self) -> common.Status:
@@ -425,7 +425,7 @@ class SetBlackboardVariable(behaviour.Behaviour):
         """
         if self.blackboard.set(
             self.variable_name,
-            self.variable_value,
+            self.variable_value_generator(),
             overwrite=self.overwrite
         ):
             return common.Status.SUCCESS
