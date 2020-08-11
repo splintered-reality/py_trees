@@ -5,6 +5,10 @@ Forthcoming
 -----------
 * ...
 
+2.0.16 (2020-08-11)
+-------------------
+* [behaviours] generators for variable values in SetBlackboardVariable, `#300 <https://github.com/splintered-reality/py_trees_ros/pull/300>`_
+
 2.0.15 (2020-05-14)
 -------------------
 * [composites] fix current_child problems on dynamic child insertion/removal, `#289 <https://github.com/splintered-reality/py_trees_ros/pull/289>`_
