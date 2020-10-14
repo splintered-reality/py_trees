@@ -10,7 +10,7 @@
 
 """
 Blackboards are not a necessary component of behaviour tree implementations,
-but are nonetheless, a fairly common mechanism for for sharing data between
+but are nonetheless, a fairly common mechanism for sharing data between
 behaviours in the tree. See, for example, the `design notes`_
 for blackboards in Unreal Engine.
 
@@ -27,7 +27,7 @@ graph overlaying the tree connecting data ports between behaviours.
 The *'Zen of PyTrees'* is to enable rapid development, yet be rich
 enough so that *all* of the magic is exposed for debugging purposes.
 The first implementation of a blackboard was merely a global key-value
-store with an api that lended itself to ease of use, but did not
+store with an api that lent itself to ease of use, but did not
 expose the data sharing between behaviours which meant any tooling
 used to introspect or visualise the tree, only told half the story.
 
@@ -42,7 +42,7 @@ with parameter and input-output ports on each behaviour was
 discarded as being too heavy for the zen requirements of py_trees.
 This is in part due to the wiring costs, but also due to
 complexity arising from a tree's partial graph execution
-(a feature which makes trees different to most computational
+(a feature which makes trees different from most computational
 graph frameworks) and not to regress on py_trees' capability to
 dynamically insert and prune subtrees on the fly.
 
