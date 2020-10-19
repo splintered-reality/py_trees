@@ -7,26 +7,26 @@ Forthcoming
 
 2.1.1 (2020-08-11)
 ------------------
-* [behaviours] generators for variable values in SetBlackboardVariable, `#300 <https://github.com/splintered-reality/py_trees_ros/pull/300>`_
+* [behaviours] generators for variable values in SetBlackboardVariable, `#300 <https://github.com/splintered-reality/py_trees/pull/300>`_
 
 2.1.0 (2020-07-20)
 ------------------
-* [behaviours] CheckBlackboardVariableValue, WaitForBlackboardVariableValue use comparison expressins, `#296 <https://github.com/splintered-reality/py_trees_ros/pull/296>`_
-* [idioms] eternal_guard uses blackboard_names (previously blackboard_name_prefix), `#295 <https://github.com/splintered-reality/py_trees_ros/pull/295>`_
-* [composites] Chooser deprecated, `#293 <https://github.com/splintered-reality/py_trees_ros/pull/293>`_
-* [composites] chain-able add_children for all composites, `#290 <https://github.com/splintered-reality/py_trees_ros/pull/290>`_
+* [behaviours] CheckBlackboardVariableValue, WaitForBlackboardVariableValue use comparison expressins, `#296 <https://github.com/splintered-reality/py_trees/pull/296>`_
+* [idioms] eternal_guard uses blackboard_names (previously blackboard_name_prefix), `#295 <https://github.com/splintered-reality/py_trees/pull/295>`_
+* [composites] Chooser deprecated, `#293 <https://github.com/splintered-reality/py_trees/pull/293>`_
+* [composites] chain-able add_children for all composites, `#290 <https://github.com/splintered-reality/py_trees/pull/290>`_
 
 2.0.16 (2020-08-11)
 -------------------
-* [behaviours] generators for variable values in SetBlackboardVariable, `#300 <https://github.com/splintered-reality/py_trees_ros/pull/300>`_
+* [behaviours] generators for variable values in SetBlackboardVariable, `#300 <https://github.com/splintered-reality/py_trees/pull/300>`_
 
 2.0.15 (2020-05-14)
 -------------------
-* [composites] fix current_child problems on dynamic child insertion/removal, `#289 <https://github.com/splintered-reality/py_trees_ros/pull/289>`_
+* [composites] fix current_child problems on dynamic child insertion/removal, `#289 <https://github.com/splintered-reality/py_trees/pull/289>`_
 
 2.0.14 (2020-04-26)
 -------------------
-* [blackboard] bugfix metadata not created on static set, `#286 <https://github.com/splintered-reality/py_trees_ros/pull/286>`_
+* [blackboard] bugfix metadata not created on static set, `#286 <https://github.com/splintered-reality/py_trees/pull/286>`_
 
 2.0.13 (2020-03-24)
 -------------------
