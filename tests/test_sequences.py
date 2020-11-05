@@ -10,7 +10,6 @@
 
 import py_trees
 import py_trees.console as console
-import typing
 
 ##############################################################################
 # Logging Level
