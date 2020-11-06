@@ -9,8 +9,8 @@ Forthcoming
 ------------------
 * [sequences] bugfix current child setting whilst moving through children, `#304 <https://github.com/splintered-reality/py_trees/pull/304>`_
 
- 2.1.1 (2020-08-11)
--------------------
+2.1.1 (2020-08-11)
+------------------
 * [behaviours] generators for variable values in SetBlackboardVariable, `#300 <https://github.com/splintered-reality/py_trees/pull/300>`_
 
 2.1.0 (2020-07-20)
