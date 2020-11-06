@@ -423,6 +423,7 @@ class Sequence(Composite):
             try:
                 # advance if there is 'next' sibling
                 self.current_child = self.children[index + 1]
+                index += 1
             except IndexError:
                 pass
 
