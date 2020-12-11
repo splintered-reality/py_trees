@@ -381,7 +381,7 @@ class Blackboard(object):
         Blackboard.activity_stream = None
 
     @staticmethod
-    def absolute_name(namespace: str, name: str) -> str:
+    def absolute_name(namespace: str, key: str) -> str:
         """
         Generate the fully qualified key name from namespace and name arguments.
 
@@ -399,7 +399,7 @@ class Blackboard(object):
 
         Args:
             namespace: namespace the key should be embedded in
-            name: key name (relative or absolute)
+            key: key name (relative or absolute)
 
         Returns:
             the absolute name
@@ -414,15 +414,15 @@ class Blackboard(object):
             name directly.
         """
         # it's already absolute
-        if name.startswith(Blackboard.separator):
-            return name
+        if key.startswith(Blackboard.separator):
+            return key
         # remove leading and trailing separators
         namespace = namespace if namespace.endswith(Blackboard.separator) else namespace + Blackboard.separator
-        name = name.strip(Blackboard.separator)
-        return "{}{}".format(namespace, name)
+        key = key.strip(Blackboard.separator)
+        return "{}{}".format(namespace, key)
 
     @staticmethod
-    def relative_name(namespace: str, name: str) -> str:
+    def relative_name(namespace: str, key: str) -> str:
         """
         **Examples**
 
@@ -432,18 +432,18 @@ class Blackboard(object):
             '/' + '/foo' = '/foo'
             '/foo' + 'bar' = '/foo/bar'
             '/foo/' + 'bar' = '/foo/bar'
-            '/foo' + '/bar' => ValueError('/bar' is not in 'foo')
+            '/foo' + '/bar' => KeyError('/bar' is not in 'foo')
             '/foo' + 'foo/bar' = '/foo/foo/bar'
 
         Args:
             namespace: namespace the key should be embedded in
-            name: key name (relative or absolute)
+            key: key name (relative or absolute)
 
         Returns:
             the absolute name
 
         Raises:
-            ValueError if the key is not in the specified namespace
+            KeyError if the key is not in the specified namespace
 
         .. warning::
 
@@ -452,15 +452,15 @@ class Blackboard(object):
             the namespace argument leads with a "/"
         """
         # it's already relative
-        if not name.startswith(Blackboard.separator):
-            return name
+        if not key.startswith(Blackboard.separator):
+            return key
         # remove leading and trailing separators
         namespace = namespace if namespace.endswith(Blackboard.separator) else namespace + Blackboard.separator
-        if name.startswith(namespace):
-            return name.lstrip(namespace)
+        if key.startswith(namespace):
+            return key.lstrip(namespace)
         else:
-            raise ValueError("key '{}' is not in namespace '{}'".format(
-                name, namespace)
+            raise KeyError("key '{}' is not in namespace '{}'".format(
+                key, namespace)
             )
 
     @staticmethod
@@ -1000,6 +1000,34 @@ class Client(object):
         except KeyError:
             return False
 
+    def absolute_name(self, key: str) -> str:
+        """
+        Generate the fully qualified key name for this key.
+
+        .. code-block:: python
+
+            blackboard = Client(name="FooBar", namespace="foo")
+            blackboard.register_key(key="bar", access=py_trees.common.Access.READ)
+            print("{}".format(blackboard.absolute_name("bar")))  # "/foo/bar"
+
+        Args:
+            key: name of the key
+
+        Returns:
+            the absolute name
+
+        Raises:
+            KeyError: if the key is not registered with this client
+        """
+        if not self.is_registered(key=key):
+            raise KeyError("key '{}' is not in namespace '{}'".format(
+                key, super().__getattribute__("namespace"))
+            )
+        return Blackboard.absolute_name(
+            super().__getattribute__("namespace"),
+            key
+        )
+
     def get(self, name: str) -> typing.Any:
         """
         Method based accessor to the blackboard variables (as opposed to simply using
@@ -1179,9 +1207,6 @@ class Client(object):
 
         Returns:
            if registered, True otherwise False
-
-        Raises:
-            ValueError if key is in absolute form, but not rooted in the client's namespace
         """
         absolute_name = Blackboard.absolute_name(
             super().__getattribute__("namespace"),
