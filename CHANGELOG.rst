@@ -5,6 +5,10 @@ Forthcoming
 -----------
 * ...
 
+2.1.3 (2020-12-13)
+------------------
+* [blackboard] convenience `absolute_name()` api for blackboard clients, `#306 <https://github.com/splintered-reality/py_trees/pull/306>`_
+
 2.1.2 (2020-11-05)
 ------------------
 * [sequences] bugfix current child setting whilst moving through children, `#304 <https://github.com/splintered-reality/py_trees/pull/304>`_
