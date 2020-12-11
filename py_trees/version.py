@@ -16,4 +16,4 @@ setup.py and sphinx.
 ##############################################################################
 
 # When changing, Also update setup.py and package.xml
-__version__ = '2.1.2'
+__version__ = '2.1.3'
