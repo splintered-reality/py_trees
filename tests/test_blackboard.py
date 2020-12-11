@@ -453,14 +453,14 @@ def test_absolute_name():
         ("/foo/", "/foo/bar", "/foo/bar"),
         ("/foo/", "foo/bar", "/foo/foo/bar"),
     ]
-    for (namespace, name, absolute_name) in test_tuples:
+    for (namespace, key, absolute_name) in test_tuples:
         print("[{}][{}]..........[{}][{}]".format(
             namespace,
-            name,
+            key,
             absolute_name,
-            Blackboard.absolute_name(namespace, name)
+            Blackboard.absolute_name(namespace, key)
         ))
-        assert(absolute_name == Blackboard.absolute_name(namespace, name))
+        assert(absolute_name == Blackboard.absolute_name(namespace, key))
 
 
 def test_relative_name():
@@ -476,20 +476,43 @@ def test_relative_name():
         ("/foo", "/foo/bar", "bar"),
         ("/foo/", "/foo/bar", "bar"),
     ]
-    for (namespace, name, absolute_name) in test_tuples:
+    for (namespace, key, absolute_name) in test_tuples:
         print("[{}][{}]..........[{}][{}]".format(
             namespace,
-            name,
+            key,
             absolute_name,
-            Blackboard.absolute_name(namespace, name)
+            Blackboard.absolute_name(namespace, key)
         ))
-        assert(absolute_name == Blackboard.relative_name(namespace, name))
+        assert(absolute_name == Blackboard.relative_name(namespace, key))
 
     namespace = "/bar"
-    name = "/foo/bar"
-    with nose.tools.assert_raises(ValueError):
-        print("[{}][{}]..........Expecting ValueError".format(namespace, name))
-        Blackboard.relative_name(namespace, name)
+    key = "/foo/bar"
+    with nose.tools.assert_raises(KeyError):
+        print("[{}][{}]..........Expecting ValueError".format(namespace, key))
+        Blackboard.relative_name(namespace, key)
+
+
+def test_client_absolute_name():
+    console.banner("Absolute Names from Client API")
+    # should use Blackboard.separator here, but it's a pita - long and unreadable
+    # just update this if the separator ever changes
+    test_tuples = [
+        # namespace, name, absolute name
+        (None, "foo", "/foo"),
+        ("foo", "bar", "/foo/bar"),
+        ("foo", "/foo/bar", "/foo/bar"),  # ignores the namespace
+        ("/foo/", "foo/bar", "/foo/foo/bar"),
+    ]
+    for (namespace, key, absolute_name) in test_tuples:
+        blackboard = py_trees.blackboard.Client(name="Blackboard", namespace=namespace)
+        blackboard.register_key(key=key, access=py_trees.common.Access.READ)
+        print("[{}][{}]..........[{}][{}]".format(
+            namespace,
+            key,
+            absolute_name,
+            blackboard.absolute_name(key)
+        ))
+        assert(absolute_name == blackboard.absolute_name(key))
 
 
 def test_namespaced_dot_access():
