@@ -83,6 +83,7 @@ class Decorator(behaviour.Behaviour):
         # Initialise
         super(Decorator, self).__init__(name=name)
         self.children.append(child)
+        child.parent = self
         # Give a convenient alias
         self.decorated = self.children[0]
  
