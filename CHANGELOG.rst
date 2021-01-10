@@ -5,6 +5,9 @@ Forthcoming
 -----------
 * [docs] fix some warnings
 
+0.6.9 (2021-01-10)
+------------------
+* [decorators] setting the child's parent as the decorator
 
 0.6.7 (2019-02-13)
 ------------------
