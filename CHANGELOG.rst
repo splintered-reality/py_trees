@@ -5,6 +5,10 @@ Forthcoming
 -----------
 * ...
 
+0.7.4 (2021-01-10)
+------------------
+* [decorators] setting the child's parent as the decorator
+
 0.7.3 (202019-08-02)
 --------------------
 * [infra] fix cmake version, zip_safe build warnings for catkin
