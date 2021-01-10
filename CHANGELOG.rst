@@ -5,6 +5,10 @@ Forthcoming
 -----------
 * ...
 
+0.7.6 (2021-01-10)
+------------------
+* [infra] skipping archived 0.7.4 and 0.7.5 versions that were dropped in favour of a push to 1.0.x
+
 0.7.4 (2021-01-10)
 ------------------
 * [decorators] setting the child's parent as the decorator
