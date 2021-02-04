@@ -112,3 +112,60 @@ def test_remove_nonexistant_child():
     with nose.tools.assert_raises(IndexError):
         print("Expecting an Index Error")
         root.remove_child_by_id(non_existant_child.id)
+
+
+def test_latched_selector() -> None:
+    ls = py_trees.composites.LatchedSelector(children=[
+        # Fail
+        py_trees.behaviours.Failure(name='should-never-stop-here'),
+        # Should fail the first tick, then never return during first pass through selector
+        # On second pass through the selector, it will succeed.
+        py_trees.behaviours.Count(
+            name='succeed-on-second-pass',
+            fail_until=1,
+            running_until=0,
+            success_until=10,
+            reset=False
+        ),
+        # Running for 2 ticks, then succeed
+        py_trees.behaviours.Count(name='run-till-success', fail_until=0, running_until=2, success_until=10),
+        # Set BB variable to "should not get here"
+        py_trees.behaviours.SetBlackboardVariable(
+            name='set-true',
+            variable_name='selector_finished',
+            variable_value=True
+        )
+    ])
+
+    seq = py_trees.composites.Sequence(children=[
+        py_trees.behaviours.SetBlackboardVariable(
+            name='set-false',
+            variable_name='selector_finished',
+            variable_value=False
+        ),
+        ls
+    ])
+
+    tree = py_trees.trees.BehaviourTree(seq)
+
+    tree.setup(None)
+
+    tree.tick()
+    assert tree.tip().name == 'run-till-success'
+    assert tree.root.status == py_trees.common.Status.RUNNING
+
+    tree.tick()
+    assert tree.tip().name == 'run-till-success'
+    assert tree.root.status == py_trees.common.Status.RUNNING
+
+    tree.tick()
+    assert tree.tip().name == 'run-till-success'
+    assert tree.root.status == py_trees.common.Status.SUCCESS
+
+    tree.tick()
+
+    assert tree.tip().name == 'succeed-on-second-pass'
+    assert tree.root.status == py_trees.common.Status.SUCCESS
+
+    bb = py_trees.blackboard.Blackboard()
+    assert bb.get('selector_finished') is False

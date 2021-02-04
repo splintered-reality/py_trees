@@ -619,3 +619,85 @@ class Parallel(Composite):
                                  "not children of this parallel {}[{}]""".format(missing_children_names, self.name))
                 self.logger.error(error_message)
                 raise RuntimeError(error_message)
+
+
+class LatchedSelector(Composite):
+    """
+    Latched Selector are the factory lines of Behaviour Trees
+
+    * Ticks each child subtree until one of them returns SUCCESS or RUNNING,
+        then returns that value.
+    * If we exhaust all the children, return FAILURE.
+    * If a child subtree returns RUNNING, subsequent ticks start at that child.
+
+    A LatchedSelector will progressively tick over each of its children so long as
+    each child returns :data:`~py_trees.common.Status.FAILURE`. If any child returns
+    :data:`~py_trees.common.Status.SUCCESS` or :data:`~py_trees.common.Status.RUNNING`
+    the sequence will halt and the parent will adopt
+    the result of this child. If it reaches the last child, it returns with
+    that result regardless.
+
+    .. note::
+
+       The sequence halts once it sees a child is RUNNING and then returns
+       the result. *It does not get stuck in the running behaviour*.
+
+
+    Args:
+        name (:obj:`str`): the composite behaviour name
+        children ([:class:`~py_trees.behaviour.Behaviour`]): list of children to add
+
+    """
+    status: Status
+
+    def __init__(self, name = "LatchedSelector", children = None):
+        super(LatchedSelector, self).__init__(name, children)
+
+    def tick(self):
+        """
+        Tick over the children.
+
+        Yields:
+            :class:`~py_trees.behaviour.Behaviour`: a reference to itself or one of its children
+        """
+        self.logger.debug("%s.tick()" % self.__class__.__name__)
+
+        # reset
+        if self.status != Status.RUNNING:
+            self.logger.debug("%s.tick(): [!RUNNING->resetting child index]" % self.__class__.__name__)
+            self.current_child = self.children[0] if self.children else None
+            for child in self.children:
+                # reset the children
+                if child.status != Status.INVALID:
+                    child.stop(Status.INVALID)
+            # subclass (user) handling
+            self.initialise()
+
+        # customised work
+        self.update()
+
+        # nothing to do
+        if not self.children:
+            self.current_child = None
+            self.stop(Status.FAILURE)
+            yield self
+            return
+
+        # iterate through children
+        index = self.children.index(self.current_child)
+        for child in itertools.islice(self.children, index, None):
+            for node in child.tick():
+                yield node
+                if node is child and node.status != Status.FAILURE:
+                    self.status = node.status
+                    yield self
+                    return
+            try:
+                # advance if there is 'next' sibling
+                self.current_child = self.children[index + 1]
+                index += 1
+            except IndexError:
+                pass
+
+        self.stop(Status.FAILURE)
+        yield self
