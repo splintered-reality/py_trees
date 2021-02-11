@@ -73,6 +73,6 @@ Once the large button has gone `GREEN`, you or the reviewer may merge the pull r
 If you are interested in seeing your changes make it into a release (sooner rather than later) and distributed on
 PyPi, PPA or via the ROS ecosystem, please make the request via a comment in your PR or in an issue.
 
-### Social Conduct
+## Social Conduct
 
 Be prepared to be tickled by noodly appendages and at all times, be froody.
