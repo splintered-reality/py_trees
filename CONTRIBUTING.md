@@ -19,6 +19,10 @@ Some recommendations to help align your contribution and minimise the eventual b
 If it is a feature or bugfix that you'd like to see backported to one of the release branches, open a parallel PR for that
 release branch or mention that you'd like to see it backported in the original PR's description.
 
+### Coding
+
+Running `. ./venv.bash` in the root of the repository can create a nice, self-contained sandbox within which you can develop and test your contribution.
+
 ### The Pull Request
 
 Be sure to state clearly in the pull request's **description** (this helps expedite review):
@@ -35,8 +39,19 @@ code conforms. This is run as part of the CI checks.
 
 ### Tests
 
-See [tests/Readme.md] for instructions on how to run the tests all together or manually. If you are contributing new features, or
+See [tests/README.md](tests/README.md) for instructions on how to run the tests all together or manually. If you are contributing new features, or
 bugfixing a problem that did not have coverage, it is expected that the pull requests will include a test for regression purposes.
+
+### Documentation
+
+Documentation is auto-generated as part of the PR process, but if you do wish to make changes and check locally:
+
+```
+. ./venv.bash
+make docs
+...
+The HTML pages are in doc/html.
+```
 
 ### Changelog
 
