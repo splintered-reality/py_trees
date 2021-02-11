@@ -6,6 +6,8 @@
 
 ## About
 
+Foo
+
 PyTrees is a python implementation of behaviour trees designed to facilitate the rapid development of medium sized decision making engines for use in fields like robotics. Brief feature list:
 
 * Sequence, Selector, Parallel composites
