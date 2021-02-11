@@ -1,6 +1,6 @@
 # Contributing Guidelines
 
-Successfully collaborating on common problems is always a satisfying experience that increases the desire to be 
+Successfully collaborating on common problems is always an edifying experience that increases the desire to do more. 
 
 ## Pull Requests
 
