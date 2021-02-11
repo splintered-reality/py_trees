@@ -8,8 +8,8 @@ Successfully collaborating on common problems is always an edifying experience t
 
 Some recommendations to help align your contribution and minimise the eventual back and forth on a PR:
 
-* Engage in an issue thread or in the discussion section
-* Actual code in the form of a minimal PR with a `status:do_not_merge` label is a great tool for generating useful dialogue
+* Engage in an issue thread or in the discussion section.
+* Actual code in the form of a minimal PR with a `status:do_not_merge` label is a great tool for generating useful dialogue.
 
 ### Which Branch?
 
@@ -27,8 +27,8 @@ Running `. ./venv.bash` in the root of the repository can create a nice, self-co
 
 Be sure to state clearly in the pull request's **description** (this helps expedite review):
 
-* The motivation, i.e. what problem is this solving
-* A concise summary of what was done (and why if relevant)
+* The motivation, i.e. what problem is this solving.
+* A concise summary of what was done (and why if relevant).
 
 Apply relevant **labels** - one of `component` & `type` is the norm. If the pull request is not yet ready, use the `status:do_not_merge` label.
 
