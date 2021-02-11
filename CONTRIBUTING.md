@@ -62,7 +62,7 @@ The HTML pages are in doc/html.
 ### Review
 
 Once submitted, a reviewer will be assigned. You do not need to select. If no-one has self-assigned in a reasonable time window,
-feel free to append a *friendly bump* coment to your PR.
+feel free to append a *friendly bump* comment to your PR.
 
 ### Merging
 
