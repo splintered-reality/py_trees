@@ -8,9 +8,11 @@
 # Imports
 ##############################################################################
 
+import nose
+import operator
+
 import py_trees
 import py_trees.console as console
-import operator
 
 from py_trees.common import Status
 from py_trees.behaviours import (
@@ -575,3 +577,38 @@ def test_check_variable_values():
             result=b.status
         )
         assert(b.status == data['result'])
+
+
+def test_check_blackboard_to_status():
+    console.banner("Check Blackboard to Status")
+    blackboard = Client(name="Blackboard")
+    blackboard.register_key(
+        key="status",
+        access=py_trees.common.Access.WRITE
+    )
+    b = py_trees.behaviours.BlackboardToStatus(
+        name="ToStatus",
+        variable_name="status",
+    )
+    for result in {
+        py_trees.common.Status.FAILURE,
+        py_trees.common.Status.RUNNING,
+        py_trees.common.Status.SUCCESS,
+    }:
+        blackboard.status = result
+        b.tick_once()
+        assert_details(
+            text=f"ToStatus - {result}",
+            expected=result,
+            result=b.status
+        )
+        assert(b.status == blackboard.status)
+
+    blackboard.unset("status")
+    with nose.tools.assert_raises(KeyError):
+        print("Unset the blackboard variable - expecting a KeyError")
+        b.tick_once()
+    blackboard.status = 5
+    with nose.tools.assert_raises(TypeError):
+        print("Set a different type - expecting a TypeError")
+        b.tick_once()
