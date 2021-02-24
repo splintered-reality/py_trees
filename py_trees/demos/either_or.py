@@ -140,7 +140,7 @@ def create_root():
     )
     idle = py_trees.behaviours.Running(name="Idle")
     either_or = py_trees.idioms.either_or(
-        name="EitherOr",
+        name="Either Or",
         conditions=[
             py_trees.common.ComparisonExpression("joystick_one", "enabled", operator.eq),
             py_trees.common.ComparisonExpression("joystick_two", "enabled", operator.eq),
