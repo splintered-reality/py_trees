@@ -109,6 +109,9 @@ source ${VENV_DIR}/bin/activate
 
 pretty_header "PyPi Dependencies"
 
+# upgrade pip3
+python3 -m pip install -U pip
+
 # build environment depedencies
 pip3 install wheel
 pip3 install "setuptools==45.2"
