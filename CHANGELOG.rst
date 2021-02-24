@@ -3,6 +3,8 @@ Release Notes
 
 Forthcoming
 -----------
+* [behaviours] added BlackboardToStatus, `#320 <https://github.com/splintered-reality/py_trees/pull/320>`_
+* [idioms] bugfix lost append in blackboard names for either_or, `#319 <https://github.com/splintered-reality/py_trees/pull/319>`_
 * [docs] contributing guidelines added, `#315 <https://github.com/splintered-reality/py_trees/pull/315>`_
 
 2.1.3 (2020-12-13)
