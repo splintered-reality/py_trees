@@ -250,8 +250,9 @@ def either_or(
     if namespace is None:
         namespace = blackboard.Blackboard.separator
         namespace += name.lower().replace("-", "_").replace(" ", "_")
+        namespace += blackboard.Blackboard.separator
         namespace += str(root.id).replace("-", "_").replace(" ", "_")
-        namespace = blackboard.Blackboard.separator
+        namespace += blackboard.Blackboard.separator
         namespace += "conditions"
     xor = behaviours.CheckBlackboardVariableValues(
         name="XOR",
