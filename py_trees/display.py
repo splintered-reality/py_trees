@@ -42,6 +42,8 @@ unicode_symbols = {
     'left_right_arrow': console.left_right_arrow,
     'bold': console.bold,
     'bold_reset': console.reset,
+    'sequence_with_memory': u'{-}',
+    'selector_with_memory': u'{o}',
     composites.Sequence: u'[-]',
     composites.Selector: u'[o]',
     composites.Parallel: u'[' + console.double_vertical_line + u']',
@@ -61,6 +63,8 @@ ascii_symbols = {
     'left_right_arrow': '<->',
     'bold': console.bold,
     'bold_reset': console.reset,
+    'sequence_with_memory': '{-}',
+    'selector_with_memory': '{o}',
     composites.Sequence: "[-]",
     composites.Selector: "[o]",
     composites.Parallel: "[||]",
@@ -79,6 +83,8 @@ xhtml_symbols = {
     'left_right_arrow': '<text>&#x2194;</text>',
     'bold': '<b>',
     'bold_reset': '</b>',
+    'sequence_with_memory': '<text>{-}</text>',
+    'selector_with_memory': '<text>{o}</text>',
     composites.Sequence: '<text>[-]</text>',
     composites.Selector: '<text>[o]</text>',
     composites.Parallel: '<text style="color:green;">[&#x2016;]</text>',  # c.f. console.double_vertical_line
@@ -131,12 +137,14 @@ def _generate_text_tree(
     tip_id = root.tip().id if root.tip() else None
 
     def get_behaviour_type(b):
-        for behaviour_type in [composites.Sequence,
-                               composites.Selector,
-                               composites.Parallel,
-                               decorators.Decorator]:
-            if isinstance(b, behaviour_type):
-                return behaviour_type
+        if isinstance(b, composites.Parallel):
+            return composites.Parallel
+        if isinstance(b, decorators.Decorator):
+            return decorators.Decorator
+        if isinstance(b, composites.Sequence):
+            return composites.Sequence
+        if isinstance(b, composites.Selector):
+            return "selector_with_memory" if b.memory else composites.Selector
         return behaviour.Behaviour
 
     def style(s, font_weight=False):
@@ -296,7 +304,7 @@ def unicode_tree(
         visited,
         previously_visited,
         indent,
-        symbols=ascii_symbols
+        symbols=unicode_symbols
     )
     return lines
 
@@ -409,6 +417,11 @@ def dot_tree(
         that which will be used for the node name.
         """
         node_label = node_name
+        try:
+            if behaviour.memory:
+                node_label = console.circled_m + " " + node_label
+        except AttributeError:
+            pass
         if behaviour.verbose_info_string():
             node_label += "\n{}".format(behaviour.verbose_info_string())
         if with_qualified_names:
@@ -424,8 +437,9 @@ def dot_tree(
     graph.set_node_defaults(fontname='times-roman')
     graph.set_edge_defaults(fontname='times-roman')
     (node_shape, node_colour, node_font_colour) = get_node_attributes(root)
+    node_name = root.name
     node_root = pydot.Node(
-        root.name,
+        name=root.name,
         label=get_node_label(root.name, root),
         shape=node_shape,
         style="filled",

@@ -58,7 +58,10 @@ def test_text_trees():
         success_until=10
     )
     low_priority = py_trees.behaviours.Running(name="Low Priority")
-    root.add_children([high_priority, low_priority])
+    selector_with_memory = py_trees.composites.Selector("Selector w/ Memory", memory=True)
+    success = py_trees.behaviours.Success("Success")
+    selector_with_memory.add_child(success)
+    root.add_children([high_priority, low_priority, selector_with_memory])
     tree = py_trees.trees.BehaviourTree(root)
     snapshot_visitor = py_trees.visitors.SnapshotVisitor()
     tree.visitors.append(snapshot_visitor)

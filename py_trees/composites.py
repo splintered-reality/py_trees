@@ -246,7 +246,7 @@ class Composite(behaviour.Behaviour):
 
 class Selector(Composite):
     """
-    Selectors are the Decision Makers
+    Selectors are the decision makers.
 
     .. graphviz:: dot/selector.dot
 
@@ -262,17 +262,17 @@ class Selector(Composite):
        executing low priority branch. This signal will percolate down that child's own subtree. Behaviours
        should make sure that they catch this and *destruct* appropriately.
 
-    Make sure you do your appropriate cleanup in the :meth:`terminate()` methods! e.g. cancelling a running goal, or restoring a context.
-
     .. seealso:: The :ref:`py-trees-demo-selector-program` program demos higher priority switching under a selector.
 
     Args:
         name (:obj:`str`): the composite behaviour name
+        memory (:obj:`bool`): if :data:`~py_trees.common.Status.RUNNING` on the previous tick, resume with the :data:`~py_trees.common.Status.RUNNING` child
         children ([:class:`~py_trees.behaviour.Behaviour`]): list of children to add
     """
 
-    def __init__(self, name="Selector", children=None):
+    def __init__(self, name="Selector", memory=False, children=None):
         super(Selector, self).__init__(name, children)
+        self.memory = memory
 
     def tick(self):
         """
@@ -284,17 +284,41 @@ class Selector(Composite):
             :class:`~py_trees.behaviour.Behaviour`: a reference to itself or one of its children
         """
         self.logger.debug("%s.tick()" % self.__class__.__name__)
-        # Required behaviour for *all* behaviours and composites is
-        # for tick() to check if it isn't running and initialise
+        # initialise
         if self.status != Status.RUNNING:
-            # selectors dont do anything specific on initialisation
-            #   - the current child is managed by the update, never needs to be 'initialised'
-            # run subclass (user) handles
+            # selector specific initialisation - leave initialise() free for users to
+            # re-implement without having to make calls to super()
+            self.logger.debug("%s.tick() [!RUNNING->reset current_child]" % self.__class__.__name__)
+            self.current_child = self.children[0] if self.children else None
+
+            # reset the children - don't need to worry since they will be handled
+            # a) prior to a remembered starting point, or
+            # b) invalidated by a higher level priority
+
+            # user specific initialisation
             self.initialise()
-        # run any work designated by a customised instance of this class
+
+        # customised work
         self.update()
+
+        # nothing to do
+        if not self.children:
+            self.current_child = None
+            self.stop(Status.FAILURE)
+            yield self
+            return
+
+        # starting point
+        if self.memory:
+            index = self.children.index(self.current_child)
+            for child in itertools.islice(self.children, None, index):
+                child.stop(Status.INVALID)
+        else:
+            index = 0
+
+        # customised work
         previous = self.current_child
-        for child in self.children:
+        for child in itertools.islice(self.children, index, None):
             for node in child.tick():
                 yield node
                 if node is child:
@@ -389,16 +413,17 @@ class Sequence(Composite):
             :class:`~py_trees.behaviour.Behaviour`: a reference to itself or one of its children
         """
         self.logger.debug("%s.tick()" % self.__class__.__name__)
-
-        # reset
+        # initialise
         if self.status != Status.RUNNING:
-            self.logger.debug("%s.tick() [!RUNNING->resetting child index]" % self.__class__.__name__)
+            # sequence specific initialisation - leave initialise() free for users to
+            # re-implement without having to make calls to super()
+            self.logger.debug("%s.tick() [!RUNNING->reset current_child]" % self.__class__.__name__)
             self.current_child = self.children[0] if self.children else None
+            # reset the children
             for child in self.children:
-                # reset the children
                 if child.status != Status.INVALID:
                     child.stop(Status.INVALID)
-            # subclass (user) handling
+            # user specific initialisation
             self.initialise()
 
         # customised work

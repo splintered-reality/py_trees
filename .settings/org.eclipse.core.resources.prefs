@@ -5,6 +5,7 @@ encoding//doc/examples/oneshot.py=utf-8
 encoding//doc/examples/parallel.py=utf-8
 encoding//doc/examples/pickup_where_you_left_off.py=utf-8
 encoding//doc/examples/selector.py=utf-8
+encoding//doc/examples/selector_with_memory.py=utf-8
 encoding//doc/examples/sequence.py=utf-8
 encoding//doc/examples/skeleton_behaviour.py=utf-8
 encoding//doc/examples/skeleton_tree.py=utf-8

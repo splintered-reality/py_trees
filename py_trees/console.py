@@ -85,6 +85,7 @@ def define_symbol_or_fallback(original: str, fallback: str, encoding: str=sys.st
     return original
 
 
+circle = u'\u26ac'
 lightning_bolt = u'\u26A1'
 double_vertical_line = u'\u2016'
 check_mark = u'\u2713'
@@ -93,6 +94,7 @@ left_arrow = u'\u2190'  # u'\u2190'
 right_arrow = u'\u2192'
 left_right_arrow = u'\u2194'
 forbidden_circle = u'\u29B8'
+circled_m = u'\u24c2'
 
 ##############################################################################
 # Keypress
@@ -334,4 +336,5 @@ if __name__ == '__main__':
     print("multiplication_x: {}".format(multiplication_x))
     print("left_arrow: {}".format(left_arrow))
     print("right_arrow: {}".format(right_arrow))
+    print("circled_m: {}".format(circled_m))
     # print("has unicode: {}".format(has_unicode()))
