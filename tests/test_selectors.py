@@ -40,6 +40,60 @@ def assert_details(text, expected, result):
 ##############################################################################
 
 
+def test_tick_running_with_no_memory():
+    console.banner('Tick-Running with No Memory')
+    assert_banner()
+    root = py_trees.composites.Selector(name="Selector w/o Memory", memory=False)
+    child_1 = py_trees.behaviours.Count(name="Fail Fast", fail_until=1, running_until=1, success_until=100)
+    child_2 = py_trees.behaviours.Running(name="Running")
+    root.add_children([child_1, child_2])
+    root.tick_once()
+    print(py_trees.display.unicode_tree(root, show_status=True))
+    assert_details("1::Selector Status", py_trees.common.Status.RUNNING, root.status)
+    assert(root.status == py_trees.common.Status.RUNNING)
+    assert_details("2::Child 1 Status", py_trees.common.Status.FAILURE, child_1.status)
+    assert(child_1.status == py_trees.common.Status.FAILURE)
+    assert_details("2::Child 2 Status", py_trees.common.Status.RUNNING, child_2.status)
+    assert(child_2.status == py_trees.common.Status.RUNNING)
+    root.tick_once()
+    print(py_trees.display.unicode_tree(root, show_status=True))
+    assert_details("2::Selector Status", py_trees.common.Status.SUCCESS, root.status)
+    assert(root.status == py_trees.common.Status.SUCCESS)
+    assert_details("2::Child 1 Status", py_trees.common.Status.SUCCESS, child_1.status)
+    assert(child_1.status == py_trees.common.Status.SUCCESS)
+    assert_details("2::Child 2 Status", py_trees.common.Status.INVALID, child_2.status)
+    assert(child_2.status == py_trees.common.Status.INVALID)
+
+
+def test_tick_running_with_memory():
+    console.banner('Tick-Running with Memory')
+    assert_banner()
+    root = py_trees.composites.Selector(name="Selector w/ Memory", memory=True)
+    child_1 = py_trees.behaviours.Count(name="Fail Fast", fail_until=1, running_until=1, success_until=100)
+    child_2 = py_trees.behaviours.Running(name="Running")
+    root.add_children([child_1, child_2])
+    root.tick_once()
+    print(py_trees.display.unicode_tree(root, show_status=True))
+    assert_details("1::Selector Status", py_trees.common.Status.RUNNING, root.status)
+    assert(root.status == py_trees.common.Status.RUNNING)
+    assert_details("2::Child 1 Status", py_trees.common.Status.FAILURE, child_1.status)
+    assert(child_1.status == py_trees.common.Status.FAILURE)
+    assert_details("2::Child 2 Status", py_trees.common.Status.RUNNING, child_2.status)
+    assert(child_2.status == py_trees.common.Status.RUNNING)
+    root.tick_once()
+    print(py_trees.display.unicode_tree(root, show_status=True))
+    assert_details("2::Selector Status", py_trees.common.Status.RUNNING, root.status)
+    assert(root.status == py_trees.common.Status.RUNNING)
+    assert_details("2::Child 1 Status", py_trees.common.Status.INVALID, child_1.status)
+    assert(child_1.status == py_trees.common.Status.INVALID)
+    assert_details("2::Child 2 Status", py_trees.common.Status.RUNNING, child_2.status)
+    assert(child_2.status == py_trees.common.Status.RUNNING)
+
+##############################################################################
+# Tests - Dynamic Insertion / Removal
+##############################################################################
+
+
 def test_tick_add_with_current_child():
     console.banner('Tick-Add with Current Child')
     assert_banner()
