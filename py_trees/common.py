@@ -107,15 +107,6 @@ class ParallelPolicy(object):
             """
             super().__init__(synchronise=synchronise)
 
-        def __str__(self) -> str:
-            """
-            Human readable description.
-            """
-            description = "--" + self.__class__.__name__ + "("
-            description += console.lightning_bolt if self.synchronise else "-"
-            description += ")--"
-            return description
-
     class SuccessOnOne(Base):
         """
         Return :py:data:`~py_trees.common.Status.SUCCESS` so long as at least one child has :py:data:`~py_trees.common.Status.SUCCESS`
@@ -126,12 +117,6 @@ class ParallelPolicy(object):
             No configuration necessary for this policy.
             """
             super().__init__(synchronise=False)
-
-        def __str__(self) -> str:
-            """
-            Human readable description.
-            """
-            return "--" + self.__class__.__name__ + "--"
 
     class SuccessOnSelected(Base):
         """
@@ -150,17 +135,6 @@ class ParallelPolicy(object):
             """
             super().__init__(synchronise=synchronise)
             self.children = children
-
-        def __str__(self) -> str:
-            """
-            Human readable description.
-            """
-            description = "--" + self.__class__.__name__ + "("
-            description += console.lightning_bolt if self.synchronise else "-"
-            description += ","
-            description += "[" + ",".join([c.name for c in self.children]) + "]"
-            description += ")--"
-            return description
 
 
 class OneShotPolicy(enum.Enum):

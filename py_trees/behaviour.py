@@ -377,16 +377,3 @@ class Behaviour(object):
             :class:`~py_trees.behaviour.Behaviour` or :obj:`None`: child behaviour, itself or :obj:`None` if its status is :data:`~py_trees.common.Status.INVALID`
         """
         return self if self.status != common.Status.INVALID else None
-
-    def verbose_info_string(self):
-        """
-        Override to provide a one line informative string about the behaviour. This
-        gets used in, e.g. dot graph rendering of the tree.
-
-        .. tip::
-           Use this sparingly. A good use case is for when the behaviour type
-           and class name isn't sufficient to inform the user about it's
-           mechanisms for controlling the flow of a tree tick (e.g. parallels
-           with policies).
-        """
-        return ""
