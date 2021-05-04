@@ -39,7 +39,6 @@ import typing
 
 from . import behaviour
 from . import common
-from .common import Status
 
 ##############################################################################
 # Composites
@@ -71,7 +70,7 @@ class Composite(behaviour.Behaviour):
     # Worker Overrides
     ############################################
 
-    def stop(self, new_status=Status.INVALID):
+    def stop(self, new_status=common.Status.INVALID):
         """
         There is generally two use cases that must be supported here.
 
@@ -86,7 +85,7 @@ class Composite(behaviour.Behaviour):
         """
         self.logger.debug("%s.stop()[%s]" % (self.__class__.__name__, "%s->%s" % (self.status, new_status) if self.status != new_status else "%s" % new_status))
         # priority interrupted
-        if new_status == Status.INVALID:
+        if new_status == common.Status.INVALID:
             self.current_child = None
             for child in self.children:
                 child.stop(new_status)
@@ -159,8 +158,8 @@ class Composite(behaviour.Behaviour):
         """
         if self.current_child is not None and (self.current_child.id == child.id):
             self.current_child = None
-        if child.status == Status.RUNNING:
-            child.stop(Status.INVALID)
+        if child.status == common.Status.RUNNING:
+            child.stop(common.Status.INVALID)
         child_index = self.children.index(child)
         self.children.remove(child)
         child.parent = None
@@ -172,8 +171,8 @@ class Composite(behaviour.Behaviour):
         """
         self.current_child = None
         for child in self.children:
-            if child.status == Status.RUNNING:
-                child.stop(Status.INVALID)
+            if child.status == common.Status.RUNNING:
+                child.stop(common.Status.INVALID)
             child.parent = None
         # makes sure to delete it for this class and all references to it
         #   http://stackoverflow.com/questions/850795/clearing-python-lists
@@ -285,7 +284,7 @@ class Selector(Composite):
         """
         self.logger.debug("%s.tick()" % self.__class__.__name__)
         # initialise
-        if self.status != Status.RUNNING:
+        if self.status != common.Status.RUNNING:
             # selector specific initialisation - leave initialise() free for users to
             # re-implement without having to make calls to super()
             self.logger.debug("%s.tick() [!RUNNING->reset current_child]" % self.__class__.__name__)
@@ -304,7 +303,7 @@ class Selector(Composite):
         # nothing to do
         if not self.children:
             self.current_child = None
-            self.stop(Status.FAILURE)
+            self.stop(common.Status.FAILURE)
             yield self
             return
 
@@ -312,17 +311,17 @@ class Selector(Composite):
         if self.memory:
             index = self.children.index(self.current_child)
             for child in itertools.islice(self.children, None, index):
-                child.stop(Status.INVALID)
+                child.stop(common.Status.INVALID)
         else:
             index = 0
 
-        # customised work
+        # actual work
         previous = self.current_child
         for child in itertools.islice(self.children, index, None):
             for node in child.tick():
                 yield node
                 if node is child:
-                    if node.status == Status.RUNNING or node.status == Status.SUCCESS:
+                    if node.status == common.Status.RUNNING or node.status == common.Status.SUCCESS:
                         self.current_child = child
                         self.status = node.status
                         if previous is None or previous != self.current_child:
@@ -330,20 +329,20 @@ class Selector(Composite):
                             passed = False
                             for child in self.children:
                                 if passed:
-                                    if child.status != Status.INVALID:
-                                        child.stop(Status.INVALID)
+                                    if child.status != common.Status.INVALID:
+                                        child.stop(common.Status.INVALID)
                                 passed = True if child == self.current_child else passed
                         yield self
                         return
         # all children failed, set failure ourselves and current child to the last bugger who failed us
-        self.status = Status.FAILURE
+        self.status = common.Status.FAILURE
         try:
             self.current_child = self.children[-1]
         except IndexError:
             self.current_child = None
         yield self
 
-    def stop(self, new_status=Status.INVALID):
+    def stop(self, new_status=common.Status.INVALID):
         """
         Stopping a selector requires setting the current child to none. Note that it
         is important to implement this here instead of terminate, so users are free
@@ -355,23 +354,9 @@ class Selector(Composite):
         """
         # retain information about the last running child if the new status is
         # SUCCESS or FAILURE
-        if new_status == Status.INVALID:
+        if new_status == common.Status.INVALID:
             self.current_child = None
         Composite.stop(self, new_status)
-
-    def __repr__(self):
-        """
-        Simple string representation of the object.
-
-        Returns:
-            :obj:`str`: string representation
-        """
-        s = "Name       : %s\n" % self.name
-        s += "  Status  : %s\n" % self.status
-        s += "  Current : %s\n" % (self.current_child.name if self.current_child is not None else "none")
-        s += "  Children: %s\n" % [child.name for child in self.children]
-        return s
-
 
 ##############################################################################
 # Sequence
@@ -414,15 +399,15 @@ class Sequence(Composite):
         """
         self.logger.debug("%s.tick()" % self.__class__.__name__)
         # initialise
-        if self.status != Status.RUNNING:
+        if self.status != common.Status.RUNNING:
             # sequence specific initialisation - leave initialise() free for users to
             # re-implement without having to make calls to super()
             self.logger.debug("%s.tick() [!RUNNING->reset current_child]" % self.__class__.__name__)
             self.current_child = self.children[0] if self.children else None
             # reset the children
             for child in self.children:
-                if child.status != Status.INVALID:
-                    child.stop(Status.INVALID)
+                if child.status != common.Status.INVALID:
+                    child.stop(common.Status.INVALID)
             # user specific initialisation
             self.initialise()
 
@@ -432,7 +417,7 @@ class Sequence(Composite):
         # nothing to do
         if not self.children:
             self.current_child = None
-            self.stop(Status.SUCCESS)
+            self.stop(common.Status.SUCCESS)
             yield self
             return
 
@@ -441,7 +426,7 @@ class Sequence(Composite):
         for child in itertools.islice(self.children, index, None):
             for node in child.tick():
                 yield node
-                if node is child and node.status != Status.SUCCESS:
+                if node is child and node.status != common.Status.SUCCESS:
                     self.status = node.status
                     yield self
                     return
@@ -452,8 +437,9 @@ class Sequence(Composite):
             except IndexError:
                 pass
 
-        self.stop(Status.SUCCESS)
+        self.stop(common.Status.SUCCESS)
         yield self
+
 
 ##############################################################################
 # Parallel
@@ -544,8 +530,8 @@ class Parallel(Composite):
             for child in self.children:
                 # reset the children, this ensures old SUCCESS/FAILURE status flags
                 # don't break the synchronisation logic below
-                if child.status != Status.INVALID:
-                    child.stop(Status.INVALID)
+                if child.status != common.Status.INVALID:
+                    child.stop(common.Status.INVALID)
             self.current_child = None
             # subclass (user) handling
             self.initialise()
@@ -553,7 +539,7 @@ class Parallel(Composite):
         # nothing to do
         if not self.children:
             self.current_child = None
-            self.stop(Status.SUCCESS)
+            self.stop(common.Status.SUCCESS)
             yield self
             return
 
@@ -595,7 +581,7 @@ class Parallel(Composite):
         self.status = new_status
         yield self
 
-    def stop(self, new_status: common.Status=Status.INVALID):
+    def stop(self, new_status: common.Status=common.Status.INVALID):
         """
         For interrupts or any of the termination conditions, ensure that any
         running children are stopped.
@@ -611,15 +597,6 @@ class Parallel(Composite):
         # only nec. thing here is to make sure the status gets set to INVALID if
         # it was a higher priority interrupt (new_status == INVALID)
         Composite.stop(self, new_status)
-
-    def verbose_info_string(self) -> str:
-        """
-        Provide additional information about the underlying policy.
-
-        Returns:
-            :obj:`str`: name of the policy along with it's configuration
-        """
-        return str(self.policy)
 
     def validate_policy_configuration(self):
         """
