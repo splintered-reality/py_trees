@@ -1,0 +1,15 @@
+digraph pastafarianism {
+ordering=out;
+graph [fontname="times-roman"];
+node [fontname="times-roman"];
+edge [fontname="times-roman"];
+"Sequence with Memory" [fillcolor=orange, fontcolor=black, fontsize=9, label="Ⓜ Sequence with Memory", shape=box, style=filled];
+Guard [fillcolor=gray, fontcolor=black, fontsize=9, label=Guard, shape=ellipse, style=filled];
+"Sequence with Memory" -> Guard;
+"Action 1" [fillcolor=gray, fontcolor=black, fontsize=9, label="Action 1", shape=ellipse, style=filled];
+"Sequence with Memory" -> "Action 1";
+"Action 2" [fillcolor=gray, fontcolor=black, fontsize=9, label="Action 2", shape=ellipse, style=filled];
+"Sequence with Memory" -> "Action 2";
+"Action 3" [fillcolor=gray, fontcolor=black, fontsize=9, label="Action 3", shape=ellipse, style=filled];
+"Sequence with Memory" -> "Action 3";
+}
