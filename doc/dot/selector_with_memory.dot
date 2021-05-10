@@ -1,0 +1,13 @@
+digraph pastafarianism {
+ordering=out;
+graph [fontname="times-roman"];
+node [fontname="times-roman"];
+edge [fontname="times-roman"];
+"Selector With Memory" [fillcolor=cyan, fontcolor=black, fontsize=9, label="Ⓜ Selector With Memory", shape=octagon, style=filled];
+"High Priority" [fillcolor=gray, fontcolor=black, fontsize=9, label="High Priority", shape=ellipse, style=filled];
+"Selector With Memory" -> "High Priority";
+"Med Priority" [fillcolor=gray, fontcolor=black, fontsize=9, label="Med Priority", shape=ellipse, style=filled];
+"Selector With Memory" -> "Med Priority";
+"Low Priority" [fillcolor=gray, fontcolor=black, fontsize=9, label="Low Priority", shape=ellipse, style=filled];
+"Selector With Memory" -> "Low Priority";
+}

@@ -146,7 +146,7 @@ def _generate_text_tree(
         if isinstance(b, decorators.Decorator):
             return decorators.Decorator
         if isinstance(b, composites.Sequence):
-            return composites.Sequence
+            return "sequence_with_memory" if b.memory else composites.Sequence
         if isinstance(b, composites.Selector):
             return "selector_with_memory" if b.memory else composites.Selector
         return behaviour.Behaviour

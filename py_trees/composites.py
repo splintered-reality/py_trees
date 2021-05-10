@@ -8,26 +8,49 @@
 ##############################################################################
 
 """
-Composites are the **factories** and **decision makers** of a
-behaviour tree. They are responsible for shaping the branches.
+Composites are responsible for directing the path traced through
+the tree on a given tick (execution). They are the **factories**
+(Sequences and Parallels) and **decision makers** (Selectors) of a behaviour
+tree.
 
 .. graphviz:: dot/composites.dot
-
-.. tip:: You should never need to subclass or create new composites.
-
-Most patterns can be achieved with a combination of the above. Adding to this
-set exponentially increases the complexity and subsequently
-making it more difficult to design, introspect, visualise and debug the trees. Always try
-to find the combination you need to achieve your result before contemplating adding
-to this set. Actually, scratch that...just don't contemplate it!
+   :align: center
+   :caption: PyTree Composites
 
 Composite behaviours typically manage children and apply some logic to the way
 they execute and return a result, but generally don't do anything themselves.
 Perform the checks or actions you need to do in the non-composite behaviours.
 
+Most any desired functionality can be authored with a combination of these
+three composites. In fact, it is precisely this feature that makes behaviour
+trees attractive - it breaks down complex decision making logic to just three
+primitive elements. It is possible and often desirable to extend this set with
+custom composites of your own, but think carefully before you do - in almost
+every case, a combination of the existing composites will serve and as a
+result, you will merely compound the complexity inherent in your tree logic.
+This this makes it confoundingly difficult to design, introspect and debug. As
+an example, design sessions often revolve around a sketched graph on a
+whiteboard. When these graphs are composed of just five elements (Selectors,
+Sequences, Parallels, Decorators and Behaviours), it is very easy to understand
+the logic at a glance. Double the number of fundamental elements and you may as
+well be back at the terminal parsing code.
+
+.. tip:: You should never need to subclass or create new composites.
+
+The basic operational modes of the three composites in this library are as follows:
+
+* :class:`~py_trees.composites.Selector`: select a child to execute based on cascading priorities
 * :class:`~py_trees.composites.Sequence`: execute children sequentially
-* :class:`~py_trees.composites.Selector`: select a path through the tree, interruptible by higher priorities
-* :class:`~py_trees.composites.Parallel`: manage children concurrently
+* :class:`~py_trees.composites.Parallel`: execute children concurrently
+
+This library does provide some flexibility in *how* each composite is implemented without
+breaking the fundamental nature of each (as described above). Selectors and Sequences can
+be configured with or without memory (resumes or resets if children are RUNNING) and
+the results of a parallel can be configured to wait upon all children completing, succeed
+on one, all or a subset thereof.
+
+.. tip:: Follow the links in each composite's documentation to the relevant demo programs.
+
 """
 
 ##############################################################################
@@ -310,6 +333,8 @@ class Selector(Composite):
         # starting point
         if self.memory:
             index = self.children.index(self.current_child)
+            # clear out preceding status' - not actually necessary but helps
+            # visualise the case of memory vs no memory
             for child in itertools.islice(self.children, None, index):
                 child.stop(common.Status.INVALID)
         else:
@@ -383,12 +408,19 @@ class Sequence(Composite):
     .. seealso:: The :ref:`py-trees-demo-sequence-program` program demos a simple sequence in action.
 
     Args:
-        name (:obj:`str`): the composite behaviour name
-        children ([:class:`~py_trees.behaviour.Behaviour`]): list of children to add
+        name: the composite behaviour name
+        memory: if :data:`~py_trees.common.Status.RUNNING` on the previous tick, resume with the :data:`~py_trees.common.Status.RUNNING` child
+        children: list of children to add
 
     """
-    def __init__(self, name="Sequence", children=None):
+    def __init__(
+        self,
+        name: str="Sequence",
+        memory: bool=True,
+        children: typing.List[behaviour.Behaviour]=None
+    ):
         super(Sequence, self).__init__(name, children)
+        self.memory = memory
 
     def tick(self):
         """
@@ -398,18 +430,22 @@ class Sequence(Composite):
             :class:`~py_trees.behaviour.Behaviour`: a reference to itself or one of its children
         """
         self.logger.debug("%s.tick()" % self.__class__.__name__)
+
         # initialise
-        if self.status != common.Status.RUNNING:
-            # sequence specific initialisation - leave initialise() free for users to
-            # re-implement without having to make calls to super()
-            self.logger.debug("%s.tick() [!RUNNING->reset current_child]" % self.__class__.__name__)
+        index = 0
+        if self.status != common.Status.RUNNING or not self.memory:
             self.current_child = self.children[0] if self.children else None
-            # reset the children
             for child in self.children:
                 if child.status != common.Status.INVALID:
                     child.stop(common.Status.INVALID)
             # user specific initialisation
             self.initialise()
+        else:  # self.memory is True and status is RUNNING
+            index = self.children.index(self.current_child)
+            # clear out preceding status' - not actually necessary but helps
+            # visualise the case of memory vs no memory
+            for child in itertools.islice(self.children, None, index):
+                child.stop(common.Status.INVALID)
 
         # customised work
         self.update()
@@ -421,8 +457,7 @@ class Sequence(Composite):
             yield self
             return
 
-        # iterate through children
-        index = self.children.index(self.current_child)
+        # actual work
         for child in itertools.islice(self.children, index, None):
             for node in child.tick():
                 yield node
