@@ -47,7 +47,7 @@ unicode_symbols = {
     'selector_with_memory': u'{o}',
     composites.Sequence: u'[-]',
     composites.Selector: u'[o]',
-    composites.Parallel: u'[' + console.double_vertical_line + u']',
+    composites.Parallel: u'/_/',
     decorators.Decorator: u'-^-',
     behaviour.Behaviour: u'-->',
     common.Status.SUCCESS: console.green + console.check_mark + console.reset,
@@ -69,7 +69,7 @@ ascii_symbols = {
     'selector_with_memory': '{o}',
     composites.Sequence: "[-]",
     composites.Selector: "[o]",
-    composites.Parallel: "[||]",
+    composites.Parallel: "/_/",
     decorators.Decorator: "-^-",
     behaviour.Behaviour: "-->",
     common.Status.SUCCESS: console.green + 'o' + console.reset,
@@ -90,7 +90,7 @@ xhtml_symbols = {
     'selector_with_memory': '<text>{o}</text>',
     composites.Sequence: '<text>[-]</text>',
     composites.Selector: '<text>[o]</text>',
-    composites.Parallel: '<text style="color:green;">[&#x2016;]</text>',  # c.f. console.double_vertical_line
+    composites.Parallel: '<text style="color:green;">/_/</text>',
     decorators.Decorator: '<text>-^-</text>',
     behaviour.Behaviour: '<text>--></text>',
     common.Status.SUCCESS: '<text style="color:green;">&#x2713;</text>',  # c.f. console.check_mark
