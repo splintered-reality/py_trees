@@ -3,6 +3,10 @@ Release Notes
 
 Forthcoming
 -----------
+* ...
+
+2.1.5 (2021-05-09)
+------------------
 * [composites] sequences w/o memory, `#325 <https://github.com/splintered-reality/py_trees/pull/325>`_
 * [composites] selectors with memory, `#324 <https://github.com/splintered-reality/py_trees/pull/324>`_
 * [display] unicode trees are unicode, not ascii `#324 <https://github.com/splintered-reality/py_trees/pull/324>`_
