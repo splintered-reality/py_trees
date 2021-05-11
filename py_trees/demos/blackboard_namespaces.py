@@ -36,8 +36,6 @@ import py_trees.console as console
 def description():
     content = "Demonstrates usage of blackboard namespaces.\n"
     content += "\n"
-    content += "...\n"
-    content += "...\n"
 
     if py_trees.console.has_colours:
         banner_line = console.green + "*" * 79 + "\n" + console.reset

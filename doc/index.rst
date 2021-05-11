@@ -11,7 +11,6 @@ Py Trees
 .. toctree::
    :maxdepth: 1
    :caption: Guide
-
   
    introduction
    behaviours

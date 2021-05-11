@@ -14,7 +14,11 @@
 pydot
 
 # extras_require[docs]
-Sphinx<2
+Sphinx==1.8.5
+# Avoid a sphinx-docutils incompatibility that creates deprecation warnings:
+#   sphinxsphinx/util/nodes.py:94: FutureWarning: The iterable returned by
+#   Node.traverse() will become an iterator instead of a list in Docutils > 0.16.
+docutils==0.15.2
 sphinx-argparse<0.3
 sphinx_rtd_theme<0.5
 sphinx-autodoc-typehints==1.6.0

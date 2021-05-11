@@ -53,7 +53,7 @@ py-trees-demo-blackboard
 
 .. _py-trees-demo-blackboard-namespaces-program:
 
-py-trees-demo-blackboard_namespaces
+py-trees-demo-blackboard-namespaces
 -----------------------------------
 
 .. automodule:: py_trees.demos.blackboard_namespaces
