@@ -28,6 +28,7 @@
 
   <exec_depend>python3-pydot</exec_depend>
 
+  <test_depend>python3-mypy</test_depend>
   <test_depend>python3-nose</test_depend>
   <test_depend>python3-nose-yanc</test_depend>
   <!--           not available as a deb yet                     -->

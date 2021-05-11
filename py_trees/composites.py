@@ -78,7 +78,7 @@ class Composite(behaviour.Behaviour):
         children ([:class:`~py_trees.behaviour.Behaviour`]): list of children to add
     """
     def __init__(self,
-                 name: str=common.Name.AUTO_GENERATED,
+                 name: typing.Union[str, common.Name]=common.Name.AUTO_GENERATED,
                  children: typing.List[behaviour.Behaviour]=None
                  ):
         super(Composite, self).__init__(name)
@@ -518,7 +518,7 @@ class Parallel(Composite):
        * :ref:`Context Switching Demo <py-trees-demo-context-switching-program>`
     """
     def __init__(self,
-                 name: str=common.Name.AUTO_GENERATED,
+                 name: typing.Union[str, common.Name]=common.Name.AUTO_GENERATED,
                  policy: common.ParallelPolicy.Base=common.ParallelPolicy.SuccessOnAll(),
                  children: typing.List[behaviour.Behaviour]=None
                  ):

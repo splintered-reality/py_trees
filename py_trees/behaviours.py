@@ -326,7 +326,7 @@ class BlackboardToStatus(behaviour.Behaviour):
     def __init__(
         self,
         variable_name: str,
-        name: str=common.Name.AUTO_GENERATED
+        name: typing.Union[str, common.Name]=common.Name.AUTO_GENERATED
     ):
         super().__init__(name=name)
         name_components = variable_name.split('.')
@@ -371,7 +371,7 @@ class CheckBlackboardVariableExists(behaviour.Behaviour):
     def __init__(
             self,
             variable_name: str,
-            name: str=common.Name.AUTO_GENERATED
+            name: typing.Union[str, common.Name]=common.Name.AUTO_GENERATED
     ):
         super().__init__(name=name)
         self.variable_name = variable_name
@@ -417,7 +417,7 @@ class WaitForBlackboardVariable(CheckBlackboardVariableExists):
     def __init__(
             self,
             variable_name: str,
-            name: str=common.Name.AUTO_GENERATED
+            name: typing.Union[str, common.Name]=common.Name.AUTO_GENERATED
     ):
         super().__init__(name=name, variable_name=variable_name)
 
@@ -430,10 +430,11 @@ class WaitForBlackboardVariable(CheckBlackboardVariableExists):
         """
         self.logger.debug("%s.update()" % self.__class__.__name__)
         new_status = super().update()
+        # CheckBlackboardExists only returns SUCCESS || FAILURE
         if new_status == common.Status.SUCCESS:
             self.feedback_message = "'{}' found".format(self.key)
             return common.Status.SUCCESS
-        elif new_status == common.Status.FAILURE:
+        else:  # new_status == common.Status.FAILURE
             self.feedback_message = "waiting for key '{}'...".format(self.key)
             return common.Status.RUNNING
 
@@ -452,7 +453,7 @@ class UnsetBlackboardVariable(behaviour.Behaviour):
     """
     def __init__(self,
                  key: str,
-                 name: str=common.Name.AUTO_GENERATED,
+                 name: typing.Union[str, common.Name]=common.Name.AUTO_GENERATED,
                  ):
         super().__init__(name=name)
         self.key = key
@@ -488,7 +489,7 @@ class SetBlackboardVariable(behaviour.Behaviour):
             variable_name: str,
             variable_value: typing.Union[typing.Any, typing.Callable[[], typing.Any]],
             overwrite: bool = True,
-            name: str=common.Name.AUTO_GENERATED,
+            name: typing.Union[str, common.Name]=common.Name.AUTO_GENERATED,
     ):
         super().__init__(name=name)
         self.variable_name = variable_name
@@ -539,7 +540,7 @@ class CheckBlackboardVariableValue(behaviour.Behaviour):
     def __init__(
             self,
             check: common.ComparisonExpression,
-            name: str=common.Name.AUTO_GENERATED
+            name: typing.Union[str, common.Name]=common.Name.AUTO_GENERATED
     ):
         super().__init__(name=name)
         self.check = check
@@ -603,7 +604,7 @@ class WaitForBlackboardVariableValue(CheckBlackboardVariableValue):
     def __init__(
             self,
             check: common.ComparisonExpression,
-            name: str=common.Name.AUTO_GENERATED
+            name: typing.Union[str, common.Name]=common.Name.AUTO_GENERATED
     ):
         super().__init__(
             check=check,
@@ -647,8 +648,8 @@ class CheckBlackboardVariableValues(behaviour.Behaviour):
         self,
         checks: typing.List[common.ComparisonExpression],
         operator: typing.Callable[[bool, bool], bool],
-        name: str=common.Name.AUTO_GENERATED,
-        namespace: str=None,
+        name: typing.Union[str, common.Name]=common.Name.AUTO_GENERATED,
+        namespace: typing.Optional[str]=None,
     ):
         super().__init__(name=name)
         self.checks = checks
@@ -661,6 +662,7 @@ class CheckBlackboardVariableValues(behaviour.Behaviour):
                 key=blackboard.Blackboard.key(check.variable),
                 access=common.Access.READ
             )
+        self.blackboard_results = None
         if namespace is not None:
             self.blackboard_results = self.attach_blackboard_client(namespace=namespace)
             for counter in range(1, len(self.checks) + 1):
@@ -668,8 +670,6 @@ class CheckBlackboardVariableValues(behaviour.Behaviour):
                     key=str(counter),
                     access=common.Access.WRITE
                 )
-        else:
-            self.blackboard_results = None
 
     def update(self) -> common.Status:
         """
@@ -685,7 +685,7 @@ class CheckBlackboardVariableValues(behaviour.Behaviour):
             try:
                 value = self.blackboard.get(check.variable)
             except KeyError:
-                self.feedback_message = "variable '{}' does not yet exist on the blackboard".format(self.variable_name)
+                self.feedback_message = "variable '{}' does not yet exist on the blackboard".format(check.variable)
                 return common.Status.FAILURE
             results.append(check.operator(value, check.value))
         if self.blackboard_results is not None:

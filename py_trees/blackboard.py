@@ -158,7 +158,7 @@ class ActivityStream(object):
         Args:
             maximum_size: pop items from the stream if this size is exceeded
         """
-        self.data = []
+        self.data: typing.List[ActivityItem] = []
         self.maximum_size = maximum_size
 
     def push(self, activity_item: ActivityItem):
@@ -189,17 +189,17 @@ class Blackboard(object):
     tools on the blackboard. Users should make use of the :class:`Client`.
 
     Attributes:
-        Blackboard.clients (typing.Dict[uuid.UUID, Blackboard]): clients, gathered by uuid
+        Blackboard.clients (typing.Dict[uuid.UUID, str]): client uuid-name registry
         Blackboard.storage (typing.Dict[str, typing.Any]): key-value data store
         Blackboard.metadata (typing.Dict[str, KeyMetaData]): key associated metadata
         Blackboard.activity_stream (ActivityStream): logged activity
         Blackboard.separator (char): namespace separator character
     """
-    storage = {}  # Dict[str, Any] / key-value storage
-    metadata = {}  # Dict[ str, KeyMetaData ] / key-metadata information
-    clients = {}   # Dict[ uuid.UUID, Client] / id-client information
-    activity_stream = None
-    separator = "/"
+    storage: typing.Dict[str, typing.Any] = {}  # key-value storage
+    metadata: typing.Dict[str, KeyMetaData] = {}  # key-metadata information
+    clients: typing.Dict[uuid.UUID, str] = {}   # client id-name pairs
+    activity_stream: typing.Optional[ActivityStream] = None
+    separator: str = "/"
 
     @staticmethod
     def keys() -> typing.Set[str]:
@@ -211,7 +211,7 @@ class Blackboard(object):
         """
         # return registered keys, those on the blackboard are not
         # necessarily written to yet
-        return Blackboard.metadata.keys()
+        return set(Blackboard.metadata.keys())
 
     @staticmethod
     def get(variable_name: str) -> typing.Any:
@@ -318,12 +318,14 @@ class Blackboard(object):
             subset of keys that have been registered and match the pattern
         """
         pattern = re.compile(regex)
-        return [key for key in Blackboard.metadata.keys() if pattern.search(key) is not None]
+        return {key for key in Blackboard.metadata.keys() if pattern.search(key) is not None}
 
     @staticmethod
-    def keys_filtered_by_clients(client_ids: typing.Union[typing.List[str], typing.Set[str]]) -> typing.Set[str]:
+    def keys_filtered_by_clients(
+        client_ids: typing.Union[typing.Set[uuid.UUID], typing.List[uuid.UUID]]
+    ) -> typing.Set[str]:
         """
-        Get the set of blackboard keys filtered by client ids.
+        Get the set of blackboard keys filtered by client unique identifiers.
 
         Args:
             client_ids: set of client uuid's.
@@ -331,8 +333,8 @@ class Blackboard(object):
         Returns:
             subset of keys that have been registered by the specified clients
         """
-        # convenience for users
-        if type(client_ids) == list:
+        # forgive users if they sent a list instead of a set
+        if isinstance(client_ids, list):
             client_ids = set(client_ids)
         keys = set()
         for key in Blackboard.metadata.keys():
@@ -814,7 +816,7 @@ class Client(object):
         super().__setattr__("remappings", {})
         Blackboard.clients[
             super().__getattribute__("unique_identifier")
-        ] = self
+        ] = self.name
 
     def id(self) -> uuid.UUID:
         """
@@ -1256,7 +1258,7 @@ class Client(object):
             conflicts = set()
             try:
                 for unique_identifier in Blackboard.metadata[remapped_key].exclusive:
-                    conflicts.add(Blackboard.clients[unique_identifier].name)
+                    conflicts.add(Blackboard.clients[unique_identifier])
                     if conflicts:
                         raise AttributeError("'{}' requested write on key '{}', but this key already associated with an exclusive writer[{}]".format(
                             super().__getattribute__("name"),
@@ -1273,7 +1275,7 @@ class Client(object):
                 key_metadata = Blackboard.metadata[remapped_key]
                 conflicts = set()
                 for unique_identifier in (key_metadata.write | key_metadata.exclusive):
-                    conflicts.add(Blackboard.clients[unique_identifier].name)
+                    conflicts.add(Blackboard.clients[unique_identifier])
                 if conflicts:
                     raise AttributeError("'{}' requested exclusive write on key '{}', but this key is already associated [{}]".format(
                         super().__getattribute__("name"),

@@ -187,7 +187,7 @@ def either_or(
     conditions: typing.List[common.ComparisonExpression],
     subtrees: typing.List[behaviour.Behaviour],
     name="Either Or",
-    namespace: str=None
+    namespace: typing.Optional[str]=None
 ) -> behaviour.Behaviour:
     """
     Often you need a kind of selector that doesn't implement prioritisations, i.e.
@@ -244,26 +244,23 @@ def either_or(
     """
     if len(conditions) != len(subtrees):
         raise ValueError("Must be the same number of conditions as subtrees [{} != {}]".format(
-            len(conditions, len(subtrees)))
+            len(conditions), len(subtrees))
         )
     root = composites.Sequence(name=name)
-    if namespace is None:
-        namespace = blackboard.Blackboard.separator
-        namespace += name.lower().replace("-", "_").replace(" ", "_")
-        namespace += blackboard.Blackboard.separator
-        namespace += str(root.id).replace("-", "_").replace(" ", "_")
-        namespace += blackboard.Blackboard.separator
-        namespace += "conditions"
+    configured_namespace: str = namespace if namespace is not None else \
+        blackboard.Blackboard.separator + name.lower().replace("-", "_").replace(" ", "_") + \
+        blackboard.Blackboard.separator + str(root.id).replace("-", "_").replace(" ", "_") + \
+        blackboard.Blackboard.separator + "conditions"
     xor = behaviours.CheckBlackboardVariableValues(
         name="XOR",
         checks=conditions,
         operator=operator.xor,
-        namespace=namespace
+        namespace=configured_namespace
     )
     chooser = composites.Selector(name="Chooser")
     for counter in range(1, len(conditions) + 1):
         sequence = composites.Sequence(name="Option {}".format(str(counter)))
-        variable_name = namespace + blackboard.Blackboard.separator + str(counter)
+        variable_name = configured_namespace + blackboard.Blackboard.separator + str(counter)
         disabled = behaviours.CheckBlackboardVariableValue(
             name="Enabled?",
             check=common.ComparisonExpression(

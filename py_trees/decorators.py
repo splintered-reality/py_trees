@@ -79,6 +79,7 @@ combination of behaviours to affect the non-blocking characteristics.
 import functools
 import inspect
 import time
+import typing
 
 from typing import Callable, List, Set, Union  # noqa
 
@@ -195,7 +196,7 @@ class StatusToBlackboard(Decorator):
             *,
             child: behaviour.Behaviour,
             variable_name: str,
-            name: str=common.Name.AUTO_GENERATED,
+            name: Union[str, common.Name]=common.Name.AUTO_GENERATED,
     ):
         super().__init__(child=child, name=name)
         self.variable_name = variable_name
@@ -217,6 +218,14 @@ class StatusToBlackboard(Decorator):
             overwrite=True
         )
         return self.decorated.status
+
+
+ConditionType = Union[
+    Callable[[], bool],
+    Callable[[], common.Status],
+    Callable[[blackboard.Blackboard], bool],
+    Callable[[blackboard.Blackboard], common.Status]
+]
 
 
 class EternalGuard(Decorator):
@@ -247,7 +256,7 @@ class EternalGuard(Decorator):
 
         foo = py_trees.behaviours.Foo()
         eternal_guard = py_trees.decorators.EternalGuard(
-            name="Eternal Guard,
+            name="Eternal Guard",
             condition=check,
             child=foo
         )
@@ -261,7 +270,7 @@ class EternalGuard(Decorator):
 
         foo = py_trees.behaviours.Foo()
         eternal_guard = py_trees.decorators.EternalGuard(
-            name="Eternal Guard,
+            name="Eternal Guard",
             condition=check,
             child=foo
         )
@@ -277,7 +286,7 @@ class EternalGuard(Decorator):
 
         foo = py_trees.behaviours.Foo()
         eternal_guard = py_trees.decorators.EternalGuard(
-            name="Eternal Guard,
+            name="Eternal Guard",
             condition=check,
             blackboard_keys={"velocity"},
             child=foo
@@ -289,9 +298,12 @@ class EternalGuard(Decorator):
             self,
             *,
             child: behaviour.Behaviour,
-            condition: Union[Callable[[blackboard.Blackboard], bool], Callable[[blackboard.Blackboard], common.Status]],
-            blackboard_keys: Set[str]=[],
-            name: str=common.Name.AUTO_GENERATED,
+            # Condition is one of 4 callable types illustrated in the docstring, partials complicate
+            # it as well. When typing_extensions are available (very recent) more generally, can use
+            # Protocols to handle it. Probably also a sign that it's not a very clean api though...
+            condition: typing.Any,
+            blackboard_keys: Union[List[str], Set[str]]=[],
+            name: Union[str, common.Name]=common.Name.AUTO_GENERATED,
     ):
         super().__init__(name=name, child=child)
         self.blackboard = self.attach_blackboard_client(self.name)
@@ -350,7 +362,7 @@ class Timeout(Decorator):
     """
     def __init__(self,
                  child: behaviour.Behaviour,
-                 name: str=common.Name.AUTO_GENERATED,
+                 name: Union[str, common.Name]=common.Name.AUTO_GENERATED,
                  duration: float=5.0):
         """
         Init with the decorated child and a timeout duration.
