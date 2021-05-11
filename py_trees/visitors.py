@@ -22,7 +22,6 @@ runs its own method on the behaviour to do as it wishes - logging, introspecting
 ##############################################################################
 
 from . import blackboard
-from . import console
 from . import display
 
 ##############################################################################

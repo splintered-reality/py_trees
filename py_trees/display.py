@@ -35,6 +35,8 @@ from . import utilities
 # Symbols
 ##############################################################################
 
+Symbols = typing.Dict[typing.Any, str]
+
 unicode_symbols = {
     'space': ' ',
     'left_arrow': console.left_arrow,
@@ -506,10 +508,10 @@ def dot_tree(
 
     add_children_and_edges(root, node_root, root.name, visibility_level, collapse_decorators)
 
-    def create_blackboard_client_node(blackboard_client: blackboard.Blackboard):
+    def create_blackboard_client_node(blackboard_client_name: str):
         return pydot.Node(
-            name=blackboard_client.name,
-            label=blackboard_client.name,
+            name=blackboard_client_name,
+            label=blackboard_client_name,
             shape="ellipse",
             style="filled",
             color=blackboard_colour,
@@ -530,10 +532,10 @@ def dot_tree(
             rank="sink",
         )
 
-        for unique_identifier, client in clients.items():
+        for unique_identifier, client_name in clients.items():
             if unique_identifier not in blackboard_id_name_map:
                 subgraph.add_node(
-                    create_blackboard_client_node(client)
+                    create_blackboard_client_node(client_name)
                 )
         # add key nodes
         for key in blackboard.Blackboard.keys():
@@ -671,7 +673,7 @@ def _generate_text_blackboard(
         keys_to_highlight: typing.List[str]=[],
         display_only_key_metadata: bool=False,
         indent: int=0,
-        symbols: typing.Dict[str, str]=None) -> str:
+        symbols: typing.Optional[Symbols]=None) -> str:
     """
     Generate a text blackboard.
 
@@ -721,7 +723,7 @@ def _generate_text_blackboard(
             for client_uuid in client_uuids:
                 metastring = prefix + '{0}'.format(
                     utilities.truncate(
-                        blackboard.Blackboard.clients[client_uuid].name, 11
+                        blackboard.Blackboard.clients[client_uuid], 11
                     )
                 )
                 metastring += ' ('
@@ -759,7 +761,7 @@ def _generate_text_blackboard(
     blackboard_metadata = blackboard.Blackboard.metadata if display_only_key_metadata else None
 
     if key_filter:
-        if type(key_filter) == list:
+        if isinstance(key_filter, list):
             key_filter = set(key_filter)
         all_keys = blackboard.Blackboard.keys() & key_filter
     elif regex_filter:
@@ -791,7 +793,7 @@ def _generate_text_blackboard(
 def ascii_blackboard(
         key_filter: typing.Union[typing.Set[str], typing.List[str]]=None,
         regex_filter: str=None,
-        client_filter: typing.Union[typing.Set[uuid.UUID], typing.List[uuid.UUID]]=None,
+        client_filter: typing.Optional[typing.Union[typing.Set[uuid.UUID], typing.List[uuid.UUID]]]=None,
         keys_to_highlight: typing.List[str]=[],
         display_only_key_metadata: bool=False,
         indent: int=0) -> str:
@@ -828,7 +830,7 @@ def ascii_blackboard(
 def unicode_blackboard(
         key_filter: typing.Union[typing.Set[str], typing.List[str]]=None,
         regex_filter: str=None,
-        client_filter: typing.Union[typing.Set[uuid.UUID], typing.List[uuid.UUID]]=None,
+        client_filter: typing.Optional[typing.Union[typing.Set[uuid.UUID], typing.List[uuid.UUID]]]=None,
         keys_to_highlight: typing.List[str]=[],
         display_only_key_metadata: bool=False,
         indent: int=0) -> str:
@@ -863,10 +865,10 @@ def unicode_blackboard(
 
 
 def _generate_text_activity(
-    activity_stream: typing.List[blackboard.ActivityItem]=None,
+    activity_stream: typing.Optional[typing.List[blackboard.ActivityItem]]=None,
     show_title: bool=True,
     indent: int=0,
-    symbols: typing.Dict[str, str]=None
+    symbols: typing.Optional[Symbols]=None
 ) -> str:
     """
     Generator for the various formatted outputs (ascii, unicode, xhtml).
@@ -876,13 +878,14 @@ def _generate_text_activity(
         indent: the number of characters to indent the blackboard
         show_title: include the title in the output
     """
+    if symbols is None:
+        symbols = unicode_symbols if console.has_unicode() else ascii_symbols
     space = symbols['space']
-    if activity_stream is None:
+    if activity_stream is None and blackboard.Blackboard.activity_stream is not None:
         activity_stream = blackboard.Blackboard.activity_stream.data
+    s = ""
     if show_title:
-        s = space * indent + console.green + "Blackboard Activity Stream" + console.reset + "\n"
-    else:
-        s = ""
+        s += space * indent + console.green + "Blackboard Activity Stream" + console.reset + "\n"
     if activity_stream is not None:
         key_width = 0
         client_width = 0
@@ -946,7 +949,7 @@ def _generate_text_activity(
                 s += "unknown operation\n"
         s = s.rstrip("\n")
         s += console.reset
-        return s
+    return s
 
 
 def unicode_blackboard_activity_stream(

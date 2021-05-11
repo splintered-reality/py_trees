@@ -73,7 +73,7 @@ class Remap(py_trees.behaviour.Behaviour):
     """
     Custom writer that submits a more complicated variable to the blackboard.
     """
-    def __init__(self, name: str="Writer", remap_to: typing.Dict[str, str]=None):
+    def __init__(self, name: str, remap_to: typing.Dict[str, str]):
         super().__init__(name=name)
         self.logger.debug("%s.__init__()" % (self.__class__.__name__))
         self.blackboard = self.attach_blackboard_client()

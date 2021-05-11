@@ -11,7 +11,7 @@ install_requires = [  # ] if os.environ.get('AMENT_PREFIX_PATH') else [
     'pydot'
 ]
 
-tests_require = ['nose', 'pydot', 'pytest', 'flake8', 'yanc', 'nose-htmloutput']
+tests_require = ['flake8', 'mypy==0.812', 'nose', 'nose-htmloutput', 'pydot', 'pytest', 'yanc']
 
 extras_require = {} if os.environ.get('AMENT_PREFIX_PATH') else {
     'test': tests_require,
@@ -35,6 +35,7 @@ d = setup(
     name='py_trees',
     version='2.1.5',  # also update package.xml and version.py
     packages=find_packages(exclude=['tests*', 'docs*']),
+    package_data={"py_trees": ["py.typed"]},
     install_requires=install_requires,
     extras_require=extras_require,
     author='Daniel Stonier, Naveed Usmani, Michal Staniaszek',

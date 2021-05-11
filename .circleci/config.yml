@@ -52,10 +52,16 @@ jobs:
             python setup.py nosetests --with-html
 
       - run:
-          name: Linters
+          name: Flake8
           command: |
             . venv/bin/activate
-            ./lint/flake8 | tee lint_output
+            ./lint/flake8 | tee flake8_output
+
+      - run:
+          name: Static Analysers
+          command: |
+            . venv/bin/activate
+            mypy -p py_trees | tee mypy_output
 
       - store_artifacts:
           path: install_dependencies_output
@@ -66,7 +72,10 @@ jobs:
           destination: nosetests.html
           
       - store_artifacts:
-          path: lint_output
-          destination: lint_output
+          path: flake8_output
+          destination: flake8_output
             
+      - store_artifacts:
+          path: mypy_output
+          destination: mypy_output
           

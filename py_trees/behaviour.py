@@ -17,6 +17,7 @@ from this class.
 ##############################################################################
 
 import re
+import typing
 import uuid
 
 from . import blackboard
@@ -57,20 +58,22 @@ class Behaviour(object):
        * :ref:`The Action Behaviour Demo <py-trees-demo-action-behaviour-program>`
 
     """
-    def __init__(self,
-                 name: str=common.Name.AUTO_GENERATED):
+    def __init__(
+        self,
+        name: typing.Union[str, common.Name]=common.Name.AUTO_GENERATED
+    ):
         if not name or name == common.Name.AUTO_GENERATED:
             name = self.__class__.__name__
         if not isinstance(name, str):
             raise TypeError("a behaviour name should be a string, but you passed in {}".format(type(name)))
         self.id = uuid.uuid4()  # used to uniquely identify this node (helps with removing children from a tree)
-        self.name = name
-        self.blackboards = []
+        self.name: str = name
+        self.blackboards: typing.List[blackboard.Client] = []
         self.qualified_name = "{}/{}".format(self.__class__.__qualname__, self.name)  # convenience
         self.status = common.Status.INVALID
         self.iterator = self.tick()
-        self.parent = None  # will get set if a behaviour is added to a composite
-        self.children = []  # only set by composite behaviours
+        self.parent: typing.Optional[Behaviour] = None  # will get set if a behaviour is added to a composite
+        self.children: typing.List[Behaviour] = []  # only set by composite behaviours
         self.logger = logging.Logger(name)
         self.feedback_message = ""  # useful for debugging, or human readable updates, but not necessary to implement
         self.blackbox_level = common.BlackBoxLevel.NOT_A_BLACKBOX

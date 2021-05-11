@@ -3,7 +3,7 @@ Release Notes
 
 Forthcoming
 -----------
-* ...
+* [tests] mypy conformance,  `#327 <https://github.com/splintered-reality/py_trees/pull/327>`_
 
 2.1.5 (2021-05-09)
 ------------------

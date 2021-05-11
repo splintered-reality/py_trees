@@ -30,11 +30,11 @@ import os
 import signal
 import threading
 import time
+import typing
 
 from . import behaviour
 from . import common
 from . import composites
-from . import display
 from . import visitors
 
 CONTINUOUS_TICK_TOCK = -1
@@ -45,7 +45,7 @@ CONTINUOUS_TICK_TOCK = -1
 
 
 def setup(root: behaviour.Behaviour,
-          timeout: float=common.Duration.INFINITE,
+          timeout: typing.Union[float, common.Duration]=common.Duration.INFINITE,
           visitor: visitors.VisitorBase=None,
           **kwargs: int):
     """
@@ -100,7 +100,9 @@ def setup(root: behaviour.Behaviour,
         if visitor is not None:
             visitor.finalise()
 
-    if timeout == common.Duration.INFINITE:
+    if isinstance(timeout, common.Duration):
+        timeout = timeout.value
+    if timeout == common.Duration.INFINITE.value:  # math.inf
         visited_setup()
     else:
         original_signal_handler = signal.getsignal(_SIGNAL)
@@ -140,27 +142,27 @@ class BehaviourTree(object):
         root (:class:`~py_trees.behaviour.Behaviour`): root node of the tree
 
     Attributes:
-        count (:obj:`int`): number of times the tree has been ticked.
-        root (:class:`~py_trees.behaviour.Behaviour`): root node of the tree
-        visitors ([:mod:`~py_trees.visitors`]): entities that visit traversed parts of the tree when it ticks
-        pre_tick_handlers ([:obj:`func`]): functions that run before the entire tree is ticked
-        post_tick_handlers ([:obj:`func`]): functions that run after the entire tree is ticked
+        count: number of times the tree has been ticked.
+        root: root node of the tree
+        visitors: entities that visit traversed parts of the tree when it ticks
+        pre_tick_handlers: functions that run before the entire tree is ticked
+        post_tick_handlers: functions that run after the entire tree is ticked
 
     Raises:
         TypeError: if root variable is not an instance of :class:`~py_trees.behaviour.Behaviour`
     """
     def __init__(self, root: behaviour.Behaviour):
-        self.count = 0
+        self.count: int = 0
         if not isinstance(root, behaviour.Behaviour):
             raise TypeError("root node must be an instance of 'py_trees.behaviour.Behaviour' [{}]".format(type(root)))
-        self.root = root
-        self.visitors = []
-        self.pre_tick_handlers = []
-        self.post_tick_handlers = []
+        self.root: behaviour.Behaviour = root
+        self.visitors: typing.List[visitors.VisitorBase] = []
+        self.pre_tick_handlers: typing.List[typing.Callable[['BehaviourTree'], None]] = []
+        self.post_tick_handlers: typing.List[typing.Callable[['BehaviourTree'], None]] = []
         self.interrupt_tick_tocking = False
         self.tree_update_handler = None  # child classes can utilise this one
 
-    def add_pre_tick_handler(self, handler):
+    def add_pre_tick_handler(self, handler: typing.Callable[['BehaviourTree'], None]):
         """
         Add a function to execute before the tree is ticked. The function must have
         a single argument of type :class:`~py_trees.trees.BehaviourTree`.
@@ -175,7 +177,7 @@ class BehaviourTree(object):
         """
         self.pre_tick_handlers.append(handler)
 
-    def add_post_tick_handler(self, handler):
+    def add_post_tick_handler(self, handler: typing.Callable[['BehaviourTree'], None]):
         """
         Add a function to execute after the tree has ticked. The function must have
         a single argument of type :class:`~py_trees.trees.BehaviourTree`.
@@ -192,7 +194,7 @@ class BehaviourTree(object):
         """
         self.post_tick_handlers.append(handler)
 
-    def add_visitor(self, visitor):
+    def add_visitor(self, visitor: visitors.VisitorBase):
         """
         Trees can run multiple visitors on each behaviour as they
         tick through a tree.
@@ -296,7 +298,7 @@ class BehaviourTree(object):
         return False
 
     def setup(self,
-              timeout: float=common.Duration.INFINITE,
+              timeout: typing.Union[float, common.Duration]=common.Duration.INFINITE,
               visitor: visitors.VisitorBase=None,
               **kwargs):
         """
