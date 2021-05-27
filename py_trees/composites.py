@@ -442,10 +442,6 @@ class Sequence(Composite):
             self.initialise()
         else:  # self.memory is True and status is RUNNING
             index = self.children.index(self.current_child)
-            # clear out preceding status' - not actually necessary but helps
-            # visualise the case of memory vs no memory
-            for child in itertools.islice(self.children, None, index):
-                child.stop(common.Status.INVALID)
 
         # customised work
         self.update()
