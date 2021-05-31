@@ -3,6 +3,10 @@ Release Notes
 
 Forthcoming
 -----------
+* ...
+
+2.1.6 (2021-05-31)
+------------------
 * [tests] mypy conformance,  `#327 <https://github.com/splintered-reality/py_trees/pull/327>`_
 * [composites] show ghost states for sequence children,  `#330 <https://github.com/splintered-reality/py_trees/pull/330>`_ (reverts behaviour introduced in `#325 <https://github.com/splintered-reality/py_trees/pull/325>`_) 
 
