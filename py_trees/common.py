@@ -159,8 +159,10 @@ class ClearingPolicy(enum.IntEnum):
 # Blackboards
 ##############################################################################
 
+T_contra = typing.TypeVar('T_contra', contravariant=True)  # contravariant.
+V_contra = typing.TypeVar('V_contra', contravariant=True)  # contravariant.
 
-class ComparisonExpression(object):
+class ComparisonExpression(typing.Generic[T_contra, V_contra]):
     """
     Store the parameters for a univariate comparison operation
     (i.e. between a variable and a value).
@@ -177,7 +179,7 @@ class ComparisonExpression(object):
         self,
         variable: str,
         value: typing.Any,
-        operator: typing.Callable[[typing.Any, typing.Any], bool]
+        operator: typing.Callable[[T_contra, V_contra], bool]
     ):
         self.variable = variable
         self.value = value
