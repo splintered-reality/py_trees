@@ -358,17 +358,17 @@ def test_parallel_no_synchronisation():
         print(counter)
         if counter % 2 == 0:
             print("success_every_two.status == py_trees.common.Status.SUCCESS")
-            assert(success_every_two.status == py_trees.common.Status.SUCCESS)
+            assert success_every_two.status == py_trees.common.Status.SUCCESS
         elif counter % 3 == 0:
             print("success_every_three.status == py_trees.common.Status.SUCCESS")
-            assert(success_every_three.status == py_trees.common.Status.SUCCESS)
+            assert success_every_three.status == py_trees.common.Status.SUCCESS
         else:
             print("success_every_two.status == py_trees.common.Status.RUNNING")
-            assert(success_every_two.status == py_trees.common.Status.RUNNING)
+            assert success_every_two.status == py_trees.common.Status.RUNNING
             print("success_every_three.status == py_trees.common.Status.RUNNING")
-            assert(success_every_three.status == py_trees.common.Status.RUNNING)
+            assert success_every_three.status == py_trees.common.Status.RUNNING
         print("root.status == py_trees.common.Status.RUNNING")
-        assert(root.status == py_trees.common.Status.RUNNING, "{}, {}".format(root.status, counter))
+        assert root.status == py_trees.common.Status.RUNNING, "{}, {}".format(root.status, counter)
 
     snapshot_visitor.initialise()
     py_trees.tests.tick_tree(
@@ -376,11 +376,11 @@ def test_parallel_no_synchronisation():
         print_snapshot=True
     )
     print("success_every_two.status == py_trees.common.Status.SUCCESS")
-    assert(success_every_two.status == py_trees.common.Status.SUCCESS)
+    assert success_every_two.status == py_trees.common.Status.SUCCESS
     print("success_every_three.status == py_trees.common.Status.SUCCESS")
-    assert(success_every_three.status == py_trees.common.Status.SUCCESS)
+    assert success_every_three.status == py_trees.common.Status.SUCCESS
     print("root.status == py_trees.common.Status.SUCCESS")
-    assert(root.status == py_trees.common.Status.SUCCESS)
+    assert root.status == py_trees.common.Status.SUCCESS
 
 
 def test_add_tick_remove_with_current_child():
@@ -396,7 +396,7 @@ def test_add_tick_remove_with_current_child():
     root.remove_child(child)
     print(py_trees.display.unicode_tree(root, show_status=True))
     assert_details("Current Child", None, root.current_child)
-    assert(root.current_child is None)
+    assert root.current_child is None
 
     root.add_child(child)
     root.tick_once()
@@ -404,7 +404,7 @@ def test_add_tick_remove_with_current_child():
     root.remove_all_children()
     print(py_trees.display.unicode_tree(root, show_status=True))
     assert_details("Current Child", None, root.current_child)
-    assert(root.current_child is None)
+    assert root.current_child is None
 
     replacement = py_trees.behaviours.Success(name="Replacement")
     root.add_child(child)
@@ -413,7 +413,7 @@ def test_add_tick_remove_with_current_child():
     root.replace_child(child=child, replacement=replacement)
     print(py_trees.display.unicode_tree(root, show_status=True))
     assert_details("Current Child", None, root.current_child)
-    assert(root.current_child is None)
+    assert root.current_child is None
 
     root.remove_all_children()
     root.add_child(child)
@@ -422,7 +422,7 @@ def test_add_tick_remove_with_current_child():
     root.remove_child_by_id(child_id=child.id)
     print(py_trees.display.unicode_tree(root, show_status=True))
     assert_details("Current Child", None, root.current_child)
-    assert(root.current_child is None)
+    assert root.current_child is None
 
 
 def test_tick_add_with_current_child():
@@ -435,7 +435,7 @@ def test_tick_add_with_current_child():
     child = py_trees.behaviours.Failure(name="Failure")
     root.add_child(child)
     assert_details("Current Child", None, root.current_child)
-    assert(root.current_child is None)
+    assert root.current_child is None
 
 
 def test_add_tick_add_with_current_child():
@@ -450,11 +450,11 @@ def test_add_tick_add_with_current_child():
     root.tick_once()
     print(py_trees.display.unicode_tree(root, show_status=True))
     assert_details("Current Child", run1.name, root.current_child.name)
-    assert(root.current_child.name == run1.name)
+    assert root.current_child.name == run1.name
     root.add_child(run2)
     print(py_trees.display.unicode_tree(root, show_status=True))
     assert_details("Current Child", run1.name, root.current_child.name)
-    assert(root.current_child.name == run1.name)
+    assert root.current_child.name == run1.name
 
 
 def test_add_tick_insert_with_current_child():
@@ -469,8 +469,8 @@ def test_add_tick_insert_with_current_child():
     root.tick_once()
     print(py_trees.display.unicode_tree(root, show_status=True))
     assert_details("Current Child", run1.name, root.current_child.name)
-    assert(root.current_child.name == run1.name)
+    assert root.current_child.name == run1.name
     root.insert_child(run2, index=0)
     print(py_trees.display.unicode_tree(root, show_status=True))
     assert_details("Current Child", run1.name, root.current_child.name)
-    assert(root.current_child.name == run1.name)
+    assert root.current_child.name == run1.name

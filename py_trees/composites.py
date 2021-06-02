@@ -69,6 +69,7 @@ from . import common
 
 
 class Composite(behaviour.Behaviour):
+
     """
     The parent class to all composite behaviours, i.e. those that
     have children.

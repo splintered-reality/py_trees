@@ -510,7 +510,7 @@ def test_failed_tree():
     tree.tick()
     print("\n--------- Assertions ---------\n")
     print("root.tip().name == Failure 3")
-    assert(root.tip().name == "Failure 3")
+    assert root.tip().name == "Failure 3"
 
     # TODO failed sequence tree
 
@@ -522,7 +522,7 @@ def test_tree_errors():
     with nose.tools.assert_raises(TypeError) as context:
         unused_tree = py_trees.trees.BehaviourTree(root)
         print("TypeError has message with substring 'must be an instance of'")
-        assert("must be an instance of" in str(context.exception))
+        assert "must be an instance of" in str(context.exception)
 
     root = py_trees.behaviours.Success()
     print("__init__ raises a 'RuntimeError' because we try to prune the root node")
@@ -530,7 +530,7 @@ def test_tree_errors():
         tree = py_trees.trees.BehaviourTree(root)
         tree.prune_subtree(root.id)
         print("RuntimeError has message with substring 'prune'")
-        assert("prune" in str(context.exception))
+        assert "prune" in str(context.exception)
 
     root = py_trees.behaviours.Success()
     new_subtree = py_trees.behaviours.Success()
@@ -539,7 +539,7 @@ def test_tree_errors():
         tree = py_trees.trees.BehaviourTree(root)
         tree.replace_subtree(root.id, new_subtree)
         print("RuntimeError has message with substring 'replace'")
-        assert("replace" in str(context.exception))
+        assert "replace" in str(context.exception)
 
     root = py_trees.behaviours.Success()
     new_subtree = py_trees.behaviours.Success()
@@ -548,7 +548,7 @@ def test_tree_errors():
         tree = py_trees.trees.BehaviourTree(root)
         tree.insert_subtree(child=new_subtree, unique_id=root.id, index=0)
         print("TypeError has message with substring 'Composite'")
-        assert("Composite" in str(context.exception))
+        assert "Composite" in str(context.exception)
 
 
 def test_tree_setup():
@@ -567,7 +567,7 @@ def test_tree_setup():
     print("RuntimeError has message with substring 'timed out'")
     assert("timed out" in str(context.exception))
     active_threads = threading.active_count()
-    assert(active_threads == 1, "Only one thread should be active but there are {} active".format(active_threads))
+    assert active_threads == 1, "Only one thread should be active but there are {} active".format(active_threads)
 
     print("\n--------- Assertions ---------\n")
     print(console.cyan + "Short timeout: " + console.yellow + "No Visitor" + console.reset)
@@ -576,7 +576,7 @@ def test_tree_setup():
     except RuntimeError:
         assert False, "should not have timed out"
     active_threads = threading.active_count()
-    assert(active_threads == 1, "Only one thread should be active but there are {} active".format(active_threads))
+    assert active_threads == 1, "Only one thread should be active but there are {} active".format(active_threads)
 
     print("\n--------- Assertions ---------\n")
     print(console.cyan + "Long Timeout: " + console.yellow + "With Visitor" + console.reset)
@@ -586,7 +586,7 @@ def test_tree_setup():
     print("RuntimeError has message with substring 'timed out'")
     assert("timed out" in str(context.exception))
     active_threads = threading.active_count()
-    assert(active_threads == 1, "Only one thread should be active but there are {} active".format(active_threads))
+    assert active_threads == 1, "Only one thread should be active but there are {} active".format(active_threads)
 
     print("\n--------- Assertions ---------\n")
     print(console.cyan + "Long timeout: " + console.yellow + "With Visitor" + console.reset)
@@ -596,7 +596,7 @@ def test_tree_setup():
     except RuntimeError:
         assert False, "should not have timed out"
     active_threads = threading.active_count()
-    assert(active_threads == 1, "Only one thread should be active but there are {} active".format(active_threads))
+    assert active_threads == 1, "Only one thread should be active but there are {} active".format(active_threads)
 
     print("\n--------- Assertions ---------\n")
     print(console.cyan + "No timeout: " + console.yellow + "No Visitor" + console.reset)
@@ -606,7 +606,7 @@ def test_tree_setup():
     except RuntimeError:
         assert False, "should not have timed out"
     active_threads = threading.active_count()
-    assert(active_threads == 1, "Only one thread should be active but there are {} active".format(active_threads))
+    assert active_threads == 1, "Only one thread should be active but there are {} active".format(active_threads)
 
 
 def test_pre_post_tick_activity_sequence():
@@ -647,14 +647,14 @@ def test_pre_post_tick_activity_sequence():
         "one_shot_post_tick_handler"
     ]
     print("")
-    assert(len(breadcrumbs) == len(expected_breadcrumbs))
+    assert len(breadcrumbs) == len(expected_breadcrumbs)
     for expected, actual in zip(expected_breadcrumbs, breadcrumbs):
         print(
             console.green + "Breadcrumb..................." +
             console.cyan + "{} ".format(expected) +
             console.yellow + "[{}]".format(actual)
         )
-        assert(expected == actual)
+        assert expected == actual
 
 
 def test_unicode_tree_debug():
