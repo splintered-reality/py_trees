@@ -8,7 +8,7 @@ jobs:
     docker:
       # specify the version you desire here
       - image: circleci/python:3.6.1
-      
+
       # Specify service dependencies here if necessary
       # CircleCI maintains a library of pre-built images
       # documented at https://circleci.com/docs/2.0/circleci-images/
@@ -39,7 +39,7 @@ jobs:
           paths:
             - ./venv
           key: setup-py-{{ checksum "setup.py" }}
-        
+
       # run tests!
       # this example uses Django's built-in test-runner
       # other common Python testing frameworks include pytest and nose
@@ -61,21 +61,20 @@ jobs:
           name: Static Analysers
           command: |
             . venv/bin/activate
-            mypy -p py_trees | tee mypy_output
+            mypy | tee mypy_output
 
       - store_artifacts:
           path: install_dependencies_output
           destination: install_dependencies_output
-            
+
       - store_artifacts:
           path: nosetests.html
           destination: nosetests.html
-          
+
       - store_artifacts:
           path: flake8_output
           destination: flake8_output
-            
+
       - store_artifacts:
           path: mypy_output
           destination: mypy_output
-          
