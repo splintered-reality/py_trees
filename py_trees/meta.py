@@ -16,6 +16,7 @@ themselves.
 # Imports
 ##############################################################################
 
+from typing import Type
 from . import behaviour
 from . import common
 
@@ -24,7 +25,7 @@ from . import common
 ##############################################################################
 
 
-def create_behaviour_from_function(func):
+def create_behaviour_from_function(func) -> Type[behaviour.Behaviour]:
     """
     Create a behaviour from the specified function, dropping it in for
     the Behaviour :meth:`~py_trees.behaviour.Behaviour.update` method.
