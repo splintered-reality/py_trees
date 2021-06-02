@@ -346,7 +346,7 @@ class BlackboardToStatus(behaviour.Behaviour):
         self.logger.debug("%s.update()" % self.__class__.__name__)
         # raises a KeyError if the variable doesn't exist
         status = self.blackboard.get(self.variable_name)
-        if type(status) != common.Status:
+        if not isinstance(status, common.Status):
             raise TypeError(f"{self.variable_name} is not of type py_trees.common.Status")
         self.feedback_message = f"{self.variable_name}: {status}"
         return status
