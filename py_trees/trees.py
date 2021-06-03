@@ -117,7 +117,9 @@ def setup(root: behaviour.Behaviour,
             timer.start()
             visited_setup()
         finally:
+            print("Stopping setup timer")
             timer.cancel()  # this only works if the timer is still waiting
+            timer.join()
             signal.signal(_SIGNAL, original_signal_handler)
 
 ##############################################################################

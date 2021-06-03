@@ -570,7 +570,7 @@ def test_tree_setup():
     assert active_threads == 1, "Only one thread should be active but there are {} active".format(active_threads)
 
     print("\n--------- Assertions ---------\n")
-    print(console.cyan + "Short timeout: " + console.yellow + "No Visitor" + console.reset)
+    print(console.cyan + "Long timeout: " + console.yellow + "No Visitor" + console.reset)
     try:
         tree.setup(timeout=4 * duration)
     except RuntimeError:
@@ -579,7 +579,7 @@ def test_tree_setup():
     assert active_threads == 1, "Only one thread should be active but there are {} active".format(active_threads)
 
     print("\n--------- Assertions ---------\n")
-    print(console.cyan + "Long Timeout: " + console.yellow + "With Visitor" + console.reset)
+    print(console.cyan + "Short Timeout: " + console.yellow + "With Visitor" + console.reset)
     visitor = SetupVisitor()
     with nose.tools.assert_raises(RuntimeError) as context:
         tree.setup(timeout=2 * duration, visitor=visitor)
