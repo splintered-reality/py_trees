@@ -517,10 +517,10 @@ def test_failed_tree():
 
 def test_tree_errors():
     console.banner("Tree Errors")
-    root = 5.0
+    float_root = 5.0
     print("__init__ raises a 'TypeError' due to invalid root variable type being passed")
     with nose.tools.assert_raises(TypeError) as context:
-        unused_tree = py_trees.trees.BehaviourTree(root)
+        unused_tree = py_trees.trees.BehaviourTree(float_root)  # type: ignore
         print("TypeError has message with substring 'must be an instance of'")
         assert "must be an instance of" in str(context.exception)
 

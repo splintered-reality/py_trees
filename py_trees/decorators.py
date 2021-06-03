@@ -81,7 +81,7 @@ import inspect
 import time
 import typing
 
-from typing import Callable, List, Set, Union  # noqa
+from typing import Callable, List, Optional, Set, Union  # noqa
 
 from . import behaviour
 from . import blackboard
@@ -374,7 +374,7 @@ class Timeout(Decorator):
         """
         super(Timeout, self).__init__(name=name, child=child)
         self.duration = duration
-        self.finish_time = None
+        self.finish_time: Optional[float] = None
 
     def initialise(self):
         """
@@ -389,6 +389,7 @@ class Timeout(Decorator):
         if the timeout is exceeded.
         """
         current_time = time.monotonic()
+        assert self.finish_time is not None
         if self.decorated.status == common.Status.RUNNING and current_time > self.finish_time:
             self.feedback_message = "timed out"
             self.logger.debug("{}.update() {}".format(self.__class__.__name__, self.feedback_message))

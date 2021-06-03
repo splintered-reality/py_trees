@@ -1124,11 +1124,11 @@ class Client(object):
         s += console.white + indent + "Client Data" + console.reset + "\n"
         keys = ["name", "namespace", "unique_identifier", "read", "write", "exclusive"]
         s += self._stringify_key_value_pairs(keys, self.__dict__, 2 * indent)
-        keys = {k for k, v in self.remappings.items() if k != v}
-        if keys:
+        key_set = {k for k, v in self.remappings.items() if k != v}
+        if key_set:
             s += console.white + indent + "Remappings" + console.reset + "\n"
             s += self._stringify_key_value_pairs(
-                keys=keys,
+                keys=key_set,
                 key_value_dict=self.remappings,
                 indent=2 * indent,
                 separator=console.right_arrow

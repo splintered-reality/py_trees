@@ -43,6 +43,7 @@ CONTINUOUS_TICK_TOCK = -1
 # Methods
 ##############################################################################
 
+current_behaviour_name: str = ""
 
 def setup(root: behaviour.Behaviour,
           timeout: typing.Union[float, common.Duration]=common.Duration.INFINITE,
@@ -78,7 +79,6 @@ def setup(root: behaviour.Behaviour,
         # it will work in most situations. If a windows user is running into
         # problems, work with them to resolve it.
         _SIGNAL = signal.SIGINT
-    current_behaviour_name = None
 
     def on_timer_timed_out():
         os.kill(os.getpid(), _SIGNAL)

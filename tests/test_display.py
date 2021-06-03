@@ -9,6 +9,7 @@
 ##############################################################################
 
 import functools
+from typing import Any, Dict, Tuple
 import py_trees
 import py_trees.console as console
 import py_trees.display as display
@@ -21,6 +22,8 @@ import xml.etree.ElementTree
 
 def test_symbols():
     console.banner("Symbols")
+
+    symbol_groups: Tuple[Dict[object, Any], ...]
     # This test has no assertions, except from the human eye. When it fails,
     # ticks and crosses fail and must be inspected by the human eye
     if console.has_unicode():

@@ -8,6 +8,7 @@
 # Imports
 ##############################################################################
 
+from typing import Callable, cast
 import nose
 import operator
 
@@ -569,7 +570,7 @@ def test_check_variable_values():
         blackboard.b = data['b']
         blackboard.c = data['c']
         blackboard.d = data['d']
-        b.operator = data['operator']
+        b.operator = cast(Callable[[bool, bool], bool], data['operator'])
         b.tick_once()
         assert_details(
             text="[a:{}|b:{}|c:{}|d:{}]{} - {}".format(blackboard.a, blackboard.b, blackboard.c, blackboard.d, b.feedback_message, data['text']),

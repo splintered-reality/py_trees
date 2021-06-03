@@ -30,6 +30,7 @@ from . import composites
 from . import console
 from . import decorators
 from . import utilities
+import py_trees
 
 ##############################################################################
 # Symbols
@@ -427,26 +428,19 @@ def dot_tree(
         # for their derived composites.
         prefix = ""
         policy = ""
+
+        # This could be made cleaner by refactoring this code, or using typeguard (https://pypi.org/project/typeguard/)
         if isinstance(behaviour, composites.Composite):
-            try:
-                if behaviour.memory:
-                    prefix += console.circled_m
-            except AttributeError:
-                pass
-            try:
-                if behaviour.policy.synchronise:
-                    prefix += console.lightning_bolt
-            except AttributeError:
-                pass
-            try:
-                policy = behaviour.policy.__class__.__name__
-            except AttributeError:
-                pass
-            try:
-                indices = [str(behaviour.children.index(child)) for child in behaviour.policy.children]
-                policy += "({})".format(', '.join(sorted(indices)))
-            except AttributeError:
-                pass
+            if hasattr(behaviour, 'memory'):
+                prefix += console.circled_m
+            p = getattr(behaviour, 'policy', None)
+            if p is not None and isinstance(p, py_trees.common.ParallelPolicy.Base):
+                prefix += console.lightning_bolt
+                policy = p.__class__.__name__
+                if isinstance(p, common.ParallelPolicy.SuccessOnSelected):
+                    indices = [str(behaviour.children.index(child)) for child in p.children]
+                    policy += "({})".format(', '.join(sorted(indices)))
+
         node_label = f"{prefix} {node_name}" if prefix else node_name
         if policy:
             node_label += f"\n{str(policy)}"
@@ -697,6 +691,7 @@ def _generate_text_blackboard(
         symbols = unicode_symbols if console.has_unicode() else ascii_symbols
 
     def style(s, font_weight=False):
+        assert symbols is not None
         if font_weight:
             return symbols['bold'] + s + symbols['bold_reset']
         else:
@@ -738,6 +733,7 @@ def _generate_text_blackboard(
             s += console.yellow + "{}\n".format(', '.join(metastrings))
             return style(s, apply_highlight) + console.reset
 
+        assert symbols is not None
         text_indent = symbols['space'] * (4 + indent)
         key_width = 0
         for key in storage.keys():

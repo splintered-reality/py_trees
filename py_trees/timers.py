@@ -77,6 +77,7 @@ class Timer(behaviour.Behaviour):
         """
         self.logger.debug("%s.update()" % self.__class__.__name__)
         current_time = time.time()
+        assert self.finish_time is not None
         if current_time > self.finish_time:
             self.feedback_message = "timer ran out [{0}]".format(self.duration)
             return common.Status.SUCCESS

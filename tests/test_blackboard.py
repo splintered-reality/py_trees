@@ -8,12 +8,15 @@
 # Imports
 ##############################################################################
 
+from contextlib import AbstractContextManager
+
 import nose
 
 import py_trees
 import py_trees.console as console
 
 from py_trees.blackboard import Blackboard
+
 
 ##############################################################################
 # Helpers
@@ -28,7 +31,7 @@ class Motley(object):
         self.nested = "nested"
 
 
-class create_blackboards(object):
+class create_blackboards(AbstractContextManager):
 
     def __enter__(self):
         self.foo = create_blackboard_foo()
@@ -41,7 +44,7 @@ class create_blackboards(object):
         self.bar.unregister(clear=True)
 
 
-class create_namespaced_blackboards(object):
+class create_namespaced_blackboards(AbstractContextManager):
 
     def __enter__(self):
         self.namespace = "/woohoo"
@@ -106,7 +109,7 @@ def test_bad_name_exception():
     console.banner("Bad Name Exception")
     with nose.tools.assert_raises_regexp(TypeError, "str"):
         print("Expecting a TypeError with substring 'str'")
-        unused_blackboard = py_trees.blackboard.Client(name=5)
+        unused_blackboard = py_trees.blackboard.Client(name=5)  # type: ignore
 
 
 def test_unregister_keys_with_clear():
@@ -337,6 +340,7 @@ def test_activity_stream():
         py_trees.blackboard.ActivityType.NO_OVERWRITE,
         py_trees.blackboard.ActivityType.UNSET,
     ]
+    assert Blackboard.activity_stream is not None
     for item, expected in zip(Blackboard.activity_stream.data, expected_types):
         assert(item.activity_type == expected.value)
     blackboard.unregister(clear=True)

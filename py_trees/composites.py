@@ -69,6 +69,7 @@ from . import common
 
 
 class Composite(behaviour.Behaviour):
+    current_child: typing.Optional[behaviour.Behaviour]
 
     """
     The parent class to all composite behaviours, i.e. those that
@@ -338,6 +339,7 @@ class Selector(Composite):
 
         # starting point
         if self.memory:
+            assert self.current_child is not None
             index = self.children.index(self.current_child)
             # clear out preceding status' - not actually necessary but helps
             # visualise the case of memory vs no memory
@@ -447,6 +449,7 @@ class Sequence(Composite):
             # user specific initialisation
             self.initialise()
         else:  # self.memory is True and status is RUNNING
+            assert self.current_child is not None
             index = self.children.index(self.current_child)
 
         # customised work
@@ -604,7 +607,7 @@ class Parallel(Composite):
                 if successful:
                     new_status = common.Status.SUCCESS
                     self.current_child = successful[-1]
-            elif type(self.policy) is common.ParallelPolicy.SuccessOnSelected:
+            elif isinstance(self.policy, common.ParallelPolicy.SuccessOnSelected):
                 if all([c.status == common.Status.SUCCESS for c in self.policy.children]):
                     new_status = common.Status.SUCCESS
                     self.current_child = self.policy.children[-1]
@@ -645,7 +648,7 @@ class Parallel(Composite):
         Raises:
             RuntimeError: if policy configuration was invalid
         """
-        if type(self.policy) is common.ParallelPolicy.SuccessOnSelected:
+        if isinstance(self.policy, common.ParallelPolicy.SuccessOnSelected):
             if not self.policy.children:
                 error_message = ("policy SuccessOnSelected requires a non-empty "
                                  "selection of children [{}]".format(self.name))

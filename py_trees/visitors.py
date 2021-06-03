@@ -169,6 +169,7 @@ class DisplaySnapshotVisitor(SnapshotVisitor):
         self.root = None
         super().initialise()
         if self.display_activity_stream:
+            assert blackboard.Blackboard.activity_stream is not None
             blackboard.Blackboard.activity_stream.clear()
 
     def run(self, behaviour):

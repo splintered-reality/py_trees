@@ -144,17 +144,6 @@ class OneShotPolicy(enum.Enum):
     """Permits the oneshot to keep trying until it's first success."""
 
 
-class ClearingPolicy(enum.IntEnum):
-    """
-    Policy rules for behaviours to dictate when data should be cleared/reset.
-    """
-    ON_INITIALISE = 1
-    """Clear when entering the :py:meth:`~py_trees.behaviour.Behaviour.initialise` method."""
-    ON_SUCCESS = 2
-    """Clear when returning :py:data:`~py_trees.common.Status.SUCCESS`."""
-    NEVER = 3
-    """Never clear the data"""
-
 ##############################################################################
 # Blackboards
 ##############################################################################

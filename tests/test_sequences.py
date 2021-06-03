@@ -8,6 +8,7 @@
 # Imports
 ##############################################################################
 
+from typing import Any
 import py_trees
 import py_trees.console as console
 
@@ -27,12 +28,13 @@ def assert_banner():
     print(console.green + "----- Asserts -----" + console.reset)
 
 
-def assert_details(text, expected, result):
+def assert_details(text: str, expected: Any, result: Any):
     print(console.green + text +
           "." * (70 - len(text)) +
           console.cyan + "{}".format(expected) +
           console.yellow + " [{}]".format(result) +
           console.reset)
+
 
 ##############################################################################
 # Tests
@@ -130,6 +132,7 @@ def test_static_sequence_successes():
 
     root.tick_once()
 
+    assert root.current_child is not None
     assert_details("Current Child", success4.name, root.current_child.name)
     assert root.tip().name == success4.name, 'should execute all 4 nodes of this Sequence'
 
@@ -153,6 +156,7 @@ def test_static_sequence_with_failure():
 
     root.tick_once()
 
+    assert root.current_child is not None
     assert_details("Current Child", failure.name, root.current_child.name)
     assert root.tip().name == failure.name, 'should execute first 2 nodes of this Sequence and fail'
 
@@ -179,10 +183,12 @@ def test_add_tick_add_with_current_child():
     root.add_child(run1)
     root.tick_once()
     print(py_trees.display.unicode_tree(root, show_status=True))
+    assert root.current_child is not None
     assert_details("Current Child", run1.name, root.current_child.name)
     assert(root.current_child.name == run1.name)
     root.add_child(run2)
     print(py_trees.display.unicode_tree(root, show_status=True))
+    assert root.current_child is not None
     assert_details("Current Child", run1.name, root.current_child.name)
     assert(root.current_child.name == run1.name)
 
@@ -196,10 +202,12 @@ def test_add_tick_insert_with_current_child():
     root.add_child(run1)
     root.tick_once()
     print(py_trees.display.unicode_tree(root, show_status=True))
+    assert root.current_child is not None
     assert_details("Current Child", run1.name, root.current_child.name)
     assert(root.current_child.name == run1.name)
     root.insert_child(run2, index=0)
     print(py_trees.display.unicode_tree(root, show_status=True))
+    assert root.current_child is not None
     assert_details("Current Child", run1.name, root.current_child.name)
     assert(root.current_child.name == run1.name)
 
@@ -214,6 +222,7 @@ def test_add_tick_remove_with_current_child():
     print(py_trees.display.unicode_tree(root, show_status=True))
     root.remove_child(child)
     print(py_trees.display.unicode_tree(root, show_status=True))
+    assert root.current_child is not None
     assert_details("Current Child", None, root.current_child)
     assert(root.current_child is None)
 
@@ -222,6 +231,7 @@ def test_add_tick_remove_with_current_child():
     print(py_trees.display.unicode_tree(root, show_status=True))
     root.remove_all_children()
     print(py_trees.display.unicode_tree(root, show_status=True))
+    assert root.current_child is not None
     assert_details("Current Child", None, root.current_child)
     assert(root.current_child is None)
 
@@ -231,6 +241,7 @@ def test_add_tick_remove_with_current_child():
     print(py_trees.display.unicode_tree(root, show_status=True))
     root.replace_child(child=child, replacement=replacement)
     print(py_trees.display.unicode_tree(root, show_status=True))
+    assert root.current_child is not None
     assert_details("Current Child", None, root.current_child)
     assert(root.current_child is None)
 
@@ -240,5 +251,6 @@ def test_add_tick_remove_with_current_child():
     print(py_trees.display.unicode_tree(root, show_status=True))
     root.remove_child_by_id(child_id=child.id)
     print(py_trees.display.unicode_tree(root, show_status=True))
+    assert root.current_child is not None
     assert_details("Current Child", None, root.current_child)
     assert(root.current_child is None)

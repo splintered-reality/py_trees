@@ -9,6 +9,7 @@
 ##############################################################################
 
 import time
+from typing import Any, Dict
 
 import py_trees
 import py_trees.console as console
@@ -115,7 +116,7 @@ def benchmark_read():
                     py_trees.blackboard.Blackboard.set("/colander_{}".format(i), i)
                     py_trees.blackboard.Blackboard.set("/parameters/colander_{}".format(i), i)
             relative_names = {}
-            absolute_names = {"Root": {}, "Namespaced": {}}
+            absolute_names: Dict[str, Dict[int, str]] = {"Root": {}, "Namespaced": {}}
             for i in range(0, 1000):
                 relative_names[i] = "colander_{}".format(i)
                 absolute_names["Root"][i] = "/colander_{}".format(i)
@@ -164,7 +165,7 @@ def benchmark_write():
                             access=py_trees.common.Access.WRITE,
                         )
             relative_names = {}
-            absolute_names = {"Root": {}, "Namespaced": {}}
+            absolute_names: Dict[str, Dict[int, str]] = {"Root": {}, "Namespaced": {}}
             for i in range(0, 1000):
                 relative_names[i] = str(i)
                 absolute_names["Root"][i] = "/{}".format(str(i))

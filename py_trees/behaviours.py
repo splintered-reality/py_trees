@@ -564,7 +564,7 @@ class CheckBlackboardVariableValue(behaviour.Behaviour):
                 try:
                     value = operator.attrgetter(self.key_attributes)(value)
                 except AttributeError:
-                    self.feedback_message = 'blackboard key-value pair exists, but the value does not have the requested nested attributes [{}]'.format(self.variable_name)
+                    self.feedback_message = 'blackboard key-value pair exists, but the value does not have the requested nested attributes [{}]'.format(self.check.variable)
                     return common.Status.FAILURE
         except KeyError:
             self.feedback_message = "key '{}' does not yet exist on the blackboard".format(self.check.variable)

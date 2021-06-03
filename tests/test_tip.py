@@ -144,6 +144,8 @@ def test_decorator():
     console.banner("Decorators")
     print("\n--------- Assertions ---------\n")
 
+    root: py_trees.behaviour.Behaviour
+
     # Decorators are the exception, when they reach SUCCESS||FAILURE and
     # the child is RUNNING they invalidate their children, so look to the
     # decorator, not the child!

@@ -8,6 +8,7 @@
 # Imports
 ##############################################################################
 import itertools
+from typing import Any
 import nose.tools
 import py_trees
 import py_trees.console as console
@@ -28,7 +29,7 @@ def assert_banner():
     print(console.green + "----- Asserts -----" + console.reset)
 
 
-def assert_details(text, expected, result):
+def assert_details(text: str, expected: Any, result: Any):
     print(console.green + text +
           "." * (70 - len(text)) +
           console.cyan + "{}".format(expected) +
@@ -130,10 +131,12 @@ def test_add_tick_add_with_current_child():
     root.add_child(run1)
     root.tick_once()
     print(py_trees.display.unicode_tree(root, show_status=True))
+    assert root.current_child is not None
     assert_details("Current Child", run1.name, root.current_child.name)
     assert(root.current_child.name == run1.name)
     root.add_child(run2)
     print(py_trees.display.unicode_tree(root, show_status=True))
+    assert root.current_child is not None
     assert_details("Current Child", run1.name, root.current_child.name)
     assert(root.current_child.name == run1.name)
 
@@ -147,10 +150,12 @@ def test_add_tick_insert_with_current_child():
     root.add_child(run1)
     root.tick_once()
     print(py_trees.display.unicode_tree(root, show_status=True))
+    assert root.current_child is not None
     assert_details("Current Child", run1.name, root.current_child.name)
     assert(root.current_child.name == run1.name)
     root.insert_child(run2, index=0)
     print(py_trees.display.unicode_tree(root, show_status=True))
+    assert root.current_child is not None
     assert_details("Current Child", run1.name, root.current_child.name)
     assert(root.current_child.name == run1.name)
 
