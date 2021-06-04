@@ -222,18 +222,16 @@ def test_add_tick_remove_with_current_child():
     print(py_trees.display.unicode_tree(root, show_status=True))
     root.remove_child(child)
     print(py_trees.display.unicode_tree(root, show_status=True))
-    assert root.current_child is not None
     assert_details("Current Child", None, root.current_child)
-    assert(root.current_child is None)
+    assert root.current_child is None
 
     root.add_child(child)
     root.tick_once()
     print(py_trees.display.unicode_tree(root, show_status=True))
     root.remove_all_children()
     print(py_trees.display.unicode_tree(root, show_status=True))
-    assert root.current_child is not None
     assert_details("Current Child", None, root.current_child)
-    assert(root.current_child is None)
+    assert root.current_child is None
 
     replacement = py_trees.behaviours.Success(name="Replacement")
     root.add_child(child)
@@ -241,9 +239,8 @@ def test_add_tick_remove_with_current_child():
     print(py_trees.display.unicode_tree(root, show_status=True))
     root.replace_child(child=child, replacement=replacement)
     print(py_trees.display.unicode_tree(root, show_status=True))
-    assert root.current_child is not None
     assert_details("Current Child", None, root.current_child)
-    assert(root.current_child is None)
+    assert root.current_child is None
 
     root.remove_all_children()
     root.add_child(child)
@@ -251,6 +248,5 @@ def test_add_tick_remove_with_current_child():
     print(py_trees.display.unicode_tree(root, show_status=True))
     root.remove_child_by_id(child_id=child.id)
     print(py_trees.display.unicode_tree(root, show_status=True))
-    assert root.current_child is not None
     assert_details("Current Child", None, root.current_child)
-    assert(root.current_child is None)
+    assert root.current_child is None
