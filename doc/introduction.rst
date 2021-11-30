@@ -114,7 +114,7 @@ Alternatives
 .. _BehaviorTreeCPP: https://github.com/BehaviorTree/BehaviorTree.CPP
 .. _Owyl: https://github.com/eykd/owyl
 .. _Youtube - Second Generation of Behaviour Trees: https://www.youtube.com/watch?v=n4aREFb3SsU
-.. _Introduction to Behavior Trees: https://roboticseabass.wordpress.com/2021/05/08/introduction-to-behavior-trees/
+.. _Introduction to Behavior Trees: https://roboticseabass.com/2021/05/08/introduction-to-behavior-trees/
 .. _Behaviour Trees in Robotics and AI: https://btirai.github.io/index
 .. _A Curious Course on Coroutines and Concurrency: http://www.dabeaz.com/coroutines/Coroutines.pdf
 .. _Behaviour Designer: https://forum.unity3d.com/threads/behavior-designer-behavior-trees-for-everyone.227497/
