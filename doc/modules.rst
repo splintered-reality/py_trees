@@ -63,6 +63,10 @@ py_trees.common
     :members: SUCCESS, FAILURE, RUNNING, INVALID
     :show-inheritance:
 
+.. autoclass:: py_trees.common.Access
+   :members: READ, WRITE, EXCLUSIVE_WRITE
+   :show-inheritance:
+
 .. autoclass:: py_trees.common.VisibilityLevel
     :members: ALL, DETAIL, COMPONENT, BIG_PICTURE
     :show-inheritance:
