@@ -40,6 +40,10 @@ py_trees.common
 .. automodule:: py_trees.common
     :synopsis: common definitions, methods and enumerations
 
+.. autoclass:: py_trees.common.Access
+   :members: READ, WRITE, EXCLUSIVE_WRITE
+   :show-inheritance:
+
 .. autoclass:: py_trees.common.BlackBoxLevel
     :members: BIG_PICTURE, COMPONENT, DETAIL, NOT_A_BLACKBOX
     :show-inheritance:
