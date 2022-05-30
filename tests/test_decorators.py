@@ -8,10 +8,12 @@
 # Imports
 ##############################################################################
 
+import pytest
+
 import py_trees
+import py_trees.tests
 import py_trees.console as console
 
-from nose.tools import assert_raises
 import time
 
 ##############################################################################
@@ -19,7 +21,7 @@ import time
 ##############################################################################
 
 py_trees.logging.level = py_trees.logging.Level.DEBUG
-logger = py_trees.logging.Logger("Nosetest")
+logger = py_trees.logging.Logger("Tests")
 
 
 ##############################################################################
@@ -37,10 +39,14 @@ class DummyDecorator(py_trees.decorators.Decorator):
 
 
 def test_invalid_child():
-    console.banner("Invalid Child")
-    print("\n--------- Assertions ---------\n")
-    print("TypeError is raised")
-    assert_raises(TypeError, DummyDecorator.__init__, child=5)
+    console.banner("Decorator Exceptions - Invalid Child Type")
+    with pytest.raises(TypeError) as context:  # if raised, context survives
+        unused_decorator = DummyDecorator(child=5)
+        py_trees.tests.print_assert_details("TypeError raised", "raised", "not raised")
+    py_trees.tests.print_assert_details("TypeError raised", "yes", "yes")
+    assert("TypeError" == context.typename)
+    py_trees.tests.print_assert_details("Substring match", "instance", f"{context.value}")
+    assert("instance" in str(context.value))
 
 
 def test_failure_is_success_tree():

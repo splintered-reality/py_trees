@@ -1,25 +1,23 @@
 # Tests
 
-Make sure you source the virutal environment in all cases to run
-tests in this way (if you are using a colcon environment, the
-same commands will eventually hold once ros2's rosdep becomes
-functional).
+Make sure you have an sourced the appropriate environment
+(virtual or colcon) before executing.
 
-## Executing Tests
+# Executing Tests
 
-Always run tests from the root directory, since that is where
-it will pick up the nosetests configuration in `setup.cfg`.
+```bash
+# run all tests in the current directory
+$ pytest-3
 
-```
-# All Tests via SetupTools (indirectly)
-$ python setup.py nosetests
-# All Tests via Nosetest (directly)
-$ nosetests -s ./tests
+# All tests with full stdout (-s / --capture=no)
+$ pytest-3 -s
+
 # A single test module
-$ nosetests -s tests/test_oneshot.py
-# A single test
-$ nosetests -s tests/test_blackboard.py:test_activity_stream
-```
+$ pytest-3 -s test_alakazam.py
 
-If not in the virtualenv and in a dual python environment, e.g. Ubuntu bionic,
-replace those commands with their `python3 / nosetests3` equivalents.
+# A single test
+$ pytest-3 -s test_action_clients.py::test_success
+
+# Using setuptools from the root dir
+$ python3 setup.py test
+```

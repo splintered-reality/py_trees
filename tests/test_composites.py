@@ -8,19 +8,17 @@
 # Imports
 ##############################################################################
 
-import nose.tools
+import pytest
 
 import py_trees
 import py_trees.console as console
-
-from nose.tools import assert_raises
 
 ##############################################################################
 # Logging Level
 ##############################################################################
 
 py_trees.logging.level = py_trees.logging.Level.DEBUG
-logger = py_trees.logging.Logger("Nosetest")
+logger = py_trees.logging.Logger("Tests")
 
 ##############################################################################
 # Helpers
@@ -81,14 +79,16 @@ def test_removing_children():
     assert(child.parent is None)
 
 
-def test_composite_errors():
-    console.banner("Timer Errors")
+def test_composite_add_child_exception():
+    console.banner("Composite Add Child Exception - Invalid Type")
     root = py_trees.composites.Selector()
-    print("add_child raises a 'TypeError' due to not being an instance of Behaviour")
-    with nose.tools.assert_raises(TypeError) as context:
+    with pytest.raises(TypeError) as context:  # if raised, context survives
         root.add_child(5.0)
-        print("TypeError has message with substring 'behaviours'")
-        assert("behaviours" in str(context.exception))
+        py_trees.tests.print_assert_details("TypeError raised", "raised", "not raised")
+    py_trees.tests.print_assert_details("TypeError raised", "yes", "yes")
+    assert("TypeError" == context.typename)
+    py_trees.tests.print_assert_details("Substring match", "behaviours", f"{context.value}")
+    assert("behaviours" in str(context.value))
 
 
 def test_protect_against_multiple_parents():
@@ -96,11 +96,15 @@ def test_protect_against_multiple_parents():
     child = py_trees.behaviours.Success()
     first_parent = py_trees.composites.Selector()
     second_parent = py_trees.composites.Sequence()
-    with nose.tools.assert_raises(RuntimeError):
-        print("Adding a child to two parents")
-        print("Expecting a RuntimeError")
+    with pytest.raises(RuntimeError) as context:  # if raised, context survives
+        # Adding a child to two parents - expecting a RuntimeError
         for parent in [first_parent, second_parent]:
             parent.add_child(child)
+        py_trees.tests.print_assert_details("RuntimeError raised", "raised", "not raised")
+    py_trees.tests.print_assert_details("RuntimeError raised", "yes", "yes")
+    assert("RuntimeError" == context.typename)
+    py_trees.tests.print_assert_details("Substring match", "parent", f"{context.value}")
+    assert("parent" in str(context.value))
 
 
 def test_remove_nonexistant_child():
@@ -109,6 +113,11 @@ def test_remove_nonexistant_child():
     child = py_trees.behaviours.Success(name="Success")
     root.add_child(child)
     non_existant_child = py_trees.behaviours.Success(name="Ooops")
-    with nose.tools.assert_raises(IndexError):
-        print("Expecting an Index Error")
+
+    with pytest.raises(IndexError) as context:  # if raised, context survives
         root.remove_child_by_id(non_existant_child.id)
+        py_trees.tests.print_assert_details("IndexError raised", "raised", "not raised")
+    py_trees.tests.print_assert_details("IndexError raised", "yes", "yes")
+    assert("IndexError" == context.typename)
+    py_trees.tests.print_assert_details("Substring match", "not found", f"{context.value}")
+    assert("not found" in str(context.value))

@@ -39,17 +39,12 @@ jobs:
           paths:
             - ./venv
           key: setup-py-{{ checksum "setup.py" }}
-        
-      # run tests!
-      # this example uses Django's built-in test-runner
-      # other common Python testing frameworks include pytest and nose
-      # https://pytest.org
-      # https://nose.readthedocs.io
+
       - run:
           name: Tests
           command: |
             . venv/bin/activate
-            python setup.py nosetests --with-html
+            pytest -s ./tests
 
       - run:
           name: Flake8
@@ -66,10 +61,6 @@ jobs:
       - store_artifacts:
           path: install_dependencies_output
           destination: install_dependencies_output
-            
-      - store_artifacts:
-          path: nosetests.html
-          destination: nosetests.html
           
       - store_artifacts:
           path: flake8_output

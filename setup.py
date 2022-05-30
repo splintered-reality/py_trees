@@ -11,7 +11,7 @@ install_requires = [  # ] if os.environ.get('AMENT_PREFIX_PATH') else [
     'pydot'
 ]
 
-tests_require = ['flake8', 'mypy==0.812', 'nose', 'nose-htmloutput', 'pydot', 'pytest', 'yanc']
+tests_require = ['flake8', 'mypy==0.812', 'pydot', 'pytest', 'yanc']
 
 extras_require = {} if os.environ.get('AMENT_PREFIX_PATH') else {
     'test': tests_require,
@@ -54,7 +54,7 @@ d = setup(
     description="pythonic implementation of behaviour trees",
     long_description="A behaviour tree implementation for rapid development of small scale decision making engines that don't need to be real time reactive.",
     license='BSD',
-    test_suite='nose.collector',
+    test_suite='tests',
     tests_require=tests_require,
     entry_points={
         'console_scripts': [

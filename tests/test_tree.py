@@ -8,12 +8,12 @@
 # Imports
 ##############################################################################
 
+import pytest
 import threading
 import time
 
-import nose.tools
-
 import py_trees
+import py_trees.tests
 import py_trees.console as console
 
 ##############################################################################
@@ -21,7 +21,7 @@ import py_trees.console as console
 ##############################################################################
 
 py_trees.logging.level = py_trees.logging.Level.DEBUG
-logger = py_trees.logging.Logger("Nosetest")
+logger = py_trees.logging.Logger("Tests")
 
 
 ##############################################################################
@@ -519,36 +519,52 @@ def test_tree_errors():
     console.banner("Tree Errors")
     root = 5.0
     print("__init__ raises a 'TypeError' due to invalid root variable type being passed")
-    with nose.tools.assert_raises(TypeError) as context:
+
+    with pytest.raises(TypeError) as context:  # if raised, context survives
         unused_tree = py_trees.trees.BehaviourTree(root)
-        print("TypeError has message with substring 'must be an instance of'")
-        assert("must be an instance of" in str(context.exception))
+        py_trees.tests.print_assert_details("TypeError raised", "raised", "not raised")
+    py_trees.tests.print_assert_details("TypeError raised", "yes", "yes")
+    assert("TypeError" == context.typename)
+    py_trees.tests.print_assert_details("  substring match", "instance", f"{context.value}")
+    assert("instance" in str(context.value))
 
     root = py_trees.behaviours.Success()
     print("__init__ raises a 'RuntimeError' because we try to prune the root node")
-    with nose.tools.assert_raises(RuntimeError) as context:
+
+    with pytest.raises(RuntimeError) as context:  # if raised, context survives
         tree = py_trees.trees.BehaviourTree(root)
         tree.prune_subtree(root.id)
-        print("RuntimeError has message with substring 'prune'")
-        assert("prune" in str(context.exception))
+        py_trees.tests.print_assert_details("RuntimeError raised", "raised", "not raised")
+    py_trees.tests.print_assert_details("RuntimeError raised", "yes", "yes")
+    assert("RuntimeError" == context.typename)
+    py_trees.tests.print_assert_details("  substring match", "prune", f"{context.value}")
+    assert("prune" in str(context.value))
 
     root = py_trees.behaviours.Success()
     new_subtree = py_trees.behaviours.Success()
     print("__init__ raises a 'RuntimeError' because we try to replace the root node")
-    with nose.tools.assert_raises(RuntimeError) as context:
+
+    with pytest.raises(RuntimeError) as context:  # if raised, context survives
         tree = py_trees.trees.BehaviourTree(root)
         tree.replace_subtree(root.id, new_subtree)
-        print("RuntimeError has message with substring 'replace'")
-        assert("replace" in str(context.exception))
+        py_trees.tests.print_assert_details("RuntimeError raised", "raised", "not raised")
+    py_trees.tests.print_assert_details("RuntimeError raised", "yes", "yes")
+    assert("RuntimeError" == context.typename)
+    py_trees.tests.print_assert_details("  substring match", "replace", f"{context.value}")
+    assert("replace" in str(context.value))
 
     root = py_trees.behaviours.Success()
     new_subtree = py_trees.behaviours.Success()
     print("__init__ raises a 'TypeError' because we try to insert a subtree beneath a standalone behaviour")
-    with nose.tools.assert_raises(TypeError) as context:
+
+    with pytest.raises(TypeError) as context:  # if raised, context survives
         tree = py_trees.trees.BehaviourTree(root)
         tree.insert_subtree(child=new_subtree, unique_id=root.id, index=0)
-        print("TypeError has message with substring 'Composite'")
-        assert("Composite" in str(context.exception))
+        py_trees.tests.print_assert_details("TypeError raised", "raised", "not raised")
+    py_trees.tests.print_assert_details("TypeError raised", "yes", "yes")
+    assert("TypeError" == context.typename)
+    py_trees.tests.print_assert_details("  substring match", "Composite", f"{context.value}")
+    assert("Composite" in str(context.value))
 
 
 def test_tree_setup():
@@ -562,12 +578,17 @@ def test_tree_setup():
     tree = py_trees.trees.BehaviourTree(root=root)
     print("\n--------- Assertions ---------\n")
     print(console.cyan + "Short Timeout: " + console.yellow + "No Visitor" + console.reset)
-    with nose.tools.assert_raises(RuntimeError) as context:
+
+    with pytest.raises(RuntimeError) as context:  # if raised, context survives
         tree.setup(timeout=2 * duration)
-    print("RuntimeError has message with substring 'timed out'")
-    assert("timed out" in str(context.exception))
-    active_threads = threading.active_count()
-    assert(active_threads == 1, "Only one thread should be active but there are {} active".format(active_threads))
+        py_trees.tests.print_assert_details("RuntimeError raised", "raised", "not raised")
+    py_trees.tests.print_assert_details("RuntimeError raised", "yes", "yes")
+    assert("RuntimeError" == context.typename)
+    py_trees.tests.print_assert_details("  substring match", "timed out", f"{context.value}")
+    assert("timed out" in str(context.value))
+
+    time.sleep(duration)  # give the setup timer thread a chance to be cancelled
+    assert(threading.active_count() == 1)
 
     print("\n--------- Assertions ---------\n")
     print(console.cyan + "Short timeout: " + console.yellow + "No Visitor" + console.reset)
@@ -575,18 +596,23 @@ def test_tree_setup():
         tree.setup(timeout=4 * duration)
     except RuntimeError:
         assert False, "should not have timed out"
-    active_threads = threading.active_count()
-    assert(active_threads == 1, "Only one thread should be active but there are {} active".format(active_threads))
+    time.sleep(duration)  # give the setup timer thread a chance to be cancelled
+    assert(threading.active_count() == 1)
 
     print("\n--------- Assertions ---------\n")
     print(console.cyan + "Long Timeout: " + console.yellow + "With Visitor" + console.reset)
     visitor = SetupVisitor()
-    with nose.tools.assert_raises(RuntimeError) as context:
+
+    with pytest.raises(RuntimeError) as context:  # if raised, context survives
         tree.setup(timeout=2 * duration, visitor=visitor)
-    print("RuntimeError has message with substring 'timed out'")
-    assert("timed out" in str(context.exception))
-    active_threads = threading.active_count()
-    assert(active_threads == 1, "Only one thread should be active but there are {} active".format(active_threads))
+        py_trees.tests.print_assert_details("RuntimeError raised", "raised", "not raised")
+    py_trees.tests.print_assert_details("RuntimeError raised", "yes", "yes")
+    assert("RuntimeError" == context.typename)
+    py_trees.tests.print_assert_details("  substring match", "timed out", f"{context.value}")
+    assert("timed out" in str(context.value))
+
+    time.sleep(duration)  # give the setup timer thread a chance to be cancelled
+    assert(threading.active_count() == 1)
 
     print("\n--------- Assertions ---------\n")
     print(console.cyan + "Long timeout: " + console.yellow + "With Visitor" + console.reset)
@@ -595,8 +621,8 @@ def test_tree_setup():
         tree.setup(timeout=4 * duration, visitor=visitor)
     except RuntimeError:
         assert False, "should not have timed out"
-    active_threads = threading.active_count()
-    assert(active_threads == 1, "Only one thread should be active but there are {} active".format(active_threads))
+    time.sleep(duration)  # give the setup timer thread a chance to be cancelled
+    assert(threading.active_count() == 1)
 
     print("\n--------- Assertions ---------\n")
     print(console.cyan + "No timeout: " + console.yellow + "No Visitor" + console.reset)
@@ -605,8 +631,8 @@ def test_tree_setup():
         tree.setup()
     except RuntimeError:
         assert False, "should not have timed out"
-    active_threads = threading.active_count()
-    assert(active_threads == 1, "Only one thread should be active but there are {} active".format(active_threads))
+    time.sleep(duration)  # give the setup timer thread a chance to be cancelled
+    assert(threading.active_count() == 1)
 
 
 def test_pre_post_tick_activity_sequence():

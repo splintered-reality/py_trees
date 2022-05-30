@@ -8,10 +8,11 @@
 # Imports
 ##############################################################################
 
-import nose
 import operator
+import pytest
 
 import py_trees
+import py_trees.tests
 import py_trees.console as console
 
 from py_trees.common import Status
@@ -605,10 +606,23 @@ def test_check_blackboard_to_status():
         assert(b.status == blackboard.status)
 
     blackboard.unset("status")
-    with nose.tools.assert_raises(KeyError):
+
+    with pytest.raises(KeyError) as context:  # if raised, context survives
         print("Unset the blackboard variable - expecting a KeyError")
         b.tick_once()
+        py_trees.tests.print_assert_details("KeyError raised", "raised", "not raised")
+    py_trees.tests.print_assert_details("KeyError raised", "yes", "yes")
+    assert("KeyError" == context.typename)
+    py_trees.tests.print_assert_details("Substring match", "yet exist", f"{context.value}")
+    assert("yet exist" in str(context.value))
+
     blackboard.status = 5
-    with nose.tools.assert_raises(TypeError):
+
+    with pytest.raises(TypeError) as context:  # if raised, context survives
         print("Set a different type - expecting a TypeError")
         b.tick_once()
+        py_trees.tests.print_assert_details("TypeError raised", "raised", "not raised")
+    py_trees.tests.print_assert_details("TypeError raised", "yes", "yes")
+    assert("TypeError" == context.typename)
+    py_trees.tests.print_assert_details("Substring match", "not of type", f"{context.value}")
+    assert("not of type" in str(context.value))

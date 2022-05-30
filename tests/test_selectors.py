@@ -7,8 +7,7 @@
 ##############################################################################
 # Imports
 ##############################################################################
-import itertools
-import nose.tools
+
 import py_trees
 import py_trees.console as console
 
@@ -17,7 +16,7 @@ import py_trees.console as console
 ##############################################################################
 
 py_trees.logging.level = py_trees.logging.Level.DEBUG
-logger = py_trees.logging.Logger("Nosetest")
+logger = py_trees.logging.Logger("Tests")
 
 ##############################################################################
 # Helpers
