@@ -8,9 +8,10 @@
 # Imports
 ##############################################################################
 
-import nose
+import pytest
 
 import py_trees
+import py_trees.tests
 import py_trees.console as console
 
 from py_trees.blackboard import Blackboard
@@ -104,9 +105,14 @@ def test_client_print_blackboard():
 
 def test_bad_name_exception():
     console.banner("Bad Name Exception")
-    with nose.tools.assert_raises_regexp(TypeError, "str"):
-        print("Expecting a TypeError with substring 'str'")
+
+    with pytest.raises(TypeError) as context:  # if raised, context survives
         unused_blackboard = py_trees.blackboard.Client(name=5)
+        py_trees.tests.print_assert_details("TypeError raised", "raised", "not raised")
+    py_trees.tests.print_assert_details("TypeError raised", "yes", "yes")
+    assert("TypeError" == context.typename)
+    py_trees.tests.print_assert_details("Substring match", "str", f"{context.value}")
+    assert("str" in str(context.value))
 
 
 def test_unregister_keys_with_clear():
@@ -129,21 +135,40 @@ def test_delayed_register_key():
     console.banner("Delayed Register Key")
     for create in [create_blackboards, create_namespaced_blackboards]:
         with create() as (foo, bar, unused_namespace):
-            with nose.tools.assert_raises_regexp(AttributeError, "does not have read/write access"):
+            with pytest.raises(AttributeError) as context:  # if raised, context survives
                 print("Expecting Attribute Error with substring 'does not have read/write access'")
                 print(foo.other)
-            with nose.tools.assert_raises_regexp(AttributeError, "does not have write access"):
+                py_trees.tests.print_assert_details("AttributeError raised", "raised", "not raised")
+            py_trees.tests.print_assert_details("AttributeError raised", "yes", "yes")
+            assert("AttributeError" == context.typename)
+            py_trees.tests.print_assert_details("Substring match", "does not have read/write access", f"{context.value}")
+            assert("does not have read/write access" in str(context.value))
+
+            with pytest.raises(AttributeError) as context:  # if raised, context survives
                 print("Expecting Attribute Error with substring 'does not have write access'")
                 foo.other = 1
+                py_trees.tests.print_assert_details("AttributeError raised", "raised", "not raised")
+            py_trees.tests.print_assert_details("AttributeError raised", "yes", "yes")
+            assert("AttributeError" == context.typename)
+            py_trees.tests.print_assert_details("Substring match", "does not have write access", f"{context.value}")
+            assert("does not have write access" in str(context.value))
+
             print("register other for writing")
             foo.register_key(key="other", access=py_trees.common.Access.WRITE)
             print(str(foo))
             print("foo.other = 1")
             foo.other = 1
             print("Attempting to read 'other'...")
-            with nose.tools.assert_raises_regexp(AttributeError, "does not have read/write access"):
+
+            with pytest.raises(AttributeError) as context:  # if raised, context survives
                 print("Expecting Attribute Error with substring 'does not have read/write access'")
                 unused_result = bar.other
+                py_trees.tests.print_assert_details("AttributeError raised", "raised", "not raised")
+            py_trees.tests.print_assert_details("AttributeError raised", "yes", "yes")
+            assert("AttributeError" == context.typename)
+            py_trees.tests.print_assert_details("Substring match", "does not have read/write access", f"{context.value}")
+            assert("does not have read/write access" in str(context.value))
+
             print("register other for reading")
             bar.register_key(key="other", access=py_trees.common.Access.READ)
             print(str(bar))
@@ -187,19 +212,24 @@ def test_key_exists():
     console.banner("Key Exists")
     for create in [create_blackboards, create_namespaced_blackboards]:
         with create() as (foo, unused_bar, namespace):
-            print("foo.exists('dude') [{}][{}]".format(foo.exists("dude"), True))
+            py_trees.tests.print_assert_details("'dude' exists", foo.exists("dude"), True)
             assert(foo.exists("dude"))
             if namespace:
-                print("Blackboard.exists('{}/dude') [{}][{}]".format(
-                    namespace,
-                    Blackboard.exists(name="{}/dude".format(namespace)),
-                    True)
+                py_trees.tests.print_assert_details(
+                    "'/woohoo/dude' exists",
+                    Blackboard.exists("dude"),
+                    True
                 )
                 assert(Blackboard.exists(name="{}/dude".format(namespace)))
-            with nose.tools.assert_raises_regexp(AttributeError, "does not have read/write access"):
-                print("Expecting Attribute Error with substring 'does not have read/write access'")
+
+            with pytest.raises(AttributeError) as context:  # if raised, context survives
+                print("Checking existence of non-existant 'dude_not_here'")
                 print("foo.exists('dude_not_here') [{}][{}]".format(foo.exists("dude_not_here"), False))
-                assert(not foo.exists("dude_not_here"))
+                py_trees.tests.print_assert_details("AttributeError raised", "raised", "not raised")
+            py_trees.tests.print_assert_details("AttributeError raised", "yes", "yes")
+            assert("AttributeError" == context.typename)
+            py_trees.tests.print_assert_details("Substring match", "does not have read/write access", f"{context.value}")
+            assert("does not have read/write access" in str(context.value))
 
 
 def test_nested_exists():
@@ -230,16 +260,29 @@ def test_nested_read():
             result = foo.get('motley.nested')
             print("Read foo.get('motley.nested') {} [{}]".format(result, "nested"))
             assert(result == "nested")
-            with nose.tools.assert_raises_regexp(KeyError, "nested attributes"):
+
+            with pytest.raises(KeyError) as context:  # if raised, context survives
                 print("foo.get('motley.huzzah_not_here') ...")
                 print("Expecting a KeyError with substring 'nested attributes'")
                 foo.get('motley.huzzah_not_here')
+                py_trees.tests.print_assert_details("KeyError raised", "raised", "not raised")
+            py_trees.tests.print_assert_details("KeyError raised", "yes", "yes")
+            assert("KeyError" == context.typename)
+            py_trees.tests.print_assert_details("  substring match", "nested attributes", f"{context.value}")
+            assert("nested attributes" in str(context.value))
+
             print("foo.unset('motley')")
             foo.unset('motley')
-            with nose.tools.assert_raises_regexp(KeyError, "does not yet exist"):
+
+            with pytest.raises(KeyError) as context:  # if raised, context survives
                 print("foo.get('motley.not_here') ...")
                 print("Expecting a KeyError with substring 'does not yet exist'")
                 foo.get('motley.not_here')
+                py_trees.tests.print_assert_details("KeyError raised", "raised", "not raised")
+            py_trees.tests.print_assert_details("KeyError raised", "yes", "yes")
+            assert("KeyError" == context.typename)
+            py_trees.tests.print_assert_details("  substring match", "does not yet exist", f"{context.value}")
+            assert("does not yet exist" in str(context.value))
 
 
 def test_nested_write():
@@ -259,12 +302,18 @@ def test_nested_write():
             print("  'result' == {} [{}]".format(False, result))
             print("  'foo.motley.nested' == {} [{}]".format("via_set_overwrite", foo.motley.nested))
             assert(foo.motley.nested == "via_set_overwrite")
-            with nose.tools.assert_raises_regexp(KeyError, "does not yet exist"):
+
+            with pytest.raises(KeyError) as context:  # if raised, context survives
                 print("bar.unset('motley')")
                 bar.unset('motley')
                 print("bar.set('motley.nested', 'on_unset') ...")
                 print("Expecting a KeyError with substring 'does not yet exist'")
                 bar.set('motley.nested', "on_unset")
+                py_trees.tests.print_assert_details("KeyError raised", "raised", "not raised")
+            py_trees.tests.print_assert_details("KeyError raised", "yes", "yes")
+            assert("KeyError" == context.typename)
+            py_trees.tests.print_assert_details("  substring match", "does not yet exist", f"{context.value}")
+            assert("does not yet exist" in str(context.value))
 
 
 def test_key_filters():
@@ -368,29 +417,51 @@ def test_static_get_set():
     Blackboard.set("foo", 5)
     print("Unset foo")
     Blackboard.unset("foo")
-    with nose.tools.assert_raises_regexp(KeyError, "foo"):
-        print(" - Expecting a KeyError")
+
+    with pytest.raises(KeyError) as context:  # if raised, context survives
         unused_value = Blackboard.get("foo")
+        py_trees.tests.print_assert_details("KeyError raised", "raised", "not raised")
+    py_trees.tests.print_assert_details("KeyError raised", "yes", "yes")
+    assert("KeyError" == context.typename)
+    py_trees.tests.print_assert_details("  substring match", "foo", f"{context.value}")
+    assert("foo" in str(context.value))
+
     print("Get bar")
-    with nose.tools.assert_raises_regexp(KeyError, "bar"):
-        print(" - Expecting a KeyError")
+
+    with pytest.raises(KeyError) as context:  # if raised, context survives
         unused_value = Blackboard.get("bar")
+        py_trees.tests.print_assert_details("KeyError raised", "raised", "not raised")
+    py_trees.tests.print_assert_details("KeyError raised", "yes", "yes")
+    assert("KeyError" == context.typename)
+    py_trees.tests.print_assert_details("  substring match", "bar", f"{context.value}")
+    assert("bar" in str(context.value))
+
     print("Set motley: Motley()")
     Blackboard.set("motley", Motley())
     print("Set motley.nested: nooo")
     Blackboard.set("motley.nested", "nooo")
     assert(Blackboard.get("motley.nested") == "nooo")
     print("Get motley.foo")
-    with nose.tools.assert_raises_regexp(KeyError, "nested attributes"):
-        print(" - Expecting a KeyError")
+
+    with pytest.raises(KeyError) as context:  # if raised, context survives
         unused_value = Blackboard.get("motley.foo")
+        py_trees.tests.print_assert_details("KeyError raised", "raised", "not raised")
+    py_trees.tests.print_assert_details("KeyError raised", "yes", "yes")
+    assert("KeyError" == context.typename)
+    py_trees.tests.print_assert_details("  substring match", "motley.foo", f"{context.value}")
+    assert("motley.foo" in str(context.value))
     print("Set motley.other: floosie")
     Blackboard.set("motley.other", "floosie")
     assert(Blackboard.get("motley.other") == "floosie")
     print("Get missing")
-    with nose.tools.assert_raises_regexp(KeyError, "missing"):
-        print(" - Expecting a KeyError")
+
+    with pytest.raises(KeyError) as context:  # if raised, context survives
         unused_value = Blackboard.get("missing")
+        py_trees.tests.print_assert_details("KeyError raised", "raised", "not raised")
+    py_trees.tests.print_assert_details("KeyError raised", "yes", "yes")
+    assert("KeyError" == context.typename)
+    py_trees.tests.print_assert_details("  substring match", "missing", f"{context.value}")
+    assert("missing" in str(context.value))
 
 
 def test_unregister_key():
@@ -423,9 +494,15 @@ def test_required_keys():
         access=py_trees.common.Access.READ,
         required=True
     )
-    with nose.tools.assert_raises_regexp(KeyError, "but not yet on the blackboard"):
-        print("Key does not exist - expecting a KeyError")
+
+    with pytest.raises(KeyError) as context:  # if raised, context survives
+        print("Required key does not exist - expecting a KeyError")
         blackboard.verify_required_keys_exist()
+        py_trees.tests.print_assert_details("KeyError raised", "raised", "not raised")
+    py_trees.tests.print_assert_details("KeyError raised", "yes", "yes")
+    assert("KeyError" == context.typename)
+    py_trees.tests.print_assert_details("  substring match", "but not yet on the blackboard", f"{context.value}")
+    assert("but not yet on the blackboard" in str(context.value))
 
     py_trees.blackboard.Blackboard.set(
         variable_name="/bar",
@@ -487,9 +564,14 @@ def test_relative_name():
 
     namespace = "/bar"
     key = "/foo/bar"
-    with nose.tools.assert_raises(KeyError):
-        print("[{}][{}]..........Expecting ValueError".format(namespace, key))
+
+    with pytest.raises(KeyError) as context:  # if raised, context survives
         Blackboard.relative_name(namespace, key)
+        py_trees.tests.print_assert_details("KeyError raised", "raised", "not raised")
+    py_trees.tests.print_assert_details("KeyError raised", "yes", "yes")
+    assert("KeyError" == context.typename)
+    py_trees.tests.print_assert_details("  substring match", "/foo/bar", f"{context.value}")
+    assert("/foo/bar" in str(context.value))
 
 
 def test_client_absolute_name():
@@ -594,15 +676,33 @@ def test_exclusive_write():
     blackboard.register_key(key="dude", access=py_trees.common.Access.WRITE)
     blackboard.register_key(key="dudette", access=py_trees.common.Access.EXCLUSIVE_WRITE)
     blackboard_exclusive = py_trees.blackboard.Client(name="BlackboardX")
-    with nose.tools.assert_raises_regexp(AttributeError, "requested exclusive write"):
+
+    with pytest.raises(AttributeError) as context:  # if raised, context survives
         print("Exclusive write requested, but already has a writer - expecting an AttributeError")
         blackboard_exclusive.register_key(key="dude", access=py_trees.common.Access.EXCLUSIVE_WRITE)
-    with nose.tools.assert_raises_regexp(AttributeError, "requested exclusive write"):
+        py_trees.tests.print_assert_details("AttributeError raised", "raised", "not raised")
+    py_trees.tests.print_assert_details("AttributeError raised", "yes", "yes")
+    assert("AttributeError" == context.typename)
+    py_trees.tests.print_assert_details("  substring match", "requested exclusive write", f"{context.value}")
+    assert("requested exclusive write" in str(context.value))
+
+    with pytest.raises(AttributeError) as context:  # if raised, context survives
         print("Exclusive write requested, but already has a writer - expecting an AttributeError")
         blackboard_exclusive.register_key(key="dudette", access=py_trees.common.Access.EXCLUSIVE_WRITE)
-    with nose.tools.assert_raises_regexp(AttributeError, "requested write on"):
+        py_trees.tests.print_assert_details("AttributeError raised", "raised", "not raised")
+    py_trees.tests.print_assert_details("AttributeError raised", "yes", "yes")
+    assert("AttributeError" == context.typename)
+    py_trees.tests.print_assert_details("  substring match", "requested exclusive write", f"{context.value}")
+    assert("requested exclusive write" in str(context.value))
+
+    with pytest.raises(AttributeError) as context:  # if raised, context survives
         print("Write requested, but already has an exclusive writer - expecting an AttributeError")
         blackboard_exclusive.register_key(key="dudette", access=py_trees.common.Access.WRITE)
+        py_trees.tests.print_assert_details("AttributeError raised", "raised", "not raised")
+    py_trees.tests.print_assert_details("AttributeError raised", "yes", "yes")
+    assert("AttributeError" == context.typename)
+    py_trees.tests.print_assert_details("  substring match", "requested write on", f"{context.value}")
+    assert("requested write on" in str(context.value))
 
     blackboard.unregister(clear=True)
     blackboard_exclusive.unregister(clear=True)

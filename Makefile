@@ -8,7 +8,7 @@ VERSION=`./setup.py --version`
 help:
 	@echo "Local Build"
 	@echo "  build     : build the python package"
-	@echo "  tests     : run all of the nosetests"
+	@echo "  tests     : run all of the tests"
 	@echo "  clean     : clean build/dist directories"
 	@echo "Packages"
 	@echo "  pypi      : upload the package to PyPI"

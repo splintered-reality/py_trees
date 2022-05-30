@@ -8,8 +8,10 @@
 # Imports
 ##############################################################################
 
-import nose.tools
+import pytest
+
 import py_trees
+import py_trees.tests
 import py_trees.console as console
 
 ##############################################################################
@@ -17,17 +19,19 @@ import py_trees.console as console
 ##############################################################################
 
 py_trees.logging.level = py_trees.logging.Level.DEBUG
-logger = py_trees.logging.Logger("Nosetest")
+logger = py_trees.logging.Logger("Tests")
 
 ##############################################################################
 # Tests
 ##############################################################################
 
 
-def test_timer_errors():
-    console.banner("Timer Errors")
-    print("__init__ raises a 'TypeError' due to invalid duration being passed")
-    with nose.tools.assert_raises(TypeError) as context:
+def test_timer_invalid_duration():
+    console.banner("Timer Exceptions - Invalid Duration")
+    with pytest.raises(TypeError) as context:  # if raised, context survives
         unused_timer = py_trees.timers.Timer(name="Timer", duration="invalid_type")
-        print("TypeError has message with substring 'duration'")
-        assert("duration" in str(context.exception))
+        py_trees.tests.print_assert_details("TypeError raised", "raised", "not raised")
+    py_trees.tests.print_assert_details("TypeError raised", "yes", "yes")
+    assert("TypeError" == context.typename)
+    py_trees.tests.print_assert_details("  substring match", "duration", f"{context.value}")
+    assert("duration" in str(context.value))

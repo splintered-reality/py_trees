@@ -7,9 +7,12 @@
 ##############################################################################
 # Imports
 ##############################################################################
+
 import itertools
-import nose.tools
+import pytest
+
 import py_trees
+import py_trees.tests
 import py_trees.console as console
 
 ##############################################################################
@@ -17,7 +20,7 @@ import py_trees.console as console
 ##############################################################################
 
 py_trees.logging.level = py_trees.logging.Level.DEBUG
-logger = py_trees.logging.Logger("Nosetest")
+logger = py_trees.logging.Logger("Tests")
 
 ##############################################################################
 # Helpers
@@ -253,15 +256,24 @@ def test_parallel_success_on_selected_invalid_configuration():
         parallel.policy = policy
         print("\n--------- Assertions ---------\n")
         print("setup() raises a 'RuntimeError' due to invalid configuration")
-        with nose.tools.assert_raises(RuntimeError) as context:
+
+        with pytest.raises(RuntimeError) as context:  # if raised, context survives
             parallel.setup()
-            print("RuntimeError has message with substring 'SuccessOnSelected'")
-            assert("SuccessOnSelected" in str(context.exception))
+            py_trees.tests.print_assert_details("RuntimeError raised", "raised", "not raised")
+        py_trees.tests.print_assert_details("RuntimeError raised", "yes", "yes")
+        assert("RuntimeError" == context.typename)
+        py_trees.tests.print_assert_details("Substring match", "SuccessOnSelected", f"{context.value}")
+        assert("SuccessOnSelected" in str(context.value))
+
         print("initialise() raises a 'RuntimeError' due to invalid configuration")
-        with nose.tools.assert_raises(RuntimeError) as context:
+
+        with pytest.raises(RuntimeError) as context:  # if raised, context survives
             parallel.tick_once()
-            print("RuntimeError has message with substring 'SuccessOnSelected'")
-            assert("SuccessOnSelected" in str(context.exception))
+            py_trees.tests.print_assert_details("RuntimeError raised", "raised", "not raised")
+        py_trees.tests.print_assert_details("RuntimeError raised", "yes", "yes")
+        assert("RuntimeError" == context.typename)
+        py_trees.tests.print_assert_details("Substring match", "SuccessOnSelected", f"{context.value}")
+        assert("SuccessOnSelected" in str(context.value))
 
 
 def test_parallel_synchronisation():
@@ -368,7 +380,7 @@ def test_parallel_no_synchronisation():
             print("success_every_three.status == py_trees.common.Status.RUNNING")
             assert(success_every_three.status == py_trees.common.Status.RUNNING)
         print("root.status == py_trees.common.Status.RUNNING")
-        assert(root.status == py_trees.common.Status.RUNNING, "{}, {}".format(root.status, counter))
+        assert(root.status == py_trees.common.Status.RUNNING)
 
     snapshot_visitor.initialise()
     py_trees.tests.tick_tree(

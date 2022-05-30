@@ -31,7 +31,7 @@ from . import console
 # on top of python logging kills it.
 #
 # Could still use it here, and would actually be useful if I could
-# integrate it with nosetests, but for now, this will do.
+# integrate it with testing, but for now, this will do.
 # Note, you can get colour with python logging, but its tricky;
 #
 #   http://stackoverflow.com/questions/384076/how-can-i-color-python-logging-output

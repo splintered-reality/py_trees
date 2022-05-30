@@ -7,9 +7,10 @@
 # Imports
 ##############################################################################
 
-import nose
+import pytest
 
 import py_trees
+import py_trees.tests
 import py_trees.console as console
 
 ##############################################################################
@@ -117,9 +118,14 @@ def test_eternal_guard_unique_names():
     # tick once, get variables on the blackboard
     py_trees.tests.tick_tree(root, 1, 1, print_snapshot=True)
     assert(blackboard.get("eternal_guard_condition_1") == message)  # wasn't overwritten
-    with nose.tools.assert_raises_regexp(KeyError, "exist"):
-        print("Expecting a KeyError with substring 'yet exist'")
+
+    with pytest.raises(KeyError) as context:  # if raised, context survives
         unused = blackboard.eternal_guard_condition_2
+        py_trees.tests.print_assert_details("KeyError raised", "raised", "not raised")
+    py_trees.tests.print_assert_details("KeyError raised", "yes", "yes")
+    assert("KeyError" == context.typename)
+    py_trees.tests.print_assert_details("Substring match", "exist", f"{context.value}")
+    assert("exist" in str(context.value))
 
 
 def test_eternal_guard_decorator():

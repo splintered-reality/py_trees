@@ -8,7 +8,6 @@
 ##############################################################################
 
 import operator
-import nose
 
 import py_trees
 import py_trees.console as console
