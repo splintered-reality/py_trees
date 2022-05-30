@@ -40,6 +40,10 @@ py_trees.common
 .. automodule:: py_trees.common
     :synopsis: common definitions, methods and enumerations
 
+.. autoclass:: py_trees.common.Access
+   :members: READ, WRITE, EXCLUSIVE_WRITE
+   :show-inheritance:
+
 .. autoclass:: py_trees.common.BlackBoxLevel
     :members: BIG_PICTURE, COMPONENT, DETAIL, NOT_A_BLACKBOX
     :show-inheritance:
@@ -62,10 +66,6 @@ py_trees.common
 .. autoclass:: py_trees.common.Status
     :members: SUCCESS, FAILURE, RUNNING, INVALID
     :show-inheritance:
-
-.. autoclass:: py_trees.common.Access
-   :members: READ, WRITE, EXCLUSIVE_WRITE
-   :show-inheritance:
 
 .. autoclass:: py_trees.common.VisibilityLevel
     :members: ALL, DETAIL, COMPONENT, BIG_PICTURE
