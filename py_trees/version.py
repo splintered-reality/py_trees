@@ -7,8 +7,7 @@
 ##############################################################################
 
 """
-Version number provided separately here so there is easy access for the module,
-setup.py and sphinx.
+Package version number.
 """
 
 ##############################################################################
@@ -16,4 +15,5 @@ setup.py and sphinx.
 ##############################################################################
 
 # When changing, Also update setup.py and package.xml
+# TODO: use pkg_resources to fetch the version from setup.py
 __version__ = '2.1.6'

@@ -28,8 +28,7 @@ import typing
 
 def static_variables(**kwargs):
     """
-    This is a decorator that can be used with python methods to attach
-    initialised static variables to the method.
+    Attach initialised static variables to a python method.
 
     .. code-block:: python
 
@@ -48,8 +47,9 @@ def static_variables(**kwargs):
 @static_variables(primitives={bool, str, int, float})
 def is_primitive(incoming: typing.Any) -> bool:
     """
-    Check if an incoming argument is a primitive type with no esoteric
-    accessors (e.g. class attributes or container [] accessors.
+    Check if an incoming argument is a primitive type with no esoteric accessors.
+
+    That is, it has no class attributes or container style [] accessors.
 
     Args:
         incoming: the instance to check
@@ -61,9 +61,7 @@ def is_primitive(incoming: typing.Any) -> bool:
 
 def truncate(original: str, length: int) -> str:
     """
-    Provide an elided version of the string for which the last three
-    characters are dots if the original string does not fit within the
-    specified length.
+    Provide an elided (...) version of a string if it is longer than desired.
 
     Args:
         original: string to elide
@@ -99,15 +97,15 @@ class Process(multiprocessing.Process):
 
 
 def which(program):
-    '''
-    Wrapper around the command line 'which' program.
+    """
+    Call the command line 'which' tool (convenience wrapper).
 
     Args:
         program (:obj:`str`): name of the program to find.
 
     Returns:
         :obj:`str`: path to the program or None if it doesnt exist.
-    '''
+    """
     def is_exe(fpath):
         return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
 
@@ -127,10 +125,15 @@ def which(program):
 
 def get_valid_filename(s: str) -> str:
     """
-    Return the given string converted to a string that can be used for a clean
-    filename (without extension). Remove leading and trailing spaces; convert
-    other spaces and newlines to underscores; and remove anything that is not
-    an alphanumeric, dash, underscore, or dot.
+    Clean up and style a string so that it can be used as a filename.
+
+    This is valid only from the perspective of the py_trees package. It does
+    place a few extra constraints on strings to keep string handling and
+    manipulation complexities to a minimum so that sanity prevails.
+
+    * Removes leading and trailing spaces
+    * Convert other spaces and newlines to underscores
+    * Remove anything that is not an alphanumeric, dash, underscore, or dot
 
     .. code-block:: python
 
@@ -149,9 +152,10 @@ def get_valid_filename(s: str) -> str:
 
 def get_fully_qualified_name(instance: object) -> str:
     """
-    Get at the fully qualified name of an object, e.g.
-    an instance of a :class:`~py_trees.composites.Sequence`
-    becomes 'py_trees.composites.Sequence'.
+    Retrieve the fully qualified name of an object.
+
+    For example, an instance of
+    :class:`~py_trees.composites.Sequence` becomes 'py_trees.composites.Sequence'.
 
     Args:
         instance (:obj:`object`): an instance of any class

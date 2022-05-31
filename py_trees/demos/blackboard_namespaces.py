@@ -8,6 +8,8 @@
 ##############################################################################
 
 """
+Demonstrates usage of blackboard namespaces.
+
 .. argparse::
    :module: py_trees.demos.blackboard_namespaces
    :func: command_line_argument_parser
@@ -73,10 +75,8 @@ def command_line_argument_parser():
 
 
 def main():
-    """
-    Entry point for the demo script.
-    """
-    unused_args = command_line_argument_parser().parse_args()
+    """Entry point for the demo script."""
+    _ = command_line_argument_parser().parse_args()  # configuration only, no args to process
     print(description())
     print("-------------------------------------------------------------------------------")
     print("$ py_trees.blackboard.Client(name='Blackboard')")

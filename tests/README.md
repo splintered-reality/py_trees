@@ -18,6 +18,9 @@ $ pytest-3 -s test_alakazam.py
 # A single test
 $ pytest-3 -s test_action_clients.py::test_success
 
-# Using setuptools from the root dir
-$ python3 setup.py test
+# Using tox from the root dir
+$ tox -l         # list runnable contexts
+$ tox            # everything
+$ tox -e py38    # tests only
+$ tox -e flake8  # lint only
 ```

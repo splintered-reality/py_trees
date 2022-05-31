@@ -8,6 +8,8 @@
 ##############################################################################
 
 """
+Demonstrates sequences in action.
+
 .. argparse::
    :module: py_trees.demos.sequence
    :func: command_line_argument_parser
@@ -86,9 +88,7 @@ def create_root():
 ##############################################################################
 
 def main():
-    """
-    Entry point for the demo script.
-    """
+    """Entry point for the demo script."""
     args = command_line_argument_parser().parse_args()
     print(description())
     py_trees.logging.level = py_trees.logging.Level.DEBUG

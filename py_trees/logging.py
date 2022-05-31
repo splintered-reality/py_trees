@@ -8,6 +8,8 @@
 ##############################################################################
 
 """
+A (very) simple logging module.
+
 .. module:: loggers
    :synopsis: Logging facilities in py_trees.
 
@@ -51,8 +53,10 @@ from . import console
 class Level(IntEnum):
     """
     An enumerator representing the logging level.
+
     Not valid if you override with your own loggers.
     """
+
     DEBUG = 0
     INFO = 1
     WARN = 2
@@ -69,6 +73,8 @@ level = Level.INFO
 
 class Logger(object):
     """
+    Simple logger object.
+
     :cvar override: whether or not the default python logger has been overridden.
     :vartype override: bool
     """

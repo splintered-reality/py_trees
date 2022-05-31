@@ -21,4 +21,5 @@ eclipse
 *.vscode
 dump.json
 tests/blackboard.cprofile
-
+.tox
+testies

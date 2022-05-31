@@ -8,6 +8,8 @@
 ##############################################################################
 
 """
+Demonstrates usage of the ascii/unicode display modes.
+
 .. argparse::
    :module: py_trees.demos.display_modes
    :func: command_line_argument_parser
@@ -100,10 +102,8 @@ def create_root() -> py_trees.behaviour.Behaviour:
 
 
 def main():
-    """
-    Entry point for the demo script.
-    """
-    unused_args = command_line_argument_parser().parse_args()
+    """Entry point for the demo script."""
+    _ = command_line_argument_parser().parse_args()  # configuration only, no args to process
     print(description())
     print("-------------------------------------------------------------------------------")
     print("$ py_trees.blackboard.Client(name='Blackboard')")

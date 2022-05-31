@@ -8,8 +8,7 @@
 ##############################################################################
 
 """
-A library of subtree creators that build complex patterns of behaviours
-representing common behaviour tree idioms.
+A library of subtree creators that build common, but complex patterns of behaviours.
 """
 
 ##############################################################################
@@ -33,9 +32,11 @@ from . import decorators
 
 
 def pick_up_where_you_left_off(
-        name="Pickup Where You Left Off Idiom",
-        tasks=[]):
+        name: str = "Pickup Where You Left Off Idiom",
+        tasks: typing.List[behaviour.Behaviour] = None):
     """
+    Create an idiom that enables a sequence of tasks to pick up where it left off.
+
     Rudely interrupted while enjoying a sandwich, a caveman (just because
     they wore loincloths does not mean they were not civilised), picks
     up his club and fends off the sabre-tooth tiger invading his sanctum
@@ -71,6 +72,8 @@ def pick_up_where_you_left_off(
     Returns:
         :class:`~py_trees.behaviour.Behaviour`: root of the generated subtree
     """
+    if tasks is None:
+        tasks = []
     root = composites.Sequence(name=name)
     for task in tasks:
         task_selector = composites.Selector(name="Do or Don't")
@@ -102,10 +105,12 @@ def pick_up_where_you_left_off(
 
 def eternal_guard(
         subtree: behaviour.Behaviour,
-        name: str="Eternal Guard",
-        conditions: typing.List[behaviour.Behaviour]=[],
-        blackboard_namespace: str=None) -> behaviour.Behaviour:
+        name: str = "Eternal Guard",
+        conditions: typing.List[behaviour.Behaviour] = None,
+        blackboard_namespace: str = None) -> behaviour.Behaviour:
     """
+    Create an idiom that continuously guards a long running sequence of tasks.
+
     The eternal guard idiom implements a stronger :term:`guard` than the typical check at the
     beginning of a sequence of tasks. Here they guard continuously while the task sequence
     is being executed. While executing, if any of the guards should update with
@@ -118,32 +123,35 @@ def eternal_guard(
         subtree: behaviour(s) that actually do the work
         name: the name to use on the root behaviour of the idiom subtree
         conditions: behaviours on which tasks are conditional
-        blackboard_namespace: applied to condition variable results stored on the blackboard (default: derived from the idiom name)
+        blackboard_namespace: applied to condition variable results stored on
+            the blackboard (default: derived from the idiom name)
 
     Returns:
         the root of the idiom subtree
 
     .. seealso:: :class:`py_trees.decorators.EternalGuard`
     """
+    if conditions is None:
+        conditions = []
     if blackboard_namespace is None:
         blackboard_namespace = name.lower().replace(" ", "_")
     blackboard_variable_names = []
     # construct simple, easy to read, variable names (risk of conflict)
     counter = 1
-    for condition in conditions:
+    for _unused_condition in conditions:
         suffix = "" if len(conditions) == 1 else "_{}".format(counter)
         blackboard_variable_names.append(
-            blackboard.Blackboard.separator +
-            blackboard_namespace +
-            "_condition" +
-            suffix
+            blackboard.Blackboard.separator
+            + blackboard_namespace
+            + "_condition"
+            + suffix
         )
         counter += 1
     # if there is just one blackboard name already on the blackboard, switch to unique names
     conflict = False
     for name in blackboard_variable_names:
         try:
-            unused_name = blackboard.Blackboard.get(name)
+            _ = blackboard.Blackboard.get(name)
             conflict = True
         except KeyError:
             pass
@@ -151,7 +159,7 @@ def eternal_guard(
         blackboard_variable_names = []
         counter = 1
         unique_id = uuid.uuid4()
-        for condition in conditions:
+        for _unused_condition in conditions:
             suffix = "" if len(conditions) == 1 else "_{}".format(counter)
             blackboard_variable_names.append(blackboard_namespace + "_" + str(unique_id) + "_condition" + suffix)
             counter += 1
@@ -186,10 +194,12 @@ def eternal_guard(
 def either_or(
     conditions: typing.List[common.ComparisonExpression],
     subtrees: typing.List[behaviour.Behaviour],
-    name="Either Or",
-    namespace: typing.Optional[str]=None
+    name: str = "Either Or",
+    namespace: typing.Optional[str] = None
 ) -> behaviour.Behaviour:
     """
+    Create an idiom with selector-like qualities, but no priority concerns.
+
     Often you need a kind of selector that doesn't implement prioritisations, i.e.
     you would like different paths to be selected on a first-come, first-served basis.
 
@@ -277,13 +287,14 @@ def either_or(
 
 def oneshot(
     behaviour: behaviour.Behaviour,
-    name: str="Oneshot",
-    variable_name: str="oneshot",
-    policy: common.OneShotPolicy=common.OneShotPolicy.ON_SUCCESSFUL_COMPLETION
+    name: str = "Oneshot",
+    variable_name: str = "oneshot",
+    policy: common.OneShotPolicy = common.OneShotPolicy.ON_SUCCESSFUL_COMPLETION
 ) -> behaviour.Behaviour:
     """
-    Ensure that a particular pattern is executed through to
-    completion just once. Thereafter it will just rebound with the completion status.
+    Ensure that a particular pattern is executed through to completion just once.
+
+    Thereafter it will just rebound with the completion status.
 
     .. graphviz:: dot/oneshot.dot
 

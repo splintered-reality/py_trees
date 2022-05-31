@@ -8,6 +8,8 @@
 ##############################################################################
 
 """
+Demonstrates the 'pick up where you left off idiom'.
+
 .. argparse::
    :module: py_trees.demos.pick_up_where_you_left_off
    :func: command_line_argument_parser
@@ -81,8 +83,7 @@ def command_line_argument_parser():
 
 
 def pre_tick_handler(behaviour_tree):
-    """
-    This prints a banner and will run immediately before every tick of the tree.
+    """Print a banner immediately before every tick of the tree.
 
     Args:
         behaviour_tree (:class:`~py_trees.trees.BehaviourTree`): the tree custodian
@@ -92,9 +93,7 @@ def pre_tick_handler(behaviour_tree):
 
 
 def post_tick_handler(snapshot_visitor, behaviour_tree):
-    """
-    Prints an ascii tree with the current snapshot status.
-    """
+    """Print an ascii tree with the current snapshot status."""
     print(
         "\n" + py_trees.display.unicode_tree(
             root=behaviour_tree.root,
@@ -138,9 +137,7 @@ def create_root():
 
 
 def main():
-    """
-    Entry point for the demo script.
-    """
+    """Entry point for the demo script."""
     args = command_line_argument_parser().parse_args()
     py_trees.logging.level = py_trees.logging.Level.DEBUG
     root = create_root()
@@ -169,7 +166,7 @@ def main():
     ####################
     if args.interactive:
         py_trees.console.read_single_keypress()
-    for unused_i in range(1, 11):
+    for _unused_i in range(1, 11):
         try:
             behaviour_tree.tick()
             if args.interactive:

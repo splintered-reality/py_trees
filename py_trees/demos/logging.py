@@ -8,6 +8,8 @@
 ##############################################################################
 
 """
+Demonstrates a simple logging capability.
+
 .. argparse::
    :module: py_trees.demos.logging
    :func: command_line_argument_parser
@@ -82,8 +84,9 @@ def command_line_argument_parser():
 
 
 def logger(snapshot_visitor, behaviour_tree):
-    """
-    A post-tick handler that logs the tree (relevant parts thereof) to a yaml file.
+    """Log the tree (relevant parts thereof) to a yaml file.
+
+    Use as a post-tick handler for a tree.
     """
     if snapshot_visitor.changed:
         print(console.cyan + "Logging.......................yes\n" + console.reset)
@@ -110,7 +113,7 @@ def logger(snapshot_visitor, behaviour_tree):
                 'status': node.status.value,
                 'message': node.feedback_message,
                 'is_active': True if node.id in snapshot_visitor.visited else False
-                }
+            }
             tree_serialisation['nodes'].append(node_snapshot)
         if behaviour_tree.count == 0:
             with open('dump.json', 'w+') as outfile:
@@ -145,9 +148,7 @@ def create_tree():
 ##############################################################################
 
 def main():
-    """
-    Entry point for the demo script.
-    """
+    """Entry point for the demo script."""
     args = command_line_argument_parser().parse_args()
     py_trees.logging.level = py_trees.logging.Level.DEBUG
     tree = create_tree()
