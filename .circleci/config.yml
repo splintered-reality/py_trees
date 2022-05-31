@@ -50,7 +50,7 @@ jobs:
           name: Flake8
           command: |
             . venv/bin/activate
-            ./lint/flake8 | tee flake8_output
+            tox -e flake8
 
       - run:
           name: Static Analysers
