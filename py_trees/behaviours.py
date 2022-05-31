@@ -80,20 +80,20 @@ Crash test dummy used for anything dangerous.
 
 class Periodic(behaviour.Behaviour):
     """
-    Simply periodically rotates it's status over the
-    :data:`~py_trees.common.Status.RUNNING`, :data:`~py_trees.common.Status.SUCCESS`,
-    :data:`~py_trees.common.Status.FAILURE` states.
+    Simply periodically rotates it's status over all each status.
+
     That is, :data:`~py_trees.common.Status.RUNNING` for N ticks,
     :data:`~py_trees.common.Status.SUCCESS` for N ticks,
     :data:`~py_trees.common.Status.FAILURE` for N ticks...
 
     Args:
-        name (:obj:`str`): name of the behaviour
-        n (:obj:`int`): period value (in ticks)
+        name: name of the behaviour
+        n: period value (in ticks)
 
     .. note:: It does not reset the count when initialising.
     """
-    def __init__(self, name, n):
+
+    def __init__(self, name: str, n: int):
         super(Periodic, self).__init__(name)
         self.count = 0
         self.period = n
@@ -119,13 +119,14 @@ class Periodic(behaviour.Behaviour):
 
 class StatusSequence(behaviour.Behaviour):
     """
-    Cycle through the specified sequence of states.
+    Cycle through a specified sequence of states.
 
     Args:
         name: name of the behaviour
         sequence: list of status values to cycle through
         eventually: status to use eventually, None to re-cycle the sequence
     """
+
     def __init__(
             self,
             name: str,
@@ -150,6 +151,8 @@ class StatusSequence(behaviour.Behaviour):
 
 class SuccessEveryN(behaviour.Behaviour):
     """
+    Non-blocking, periodic success.
+
     This behaviour updates it's status with :data:`~py_trees.common.Status.SUCCESS`
     once every N ticks, :data:`~py_trees.common.Status.FAILURE` otherwise.
 
@@ -161,6 +164,7 @@ class SuccessEveryN(behaviour.Behaviour):
        Use with decorators to change the status value as desired, e.g.
        :meth:`py_trees.decorators.FailureIsRunning`
     """
+
     def __init__(self, name, n):
         super(SuccessEveryN, self).__init__(name)
         self.count = 0
@@ -179,6 +183,8 @@ class SuccessEveryN(behaviour.Behaviour):
 
 class TickCounter(behaviour.Behaviour):
     """
+    Block for a specified tick count.
+
     A useful utility behaviour for demos and tests. Simply
     ticks with :data:`~py_trees.common.Status.RUNNING` for
     the specified number of ticks before returning the
@@ -192,11 +198,12 @@ class TickCounter(behaviour.Behaviour):
         duration: number of ticks to run
         completion_status: status to switch to once the counter has expired
     """
+
     def __init__(
         self,
         duration: int,
-        name=common.Name.AUTO_GENERATED,
-        completion_status: common.Status=common.Status.SUCCESS
+        name: typing.Union[str, common.Name] = common.Name.AUTO_GENERATED,
+        completion_status: common.Status = common.Status.SUCCESS
     ):
         super().__init__(name=name)
         self.completion_status = completion_status
@@ -211,8 +218,7 @@ class TickCounter(behaviour.Behaviour):
 
     def update(self):
         """
-        Increment the tick counter and return the appropriate status for this behaviour
-        based on the tick count.
+        Increment the tick counter and check to see if it should complete.
 
         Returns
             :data:`~py_trees.common.Status.RUNNING` while not expired, the given completion status otherwise
@@ -226,6 +232,8 @@ class TickCounter(behaviour.Behaviour):
 
 class Count(behaviour.Behaviour):
     """
+    A simple counter.
+
     A counting behaviour that updates its status at each tick depending on
     the value of the counter. The status will move through the states in order -
     :data:`~py_trees.common.Status.FAILURE`, :data:`~py_trees.common.Status.RUNNING`,
@@ -234,16 +242,22 @@ class Count(behaviour.Behaviour):
     This behaviour is useful for simple testing and demo scenarios.
 
     Args:
-        name (:obj:`str`): name of the behaviour
-        fail_until (:obj:`int`): set status to :data:`~py_trees.common.Status.FAILURE` until the counter reaches this value
-        running_until (:obj:`int`): set status to :data:`~py_trees.common.Status.RUNNING` until the counter reaches this value
-        success_until (:obj:`int`): set status to :data:`~py_trees.common.Status.SUCCESS` until the counter reaches this value
-        reset (:obj:`bool`): whenever invalidated (usually by a sequence reinitialising, or higher priority interrupting)
+        name: name of the behaviour
+        fail_until: set status to :data:`~py_trees.common.Status.FAILURE` until the counter reaches this value
+        running_until: set status to :data:`~py_trees.common.Status.RUNNING` until the counter reaches this value
+        success_until: set status to :data:`~py_trees.common.Status.SUCCESS` until the counter reaches this value
+        reset: whenever invalidated (usually by a sequence reinitialising, or higher priority interrupting)
 
     Attributes:
         count (:obj:`int`): a simple counter which increments every tick
     """
-    def __init__(self, name="Count", fail_until=3, running_until=5, success_until=6, reset=True):
+
+    def __init__(
+        self,
+        name: str = "Count",
+        fail_until: int = 3, running_until: int = 5, success_until: int = 6,
+        reset: bool = True
+    ):
         super(Count, self).__init__(name)
         self.count = 0
         self.fail_until = fail_until
@@ -283,7 +297,7 @@ class Count(behaviour.Behaviour):
 
     def __repr__(self):
         """
-        Simple string representation of the object.
+        Generate a simple string representation of the object.
 
         Returns:
             :obj:`str`: string representation
@@ -302,6 +316,8 @@ class Count(behaviour.Behaviour):
 
 class BlackboardToStatus(behaviour.Behaviour):
     """
+    Reflects a :py:data:`~py_trees.common.Status` stored in a blackboard variable.
+
     This behaviour reverse engineers the :class:`~py_trees.decorators.StatusToBlackboard`
     decorator. Used in conjuction with that decorator, this behaviour can be used to
     reflect the status of a decision elsewhere in the tree.
@@ -323,10 +339,11 @@ class BlackboardToStatus(behaviour.Behaviour):
         KeyError: if the variable doesn't exist
         TypeError: if the variable isn't of type :py:data:`~py_trees.common.Status`
     """
+
     def __init__(
         self,
         variable_name: str,
-        name: typing.Union[str, common.Name]=common.Name.AUTO_GENERATED
+        name: typing.Union[str, common.Name] = common.Name.AUTO_GENERATED
     ):
         super().__init__(name=name)
         name_components = variable_name.split('.')
@@ -354,6 +371,8 @@ class BlackboardToStatus(behaviour.Behaviour):
 
 class CheckBlackboardVariableExists(behaviour.Behaviour):
     """
+    A non-blocking check for the existence of a blackboard variable.
+
     Check the blackboard to verify if a specific variable (key-value pair)
     exists. This is non-blocking, so will always tick with
     status :data:`~py_trees.common.Status.FAILURE`
@@ -368,10 +387,11 @@ class CheckBlackboardVariableExists(behaviour.Behaviour):
         variable_name: name of the variable look for, may be nested, e.g. battery.percentage
         name: name of the behaviour
     """
+
     def __init__(
             self,
             variable_name: str,
-            name: typing.Union[str, common.Name]=common.Name.AUTO_GENERATED
+            name: typing.Union[str, common.Name] = common.Name.AUTO_GENERATED
     ):
         super().__init__(name=name)
         self.variable_name = variable_name
@@ -390,7 +410,7 @@ class CheckBlackboardVariableExists(behaviour.Behaviour):
         """
         self.logger.debug("%s.update()" % self.__class__.__name__)
         try:
-            unused_value = self.blackboard.get(self.variable_name)
+            _ = self.blackboard.get(self.variable_name)
             self.feedback_message = "variable '{}' found".format(self.variable_name)
             return common.Status.SUCCESS
         except KeyError:
@@ -400,7 +420,8 @@ class CheckBlackboardVariableExists(behaviour.Behaviour):
 
 class WaitForBlackboardVariable(CheckBlackboardVariableExists):
     """
-    Wait for the blackboard variable to become available on the blackboard.
+    Block until a blackboard variable comes into existence.
+
     This is blocking, so it will tick with
     status :data:`~py_trees.common.Status.SUCCESS` if the variable is found,
     and :data:`~py_trees.common.Status.RUNNING` otherwise.
@@ -414,10 +435,11 @@ class WaitForBlackboardVariable(CheckBlackboardVariableExists):
         variable_name: name of the variable to wait for, may be nested, e.g. battery.percentage
         name: name of the behaviour
     """
+
     def __init__(
             self,
             variable_name: str,
-            name: typing.Union[str, common.Name]=common.Name.AUTO_GENERATED
+            name: typing.Union[str, common.Name] = common.Name.AUTO_GENERATED
     ):
         super().__init__(name=name, variable_name=variable_name)
 
@@ -451,9 +473,10 @@ class UnsetBlackboardVariable(behaviour.Behaviour):
         key: unset this key-value pair
         name: name of the behaviour
     """
+
     def __init__(self,
                  key: str,
-                 name: typing.Union[str, common.Name]=common.Name.AUTO_GENERATED,
+                 name: typing.Union[str, common.Name] = common.Name.AUTO_GENERATED,
                  ):
         super().__init__(name=name)
         self.key = key
@@ -484,12 +507,13 @@ class SetBlackboardVariable(behaviour.Behaviour):
         overwrite: when False, do not set the variable if it already exists
         name: name of the behaviour
     """
+
     def __init__(
             self,
             variable_name: str,
             variable_value: typing.Union[typing.Any, typing.Callable[[], typing.Any]],
             overwrite: bool = True,
-            name: typing.Union[str, common.Name]=common.Name.AUTO_GENERATED,
+            name: typing.Union[str, common.Name] = common.Name.AUTO_GENERATED,
     ):
         super().__init__(name=name)
         self.variable_name = variable_name
@@ -503,10 +527,11 @@ class SetBlackboardVariable(behaviour.Behaviour):
 
     def update(self) -> common.Status:
         """
-        Always return success.
+        Attempt to set the stored value in the requested blackboard variable.
 
         Returns:
-             :data:`~py_trees.common.Status.FAILURE` if no overwrite requested and the variable exists,  :data:`~py_trees.common.Status.SUCCESS` otherwise
+             :data:`~py_trees.common.Status.FAILURE` if no overwrite requested
+                 and the variable exists,  :data:`~py_trees.common.Status.SUCCESS` otherwise
         """
         if self.blackboard.set(
             self.variable_name,
@@ -520,6 +545,8 @@ class SetBlackboardVariable(behaviour.Behaviour):
 
 class CheckBlackboardVariableValue(behaviour.Behaviour):
     """
+    Non-blocking check to determine if a blackboard variable matches a given value/expression.
+
     Inspect a blackboard variable and if it exists, check that it
     meets the specified criteria (given by operation type and expected value).
     This is non-blocking, so it will always tick with
@@ -537,10 +564,11 @@ class CheckBlackboardVariableValue(behaviour.Behaviour):
     .. tip::
         The python `operator module`_ includes many useful comparison operations.
     """
+
     def __init__(
             self,
             check: common.ComparisonExpression,
-            name: typing.Union[str, common.Name]=common.Name.AUTO_GENERATED
+            name: typing.Union[str, common.Name] = common.Name.AUTO_GENERATED
     ):
         super().__init__(name=name)
         self.check = check
@@ -555,7 +583,8 @@ class CheckBlackboardVariableValue(behaviour.Behaviour):
         Check for existence, or the appropriate match on the expected value.
 
         Returns:
-             :class:`~py_trees.common.Status`: :data:`~py_trees.common.Status.FAILURE` if not matched, :data:`~py_trees.common.Status.SUCCESS` otherwise.
+             :class:`~py_trees.common.Status`: :data:`~py_trees.common.Status.FAILURE`
+                 if not matched, :data:`~py_trees.common.Status.SUCCESS` otherwise.
         """
         self.logger.debug("%s.update()" % self.__class__.__name__)
         try:
@@ -564,7 +593,10 @@ class CheckBlackboardVariableValue(behaviour.Behaviour):
                 try:
                     value = operator.attrgetter(self.key_attributes)(value)
                 except AttributeError:
-                    self.feedback_message = 'blackboard key-value pair exists, but the value does not have the requested nested attributes [{}]'.format(self.variable_name)
+                    self.feedback_message = (
+                        "blackboard key-value pair exists, but the value does not "
+                        f"have the requested nested attributes [{self.variable_name}]"
+                    )
                     return common.Status.FAILURE
         except KeyError:
             self.feedback_message = "key '{}' does not yet exist on the blackboard".format(self.check.variable)
@@ -573,15 +605,25 @@ class CheckBlackboardVariableValue(behaviour.Behaviour):
         success = self.check.operator(value, self.check.value)
 
         if success:
-            self.feedback_message = "'%s' comparison succeeded [v: %s][e: %s]" % (self.check.variable, value, self.check.value)
+            self.feedback_message = "'%s' comparison succeeded [v: %s][e: %s]" % (
+                self.check.variable,
+                value,
+                self.check.value
+            )
             return common.Status.SUCCESS
         else:
-            self.feedback_message = "'%s' comparison failed [v: %s][e: %s]" % (self.check.variable, value, self.check.value)
+            self.feedback_message = "'%s' comparison failed [v: %s][e: %s]" % (
+                self.check.variable,
+                value,
+                self.check.value
+            )
             return common.Status.FAILURE
 
 
 class WaitForBlackboardVariableValue(CheckBlackboardVariableValue):
     """
+    Block until a blackboard variable matches a given value/expression.
+
     Inspect a blackboard variable and if it exists, check that it
     meets the specified criteria (given by operation type and expected value).
     This is blocking, so it will always tick with
@@ -601,10 +643,11 @@ class WaitForBlackboardVariableValue(CheckBlackboardVariableValue):
         check: a comparison expression to check against
         name: name of the behaviour
     """
+
     def __init__(
             self,
             check: common.ComparisonExpression,
-            name: typing.Union[str, common.Name]=common.Name.AUTO_GENERATED
+            name: typing.Union[str, common.Name] = common.Name.AUTO_GENERATED
     ):
         super().__init__(
             check=check,
@@ -616,7 +659,8 @@ class WaitForBlackboardVariableValue(CheckBlackboardVariableValue):
         Check for existence, or the appropriate match on the expected value.
 
         Returns:
-             :class:`~py_trees.common.Status`: :data:`~py_trees.common.Status.FAILURE` if not matched, :data:`~py_trees.common.Status.SUCCESS` otherwise.
+             :class:`~py_trees.common.Status`: :data:`~py_trees.common.Status.FAILURE`
+                 if not matched, :data:`~py_trees.common.Status.SUCCESS` otherwise.
         """
         new_status = super().update()
         if new_status == common.Status.FAILURE:
@@ -628,6 +672,7 @@ class WaitForBlackboardVariableValue(CheckBlackboardVariableValue):
 class CheckBlackboardVariableValues(behaviour.Behaviour):
     """
     Apply a logical operation across a set of blackboard variable checks.
+
     This is non-blocking, so will always tick with status
     :data:`~py_trees.common.Status.FAILURE` or
     :data:`~py_trees.common.Status.SUCCESS`.
@@ -644,12 +689,13 @@ class CheckBlackboardVariableValues(behaviour.Behaviour):
     Raises:
         ValueError if less than two variable checks are specified (insufficient for logical operations)
     """
+
     def __init__(
         self,
         checks: typing.List[common.ComparisonExpression],
         operator: typing.Callable[[bool, bool], bool],
-        name: typing.Union[str, common.Name]=common.Name.AUTO_GENERATED,
-        namespace: typing.Optional[str]=None,
+        name: typing.Union[str, common.Name] = common.Name.AUTO_GENERATED,
+        namespace: typing.Optional[str] = None,
     ):
         super().__init__(name=name)
         self.checks = checks
@@ -673,11 +719,11 @@ class CheckBlackboardVariableValues(behaviour.Behaviour):
 
     def update(self) -> common.Status:
         """
-        Applies comparison checks on each variable and a logical check across the
-        complete set of variables.
+        Apply comparison checks on each and a logical check across all variables.
 
         Returns:
-             :data:`~py_trees.common.Status.FAILURE` if key retrieval or logical checks failed, :data:`~py_trees.common.Status.SUCCESS` otherwise.
+             :data:`~py_trees.common.Status.FAILURE` if key retrieval or logical
+                 checks failed, :data:`~py_trees.common.Status.SUCCESS` otherwise.
         """
         self.logger.debug("%s.update()" % self.__class__.__name__)
         results = []

@@ -8,6 +8,8 @@
 ##############################################################################
 
 """
+Tree stewardship.
+
 While a graph of connected behaviours and composites form a tree in their own right
 (i.e. it can be initialised and ticked), it is usually convenient to wrap your tree
 in another class to take care of alot of the housework and provide some extra bells
@@ -45,12 +47,11 @@ CONTINUOUS_TICK_TOCK = -1
 
 
 def setup(root: behaviour.Behaviour,
-          timeout: typing.Union[float, common.Duration]=common.Duration.INFINITE,
-          visitor: visitors.VisitorBase=None,
+          timeout: typing.Union[float, common.Duration] = common.Duration.INFINITE,
+          visitor: visitors.VisitorBase = None,
           **kwargs: int):
     """
-    Crawls across a (sub)tree of behaviours
-    calling :meth:`~py_trees.behaviour.Behaviour.setup` on each behaviour.
+    Crawl across a (sub)tree of behaviours calling :meth:`~py_trees.behaviour.Behaviour.setup` on each behaviour.
 
     Visitors can optionally be provided to provide a node-by-node analysis
     on the result of each node's :meth:`~py_trees.behaviour.Behaviour.setup`
@@ -71,13 +72,13 @@ def setup(root: behaviour.Behaviour,
     # SIGUSR1 is a better choice since it's a user defined operation, but these
     # are not available on windows, so overload one of the standard definitions
     try:
-        _SIGNAL = signal.SIGUSR1
+        _SIGNAL = signal.SIGUSR1  # noqa
     except AttributeError:  # windows...
         # SIGINT can get you into trouble if for example, you are using a
         # process manager that plays shenanigans with SIGINT. Nonetheless,
         # it will work in most situations. If a windows user is running into
         # problems, work with them to resolve it.
-        _SIGNAL = signal.SIGINT
+        _SIGNAL = signal.SIGINT  # noqa
     current_behaviour_name = None
 
     def on_timer_timed_out():
@@ -127,8 +128,10 @@ def setup(root: behaviour.Behaviour,
 
 class BehaviourTree(object):
     """
-    Grow, water, prune your behaviour tree with this, the default reference
-    implementation. It features a few enhancements to provide richer logging,
+    Grow, water, prune your behaviour tree with this, the tree custodian.
+
+    It features a few enhancements that go above and beyond just ticking
+    the root behaviour of a tree. These provide richer logging,
     introspection and dynamic management of the tree itself:
 
     * Pre and post tick handlers to execute code automatically before and after a tick
@@ -151,6 +154,7 @@ class BehaviourTree(object):
     Raises:
         TypeError: if root variable is not an instance of :class:`~py_trees.behaviour.Behaviour`
     """
+
     def __init__(self, root: behaviour.Behaviour):
         self.count: int = 0
         if not isinstance(root, behaviour.Behaviour):
@@ -164,7 +168,9 @@ class BehaviourTree(object):
 
     def add_pre_tick_handler(self, handler: typing.Callable[['BehaviourTree'], None]):
         """
-        Add a function to execute before the tree is ticked. The function must have
+        Add a function to execute before the tree is ticked.
+
+        The function must have
         a single argument of type :class:`~py_trees.trees.BehaviourTree`.
 
         Some ideas that are often used:
@@ -179,7 +185,9 @@ class BehaviourTree(object):
 
     def add_post_tick_handler(self, handler: typing.Callable[['BehaviourTree'], None]):
         """
-        Add a function to execute after the tree has ticked. The function must have
+        Add a function to execute after the tree has ticked.
+
+        The function must have
         a single argument of type :class:`~py_trees.trees.BehaviourTree`.
 
         Some ideas that are often used:
@@ -196,6 +204,8 @@ class BehaviourTree(object):
 
     def add_visitor(self, visitor: visitors.VisitorBase):
         """
+        Welcome a visitor.
+
         Trees can run multiple visitors on each behaviour as they
         tick through a tree.
 
@@ -236,8 +246,9 @@ class BehaviourTree(object):
 
     def insert_subtree(self, child, unique_id, index):
         """
-        Insert a subtree as a child of the specified parent. If the parent
-        is found, this directly calls the parent's
+        Insert a subtree as a child of the specified parent.
+
+        If the parent is found, this directly calls the parent's
         :meth:`~py_trees.composites.Composite.insert_child`
         method using the child and index arguments.
 
@@ -272,6 +283,7 @@ class BehaviourTree(object):
     def replace_subtree(self, unique_id, subtree):
         """
         Replace the subtree with the specified id for the new subtree.
+
         This is a common pattern where we'd like to swap out a whole sub-behaviour for another one.
 
         Args:
@@ -298,12 +310,11 @@ class BehaviourTree(object):
         return False
 
     def setup(self,
-              timeout: typing.Union[float, common.Duration]=common.Duration.INFINITE,
-              visitor: visitors.VisitorBase=None,
+              timeout: typing.Union[float, common.Duration] = common.Duration.INFINITE,
+              visitor: visitors.VisitorBase = None,
               **kwargs):
         """
-        Crawls across the tree calling :meth:`~py_trees.behaviour.Behaviour.setup`
-        on each behaviour.
+        Crawl across the tree calling :meth:`~py_trees.behaviour.Behaviour.setup` on each behaviour.
 
         Visitors can optionally be provided to provide a node-by-node analysis
         on the result of each node's :meth:`~py_trees.behaviour.Behaviour.setup`
@@ -331,8 +342,10 @@ class BehaviourTree(object):
     def tick(self, pre_tick_handler=None, post_tick_handler=None):
         """
         Tick the tree just once and run any handlers before and after the tick.
+
         This optionally accepts some one-shot handlers (c.f. those added by
-        :meth:`~py_trees.trees.BehaviourTree.add_pre_tick_handler` and :meth:`~py_trees.trees.BehaviourTree.add_post_tick_handler`
+        :meth:`~py_trees.trees.BehaviourTree.add_pre_tick_handler` and
+        :meth:`~py_trees.trees.BehaviourTree.add_post_tick_handler`
         which will be automatically run every time).
 
         The handler functions must have a single argument of type :class:`~py_trees.trees.BehaviourTree`.
@@ -373,14 +386,17 @@ class BehaviourTree(object):
                   pre_tick_handler=None,
                   post_tick_handler=None):
         """
-        Tick continuously with period as specified. Depending on the implementation, the
+        Tick continuously with period as specified.
+
+        Depending on the implementation, the
         period may be more or less accurate and may drift in some cases (the default
         implementation here merely assumes zero time in tick and sleeps for this duration
         of time and consequently, will drift).
 
         This optionally accepts some handlers that will
         be used for the duration of this tick tock (c.f. those added by
-        :meth:`~py_trees.trees.BehaviourTree.add_pre_tick_handler` and :meth:`~py_trees.trees.BehaviourTree.add_post_tick_handler`
+        :meth:`~py_trees.trees.BehaviourTree.add_pre_tick_handler`
+        and :meth:`~py_trees.trees.BehaviourTree.add_post_tick_handler`
         which will be automatically run every time).
 
         The handler functions must have a single argument of type :class:`~py_trees.trees.BehaviourTree`.
@@ -392,7 +408,10 @@ class BehaviourTree(object):
             post_tick_handler (:obj:`func`): function to execute after ticking
         """
         tick_tocks = 0
-        while not self.interrupt_tick_tocking and (tick_tocks < number_of_iterations or number_of_iterations == CONTINUOUS_TICK_TOCK):
+        while (
+            not self.interrupt_tick_tocking
+            and (tick_tocks < number_of_iterations or number_of_iterations == CONTINUOUS_TICK_TOCK)
+        ):
             self.tick(pre_tick_handler, post_tick_handler)
             try:
                 time.sleep(period_ms / 1000.0)
@@ -404,11 +423,13 @@ class BehaviourTree(object):
     def tip(self):
         """
         Get the *tip* of the tree.
+
         This corresponds to the the deepest node that was running before the
         subtree traversal reversed direction and headed back to this node.
 
         Returns:
-            :class:`~py_trees.behaviour.Behaviour` or :obj:`None`: child behaviour, itself or :obj:`None` if its status is :data:`~py_trees.common.Status.INVALID`
+            :class:`~py_trees.behaviour.Behaviour` or :obj:`None`: child behaviour,
+                itself or :obj:`None` if its status is :data:`~py_trees.common.Status.INVALID`
 
         .. seealso:: :meth:`~py_trees.behaviour.Behaviour.tip`
         """
@@ -416,15 +437,16 @@ class BehaviourTree(object):
 
     def interrupt(self):
         """
-        Interrupt tick-tock if it is tick-tocking. Note that this will permit a currently
+        Interrupt tick-tock if it is tick-tocking.
+
+        Note that this will permit a currently
         executing tick to finish before interrupting the tick-tock.
         """
         self.interrupt_tick_tocking = True
 
     def shutdown(self):
         """
-        Crawls across the tree calling :meth:`~py_trees.behaviour.Behaviour.shutdown`
-        on each behaviour.
+        Crawl across the tree, calling :meth:`~py_trees.behaviour.Behaviour.shutdown` on each behaviour.
 
         Raises:
             Exception: be ready to catch if any of the behaviours raise an exception

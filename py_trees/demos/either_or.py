@@ -8,6 +8,8 @@
 ##############################################################################
 
 """
+A demonstration of the 'either_or' idiom.
+
 .. argparse::
    :module: py_trees.demos.either_or
    :func: command_line_argument_parser
@@ -170,9 +172,7 @@ def create_root():
 
 
 def main():
-    """
-    Entry point for the demo script.
-    """
+    """Entry point for the demo script."""
     args = command_line_argument_parser().parse_args()
     # py_trees.logging.level = py_trees.logging.Level.DEBUG
     root = create_root()
@@ -201,7 +201,7 @@ def main():
     ####################
     if args.interactive:
         py_trees.console.read_single_keypress()
-    for unused_i in range(1, 11):
+    for _unused_i in range(1, 11):
         try:
             behaviour_tree.tick()
             if args.interactive:

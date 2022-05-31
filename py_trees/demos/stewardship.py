@@ -8,6 +8,8 @@
 ##############################################################################
 
 """
+Demonstrates various aspects of tree stewardship.
+
 .. argparse::
    :module: py_trees.demos.stewardship
    :func: command_line_argument_parser
@@ -90,6 +92,7 @@ def pre_tick_handler(behaviour_tree):
 
 
 class SuccessEveryN(py_trees.behaviours.SuccessEveryN):
+
     def __init__(self):
         super().__init__(name="EveryN", n=5)
         self.blackboard = self.attach_blackboard_client(name=self.name)
@@ -151,9 +154,7 @@ def create_tree():
 ##############################################################################
 
 def main():
-    """
-    Entry point for the demo script.
-    """
+    """Entry point for the demo script."""
     args = command_line_argument_parser().parse_args()
     py_trees.logging.level = py_trees.logging.Level.DEBUG
     tree = create_tree()

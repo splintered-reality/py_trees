@@ -8,6 +8,8 @@
 ##############################################################################
 
 """
+Demonstrates usage of blackboard remappings.
+
 .. argparse::
    :module: py_trees.demos.blackboard_remappings
    :func: command_line_argument_parser
@@ -70,9 +72,8 @@ def command_line_argument_parser():
 
 
 class Remap(py_trees.behaviour.Behaviour):
-    """
-    Custom writer that submits a more complicated variable to the blackboard.
-    """
+    """Custom writer that submits a more complicated variable to the blackboard."""
+
     def __init__(self, name: str, remap_to: typing.Dict[str, str]):
         super().__init__(name=name)
         self.logger.debug("%s.__init__()" % (self.__class__.__name__))
@@ -84,8 +85,9 @@ class Remap(py_trees.behaviour.Behaviour):
         )
 
     def update(self):
-        """
-        Write a dictionary to the blackboard and return :data:`~py_trees.common.Status.SUCCESS`.
+        """Write a dictionary to the blackboard.
+
+        This beaviour always returns :data:`~py_trees.common.Status.SUCCESS`.
         """
         self.logger.debug("%s.update()" % (self.__class__.__name__))
         self.blackboard.foo.bar.wow = "colander"
@@ -98,10 +100,8 @@ class Remap(py_trees.behaviour.Behaviour):
 
 
 def main():
-    """
-    Entry point for the demo script.
-    """
-    args = command_line_argument_parser().parse_args()
+    """Entry point for the demo script."""
+    _ = command_line_argument_parser().parse_args()  # configuration only, no arg processing
     print(description())
     py_trees.logging.level = py_trees.logging.Level.DEBUG
     py_trees.blackboard.Blackboard.enable_activity_stream(maximum_size=100)

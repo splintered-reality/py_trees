@@ -6,9 +6,7 @@
 # Documentation
 ##############################################################################
 
-"""
-This package contains py_trees program script code.
-"""
+"""This package contains py_trees program script code."""
 
 ##############################################################################
 # Imports

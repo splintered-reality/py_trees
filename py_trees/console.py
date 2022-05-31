@@ -41,11 +41,13 @@ import sys
 ##############################################################################
 
 
-def has_unicode(encoding: str=sys.stdout.encoding) -> bool:
+def has_unicode(encoding: str = sys.stdout.encoding) -> bool:
     """
-    Define whether the specified encoding has unicode symbols. Usually used to check
-    if the stdout is capable or otherwise (e.g. Jenkins CI can often be configured
-    with unicode disabled).
+    Define whether the specified encoding has unicode symbols.
+
+    This is usually used to check
+    if stdout is capable of unicode or otherwise (e.g.
+    Jenkins CI is often be configured with unicode disabled).
 
     Args:
         encoding (:obj:`str`, optional): the encoding to check against.
@@ -64,8 +66,10 @@ def has_unicode(encoding: str=sys.stdout.encoding) -> bool:
     return True
 
 
-def define_symbol_or_fallback(original: str, fallback: str, encoding: str=sys.stdout.encoding):
+def define_symbol_or_fallback(original: str, fallback: str, encoding: str = sys.stdout.encoding):
     """
+    Go unicode, or fallback to ascii.
+
     Return the correct encoding according to the specified encoding. Used to
     make sure we get an appropriate symbol, even if the shell is merely ascii as
     is often the case on, e.g. Jenkins CI.
@@ -102,7 +106,7 @@ circled_m = u'\u24c2'
 
 
 def read_single_keypress():
-    """Waits for a single keypress on stdin.
+    """Wait for a single keypress on stdin.
 
     This is a silly function to call if you need to do it a lot because it has
     to store stdin's current setup, setup stdin for reading single keystrokes
@@ -126,17 +130,17 @@ def read_single_keypress():
         # make raw - the way to do this comes from the termios(3) man page.
         attrs = list(attrs_save)  # copy the stored version to update
         # iflag
-        attrs[0] &= ~(termios.IGNBRK | termios.BRKINT | termios.PARMRK |
-                      termios.ISTRIP | termios.INLCR | termios. IGNCR |
-                      termios.ICRNL | termios.IXON)
+        attrs[0] &= ~(termios.IGNBRK | termios.BRKINT | termios.PARMRK
+                      | termios.ISTRIP | termios.INLCR | termios. IGNCR
+                      | termios.ICRNL | termios.IXON)
         # oflag
         attrs[1] &= ~termios.OPOST
         # cflag
         attrs[2] &= ~(termios.CSIZE | termios. PARENB)
         attrs[2] |= termios.CS8
         # lflag
-        attrs[3] &= ~(termios.ECHONL | termios.ECHO | termios.ICANON |
-                      termios.ISIG | termios.IEXTEN)
+        attrs[3] &= ~(termios.ECHONL | termios.ECHO | termios.ICANON
+                      | termios.ISIG | termios.IEXTEN)
         termios.tcsetattr(fd, termios.TCSANOW, attrs)
         # turn off non-blocking
         fcntl.fcntl(fd, fcntl.F_SETFL, flags_save & ~os.O_NONBLOCK)
@@ -152,8 +156,7 @@ def read_single_keypress():
         return ret
 
     def read_single_keypress_windows():
-        """Windows case, can't use fcntl and termios.
-        Not same implementation as for Unix, requires a newline to continue.
+        """Implement keypress functionality for windows, which can't use fcntl and termios.
         """
         import msvcrt  # noqa
         # read a single keystroke
@@ -167,7 +170,12 @@ def read_single_keypress():
         try:
             return read_single_keypress_windows()
         except ImportError as e_windows:
-            raise ImportError("Neither unix nor windows implementations supported [{}][{}]".format(str(e_unix), str(e_windows)))
+            raise ImportError(
+                "Neither unix nor windows implementations supported [{}][{}]".format(
+                    str(e_unix),
+                    str(e_windows)
+                )
+            )
 
 ##############################################################################
 # Methods
@@ -176,15 +184,15 @@ def read_single_keypress():
 
 def console_has_colours():
     """
-    Detects if the console (stdout) has colourising capability.
+    Detect if the console (stdout) has colourising capability.
     """
     if os.environ.get("PY_TREES_DISABLE_COLORS"):
         return False
     # From django.core.management.color.supports_color
     #   https://github.com/django/django/blob/master/django/core/management/color.py
     plat = sys.platform
-    supported_platform = plat != 'Pocket PC' and (plat != 'win32' or
-                                                  'ANSICON' in os.environ)
+    supported_platform = plat != 'Pocket PC' and (plat != 'win32'
+                                                  or 'ANSICON' in os.environ)
     # isatty is not always implemented, #6223.
     is_a_tty = hasattr(sys.stdout, 'isatty') and sys.stdout.isatty()
     if not supported_platform or not is_a_tty:
@@ -204,7 +212,8 @@ if has_colours:
     underlined = "\x1b[%sm" % '4'
     blink = "\x1b[%sm" % '5'
     black, red, green, yellow, blue, magenta, cyan, white = ["\x1b[%sm" % str(i) for i in range(30, 38)]
-    bold_black, bold_red, bold_green, bold_yellow, bold_blue, bold_magenta, bold_cyan, bold_white = ["\x1b[%sm" % ('1;' + str(i)) for i in range(30, 38)]
+    bold_black, bold_red, bold_green, bold_yellow, bold_blue, bold_magenta, bold_cyan, bold_white = \
+        ["\x1b[%sm" % ('1;' + str(i)) for i in range(30, 38)]
 else:
     reset = ""
     bold = ""
@@ -212,7 +221,8 @@ else:
     underlined = ""
     blink = ""
     black, red, green, yellow, blue, magenta, cyan, white = ["" for i in range(30, 38)]
-    bold_black, bold_red, bold_green, bold_yellow, bold_blue, bold_magenta, bold_cyan, bold_white = ["" for i in range(30, 38)]
+    bold_black, bold_red, bold_green, bold_yellow, bold_blue, bold_magenta, bold_cyan, bold_white = \
+        ["" for i in range(30, 38)]
 
 colours = [bold, dim, underlined, blink,
            black, red, green, yellow, blue, magenta, cyan, white,
@@ -266,52 +276,52 @@ def error(msg):
 
 
 def logdebug(message):
-    '''
+    """
     Prefixes ``[DEBUG]`` and colours the message green.
 
     Args:
         message (:obj:`str`): message to log.
-    '''
+    """
     print(green + "[DEBUG] " + message + reset)
 
 
 def loginfo(message):
-    '''
+    """
     Prefixes ``[ INFO]`` to the message.
 
     Args:
         message (:obj:`str`): message to log.
-    '''
+    """
     print("[ INFO] " + message)
 
 
 def logwarn(message):
-    '''
+    """
     Prefixes ``[ WARN]`` and colours the message yellow.
 
     Args:
         message (:obj:`str`): message to log.
-    '''
+    """
     print(yellow + "[ WARN] " + message + reset)
 
 
 def logerror(message):
-    '''
+    """
     Prefixes ``[ERROR]`` and colours the message red.
 
     Args:
         message (:obj:`str`): message to log.
-    '''
+    """
     print(red + "[ERROR] " + message + reset)
 
 
 def logfatal(message):
-    '''
+    """
     Prefixes ``[FATAL]`` and colours the message bold red.
 
     Args:
         message (:obj:`str`): message to log.
-    '''
+    """
     print(bold_red + "[FATAL] " + message + reset)
 
 

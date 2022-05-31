@@ -8,6 +8,8 @@
 ##############################################################################
 
 """
+Program to render dot/svg/png graphs of methods that return a pytree.
+
 .. argparse::
    :module: py_trees.programs.render
    :func: command_line_argument_parser
@@ -34,11 +36,13 @@ import py_trees.console as console
 
 
 def examples():
-    examples = [console.cyan + "py-trees-render" + console.yellow + " py_trees.demos.stewardship.create_tree" + console.reset,
-                console.cyan + "py-trees-render" + console.yellow + " --with-blackboard-variables" + console.reset,
-                console.cyan + "py-trees-render" + console.yellow + " --name=foo py_trees.demos.stewardship.create_tree" + console.reset,
-                console.cyan + "py-trees-render" + console.yellow + " --kwargs='{\"level\":\"all\"}' py_trees.demos.dot_graphs.create_tree" + console.reset
-                ]
+    prefix = console.cyan + "py-trees-render" + console.yellow
+    examples = [
+        prefix + " py_trees.demos.stewardship.create_tree" + console.reset,
+        prefix + " --with-blackboard-variables" + console.reset,
+        prefix + " --name=foo py_trees.demos.stewardship.create_tree" + console.reset,
+        prefix + " --kwargs='{\"level\":\"all\"}' py_trees.demos.dot_graphs.create_tree" + console.reset
+    ]
     return examples
 
 
@@ -82,15 +86,32 @@ def command_line_argument_parser():
                                      epilog=epilog(),
                                      formatter_class=argparse.RawDescriptionHelpFormatter,
                                      )
-    parser.add_argument('method', default=None, help='space separated list of blackboard variables to watch')
-    parser.add_argument('-l', '--level', action='store',
-                        default='fine_detail',
-                        choices=['all', 'fine_detail', 'detail', 'component', 'big_picture'],
-                        help='visibility level')
-    parser.add_argument('-n', '--name', default=None, help='name to use for the created files (defaults to the root behaviour name)')
-    parser.add_argument('-k', '--kwargs', default="{}", type=json.loads, help='dictionary of keyword arguments to the method')
-    parser.add_argument('-b', '--with-blackboard-variables', default=False, action='store_true', help='add nodes for the blackboard variables')
-    parser.add_argument('-v', '--verbose', default=False, action='store_true', help="embellish each node in the dot graph with extra information")
+    parser.add_argument(
+        'method', default=None,
+        help='space separated list of blackboard variables to watch'
+    )
+    parser.add_argument(
+        '-l', '--level', action='store',
+        default='fine_detail',
+        choices=['all', 'fine_detail', 'detail', 'component', 'big_picture'],
+        help='visibility level'
+    )
+    parser.add_argument(
+        '-n', '--name', default=None,
+        help='name to use for the created files (defaults to the root behaviour name)'
+    )
+    parser.add_argument(
+        '-k', '--kwargs', default="{}", type=json.loads,
+        help='dictionary of keyword arguments to the method'
+    )
+    parser.add_argument(
+        '-b', '--with-blackboard-variables', default=False, action='store_true',
+        help='add nodes for the blackboard variables'
+    )
+    parser.add_argument(
+        '-v', '--verbose', default=False, action='store_true',
+        help="embellish each node in the dot graph with extra information"
+    )
     return parser
 
 
@@ -99,9 +120,7 @@ def command_line_argument_parser():
 ##############################################################################
 
 def main():
-    """
-    Entry point.
-    """
+    """Entry point."""
     args = command_line_argument_parser().parse_args()
     args.enum_level = py_trees.common.string_to_visibility_level(args.level)
     (module_or_class_name, method_name) = args.method.rsplit(".", 1)
@@ -128,7 +147,9 @@ def main():
             try:
                 method_itself = getattr(class_type(), method_name)
             except TypeError:
-                console.logerror("Can only instantiate class methods if the class __init__ has no non-default arguments")
+                console.logerror(
+                    "Can only instantiate class methods if the class __init__ has no non-default arguments"
+                )
                 sys.exit(1)
             root = method_itself(**(args.kwargs))
     else:

@@ -8,6 +8,8 @@
 ##############################################################################
 
 """
+Demonstrate the context switching design pattern.
+
 .. argparse::
    :module: py_trees.demos.context_switching
    :func: command_line_argument_parser
@@ -77,7 +79,9 @@ def command_line_argument_parser():
 
 class ContextSwitch(py_trees.behaviour.Behaviour):
     """
-    An example of a context switching class that sets (in ``initialise()``)
+    An example of a context switching class.
+
+    This class sets (in ``initialise()``)
     and restores a context (in ``terminate()``). Use in parallel with a
     sequence/subtree that does the work while in this context.
 
@@ -85,16 +89,15 @@ class ContextSwitch(py_trees.behaviour.Behaviour):
         either end of a sequence will not suffice for context switching. In the case
         that one of the work behaviours in the sequence fails, the final reset context
         switch will never trigger.
-
     """
+
     def __init__(self, name="ContextSwitch"):
+        """Initialise with a behaviour name."""
         super(ContextSwitch, self).__init__(name)
         self.feedback_message = "no context"
 
     def initialise(self):
-        """
-        Backup and set a new context.
-        """
+        """Backup and set a new context."""
         self.logger.debug("%s.initialise()[switch context]" % (self.__class__.__name__))
         # Some actions that:
         #   1. retrieve the current context from somewhere
@@ -103,17 +106,16 @@ class ContextSwitch(py_trees.behaviour.Behaviour):
         self.feedback_message = "new context"
 
     def update(self):
-        """
-        Just returns RUNNING while it waits for other activities to finish.
-        """
+        """Just returns RUNNING while it waits for other activities to finish."""
         self.logger.debug("%s.update()[RUNNING][%s]" % (self.__class__.__name__, self.feedback_message))
         return py_trees.common.Status.RUNNING
 
     def terminate(self, new_status):
-        """
-        Restore the context with the previously backed up context.
-        """
-        self.logger.debug("%s.terminate()[%s->%s][restore context]" % (self.__class__.__name__, self.status, new_status))
+        """Restore the context with the previously backed up context."""
+        self.logger.debug(
+            "%s.terminate()[%s->%s][restore context]" % (
+                self.__class__.__name__, self.status, new_status)
+        )
         # Some actions that:
         #   1. restore the cached context
         self.feedback_message = "restored context"
@@ -139,9 +141,7 @@ def create_root():
 ##############################################################################
 
 def main():
-    """
-    Entry point for the demo script.
-    """
+    """Entry point for the demo script."""
     args = command_line_argument_parser().parse_args()
     print(description())
     py_trees.logging.level = py_trees.logging.Level.DEBUG

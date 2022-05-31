@@ -28,7 +28,9 @@ from . import common
 
 class Timer(behaviour.Behaviour):
     """
-    Simple timer class that is :py:data:`~py_trees.common.Status.RUNNING` until the timer
+    A simple, blocking timer behaviour running off python time.time().
+
+    This behaviour is :py:data:`~py_trees.common.Status.RUNNING` until the timer
     runs out, at which point it is :data:`~py_trees.common.Status.SUCCESS`. This can be
     used in a wide variety of situations - pause, duration, timeout depending on how
     it is wired into the tree (e.g. pause in a sequence, duration/timeout in
@@ -53,6 +55,7 @@ class Timer(behaviour.Behaviour):
         Use the :func:`~py_trees.decorators.RunningIsFailure` decorator if you need
         :data:`~py_trees.common.Status.FAILURE` until the timer finishes.
     """
+
     def __init__(self, name="Timer", duration=5.0):
         super(Timer, self).__init__(name)
         if not isinstance(duration, numbers.Real):
@@ -72,6 +75,8 @@ class Timer(behaviour.Behaviour):
 
     def update(self):
         """
+        Check the timer and update the behaviour result accordingly.
+
         Check current time against the expected finishing time. If it is in excess, flip to
         :data:`~py_trees.common.Status.SUCCESS`.
         """
@@ -90,7 +95,10 @@ class Timer(behaviour.Behaviour):
         """
         Clear the expected finishing time.
         """
-        self.logger.debug("%s.terminate(%s)" % (self.__class__.__name__, "%s->%s" % (self.status, new_status) if self.status != new_status else "%s" % new_status))
+        self.logger.debug("%s.terminate(%s)" % (
+            self.__class__.__name__,
+            f"{self.status}->{new_status}" if self.status != new_status else f"{new_status}"
+        ))
         # clear the time if finishing with SUCCESS or in the case of an interruption from INVALID
         if new_status == common.Status.SUCCESS or new_status == common.Status.INVALID:
             self.finish_time = None

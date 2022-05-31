@@ -9,6 +9,8 @@
 ##############################################################################
 
 """
+Blackboards, for behaviours to write and read from.
+
 Blackboards are not a necessary component of behaviour tree implementations,
 but are nonetheless, a fairly common mechanism for sharing data between
 behaviours in the tree. See, for example, the `design notes`_
@@ -82,6 +84,7 @@ class KeyMetaData(object):
     """
     Stores the aggregated metadata for a key on the blackboard.
     """
+
     def __init__(self):
         self.read = set()
         self.write = set()
@@ -89,7 +92,7 @@ class KeyMetaData(object):
 
 
 class ActivityType(enum.Enum):
-    """An enumerator representing the operation on a blackboard variable"""
+    """An enumerator representing the operation on a blackboard variable."""
 
     READ = "READ"
     """Read from the blackboard"""
@@ -111,7 +114,7 @@ class ActivityType(enum.Enum):
 
 class ActivityItem(object):
     """
-    Recorded data pertaining to activity on the blackboard.
+    Holds data pertaining to activity on the blackboard.
 
     Args:
         key: name of the variable on the blackboard
@@ -121,14 +124,15 @@ class ActivityItem(object):
         previous_value: of the given key (None if this field is not relevant)
         current_value: current value for the given key (None if this field is not relevant)
     """
+
     def __init__(
             self,
             key,
             client_name: str,
             client_id: uuid.UUID,
             activity_type: str,
-            previous_value: typing.Any=None,
-            current_value: typing.Any=None):
+            previous_value: typing.Any = None,
+            current_value: typing.Any = None):
         # TODO validity checks for values passed/not passed on the
         # respective activity types. Note: consider using an enum
         # for 'no value here' since None is a perfectly acceptable
@@ -143,15 +147,20 @@ class ActivityItem(object):
 
 class ActivityStream(object):
     """
-    Storage container with convenience methods for manipulating the stored
-    activity stream.
+    Stores the stream of events recording blackboard activity.
+
+    What got registered, unregistered, written, accessed? What operations
+    failed due to incorrect permissions? What did the written variable change
+    from? What did it change to? The activity stream captures all of these
+    and more. It is a very useful mechanisms for debugging your tree from
+    tick to tick.
 
     Attributes:
         data (typing.List[ActivityItem]: list of activity items, earliest first
         maximum_size (int): pop items if this size is exceeded
     """
 
-    def __init__(self, maximum_size: int=500):
+    def __init__(self, maximum_size: int = 500):
         """
         Initialise the stream with a maximum storage limit.
 
@@ -182,6 +191,7 @@ class ActivityStream(object):
 class Blackboard(object):
     """
     Centralised key-value store for sharing data between behaviours.
+
     This class is a coat-hanger for the centralised data store, metadata
     for it's administration and static methods for interacting with it.
 
@@ -195,6 +205,7 @@ class Blackboard(object):
         Blackboard.activity_stream (ActivityStream): logged activity
         Blackboard.separator (char): namespace separator character
     """
+
     storage: typing.Dict[str, typing.Any] = {}  # key-value storage
     metadata: typing.Dict[str, KeyMetaData] = {}  # key-metadata information
     clients: typing.Dict[uuid.UUID, str] = {}   # client id-name pairs
@@ -216,11 +227,13 @@ class Blackboard(object):
     @staticmethod
     def get(variable_name: str) -> typing.Any:
         """
+        Get a variable from the blackboard.
+
         Extract the value associated with the given a variable name,
         can be nested, e.g. battery.percentage. This differs from the
         client get method in that it doesn't pass through the client access
-        checks. To be used for utility tooling (e.g. display methods) and not by
-        users directly.
+        checks. Use for debugging / introspection tooling (e.g. display methods)
+        only (prefer the clients for rigorous programmatic access).
 
         Args:
             variable_name: of the variable to get, can be nested, e.g. battery.percentage
@@ -241,17 +254,20 @@ class Blackboard(object):
             try:
                 value = operator.attrgetter(key_attributes)(value)
             except AttributeError:
-                raise KeyError("Key exists, but does not have the specified nested attributes [{}]".format(variable_name))
+                raise KeyError(
+                    f"Key exists, but does not have the specified nested attributes [{variable_name}]")
         return value
 
     @staticmethod
     def set(variable_name: str, value: typing.Any):
         """
-        Set the value associated with the given a variable name,
+        Set a variable on the blackboard.
+
+        Set the value associated with the given variable name. The name
         can be nested, e.g. battery.percentage. This differs from the
         client get method in that it doesn't pass through the client access
-        checks. To be used for utility tooling (e.g. display methods) and not by
-        users directly.
+        checks. Use for debugging / introspection tooling (e.g. display methods)
+        only (prefer the clients for rigorous programmatic access).
 
         Args:
             variable_name: of the variable to set, can be nested, e.g. battery.percentage
@@ -272,8 +288,7 @@ class Blackboard(object):
     @staticmethod
     def unset(key: str):
         """
-        For when you need to completely remove a blackboard variable (key-value pair),
-        this provides a convenient helper method.
+        Unset a variable on the blackboard.
 
         Args:
             key: name of the variable to remove
@@ -301,7 +316,7 @@ class Blackboard(object):
         """
         try:
             name = Blackboard.absolute_name(Blackboard.separator, name)
-            unused_value = Blackboard.get(name)
+            _ = Blackboard.get(name)
             return True
         except KeyError:
             return False
@@ -340,18 +355,18 @@ class Blackboard(object):
         for key in Blackboard.metadata.keys():
             # for sets, | is union, & is intersection
             key_clients = (
-                set(Blackboard.metadata[key].read) |
-                set(Blackboard.metadata[key].write) |
-                set(Blackboard.metadata[key].exclusive)
+                set(Blackboard.metadata[key].read)
+                | set(Blackboard.metadata[key].write)
+                | set(Blackboard.metadata[key].exclusive)
             )
             if key_clients & client_ids:
                 keys.add(key)
         return keys
 
     @staticmethod
-    def enable_activity_stream(maximum_size: int=500):
+    def enable_activity_stream(maximum_size: int = 500):
         """
-        Enable logging of activities on the blackboard.
+        Enable logging into the activity stream.
 
         Args:
             maximum_size: pop items from the stream if this size is exceeded
@@ -367,7 +382,7 @@ class Blackboard(object):
     @staticmethod
     def disable_activity_stream():
         """
-        Disable logging of activities on the blackboard
+        Disable logging into the activity stream.
         """
         Blackboard.activity_stream = None
 
@@ -375,7 +390,8 @@ class Blackboard(object):
     def clear():
         """
         Completely clear all key, value and client information from the blackboard.
-        Also deletes the activity stream.
+
+        This also deletes the activity stream, if it exists.
         """
         Blackboard.storage.clear()
         Blackboard.metadata.clear()
@@ -426,16 +442,20 @@ class Blackboard(object):
     @staticmethod
     def relative_name(namespace: str, key: str) -> str:
         """
+        Generate the abbreviated name for a key relative to the specified namespace.
+
         **Examples**
 
         .. code-block:: python
 
-            '/' + 'foo'  = '/foo'
-            '/' + '/foo' = '/foo'
-            '/foo' + 'bar' = '/foo/bar'
-            '/foo/' + 'bar' = '/foo/bar'
-            '/foo' + '/bar' => KeyError('/bar' is not in 'foo')
-            '/foo' + 'foo/bar' = '/foo/foo/bar'
+            '/' + 'foo'  = 'foo'
+            '/' + '/foo' = 'foo'
+            '/foo' + 'bar' = 'bar'
+            '/foo/' + 'bar' = 'bar'
+            '/foo' + '/foo/bar' = 'bar'
+            '/foo/' + '/foo/bar' = 'bar'
+            '/foo' + 'foo/bar' = 'foo/bar'
+            '/foo' + '/food/bar' => KeyError('/food/bar' is prefixed with a namespace conflicting with '/foo/')
 
         Args:
             namespace: namespace the key should be embedded in
@@ -445,13 +465,13 @@ class Blackboard(object):
             the absolute name
 
         Raises:
-            KeyError if the key is not in the specified namespace
+            KeyError if the key is prefixed with a conflicting namespace
 
         .. warning::
 
             To expedite the method call (it's used with high frequency
             in blackboard key lookups), no checks are made to ensure
-            the namespace argument leads with a "/"
+            the namespace argument leads with a "/". Be sure to lead with a "/"!
         """
         # it's already relative
         if not key.startswith(Blackboard.separator):
@@ -461,15 +481,18 @@ class Blackboard(object):
         if key.startswith(namespace):
             return key[len(namespace):]  # in python 3.9, you can do key.removeprefix(namespace)
         else:
-            raise KeyError("key '{}' is not in namespace '{}'".format(
+            raise KeyError("key '{}' is prefixed with a namespace conflicting with '{}'".format(
                 key, namespace)
             )
 
     @staticmethod
     def key(variable_name: str) -> str:
         """
-        Extract the key for an arbitrary blackboard variable, keeping in mind that blackboard variable
-        names can be pointing to a nested attribute within a key.
+        Extract the key portion of an abitrary blackboard variable name.
+
+        Given a variable name that potentially also includes a reference to
+        internal attributes of the variable
+        stored on the blackboard, return the part that represents the blackboard key only.
 
         Example: '/foo/bar.woohoo -> /foo/bar'.
 
@@ -486,10 +509,13 @@ class Blackboard(object):
     @staticmethod
     def key_with_attributes(variable_name: str) -> typing.Tuple[str, str]:
         """
-        Extract the key for an arbitrary blackboard variable, keeping in mind that blackboard variable
-        names can be pointing to a nested attribute within a key,
+        Separate key and attribrutes from a variable name.
 
-        Example: '/foo/bar.woohoo -> (/foo/bar'. 'woohoo')
+        Given a variable name that potentially also includes a reference to
+        internal attributes of the variable
+        stored on the blackboard, separate and return in tuple form.
+
+        Example: '/foo/bar.woohoo -> (/foo/bar', 'woohoo')
 
         Args:
             variable_name: blackboard variable name - can be nested, e.g. battery.percentage
@@ -768,11 +794,15 @@ class Client(object):
         remappings (typing.Dict[str, str]: client key names with blackboard remappings
         namespaces (typing.Set[str]: a cached list of namespaces this client accesses
     """
+
     def __init__(
-            self, *,
-            name: str=None,
-            namespace: str=None):
+        self, *,
+        name: str = None,
+        namespace: str = None
+    ):
         """
+        Initialise with a unique name and optionally, a namespace to operate within.
+
         Args:
             name: client's convenient identifier (stringifies the uuid if None)
             namespace: prefix to apply to key/variable name operations
@@ -784,7 +814,6 @@ class Client(object):
             TypeError: if the provided name is not of type str
             ValueError: if the unique identifier has already been registered
         """
-
         # unique identifier
         super().__setattr__("unique_identifier", uuid.uuid4())
         if super().__getattribute__("unique_identifier") in Blackboard.clients.keys():
@@ -820,7 +849,7 @@ class Client(object):
 
     def id(self) -> uuid.UUID:
         """
-        The unique identifier for this client.
+        Access the unique identifier for this client.
 
         Returns:
             The uuid.UUID object
@@ -829,8 +858,10 @@ class Client(object):
 
     def __setattr__(self, name: str, value: typing.Any):
         """
-        Convenience attribute style referencing with checking against
-        permissions.
+        Set variables via a convenient attribute setter.
+
+        This is also responsible for checking permissions prior to writing the
+        variable.
 
         Raises:
             AttributeError: if the client does not have write access to the variable
@@ -838,8 +869,8 @@ class Client(object):
         # print("__setattr__ [{}][{}]".format(name, value))
         name = Blackboard.absolute_name(super().__getattribute__("namespace"), name)
         if (
-            (name not in super().__getattribute__("write")) and
-            (name not in super().__getattribute__("exclusive"))
+            (name not in super().__getattribute__("write"))
+            and (name not in super().__getattribute__("exclusive"))
         ):
             if Blackboard.activity_stream is not None:
                 Blackboard.activity_stream.push(
@@ -869,8 +900,10 @@ class Client(object):
 
     def __getattr__(self, name: str):
         """
-        Convenience attribute style referencing with checking against
-        permissions.
+        Access variables via a convenient attribute accessor.
+
+        This is also responsible for checking permissions prior to returning the
+        variable.
 
         Raises:
             AttributeError: if the client does not have read access to the variable
@@ -925,9 +958,11 @@ class Client(object):
                 Blackboard.activity_stream.push(
                     self._generate_activity_item(remapped_name, ActivityType.NO_KEY)
                 )
-            raise KeyError("client '{}' tried to access '{}' but it does not yet exist on the blackboard".format(self.name, remapped_name)) from e
+            raise KeyError(
+                f"client '{self.name}' tried to access '{remapped_name}' but it does not yet exist on the blackboard"
+            ) from e
 
-    def set(self, name: str, value: typing.Any, overwrite: bool=True) -> bool:
+    def set(self, name: str, value: typing.Any, overwrite: bool = True) -> bool:
         """
         Set, conditionally depending on whether the variable already exists or otherwise.
 
@@ -956,8 +991,8 @@ class Client(object):
         key = name_components[0]
         key_attributes = '.'.join(name_components[1:])
         if (
-            (key not in super().__getattribute__("write")) and
-            (key not in super().__getattribute__("exclusive"))
+            (key not in super().__getattribute__("write"))
+            and (key not in super().__getattribute__("exclusive"))
         ):
             if Blackboard.activity_stream is not None:
                 Blackboard.activity_stream.push(
@@ -997,7 +1032,7 @@ class Client(object):
             AttributeError: if the client does not have read access to the variable
         """
         try:
-            unused_value = self.get(name)
+            _ = self.get(name)
             return True
         except KeyError:
             return False
@@ -1032,8 +1067,10 @@ class Client(object):
 
     def get(self, name: str) -> typing.Any:
         """
-        Method based accessor to the blackboard variables (as opposed to simply using
-        '.<name>').
+        Access via method a key on the blackboard.
+
+        This is the more cumbersome method (as opposed to simply using '.<name>'), but
+        useful when the name is programatically generated.
 
         Args:
             name: name of the variable to get, can be nested, e.g. battery.percentage
@@ -1056,8 +1093,9 @@ class Client(object):
 
     def unset(self, key: str):
         """
-        For when you need to completely remove a blackboard variable (key-value pair),
-        this provides a convenient helper method.
+        Unset a blackboard variable.
+
+        Use to completely remove a blackboard variable (key-value pair).
 
         Args:
             key: name of the variable to remove
@@ -1148,20 +1186,24 @@ class Client(object):
                 value = key_value_dict[key]
                 lines = ('{0}'.format(value)).split('\n')
                 if len(lines) > 1:
-                    s += console.cyan + indent + '{0: <{1}}'.format(key, max_length + 1) + console.reset + separator + "\n"
+                    s += console.cyan + indent + '{0: <{1}}'.format(key, max_length + 1) + console.reset \
+                        + separator + "\n"
                     for line in lines:
                         s += console.yellow + indent + "  {0}\n".format(line) + console.reset
                 else:
-                    s += console.cyan + indent + '{0: <{1}}'.format(key, max_length + 1) + console.reset + separator + " " + console.yellow + '{0}\n'.format(value) + console.reset
+                    s += console.cyan + indent + '{0: <{1}}'.format(key, max_length + 1) + console.reset \
+                        + separator + " " + console.yellow + '{0}\n'.format(value) + console.reset
             except KeyError:
-                s += console.cyan + indent + '{0: <{1}}'.format(key, max_length + 1) + console.reset + separator + " " + console.yellow + "-\n" + console.reset
+                s += console.cyan + indent + '{0: <{1}}'.format(key, max_length + 1) \
+                    + console.reset + separator + " " + console.yellow + "-\n" + console.reset
         s += console.reset
         return s
 
-    def unregister(self, clear: bool=True):
+    def unregister(self, clear: bool = True):
         """
-        Unregister this blackboard client and if requested, clear key-value pairs if this
-        client is the last user of those variables.
+        Unregister this blackboard client.
+
+        If requested, clear key-value pairs if this client is the last user of those variables.
 
         Args:
             clear: remove key-values pairs from the blackboard
@@ -1169,10 +1211,12 @@ class Client(object):
         self.unregister_all_keys(clear)
         del Blackboard.clients[super().__getattribute__("unique_identifier")]
 
-    def unregister_all_keys(self, clear: bool=True):
+    def unregister_all_keys(self, clear: bool = True):
         """
-        Unregister all keys currently registered by this blackboard client and if requested,
-        clear key-value pairs if this client is the last user of those variables.
+        Unregister all keys currently registered by this blackboard client.
+
+        If requested, clear key-value pairs if this client is the last user
+        of those variables.
 
         Args:
             clear: remove key-values pairs from the blackboard
@@ -1183,8 +1227,7 @@ class Client(object):
 
     def verify_required_keys_exist(self):
         """
-        En-masse check of existence on the blackboard for all keys that were hitherto
-        registered as 'required'.
+        Check for existence of all keys registered as 'required'.
 
         Raises: KeyError if any of the required keys do not exist on the blackboard
         """
@@ -1198,7 +1241,7 @@ class Client(object):
     def is_registered(
         self,
         key: str,
-        access: typing.Union[None, common.Access]=None
+        access: typing.Union[None, common.Access] = None
     ) -> bool:
         """
         Check to see if the specified key is registered.
@@ -1227,8 +1270,8 @@ class Client(object):
             self,
             key: str,
             access: common.Access,
-            required: bool=False,
-            remap_to: str=None,
+            required: bool = False,
+            remap_to: str = None,
     ):
         """
         Register a key on the blackboard to associate with this client.
@@ -1244,7 +1287,8 @@ class Client(object):
         the client, access via the specified 'key' remains the same.
 
         Raises:
-            AttributeError if exclusive write access is requested, but write access has already been given to another client
+            AttributeError if exclusive write access is requested, but
+                write access has already been given to another client
             TypeError if the access argument is of incorrect type
         """
         key = Blackboard.absolute_name(super().__getattribute__("namespace"), key)
@@ -1260,10 +1304,9 @@ class Client(object):
                 for unique_identifier in Blackboard.metadata[remapped_key].exclusive:
                     conflicts.add(Blackboard.clients[unique_identifier])
                     if conflicts:
-                        raise AttributeError("'{}' requested write on key '{}', but this key already associated with an exclusive writer[{}]".format(
-                            super().__getattribute__("name"),
-                            remapped_key,
-                            conflicts)
+                        raise AttributeError(
+                            (f"'{super().__getattribute__('name')}' requested write on key '{remapped_key}', "
+                             f"but this key is already associated with an exclusive writer[{conflicts}]")
                         )
             except KeyError:
                 pass  # no readers or writers on the key yet
@@ -1277,10 +1320,12 @@ class Client(object):
                 for unique_identifier in (key_metadata.write | key_metadata.exclusive):
                     conflicts.add(Blackboard.clients[unique_identifier])
                 if conflicts:
-                    raise AttributeError("'{}' requested exclusive write on key '{}', but this key is already associated [{}]".format(
-                        super().__getattribute__("name"),
-                        remapped_key,
-                        conflicts)
+                    raise AttributeError(
+                        "'{}' requested exclusive write on key '{}', but this key is already associated [{}]".format(
+                            super().__getattribute__("name"),
+                            remapped_key,
+                            conflicts
+                        )
                     )
             except KeyError:
                 pass  # no readers or writers on the key yet
@@ -1296,8 +1341,8 @@ class Client(object):
     def unregister_key(
             self,
             key: str,
-            clear: bool=True,
-            update_namespace_cache: bool=True):
+            clear: bool = True,
+            update_namespace_cache: bool = True):
         """
         Unegister a key associated with this client.
 
@@ -1320,9 +1365,9 @@ class Client(object):
         Blackboard.metadata[remapped_key].write.discard(super().__getattribute__("unique_identifier"))
         Blackboard.metadata[remapped_key].exclusive.discard(super().__getattribute__("unique_identifier"))
         if (
-            (not Blackboard.metadata[remapped_key].read) and
-            (not Blackboard.metadata[remapped_key].write) and
-            (not Blackboard.metadata[remapped_key].exclusive)
+            (not Blackboard.metadata[remapped_key].read)
+            and (not Blackboard.metadata[remapped_key].write)
+            and (not Blackboard.metadata[remapped_key].exclusive)
         ):
             del Blackboard.metadata[remapped_key]
             if clear:

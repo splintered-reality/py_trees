@@ -33,7 +33,7 @@ extras_require = {} if os.environ.get('AMENT_PREFIX_PATH') else {
 # That is the price paid for a pypi and catkin package.
 d = setup(
     name='py_trees',
-    version='2.1.6',  # also update package.xml and version.py
+    version='2.1.6',  # remember to also update package.xml and version.py
     packages=find_packages(exclude=['tests*', 'docs*']),
     package_data={"py_trees": ["py.typed"]},
     install_requires=install_requires,

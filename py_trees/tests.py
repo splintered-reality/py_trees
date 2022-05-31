@@ -18,9 +18,12 @@ Bless my noggin with a tickle from your noodly appendages!
 # Imports
 ##############################################################################
 
+import typing
+
 from . import blackboard
 from . import console
 from . import display
+from . import visitors
 
 ##############################################################################
 # Methods
@@ -32,25 +35,28 @@ def print_assert_banner():
 
 
 def print_assert_details(text, expected, result):
-    print(console.green + text +
-          "." * (70 - len(text)) +
-          console.cyan + "{}".format(expected) +
-          console.yellow + " [{}]".format(result) +
-          console.reset)
+    print(console.green + text
+          + "." * (70 - len(text))
+          + console.cyan + "{}".format(expected)
+          + console.yellow + " [{}]".format(result)
+          + console.reset)
 
 
 def pre_tick_visitor(behaviour_tree):
     print("\n--------- Run %s ---------\n" % behaviour_tree.count)
 
 
-def tick_tree(root,
-              from_tick,
-              to_tick,
-              *,
-              visitors=[],
-              print_snapshot=False,
-              print_blackboard=False
-              ):
+def tick_tree(
+    root,
+    from_tick,
+    to_tick,
+    *,
+    visitors: typing.List[visitors.VisitorBase] = None,
+    print_snapshot: bool = False,
+    print_blackboard: bool = False
+):
+    if visitors is None:
+        visitors = []
     print("\n================== Iteration {}-{} ==================\n".format(from_tick, to_tick))
     for i in range(from_tick, to_tick + 1):
         for visitor in visitors:

@@ -8,6 +8,8 @@
 ##############################################################################
 
 """
+Display utilities for the command line.
+
 Behaviour trees are significantly easier to design, monitor and debug
 with visualisations. Py Trees does provide minimal assistance to render
 trees to various simple output formats. Currently this includes dot graphs,
@@ -81,7 +83,8 @@ ascii_symbols = {
 }
 """Symbols for a non-unicode, non-escape sequence capable console."""
 xhtml_symbols = {
-    'space': '<text>&#xa0;</text>',  # &nbsp; is not valid xhtml, see http://www.fileformat.info/info/unicode/char/00a0/index.htm
+    'space': '<text>&#xa0;</text>',  # &nbsp; is not valid xhtml,
+                                     # see http://www.fileformat.info/info/unicode/char/00a0/index.htm
     'left_arrow': '<text>&#x2190;</text>',
     'right_arrow': '<text>&#x2192;</text>',
     'left_right_arrow': '<text>&#x2194;</text>',
@@ -109,34 +112,40 @@ xhtml_symbols = {
 
 
 def _generate_text_tree(
-        root,
-        show_only_visited=False,
-        show_status=False,
-        visited={},
-        previously_visited={},
-        indent=0,
+        root: behaviour.Behaviour,
+        show_only_visited: bool = False,
+        show_status: bool = False,
+        visited: typing.Dict[uuid.UUID, common.Status] = None,
+        previously_visited: typing.Dict[uuid.UUID, common.Status] = None,
+        indent: int = 0,
         symbols=None):
     """
     Generate a text tree utilising the specified symbol formatter.
 
     Args:
-        root (:class:`~py_trees.behaviour.Behaviour`): the root of the tree, or subtree you want to show
-        show_only_visited (:obj:`bool`): show only visited behaviours
-        show_status (:obj:`bool`): always show status and feedback message (i.e. for every element,
-            not just those visited)
-        visited (dict): dictionary of (uuid.UUID) and status (:class:`~py_trees.common.Status`) pairs
-            for behaviours visited on the current tick
+        root: the root of the tree, or subtree you want to show
+        show_only_visited: show only visited behaviours
+        show_status: always show status and feedback message (i.e. for every element, not just those visited)
+        visited (dict): dictionary of (uuid.UUID) and status (:class:`~py_trees.common.Status`)
+            pairs for behaviours visited on the current tick
         previously_visited (dict): dictionary of behaviour id/status pairs from the previous tree tick
-        indent (:obj:`int`): the number of characters to indent the tree
+        indent: the number of characters to indent the tree
         symbols (dict, optional): dictates formatting style
-            (one of :data:`py_trees.display.unicode_symbols` || :data:`py_trees.display.ascii_symbols` || :data:`py_trees.display.xhtml_symbols`),
+            (one of :data:`py_trees.display.unicode_symbols`
+            || :data:`py_trees.display.ascii_symbols`
+            || :data:`py_trees.display.xhtml_symbols`),
             defaults to unicode if stdout supports it, ascii otherwise
 
     Returns:
         :obj:`str`: a text-based representation of the behaviour tree
 
-    .. seealso:: :meth:`py_trees.display.ascii_tree`, :meth:`py_trees.display.unicode_tree`, :meth:`py_trees.display.xhtml_tree`
+    .. seealso::
+       :meth:`py_trees.display.ascii_tree`, :meth:`py_trees.display.unicode_tree`, :meth:`py_trees.display.xhtml_tree`
     """
+    if visited is None:
+        visited = {}
+    if previously_visited is None:
+        previously_visited = {}
     # default to unicode if stdout supports it, ascii otherwise
     if symbols is None:
         symbols = unicode_symbols if console.has_unicode() else ascii_symbols
@@ -155,6 +164,8 @@ def _generate_text_tree(
 
     def style(s, font_weight=False):
         """
+        Apply bold styling if specified.
+
         Because the way the shell escape sequences reset everything, this needs to get used on any
         single block of formatted text.
         """
@@ -177,9 +188,9 @@ def _generate_text_tree(
                 s += style("{}".format(symbols[b.status]), font_weight)
                 message = "" if not b.feedback_message else " -- " + b.feedback_message
                 s += style("]" + message, font_weight)
-            elif (b.id in previously_visited.keys() and
-                  b.id not in visited.keys() and
-                  previously_visited[b.id] == common.Status.RUNNING):
+            elif (b.id in previously_visited.keys()
+                  and b.id not in visited.keys()
+                  and previously_visited[b.id] == common.Status.RUNNING):
                 s += style("{} [".format(b.name.replace('\n', ' ')), font_weight)
                 s += style("{}".format(symbols[b.status]), font_weight)
                 s += style("]", font_weight)
@@ -207,22 +218,23 @@ def _generate_text_tree(
 
 
 def ascii_tree(
-        root,
-        show_only_visited=False,
-        show_status=False,
-        visited={},
-        previously_visited={},
-        indent=0):
+        root: behaviour.Behaviour,
+        show_only_visited: bool = False,
+        show_status: bool = False,
+        visited: typing.Dict[uuid.UUID, common.Status] = None,
+        previously_visited: typing.Dict[uuid.UUID, common.Status] = None,
+        indent: int = 0):
     """
     Graffiti your console with ascii art for your trees.
 
     Args:
-        root (:class:`~py_trees.behaviour.Behaviour`): the root of the tree, or subtree you want to show
-        show_only_visited (:obj:`bool`) : show only visited behaviours
-        show_status (:obj:`bool`): always show status and feedback message (i.e. for every element, not just those visited)
-        visited (dict): dictionary of (uuid.UUID) and status (:class:`~py_trees.common.Status`) pairs for behaviours visited on the current tick
+        root: the root of the tree, or subtree you want to show
+        show_only_visited: show only visited behaviours
+        show_status: always show status and feedback message (i.e. for every element, not just those visited)
+        visited (dict): dictionary of (uuid.UUID) and status (:class:`~py_trees.common.Status`)
+            pairs for behaviours visited on the current tick
         previously_visited (dict): dictionary of behaviour id/status pairs from the previous tree tick
-        indent (:obj:`int`): the number of characters to indent the tree
+        indent: the number of characters to indent the tree
 
     Returns:
         :obj:`str`: an ascii tree (i.e. in string form)
@@ -230,7 +242,6 @@ def ascii_tree(
     .. seealso:: :meth:`py_trees.display.xhtml_tree`, :meth:`py_trees.display.unicode_tree`
 
     Examples:
-
         Use the :class:`~py_trees.visitors.SnapshotVisitor`
         and :class:`~py_trees.trees.BehaviourTree`
         to generate snapshot information at each tick and feed that to
@@ -267,6 +278,10 @@ def ascii_tree(
                                   snapshot_visitor))
             behaviour_tree.visitors.append(snapshot_visitor)
     """
+    if visited is None:
+        visited = {}
+    if previously_visited is None:
+        previously_visited = {}
     lines = _generate_text_tree(
         root,
         show_only_visited,
@@ -280,22 +295,23 @@ def ascii_tree(
 
 
 def unicode_tree(
-        root,
-        show_only_visited=False,
-        show_status=False,
-        visited={},
-        previously_visited={},
-        indent=0):
+        root: behaviour.Behaviour,
+        show_only_visited: bool = False,
+        show_status: bool = False,
+        visited: typing.Dict[uuid.UUID, common.Status] = None,
+        previously_visited: typing.Dict[uuid.UUID, common.Status] = None,
+        indent: int = 0):
     """
     Graffiti your console with unicode art for your trees.
 
     Args:
-        root (:class:`~py_trees.behaviour.Behaviour`): the root of the tree, or subtree you want to show
-        show_only_visited (:obj:`bool`) : show only visited behaviours
-        show_status (:obj:`bool`): always show status and feedback message (i.e. for every element, not just those visited)
-        visited (dict): dictionary of (uuid.UUID) and status (:class:`~py_trees.common.Status`) pairs for behaviours visited on the current tick
+        root: the root of the tree, or subtree you want to show
+        show_only_visited: show only visited behaviours
+        show_status: always show status and feedback message (i.e. for every element, not just those visited)
+        visited (dict): dictionary of (uuid.UUID) and status (:class:`~py_trees.common.Status`)
+            pairs for behaviours visited on the current tick
         previously_visited (dict): dictionary of behaviour id/status pairs from the previous tree tick
-        indent (:obj:`int`): the number of characters to indent the tree
+        indent: the number of characters to indent the tree
 
     Returns:
         :obj:`str`: a unicode tree (i.e. in string form)
@@ -303,6 +319,10 @@ def unicode_tree(
     .. seealso:: :meth:`py_trees.display.ascii_tree`, :meth:`py_trees.display.xhtml_tree`
 
     """
+    if visited is None:
+        visited = {}
+    if previously_visited is None:
+        previously_visited = {}
     lines = _generate_text_tree(
         root,
         show_only_visited,
@@ -316,22 +336,23 @@ def unicode_tree(
 
 
 def xhtml_tree(
-        root,
-        show_only_visited=False,
-        show_status=False,
-        visited={},
-        previously_visited={},
-        indent=0):
+        root: behaviour.Behaviour,
+        show_only_visited: bool = False,
+        show_status: bool = False,
+        visited: typing.Dict[uuid.UUID, common.Status] = None,
+        previously_visited: typing.Dict[uuid.UUID, common.Status] = None,
+        indent: int = 0):
     """
     Paint your tree on an xhtml snippet.
 
     Args:
-        root (:class:`~py_trees.behaviour.Behaviour`): the root of the tree, or subtree you want to show
-        show_only_visited (:obj:`bool`) : show only visited behaviours
-        show_status (:obj:`bool`): always show status and feedback message (i.e. for every element, not just those visited)
-        visited (dict): dictionary of (uuid.UUID) and status (:class:`~py_trees.common.Status`) pairs for behaviours visited on the current tick
+        root: the root of the tree, or subtree you want to show
+        show_only_visited: show only visited behaviours
+        show_status: always show status and feedback message (i.e. for every element, not just those visited)
+        visited (dict): dictionary of (uuid.UUID) and status
+            (:class:`~py_trees.common.Status`) pairs for behaviours visited on the current tick
         previously_visited (dict): dictionary of behaviour id/status pairs from the previous tree tick
-        indent (:obj:`int`): the number of characters to indent the tree
+        indent: the number of characters to indent the tree
 
     Returns:
         :obj:`str`: an ascii tree (i.e. as a xhtml snippet)
@@ -339,20 +360,23 @@ def xhtml_tree(
     .. seealso:: :meth:`py_trees.display.ascii_tree`, :meth:`py_trees.display.unicode_tree`
 
     Examples:
+        .. code-block:: python
 
-    .. code-block:: python
+            import py_trees
+            a = py_trees.behaviours.Success()
+            b = py_trees.behaviours.Success()
+            c = c = py_trees.composites.Sequence(children=[a, b])
+            c.tick_once()
 
-        import py_trees
-        a = py_trees.behaviours.Success()
-        b = py_trees.behaviours.Success()
-        c = c = py_trees.composites.Sequence(children=[a, b])
-        c.tick_once()
-
-        f = open('testies.html', 'w')
-        f.write('<html><head><title>Foo</title><body>')
-        f.write(py_trees.display.xhtml_tree(c, show_status=True))
-        f.write("</body></html>")
+            f = open('testies.html', 'w')
+            f.write('<html><head><title>Foo</title><body>')
+            f.write(py_trees.display.xhtml_tree(c, show_status=True))
+            f.write("</body></html>")
     """
+    if visited is None:
+        visited = {}
+    if previously_visited is None:
+        previously_visited = {}
     lines = _generate_text_tree(
         root,
         show_only_visited,
@@ -368,10 +392,10 @@ def xhtml_tree(
 
 def dot_tree(
         root: behaviour.Behaviour,
-        visibility_level: common.VisibilityLevel=common.VisibilityLevel.DETAIL,
-        collapse_decorators: bool=False,
-        with_blackboard_variables: bool=False,
-        with_qualified_names: bool=False):
+        visibility_level: common.VisibilityLevel = common.VisibilityLevel.DETAIL,
+        collapse_decorators: bool = False,
+        with_blackboard_variables: bool = False,
+        with_qualified_names: bool = False):
     """
     Paint your tree on a pydot graph.
 
@@ -388,7 +412,6 @@ def dot_tree(
         pydot.Dot: graph
 
     Examples:
-
         .. code-block:: python
 
             # convert the pydot graph to a string object
@@ -419,8 +442,10 @@ def dot_tree(
 
     def get_node_label(node_name, behaviour):
         """
-        This extracts a more detailed string (when applicable) to append to
-        that which will be used for the node name.
+        Create a more detailed string (when applicable) to use for the node name.
+
+        This prefixes the node name with additional information about the node type (e.g. with
+        or without memory). Useful when debugging.
         """
         # Custom handling of composites provided by this library. Not currently
         # providing a generic mechanism for others to customise visualisations
@@ -463,7 +488,6 @@ def dot_tree(
     graph.set_node_defaults(fontname='times-roman')
     graph.set_edge_defaults(fontname='times-roman')
     (node_shape, node_colour, node_font_colour) = get_node_attributes(root)
-    node_name = root.name
     node_root = pydot.Node(
         name=root.name,
         label=get_node_label(root.name, root),
@@ -605,15 +629,17 @@ def dot_tree(
 
 
 def render_dot_tree(root: behaviour.Behaviour,
-                    visibility_level: common.VisibilityLevel=common.VisibilityLevel.DETAIL,
-                    collapse_decorators: bool=False,
-                    name: str=None,
-                    target_directory: str=os.getcwd(),
-                    with_blackboard_variables: bool=False,
-                    with_qualified_names: bool=False):
+                    visibility_level: common.VisibilityLevel = common.VisibilityLevel.DETAIL,
+                    collapse_decorators: bool = False,
+                    name: str = None,
+                    target_directory: str = None,
+                    with_blackboard_variables: bool = False,
+                    with_qualified_names: bool = False):
     """
-    Render the dot tree to .dot, .svg, .png. files in the current
-    working directory. These will be named with the root behaviour name.
+    Render the dot tree to dot, svg, png. files.
+
+    By default, these are saved in the current
+    working directory and will be named with the root behaviour name.
 
     Args:
         root: the root of a tree, or subtree
@@ -625,7 +651,6 @@ def render_dot_tree(root: behaviour.Behaviour,
         with_qualified_names: print the class names of each behaviour in the dot node
 
     Example:
-
         Render a simple tree to dot/svg/png file:
 
         .. graphviz:: dot/sequence.dot
@@ -646,6 +671,8 @@ def render_dot_tree(root: behaviour.Behaviour,
         A good practice is to provide a command line argument for optional rendering of a program so users
         can quickly visualise what tree the program will execute.
     """
+    if target_directory is None:
+        target_directory = os.getcwd()
     graph = dot_tree(
         root, visibility_level, collapse_decorators,
         with_blackboard_variables=with_blackboard_variables,
@@ -667,13 +694,13 @@ def render_dot_tree(root: behaviour.Behaviour,
 
 
 def _generate_text_blackboard(
-        key_filter: typing.Union[typing.Set[str], typing.List[str]]=None,
-        regex_filter: str=None,
-        client_filter: typing.Union[typing.Set[uuid.UUID], typing.List[uuid.UUID]]=None,
-        keys_to_highlight: typing.List[str]=[],
-        display_only_key_metadata: bool=False,
-        indent: int=0,
-        symbols: typing.Optional[Symbols]=None) -> str:
+        key_filter: typing.Union[typing.Set[str], typing.List[str]] = None,
+        regex_filter: str = None,
+        client_filter: typing.Union[typing.Set[uuid.UUID], typing.List[uuid.UUID]] = None,
+        keys_to_highlight: typing.List[str] = None,
+        display_only_key_metadata: bool = False,
+        indent: int = 0,
+        symbols: typing.Optional[Symbols] = None) -> str:
     """
     Generate a text blackboard.
 
@@ -685,7 +712,9 @@ def _generate_text_blackboard(
         display_only_key_metadata: (read/write access, ...) instead of values
         indent: the number of characters to indent the blackboard
         symbols: dictates formatting style
-            (one of :data:`py_trees.display.unicode_symbols` || :data:`py_trees.display.ascii_symbols` || :data:`py_trees.display.xhtml_symbols`),
+            (one of :data:`py_trees.display.unicode_symbols`
+            || :data:`py_trees.display.ascii_symbols`
+            || :data:`py_trees.display.xhtml_symbols`),
             defaults to unicode if stdout supports it, ascii otherwise
 
     Returns:
@@ -693,6 +722,8 @@ def _generate_text_blackboard(
 
     .. seealso:: :meth:`py_trees.display.unicode_blackboard`
     """
+    if keys_to_highlight is None:
+        keys_to_highlight = []
     if symbols is None:
         symbols = unicode_symbols if console.has_unicode() else ascii_symbols
 
@@ -711,7 +742,8 @@ def _generate_text_blackboard(
                 for line in lines:
                     s += console.yellow + indent + "  {0}\n".format(line)
             else:
-                s += console.cyan + indent + '{0: <{1}}'.format(key, key_width) + console.white + ": " + console.yellow + '{0}\n'.format(value) + console.reset
+                s += console.cyan + indent + '{0: <{1}}'.format(key, key_width) + console.white \
+                    + ": " + console.yellow + '{0}\n'.format(value) + console.reset
             return style(s, apply_highlight) + console.reset
 
         def assemble_metadata_line(key, metadata, apply_highlight, indent, key_width):
@@ -791,12 +823,12 @@ def _generate_text_blackboard(
 
 
 def ascii_blackboard(
-        key_filter: typing.Union[typing.Set[str], typing.List[str]]=None,
-        regex_filter: str=None,
-        client_filter: typing.Optional[typing.Union[typing.Set[uuid.UUID], typing.List[uuid.UUID]]]=None,
-        keys_to_highlight: typing.List[str]=[],
-        display_only_key_metadata: bool=False,
-        indent: int=0) -> str:
+        key_filter: typing.Union[typing.Set[str], typing.List[str]] = None,
+        regex_filter: str = None,
+        client_filter: typing.Optional[typing.Union[typing.Set[uuid.UUID], typing.List[uuid.UUID]]] = None,
+        keys_to_highlight: typing.List[str] = None,
+        display_only_key_metadata: bool = False,
+        indent: int = 0) -> str:
     """
     Graffiti your console with ascii art for your blackboard.
 
@@ -815,6 +847,8 @@ def ascii_blackboard(
 
     .. note:: registered variables that have not yet been set are marked with a '-'
     """
+    if keys_to_highlight is None:
+        keys_to_highlight = []
     lines = _generate_text_blackboard(
         key_filter=key_filter,
         regex_filter=regex_filter,
@@ -828,12 +862,12 @@ def ascii_blackboard(
 
 
 def unicode_blackboard(
-        key_filter: typing.Union[typing.Set[str], typing.List[str]]=None,
-        regex_filter: str=None,
-        client_filter: typing.Optional[typing.Union[typing.Set[uuid.UUID], typing.List[uuid.UUID]]]=None,
-        keys_to_highlight: typing.List[str]=[],
-        display_only_key_metadata: bool=False,
-        indent: int=0) -> str:
+        key_filter: typing.Union[typing.Set[str], typing.List[str]] = None,
+        regex_filter: str = None,
+        client_filter: typing.Optional[typing.Union[typing.Set[uuid.UUID], typing.List[uuid.UUID]]] = None,
+        keys_to_highlight: typing.List[str] = None,
+        display_only_key_metadata: bool = False,
+        indent: int = 0) -> str:
     """
     Graffiti your console with unicode art for your blackboard.
 
@@ -852,6 +886,8 @@ def unicode_blackboard(
 
     .. note:: registered variables that have not yet been set are marked with a '-'
     """
+    if keys_to_highlight is None:
+        keys_to_highlight = []
     lines = _generate_text_blackboard(
         key_filter=key_filter,
         regex_filter=regex_filter,
@@ -865,13 +901,13 @@ def unicode_blackboard(
 
 
 def _generate_text_activity(
-    activity_stream: typing.Optional[typing.List[blackboard.ActivityItem]]=None,
-    show_title: bool=True,
-    indent: int=0,
-    symbols: typing.Optional[Symbols]=None
+    activity_stream: typing.Optional[typing.List[blackboard.ActivityItem]] = None,
+    show_title: bool = True,
+    indent: int = 0,
+    symbols: typing.Optional[Symbols] = None
 ) -> str:
     """
-    Generator for the various formatted outputs (ascii, unicode, xhtml).
+    Loop (with a generator) over the activity stream.
 
     Args:
         activity_stream: the log of activity, if None, get the entire activity stream
@@ -953,9 +989,9 @@ def _generate_text_activity(
 
 
 def unicode_blackboard_activity_stream(
-    activity_stream: typing.List[blackboard.ActivityItem]=None,
-    indent: int=0,
-    show_title: bool=True
+    activity_stream: typing.List[blackboard.ActivityItem] = None,
+    indent: int = 0,
+    show_title: bool = True
 ):
     """
     Pretty print the blackboard stream to console.

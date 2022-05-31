@@ -8,6 +8,8 @@
 ##############################################################################
 
 """
+Demonstrates blackboard usage.
+
 .. argparse::
    :module: py_trees.demos.blackboard
    :func: command_line_argument_parser
@@ -83,9 +85,8 @@ def command_line_argument_parser():
 
 
 class Nested(object):
-    """
-    A more complex object to interact with on the blackboard.
-    """
+    """A more complex object to interact with on the blackboard."""
+
     def __init__(self):
         self.foo = "bar"
 
@@ -94,9 +95,8 @@ class Nested(object):
 
 
 class BlackboardWriter(py_trees.behaviour.Behaviour):
-    """
-    Custom writer that submits a more complicated variable to the blackboard.
-    """
+    """Write some more interesting / complex types to the blacbkoard."""
+
     def __init__(self, name="Writer"):
         super().__init__(name=name)
         self.blackboard = self.attach_blackboard_client()
@@ -106,16 +106,17 @@ class BlackboardWriter(py_trees.behaviour.Behaviour):
         self.logger.debug("%s.__init__()" % (self.__class__.__name__))
 
     def update(self):
-        """
-        Write a dictionary to the blackboard and return :data:`~py_trees.common.Status.SUCCESS`.
+        """Write a dictionary to the blackboard.
+
+        This beaviour always returns :data:`~py_trees.common.Status.SUCCESS`.
         """
         self.logger.debug("%s.update()" % (self.__class__.__name__))
         try:
-            unused = self.blackboard.dude
+            _ = self.blackboard.dude
         except KeyError:
             pass
         try:
-            unused = self.blackboard.dudette
+            _ = self.blackboard.dudette
         except AttributeError:
             pass
         try:
@@ -132,10 +133,13 @@ class BlackboardWriter(py_trees.behaviour.Behaviour):
 
 
 class ParamsAndState(py_trees.behaviour.Behaviour):
+    """Parameter and state storage on the blackboard.
+
+    This behaviour demonstrates the usage of namespaces and
+    multiple clients to perform getting and setting of
+    parameters and state in a concise and convenient manner.
     """
-    A more esotoric use of multiple blackboards in a behaviour to represent
-    storage of parameters and state.
-    """
+
     def __init__(self, name="ParamsAndState"):
         super().__init__(name=name)
         # namespaces can include the separator or may leave it out
@@ -194,9 +198,7 @@ def create_root():
 
 
 def main():
-    """
-    Entry point for the demo script.
-    """
+    """Entry point for the demo script."""
     args = command_line_argument_parser().parse_args()
     print(description())
     py_trees.logging.level = py_trees.logging.Level.DEBUG
