@@ -459,7 +459,7 @@ class Blackboard(object):
         # remove leading and trailing separators
         namespace = namespace if namespace.endswith(Blackboard.separator) else namespace + Blackboard.separator
         if key.startswith(namespace):
-            return key.lstrip(namespace)
+            return key[len(namespace):]  # in python 3.9, you can do key.removeprefix(namespace)
         else:
             raise KeyError("key '{}' is not in namespace '{}'".format(
                 key, namespace)
