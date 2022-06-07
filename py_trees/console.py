@@ -330,6 +330,15 @@ def logfatal(message):
 ##############################################################################
 
 if __name__ == '__main__':
+
+    # To test without unicode, configure a non utf-8 locale:
+    #
+    #   $ cat /usr/share/i18n/SUPPORTED | grep en_US
+    #   $ sudo locale-gen en_US.ISO-8859-15
+    #   $ sudo update-locale
+    #   $  locale -a
+    #   $ python3 ./console.py
+
     for colour in colours:
         pretty_print("dude\n", colour)
     logdebug("loginfo message")
@@ -339,7 +348,8 @@ if __name__ == '__main__':
     pretty_print("red\n", red)
     print("some normal text")
     print(cyan + "    Name" + reset + ": " + yellow + "Dude" + reset)
-    print("special characters are\n")
+    print(f"Has Unicode: {has_unicode()}")
+    print("Unicode Characters:\n")
     print("lightning_bolt: {}".format(lightning_bolt))
     print("double_vertical_line: {}".format(double_vertical_line))
     print("check_mark: {}".format(check_mark))
@@ -347,4 +357,3 @@ if __name__ == '__main__':
     print("left_arrow: {}".format(left_arrow))
     print("right_arrow: {}".format(right_arrow))
     print("circled_m: {}".format(circled_m))
-    # print("has unicode: {}".format(has_unicode()))
