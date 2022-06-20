@@ -47,6 +47,7 @@ unicode_symbols = {
     'bold': console.bold,
     'bold_reset': console.reset,
     'memory': console.circled_m,
+    'synchronised': console.lightning_bolt,
     'sequence_with_memory': u'{-}',
     'selector_with_memory': u'{o}',
     composites.Sequence: u'[-]',
@@ -69,6 +70,7 @@ ascii_symbols = {
     'bold': console.bold,
     'bold_reset': console.reset,
     'memory': 'M',
+    'synchronised': 's',
     'sequence_with_memory': '{-}',
     'selector_with_memory': '{o}',
     composites.Sequence: "[-]",
@@ -91,6 +93,7 @@ xhtml_symbols = {
     'bold': '<b>',
     'bold_reset': '</b>',
     'memory': '<text>&#x24C2;</text>',
+    'synchronised': '<text>&#9889;</text>',
     'sequence_with_memory': '<text>{-}</text>',
     'selector_with_memory': '<text>{o}</text>',
     composites.Sequence: '<text>[-]</text>',
@@ -452,15 +455,16 @@ def dot_tree(
         # for their derived composites.
         prefix = ""
         policy = ""
+        symbols = unicode_symbols if console.has_unicode() else ascii_symbols
         if isinstance(behaviour, composites.Composite):
             try:
                 if behaviour.memory:
-                    prefix += console.circled_m
+                    prefix += symbols["memory"]  # console.circled_m
             except AttributeError:
                 pass
             try:
                 if behaviour.policy.synchronise:
-                    prefix += console.lightning_bolt
+                    prefix += symbols["synchronised"]  # console.lightning_bolt
             except AttributeError:
                 pass
             try:
