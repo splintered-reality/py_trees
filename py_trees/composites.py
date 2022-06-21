@@ -98,30 +98,28 @@ class Composite(behaviour.Behaviour):
 
     def stop(self, new_status=common.Status.INVALID):
         """
-        Provide generic composite-level stop functionality.
+        Provide common stop-level functionality for all composites.
 
-        There is generally two use cases that must be supported here:
+         * Retain the current child on :data:`~py_trees.common.Status.SUCCESS` or
+           :data:`~py_trees.common.Status.FAILURE` (for introspection), lose it on
+           :data:`~py_trees.common.Status.INVALID`
+         * Kill dangling (:data:`~py_trees.common.Status.RUNNING`) children
 
-         * A composite has gone to a recognised state
-           (i.e. :data:`~py_trees.common.Status.FAILURE` or SUCCESS),
-         * A higher level parent calls on it to truly stop (INVALID).
-
-        In only the latter case will children need to be forcibly stopped as well. In the
-        first case, they should have stopped themselves appropriately already.
+        The latter situation can arise for some composites, but more importantly,
+        will always occur when high higher priority behaviour interrupts this one.
 
         Args:
             new_status (:class:`~py_trees.common.Status`): behaviour will transition to this new status
         """
-        self.logger.debug("%s.stop()[%s]" % (self.__class__.__name__, "%s->%s" % (
-            self.status, new_status) if self.status != new_status else "%s" % new_status)
-        )
-        # priority interrupted
+        # Priority interrupt handling
         if new_status == common.Status.INVALID:
             self.current_child = None
             for child in self.children:
-                child.stop(new_status)
-        # This part just replicates the Behaviour.stop function. We replicate it here so that
-        # the Behaviour logging doesn't duplicate the composite logging here, just a bit cleaner this way.
+                if child.status != common.Status.INVALID:  # redundant if INVALID->INVALID
+                    child.stop(new_status)
+
+        # Regular Behaviour.stop() handling
+        #   could call directly, but replicating here to avoid repeating the logger
         self.terminate(new_status)
         self.status = new_status
         self.iterator = self.tick()
@@ -379,22 +377,14 @@ class Selector(Composite):
             self.current_child = None
         yield self
 
-    def stop(self, new_status=common.Status.INVALID):
+    def stop(self, new_status: common.Status = common.Status.INVALID):
         """
-        Reset the current child pointer.
-
-        Stopping a selector requires setting the current child to none. Note that it
-        is important to implement this here instead of terminate, so users are free
-        to subclass this easily with their own terminate and not have to remember
-        that they need to call this function manually.
+        Ensure that children are appropriately stopped and update status.
 
         Args:
-            new_status (:class:`~py_trees.common.Status`): the composite is transitioning to this new status
+            new_status : the composite is transitioning to this new status
         """
-        # retain information about the last running child if the new status is
-        # SUCCESS or FAILURE
-        if new_status == common.Status.INVALID:
-            self.current_child = None
+        self.logger.debug(f"{self.__class__.__name__}.stop()[{self.status}->{new_status}]")
         Composite.stop(self, new_status)
 
 ##############################################################################
@@ -486,6 +476,16 @@ class Sequence(Composite):
 
         self.stop(common.Status.SUCCESS)
         yield self
+
+    def stop(self, new_status: common.Status = common.Status.INVALID):
+        """
+        Ensure that children are appropriately stopped and update status.
+
+        Args:
+            new_status : the composite is transitioning to this new status
+        """
+        self.logger.debug(f"{self.__class__.__name__}.stop()[{self.status}->{new_status}]")
+        Composite.stop(self, new_status)
 
 
 ##############################################################################
@@ -653,13 +653,14 @@ class Parallel(Composite):
         Args:
             new_status : the composite is transitioning to this new status
         """
+        self.logger.debug(f"{self.__class__.__name__}.stop()[{self.status}->{new_status}]")
+
         # clean up dangling (running) children
         for child in self.children:
             if child.status == common.Status.RUNNING:
-                # interrupt it exactly as if it was interrupted by a higher priority
+                # this unfortunately knocks out it's running status for introspection
+                # but logically is the correct thing to do, see #132.
                 child.stop(common.Status.INVALID)
-        # only nec. thing here is to make sure the status gets set to INVALID if
-        # it was a higher priority interrupt (new_status == INVALID)
         Composite.stop(self, new_status)
 
     def validate_policy_configuration(self):
