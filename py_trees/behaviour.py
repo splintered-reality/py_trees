@@ -182,7 +182,7 @@ class Behaviour(object):
         long time. e.g.
 
         * cancel an external action that got started
-        * shut down any tempoarary communication handles
+        * shut down any temporary communication handles
 
         Args:
             new_status (:class:`~py_trees.common.Status`): the behaviour is transitioning to this new status
@@ -216,7 +216,7 @@ class Behaviour(object):
 
     def shutdown(self):
         """
-        Destroy setup infrastruture (the antithesis of setup).
+        Destroy setup infrastructure (the antithesis of setup).
 
         Users should override this method for any custom destruction of infrastructure
         usually brought into being in :meth:`~py_trees.behaviour.Behaviour.setup`.
