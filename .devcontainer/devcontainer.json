@@ -1,0 +1,14 @@
+{
+    "name": "PyTrees",
+
+    "build": {
+        "dockerfile": "Dockerfile",
+        "args": {
+            "NAME": "PyTrees",
+            "POETRY_VERSION": "1.2.2",
+            "PYTHON_VERSION": "3.8.15"
+        },
+                "context": ".."
+        },
+        "remoteUser": "zen"
+}
