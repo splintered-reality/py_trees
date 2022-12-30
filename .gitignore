@@ -18,7 +18,6 @@ py_trees*.tar.gz
 tests/.README.md.html
 nosetests.html
 eclipse
-*.vscode
 dump.json
 tests/blackboard.cprofile
 .tox
