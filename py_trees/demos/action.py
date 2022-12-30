@@ -77,7 +77,7 @@ def planning(pipe_connection):
     idle = True
     percentage_complete = 0
     try:
-        while(True):
+        while (True):
             if pipe_connection.poll():
                 pipe_connection.recv()
                 percentage_complete = 0
