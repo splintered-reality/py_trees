@@ -10,6 +10,10 @@
         },
         "context": ".."
     },
+    "extensions": [
+        "bierner.github-markdown-preview",
+        "ms-python.python"
+    ],
     "remoteUser": "zen",
     "workspaceMount": "source=${localWorkspaceFolder}/../..,target=/workspace,type=bind",
     "workspaceFolder": "/workspace"
