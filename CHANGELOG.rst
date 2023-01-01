@@ -3,12 +3,12 @@ Release Notes
 
 Forthcoming
 -----------
+* [composites] restart the sequence, but allow children to retain their state `#368 <https://github.com/splintered-reality/py_trees/pull/368>`_
 * [common] a practical inf, `#366 <https://github.com/splintered-reality/py_trees/pull/366>`_
 * [composites] avoid redundant stop for non-running children `#360 <https://github.com/splintered-reality/py_trees/pull/360>`_
 * [display] bugfix unicode use when no unicode for dot `#359 <https://github.com/splintered-reality/py_trees/pull/359>`_
 * [tests] use tox, flake8 in prem-merge `#354 <https://github.com/splintered-reality/py_trees/pull/354>`_
 * [tests] switch from deprecating nose to pytest, `#350 <https://github.com/splintered-reality/py_trees/pull/350>`_
-
 
 2.1.6 (2021-05-31)
 ------------------
