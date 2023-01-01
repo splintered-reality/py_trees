@@ -31,7 +31,7 @@ logger = py_trees.logging.Logger("Tests")
 def test_snapshot_visitor():
     console.banner("Snapshot Visitor")
 
-    root = py_trees.composites.Selector(name='Selector')
+    root = py_trees.composites.Selector(name='Selector', memory=False)
     a = py_trees.behaviours.Count(name="A")
     b = py_trees.behaviours.Count(name="B")
     c = py_trees.behaviours.Count(name="C", fail_until=0, running_until=3, success_until=15)

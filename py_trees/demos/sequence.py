@@ -73,7 +73,7 @@ def command_line_argument_parser():
 
 
 def create_root():
-    root = py_trees.composites.Sequence("Sequence")
+    root = py_trees.composites.Sequence(name="Sequence", memory=True)
     for action in ["Action 1", "Action 2", "Action 3"]:
         success_after_two = py_trees.behaviours.Count(name=action,
                                                       fail_until=0,

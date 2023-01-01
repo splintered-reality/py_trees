@@ -61,7 +61,7 @@ class SetupVisitor(py_trees.visitors.VisitorBase):
 def test_selector_composite():
     console.banner("Selector")
     visitor = py_trees.visitors.DebugVisitor()
-    tree = py_trees.composites.Selector(name='Selector')
+    tree = py_trees.composites.Selector(name='Selector', memory=False)
     a = py_trees.behaviours.Count(name="A")
     b = py_trees.behaviours.Count(name="B")
     c = py_trees.behaviours.Count(name="C", fail_until=0, running_until=3, success_until=15)
@@ -144,7 +144,7 @@ def test_mixed_tree():
     a = py_trees.behaviours.Count(
         name="A", fail_until=3, running_until=5, success_until=7, reset=False)
 
-    sequence = py_trees.composites.Sequence(name="Sequence")
+    sequence = py_trees.composites.Sequence(name="Sequence", memory=True)
     b = py_trees.behaviours.Count(
         name="B", fail_until=0, running_until=3, success_until=5, reset=False)
     c = py_trees.behaviours.Count(
@@ -154,7 +154,7 @@ def test_mixed_tree():
 
     d = py_trees.behaviours.Count(name="D", fail_until=0, running_until=3, success_until=15)
 
-    root = py_trees.composites.Selector(name="Selector")
+    root = py_trees.composites.Selector(name="Selector", memory=False)
     root.add_child(a)
     root.add_child(sequence)
     root.add_child(d)
@@ -217,13 +217,13 @@ def test_display():
     console.banner("Display Tree")
 
     a = py_trees.behaviours.Count(name="A")
-    sequence = py_trees.composites.Sequence(name="Sequence")
+    sequence = py_trees.composites.Sequence(name="Sequence", memory=True)
     b = py_trees.behaviours.Count(name="B")
     c = py_trees.behaviours.Count(name="C")
     sequence.add_child(b)
     sequence.add_child(c)
     d = py_trees.behaviours.Count(name="D")
-    root = py_trees.composites.Selector(name="Root")
+    root = py_trees.composites.Selector(name="Root", memory=False)
     root.add_child(a)
     root.add_child(sequence)
     root.add_child(d)
@@ -238,13 +238,13 @@ def test_full_iteration():
 
     visitor = py_trees.visitors.DebugVisitor()
     a = py_trees.behaviours.Count(name="A")
-    sequence = py_trees.composites.Sequence(name="Sequence")
+    sequence = py_trees.composites.Sequence(name="Sequence", memory=True)
     b = py_trees.behaviours.Count(name="B")
     c = py_trees.behaviours.Count(name="C")
     sequence.add_child(b)
     sequence.add_child(c)
     d = py_trees.behaviours.Count(name="D")
-    root = py_trees.composites.Selector(name="Root")
+    root = py_trees.composites.Selector(name="Root", memory=False)
     root.add_child(a)
     root.add_child(sequence)
     root.add_child(d)
@@ -260,13 +260,13 @@ def test_prune_behaviour_tree():
     console.banner("Prune Behaviour Tree")
 
     a = py_trees.behaviours.Count(name="A")
-    sequence = py_trees.composites.Sequence(name="Sequence")
+    sequence = py_trees.composites.Sequence(name="Sequence", memory=True)
     b = py_trees.behaviours.Count(name="B")
     c = py_trees.behaviours.Count(name="C")
     sequence.add_child(b)
     sequence.add_child(c)
     d = py_trees.behaviours.Count(name="D")
-    root = py_trees.composites.Selector(name="Root")
+    root = py_trees.composites.Selector(name="Root", memory=False)
     root.add_child(a)
     root.add_child(sequence)
     root.add_child(d)
@@ -286,13 +286,13 @@ def test_replace_behaviour_tree():
     console.banner("Replace Behaviour Subtree")
 
     a = py_trees.behaviours.Count(name="A")
-    sequence1 = py_trees.composites.Sequence(name="Sequence1")
+    sequence1 = py_trees.composites.Sequence(name="Sequence1", memory=True)
     b = py_trees.behaviours.Count(name="B")
     c = py_trees.behaviours.Count(name="C")
     sequence1.add_child(b)
     sequence1.add_child(c)
     d = py_trees.behaviours.Count(name="D")
-    root = py_trees.composites.Selector(name="Root")
+    root = py_trees.composites.Selector(name="Root", memory=False)
     root.add_child(a)
     root.add_child(sequence1)
     root.add_child(d)
@@ -301,7 +301,7 @@ def test_replace_behaviour_tree():
     print(py_trees.display.unicode_tree(tree.root))
     assert(len(sequence1.children) == 2)
 
-    sequence2 = py_trees.composites.Sequence(name="Sequence2")
+    sequence2 = py_trees.composites.Sequence(name="Sequence2", memory=True)
     e = py_trees.behaviours.Count(name="E")
     f = py_trees.behaviours.Count(name="F")
     g = py_trees.behaviours.Count(name="G")
@@ -318,13 +318,13 @@ def test_tick_tock_behaviour_tree():
     console.banner("Tick Tock Behaviour Tree")
 
     a = py_trees.behaviours.Count(name="A")
-    sequence = py_trees.composites.Sequence(name="Sequence")
+    sequence = py_trees.composites.Sequence(name="Sequence", memory=True)
     b = py_trees.behaviours.Count(name="B")
     c = py_trees.behaviours.Count(name="C")
     sequence.add_child(b)
     sequence.add_child(c)
     d = py_trees.behaviours.Count(name="D")
-    root = py_trees.composites.Selector(name="Root")
+    root = py_trees.composites.Selector(name="Root", memory=False)
     root.add_child(a)
     root.add_child(sequence)
     root.add_child(d)
@@ -343,7 +343,7 @@ def test_tick_tock_behaviour_tree():
 
 def test_success_failure_tree():
     console.banner("Success Failure Tree")
-    root = py_trees.composites.Selector(name="Root")
+    root = py_trees.composites.Selector(name="Root", memory=False)
     failure = py_trees.behaviours.Failure(name="Failure")
     failure2 = py_trees.decorators.Inverter(
         name="Failure2",
@@ -372,7 +372,7 @@ def test_tip_simple():
     console.banner("Tip Simple")
 
     # behaviours will be running the first time they are seen, then success for subsequent ticks
-    seq = py_trees.composites.Sequence(name="Sequence")
+    seq = py_trees.composites.Sequence(name="Sequence", memory=True)
     a = py_trees.behaviours.Count(name="A", fail_until=0, running_until=1, success_until=100)
     b = py_trees.behaviours.Count(name="B", fail_until=0, running_until=1, success_until=100)
     seq.add_child(a)
@@ -435,9 +435,9 @@ def test_tip_complex():
     console.banner("Tip Complex")
 
     # behaviours will be running the first time they are seen, then success for subsequent ticks
-    sel = py_trees.composites.Selector(name="Selector")
-    seq1 = py_trees.composites.Sequence(name="Sequence1")
-    seq2 = py_trees.composites.Sequence(name="Sequence2")
+    sel = py_trees.composites.Selector(name="Selector", memory=False)
+    seq1 = py_trees.composites.Sequence(name="Sequence1", memory=True)
+    seq2 = py_trees.composites.Sequence(name="Sequence2", memory=True)
 
     # selector left branch fails the two times, so seq2 behaviours run. The
     # third time it is running, stopping seq2
@@ -498,7 +498,7 @@ def test_tip_complex():
 def test_failed_tree():
     console.banner("Failed Tree")
 
-    root = py_trees.composites.Selector("Root")
+    root = py_trees.composites.Selector(name="Root", memory=False)
     f1 = py_trees.behaviours.Failure("Failure 1")
     f2 = py_trees.behaviours.Failure("Failure 2")
     f3 = py_trees.behaviours.Failure("Failure 3")
@@ -573,7 +573,7 @@ def test_tree_setup():
     first = SleepInSetup(name="First", duration=duration)
     second = SleepInSetup(name="Second", duration=duration)
     third = SleepInSetup(name="Third", duration=duration)
-    root = py_trees.composites.Sequence()
+    root = py_trees.composites.Sequence(name="Root", memory=True)
     root.add_children([first, second, third])
     tree = py_trees.trees.BehaviourTree(root=root)
     print("\n--------- Assertions ---------\n")
@@ -641,7 +641,7 @@ def test_pre_post_tick_activity_sequence():
     the correct order.
     """
     console.banner("Pre-Post Tick Activity")
-    root = py_trees.composites.Selector("Selector")
+    root = py_trees.composites.Selector(name="Selector", memory=False)
     root.add_child(py_trees.behaviours.Success())
     tree = py_trees.trees.BehaviourTree(root=root)
     breadcrumbs = list()
@@ -689,7 +689,7 @@ def test_unicode_tree_debug():
     tree visitors is executable
     """
     console.banner("Tree Ascii Art")
-    root = py_trees.composites.Selector("Selector")
+    root = py_trees.composites.Selector(name="Selector", memory=False)
     root.add_child(
         py_trees.behaviours.Count(
             name="High Priority",

@@ -74,7 +74,7 @@ def command_line_argument_parser():
 
 
 def create_root():
-    root = py_trees.composites.Selector("Selector")
+    root = py_trees.composites.Selector(name="Selector", memory=False)
     success_after_two = py_trees.behaviours.Count(name="After Two",
                                                   fail_until=2,
                                                   running_until=2,

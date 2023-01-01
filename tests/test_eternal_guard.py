@@ -78,7 +78,7 @@ def generate_eternal_guard():
         py_trees.behaviours.Success(name="Success")
     ]
     tasks = create_tasks()
-    task_sequence = py_trees.composites.Sequence("Task Sequence")
+    task_sequence = py_trees.composites.Sequence(name="Task Sequence", memory=True)
     task_sequence.add_children(tasks)
     eternal_guard = py_trees.idioms.eternal_guard(
         name="Eternal Guard",
@@ -89,7 +89,7 @@ def generate_eternal_guard():
 
 
 def test_eternal_guard_idiom():
-    root = py_trees.composites.Selector(name="Root")
+    root = py_trees.composites.Selector(name="Root", memory=False)
     eternal_guard, tasks = generate_eternal_guard()
     idle = py_trees.behaviours.Running()
 
@@ -112,7 +112,7 @@ def test_eternal_guard_unique_names():
         blackboard.register_key(key=key, access=py_trees.common.Access.WRITE)
     message = "Ha, stole it"
     blackboard.eternal_guard_condition_1 = message
-    root = py_trees.composites.Selector(name="Root")
+    root = py_trees.composites.Selector(name="Root", memory=False)
     eternal_guard, unused_tasks = generate_eternal_guard()
     root.add_children([eternal_guard])
     # tick once, get variables on the blackboard
@@ -129,7 +129,7 @@ def test_eternal_guard_unique_names():
 
 
 def test_eternal_guard_decorator():
-    root = py_trees.composites.Selector(name="Root")
+    root = py_trees.composites.Selector(name="Root", memory=False)
 
     def condition_success():
         return True
@@ -155,7 +155,7 @@ def test_eternal_guard_decorator():
                 return py_trees.common.Status.FAILURE
 
     tasks = create_tasks()
-    task_sequence = py_trees.composites.Sequence("Task Sequence")
+    task_sequence = py_trees.composites.Sequence(name="Task Sequence", memory=True)
     task_sequence.add_children(tasks)
     idle = py_trees.behaviours.Running()
     nested_guard = py_trees.decorators.EternalGuard(

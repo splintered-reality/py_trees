@@ -126,7 +126,7 @@ def create_root():
         name="Pick Up\nWhere You\nLeft Off",
         tasks=[task_one, task_two]
     )
-    root = py_trees.composites.Selector(name="Root")
+    root = py_trees.composites.Selector(name="Root", memory=False)
     root.add_children([high_priority_interrupt, piwylo])
 
     return root

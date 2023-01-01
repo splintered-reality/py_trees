@@ -116,6 +116,7 @@ def test_oneshot_with_fail_causes_reentry():
 def untest_oneshot_with_subtrees_and_interrupt():
     sequence_subtree = py_trees.composites.Sequence(
         name="Sequence",
+        memory=True,
         children=[
             py_trees.behaviours.Success(name="Success 1"),
             py_trees.behaviours.Success(name="Success 2")
@@ -123,6 +124,7 @@ def untest_oneshot_with_subtrees_and_interrupt():
     )
     selector_subtree = py_trees.composites.Selector(
         name="Selector",
+        memory=False,
         children=[
             py_trees.behaviours.Failure(name="Failure"),
             py_trees.behaviours.Success(name="Success")
@@ -141,7 +143,7 @@ def untest_oneshot_with_subtrees_and_interrupt():
             py_trees.tests.clear_blackboard()
 
             # Tree with higher priority branch
-            root = py_trees.composites.Selector(name="Root")
+            root = py_trees.composites.Selector(name="Root", memory=False)
             fail_after_one = py_trees.behaviours.Count(
                 name="HighPriority", fail_until=1, running_until=1, success_until=2)
             root.add_children([fail_after_one, oneshot])

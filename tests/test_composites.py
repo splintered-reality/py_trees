@@ -44,7 +44,7 @@ def assert_details(text, expected, result):
 
 def test_replacing_children():
     console.banner("Replacing Children")
-    parent = py_trees.composites.Sequence(name="Parent")
+    parent = py_trees.composites.Sequence(name="Parent", memory=True)
     front = py_trees.behaviours.Success(name="Front")
     back = py_trees.behaviours.Success(name="Back")
     old_child = py_trees.behaviours.Success(name="Old Child")
@@ -62,7 +62,7 @@ def test_replacing_children():
 
 def test_removing_children():
     console.banner("Removing Children")
-    parent = py_trees.composites.Sequence(name="Parent")
+    parent = py_trees.composites.Sequence(name="Parent", memory=True)
     child = py_trees.behaviours.Success(name="Child")
     print("\n--------- Assertions ---------\n")
     print("child.parent is None after removing by instance")
@@ -81,7 +81,7 @@ def test_removing_children():
 
 def test_composite_add_child_exception():
     console.banner("Composite Add Child Exception - Invalid Type")
-    root = py_trees.composites.Selector()
+    root = py_trees.composites.Selector(name="Selector", memory=False)
     with pytest.raises(TypeError) as context:  # if raised, context survives
         root.add_child(5.0)
         py_trees.tests.print_assert_details("TypeError raised", "raised", "not raised")
@@ -94,8 +94,8 @@ def test_composite_add_child_exception():
 def test_protect_against_multiple_parents():
     console.banner("Protect Against Multiple Parents")
     child = py_trees.behaviours.Success()
-    first_parent = py_trees.composites.Selector()
-    second_parent = py_trees.composites.Sequence()
+    first_parent = py_trees.composites.Selector(name="Selector", memory=False)
+    second_parent = py_trees.composites.Sequence(name="Sequence", memory=True)
     with pytest.raises(RuntimeError) as context:  # if raised, context survives
         # Adding a child to two parents - expecting a RuntimeError
         for parent in [first_parent, second_parent]:
@@ -109,7 +109,7 @@ def test_protect_against_multiple_parents():
 
 def test_remove_nonexistant_child():
     console.banner("Remove non-existant child")
-    root = py_trees.composites.Sequence(name="Sequence")
+    root = py_trees.composites.Sequence(name="Sequence", memory=True)
     child = py_trees.behaviours.Success(name="Success")
     root.add_child(child)
     non_existant_child = py_trees.behaviours.Success(name="Ooops")

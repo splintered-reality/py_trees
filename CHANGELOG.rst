@@ -3,6 +3,7 @@ Release Notes
 
 Forthcoming
 -----------
+* [composites] use explicit composite arguments, `#370 <https://github.com/splintered-reality/py_trees/pull/370>`_
 * [composites] restart the sequence, but allow children to retain their state `#368 <https://github.com/splintered-reality/py_trees/pull/368>`_
 * [common] a practical inf, `#366 <https://github.com/splintered-reality/py_trees/pull/366>`_
 * [composites] avoid redundant stop for non-running children `#360 <https://github.com/splintered-reality/py_trees/pull/360>`_

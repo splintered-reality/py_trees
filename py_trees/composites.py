@@ -41,7 +41,7 @@ well be back at the terminal parsing code.
 
 The basic operational modes of the three composites in this library are as follows:
 
-* :class:`~py_trees.composites.Selector`: select a child to execute based on cascading priorities
+* :class:`~py_trees.composites.Selector`: execute a child based on cascading priorities
 * :class:`~py_trees.composites.Sequence`: execute children sequentially
 * :class:`~py_trees.composites.Parallel`: execute children concurrently
 
@@ -295,13 +295,18 @@ class Selector(Composite):
     .. seealso:: The :ref:`py-trees-demo-selector-program` program demos higher priority switching under a selector.
 
     Args:
-        name (:obj:`str`): the composite behaviour name
         memory (:obj:`bool`): if :data:`~py_trees.common.Status.RUNNING` on the previous tick,
             resume with the :data:`~py_trees.common.Status.RUNNING` child
+        name (:obj:`str`): the composite behaviour name
         children ([:class:`~py_trees.behaviour.Behaviour`]): list of children to add
     """
 
-    def __init__(self, name="Selector", memory=False, children=None):
+    def __init__(
+        self,
+        name: str,
+        memory: bool,
+        children: typing.List[behaviour.Behaviour] = None
+    ):
         super(Selector, self).__init__(name, children)
         self.memory = memory
 
@@ -421,8 +426,8 @@ class Sequence(Composite):
 
     def __init__(
         self,
-        name: str = "Sequence",
-        memory: bool = True,
+        name: str,
+        memory: bool,
         children: typing.List[behaviour.Behaviour] = None
     ):
         super(Sequence, self).__init__(name, children)
@@ -550,8 +555,8 @@ class Parallel(Composite):
     """
 
     def __init__(self,
-                 name: typing.Union[str, common.Name] = common.Name.AUTO_GENERATED,
-                 policy: common.ParallelPolicy.Base = None,
+                 name: typing.Union[str, common.Name],
+                 policy: common.ParallelPolicy.Base,
                  children: typing.List[behaviour.Behaviour] = None
                  ):
         """
@@ -562,8 +567,6 @@ class Parallel(Composite):
             policy: policy for deciding success or otherwise (default: SuccessOnAll)
             children: list of children to add
         """
-        if policy is None:
-            policy = common.ParallelPolicy.SuccessOnAll()
         super(Parallel, self).__init__(name, children)
         self.policy = policy
 

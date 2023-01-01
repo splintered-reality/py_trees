@@ -79,17 +79,17 @@ def create_root() -> py_trees.behaviour.Behaviour:
     Returns:
         the root of the tree
     """
-    root = py_trees.composites.Sequence(name="root")
-    child = py_trees.composites.Sequence(name="child1")
-    child2 = py_trees.composites.Sequence(name="child2")
-    child3 = py_trees.composites.Sequence(name="child3")
+    root = py_trees.composites.Sequence(name="root", memory=True)
+    child = py_trees.composites.Sequence(name="child1", memory=True)
+    child2 = py_trees.composites.Sequence(name="child2", memory=True)
+    child3 = py_trees.composites.Sequence(name="child3", memory=True)
     root.add_child(child)
     root.add_child(child2)
     root.add_child(child3)
 
     child.add_child(py_trees.behaviours.Count(name='Count', fail_until=0, running_until=1, success_until=6,))
     child2.add_child(py_trees.behaviours.Count(name='Count', fail_until=0, running_until=1, success_until=6,))
-    child2_child1 = py_trees.composites.Sequence(name="Child2_child1")
+    child2_child1 = py_trees.composites.Sequence(name="Child2_child1", memory=True)
     child2_child1.add_child(py_trees.behaviours.Count(name='Count', fail_until=0, running_until=1, success_until=6,))
     child2.add_child(child2_child1)
     child3.add_child(py_trees.behaviours.Count(name='Count', fail_until=0, running_until=1, success_until=6,))
