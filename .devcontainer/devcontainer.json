@@ -1,5 +1,5 @@
 {
-    "name": "py_trees",
+    "name": "py_trees-38",
 
     "build": {
         "dockerfile": "./Dockerfile",
@@ -10,5 +10,9 @@
         },
         "context": ".."
     },
+    "extensions": [
+        "bierner.github-markdown-preview",
+        "ms-python.python"
+    ],
     "remoteUser": "zen"
 }
