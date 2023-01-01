@@ -170,7 +170,7 @@ class ParamsAndState(py_trees.behaviour.Behaviour):
 
 
 def create_root():
-    root = py_trees.composites.Sequence("Blackboard Demo")
+    root = py_trees.composites.Sequence(name="Blackboard Demo", memory=True)
     set_blackboard_variable = py_trees.behaviours.SetBlackboardVariable(
         name="Set Nested", variable_name="nested", variable_value=Nested()
     )

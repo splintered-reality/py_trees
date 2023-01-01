@@ -74,9 +74,9 @@ def pick_up_where_you_left_off(
     """
     if tasks is None:
         tasks = []
-    root = composites.Sequence(name=name)
+    root = composites.Sequence(name=name, memory=True)
     for task in tasks:
-        task_selector = composites.Selector(name="Do or Don't")
+        task_selector = composites.Selector(name="Do or Don't", memory=False)
         task_guard = behaviours.CheckBlackboardVariableValue(
             name="Done?",
             check=common.ComparisonExpression(
@@ -85,7 +85,7 @@ def pick_up_where_you_left_off(
                 operator=operator.eq
             )
         )
-        sequence = composites.Sequence(name="Worker")
+        sequence = composites.Sequence(name="Worker", memory=True)
         mark_task_done = behaviours.SetBlackboardVariable(
             name="Mark\n" + task.name.lower().replace(" ", "_") + "_done",
             variable_name=task.name.lower().replace(" ", "_") + "_done",
@@ -168,7 +168,7 @@ def eternal_guard(
         name=name,
         policy=common.ParallelPolicy.SuccessOnAll(synchronise=False)
     )
-    guarded_tasks = composites.Selector(name="Guarded Tasks")
+    guarded_tasks = composites.Selector(name="Guarded Tasks", memory=False)
     for condition, blackboard_variable_name in zip(conditions, blackboard_variable_names):
         decorated_condition = decorators.StatusToBlackboard(
             name="StatusToBB",
@@ -256,7 +256,7 @@ def either_or(
         raise ValueError("Must be the same number of conditions as subtrees [{} != {}]".format(
             len(conditions), len(subtrees))
         )
-    root = composites.Sequence(name=name)
+    root = composites.Sequence(name=name, memory=True)
     configured_namespace: str = namespace if namespace is not None else \
         blackboard.Blackboard.separator + name.lower().replace("-", "_").replace(" ", "_") + \
         blackboard.Blackboard.separator + str(root.id).replace("-", "_").replace(" ", "_") + \
@@ -267,9 +267,9 @@ def either_or(
         operator=operator.xor,
         namespace=configured_namespace
     )
-    chooser = composites.Selector(name="Chooser")
+    chooser = composites.Selector(name="Chooser", memory=False)
     for counter in range(1, len(conditions) + 1):
-        sequence = composites.Sequence(name="Option {}".format(str(counter)))
+        sequence = composites.Sequence(name="Option {}".format(str(counter)), memory=True)
         variable_name = configured_namespace + blackboard.Blackboard.separator + str(counter)
         disabled = behaviours.CheckBlackboardVariableValue(
             name="Enabled?",
@@ -315,9 +315,8 @@ def oneshot(
 
     .. seealso:: :class:`py_trees.decorators.OneShot`
     """
-    subtree_root = composites.Selector(name=name)
-    oneshot_with_guard = composites.Sequence(
-        name="Oneshot w/ Guard")
+    subtree_root = composites.Selector(name=name, memory=False)
+    oneshot_with_guard = composites.Sequence(name="Oneshot w/ Guard", memory=True)
     check_not_done = decorators.Inverter(
         name="Not Completed?",
         child=behaviours.CheckBlackboardVariableExists(
@@ -335,15 +334,15 @@ def oneshot(
         behaviour.add_child(set_flag_on_success)
         sequence = behaviour
     else:
-        sequence = composites.Sequence(name="OneShot")
+        sequence = composites.Sequence(name="OneShot", memory=True)
         sequence.add_children([behaviour, set_flag_on_success])
 
     oneshot_with_guard.add_child(check_not_done)
     if policy == common.OneShotPolicy.ON_SUCCESSFUL_COMPLETION:
         oneshot_with_guard.add_child(sequence)
     else:  # ON_COMPLETION (SUCCESS || FAILURE)
-        oneshot_handler = composites.Selector(name="Oneshot Handler")
-        bookkeeping = composites.Sequence(name="Bookkeeping")
+        oneshot_handler = composites.Selector(name="Oneshot Handler", memory=False)
+        bookkeeping = composites.Sequence(name="Bookkeeping", memory=True)
         set_flag_on_failure = behaviours.SetBlackboardVariable(
             name="Mark Done\n[FAILURE]",
             variable_name=variable_name,

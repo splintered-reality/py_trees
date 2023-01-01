@@ -49,7 +49,7 @@ def test_parallel_failure():
     success_on_all_synchronised = py_trees.common.ParallelPolicy.SuccessOnAll(synchronise=True)
     success_on_all_not_synchronised = py_trees.common.ParallelPolicy.SuccessOnAll(synchronise=False)
     for policy in [success_on_one, success_on_all_synchronised, success_on_all_not_synchronised]:
-        root = py_trees.composites.Parallel("Parallel", policy=policy)
+        root = py_trees.composites.Parallel(name="Parallel", policy=policy)
         failure = py_trees.behaviours.Failure("Failure")
         success = py_trees.behaviours.Success("Success")
         root.add_child(failure)
@@ -70,7 +70,7 @@ def test_parallel_failure():
     success = py_trees.behaviours.Success("Success")
     for child, synchronise in itertools.product([success, failure], [True, False]):
         policy = py_trees.common.ParallelPolicy.SuccessOnSelected(children=[child], synchronise=synchronise)
-        root = py_trees.composites.Parallel("Parallel", policy=policy)
+        root = py_trees.composites.Parallel(name="Parallel", policy=policy)
         root.add_child(failure)
         root.add_child(success)
         print(py_trees.display.unicode_tree(root))
@@ -92,7 +92,7 @@ def test_parallel_failure():
 
 def test_parallel_success():
     console.banner("Parallel Success")
-    root = py_trees.composites.Parallel("Parallel")
+    root = py_trees.composites.Parallel(name="Parallel", policy=py_trees.common.ParallelPolicy.SuccessOnAll())
     success1 = py_trees.behaviours.Success("Success1")
     success2 = py_trees.behaviours.Success("Success2")
     root.add_child(success1)
@@ -113,7 +113,9 @@ def test_parallel_success():
 def test_parallel_running():
     console.banner("Parallel Running")
     root = py_trees.composites.Parallel(
-        "Parallel", policy=py_trees.common.ParallelPolicy.SuccessOnAll())
+        name="Parallel",
+        policy=py_trees.common.ParallelPolicy.SuccessOnAll()
+    )
     success_after_1 = py_trees.behaviours.Count(
         name="SuccessAfter1",
         fail_until=0,
@@ -157,7 +159,9 @@ def test_parallel_success_on_one():
     console.banner("Parallel Success on One")
     print("")
     root = py_trees.composites.Parallel(
-        name="Parallel", policy=py_trees.common.ParallelPolicy.SuccessOnOne())
+        name="Parallel",
+        policy=py_trees.common.ParallelPolicy.SuccessOnOne()
+    )
     running1 = py_trees.behaviours.Running("Running1")
     success = py_trees.behaviours.Success("Success")
     running2 = py_trees.behaviours.Running("Running2")
@@ -247,6 +251,7 @@ def test_parallel_success_on_selected_invalid_configuration():
     )
     parallel = py_trees.composites.Parallel(
         name="Parallel",
+        policy=py_trees.common.ParallelPolicy.SuccessOnAll(),
         children=[running1, running3]
     )
     for policy in [different_policy, empty_policy]:

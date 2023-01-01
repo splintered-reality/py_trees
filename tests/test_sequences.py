@@ -158,7 +158,7 @@ def test_static_sequence_successes():
         success3,
         success4,
     ]
-    root = py_trees.composites.Sequence(name="Sequence", children=children)
+    root = py_trees.composites.Sequence(name="Sequence", memory=True, children=children)
 
     root.tick_once()
 
@@ -181,7 +181,7 @@ def test_static_sequence_with_failure():
         failure,
         success3,
     ]
-    root = py_trees.composites.Sequence(name="Sequence", children=children)
+    root = py_trees.composites.Sequence(name="Sequence", memory=True, children=children)
 
     root.tick_once()
 
@@ -192,7 +192,7 @@ def test_static_sequence_with_failure():
 def test_tick_add_with_current_child():
     console.banner('Tick-Add with Current Child')
     assert_banner()
-    root = py_trees.composites.Sequence(name="Sequence")
+    root = py_trees.composites.Sequence(name="Sequence", memory=True)
     root.tick_once()
     child = py_trees.behaviours.Failure(name="Failure")
     print(py_trees.display.unicode_tree(root, show_status=True))
@@ -205,7 +205,7 @@ def test_tick_add_with_current_child():
 def test_add_tick_add_with_current_child():
     console.banner('Add-Tick-Add with Current Child')
     assert_banner()
-    root = py_trees.composites.Sequence(name="Sequence")
+    root = py_trees.composites.Sequence(name="Sequence", memory=True)
     run1 = py_trees.behaviours.Running("Run1")
     run2 = py_trees.behaviours.Running("Run2")
     root.add_child(run1)
@@ -222,7 +222,7 @@ def test_add_tick_add_with_current_child():
 def test_add_tick_insert_with_current_child():
     console.banner('Add-Tick-Insert with Current Child')
     assert_banner()
-    root = py_trees.composites.Sequence(name="Sequence")
+    root = py_trees.composites.Sequence(name="Sequence", memory=True)
     run1 = py_trees.behaviours.Running("Run1")
     run2 = py_trees.behaviours.Running("Run2")
     root.add_child(run1)
@@ -239,7 +239,7 @@ def test_add_tick_insert_with_current_child():
 def test_add_tick_remove_with_current_child():
     console.banner('Add-Tick-Remove with Current Child')
     assert_banner()
-    root = py_trees.composites.Sequence(name="Sequence")
+    root = py_trees.composites.Sequence(name="Sequence", memory=True)
     child = py_trees.behaviours.Success(name="Success")
     root.add_child(child)
     root.tick_once()

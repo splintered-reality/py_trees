@@ -154,13 +154,13 @@ def create_root():
         name="Root",
         policy=py_trees.common.ParallelPolicy.SuccessOnAll(synchronise=False)
     )
-    reset = py_trees.composites.Sequence(name="Reset")
+    reset = py_trees.composites.Sequence(name="Reset", memory=True)
     reset.add_children([reset_joystick_one, reset_joystick_two])
-    joystick_one_events = py_trees.composites.Sequence(name="Joy1 Events")
+    joystick_one_events = py_trees.composites.Sequence(name="Joy1 Events", memory=True)
     joystick_one_events.add_children([trigger_one, enable_joystick_one])
-    joystick_two_events = py_trees.composites.Sequence(name="Joy2 Events")
+    joystick_two_events = py_trees.composites.Sequence(name="Joy2 Events", memory=True)
     joystick_two_events.add_children([trigger_two, enable_joystick_two])
-    tasks = py_trees.composites.Selector(name="Tasks")
+    tasks = py_trees.composites.Selector(name="Tasks", memory=False)
     tasks.add_children([either_or, idle])
     root.add_children([reset, joystick_one_events, joystick_two_events, tasks])
     return root

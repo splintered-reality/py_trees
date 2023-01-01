@@ -84,18 +84,18 @@ def command_line_argument_parser():
 
 
 def create_tree(level):
-    root = py_trees.composites.Selector("Demo Dot Graphs %s" % level)
-    first_blackbox = py_trees.composites.Sequence("BlackBox 1")
+    root = py_trees.composites.Selector(name="Demo Dot Graphs %s" % level, memory=False)
+    first_blackbox = py_trees.composites.Sequence(name="BlackBox 1", memory=True)
     first_blackbox.add_child(py_trees.behaviours.Running("Worker"))
     first_blackbox.add_child(py_trees.behaviours.Running("Worker"))
     first_blackbox.add_child(py_trees.behaviours.Running("Worker"))
     first_blackbox.blackbox_level = py_trees.common.BlackBoxLevel.BIG_PICTURE
-    second_blackbox = py_trees.composites.Sequence("Blackbox 2")
+    second_blackbox = py_trees.composites.Sequence(name="Blackbox 2", memory=True)
     second_blackbox.add_child(py_trees.behaviours.Running("Worker"))
     second_blackbox.add_child(py_trees.behaviours.Running("Worker"))
     second_blackbox.add_child(py_trees.behaviours.Running("Worker"))
     second_blackbox.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
-    third_blackbox = py_trees.composites.Sequence("Blackbox 3")
+    third_blackbox = py_trees.composites.Sequence(name="Blackbox 3", memory=True)
     third_blackbox.add_child(py_trees.behaviours.Running("Worker"))
     third_blackbox.add_child(py_trees.behaviours.Running("Worker"))
     third_blackbox.add_child(py_trees.behaviours.Running("Worker"))

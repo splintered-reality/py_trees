@@ -127,7 +127,7 @@ def logger(snapshot_visitor, behaviour_tree):
 
 def create_tree():
     every_n_success = py_trees.behaviours.SuccessEveryN("EveryN", 5)
-    sequence = py_trees.composites.Sequence(name="Sequence")
+    sequence = py_trees.composites.Sequence(name="Sequence", memory=True)
     guard = py_trees.behaviours.Success("Guard")
     periodic_success = py_trees.behaviours.Periodic("Periodic", 3)
     finisher = py_trees.behaviours.Success("Finisher")
@@ -136,7 +136,7 @@ def create_tree():
     sequence.add_child(finisher)
     sequence.blackbox_level = py_trees.common.BlackBoxLevel.COMPONENT
     idle = py_trees.behaviours.Success("Idle")
-    root = py_trees.composites.Selector(name="Logging")
+    root = py_trees.composites.Selector(name="Logging", memory=False)
     root.add_child(every_n_success)
     root.add_child(sequence)
     root.add_child(idle)

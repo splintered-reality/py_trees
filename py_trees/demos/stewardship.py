@@ -134,7 +134,7 @@ class Finisher(py_trees.behaviour.Behaviour):
 
 def create_tree():
     every_n_success = SuccessEveryN()
-    sequence = py_trees.composites.Sequence(name="Sequence")
+    sequence = py_trees.composites.Sequence(name="Sequence", memory=True)
     guard = py_trees.behaviours.Success("Guard")
     periodic_success = PeriodicSuccess()
     finisher = Finisher()
@@ -142,7 +142,7 @@ def create_tree():
     sequence.add_child(periodic_success)
     sequence.add_child(finisher)
     idle = py_trees.behaviours.Success("Idle")
-    root = py_trees.composites.Selector(name="Demo Tree")
+    root = py_trees.composites.Selector(name="Demo Tree", memory=False)
     root.add_child(every_n_success)
     root.add_child(sequence)
     root.add_child(idle)

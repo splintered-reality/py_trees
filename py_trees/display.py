@@ -266,7 +266,7 @@ def ascii_tree(
                     )
                 )
 
-            root = py_trees.composites.Sequence("Sequence")
+            root = py_trees.composites.Sequence(name="Sequence", memory=True)
             for action in ["Action 1", "Action 2", "Action 3"]:
                 b = py_trees.behaviours.Count(
                         name=action,
@@ -368,7 +368,7 @@ def xhtml_tree(
             import py_trees
             a = py_trees.behaviours.Success()
             b = py_trees.behaviours.Success()
-            c = c = py_trees.composites.Sequence(children=[a, b])
+            c = c = py_trees.composites.Sequence(name="Sequence", memory=True, children=[a, b])
             c.tick_once()
 
             f = open('testies.html', 'w')
@@ -661,7 +661,7 @@ def render_dot_tree(root: behaviour.Behaviour,
 
         .. code-block:: python
 
-            root = py_trees.composites.Sequence("Sequence")
+            root = py_trees.composites.Sequence(name="Sequence", memory=True)
             for job in ["Action 1", "Action 2", "Action 3"]:
                 success_after_two = py_trees.behaviours.Count(name=job,
                                                               fail_until=0,
