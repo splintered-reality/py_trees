@@ -292,6 +292,12 @@ class Selector(Composite):
        executing low priority branch. This signal will percolate down that child's own subtree. Behaviours
        should make sure that they catch this and *destruct* appropriately.
 
+    .. note::
+
+       If configured with `memory`, higher priority checks will be skipped when a child returned with
+       running on the previous tick. i.e. once a priority is locked in, it will run to completion and can
+       only be interrupted if the selector is interrupted by higher priorities elsewhere in the tree.
+
     .. seealso:: The :ref:`py-trees-demo-selector-program` program demos higher priority switching under a selector.
 
     Args:
@@ -412,8 +418,15 @@ class Sequence(Composite):
 
     .. note::
 
-       The sequence halts once it sees a child is RUNNING and then returns
-       the result. *It does not get stuck in the running behaviour*.
+       The sequence halts once it engages with a child is RUNNING, remaining behaviours
+       are not ticked.
+
+    .. note::
+
+       If configured with `memory` and a child returned with running on the previous tick, it will
+       proceed directly to the running behaviour, skipping any and all preceding behaviours. With memory
+       is useful for moving through a long running series of tasks. Without memory is useful if you
+       want conditional guards in place preceding the work that you always want checked off.
 
     .. seealso:: The :ref:`py-trees-demo-sequence-program` program demos a simple sequence in action.
 
