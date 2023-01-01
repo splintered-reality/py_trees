@@ -3,6 +3,7 @@ Release Notes
 
 Forthcoming
 -----------
+* [common] a practical inf, `#366 <https://github.com/splintered-reality/py_trees/pull/366>`_
 * [composites] avoid redundant stop for non-running children `#360 <https://github.com/splintered-reality/py_trees/pull/360>`_
 * [display] bugfix unicode use when no unicode for dot `#359 <https://github.com/splintered-reality/py_trees/pull/359>`_
 * [tests] use tox, flake8 in prem-merge `#354 <https://github.com/splintered-reality/py_trees/pull/354>`_
