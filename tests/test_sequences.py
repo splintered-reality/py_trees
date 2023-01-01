@@ -38,19 +38,52 @@ def assert_details(text, expected, result):
 # Tests
 ##############################################################################
 
+def test_running_with_no_memory_children_do_not_reset():
+    console.banner('Tick-Running with No Memory - Children Do Not Reset')
+    assert_banner()
+    root = py_trees.composites.Sequence(name="Sequence w/o Memory", memory=False)
+    child_1 = py_trees.behaviours.TickCounter(1)  # R-S
+    child_2 = py_trees.behaviours.Success('Success')
+    root.add_children([child_1, child_2])
 
-def test_running_with_no_memory():
-    console.banner('Tick-Running with No Memory')
+    # Expect
+    #   1. R - [R, I]
+    #   2. S - [S, S]  <- NB: first child doesn't reset
+
+    root.tick_once()
+    print(py_trees.display.unicode_tree(root, show_status=True))
+    assert_details("1::Sequence Status", py_trees.common.Status.RUNNING, root.status)
+    assert(root.status == py_trees.common.Status.RUNNING)
+    assert_details("2::Child 1 Status", py_trees.common.Status.RUNNING, child_1.status)
+    assert(child_1.status == py_trees.common.Status.RUNNING)
+    assert_details("2::Child 2 Status", py_trees.common.Status.INVALID, child_2.status)
+    assert(child_2.status == py_trees.common.Status.INVALID)
+
+    root.tick_once()
+    print(py_trees.display.unicode_tree(root, show_status=True))
+    assert_details("2::Selector Status", py_trees.common.Status.SUCCESS, root.status)
+    assert(root.status == py_trees.common.Status.SUCCESS)
+    assert_details("2::Child 1 Status", py_trees.common.Status.SUCCESS, child_1.status)
+    assert(child_1.status == py_trees.common.Status.SUCCESS)
+    assert_details("2::Child 2 Status", py_trees.common.Status.SUCCESS, child_2.status)
+    assert(child_2.status == py_trees.common.Status.SUCCESS)
+
+def test_running_with_no_memory_invalidate_dangling_runners():
+    console.banner('Tick-Running with No Memory - Invalidate Dangling Runners')
     assert_banner()
     root = py_trees.composites.Sequence(name="Sequence w/o Memory", memory=False)
     child_1 = py_trees.behaviours.StatusSequence(
-        name="Success-Failure",
+        name="Success-Running",
         sequence=[py_trees.common.Status.SUCCESS,
-                  py_trees.common.Status.FAILURE],
+                  py_trees.common.Status.RUNNING],
         eventually=None
-        )
-    child_2 = py_trees.behaviours.Running(name="Running")
+    )
+    child_2 = py_trees.behaviours.Running('Running')
     root.add_children([child_1, child_2])
+
+    # Expect
+    #   1. R - [S, R]
+    #   2. R - [R, I]  <- NB: second child is invalidated
 
     root.tick_once()
     print(py_trees.display.unicode_tree(root, show_status=True))
@@ -63,13 +96,12 @@ def test_running_with_no_memory():
 
     root.tick_once()
     print(py_trees.display.unicode_tree(root, show_status=True))
-    assert_details("2::Selector Status", py_trees.common.Status.FAILURE, root.status)
-    assert(root.status == py_trees.common.Status.FAILURE)
-    assert_details("2::Child 1 Status", py_trees.common.Status.FAILURE, child_1.status)
-    assert(child_1.status == py_trees.common.Status.FAILURE)
+    assert_details("2::Selector Status", py_trees.common.Status.RUNNING, root.status)
+    assert(root.status == py_trees.common.Status.RUNNING)
+    assert_details("2::Child 1 Status", py_trees.common.Status.RUNNING, child_1.status)
+    assert(child_1.status == py_trees.common.Status.RUNNING)
     assert_details("2::Child 2 Status", py_trees.common.Status.INVALID, child_2.status)
     assert(child_2.status == py_trees.common.Status.INVALID)
-
 
 def test_running_with_memory_proceeds():
     # This test should check two things:

@@ -439,15 +439,19 @@ class Sequence(Composite):
 
         # initialise
         index = 0
-        if self.status != common.Status.RUNNING or not self.memory:
+        if self.status != common.Status.RUNNING:
             self.current_child = self.children[0] if self.children else None
             for child in self.children:
                 if child.status != common.Status.INVALID:
                     child.stop(common.Status.INVALID)
-            # user specific initialisation
-            self.initialise()
-        else:  # self.memory is True and status is RUNNING
+            self.initialise()  # user specific initialisation
+        elif self.memory and common.Status.RUNNING:
             index = self.children.index(self.current_child)
+        elif not self.memory and common.Status.RUNNING:
+            self.current_child = self.children[0] if self.children else None
+        else:
+            # previous conditional checks should cover all variations
+            raise RuntimeError("Sequence reached an unknown / invalid state")
 
         # customised work
         self.update()
@@ -465,6 +469,12 @@ class Sequence(Composite):
                 yield node
                 if node is child and node.status != common.Status.SUCCESS:
                     self.status = node.status
+                    if not self.memory:
+                        # invalidate the remainder of the sequence
+                        # i.e. kill dangling runners
+                        for child in itertools.islice(self.children, index + 1, None):
+                            if child.status != common.Status.INVALID:
+                                child.stop(common.Status.INVALID)
                     yield self
                     return
             try:
