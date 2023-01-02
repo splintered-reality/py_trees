@@ -72,7 +72,7 @@ def test_running_with_no_memory_invalidate_dangling_runners():
     console.banner('Tick-Running with No Memory - Invalidate Dangling Runners')
     assert_banner()
     root = py_trees.composites.Sequence(name="Sequence w/o Memory", memory=False)
-    child_1 = py_trees.behaviours.StatusSequence(
+    child_1 = py_trees.behaviours.StatusQueue(
         name="Success-Running",
         sequence=[py_trees.common.Status.SUCCESS,
                   py_trees.common.Status.RUNNING],
@@ -111,7 +111,7 @@ def test_running_with_memory_proceeds():
     assert_banner()
     root = py_trees.composites.Sequence(name="Sequence w/ Memory", memory=True)
     child_1 = py_trees.behaviours.Success(name="Success")
-    child_2 = py_trees.behaviours.StatusSequence(
+    child_2 = py_trees.behaviours.StatusQueue(
         name="R-S",
         sequence=[py_trees.common.Status.RUNNING,
                   py_trees.common.Status.SUCCESS],
