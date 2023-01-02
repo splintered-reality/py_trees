@@ -31,12 +31,14 @@ An example:
 
 **Decorators (Hats)**
 
-Decorators with very specific functionality:
+Decorators with specific functionality:
 
 * :class:`py_trees.decorators.Condition`
 * :class:`py_trees.decorators.EternalGuard`
 * :class:`py_trees.decorators.Inverter`
 * :class:`py_trees.decorators.OneShot`
+* :class:`py_trees.decorators.Repeat`
+* :class:`py_trees.decorators.Retry`
 * :class:`py_trees.decorators.StatusToBlackboard`
 * :class:`py_trees.decorators.Timeout`
 
@@ -52,26 +54,21 @@ And the X is Y family:
 **Decorators for Blocking Behaviours**
 
 It is worth making a note of the effect of decorators on
-behaviours that return :data:`~py_trees.common.Status.RUNNING` for
-some time before finally returning  :data:`~py_trees.common.Status.SUCCESS`
-or  :data:`~py_trees.common.Status.FAILURE` (blocking behaviours) since
-the results are often at first, surprising.
+blocking behaviours, i.e. those that return :data:`~py_trees.common.Status.RUNNING`
+before eventually returning  :data:`~py_trees.common.Status.SUCCESS`
+or  :data:`~py_trees.common.Status.FAILURE`.
 
 A decorator, such as :func:`py_trees.decorators.RunningIsSuccess` on
 a blocking behaviour will immediately terminate the underlying child and
-re-intialise on it's next tick. This is necessary to ensure the underlying
-child isn't left in a dangling state (i.e.
-:data:`~py_trees.common.Status.RUNNING`), but is often not what is being
-sought.
+re-intialise on it's next tick. This is often surprising (to the user) but
+is necessary to ensure the underlying child isn't left in a dangling state (i.e.
+:data:`~py_trees.common.Status.RUNNING`) as subsequent ticks move on to other
+parts of the tree.
 
-The typical use case being attempted is to convert the blocking
-behaviour into a non-blocking behaviour. If the underlying child has no
-state being modified in either the :meth:`~py_trees.behaviour.Behaviour.initialise`
-or :meth:`~py_trees.behaviour.Behaviour.terminate` methods (e.g. machinery is
-entirely launched at init or setup time), then conversion to a non-blocking
-representative of the original succeeds. Otherwise, another approach is
-needed. Usually this entails writing a non-blocking counterpart, or
-combination of behaviours to affect the non-blocking characteristics.
+A better approach in this case is to build a non-blocking variant or a
+combination of non-blocking behaviors that handle construction,
+monitoring and destruction of the activity represented by the
+original blocking behaviour.
 """
 
 ##############################################################################
@@ -184,6 +181,102 @@ class Decorator(behaviour.Behaviour):
 ##############################################################################
 # Decorators
 ##############################################################################
+
+
+class Repeat(Decorator):
+    """
+    Repeat.
+
+    :data:`~py_trees.common.Status.SUCCESS` is
+    :data:`~py_trees.common.Status.RUNNING` up to a specified number at
+    which point this decorator returns :data:`~py_trees.common.Status.SUCCESS`.
+
+    :data:`~py_trees.common.Status.FAILURE` is always
+    :data:`~py_trees.common.Status.FAILURE`.
+
+    Args:
+        child: the child behaviour or subtree
+        num_success: repeat this many times (-1 to repeat indefinitely)
+        name: the decorator name
+    """
+
+    def __init__(
+        self,
+        name: str,
+        num_success: int,
+        child: behaviour.Behaviour
+    ):
+        super().__init__(child=child, name=name)
+        self.success = 0
+        self.num_success = num_success
+
+    def initialise(self):
+        """
+        Reset the currently registered number of successes.
+        """
+        self.success = 0
+
+    def update(self):
+        if self.decorated.status == common.Status.FAILURE:
+            self.feedback_message = f"failed, aborting [status: {self.success} success from {self.num_success}]"
+            return common.Status.FAILURE
+        elif self.decorated.status == common.Status.SUCCESS:
+            self.success += 1
+            self.feedback_message = f"success [status: {self.success} success from {self.num_success}]"
+            if self.success == self.num_success:
+                return common.Status.SUCCESS
+            else:
+                return common.Status.RUNNING
+        else:  # RUNNING
+            self.feedback_message = f"running [status: {self.success} success from {self.num_success}]"
+            return common.Status.RUNNING
+
+
+class Retry(Decorator):
+    """
+    Keep trying, pastafarianism is within reach.
+
+    :data:`~py_trees.common.Status.FAILURE` is
+    :data:`~py_trees.common.Status.RUNNING` up to a specified number of
+    attempts.
+
+    Args:
+        child: the child behaviour or subtree
+        num_failures: maximum number of permitted failures
+        name: the decorator name
+    """
+
+    def __init__(
+        self,
+        name: str,
+        num_failures: int,
+        child: behaviour.Behaviour
+    ):
+        super().__init__(child=child, name=name)
+        self.failures = 0
+        self.num_failures = num_failures
+
+    def initialise(self):
+        """
+        Reset the currently registered number of attempts.
+        """
+        self.failures = 0
+
+    def update(self):
+        if self.decorated.status == common.Status.FAILURE:
+            self.failures += 1
+            if self.failures < self.num_failures:
+                self.feedback_message = f"attempt failed [status: {self.failures} failure from {self.num_failures}]"
+                return common.Status.RUNNING
+            else:
+                self.feedback_message = f"final failure [status: {self.failures} failure from {self.num_failures}]"
+                return common.Status.FAILURE
+        elif self.decorated.status == common.Status.RUNNING:
+            self.feedback_message = f"running [status: {self.failures} failure from {self.num_failures}]"
+            return common.Status.RUNNING
+        else:  # SUCCESS
+            self.feedback_message = f"succeeded [status: {self.failures} failure from {self.num_failures}]"
+            return common.Status.SUCCESS
 
 
 class StatusToBlackboard(Decorator):
