@@ -117,9 +117,9 @@ class Periodic(behaviour.Behaviour):
         return self.response
 
 
-class StatusSequence(behaviour.Behaviour):
+class StatusQueue(behaviour.Behaviour):
     """
-    Cycle through a specified sequence of states.
+    Cycle through a specified queue of states.
 
     .. note::
 
@@ -137,7 +137,7 @@ class StatusSequence(behaviour.Behaviour):
             sequence: typing.List[common.Status],
             eventually: typing.Optional[common.Status]
     ):
-        super(StatusSequence, self).__init__(name)
+        super(StatusQueue, self).__init__(name)
         self.sequence = sequence
         self.eventually = eventually
         self.current_sequence = copy.copy(sequence)

@@ -51,7 +51,7 @@ def test_invalid_child():
 
 def test_repeat_until_success():
     console.banner("Repeat - Until Success")
-    child = py_trees.behaviours.StatusSequence(
+    child = py_trees.behaviours.StatusQueue(
         name="R-S-S",
         sequence=[
             py_trees.common.Status.RUNNING,
@@ -89,7 +89,7 @@ def test_repeat_until_success():
 
 def test_repeat_interrupting_failure():
     console.banner("Repeat - Interrupting Failure")
-    child = py_trees.behaviours.StatusSequence(
+    child = py_trees.behaviours.StatusQueue(
         name="R-S-F",
         sequence=[
             py_trees.common.Status.RUNNING,
@@ -127,7 +127,7 @@ def test_repeat_interrupting_failure():
 
 def test_retry_until_success():
     console.banner("Retry - Until Success")
-    child = py_trees.behaviours.StatusSequence(
+    child = py_trees.behaviours.StatusQueue(
         name="R-F-S",
         sequence=[
             py_trees.common.Status.RUNNING,
@@ -171,7 +171,7 @@ def test_retry_until_success():
 
 def test_retry_eventual_failure():
     console.banner("Retry - Eventual Failure")
-    child = py_trees.behaviours.StatusSequence(
+    child = py_trees.behaviours.StatusQueue(
         name="R-F-F",
         sequence=[
             py_trees.common.Status.RUNNING,
