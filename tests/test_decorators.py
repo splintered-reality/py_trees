@@ -49,6 +49,170 @@ def test_invalid_child():
     assert("instance" in str(context.value))
 
 
+def test_repeat_until_success():
+    console.banner("Repeat - Until Success")
+    child = py_trees.behaviours.StatusSequence(
+        name="R-S-S",
+        sequence=[
+            py_trees.common.Status.RUNNING,
+            py_trees.common.Status.SUCCESS,
+            py_trees.common.Status.SUCCESS
+        ],
+        eventually=None
+    )
+    decorator = py_trees.decorators.Repeat(
+        name="Repeat",
+        num_success=2,
+        child=child
+    )
+    decorator.tick_once()
+    print("\n--------- Tick 1 ---------\n")
+    print("decorator.status == py_trees.common.Status.RUNNING")
+    assert(decorator.status == py_trees.common.Status.RUNNING)
+    print("child.status == py_trees.common.Status.RUNNING")
+    assert(child.status == py_trees.common.Status.RUNNING)
+
+    decorator.tick_once()
+    print("\n--------- Tick 2 ---------\n")
+    print("decorator.status == py_trees.common.Status.RUNNING")
+    assert(decorator.status == py_trees.common.Status.RUNNING)
+    print("child.status == py_trees.common.Status.SUCCESS")
+    assert(child.status == py_trees.common.Status.SUCCESS)
+
+    decorator.tick_once()
+    print("\n--------- Tick 3 ---------\n")
+    print("decorator.status == py_trees.common.Status.SUCCESS")
+    assert(decorator.status == py_trees.common.Status.SUCCESS)
+    print("child.status == py_trees.common.Status.SUCCESS")
+    assert(child.status == py_trees.common.Status.SUCCESS)
+
+
+def test_repeat_interrupting_failure():
+    console.banner("Repeat - Interrupting Failure")
+    child = py_trees.behaviours.StatusSequence(
+        name="R-S-F",
+        sequence=[
+            py_trees.common.Status.RUNNING,
+            py_trees.common.Status.SUCCESS,
+            py_trees.common.Status.FAILURE
+        ],
+        eventually=None
+    )
+    decorator = py_trees.decorators.Repeat(
+        name="Repeat",
+        num_success=2,
+        child=child
+    )
+    decorator.tick_once()
+    print("\n--------- Tick 1 ---------\n")
+    print("decorator.status == py_trees.common.Status.RUNNING")
+    assert(decorator.status == py_trees.common.Status.RUNNING)
+    print("child.status == py_trees.common.Status.RUNNING")
+    assert(child.status == py_trees.common.Status.RUNNING)
+
+    decorator.tick_once()
+    print("\n--------- Tick 2 ---------\n")
+    print("decorator.status == py_trees.common.Status.RUNNING")
+    assert(decorator.status == py_trees.common.Status.RUNNING)
+    print("child.status == py_trees.common.Status.SUCCESS")
+    assert(child.status == py_trees.common.Status.SUCCESS)
+
+    decorator.tick_once()
+    print("\n--------- Tick 3 ---------\n")
+    print("decorator.status == py_trees.common.Status.FAILURE")
+    assert(decorator.status == py_trees.common.Status.FAILURE)
+    print("child.status == py_trees.common.Status.FAILURE")
+    assert(child.status == py_trees.common.Status.FAILURE)
+
+
+def test_retry_until_success():
+    console.banner("Retry - Until Success")
+    child = py_trees.behaviours.StatusSequence(
+        name="R-F-S",
+        sequence=[
+            py_trees.common.Status.RUNNING,
+            py_trees.common.Status.FAILURE,
+            py_trees.common.Status.SUCCESS
+        ],
+        eventually=None
+    )
+    decorator = py_trees.decorators.Retry(
+        name="Retry",
+        num_failures=2,
+        child=child
+    )
+    decorator.tick_once()
+    print("\n--------- Tick 1 ---------\n")
+    print("decorator.status == py_trees.common.Status.RUNNING")
+    assert(decorator.status == py_trees.common.Status.RUNNING)
+    print("decorator.failures == 0")
+    assert(decorator.failures == 0)
+    print("child.status == py_trees.common.Status.RUNNING")
+    assert(child.status == py_trees.common.Status.RUNNING)
+
+    decorator.tick_once()
+    print("\n--------- Tick 2 ---------\n")
+    print("decorator.status == py_trees.common.Status.RUNNING")
+    assert(decorator.status == py_trees.common.Status.RUNNING)
+    print("decorator.failures == 1")
+    assert(decorator.failures == 1)
+    print("child.status == py_trees.common.Status.FAILURE")
+    assert(child.status == py_trees.common.Status.FAILURE)
+
+    decorator.tick_once()
+    print("\n--------- Tick 3 ---------\n")
+    print("decorator.status == py_trees.common.Status.SUCCESS")
+    assert(decorator.status == py_trees.common.Status.SUCCESS)
+    print("decorator.failures == 1")
+    assert(decorator.failures == 1)
+    print("child.status == py_trees.common.Status.SUCCESS")
+    assert(child.status == py_trees.common.Status.SUCCESS)
+
+
+def test_retry_eventual_failure():
+    console.banner("Retry - Eventual Failure")
+    child = py_trees.behaviours.StatusSequence(
+        name="R-F-F",
+        sequence=[
+            py_trees.common.Status.RUNNING,
+            py_trees.common.Status.FAILURE,
+            py_trees.common.Status.FAILURE
+        ],
+        eventually=None
+    )
+    decorator = py_trees.decorators.Retry(
+        name="Retry",
+        num_failures=2,
+        child=child
+    )
+    decorator.tick_once()
+    print("\n--------- Tick 1 ---------\n")
+    print("decorator.status == py_trees.common.Status.RUNNING")
+    assert(decorator.status == py_trees.common.Status.RUNNING)
+    print("decorator.failures == 0")
+    assert(decorator.failures == 0)
+    print("child.status == py_trees.common.Status.RUNNING")
+    assert(child.status == py_trees.common.Status.RUNNING)
+
+    decorator.tick_once()
+    print("\n--------- Tick 2 ---------\n")
+    print("decorator.status == py_trees.common.Status.RUNNING")
+    assert(decorator.status == py_trees.common.Status.RUNNING)
+    print("decorator.failures == 1")
+    assert(decorator.failures == 1)
+    print("child.status == py_trees.common.Status.FAILURE")
+    assert(child.status == py_trees.common.Status.FAILURE)
+
+    decorator.tick_once()
+    print("\n--------- Tick 3 ---------\n")
+    print("decorator.status == py_trees.common.Status.FAILURE")
+    assert(decorator.status == py_trees.common.Status.FAILURE)
+    print("decorator.failures == 2")
+    assert(decorator.failures == 2)
+    print("child.status == py_trees.common.Status.FAILURE")
+    assert(child.status == py_trees.common.Status.FAILURE)
+
+
 def test_failure_is_success_tree():
     console.banner("Failure is Success Tree")
     root = py_trees.composites.Selector(name="Root", memory=False)

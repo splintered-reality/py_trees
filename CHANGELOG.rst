@@ -3,6 +3,7 @@ Release Notes
 
 Forthcoming
 -----------
+* [decorators] repeat and retry, `#371 <https://github.com/splintered-reality/py_trees/pull/371>`_
 * [composites] use explicit composite arguments, `#370 <https://github.com/splintered-reality/py_trees/pull/370>`_
 * [composites] restart the sequence, but allow children to retain their state `#368 <https://github.com/splintered-reality/py_trees/pull/368>`_
 * [common] a practical inf, `#366 <https://github.com/splintered-reality/py_trees/pull/366>`_

@@ -121,6 +121,10 @@ class StatusSequence(behaviour.Behaviour):
     """
     Cycle through a specified sequence of states.
 
+    .. note::
+
+       This does not reset when the behaviour initialises.
+
     Args:
         name: name of the behaviour
         sequence: list of status values to cycle through
