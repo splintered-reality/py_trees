@@ -28,14 +28,6 @@ Either Or
 .. automethod:: py_trees.idioms.either_or
     :noindex:
 
-.. _eternal-guard-section:
-
-Eternal Guard
--------------
-
-.. automethod:: py_trees.idioms.eternal_guard
-    :noindex:
-
 .. _oneshot-section:
 
 Oneshot

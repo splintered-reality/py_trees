@@ -330,14 +330,13 @@ class EternalGuard(Decorator):
     """
     Continuously guard (with a condition) the execution of a child/subtree.
 
-    A decorator that continually guards the execution of a subtree.
-    If at any time the guard's condition check fails, then the child
-    behaviour/subtree is invalidated.
+    The eternal guard checks a condition prior to *every* tick of the child/subtree.
+    If at any time the condition fails, the child/subtree is invalidated.
 
-    .. note:: This decorator's behaviour is stronger than the
-       :term:`guard` typical of a conditional check at the beginning of a
-       sequence of tasks as it continues to check on every tick whilst the
-       task (or sequence of tasks) runs.
+    .. note::
+
+       This is stronger than a conventional :term:`guard` which is only checked once
+       before any and all ticking of what follows the guard.
 
     Args:
         child: the child behaviour or subtree
@@ -391,7 +390,16 @@ class EternalGuard(Decorator):
                 child=foo
             )
 
-    .. seealso:: :meth:`py_trees.idioms.eternal_guard`
+        This can also be implemented using sequences without memory:
+
+        .. graphviz:: dot/eternal_guard.dot
+          :align: center
+
+        with code:
+
+        .. literalinclude:: examples/eternal_guard.py
+          :language: python
+          :linenos:
     """
 
     def __init__(

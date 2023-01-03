@@ -1,0 +1,19 @@
+digraph pastafarianism {
+ordering=out;
+graph [fontname="times-roman"];
+node [fontname="times-roman"];
+edge [fontname="times-roman"];
+"Eternal Guard" [fillcolor=orange, fontcolor=black, fontsize=9, label="Eternal Guard", shape=box, style=filled];
+Conditions [fillcolor=gold, fontcolor=black, fontsize=9, label="Conditions\nSuccessOnOne", shape=parallelogram, style=filled];
+"Eternal Guard" -> Conditions;
+"F-R-S-S-S-S-F" [fillcolor=gray, fontcolor=black, fontsize=9, label="F-R-S-S-S-S-F", shape=ellipse, style=filled];
+Conditions -> "F-R-S-S-S-S-F";
+Success [fillcolor=gray, fontcolor=black, fontsize=9, label=Success, shape=ellipse, style=filled];
+Conditions -> Success;
+"Task Sequence" [fillcolor=orange, fontcolor=black, fontsize=9, label="Ⓜ Task Sequence", shape=box, style=filled];
+"Eternal Guard" -> "Task Sequence";
+"R-R-S" [fillcolor=gray, fontcolor=black, fontsize=9, label="R-R-S", shape=ellipse, style=filled];
+"Task Sequence" -> "R-R-S";
+"R-S" [fillcolor=gray, fontcolor=black, fontsize=9, label="R-S", shape=ellipse, style=filled];
+"Task Sequence" -> "R-S";
+}
