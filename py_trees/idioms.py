@@ -17,7 +17,6 @@ A library of subtree creators that build common, but complex patterns of behavio
 
 import operator
 import typing
-import uuid
 
 from . import behaviour
 from . import behaviours
@@ -100,94 +99,6 @@ def pick_up_where_you_left_off(
             key=task.name.lower().replace(" ", "_") + "_done"
         )
         root.add_child(clear_mark_done)
-    return root
-
-
-def eternal_guard(
-        subtree: behaviour.Behaviour,
-        name: str = "Eternal Guard",
-        conditions: typing.List[behaviour.Behaviour] = None,
-        blackboard_namespace: str = None) -> behaviour.Behaviour:
-    """
-    Create an idiom that continuously guards a long running sequence of tasks.
-
-    The eternal guard idiom implements a stronger :term:`guard` than the typical check at the
-    beginning of a sequence of tasks. Here they guard continuously while the task sequence
-    is being executed. While executing, if any of the guards should update with
-    status :data:`~common.Status.FAILURE`, then the task sequence is terminated.
-
-    .. graphviz:: dot/idiom-eternal-guard.dot
-        :align: center
-
-    Args:
-        subtree: behaviour(s) that actually do the work
-        name: the name to use on the root behaviour of the idiom subtree
-        conditions: behaviours on which tasks are conditional
-        blackboard_namespace: applied to condition variable results stored on
-            the blackboard (default: derived from the idiom name)
-
-    Returns:
-        the root of the idiom subtree
-
-    .. seealso:: :class:`py_trees.decorators.EternalGuard`
-    """
-    if conditions is None:
-        conditions = []
-    if blackboard_namespace is None:
-        blackboard_namespace = name.lower().replace(" ", "_")
-    blackboard_variable_names = []
-    # construct simple, easy to read, variable names (risk of conflict)
-    counter = 1
-    for _unused_condition in conditions:
-        suffix = "" if len(conditions) == 1 else "_{}".format(counter)
-        blackboard_variable_names.append(
-            blackboard.Blackboard.separator
-            + blackboard_namespace
-            + "_condition"
-            + suffix
-        )
-        counter += 1
-    # if there is just one blackboard name already on the blackboard, switch to unique names
-    conflict = False
-    for name in blackboard_variable_names:
-        try:
-            _ = blackboard.Blackboard.get(name)
-            conflict = True
-        except KeyError:
-            pass
-    if conflict:
-        blackboard_variable_names = []
-        counter = 1
-        unique_id = uuid.uuid4()
-        for _unused_condition in conditions:
-            suffix = "" if len(conditions) == 1 else "_{}".format(counter)
-            blackboard_variable_names.append(blackboard_namespace + "_" + str(unique_id) + "_condition" + suffix)
-            counter += 1
-    # build the tree
-    root = composites.Parallel(
-        name=name,
-        policy=common.ParallelPolicy.SuccessOnAll(synchronise=False)
-    )
-    guarded_tasks = composites.Selector(name="Guarded Tasks", memory=False)
-    for condition, blackboard_variable_name in zip(conditions, blackboard_variable_names):
-        decorated_condition = decorators.StatusToBlackboard(
-            name="StatusToBB",
-            child=condition,
-            variable_name=blackboard_variable_name
-        )
-        root.add_child(decorated_condition)
-        guarded_tasks.add_child(
-            behaviours.CheckBlackboardVariableValue(
-                name="Abort on\n{}".format(condition.name),
-                check=common.ComparisonExpression(
-                    variable=blackboard_variable_name,
-                    value=common.Status.FAILURE,
-                    operator=operator.eq
-                )
-            )
-        )
-    guarded_tasks.add_child(subtree)
-    root.add_child(guarded_tasks)
     return root
 
 
