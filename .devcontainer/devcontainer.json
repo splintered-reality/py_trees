@@ -12,6 +12,7 @@
     },
     "extensions": [
         "bierner.github-markdown-preview",
+        "bungcip.better-toml",
         "ms-python.python"
     ],
     "remoteUser": "zen"

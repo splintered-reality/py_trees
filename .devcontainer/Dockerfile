@@ -22,15 +22,18 @@ ENV PATH="${POETRY_HOME}/bin:${PATH}"
 ################################################################################
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    # For poetry installation
+    # For poetry
     curl \
+    # For pytrees
+    graphviz \
+    make \
     # For convenience
     bash \
-    git \
-    wget \
     ca-certificates \
-    vim \
+    git \
     less \
+    vim \
+    wget \
     && \
     curl -sSL https://install.python-poetry.org | POETRY_VERSION=${POETRY_VERSION} python3 - && \
     poetry config virtualenvs.create false
