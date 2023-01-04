@@ -41,6 +41,9 @@ class SleepInSetup(py_trees.behaviour.Behaviour):
             self.__class__.__name__, self.name, time.time()))
         time.sleep(self.duration)
 
+    def update(self):
+        return py_trees.common.Status.INVALID
+
 
 class SetupVisitor(py_trees.visitors.VisitorBase):
     """

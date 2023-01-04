@@ -15,6 +15,8 @@ Meta methods to create behaviours without creating behaviours themselves.
 # Imports
 ##############################################################################
 
+import typing
+
 from . import behaviour
 from . import common
 
@@ -23,7 +25,10 @@ from . import common
 ##############################################################################
 
 
-def create_behaviour_from_function(func):
+def create_behaviour_from_function(
+    func: typing.Callable[[typing.Any,], common.Status],
+    module: typing.Optional[str] = None
+):
     """
     Create a behaviour from the specified function.
 
@@ -37,7 +42,8 @@ def create_behaviour_from_function(func):
     method that clears the feedback message. Other methods are left untouched.
 
     Args:
-        func (:obj:`function`):  a drop-in for the :meth:`~py_trees.behaviour.Behaviour.update` method
+        func: a drop-in for the :meth:`~py_trees.behaviour.Behaviour.update` method
+        module: suppliment it with a __module__ name if required (otherwise it will default to 'abc.')
     """
     class_name = func.__name__.capitalize()
 
@@ -48,4 +54,16 @@ def create_behaviour_from_function(func):
         if new_status == common.Status.INVALID:
             self.feedback_message = ""
 
-    return type(class_name, (behaviour.Behaviour,), dict(__init__=init, update=func, terminate=terminate))
+    class_type = type(
+        class_name,
+        (behaviour.Behaviour,),
+        dict(__init__=init, update=func, terminate=terminate)
+    )
+
+    # When module is None, it will default to 'abc.' since behaviour.Behaviour is an ABC.
+    # If that does matter (e.g. you're creating a class for an actual module, not a script), then
+    # use the module argument. NB: this is better than relying on magic inspect methods that aren't
+    # consistently available across different python implementations.
+    if module is not None:
+        class_type.__module__ = module
+    return class_type

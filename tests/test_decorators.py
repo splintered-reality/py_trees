@@ -33,6 +33,9 @@ class DummyDecorator(py_trees.decorators.Decorator):
     def __init__(self, child, name=py_trees.common.Name.AUTO_GENERATED):
         super(DummyDecorator, self).__init__(name=name, child=child)
 
+    def update(self):
+        return py_trees.common.Status.INVALID
+
 ##############################################################################
 # Tests
 ##############################################################################
@@ -53,7 +56,7 @@ def test_repeat_until_success():
     console.banner("Repeat - Until Success")
     child = py_trees.behaviours.StatusQueue(
         name="R-S-S",
-        sequence=[
+        queue=[
             py_trees.common.Status.RUNNING,
             py_trees.common.Status.SUCCESS,
             py_trees.common.Status.SUCCESS
@@ -91,7 +94,7 @@ def test_repeat_interrupting_failure():
     console.banner("Repeat - Interrupting Failure")
     child = py_trees.behaviours.StatusQueue(
         name="R-S-F",
-        sequence=[
+        queue=[
             py_trees.common.Status.RUNNING,
             py_trees.common.Status.SUCCESS,
             py_trees.common.Status.FAILURE
@@ -129,7 +132,7 @@ def test_retry_until_success():
     console.banner("Retry - Until Success")
     child = py_trees.behaviours.StatusQueue(
         name="R-F-S",
-        sequence=[
+        queue=[
             py_trees.common.Status.RUNNING,
             py_trees.common.Status.FAILURE,
             py_trees.common.Status.SUCCESS
@@ -173,7 +176,7 @@ def test_retry_eventual_failure():
     console.banner("Retry - Eventual Failure")
     child = py_trees.behaviours.StatusQueue(
         name="R-F-F",
-        sequence=[
+        queue=[
             py_trees.common.Status.RUNNING,
             py_trees.common.Status.FAILURE,
             py_trees.common.Status.FAILURE

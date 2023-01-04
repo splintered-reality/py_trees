@@ -53,22 +53,22 @@ def dummy(self):
     return common.Status.RUNNING
 
 
-Success = meta.create_behaviour_from_function(success)
+Success = meta.create_behaviour_from_function(success, 'py_trees.behaviours')
 """
 Do nothing but tick over with :data:`~py_trees.common.Status.SUCCESS`.
 """
 
-Failure = meta.create_behaviour_from_function(failure)
+Failure = meta.create_behaviour_from_function(failure, 'py_trees.behaviours')
 """
 Do nothing but tick over with :data:`~py_trees.common.Status.FAILURE`.
 """
 
-Running = meta.create_behaviour_from_function(running)
+Running = meta.create_behaviour_from_function(running, 'py_trees.behaviours')
 """
 Do nothing but tick over with :data:`~py_trees.common.Status.RUNNING`.
 """
 
-Dummy = meta.create_behaviour_from_function(dummy)
+Dummy = meta.create_behaviour_from_function(dummy, 'py_trees.behaviours')
 """
 Crash test dummy used for anything dangerous.
 """
@@ -134,22 +134,22 @@ class StatusQueue(behaviour.Behaviour):
     def __init__(
             self,
             name: str,
-            sequence: typing.List[common.Status],
+            queue: typing.List[common.Status],
             eventually: typing.Optional[common.Status]
     ):
         super(StatusQueue, self).__init__(name)
-        self.sequence = sequence
+        self.queue = queue
         self.eventually = eventually
-        self.current_sequence = copy.copy(sequence)
+        self.current_queue = copy.copy(queue)
 
     def update(self):
-        if self.current_sequence:
-            status = self.current_sequence.pop(0)
+        if self.current_queue:
+            status = self.current_queue.pop(0)
         elif self.eventually is not None:
             status = self.eventually
         else:
-            self.current_sequence = copy.copy(self.sequence)
-            status = self.current_sequence.pop(0)
+            self.current_queue = copy.copy(self.queue)
+            status = self.current_queue.pop(0)
         return status
 
 

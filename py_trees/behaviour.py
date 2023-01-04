@@ -15,6 +15,7 @@ The core behaviour template for all py_tree behaviours.
 # Imports
 ##############################################################################
 
+import abc
 import re
 import typing
 import uuid
@@ -28,7 +29,7 @@ from . import logging
 ##############################################################################
 
 
-class Behaviour(object):
+class Behaviour(abc.ABC):
     """
     A parent class for all user definable tree behaviours.
 
@@ -88,7 +89,7 @@ class Behaviour(object):
     # User Customisable Callbacks
     ############################################
 
-    def setup(self, **kwargs):
+    def setup(self, **kwargs):  # noqa: B027
         """
         Set up and verify infrastructure (middleware connections, etc) is available.
 
@@ -152,7 +153,7 @@ class Behaviour(object):
         """
         pass
 
-    def initialise(self):
+    def initialise(self):  # noqa: B027
         """
         Execute user specified instructions prior to commencement of a new round of activity.
 
@@ -166,7 +167,7 @@ class Behaviour(object):
         """
         pass
 
-    def terminate(self, new_status):
+    def terminate(self, new_status):  # noqa: B027
         """
         Execute user specified instructions when the behaviour is stopped.
 
@@ -197,6 +198,7 @@ class Behaviour(object):
         """
         pass
 
+    @abc.abstractmethod
     def update(self):
         """
         Execute user specified instructions when the behaviour is ticked.
@@ -214,7 +216,7 @@ class Behaviour(object):
         """
         return common.Status.INVALID
 
-    def shutdown(self):
+    def shutdown(self):  # noqa: B027
         """
         Destroy setup infrastructure (the antithesis of setup).
 

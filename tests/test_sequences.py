@@ -74,8 +74,8 @@ def test_running_with_no_memory_invalidate_dangling_runners():
     root = py_trees.composites.Sequence(name="Sequence w/o Memory", memory=False)
     child_1 = py_trees.behaviours.StatusQueue(
         name="Success-Running",
-        sequence=[py_trees.common.Status.SUCCESS,
-                  py_trees.common.Status.RUNNING],
+        queue=[py_trees.common.Status.SUCCESS,
+               py_trees.common.Status.RUNNING],
         eventually=None
     )
     child_2 = py_trees.behaviours.Running('Running')
@@ -113,8 +113,8 @@ def test_running_with_memory_proceeds():
     child_1 = py_trees.behaviours.Success(name="Success")
     child_2 = py_trees.behaviours.StatusQueue(
         name="R-S",
-        sequence=[py_trees.common.Status.RUNNING,
-                  py_trees.common.Status.SUCCESS],
+        queue=[py_trees.common.Status.RUNNING,
+               py_trees.common.Status.SUCCESS],
         eventually=None
         )
     child_3 = py_trees.behaviours.Running(name="Running")
