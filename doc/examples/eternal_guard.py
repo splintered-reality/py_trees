@@ -1,46 +1,33 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import py_trees.decorators
-import py_trees.display
-
-def create_tasks():
-    return [
-        py_trees.behaviours.Count(
-            name="R-R-S",
-            fail_until=0,
-            running_until=2,
-            success_until=3,
-            reset=True
-        ),
-        py_trees.behaviours.Count(
-            name="R-S",
-            fail_until=0,
-            running_until=1,
-            success_until=100,
-            reset=True
-        ),
-    ]
+import py_trees
 
 if __name__ == '__main__':
 
     eternal_guard = py_trees.composites.Sequence(name="Eternal Guard", memory=False)
-    conditions = py_trees.composites.Parallel(
-        name="Conditions",
-        policy=py_trees.common.ParallelPolicy.SuccessOnOne()
+    condition_one = py_trees.behaviours.StatusQueue(
+        name="Condition 1",
+        queue=[
+            py_trees.common.Status.SUCCESS,
+            py_trees.common.Status.FAILURE,
+            py_trees.common.Status.SUCCESS,
+        ],
+        eventually=py_trees.common.Status.SUCCESS
     )
-    frssssf = py_trees.behaviours.Count(
-        name="F-R-S-S-S-S-F",
-        fail_until=1,
-        running_until=2,
-        success_until=6,
-        reset=False
+    condition_two = py_trees.behaviours.StatusQueue(
+        name="Condition 2",
+        queue=[
+            py_trees.common.Status.SUCCESS,
+            py_trees.common.Status.SUCCESS,
+            py_trees.common.Status.FAILURE,
+        ],
+        eventually=py_trees.common.Status.SUCCESS
     )
-    success = py_trees.behaviours.Success(name="Success")
     task_sequence = py_trees.composites.Sequence(name="Task Sequence", memory=True)
-    tasks = create_tasks()
+    task_one = py_trees.behaviours.Success(name="Worker 1")
+    task_two = py_trees.behaviours.Running(name="Worker 2")
 
-    eternal_guard.add_children([conditions, task_sequence])
-    task_sequence.add_children(tasks)
-    conditions.add_children([frssssf, success])
+    eternal_guard.add_children([condition_one, condition_two, task_sequence])
+    task_sequence.add_children([task_one, task_two])
     py_trees.display.render_dot_tree(eternal_guard)
