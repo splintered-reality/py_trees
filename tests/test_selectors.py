@@ -74,8 +74,8 @@ def test_with_memory_priority_handling():
     child_1 = py_trees.behaviours.Failure("Failure")
     child_2 = py_trees.behaviours.StatusQueue(
         name="Run-Fail",
-        sequence=[py_trees.common.Status.RUNNING,
-                  py_trees.common.Status.FAILURE],
+        queue=[py_trees.common.Status.RUNNING,
+               py_trees.common.Status.FAILURE],
         eventually=None
         )
     child_3 = py_trees.behaviours.Success(name="Success")

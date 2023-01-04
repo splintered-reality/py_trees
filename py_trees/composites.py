@@ -59,6 +59,7 @@ on one, all or a subset thereof.
 # Imports
 ##############################################################################
 
+import abc
 import itertools
 import typing
 
@@ -70,7 +71,7 @@ from . import common
 ##############################################################################
 
 
-class Composite(behaviour.Behaviour):
+class Composite(behaviour.Behaviour, abc.ABC):
     """
     The parent class to all composite behaviours.
 
@@ -93,7 +94,60 @@ class Composite(behaviour.Behaviour):
         self.current_child = None
 
     ############################################
-    # Worker Overrides
+    # Virtual
+    ############################################
+    @abc.abstractmethod
+    def tick(self):
+        """
+        Tick the composite.
+
+        All composite subclasses require a re-implementation
+        of the tick method to provide the logic for managing multiple
+        children (:meth:`~py_trees.behaviour.Behaviour.tick` merely
+        provides default logic for when there are no children).
+        """
+        pass
+
+    ############################################
+    # Unused
+    ############################################
+
+    def update(self):
+        """
+        Unused update method.
+
+        Composites should direct the flow, whilst
+        behaviours do the real work.
+
+        Such flows are a consequence of how the composite
+        interacts with it's children. The success of
+        behaviour trees depends on this logic being simple,
+        well defined and limited to a few well established
+        patterns - this is what ensures that visualising
+        a tree enables a user to quickly grasp the
+        decision making captured therein.
+
+        For the standard patterns, this logic is limited
+        to the ordering of execution and logical inferences
+        on the resulting status of the composite's children.
+
+        This is a good guideline to adhere to (i.e. don't reach
+        inside children to inference on custom variables, nor
+        reach out to the system your tree is attached to).
+
+        Implementation wise, this renders the
+        :meth:`~py_trees.behaviour.Behaviour.update` method redundant
+        as all customisation to create a simple, well defined composite
+        happens in the :meth:`~py_trees.behaviour.Behaviour.tick` method.
+
+        Bottom line, composites do not make use of this method.
+        Implementing it for subclasses of the core composites
+        will not do anything.
+        """
+        pass
+
+    ############################################
+    # Overrides
     ############################################
 
     def stop(self, new_status=common.Status.INVALID):
@@ -341,9 +395,6 @@ class Selector(Composite):
             # user specific initialisation
             self.initialise()
 
-        # customised work
-        self.update()
-
         # nothing to do
         if not self.children:
             self.current_child = None
@@ -470,9 +521,6 @@ class Sequence(Composite):
         else:
             # previous conditional checks should cover all variations
             raise RuntimeError("Sequence reached an unknown / invalid state")
-
-        # customised work
-        self.update()
 
         # nothing to do
         if not self.children:

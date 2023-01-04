@@ -3,6 +3,7 @@ Release Notes
 
 Forthcoming
 -----------
+* [behaviours, decorators, composites] abstract base classes, `#375 <https://github.com/splintered-reality/py_trees/pull/375>`_
 * [behaviours] StatusSequence -> StatusQueue, `#372 <https://github.com/splintered-reality/py_trees/pull/372>`_
 * [decorators] repeat and retry, `#371 <https://github.com/splintered-reality/py_trees/pull/371>`_
 * [composites] use explicit composite arguments, `#370 <https://github.com/splintered-reality/py_trees/pull/370>`_
