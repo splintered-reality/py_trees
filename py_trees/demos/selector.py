@@ -75,12 +75,17 @@ def command_line_argument_parser():
 
 def create_root():
     root = py_trees.composites.Selector(name="Selector", memory=False)
-    success_after_two = py_trees.behaviours.Count(name="After Two",
-                                                  fail_until=2,
-                                                  running_until=2,
-                                                  success_until=10)
+    ffs = py_trees.behaviours.StatusQueue(
+        name="FFS",
+        queue=[
+            py_trees.common.Status.FAILURE,
+            py_trees.common.Status.FAILURE,
+            py_trees.common.Status.SUCCESS,
+        ],
+        eventually=py_trees.common.Status.SUCCESS
+    )
     always_running = py_trees.behaviours.Running(name="Running")
-    root.add_children([success_after_two, always_running])
+    root.add_children([ffs, always_running])
     return root
 
 

@@ -21,9 +21,10 @@ strings or stdout.
 ##############################################################################
 
 import os
-import pydot
 import typing
 import uuid
+
+import pydot
 
 from . import behaviour
 from . import blackboard
@@ -268,11 +269,11 @@ def ascii_tree(
 
             root = py_trees.composites.Sequence(name="Sequence", memory=True)
             for action in ["Action 1", "Action 2", "Action 3"]:
-                b = py_trees.behaviours.Count(
-                        name=action,
-                        fail_until=0,
-                        running_until=1,
-                        success_until=10)
+                b = py_trees.behaviours.StatusQueue(
+                    name=action,
+                    queue=[py_trees.common.Status.RUNNING],
+                    eventually = py_trees.common.Status.SUCCESS
+                )
                 root.add_child(b)
             behaviour_tree = py_trees.trees.BehaviourTree(root)
             snapshot_visitor = py_trees.visitors.SnapshotVisitor()
@@ -663,10 +664,11 @@ def render_dot_tree(root: behaviour.Behaviour,
 
             root = py_trees.composites.Sequence(name="Sequence", memory=True)
             for job in ["Action 1", "Action 2", "Action 3"]:
-                success_after_two = py_trees.behaviours.Count(name=job,
-                                                              fail_until=0,
-                                                              running_until=1,
-                                                              success_until=10)
+                success_after_two = py_trees.behaviours.StatusQueue(
+                    name=job,
+                    queue=[py_trees.common.Status.RUNNING],
+                    eventually = py_trees.common.Status.SUCCESS
+                )
                 root.add_child(success_after_two)
             py_trees.display.render_dot_tree(root)
 

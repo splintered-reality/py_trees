@@ -42,7 +42,11 @@ def test_running_with_no_memory_children_do_not_reset():
     console.banner('Tick-Running with No Memory - Children Do Not Reset')
     assert_banner()
     root = py_trees.composites.Sequence(name="Sequence w/o Memory", memory=False)
-    child_1 = py_trees.behaviours.TickCounter(1)  # R-S
+    child_1 = py_trees.behaviours.StatusQueue(
+        name="R-S",
+        queue = [py_trees.common.Status.RUNNING, py_trees.common.Status.SUCCESS],
+        eventually = py_trees.common.Status.SUCCESS
+    )
     child_2 = py_trees.behaviours.Success('Success')
     root.add_children([child_1, child_2])
 

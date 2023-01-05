@@ -116,13 +116,11 @@ def test_parallel_running():
         name="Parallel",
         policy=py_trees.common.ParallelPolicy.SuccessOnAll()
     )
-    success_after_1 = py_trees.behaviours.Count(
+    success_after_1 = py_trees.behaviours.StatusQueue(
         name="SuccessAfter1",
-        fail_until=0,
-        running_until=1,
-        success_until=20,
-        reset=False)
-
+        queue=[py_trees.common.Status.RUNNING],
+        eventually=py_trees.common.Status.SUCCESS
+    )
     running = py_trees.behaviours.Running("Running")
     success_every_other = py_trees.behaviours.SuccessEveryN("SuccessEveryOther", 2)
     root.add_child(success_after_1)
@@ -187,16 +185,16 @@ def test_parallel_success_on_selected():
     console.banner("Parallel Success on Selected")
     print("")
     running1 = py_trees.behaviours.Running(name="Running1")
-    success1 = py_trees.behaviours.Count(
+    success1 = py_trees.behaviours.StatusQueue(
         name="Success1",
-        fail_until=0,
-        running_until=1,
-        success_until=10)
-    success2 = py_trees.behaviours.Count(
-        name="Success2",
-        fail_until=0,
-        running_until=2,
-        success_until=10)
+        queue=[py_trees.common.Status.RUNNING],
+        eventually=py_trees.common.Status.SUCCESS
+    )
+    success2 = py_trees.behaviours.StatusQueue(
+        name="Success1",
+        queue=[py_trees.common.Status.RUNNING],
+        eventually=py_trees.common.Status.SUCCESS
+    )
     running2 = py_trees.behaviours.Running(name="Running2")
 
     root = py_trees.composites.Parallel(

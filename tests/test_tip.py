@@ -124,7 +124,11 @@ def test_selector():
     assert(root.tip() is failure_two)
 
     root = py_trees.composites.Selector(name="Root", memory=False)
-    fail_then_run = py_trees.behaviours.Count(name="Fail Then Run", fail_until=1, running_until=10)
+    fail_then_run = py_trees.behaviours.StatusQueue(
+        name="Fail Then Run",
+        queue = [py_trees.common.Status.FAILURE],
+        eventually=py_trees.common.Status.RUNNING
+    )
     running = py_trees.behaviours.Running(name="Running")
     root.add_children([fail_then_run, running])
     py_trees.tests.tick_tree(root, 1, 1, print_snapshot=True)

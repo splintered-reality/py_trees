@@ -126,10 +126,14 @@ def create_root():
     context_switch = ContextSwitch(name="Context")
     sequence = py_trees.composites.Sequence(name="Sequence", memory=True)
     for job in ["Action 1", "Action 2"]:
-        success_after_two = py_trees.behaviours.Count(name=job,
-                                                      fail_until=0,
-                                                      running_until=2,
-                                                      success_until=10)
+        success_after_two = py_trees.behaviours.StatusQueue(
+            name=job,
+            queue=[
+                py_trees.common.Status.RUNNING,
+                py_trees.common.Status.RUNNING
+            ],
+            eventually=py_trees.common.Status.SUCCESS
+        )
         sequence.add_child(success_after_two)
     root.add_child(context_switch)
     root.add_child(sequence)

@@ -86,13 +86,14 @@ def create_root() -> py_trees.behaviour.Behaviour:
     root.add_child(child)
     root.add_child(child2)
     root.add_child(child3)
-
-    child.add_child(py_trees.behaviours.Count(name='Count', fail_until=0, running_until=1, success_until=6,))
-    child2.add_child(py_trees.behaviours.Count(name='Count', fail_until=0, running_until=1, success_until=6,))
+    queue = [py_trees.common.Status.RUNNING]
+    eventually = py_trees.common.Status.SUCCESS
+    child.add_child(py_trees.behaviours.StatusQueue(name="RS", queue=queue, eventually=eventually))
+    child2.add_child(py_trees.behaviours.StatusQueue(name="RS", queue=queue, eventually=eventually))
     child2_child1 = py_trees.composites.Sequence(name="Child2_child1", memory=True)
-    child2_child1.add_child(py_trees.behaviours.Count(name='Count', fail_until=0, running_until=1, success_until=6,))
+    child2_child1.add_child(py_trees.behaviours.StatusQueue(name="RS", queue=queue, eventually=eventually))
     child2.add_child(child2_child1)
-    child3.add_child(py_trees.behaviours.Count(name='Count', fail_until=0, running_until=1, success_until=6,))
+    child3.add_child(py_trees.behaviours.StatusQueue(name="RS", queue=queue, eventually=eventually))
     return root
 
 

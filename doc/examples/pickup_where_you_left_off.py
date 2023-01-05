@@ -4,17 +4,21 @@
 import py_trees
 
 if __name__ == '__main__':
-    task_one = py_trees.behaviours.Count(
+    task_one = py_trees.behaviours.StatusQueue(
         name="Task 1",
-        fail_until=0,
-        running_until=2,
-        success_until=10
+        queue=[
+            py_trees.common.Status.RUNNING,
+            py_trees.common.Status.RUNNING,
+        ],
+        eventually=py_trees.common.Status.SUCCESS
     )
-    task_two = py_trees.behaviours.Count(
+    task_two = py_trees.behaviours.StatusQueue(
         name="Task 2",
-        fail_until=0,
-        running_until=2,
-        success_until=10
+        queue=[
+            py_trees.common.Status.RUNNING,
+            py_trees.common.Status.RUNNING,
+        ],
+        eventually=py_trees.common.Status.SUCCESS
     )
     high_priority_interrupt = py_trees.decorators.RunningIsFailure(
         child=py_trees.behaviours.Periodic(

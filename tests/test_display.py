@@ -51,11 +51,10 @@ def test_text_trees():
     console.banner("Text Trees")
 
     root = py_trees.composites.Selector(name="Selector", memory=False)
-    high_priority = py_trees.behaviours.Count(
+    high_priority = py_trees.behaviours.StatusQueue(
         name="High Priority",
-        fail_until=1,
-        running_until=1,
-        success_until=10
+        queue=[py_trees.common.Status.FAILURE],
+        eventually=py_trees.common.Status.SUCCESS
     )
     low_priority = py_trees.behaviours.Running(name="Low Priority")
     selector_with_memory = py_trees.composites.Selector(name="Selector w/ Memory", memory=True)
@@ -141,11 +140,10 @@ def test_ascii_snapshot_priority_interrupt():
 
     root = py_trees.composites.Selector(name="Selector", memory=False)
     root.add_child(
-        py_trees.behaviours.Count(
+        py_trees.behaviours.StatusQueue(
             name="High Priority",
-            fail_until=1,
-            running_until=1,
-            success_until=10
+            queue=[py_trees.common.Status.FAILURE],
+            eventually=py_trees.common.Status.SUCCESS
         )
     )
     root.add_child(py_trees.behaviours.Running(name="Low Priority"))

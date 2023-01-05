@@ -473,12 +473,12 @@ def test_timeout():
         assert(running.status == py_trees.common.Status.INVALID)
 
     # test that it passes on success
-    count = py_trees.behaviours.Count(
-        name="Count",
-        fail_until=0,
-        running_until=1,
-        success_until=10,
-        reset=False
+    count = py_trees.behaviours.StatusQueue(
+        name="Queue",
+        queue=[
+            py_trees.common.Status.RUNNING
+        ],
+        eventually=py_trees.common.Status.SUCCESS
     )
     timeout = py_trees.decorators.Timeout(child=count, duration=0.2)
     print(py_trees.display.unicode_tree(timeout))
@@ -513,12 +513,12 @@ def test_timeout():
     assert(failure.status == py_trees.common.Status.FAILURE)
 
     # test that it succeeds if child succeeds on last tick
-    count = py_trees.behaviours.Count(
-        name="Count",
-        fail_until=0,
-        running_until=1,
-        success_until=10,
-        reset=False
+    count = py_trees.behaviours.StatusQueue(
+        name="Queue",
+        queue=[
+            py_trees.common.Status.RUNNING
+        ],
+        eventually=py_trees.common.Status.SUCCESS
     )
     timeout = py_trees.decorators.Timeout(child=count, duration=0.1)
     print(py_trees.display.unicode_tree(timeout))
@@ -544,12 +544,13 @@ def test_timeout():
 def test_condition():
     console.banner("Condition")
 
-    child = py_trees.behaviours.Count(
-        name="Count",
-        fail_until=2,
-        running_until=2,
-        success_until=10,
-        reset=True
+    child = py_trees.behaviours.StatusQueue(
+        name="Queue",
+        queue=[
+            py_trees.common.Status.FAILURE,
+            py_trees.common.Status.FAILURE,
+        ],
+        eventually=py_trees.common.Status.SUCCESS
     )
     condition = py_trees.decorators.Condition(
         child=child,

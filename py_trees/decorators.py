@@ -34,6 +34,7 @@ An example:
 Decorators with specific functionality:
 
 * :class:`py_trees.decorators.Condition`
+* :class:`py_trees.decorators.Count`
 * :class:`py_trees.decorators.EternalGuard`
 * :class:`py_trees.decorators.Inverter`
 * :class:`py_trees.decorators.OneShot`
@@ -518,6 +519,93 @@ class Timeout(Decorator):
         else:
             self.feedback_message = "child finished before timeout triggered"
         return self.decorated.status
+
+
+class Count(Decorator):
+    """
+    Count the number of times it's child has been ticked.
+
+    This increments counters tracking the total number of times
+    it's child has been ticked as well as the number of times it
+    has landed in each respective state.
+
+    It will always re-zero counters on
+    :meth:`~py_trees.behaviour.Behaviour.setup`.
+
+    Attributes:
+        total_tick_count: number of ticks in total
+        running_count: number of ticks resulting in this state
+        success_count: number of ticks resulting in this state
+        failure_count: number of ticks resulting in this state
+        interrupt_count: number of times a higher priority has interrupted
+    """
+
+    def __init__(
+        self,
+        name: str,
+        child: behaviour.Behaviour
+    ):
+        """
+        Init the counter.
+
+        Args:
+            name: the decorator name
+            child: the child behaviour or subtree
+        """
+        super(Count, self).__init__(name=name, child=child)
+        self.total_tick_count = 0
+        self.failure_count = 0
+        self.success_count = 0
+        self.running_count = 0
+        self.interrupt_count = 0
+
+    def setup(self, **kwargs):
+        """
+        Reset the counters.
+        """
+        self.total_tick_count = 0
+        self.failure_count = 0
+        self.running_count = 0
+        self.success_count = 0
+        self.interrupt_count = 0
+
+    def update(self):
+        """
+        Increment the counter.
+        """
+        self.logger.debug("%s.update()" % (self.__class__.__name__))
+        self.total_tick_count += 1
+        if self.decorated.status == common.Status.RUNNING:
+            self.running_count += 1
+        return self.decorated.status
+
+    def terminate(self, new_status):
+        self.logger.debug("%s.terminate(%s->%s)" % (self.__class__.__name__, self.status, new_status))
+        if new_status == common.Status.INVALID:
+            self.interrupt_count += 1
+        elif new_status == common.Status.SUCCESS:
+            self.success_count += 1
+        elif new_status == common.Status.FAILURE:
+            self.failure_count += 1
+        sft = f"S: {self.success_count}, F: {self.failure_count}, T: {self.total_tick_count}"
+        self.feedback_message = f"R: {self.running_count}, {sft}"
+
+    def __repr__(self) -> str:
+        """
+        Generate a simple string representation of the object.
+
+        Returns:
+            string representation
+        """
+        s = "%s\n" % self.name
+        s += "  Status   : %s\n" % self.status
+        s += "  Running  : %s\n" % self.running_count
+        s += "  Success  : %s\n" % self.success_count
+        s += "  Failure  : %s\n" % self.failure_count
+        s += "  Interrupt: %s\n" % self.interrupt_count
+        s += "  ---------------\n"
+        s += "  Total    : %s\n" % self.total_tick_count
+        return s
 
 
 class OneShot(Decorator):
