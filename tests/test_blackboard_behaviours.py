@@ -174,7 +174,8 @@ def test_set_blackboard_variable():
     set_foo = py_trees.behaviours.SetBlackboardVariable(
         name="Set Foo",
         variable_name="foo",
-        variable_value="bar"
+        variable_value="bar",
+        overwrite=True
     )
     conservative_set_foo = py_trees.behaviours.SetBlackboardVariable(
         name="Conservative Set Foo",
@@ -266,6 +267,7 @@ def test_set_blackboard_variable():
         name="Generator Set",
         variable_name="foo",
         variable_value=generator,
+        overwrite=True
     )
     set_blackboard_variable_from_generator.tick_once()
     assert_details(
