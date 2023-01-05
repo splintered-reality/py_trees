@@ -271,8 +271,8 @@ class BlackboardToStatus(behaviour.Behaviour):
 
     def __init__(
         self,
+        name: str,
         variable_name: str,
-        name: typing.Union[str, common.Name] = common.Name.AUTO_GENERATED
     ):
         super().__init__(name=name)
         name_components = variable_name.split('.')
@@ -319,8 +319,8 @@ class CheckBlackboardVariableExists(behaviour.Behaviour):
 
     def __init__(
             self,
+            name: str,
             variable_name: str,
-            name: typing.Union[str, common.Name] = common.Name.AUTO_GENERATED
     ):
         super().__init__(name=name)
         self.variable_name = variable_name
@@ -367,8 +367,8 @@ class WaitForBlackboardVariable(CheckBlackboardVariableExists):
 
     def __init__(
             self,
+            name: str,
             variable_name: str,
-            name: typing.Union[str, common.Name] = common.Name.AUTO_GENERATED
     ):
         super().__init__(name=name, variable_name=variable_name)
 
@@ -404,8 +404,8 @@ class UnsetBlackboardVariable(behaviour.Behaviour):
     """
 
     def __init__(self,
-                 key: str,
-                 name: typing.Union[str, common.Name] = common.Name.AUTO_GENERATED,
+                 name: str,
+                 key: str
                  ):
         super().__init__(name=name)
         self.key = key
@@ -439,10 +439,10 @@ class SetBlackboardVariable(behaviour.Behaviour):
 
     def __init__(
             self,
+            name: str,
             variable_name: str,
             variable_value: typing.Union[typing.Any, typing.Callable[[], typing.Any]],
-            overwrite: bool = True,
-            name: typing.Union[str, common.Name] = common.Name.AUTO_GENERATED,
+            overwrite: bool,
     ):
         super().__init__(name=name)
         self.variable_name = variable_name
@@ -496,8 +496,8 @@ class CheckBlackboardVariableValue(behaviour.Behaviour):
 
     def __init__(
             self,
-            check: common.ComparisonExpression,
-            name: typing.Union[str, common.Name] = common.Name.AUTO_GENERATED
+            name: str,
+            check: common.ComparisonExpression
     ):
         super().__init__(name=name)
         self.check = check
@@ -575,8 +575,8 @@ class WaitForBlackboardVariableValue(CheckBlackboardVariableValue):
 
     def __init__(
             self,
+            name: str,
             check: common.ComparisonExpression,
-            name: typing.Union[str, common.Name] = common.Name.AUTO_GENERATED
     ):
         super().__init__(
             check=check,
@@ -621,9 +621,9 @@ class CheckBlackboardVariableValues(behaviour.Behaviour):
 
     def __init__(
         self,
+        name: str,
         checks: typing.List[common.ComparisonExpression],
         operator: typing.Callable[[bool, bool], bool],
-        name: typing.Union[str, common.Name] = common.Name.AUTO_GENERATED,
         namespace: typing.Optional[str] = None,
     ):
         super().__init__(name=name)

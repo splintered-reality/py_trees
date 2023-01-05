@@ -88,7 +88,8 @@ def pick_up_where_you_left_off(
         mark_task_done = behaviours.SetBlackboardVariable(
             name="Mark\n" + task.name.lower().replace(" ", "_") + "_done",
             variable_name=task.name.lower().replace(" ", "_") + "_done",
-            variable_value=True
+            variable_value=True,
+            overwrite=True
         )
         sequence.add_children([task, mark_task_done])
         task_selector.add_children([task_guard, sequence])
@@ -238,7 +239,8 @@ def oneshot(
     set_flag_on_success = behaviours.SetBlackboardVariable(
         name="Mark Done\n[SUCCESS]",
         variable_name=variable_name,
-        variable_value=common.Status.SUCCESS
+        variable_value=common.Status.SUCCESS,
+        overwrite=True
     )
     # If it's a sequence, don't double-nest it in a redundant manner
     if isinstance(behaviour, composites.Sequence):
@@ -257,7 +259,8 @@ def oneshot(
         set_flag_on_failure = behaviours.SetBlackboardVariable(
             name="Mark Done\n[FAILURE]",
             variable_name=variable_name,
-            variable_value=common.Status.FAILURE
+            variable_value=common.Status.FAILURE,
+            overwrite=True
         )
         bookkeeping.add_children(
             [set_flag_on_failure,
