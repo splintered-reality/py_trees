@@ -391,16 +391,10 @@ class EternalGuard(Decorator):
                 child=foo
             )
 
-        This can also be implemented using sequences without memory:
+        .. seealso::
 
-        .. graphviz:: dot/eternal_guard.dot
-          :align: center
-
-        with code:
-
-        .. literalinclude:: examples/eternal_guard.py
-          :language: python
-          :linenos:
+           :ref:`py-trees-demo-eternal-guard` for an alternative means of implementing
+           the eternal guard concept using sequences without memory.
     """
 
     def __init__(
