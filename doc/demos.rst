@@ -131,6 +131,22 @@ py-trees-demo-either-or
    :linenos:
    :caption: py_trees/demos/either_or.py
 
+.. _py-trees-demo-eternal-guard:
+
+py-trees-demo-eternal-guard
+-----------------------
+
+.. automodule:: py_trees.demos.eternal_guard
+    :members:
+    :special-members:
+    :show-inheritance:
+    :synopsis: demo the 'eternal guard' concept
+
+.. literalinclude:: ../py_trees/demos/eternal_guard.py
+   :language: python
+   :linenos:
+   :caption: py_trees/demos/eternal_guard.py
+
 .. _py-trees-demo-logging-program:
 
 py-trees-demo-logging
