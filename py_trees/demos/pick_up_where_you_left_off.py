@@ -121,6 +121,7 @@ def create_root():
         eventually=py_trees.common.Status.SUCCESS
     )
     high_priority_interrupt = py_trees.decorators.RunningIsFailure(
+        name="Running is Failure",
         child=py_trees.behaviours.Periodic(
             name="High Priority",
             n=3

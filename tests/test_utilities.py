@@ -35,7 +35,7 @@ def test_get_fully_qualified_name():
     console.banner("Fully Qualified Names")
     pairs = {
         "py_trees.behaviours.Periodic": py_trees.behaviours.Periodic(name="foo", n=3),
-        "py_trees.decorators.Inverter": py_trees.decorators.Inverter(child=py_trees.behaviours.Success()),
+        "py_trees.decorators.Inverter": py_trees.decorators.Inverter(name="Inverter", child=py_trees.behaviours.Success()),
         "py_trees.behaviours.Success": py_trees.behaviours.Success(),
     }
     print(console.green + "------------------ Assertions ------------------\n" + console.reset)
