@@ -50,11 +50,14 @@ def test_oneshot_with_fail_causes_reentry():
             py_trees.tests.clear_blackboard()
 
             # Tree
-            fail_then_run = py_trees.behaviours.Count(
+            fail_then_run = py_trees.behaviours.StatusQueue(
                 name="Fail Then Run",
-                fail_until=1,
-                running_until=2,
-                reset=False
+                queue = [
+                    py_trees.common.Status.FAILURE,
+                    py_trees.common.Status.RUNNING,
+                    py_trees.common.Status.RUNNING,
+                ],
+                eventually=py_trees.common.Status.FAILURE
             )
             oneshot = create_tree(fail_then_run, policy)
 
@@ -144,9 +147,15 @@ def untest_oneshot_with_subtrees_and_interrupt():
 
             # Tree with higher priority branch
             root = py_trees.composites.Selector(name="Root", memory=False)
-            fail_after_one = py_trees.behaviours.Count(
-                name="HighPriority", fail_until=1, running_until=1, success_until=2)
-            root.add_children([fail_after_one, oneshot])
+            high_priority = py_trees.behaviours.StatusQueue(
+                name="High Priority",
+                queue = [
+                    py_trees.common.Status.FAILURE,
+                    py_trees.common.Status.SUCCESS,
+                ],
+                eventually=None
+            )
+            root.add_children([high_priority, oneshot])
 
             # Ticking
             py_trees.tests.tick_tree(

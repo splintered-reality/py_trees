@@ -20,8 +20,23 @@ logger = py_trees.logging.Logger("Tests")
 
 
 ##############################################################################
-# Classes
+# Helpers
 ##############################################################################
+
+
+def create_fffrrs_repeat_status_queue(name: str):
+    return py_trees.behaviours.StatusQueue(
+        name=name,
+        queue=[
+            py_trees.common.Status.FAILURE,
+            py_trees.common.Status.FAILURE,
+            py_trees.common.Status.FAILURE,
+            py_trees.common.Status.RUNNING,
+            py_trees.common.Status.RUNNING,
+            py_trees.common.Status.SUCCESS,
+        ],
+        eventually=None
+    )
 
 ##############################################################################
 # Tests
@@ -32,9 +47,17 @@ def test_snapshot_visitor():
     console.banner("Snapshot Visitor")
 
     root = py_trees.composites.Selector(name='Selector', memory=False)
-    a = py_trees.behaviours.Count(name="A")
-    b = py_trees.behaviours.Count(name="B")
-    c = py_trees.behaviours.Count(name="C", fail_until=0, running_until=3, success_until=15)
+    a = create_fffrrs_repeat_status_queue(name="A")
+    b = create_fffrrs_repeat_status_queue(name="B")
+    c = py_trees.behaviours.StatusQueue(
+        name="C",
+        queue=[
+            py_trees.common.Status.RUNNING,
+            py_trees.common.Status.RUNNING,
+            py_trees.common.Status.RUNNING,
+        ],
+        eventually=py_trees.common.Status.SUCCESS
+    )
     root.add_child(a)
     root.add_child(b)
     root.add_child(c)

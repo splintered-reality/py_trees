@@ -24,25 +24,30 @@ logger = py_trees.logging.Logger("Nosetest")
 
 def test_high_priority_interrupt():
     console.banner("High Priority Interrupt")
-    task_one = py_trees.behaviours.Count(
+    task_one = py_trees.behaviours.StatusQueue(
         name="Task 1",
-        fail_until=0,
-        running_until=2,
-        success_until=10
+        queue=[
+            py_trees.common.Status.RUNNING,
+            py_trees.common.Status.RUNNING,
+        ],
+        eventually=py_trees.common.Status.SUCCESS
     )
-    task_two = py_trees.behaviours.Count(
+    task_two = py_trees.behaviours.StatusQueue(
         name="Task 2",
-        fail_until=0,
-        running_until=2,
-        success_until=10
+        queue=[
+            py_trees.common.Status.RUNNING,
+            py_trees.common.Status.RUNNING,
+        ],
+        eventually=py_trees.common.Status.SUCCESS
     )
+    tasks = [task_one, task_two]
     high_priority_interrupt = py_trees.decorators.RunningIsFailure(
         name="High Priority",
         child=py_trees.behaviours.Periodic(name="Periodic", n=3)
     )
     piwylo = py_trees.idioms.pick_up_where_you_left_off(
         name="Pick Up\nWhere You\nLeft Off",
-        tasks=[task_one, task_two]
+        tasks=tasks
     )
     root = py_trees.composites.Selector(name="Root", memory=False)
     root.add_children([high_priority_interrupt, piwylo])

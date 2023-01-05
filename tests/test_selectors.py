@@ -43,7 +43,11 @@ def test_tick_running_with_no_memory():
     console.banner('Tick-Running with No Memory')
     assert_banner()
     root = py_trees.composites.Selector(name="Selector w/o Memory", memory=False)
-    child_1 = py_trees.behaviours.Count(name="Fail Fast", fail_until=1, running_until=1, success_until=100)
+    child_1 = py_trees.behaviours.StatusQueue(
+        name="Fail Fast",
+        queue = [py_trees.common.Status.FAILURE],
+        eventually=py_trees.common.Status.SUCCESS
+    )
     child_2 = py_trees.behaviours.Running(name="Running")
     root.add_children([child_1, child_2])
     root.tick_once()

@@ -8,9 +8,10 @@
 # Imports
 ##############################################################################
 
-import pytest
 import threading
 import time
+
+import pytest
 
 import py_trees
 import py_trees.tests
@@ -56,6 +57,32 @@ class SetupVisitor(py_trees.visitors.VisitorBase):
     def run(self, behaviour):
         behaviour.logger.debug("{}.setup() [Visited: {}]".format(self.__class__.__name__, behaviour.name))
 
+
+def create_fffrrs_repeat_status_queue(name: str):
+    return py_trees.behaviours.StatusQueue(
+        name=name,
+        queue=[
+            py_trees.common.Status.FAILURE,
+            py_trees.common.Status.FAILURE,
+            py_trees.common.Status.FAILURE,
+            py_trees.common.Status.RUNNING,
+            py_trees.common.Status.RUNNING,
+            py_trees.common.Status.SUCCESS,
+        ],
+        eventually=None
+    )
+
+def create_rrr_continuous_success_status_queue(name: str):
+    return py_trees.behaviours.StatusQueue(
+        name=name,
+        queue=[
+            py_trees.common.Status.RUNNING,
+            py_trees.common.Status.RUNNING,
+            py_trees.common.Status.RUNNING,
+        ],
+        eventually=py_trees.common.Status.SUCCESS
+    )
+
 ##############################################################################
 # Tests
 ##############################################################################
@@ -65,9 +92,9 @@ def test_selector_composite():
     console.banner("Selector")
     visitor = py_trees.visitors.DebugVisitor()
     tree = py_trees.composites.Selector(name='Selector', memory=False)
-    a = py_trees.behaviours.Count(name="A")
-    b = py_trees.behaviours.Count(name="B")
-    c = py_trees.behaviours.Count(name="C", fail_until=0, running_until=3, success_until=15)
+    a = py_trees.decorators.Count(name="Count A", child=create_fffrrs_repeat_status_queue(name="A"))
+    b = py_trees.decorators.Count(name="Count B", child=create_fffrrs_repeat_status_queue(name="B"))
+    c = py_trees.decorators.Count(name="Count C", child=create_rrr_continuous_success_status_queue(name="C"))
     tree.add_child(a)
     tree.add_child(b)
     tree.add_child(c)
@@ -75,21 +102,21 @@ def test_selector_composite():
     py_trees.tests.tick_tree(tree, 1, 3, visitors=[visitor])
     py_trees.tests.print_summary(nodes=[a, b, c])
     print("--------- Assertions ---------\n")
-    print("a.count == 3")
-    assert(a.count == 3)
+    print("a.total_tick_count == 3")
+    assert(a.total_tick_count == 3)
     print("a.status == py_trees.common.Status.FAILURE")
     assert(a.status == py_trees.common.Status.FAILURE)
     print("c.status == py_trees.common.Status.RUNNING")
     assert(c.status == py_trees.common.Status.RUNNING)
-    print("c.number_count_resets == 0")
-    assert(c.number_count_resets == 0)
+    print("c.interrupt_count == 0")
+    assert(c.interrupt_count == 0)
     py_trees.tests.tick_tree(tree, 4, 4, visitors=[visitor])
     py_trees.tests.print_summary(nodes=[a, b, c])
     print("--------- Assertions ---------\n")
     print("a.status == py_trees.common.Status.RUNNING")
     assert(a.status == py_trees.common.Status.RUNNING)
-    print("c.number_count_resets == 1")
-    assert(c.number_count_resets == 1)
+    print("c.interrupt_count == 1")
+    assert(c.interrupt_count == 1)
     print("c.status == py_trees.common.Status.INVALID")
     assert(c.status == py_trees.common.Status.INVALID)
     py_trees.tests.tick_tree(tree, 5, 8, visitors=[visitor])
@@ -101,9 +128,9 @@ def test_sequence_composite():
     console.banner("Sequence")
     visitor = py_trees.visitors.DebugVisitor()
     tree = py_trees.composites.Sequence(name='Sequence', memory=True)
-    a = py_trees.behaviours.Count(name="A", fail_until=0, running_until=3, success_until=6)
-    b = py_trees.behaviours.Count(name="B", fail_until=0, running_until=3, success_until=6)
-    c = py_trees.behaviours.Count(name="C", fail_until=0, running_until=3, success_until=6)
+    a = create_rrr_continuous_success_status_queue(name="C")
+    b = create_rrr_continuous_success_status_queue(name="C")
+    c = create_rrr_continuous_success_status_queue(name="C")
     tree.add_child(a)
     tree.add_child(b)
     tree.add_child(c)
@@ -143,20 +170,48 @@ def test_sequence_composite():
 def test_mixed_tree():
     console.banner("Mixed Tree")
     visitor = py_trees.visitors.DebugVisitor()
-
-    a = py_trees.behaviours.Count(
-        name="A", fail_until=3, running_until=5, success_until=7, reset=False)
-
     sequence = py_trees.composites.Sequence(name="Sequence", memory=True)
-    b = py_trees.behaviours.Count(
-        name="B", fail_until=0, running_until=3, success_until=5, reset=False)
-    c = py_trees.behaviours.Count(
-        name="C", fail_until=0, running_until=3, success_until=5, reset=False)
+    a = py_trees.decorators.Count(
+        name="Count A",
+        child=py_trees.behaviours.StatusQueue(
+            name="A",
+            queue=[
+                py_trees.common.Status.FAILURE,
+                py_trees.common.Status.FAILURE,
+                py_trees.common.Status.FAILURE,
+                py_trees.common.Status.RUNNING,
+                py_trees.common.Status.RUNNING,
+                py_trees.common.Status.SUCCESS,
+                py_trees.common.Status.SUCCESS
+            ],
+            eventually=py_trees.common.Status.FAILURE
+        )
+    )
+    b = py_trees.decorators.Count(
+        name="Count B",
+        child=py_trees.behaviours.StatusQueue(
+            name="A",
+            queue=[
+                py_trees.common.Status.RUNNING,
+                py_trees.common.Status.RUNNING,
+                py_trees.common.Status.RUNNING,
+                py_trees.common.Status.SUCCESS,
+                py_trees.common.Status.SUCCESS,
+            ],
+            eventually=py_trees.common.Status.FAILURE
+        )
+    )
+    c = py_trees.decorators.Count(
+        name="Count C",
+        child=create_rrr_continuous_success_status_queue(name="C")
+    )
     sequence.add_child(b)
     sequence.add_child(c)
 
-    d = py_trees.behaviours.Count(name="D", fail_until=0, running_until=3, success_until=15)
-
+    d = py_trees.decorators.Count(
+        name="Count D",
+        child=create_rrr_continuous_success_status_queue(name="D")
+    )
     root = py_trees.composites.Selector(name="Selector", memory=False)
     root.add_child(a)
     root.add_child(sequence)
@@ -218,14 +273,13 @@ def test_mixed_tree():
 
 def test_display():
     console.banner("Display Tree")
-
-    a = py_trees.behaviours.Count(name="A")
+    a = create_fffrrs_repeat_status_queue(name="A")
+    b = create_fffrrs_repeat_status_queue(name="B")
+    c = create_fffrrs_repeat_status_queue(name="C")
     sequence = py_trees.composites.Sequence(name="Sequence", memory=True)
-    b = py_trees.behaviours.Count(name="B")
-    c = py_trees.behaviours.Count(name="C")
     sequence.add_child(b)
     sequence.add_child(c)
-    d = py_trees.behaviours.Count(name="D")
+    d = create_fffrrs_repeat_status_queue(name="D")
     root = py_trees.composites.Selector(name="Root", memory=False)
     root.add_child(a)
     root.add_child(sequence)
@@ -240,13 +294,13 @@ def test_full_iteration():
     console.banner("Visit Whole Tree")
 
     visitor = py_trees.visitors.DebugVisitor()
-    a = py_trees.behaviours.Count(name="A")
     sequence = py_trees.composites.Sequence(name="Sequence", memory=True)
-    b = py_trees.behaviours.Count(name="B")
-    c = py_trees.behaviours.Count(name="C")
+    a = create_fffrrs_repeat_status_queue(name="A")
+    b = create_fffrrs_repeat_status_queue(name="B")
+    c = create_fffrrs_repeat_status_queue(name="C")
     sequence.add_child(b)
     sequence.add_child(c)
-    d = py_trees.behaviours.Count(name="D")
+    d = create_fffrrs_repeat_status_queue(name="D")
     root = py_trees.composites.Selector(name="Root", memory=False)
     root.add_child(a)
     root.add_child(sequence)
@@ -262,13 +316,13 @@ def test_full_iteration():
 def test_prune_behaviour_tree():
     console.banner("Prune Behaviour Tree")
 
-    a = py_trees.behaviours.Count(name="A")
     sequence = py_trees.composites.Sequence(name="Sequence", memory=True)
-    b = py_trees.behaviours.Count(name="B")
-    c = py_trees.behaviours.Count(name="C")
+    a = create_fffrrs_repeat_status_queue(name="A")
+    b = create_fffrrs_repeat_status_queue(name="B")
+    c = create_fffrrs_repeat_status_queue(name="C")
     sequence.add_child(b)
     sequence.add_child(c)
-    d = py_trees.behaviours.Count(name="D")
+    d = create_fffrrs_repeat_status_queue(name="D")
     root = py_trees.composites.Selector(name="Root", memory=False)
     root.add_child(a)
     root.add_child(sequence)
@@ -288,13 +342,13 @@ def test_prune_behaviour_tree():
 def test_replace_behaviour_tree():
     console.banner("Replace Behaviour Subtree")
 
-    a = py_trees.behaviours.Count(name="A")
     sequence1 = py_trees.composites.Sequence(name="Sequence1", memory=True)
-    b = py_trees.behaviours.Count(name="B")
-    c = py_trees.behaviours.Count(name="C")
+    a = create_fffrrs_repeat_status_queue(name="A")
+    b = create_fffrrs_repeat_status_queue(name="B")
+    c = create_fffrrs_repeat_status_queue(name="C")
     sequence1.add_child(b)
     sequence1.add_child(c)
-    d = py_trees.behaviours.Count(name="D")
+    d = create_fffrrs_repeat_status_queue(name="D")
     root = py_trees.composites.Selector(name="Root", memory=False)
     root.add_child(a)
     root.add_child(sequence1)
@@ -305,9 +359,9 @@ def test_replace_behaviour_tree():
     assert(len(sequence1.children) == 2)
 
     sequence2 = py_trees.composites.Sequence(name="Sequence2", memory=True)
-    e = py_trees.behaviours.Count(name="E")
-    f = py_trees.behaviours.Count(name="F")
-    g = py_trees.behaviours.Count(name="G")
+    e = create_fffrrs_repeat_status_queue(name="E")
+    f = create_fffrrs_repeat_status_queue(name="F")
+    g = create_fffrrs_repeat_status_queue(name="G")
     sequence2.add_child(e)
     sequence2.add_child(f)
     sequence2.add_child(g)
@@ -320,13 +374,13 @@ def test_replace_behaviour_tree():
 def test_tick_tock_behaviour_tree():
     console.banner("Tick Tock Behaviour Tree")
 
-    a = py_trees.behaviours.Count(name="A")
     sequence = py_trees.composites.Sequence(name="Sequence", memory=True)
-    b = py_trees.behaviours.Count(name="B")
-    c = py_trees.behaviours.Count(name="C")
+    a = create_fffrrs_repeat_status_queue(name="A")
+    b = create_fffrrs_repeat_status_queue(name="B")
+    c = create_fffrrs_repeat_status_queue(name="C")
     sequence.add_child(b)
     sequence.add_child(c)
-    d = py_trees.behaviours.Count(name="D")
+    d = create_fffrrs_repeat_status_queue(name="D")
     root = py_trees.composites.Selector(name="Root", memory=False)
     root.add_child(a)
     root.add_child(sequence)
@@ -376,8 +430,16 @@ def test_tip_simple():
 
     # behaviours will be running the first time they are seen, then success for subsequent ticks
     seq = py_trees.composites.Sequence(name="Sequence", memory=True)
-    a = py_trees.behaviours.Count(name="A", fail_until=0, running_until=1, success_until=100)
-    b = py_trees.behaviours.Count(name="B", fail_until=0, running_until=1, success_until=100)
+    a = py_trees.behaviours.StatusQueue(
+        name="A",
+        queue=[py_trees.common.Status.RUNNING],
+        eventually=py_trees.common.Status.SUCCESS
+    )
+    b = py_trees.behaviours.StatusQueue(
+        name="B",
+        queue=[py_trees.common.Status.RUNNING],
+        eventually=py_trees.common.Status.SUCCESS
+    )
     seq.add_child(a)
     seq.add_child(b)
 
@@ -444,11 +506,29 @@ def test_tip_complex():
 
     # selector left branch fails the two times, so seq2 behaviours run. The
     # third time it is running, stopping seq2
-    a = py_trees.behaviours.Count(name="A", fail_until=1, running_until=0, success_until=10,
-                                  reset=False)
-    b = py_trees.behaviours.Count(name="B", fail_until=0, running_until=1, success_until=10)
-    c = py_trees.behaviours.Count(name="C", fail_until=0, running_until=2, success_until=10)
-    d = py_trees.behaviours.Count(name="D", fail_until=0, running_until=1, success_until=10)
+    a = py_trees.behaviours.StatusQueue(
+        name="A",
+        queue=[py_trees.common.Status.FAILURE],
+        eventually=py_trees.common.Status.SUCCESS
+    )
+    b = py_trees.behaviours.StatusQueue(
+        name="B",
+        queue=[py_trees.common.Status.RUNNING],
+        eventually=py_trees.common.Status.SUCCESS
+    )
+    c = py_trees.behaviours.StatusQueue(
+        name="C",
+        queue=[
+            py_trees.common.Status.RUNNING,
+            py_trees.common.Status.RUNNING
+        ],
+        eventually=py_trees.common.Status.SUCCESS
+    )
+    d = py_trees.behaviours.StatusQueue(
+        name="D",
+        queue=[py_trees.common.Status.RUNNING],
+        eventually=py_trees.common.Status.SUCCESS
+    )
 
     seq1.add_child(a)
     seq1.add_child(b)
@@ -694,11 +774,15 @@ def test_unicode_tree_debug():
     console.banner("Tree Ascii Art")
     root = py_trees.composites.Selector(name="Selector", memory=False)
     root.add_child(
-        py_trees.behaviours.Count(
+        py_trees.behaviours.StatusQueue(
             name="High Priority",
-            fail_until=1,
-            running_until=3,
-            success_until=10
+            queue = [
+                py_trees.common.Status.FAILURE,
+                py_trees.common.Status.RUNNING,
+                py_trees.common.Status.RUNNING
+            ],
+            eventually=py_trees.common.Status.SUCCESS
+
         )
     )
     root.add_child(py_trees.behaviours.Running(name="Low Priority"))

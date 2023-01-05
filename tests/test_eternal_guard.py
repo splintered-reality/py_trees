@@ -20,20 +20,20 @@ import py_trees.console as console
 
 def create_tasks():
     return [
-        py_trees.behaviours.Count(
+        py_trees.behaviours.StatusQueue(
             name="R-R-S",
-            fail_until=0,
-            running_until=2,
-            success_until=3,
-            reset=True
+            queue=[
+                py_trees.common.Status.RUNNING,
+                py_trees.common.Status.RUNNING,
+                py_trees.common.Status.SUCCESS,
+            ],
+            eventually=None
         ),
-        py_trees.behaviours.Count(
+        py_trees.behaviours.StatusQueue(
             name="R-S",
-            fail_until=0,
-            running_until=1,
-            success_until=100,
-            reset=True
-        ),
+            queue=[py_trees.common.Status.RUNNING],
+            eventually=py_trees.common.Status.SUCCESS
+        )
     ]
 
 
@@ -79,13 +79,19 @@ def test_eternal_guard_sequence():
         name="Conditions",
         policy=py_trees.common.ParallelPolicy.SuccessOnOne()
     )
-    frssssf = py_trees.behaviours.Count(
-        name="F-R-S-S-S-S-F",
-        fail_until=1,
-        running_until=2,
-        success_until=6,
-        reset=False
-    )
+    frssssf = py_trees.behaviours.StatusQueue(
+            name="F-R-S-S-S-S-F",
+            queue=[
+                py_trees.common.Status.FAILURE,
+                py_trees.common.Status.RUNNING,
+                py_trees.common.Status.SUCCESS,
+                py_trees.common.Status.SUCCESS,
+                py_trees.common.Status.SUCCESS,
+                py_trees.common.Status.SUCCESS,
+                py_trees.common.Status.FAILURE,
+            ],
+            eventually=py_trees.common.Status.FAILURE
+        )
     success = py_trees.behaviours.Success(name="Success")
     task_sequence = py_trees.composites.Sequence(name="Task Sequence", memory=True)
     tasks = create_tasks()
@@ -110,7 +116,7 @@ def test_eternal_guard_decorator():
     def condition_success():
         return True
 
-    # emulate py_trees.behaviours.Count
+    # emulate py_trees.behaviours.StatusQueue
     class Count(object):
         def __init__(self):
             self.results = [

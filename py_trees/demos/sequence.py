@@ -75,11 +75,15 @@ def command_line_argument_parser():
 def create_root():
     root = py_trees.composites.Sequence(name="Sequence", memory=True)
     for action in ["Action 1", "Action 2", "Action 3"]:
-        success_after_two = py_trees.behaviours.Count(name=action,
-                                                      fail_until=0,
-                                                      running_until=1,
-                                                      success_until=10)
-        root.add_child(success_after_two)
+        rssss = py_trees.behaviours.StatusQueue(
+            name=action,
+            queue=[
+                py_trees.common.Status.RUNNING,
+                py_trees.common.Status.SUCCESS,
+            ],
+            eventually=py_trees.common.Status.SUCCESS
+        )
+        root.add_child(rssss)
     return root
 
 
