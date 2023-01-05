@@ -81,8 +81,6 @@ import inspect
 import time
 import typing
 
-from typing import Callable, List, Set, Union  # noqa
-
 from . import behaviour
 from . import blackboard
 from . import common
@@ -106,8 +104,8 @@ class Decorator(behaviour.Behaviour):
 
     def __init__(
             self,
-            child: behaviour.Behaviour,
-            name=common.Name.AUTO_GENERATED
+            name: str,
+            child: behaviour.Behaviour
     ):
         # Checks
         if not isinstance(child, behaviour.Behaviour):
@@ -204,10 +202,10 @@ class Repeat(Decorator):
     def __init__(
         self,
         name: str,
-        num_success: int,
-        child: behaviour.Behaviour
+        child: behaviour.Behaviour,
+        num_success: int
     ):
-        super().__init__(child=child, name=name)
+        super().__init__(name=name, child=child)
         self.success = 0
         self.num_success = num_success
 
@@ -250,10 +248,10 @@ class Retry(Decorator):
     def __init__(
         self,
         name: str,
-        num_failures: int,
-        child: behaviour.Behaviour
+        child: behaviour.Behaviour,
+        num_failures: int
     ):
-        super().__init__(child=child, name=name)
+        super().__init__(name=name, child=child)
         self.failures = 0
         self.num_failures = num_failures
 
@@ -292,12 +290,11 @@ class StatusToBlackboard(Decorator):
 
     def __init__(
             self,
-            *,
+            name: str,
             child: behaviour.Behaviour,
-            variable_name: str,
-            name: Union[str, common.Name] = common.Name.AUTO_GENERATED,
+            variable_name: str
     ):
-        super().__init__(child=child, name=name)
+        super().__init__(name=name, child=child)
         self.variable_name = variable_name
         name_components = variable_name.split('.')
         self.key = name_components[0]
@@ -319,11 +316,11 @@ class StatusToBlackboard(Decorator):
         return self.decorated.status
 
 
-ConditionType = Union[
-    Callable[[], bool],
-    Callable[[], common.Status],
-    Callable[[blackboard.Blackboard], bool],
-    Callable[[blackboard.Blackboard], common.Status]
+ConditionType = typing.Union[
+    typing.Callable[[], bool],
+    typing.Callable[[], common.Status],
+    typing.Callable[[blackboard.Blackboard], bool],
+    typing.Callable[[blackboard.Blackboard], common.Status]
 ]
 
 
@@ -399,14 +396,13 @@ class EternalGuard(Decorator):
 
     def __init__(
             self,
-            *,
+            name: str,
             child: behaviour.Behaviour,
             # Condition is one of 4 callable types illustrated in the docstring, partials complicate
             # it as well. When typing_extensions are available (very recent) more generally, can use
             # Protocols to handle it. Probably also a sign that it's not a very clean api though...
             condition: typing.Any,
-            blackboard_keys: Union[List[str], Set[str]] = None,
-            name: Union[str, common.Name] = common.Name.AUTO_GENERATED,
+            blackboard_keys: typing.Optional[typing.Union[typing.List[str], typing.Set[str]]] = None
     ):
         if blackboard_keys is None:
             blackboard_keys = []
@@ -470,8 +466,8 @@ class Timeout(Decorator):
     """
 
     def __init__(self,
+                 name: str,
                  child: behaviour.Behaviour,
-                 name: Union[str, common.Name] = common.Name.AUTO_GENERATED,
                  duration: float = 5.0):
         """
         Init with the decorated child and a timeout duration.
@@ -621,10 +617,12 @@ class OneShot(Decorator):
     .. seealso:: :meth:`py_trees.idioms.oneshot`
     """
 
-    def __init__(self,
-                 child: behaviour.Behaviour,
-                 name: typing.Union[str, common.Name] = common.Name.AUTO_GENERATED,
-                 policy: common.OneShotPolicy = common.OneShotPolicy.ON_SUCCESSFUL_COMPLETION):
+    def __init__(
+        self,
+        name: str,
+        child: behaviour.Behaviour,
+        policy: common.OneShotPolicy
+    ):
         """
         Init with the decorated child.
 
@@ -680,13 +678,17 @@ class Inverter(Decorator):
     A decorator that inverts the result of a class's update function.
     """
 
-    def __init__(self, child, name=common.Name.AUTO_GENERATED):
+    def __init__(
+        self,
+        name: str,
+        child: behaviour.Behaviour
+    ):
         """
         Init with the decorated child.
 
         Args:
-            child (:class:`~py_trees.behaviour.Behaviour`): behaviour to time
-            name (:obj:`str`): the decorator name
+            name : the decorator name
+            child : behaviour to invert
         """
         super(Inverter, self).__init__(name=name, child=child)
 
@@ -810,7 +812,7 @@ class SuccessIsFailure(Decorator):
 
 class SuccessIsRunning(Decorator):
     """
-    It never ends...
+    The tickling never ends...
     """
 
     def update(self):
@@ -839,19 +841,19 @@ class Condition(Decorator):
 
     def __init__(
         self,
+        name: str,
         child: behaviour.Behaviour,
-        name: typing.Union[str, common.Name] = common.Name.AUTO_GENERATED,
-        status: common.Status = common.Status.SUCCESS
+        status: common.Status
     ):
         """
         Initialise with child and optional name, status variables.
 
         Args:
+            name: the decorator name
             child: the child to be decorated
-            name: the decorator name (can be None)
             status: the desired status to watch for
         """
-        super(Condition, self).__init__(child, name)
+        super(Condition, self).__init__(name=name, child=child)
         self.succeed_status = status
 
     def update(self):
