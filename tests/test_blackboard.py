@@ -8,6 +8,8 @@
 # Imports
 ##############################################################################
 
+import typing
+
 import pytest
 
 import py_trees
@@ -31,7 +33,7 @@ class Motley(object):
 
 class create_blackboards(object):
 
-    def __enter__(self):
+    def __enter__(self) -> typing.Tuple[py_trees.blackboard.Client, py_trees.blackboard.Client, str]:
         self.foo = create_blackboard_foo()
         self.bar = create_blackboard_bar()
         self.namespace = ""
@@ -44,7 +46,7 @@ class create_blackboards(object):
 
 class create_namespaced_blackboards(object):
 
-    def __enter__(self):
+    def __enter__(self) -> typing.Tuple[py_trees.blackboard.Client, py_trees.blackboard.Client, str]:
         self.namespace = "/woohoo"
         self.foo = create_blackboard_foo(namespace=self.namespace)
         self.bar = create_blackboard_bar(namespace=self.namespace)
@@ -55,7 +57,7 @@ class create_namespaced_blackboards(object):
         self.bar.unregister(clear=True)
 
 
-def create_blackboard_foo(namespace=None) -> None:
+def create_blackboard_foo(namespace=None) -> py_trees.blackboard.Client:
     """
     Create a blackboard client with a few variables.
     """
@@ -72,7 +74,7 @@ def create_blackboard_foo(namespace=None) -> None:
     return blackboard
 
 
-def create_blackboard_bar(namespace=None) -> None:
+def create_blackboard_bar(namespace=None) -> py_trees.blackboard.Client:
     """
     Create another blackboard client with a few variables.
     """
