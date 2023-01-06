@@ -26,9 +26,9 @@ Demonstrates usage of blackboard remappings.
 ##############################################################################
 
 import argparse
-import py_trees
 import typing
 
+import py_trees
 import py_trees.console as console
 
 ##############################################################################
@@ -36,15 +36,14 @@ import py_trees.console as console
 ##############################################################################
 
 
-def description():
+def description() -> str:
     content = "Demonstrates usage of blackbord remappings.\n"
     content += "\n"
     content += "Demonstration is via an exemplar behaviour making use of remappings..\n"
 
     if py_trees.console.has_colours:
         banner_line = console.green + "*" * 79 + "\n" + console.reset
-        s = "\n"
-        s += banner_line
+        s = banner_line
         s += console.bold_white + "Blackboard".center(79) + "\n" + console.reset
         s += banner_line
         s += "\n"
@@ -56,14 +55,14 @@ def description():
     return s
 
 
-def epilog():
+def epilog() -> typing.Optional[str]:
     if py_trees.console.has_colours:
         return console.cyan + "And his noodly appendage reached forth to tickle the blessed...\n" + console.reset
     else:
         return None
 
 
-def command_line_argument_parser():
+def command_line_argument_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=description(),
                                      epilog=epilog(),
                                      formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -84,7 +83,7 @@ class Remap(py_trees.behaviour.Behaviour):
             remap_to=remap_to["/foo/bar/wow"]
         )
 
-    def update(self):
+    def update(self) -> py_trees.common.Status:
         """Write a dictionary to the blackboard.
 
         This beaviour always returns :data:`~py_trees.common.Status.SUCCESS`.
@@ -99,7 +98,7 @@ class Remap(py_trees.behaviour.Behaviour):
 ##############################################################################
 
 
-def main():
+def main() -> None:
     """Entry point for the demo script."""
     _ = command_line_argument_parser().parse_args()  # configuration only, no arg processing
     print(description())

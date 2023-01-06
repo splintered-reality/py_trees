@@ -51,7 +51,7 @@ jobs:
           name: MyPy
           command: |
             . venv/bin/activate
-            mypy --python-version 3.8 | tee mypy_output
+            tox -e mypy38 | tee mypy_output
 
       - store_artifacts:
           path: install_dependencies_output

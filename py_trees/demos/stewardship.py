@@ -25,10 +25,11 @@ Demonstrates various aspects of tree stewardship.
 ##############################################################################
 
 import argparse
-import py_trees
 import sys
 import time
+import typing
 
+import py_trees
 import py_trees.console as console
 
 ##############################################################################
@@ -36,7 +37,7 @@ import py_trees.console as console
 ##############################################################################
 
 
-def description():
+def description() -> str:
     content = "A demonstration of tree stewardship.\n\n"
     content += "A slightly less trivial tree that uses a simple stdout pre-tick handler\n"
     content += "and both the debug and snapshot visitors for logging and displaying\n"
@@ -51,8 +52,7 @@ def description():
     content += "\n"
     if py_trees.console.has_colours:
         banner_line = console.green + "*" * 79 + "\n" + console.reset
-        s = "\n"
-        s += banner_line
+        s = banner_line
         s += console.bold_white + "Trees".center(79) + "\n" + console.reset
         s += banner_line
         s += "\n"
@@ -64,14 +64,14 @@ def description():
     return s
 
 
-def epilog():
+def epilog() -> typing.Optional[str]:
     if py_trees.console.has_colours:
         return console.cyan + "And his noodly appendage reached forth to tickle the blessed...\n" + console.reset
     else:
         return None
 
 
-def command_line_argument_parser():
+def command_line_argument_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=description(),
                                      epilog=epilog(),
                                      formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -87,43 +87,43 @@ def command_line_argument_parser():
     return parser
 
 
-def pre_tick_handler(behaviour_tree):
+def pre_tick_handler(behaviour_tree: py_trees.trees.BehaviourTree) -> None:
     print("\n--------- Run %s ---------\n" % behaviour_tree.count)
 
 
 class SuccessEveryN(py_trees.behaviours.SuccessEveryN):
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(name="EveryN", n=5)
         self.blackboard = self.attach_blackboard_client(name=self.name)
         self.blackboard.register_key("count", access=py_trees.common.Access.WRITE)
 
-    def update(self):
+    def update(self) -> py_trees.common.Status:
         status = super().update()
         self.blackboard.count = self.count
         return status
 
 
 class PeriodicSuccess(py_trees.behaviours.Periodic):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(name="Periodic", n=3)
         self.blackboard = self.attach_blackboard_client(name=self.name)
         self.blackboard.register_key("period", access=py_trees.common.Access.WRITE)
 
-    def update(self):
+    def update(self) -> py_trees.common.Status:
         status = super().update()
         self.blackboard.period = self.period
         return status
 
 
 class Finisher(py_trees.behaviour.Behaviour):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(name="Finisher")
         self.blackboard = self.attach_blackboard_client(name=self.name)
         self.blackboard.register_key("count", access=py_trees.common.Access.READ)
         self.blackboard.register_key("period", access=py_trees.common.Access.READ)
 
-    def update(self):
+    def update(self) -> py_trees.common.Status:
         print(console.green + "---------------------------" + console.reset)
         print(console.bold + "        Finisher" + console.reset)
         print(console.green + "  Count : {}".format(self.blackboard.count) + console.reset)
@@ -132,7 +132,7 @@ class Finisher(py_trees.behaviour.Behaviour):
         return py_trees.common.Status.SUCCESS
 
 
-def create_tree():
+def create_tree() -> py_trees.behaviour.Behaviour:
     every_n_success = SuccessEveryN()
     sequence = py_trees.composites.Sequence(name="Sequence", memory=True)
     guard = py_trees.behaviours.Success("Guard")
@@ -153,7 +153,7 @@ def create_tree():
 # Main
 ##############################################################################
 
-def main():
+def main() -> None:
     """Entry point for the demo script."""
     args = command_line_argument_parser().parse_args()
     py_trees.logging.level = py_trees.logging.Level.DEBUG

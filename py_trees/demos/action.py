@@ -25,9 +25,10 @@ Demonstrates the characteristics of a typical 'action' behaviour.
 import argparse
 import atexit
 import multiprocessing
-import py_trees.common
 import time
+import typing
 
+import py_trees.common
 import py_trees.console as console
 
 ##############################################################################
@@ -35,7 +36,7 @@ import py_trees.console as console
 ##############################################################################
 
 
-def description():
+def description() -> str:
     content = "Demonstrates the characteristics of a typical 'action' behaviour.\n"
     content += "\n"
     content += "* Mocks an external process and connects to it in the setup() method\n"
@@ -45,8 +46,7 @@ def description():
 
     if py_trees.console.has_colours:
         banner_line = console.green + "*" * 79 + "\n" + console.reset
-        s = "\n"
-        s += banner_line
+        s = banner_line
         s += console.bold_white + "Action Behaviour".center(79) + "\n" + console.reset
         s += banner_line
         s += "\n"
@@ -58,14 +58,14 @@ def description():
     return s
 
 
-def epilog():
+def epilog() -> typing.Optional[str]:
     if py_trees.console.has_colours:
         return console.cyan + "And his noodly appendage reached forth to tickle the blessed...\n" + console.reset
     else:
         return None
 
 
-def command_line_argument_parser():
+def command_line_argument_parser() -> argparse.ArgumentParser:
     return argparse.ArgumentParser(description=description(),
                                    epilog=epilog(),
                                    formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -107,7 +107,7 @@ class Action(py_trees.behaviour.Behaviour):
     Key point - this behaviour itself should not be doing any work!
     """
 
-    def __init__(self, name="Action"):
+    def __init__(self, name: str="Action"):
         """Configure the name of the behaviour."""
         super(Action, self).__init__(name)
         self.logger.debug("%s.__init__()" % (self.__class__.__name__))
@@ -171,7 +171,7 @@ class Action(py_trees.behaviour.Behaviour):
 # Main
 ##############################################################################
 
-def main():
+def main() -> None:
     """Entry point for the demo script."""
     command_line_argument_parser().parse_args()
 

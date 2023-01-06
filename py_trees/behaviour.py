@@ -89,7 +89,7 @@ class Behaviour(abc.ABC):
     # User Customisable Callbacks
     ############################################
 
-    def setup(self, **kwargs):  # noqa: B027
+    def setup(self, **kwargs) -> None:  # noqa: B027
         """
         Set up and verify infrastructure (middleware connections, etc) is available.
 
@@ -153,7 +153,7 @@ class Behaviour(abc.ABC):
         """
         pass
 
-    def initialise(self):  # noqa: B027
+    def initialise(self) -> None:  # noqa: B027
         """
         Execute user specified instructions prior to commencement of a new round of activity.
 
@@ -167,7 +167,7 @@ class Behaviour(abc.ABC):
         """
         pass
 
-    def terminate(self, new_status):  # noqa: B027
+    def terminate(self, new_status: common.Status) -> None:  # noqa: B027
         """
         Execute user specified instructions when the behaviour is stopped.
 
@@ -199,7 +199,7 @@ class Behaviour(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def update(self):
+    def update(self) -> common.Status:
         """
         Execute user specified instructions when the behaviour is ticked.
 
@@ -216,7 +216,7 @@ class Behaviour(abc.ABC):
         """
         return common.Status.INVALID
 
-    def shutdown(self):  # noqa: B027
+    def shutdown(self) -> None:  # noqa: B027
         """
         Destroy setup infrastructure (the antithesis of setup).
 
