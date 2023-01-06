@@ -25,9 +25,10 @@ Program to render dot/svg/png graphs of methods that return a pytree.
 import argparse
 import importlib
 import json
-import py_trees
 import sys
+import typing
 
+import py_trees
 import py_trees.console as console
 
 ##############################################################################
@@ -74,7 +75,7 @@ def description():
     return s
 
 
-def epilog():
+def epilog() -> typing.Optional[str]:
     if py_trees.console.has_colours:
         return console.cyan + "And his noodly appendage reached forth to tickle the blessed...\n" + console.reset
     else:

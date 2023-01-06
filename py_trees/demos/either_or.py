@@ -27,10 +27,11 @@ A demonstration of the 'either_or' idiom.
 import argparse
 import functools
 import operator
-import py_trees
 import sys
 import time
+import typing
 
+import py_trees
 import py_trees.console as console
 
 ##############################################################################
@@ -38,7 +39,7 @@ import py_trees.console as console
 ##############################################################################
 
 
-def description(root):
+def description(root: py_trees.behaviour.Behaviour) -> str:
     content = "A demonstration of the 'either_or' idiom.\n\n"
     content += "This behaviour tree pattern enables triggering of subtrees\n"
     content += "with equal priority (first in, first served).\n"
@@ -53,8 +54,7 @@ def description(root):
     content += "\n"
     if py_trees.console.has_colours:
         banner_line = console.green + "*" * 79 + "\n" + console.reset
-        s = "\n"
-        s += banner_line
+        s = banner_line
         s += console.bold_white + "Either Or".center(79) + "\n" + console.reset
         s += banner_line
         s += "\n"
@@ -66,14 +66,14 @@ def description(root):
     return s
 
 
-def epilog():
+def epilog() -> typing.Optional[str]:
     if py_trees.console.has_colours:
         return console.cyan + "And his noodly appendage reached forth to tickle the blessed...\n" + console.reset
     else:
         return None
 
 
-def command_line_argument_parser():
+def command_line_argument_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=description(create_root()),
                                      epilog=epilog(),
                                      formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -84,11 +84,14 @@ def command_line_argument_parser():
     return parser
 
 
-def pre_tick_handler(behaviour_tree):
+def pre_tick_handler(behaviour_tree: py_trees.trees.BehaviourTree) -> None:
     print("\n--------- Run %s ---------\n" % behaviour_tree.count)
 
 
-def post_tick_handler(snapshot_visitor, behaviour_tree):
+def post_tick_handler(
+    snapshot_visitor: py_trees.visitors.SnapshotVisitor,
+    behaviour_tree: py_trees.trees.BehaviourTree
+) -> None:
     print(
         "\n" + py_trees.display.unicode_tree(
             root=behaviour_tree.root,
@@ -99,7 +102,7 @@ def post_tick_handler(snapshot_visitor, behaviour_tree):
     print(py_trees.display.unicode_blackboard())
 
 
-def create_root():
+def create_root() -> py_trees.behaviour.Behaviour:
     trigger_one = py_trees.decorators.FailureIsRunning(
         name="FisR",
         child=py_trees.behaviours.SuccessEveryN(
@@ -175,7 +178,7 @@ def create_root():
 ##############################################################################
 
 
-def main():
+def main() -> None:
     """Entry point for the demo script."""
     args = command_line_argument_parser().parse_args()
     # py_trees.logging.level = py_trees.logging.Level.DEBUG

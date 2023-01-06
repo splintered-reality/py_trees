@@ -26,9 +26,11 @@ A demonstration of the 'eternal_guard' concept.
 
 import argparse
 import functools
-import py_trees
 import sys
 import time
+import typing
+
+import py_trees
 
 import py_trees.console as console
 
@@ -37,7 +39,7 @@ import py_trees.console as console
 ##############################################################################
 
 
-def description(root):
+def description(root: py_trees.behaviour.Behaviour) -> str:
     content = "A demonstration of the 'eternal guard' concept.\n\n"
     content += "Two binary (F|S) conditional checks will fire every\n"
     content += "tick, thus providing a fail-fast mechanism for the\n"
@@ -45,12 +47,13 @@ def description(root):
     content += "\n"
     if py_trees.console.has_colours:
         banner_line = console.green + "*" * 79 + "\n" + console.reset
-        s = "\n"
-        s += banner_line
+        s = banner_line
         s += console.bold_white + "Eternal Guard".center(79) + "\n" + console.reset
         s += banner_line
         s += "\n"
         s += content
+        s += "\n"
+        s += py_trees.display.unicode_tree(root)
         s += "\n"
         s += banner_line
     else:
@@ -58,29 +61,33 @@ def description(root):
     return s
 
 
-def epilog():
+def epilog() -> typing.Optional[str]:
     if py_trees.console.has_colours:
         return console.cyan + "And his noodly appendage reached forth to tickle the blessed...\n" + console.reset
     else:
         return None
 
 
-def command_line_argument_parser():
-    parser = argparse.ArgumentParser(description=description(create_root()),
-                                     epilog=epilog(),
-                                     formatter_class=argparse.RawDescriptionHelpFormatter,
-                                     )
+def command_line_argument_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description=description(create_root()),
+        epilog=epilog(),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
     group = parser.add_mutually_exclusive_group()
     group.add_argument('-r', '--render', action='store_true', help='render dot tree to file')
     group.add_argument('-i', '--interactive', action='store_true', help='pause and wait for keypress at each tick')
     return parser
 
 
-def pre_tick_handler(behaviour_tree):
+def pre_tick_handler(behaviour_tree: py_trees.trees.BehaviourTree) -> None:
     print("\n--------- Run %s ---------\n" % behaviour_tree.count)
 
 
-def post_tick_handler(snapshot_visitor, behaviour_tree):
+def post_tick_handler(
+        snapshot_visitor: py_trees.visitors.SnapshotVisitor,
+        behaviour_tree: py_trees.trees.BehaviourTree
+    ) -> None:
     print(
         "\n" + py_trees.display.unicode_tree(
             root=behaviour_tree.root,
@@ -91,7 +98,7 @@ def post_tick_handler(snapshot_visitor, behaviour_tree):
     print(py_trees.display.unicode_blackboard())
 
 
-def create_root():
+def create_root() -> py_trees.behaviour.Behaviour:
     eternal_guard = py_trees.composites.Sequence(name="Eternal Guard", memory=False)
     condition_one = py_trees.behaviours.StatusQueue(
         name="Condition 1",
@@ -125,7 +132,7 @@ def create_root():
 ##############################################################################
 
 
-def main():
+def main() -> None:
     """Entry point for the demo script."""
     args = command_line_argument_parser().parse_args()
     # py_trees.logging.level = py_trees.logging.Level.DEBUG

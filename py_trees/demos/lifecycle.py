@@ -23,9 +23,10 @@ Demonstrates the behaviour lifecycle.
 ##############################################################################
 
 import argparse
-import py_trees
 import time
+import typing
 
+import py_trees
 import py_trees.console as console
 
 ##############################################################################
@@ -33,15 +34,14 @@ import py_trees.console as console
 ##############################################################################
 
 
-def description():
+def description() -> str:
     content = "Demonstrates a typical day in the life of a behaviour.\n\n"
     content += "This behaviour will count from 1 to 3 and then reset and repeat. As it does\n"
     content += "so, it logs and displays the methods as they are called - construction, setup,\n"
     content += "initialisation, ticking and termination.\n"
     if py_trees.console.has_colours:
         banner_line = console.green + "*" * 79 + "\n" + console.reset
-        s = "\n"
-        s += banner_line
+        s = banner_line
         s += console.bold_white + "Behaviour Lifecycle".center(79) + "\n" + console.reset
         s += banner_line
         s += "\n"
@@ -53,14 +53,14 @@ def description():
     return s
 
 
-def epilog():
+def epilog() -> typing.Optional[str]:
     if py_trees.console.has_colours:
         return console.cyan + "And his noodly appendage reached forth to tickle the blessed...\n" + console.reset
     else:
         return None
 
 
-def command_line_argument_parser():
+def command_line_argument_parser() -> argparse.ArgumentParser:
     return argparse.ArgumentParser(description=description(),
                                    epilog=epilog(),
                                    formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -80,16 +80,16 @@ class Counter(py_trees.behaviour.Behaviour):
         super(Counter, self).__init__(name)
         self.logger.debug("%s.__init__()" % (self.__class__.__name__))
 
-    def setup(self):
+    def setup(self, **kwargs: typing.Dict[str, typing.Any]) -> None:
         """No delayed initialisation required for this example."""
         self.logger.debug("%s.setup()" % (self.__class__.__name__))
 
-    def initialise(self):
+    def initialise(self) -> None:
         """Reset a counter variable."""
         self.logger.debug("%s.initialise()" % (self.__class__.__name__))
         self.counter = 0
 
-    def update(self):
+    def update(self) -> py_trees.common.Status:
         """Increment the counter and decide on a new status."""
         self.counter += 1
         new_status = py_trees.common.Status.SUCCESS if self.counter == 3 else py_trees.common.Status.RUNNING
@@ -106,7 +106,7 @@ class Counter(py_trees.behaviour.Behaviour):
         )
         return new_status
 
-    def terminate(self, new_status):
+    def terminate(self, new_status: py_trees.common.Status) -> None:
         """Nothing to clean up in this example."""
         self.logger.debug("%s.terminate()[%s->%s]" % (self.__class__.__name__, self.status, new_status))
 
@@ -115,7 +115,7 @@ class Counter(py_trees.behaviour.Behaviour):
 # Main
 ##############################################################################
 
-def main():
+def main() -> None:
     """Entry point for the demo script."""
     command_line_argument_parser().parse_args()
 

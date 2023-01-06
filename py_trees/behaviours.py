@@ -99,7 +99,7 @@ class Periodic(behaviour.Behaviour):
         self.period = n
         self.response = common.Status.RUNNING
 
-    def update(self):
+    def update(self) -> common.Status:
         self.count += 1
         if self.count > self.period:
             if self.response == common.Status.FAILURE:
@@ -178,7 +178,7 @@ class SuccessEveryN(behaviour.Behaviour):
         self.count = 0
         self.every_n = n
 
-    def update(self):
+    def update(self) -> common.Status:
         self.count += 1
         self.logger.debug("%s.update()][%s]" % (self.__class__.__name__, self.count))
         if self.count % self.every_n == 0:

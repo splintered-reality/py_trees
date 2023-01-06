@@ -25,10 +25,11 @@ Demonstrates priority switching and interruption in selectors.
 ##############################################################################
 
 import argparse
-import py_trees
 import sys
 import time
+import typing
 
+import py_trees
 import py_trees.console as console
 
 ##############################################################################
@@ -36,7 +37,7 @@ import py_trees.console as console
 ##############################################################################
 
 
-def description():
+def description() -> str:
     content = "Higher priority switching and interruption in the children of a selector.\n"
     content += "\n"
     content += "In this example the higher priority child is setup to fail initially,\n"
@@ -44,8 +45,7 @@ def description():
     content += "tick, the first child succeeds and cancels the hitherto running child.\n"
     if py_trees.console.has_colours:
         banner_line = console.green + "*" * 79 + "\n" + console.reset
-        s = "\n"
-        s += banner_line
+        s = banner_line
         s += console.bold_white + "Selectors".center(79) + "\n" + console.reset
         s += banner_line
         s += "\n"
@@ -57,14 +57,14 @@ def description():
     return s
 
 
-def epilog():
+def epilog() -> typing.Optional[str]:
     if py_trees.console.has_colours:
         return console.cyan + "And his noodly appendage reached forth to tickle the blessed...\n" + console.reset
     else:
         return None
 
 
-def command_line_argument_parser():
+def command_line_argument_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=description(),
                                      epilog=epilog(),
                                      formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -73,7 +73,7 @@ def command_line_argument_parser():
     return parser
 
 
-def create_root():
+def create_root() -> py_trees.behaviour.Behaviour:
     root = py_trees.composites.Selector(name="Selector", memory=False)
     ffs = py_trees.behaviours.StatusQueue(
         name="FFS",
@@ -93,7 +93,7 @@ def create_root():
 # Main
 ##############################################################################
 
-def main():
+def main() -> None:
     """Entry point for the demo script."""
     args = command_line_argument_parser().parse_args()
     print(description())

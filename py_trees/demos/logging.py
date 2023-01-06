@@ -27,10 +27,11 @@ Demonstrates a simple logging capability.
 import argparse
 import functools
 import json
-import py_trees
 import sys
 import time
+import typing
 
+import py_trees
 import py_trees.console as console
 
 ##############################################################################
@@ -38,7 +39,7 @@ import py_trees.console as console
 ##############################################################################
 
 
-def description(root):
+def description(root: py_trees.behaviour.Behaviour) -> str:
     content = "A demonstration of logging with trees.\n\n"
     content += "This demo utilises a SnapshotVisitor to trigger\n"
     content += "a post-tick handler to dump a serialisation of the\n"
@@ -52,12 +53,13 @@ def description(root):
     content += "\n"
     if py_trees.console.has_colours:
         banner_line = console.green + "*" * 79 + "\n" + console.reset
-        s = "\n"
-        s += banner_line
+        s = banner_line
         s += console.bold_white + "Logging".center(79) + "\n" + console.reset
         s += banner_line
         s += "\n"
         s += content
+        s += "\n"
+        s += py_trees.display.unicode_tree(root)
         s += "\n"
         s += banner_line
     else:
@@ -65,14 +67,14 @@ def description(root):
     return s
 
 
-def epilog():
+def epilog() -> typing.Optional[str]:
     if py_trees.console.has_colours:
         return console.cyan + "And his noodly appendage reached forth to tickle the blessed...\n" + console.reset
     else:
         return None
 
 
-def command_line_argument_parser():
+def command_line_argument_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=description(create_tree()),
                                      epilog=epilog(),
                                      formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -83,7 +85,10 @@ def command_line_argument_parser():
     return parser
 
 
-def logger(snapshot_visitor, behaviour_tree):
+def logger(
+    snapshot_visitor: py_trees.visitors.DisplaySnapshotVisitor,
+    behaviour_tree: py_trees.trees.BehaviourTree
+) -> None:
     """Log the tree (relevant parts thereof) to a yaml file.
 
     Use as a post-tick handler for a tree.
@@ -114,7 +119,7 @@ def logger(snapshot_visitor, behaviour_tree):
                 'message': node.feedback_message,
                 'is_active': True if node.id in snapshot_visitor.visited else False
             }
-            tree_serialisation['nodes'].append(node_snapshot)
+            typing.cast(list, tree_serialisation['nodes']).append(node_snapshot)
         if behaviour_tree.count == 0:
             with open('dump.json', 'w+') as outfile:
                 json.dump(tree_serialisation, outfile, indent=4)
@@ -125,7 +130,7 @@ def logger(snapshot_visitor, behaviour_tree):
         print(console.yellow + "Logging.......................no\n" + console.reset)
 
 
-def create_tree():
+def create_tree() -> py_trees.behaviour.Behaviour:
     every_n_success = py_trees.behaviours.SuccessEveryN("EveryN", 5)
     sequence = py_trees.composites.Sequence(name="Sequence", memory=True)
     guard = py_trees.behaviours.Success("Guard")
@@ -147,7 +152,7 @@ def create_tree():
 # Main
 ##############################################################################
 
-def main():
+def main() -> None:
     """Entry point for the demo script."""
     args = command_line_argument_parser().parse_args()
     py_trees.logging.level = py_trees.logging.Level.DEBUG

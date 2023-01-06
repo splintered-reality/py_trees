@@ -26,10 +26,11 @@ Demonstrates the 'pick up where you left off idiom'.
 
 import argparse
 import functools
-import py_trees
 import sys
 import time
+import typing
 
+import py_trees
 import py_trees.console as console
 
 ##############################################################################
@@ -37,7 +38,7 @@ import py_trees.console as console
 ##############################################################################
 
 
-def description(root):
+def description(root: py_trees.behaviour.Behaviour) -> str:
     content = "A demonstration of the 'pick up where you left off' idiom.\n\n"
     content += "A common behaviour tree pattern that allows you to resume\n"
     content += "work after being interrupted by a high priority interrupt.\n"
@@ -51,12 +52,13 @@ def description(root):
     content += "\n"
     if py_trees.console.has_colours:
         banner_line = console.green + "*" * 79 + "\n" + console.reset
-        s = "\n"
-        s += banner_line
+        s = banner_line
         s += console.bold_white + "Pick Up Where you Left Off".center(79) + "\n" + console.reset
         s += banner_line
         s += "\n"
         s += content
+        s += "\n"
+        s += py_trees.display.unicode_tree(root)
         s += "\n"
         s += banner_line
     else:
@@ -64,14 +66,14 @@ def description(root):
     return s
 
 
-def epilog():
+def epilog() -> typing.Optional[str]:
     if py_trees.console.has_colours:
         return console.cyan + "And his noodly appendage reached forth to tickle the blessed...\n" + console.reset
     else:
         return None
 
 
-def command_line_argument_parser():
+def command_line_argument_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=description(create_root()),
                                      epilog=epilog(),
                                      formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -82,7 +84,9 @@ def command_line_argument_parser():
     return parser
 
 
-def pre_tick_handler(behaviour_tree):
+def pre_tick_handler(
+    behaviour_tree: py_trees.trees.BehaviourTree
+) -> None:
     """Print a banner immediately before every tick of the tree.
 
     Args:
@@ -92,7 +96,10 @@ def pre_tick_handler(behaviour_tree):
     print("\n--------- Run %s ---------\n" % behaviour_tree.count)
 
 
-def post_tick_handler(snapshot_visitor, behaviour_tree):
+def post_tick_handler(
+    snapshot_visitor: py_trees.visitors.SnapshotVisitor,
+    behaviour_tree: py_trees.trees.BehaviourTree
+) -> None:
     """Print an ascii tree with the current snapshot status."""
     print(
         "\n" + py_trees.display.unicode_tree(
@@ -103,7 +110,7 @@ def post_tick_handler(snapshot_visitor, behaviour_tree):
     )
 
 
-def create_root():
+def create_root() -> py_trees.behaviour.Behaviour:
     task_one = py_trees.behaviours.StatusQueue(
         name="Task 1",
         queue=[
@@ -141,7 +148,7 @@ def create_root():
 ##############################################################################
 
 
-def main():
+def main() -> None:
     """Entry point for the demo script."""
     args = command_line_argument_parser().parse_args()
     py_trees.logging.level = py_trees.logging.Level.DEBUG
