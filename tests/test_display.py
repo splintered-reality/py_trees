@@ -19,7 +19,7 @@ import xml.etree.ElementTree
 ##############################################################################
 
 
-def test_symbols():
+def test_symbols() -> None:
     console.banner("Symbols")
     # This test has no assertions, except from the human eye. When it fails,
     # ticks and crosses fail and must be inspected by the human eye
@@ -47,7 +47,7 @@ def test_symbols():
         )
 
 
-def test_text_trees():
+def test_text_trees() -> None:
     console.banner("Text Trees")
 
     root = py_trees.composites.Selector(name="Selector", memory=False)
@@ -118,7 +118,7 @@ def test_text_trees():
         assert False, "failed to parse the xhtml snippet as valid xml"
 
 
-def test_ascii_snapshot_priority_interrupt():
+def test_ascii_snapshot_priority_interrupt() -> None:
     """
     Tickle the ascii tree generator, but also check specifically
     that a running node that is priority interrupted still gets

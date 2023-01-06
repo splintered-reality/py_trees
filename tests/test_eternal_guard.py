@@ -7,7 +7,7 @@
 # Imports
 ##############################################################################
 
-import pytest
+import typing
 
 import py_trees
 import py_trees.tests
@@ -18,7 +18,7 @@ import py_trees.console as console
 ##############################################################################
 
 
-def create_tasks():
+def create_tasks() -> typing.List[py_trees.behaviour.Behaviour]:
     return [
         py_trees.behaviours.StatusQueue(
             name="R-R-S",
@@ -69,7 +69,7 @@ def impl_eternal_guard_checks(name, root, eternal_guard, tasks):
         assert(task.status == py_trees.common.Status.INVALID)
 
 
-def test_eternal_guard_sequence():
+def test_eternal_guard_sequence() -> None:
     """
     Test with a sequence that has no-memory.
     """
@@ -110,10 +110,10 @@ def test_eternal_guard_sequence():
     )
 
 
-def test_eternal_guard_decorator():
+def test_eternal_guard_decorator() -> None:
     root = py_trees.composites.Selector(name="Root", memory=False)
 
-    def condition_success():
+    def condition_success() -> bool:
         return True
 
     # emulate py_trees.behaviours.StatusQueue

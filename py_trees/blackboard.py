@@ -854,7 +854,7 @@ class Client(object):
         Returns:
             The uuid.UUID object
         """
-        return super().__getattribute__("unique_identifier")
+        return typing.cast(uuid.UUID, super().__getattribute__("unique_identifier"))
 
     def __setattr__(self, name: str, value: typing.Any):
         """

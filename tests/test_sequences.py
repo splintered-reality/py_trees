@@ -23,11 +23,11 @@ logger = py_trees.logging.Logger("Nosetest")
 ##############################################################################
 
 
-def assert_banner():
+def assert_banner() -> None:
     print(console.green + "----- Asserts -----" + console.reset)
 
 
-def assert_details(text, expected, result):
+def assert_details(text, expected, result) -> None:
     print(console.green + text +
           "." * (70 - len(text)) +
           console.cyan + "{}".format(expected) +
@@ -38,7 +38,7 @@ def assert_details(text, expected, result):
 # Tests
 ##############################################################################
 
-def test_running_with_no_memory_children_do_not_reset():
+def test_running_with_no_memory_children_do_not_reset() -> None:
     console.banner('Tick-Running with No Memory - Children Do Not Reset')
     assert_banner()
     root = py_trees.composites.Sequence(name="Sequence w/o Memory", memory=False)
@@ -72,7 +72,7 @@ def test_running_with_no_memory_children_do_not_reset():
     assert_details("2::Child 2 Status", py_trees.common.Status.SUCCESS, child_2.status)
     assert(child_2.status == py_trees.common.Status.SUCCESS)
 
-def test_running_with_no_memory_invalidate_dangling_runners():
+def test_running_with_no_memory_invalidate_dangling_runners() -> None:
     console.banner('Tick-Running with No Memory - Invalidate Dangling Runners')
     assert_banner()
     root = py_trees.composites.Sequence(name="Sequence w/o Memory", memory=False)
@@ -107,7 +107,7 @@ def test_running_with_no_memory_invalidate_dangling_runners():
     assert_details("2::Child 2 Status", py_trees.common.Status.INVALID, child_2.status)
     assert(child_2.status == py_trees.common.Status.INVALID)
 
-def test_running_with_memory_proceeds():
+def test_running_with_memory_proceeds() -> None:
     # This test should check two things:
     # 1) Skipped higher priorities are set to INVALID
     # 2) On a running behaviour's eventual SUCCESS, it proceeds
@@ -147,7 +147,7 @@ def test_running_with_memory_proceeds():
     assert(child_3.status == py_trees.common.Status.RUNNING)
 
 
-def test_static_sequence_successes():
+def test_static_sequence_successes() -> None:
     console.banner('Static Sequence Successes')
     assert_banner()
 
@@ -170,7 +170,7 @@ def test_static_sequence_successes():
     assert root.tip().name == success4.name, 'should execute all 4 nodes of this Sequence'
 
 
-def test_static_sequence_with_failure():
+def test_static_sequence_with_failure() -> None:
     console.banner('Static Sequence With Failure')
     assert_banner()
 
@@ -193,7 +193,7 @@ def test_static_sequence_with_failure():
     assert root.tip().name == failure.name, 'should execute first 2 nodes of this Sequence and fail'
 
 
-def test_tick_add_with_current_child():
+def test_tick_add_with_current_child() -> None:
     console.banner('Tick-Add with Current Child')
     assert_banner()
     root = py_trees.composites.Sequence(name="Sequence", memory=True)
@@ -206,7 +206,7 @@ def test_tick_add_with_current_child():
     assert(root.current_child is None)
 
 
-def test_add_tick_add_with_current_child():
+def test_add_tick_add_with_current_child() -> None:
     console.banner('Add-Tick-Add with Current Child')
     assert_banner()
     root = py_trees.composites.Sequence(name="Sequence", memory=True)
@@ -223,7 +223,7 @@ def test_add_tick_add_with_current_child():
     assert(root.current_child.name == run1.name)
 
 
-def test_add_tick_insert_with_current_child():
+def test_add_tick_insert_with_current_child() -> None:
     console.banner('Add-Tick-Insert with Current Child')
     assert_banner()
     root = py_trees.composites.Sequence(name="Sequence", memory=True)
@@ -240,7 +240,7 @@ def test_add_tick_insert_with_current_child():
     assert(root.current_child.name == run1.name)
 
 
-def test_add_tick_remove_with_current_child():
+def test_add_tick_remove_with_current_child() -> None:
     console.banner('Add-Tick-Remove with Current Child')
     assert_banner()
     root = py_trees.composites.Sequence(name="Sequence", memory=True)

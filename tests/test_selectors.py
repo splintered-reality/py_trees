@@ -23,11 +23,11 @@ logger = py_trees.logging.Logger("Tests")
 ##############################################################################
 
 
-def assert_banner():
+def assert_banner() -> None:
     print(console.green + "----- Asserts -----" + console.reset)
 
 
-def assert_details(text, expected, result):
+def assert_details(text, expected, result) -> None:
     print(console.green + text +
           "." * (70 - len(text)) +
           console.cyan + "{}".format(expected) +
@@ -39,7 +39,7 @@ def assert_details(text, expected, result):
 ##############################################################################
 
 
-def test_tick_running_with_no_memory():
+def test_tick_running_with_no_memory() -> None:
     console.banner('Tick-Running with No Memory')
     assert_banner()
     root = py_trees.composites.Selector(name="Selector w/o Memory", memory=False)
@@ -68,7 +68,7 @@ def test_tick_running_with_no_memory():
     assert(child_2.status == py_trees.common.Status.INVALID)
 
 
-def test_with_memory_priority_handling():
+def test_with_memory_priority_handling() -> None:
     # This test should check two things:
     # 1) Skipped higher priorities are set to INVALID
     # 2) On a running behaviour's eventual FAILURE, it proceeds to the next lower priority
@@ -111,7 +111,7 @@ def test_with_memory_priority_handling():
 ##############################################################################
 
 
-def test_tick_add_with_current_child():
+def test_tick_add_with_current_child() -> None:
     console.banner('Tick-Add with Current Child')
     assert_banner()
     root = py_trees.composites.Selector(name="Selector", memory=False)
@@ -124,7 +124,7 @@ def test_tick_add_with_current_child():
     assert(root.current_child is None)
 
 
-def test_add_tick_add_with_current_child():
+def test_add_tick_add_with_current_child() -> None:
     console.banner('Add-Tick-Add with Current Child')
     assert_banner()
     root = py_trees.composites.Selector(name="Selector", memory=False)
@@ -141,7 +141,7 @@ def test_add_tick_add_with_current_child():
     assert(root.current_child.name == run1.name)
 
 
-def test_add_tick_insert_with_current_child():
+def test_add_tick_insert_with_current_child() -> None:
     console.banner('Add-Tick-Insert with Current Child')
     assert_banner()
     root = py_trees.composites.Selector(name="Selector", memory=False)
@@ -158,7 +158,7 @@ def test_add_tick_insert_with_current_child():
     assert(root.current_child.name == run1.name)
 
 
-def test_add_tick_remove_with_current_child():
+def test_add_tick_remove_with_current_child() -> None:
     console.banner('Add-Tick-Remove with Current Child')
     assert_banner()
     root = py_trees.composites.Selector(name="Selector", memory=False)

@@ -27,11 +27,11 @@ logger = py_trees.logging.Logger("Tests")
 ##############################################################################
 
 
-def assert_banner():
+def assert_banner() -> None:
     print(console.green + "----- Asserts -----" + console.reset)
 
 
-def assert_details(text, expected, result):
+def assert_details(text, expected, result) -> None:
     print(console.green + text +
           "." * (70 - len(text)) +
           console.cyan + "{}".format(expected) +
@@ -43,7 +43,7 @@ def assert_details(text, expected, result):
 ##############################################################################
 
 
-def test_parallel_failure():
+def test_parallel_failure() -> None:
     console.banner("Parallel Failure")
     success_on_one = py_trees.common.ParallelPolicy.SuccessOnOne()
     success_on_all_synchronised = py_trees.common.ParallelPolicy.SuccessOnAll(synchronise=True)
@@ -90,7 +90,7 @@ def test_parallel_failure():
         root.remove_child(success)
 
 
-def test_parallel_success():
+def test_parallel_success() -> None:
     console.banner("Parallel Success")
     root = py_trees.composites.Parallel(name="Parallel", policy=py_trees.common.ParallelPolicy.SuccessOnAll())
     success1 = py_trees.behaviours.Success("Success1")
@@ -110,7 +110,7 @@ def test_parallel_success():
     assert(success2.status == py_trees.common.Status.SUCCESS)
 
 
-def test_parallel_running():
+def test_parallel_running() -> None:
     console.banner("Parallel Running")
     root = py_trees.composites.Parallel(
         name="Parallel",
@@ -153,7 +153,7 @@ def test_parallel_running():
     assert(success_every_other.status == py_trees.common.Status.SUCCESS)
 
 
-def test_parallel_success_on_one():
+def test_parallel_success_on_one() -> None:
     console.banner("Parallel Success on One")
     print("")
     root = py_trees.composites.Parallel(
@@ -181,7 +181,7 @@ def test_parallel_success_on_one():
     assert(running2.status == py_trees.common.Status.INVALID)
 
 
-def test_parallel_success_on_selected():
+def test_parallel_success_on_selected() -> None:
     console.banner("Parallel Success on Selected")
     print("")
     running1 = py_trees.behaviours.Running(name="Running1")
@@ -234,7 +234,7 @@ def test_parallel_success_on_selected():
     assert(running2.status == py_trees.common.Status.INVALID)
 
 
-def test_parallel_success_on_selected_invalid_configuration():
+def test_parallel_success_on_selected_invalid_configuration() -> None:
     console.banner("Parallel Success on Selected [Invalid Configuration]")
     print("")
     running1 = py_trees.behaviours.Running(name="Running1")
@@ -279,7 +279,7 @@ def test_parallel_success_on_selected_invalid_configuration():
         assert("SuccessOnSelected" in str(context.value))
 
 
-def test_parallel_synchronisation():
+def test_parallel_synchronisation() -> None:
     console.banner("Parallel Synchronisation")
     root = py_trees.composites.Parallel(
         name="Parallel",
@@ -343,7 +343,7 @@ def test_parallel_synchronisation():
     assert(success_every_second.status == py_trees.common.Status.RUNNING)
 
 
-def test_parallel_no_synchronisation():
+def test_parallel_no_synchronisation() -> None:
     console.banner('Parallel No Synchronisation')
     root = py_trees.composites.Parallel(
         name="Parallel",
@@ -398,7 +398,7 @@ def test_parallel_no_synchronisation():
     assert(root.status == py_trees.common.Status.SUCCESS)
 
 
-def test_add_tick_remove_with_current_child():
+def test_add_tick_remove_with_current_child() -> None:
     console.banner('Add (Failure)-Tick-Remove with Current Child')
     assert_banner()
     root = py_trees.composites.Parallel(
@@ -440,7 +440,7 @@ def test_add_tick_remove_with_current_child():
     assert(root.current_child is None)
 
 
-def test_tick_add_with_current_child():
+def test_tick_add_with_current_child() -> None:
     console.banner('Tick-Add with Current Child')
     assert_banner()
     root = py_trees.composites.Parallel(
@@ -453,7 +453,7 @@ def test_tick_add_with_current_child():
     assert(root.current_child is None)
 
 
-def test_add_tick_add_with_current_child():
+def test_add_tick_add_with_current_child() -> None:
     console.banner('Add-Tick-Add with Current Child')
     assert_banner()
     root = py_trees.composites.Parallel(
@@ -472,7 +472,7 @@ def test_add_tick_add_with_current_child():
     assert(root.current_child.name == run1.name)
 
 
-def test_add_tick_insert_with_current_child():
+def test_add_tick_insert_with_current_child() -> None:
     console.banner('Add-Tick-Insert with Current Child')
     assert_banner()
     root = py_trees.composites.Parallel(

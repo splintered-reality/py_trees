@@ -55,7 +55,7 @@ class create_namespaced_blackboards(object):
         self.bar.unregister(clear=True)
 
 
-def create_blackboard_foo(namespace=None):
+def create_blackboard_foo(namespace=None) -> None:
     """
     Create a blackboard client with a few variables.
     """
@@ -72,7 +72,7 @@ def create_blackboard_foo(namespace=None):
     return blackboard
 
 
-def create_blackboard_bar(namespace=None):
+def create_blackboard_bar(namespace=None) -> None:
     """
     Create another blackboard client with a few variables.
     """
@@ -95,7 +95,7 @@ def create_blackboard_bar(namespace=None):
 ##############################################################################
 
 
-def test_client_print_blackboard():
+def test_client_print_blackboard() -> None:
     console.banner("Client Construction & Print")
     with create_blackboards() as (foo, bar, unused_namespace):
         print('{0}'.format(foo))
@@ -103,7 +103,7 @@ def test_client_print_blackboard():
     assert(True)
 
 
-def test_bad_name_exception():
+def test_bad_name_exception() -> None:
     console.banner("Bad Name Exception")
 
     with pytest.raises(TypeError) as context:  # if raised, context survives
@@ -115,7 +115,7 @@ def test_bad_name_exception():
     assert("str" in str(context.value))
 
 
-def test_unregister_keys_with_clear():
+def test_unregister_keys_with_clear() -> None:
     console.banner("Unregister Keys with Clear")
     Blackboard.clear()
     print(py_trees.display.unicode_blackboard())
@@ -131,7 +131,7 @@ def test_unregister_keys_with_clear():
     assert(not Blackboard.metadata)
 
 
-def test_delayed_register_key():
+def test_delayed_register_key() -> None:
     console.banner("Delayed Register Key")
     for create in [create_blackboards, create_namespaced_blackboards]:
         with create() as (foo, bar, unused_namespace):
@@ -175,7 +175,7 @@ def test_delayed_register_key():
             assert(bar.other == 1)
 
 
-def test_is_registered():
+def test_is_registered() -> None:
     console.banner("Is Registered")
     blackboard = create_blackboard_foo(namespace="aha")
     print(blackboard)
@@ -208,7 +208,7 @@ def test_is_registered():
     blackboard.unregister(clear=True)
 
 
-def test_key_exists():
+def test_key_exists() -> None:
     console.banner("Key Exists")
     for create in [create_blackboards, create_namespaced_blackboards]:
         with create() as (foo, unused_bar, namespace):
@@ -232,7 +232,7 @@ def test_key_exists():
             assert("does not have read/write access" in str(context.value))
 
 
-def test_nested_exists():
+def test_nested_exists() -> None:
     console.banner("Nested Read")
     for create in [create_blackboards, create_namespaced_blackboards]:
         with create() as (foo, unused_bar, namespace):
@@ -250,7 +250,7 @@ def test_nested_exists():
             assert(Blackboard.exists(namespaced_name))
 
 
-def test_nested_read():
+def test_nested_read() -> None:
     console.banner("Nested Read")
     for create in [create_blackboards, create_namespaced_blackboards]:
         with create() as (foo, unused_bar, unused_namespace):
@@ -285,7 +285,7 @@ def test_nested_read():
             assert("does not yet exist" in str(context.value))
 
 
-def test_nested_write():
+def test_nested_write() -> None:
     console.banner("Nested Write")
     for create in [create_blackboards, create_namespaced_blackboards]:
         with create() as (foo, bar, unused_namespace):
@@ -316,7 +316,7 @@ def test_nested_write():
             assert("does not yet exist" in str(context.value))
 
 
-def test_key_filters():
+def test_key_filters() -> None:
     console.banner("Key Accessors")
     for create in [create_blackboards, create_namespaced_blackboards]:
         with create() as (foo, bar, unused_namespace):
@@ -342,7 +342,7 @@ def test_key_filters():
             assert(no_of_keys == 4)
 
 
-def test_activity_stream():
+def test_activity_stream() -> None:
     console.banner("Activity Stream")
     Blackboard.enable_activity_stream(100)
     blackboard = py_trees.blackboard.Client(name="Client")
@@ -391,7 +391,7 @@ def test_activity_stream():
     blackboard.unregister(clear=True)
 
 
-def test_lists():
+def test_lists() -> None:
     console.banner("Lists")
     for create in [create_blackboards, create_namespaced_blackboards]:
         with create() as (foo, bar, unused_namespace):
@@ -401,7 +401,7 @@ def test_lists():
             assert(name == "Bob")
 
 
-def test_dicts():
+def test_dicts() -> None:
     console.banner("Dicts")
     for create in [create_blackboards, create_namespaced_blackboards]:
         with create() as (foo, bar, unused_namespace):
@@ -411,7 +411,7 @@ def test_dicts():
             assert(value == 5)
 
 
-def test_static_get_set():
+def test_static_get_set() -> None:
     console.banner("Blackboard get/set")
     print("Set foo: 5")
     Blackboard.set("foo", 5)
@@ -464,7 +464,7 @@ def test_static_get_set():
     assert("missing" in str(context.value))
 
 
-def test_unregister_key():
+def test_unregister_key() -> None:
     console.banner("Unregister Keys")
     for create in [create_blackboards, create_namespaced_blackboards]:
         with create() as (foo, bar, namespace):
@@ -482,7 +482,7 @@ def test_unregister_key():
             assert("{}/dudette".format(namespace) not in Blackboard.storage)
 
 
-def test_required_keys():
+def test_required_keys() -> None:
     console.banner("Required")
     blackboard = py_trees.blackboard.Client(name="Reader")
     blackboard.register_key(
@@ -516,7 +516,7 @@ def test_required_keys():
     blackboard.unregister()
 
 
-def test_absolute_name():
+def test_absolute_name() -> None:
     console.banner("Absolute Names")
     # should use Blackboard.separator here, but it's a pita - long and unreadable
     # just update this if the separator ever changes
@@ -540,7 +540,7 @@ def test_absolute_name():
         assert(absolute_name == Blackboard.absolute_name(namespace, key))
 
 
-def test_relative_name():
+def test_relative_name() -> None:
     console.banner("Relative Names")
     # should use Blackboard.separator here, but it's a pita - long and unreadable
     # just update this if the separator ever changes
@@ -574,7 +574,7 @@ def test_relative_name():
     assert("/foo/bar" in str(context.value))
 
 
-def test_client_absolute_name():
+def test_client_absolute_name() -> None:
     console.banner("Absolute Names from Client API")
     # should use Blackboard.separator here, but it's a pita - long and unreadable
     # just update this if the separator ever changes
@@ -597,7 +597,7 @@ def test_client_absolute_name():
         assert(absolute_name == blackboard.absolute_name(key))
 
 
-def test_namespaced_dot_access():
+def test_namespaced_dot_access() -> None:
     console.banner("Namespaced Dot Access")
     blackboard = py_trees.blackboard.Client(name="Blackboard")
     blackboard.register_key(key="dude", access=py_trees.common.Access.WRITE)
@@ -616,7 +616,7 @@ def test_namespaced_dot_access():
     blackboard.unregister()
 
 
-def test_remappings():
+def test_remappings() -> None:
     console.banner("Remappings")
     blackboard = py_trees.blackboard.Client(name="Blackboard")
     blackboard.register_key(key="dude", access=py_trees.common.Access.WRITE)
@@ -661,7 +661,7 @@ def test_remappings():
     blackboard.unregister(clear=True)
 
 
-def test_exclusive_write():
+def test_exclusive_write() -> None:
     console.banner("Exclusive Write")
     blackboard = py_trees.blackboard.Client(name="Blackboard")
     blackboard.register_key(key="dude", access=py_trees.common.Access.EXCLUSIVE_WRITE)
@@ -708,7 +708,7 @@ def test_exclusive_write():
     blackboard_exclusive.unregister(clear=True)
 
 
-def test_blackboard_static_names():
+def test_blackboard_static_names() -> None:
     console.banner("Test Absolute Names with Static Methods")
     print("Set 'foo'")
     Blackboard.set("foo", "foo")

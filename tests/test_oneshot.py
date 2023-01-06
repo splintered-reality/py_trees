@@ -26,7 +26,7 @@ logger = py_trees.logging.Logger("Nosetest")
 ##############################################################################
 
 
-def test_oneshot_with_fail_causes_reentry():
+def test_oneshot_with_fail_causes_reentry() -> None:
     def decorator_oneshot(child, policy):
         return py_trees.decorators.OneShot(name="OneShot", child=child, policy=policy)
 
@@ -116,7 +116,7 @@ def test_oneshot_with_fail_causes_reentry():
             assert(fail_then_run.status == expected_behaviour_status[title][policy])
 
 
-def untest_oneshot_with_subtrees_and_interrupt():
+def untest_oneshot_with_subtrees_and_interrupt() -> None:
     sequence_subtree = py_trees.composites.Sequence(
         name="Sequence",
         memory=True,

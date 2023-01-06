@@ -22,7 +22,7 @@ logger = py_trees.logging.Logger("Nosetest")
 ##############################################################################
 
 
-def test_high_priority_interrupt():
+def test_high_priority_interrupt() -> None:
     console.banner("High Priority Interrupt")
     task_one = py_trees.behaviours.StatusQueue(
         name="Task 1",

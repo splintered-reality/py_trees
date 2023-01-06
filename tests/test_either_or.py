@@ -17,11 +17,11 @@ import py_trees.console as console
 ##############################################################################
 
 
-def assert_banner():
+def assert_banner() -> None:
     print(console.green + "----- Asserts -----" + console.reset)
 
 
-def assert_details(text, expected, result):
+def assert_details(text, expected, result) -> None:
     print(console.green + text +
           "." * (40 - len(text)) +
           console.cyan + "{}".format(expected) +
@@ -34,7 +34,7 @@ def assert_details(text, expected, result):
 ##############################################################################
 
 
-def create_root():
+def create_root() -> None:
     trigger_one = py_trees.decorators.FailureIsRunning(
         name="FisR",
         child=py_trees.behaviours.SuccessEveryN(
@@ -105,7 +105,7 @@ def create_root():
     return root, task_one, task_two
 
 
-def test_basic_workflow():
+def test_basic_workflow() -> None:
     # same as py-trees-demo-idiom-either-or
     root, task_one, task_two = create_root()
     # tree = py_trees.trees.BehaviourTree(root=root)
