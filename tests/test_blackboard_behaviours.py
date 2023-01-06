@@ -34,11 +34,11 @@ from py_trees.blackboard import Blackboard, Client
 ##############################################################################
 
 
-def assert_banner():
+def assert_banner() -> None:
     print(console.green + "----- Asserts -----" + console.reset)
 
 
-def assert_details(text, expected, result):
+def assert_details(text, expected, result) -> None:
     print(console.green + text +
           "." * (70 - len(text)) +
           console.cyan + "{}".format(expected) +
@@ -52,7 +52,7 @@ class Nested(object):
         self.foo = 'bar'
 
 
-def create_blackboard():
+def create_blackboard() -> None:
     """
     Create a blackboard with a few variables.
 
@@ -82,7 +82,7 @@ def create_blackboard():
 ##############################################################################
 
 
-def test_variable_exists():
+def test_variable_exists() -> None:
     console.banner("Check Existence of Variable")
     unused_client = create_blackboard()
     tuples = []
@@ -106,7 +106,7 @@ def test_variable_exists():
         assert(b.status == asserted_result)
 
 
-def test_wait_for_variable():
+def test_wait_for_variable() -> None:
     console.banner("Wait for Variable")
     unused_client = create_blackboard()
     tuples = []
@@ -130,7 +130,7 @@ def test_wait_for_variable():
         assert(b.status == asserted_result)
 
 
-def test_unset_blackboard_variable():
+def test_unset_blackboard_variable() -> None:
     console.banner("Unset Blackboard Variable")
     blackboard = create_blackboard()
     blackboard.foo = "bar"
@@ -168,7 +168,7 @@ def test_unset_blackboard_variable():
     assert("/foo" not in Blackboard.storage.keys())
 
 
-def test_set_blackboard_variable():
+def test_set_blackboard_variable() -> None:
     console.banner("Set Blackboard Variable")
     blackboard = create_blackboard()
     set_foo = py_trees.behaviours.SetBlackboardVariable(
@@ -369,7 +369,7 @@ def test_check_variable_value():
         assert(b.status == asserted_result)
 
 
-def test_check_variable_value_inverted():
+def test_check_variable_value_inverted() -> None:
     console.banner("Check Variable Value Neq")
     unused_client = create_blackboard()
     tuples = []
@@ -453,7 +453,7 @@ def test_check_variable_value_inverted():
         assert(b.status == asserted_result)
 
 
-def test_wait_for_variable_value():
+def test_wait_for_variable_value() -> None:
     console.banner("Wait for Variable Value")
     unused_client = create_blackboard()
     tuples = []
@@ -537,7 +537,7 @@ def test_wait_for_variable_value():
         assert(b.status == asserted_result)
 
 
-def test_check_variable_values():
+def test_check_variable_values() -> None:
     console.banner("Check Variable Values")
     blackboard = Client(name="Blackboard")
     for key in {"a", "b", "c", "d"}:
@@ -582,7 +582,7 @@ def test_check_variable_values():
         assert(b.status == data['result'])
 
 
-def test_check_blackboard_to_status():
+def test_check_blackboard_to_status() -> None:
     console.banner("Check Blackboard to Status")
     blackboard = Client(name="Blackboard")
     blackboard.register_key(

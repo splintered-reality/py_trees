@@ -88,7 +88,7 @@ def create_rrr_continuous_success_status_queue(name: str):
 ##############################################################################
 
 
-def test_selector_composite():
+def test_selector_composite() -> None:
     console.banner("Selector")
     visitor = py_trees.visitors.DebugVisitor()
     tree = py_trees.composites.Selector(name='Selector', memory=False)
@@ -124,7 +124,7 @@ def test_selector_composite():
     print("Done")
 
 
-def test_sequence_composite():
+def test_sequence_composite() -> None:
     console.banner("Sequence")
     visitor = py_trees.visitors.DebugVisitor()
     tree = py_trees.composites.Sequence(name='Sequence', memory=True)
@@ -167,7 +167,7 @@ def test_sequence_composite():
 #     assert(tree.status == py_trees.common.Status.RUNNING)
 
 
-def test_mixed_tree():
+def test_mixed_tree() -> None:
     console.banner("Mixed Tree")
     visitor = py_trees.visitors.DebugVisitor()
     sequence = py_trees.composites.Sequence(name="Sequence", memory=True)
@@ -271,7 +271,7 @@ def test_mixed_tree():
     assert(root.status == py_trees.common.Status.RUNNING)
 
 
-def test_display():
+def test_display() -> None:
     console.banner("Display Tree")
     a = create_fffrrs_repeat_status_queue(name="A")
     b = create_fffrrs_repeat_status_queue(name="B")
@@ -290,7 +290,7 @@ def test_display():
     assert(True)
 
 
-def test_full_iteration():
+def test_full_iteration() -> None:
     console.banner("Visit Whole Tree")
 
     visitor = py_trees.visitors.DebugVisitor()
@@ -313,7 +313,7 @@ def test_full_iteration():
     assert(visitations == 6)
 
 
-def test_prune_behaviour_tree():
+def test_prune_behaviour_tree() -> None:
     console.banner("Prune Behaviour Tree")
 
     sequence = py_trees.composites.Sequence(name="Sequence", memory=True)
@@ -339,7 +339,7 @@ def test_prune_behaviour_tree():
     assert(len(root.children) == 2)
 
 
-def test_replace_behaviour_tree():
+def test_replace_behaviour_tree() -> None:
     console.banner("Replace Behaviour Subtree")
 
     sequence1 = py_trees.composites.Sequence(name="Sequence1", memory=True)
@@ -371,7 +371,7 @@ def test_replace_behaviour_tree():
     assert(len(sequence2.children) == 3)
 
 
-def test_tick_tock_behaviour_tree():
+def test_tick_tock_behaviour_tree() -> None:
     console.banner("Tick Tock Behaviour Tree")
 
     sequence = py_trees.composites.Sequence(name="Sequence", memory=True)
@@ -398,7 +398,7 @@ def test_tick_tock_behaviour_tree():
     assert(a.status == py_trees.common.Status.RUNNING)
 
 
-def test_success_failure_tree():
+def test_success_failure_tree() -> None:
     console.banner("Success Failure Tree")
     root = py_trees.composites.Selector(name="Root", memory=False)
     failure = py_trees.behaviours.Failure(name="Failure")
@@ -425,7 +425,7 @@ def test_success_failure_tree():
     assert(failure2.status == py_trees.common.Status.FAILURE)
 
 
-def test_tip_simple():
+def test_tip_simple() -> None:
     console.banner("Tip Simple")
 
     # behaviours will be running the first time they are seen, then success for subsequent ticks
@@ -496,7 +496,7 @@ def test_tip_simple():
     assert(b.tip() == b)
 
 
-def test_tip_complex():
+def test_tip_complex() -> None:
     console.banner("Tip Complex")
 
     # behaviours will be running the first time they are seen, then success for subsequent ticks
@@ -578,7 +578,7 @@ def test_tip_complex():
     assert(tree.root.tip() == b)
 
 
-def test_failed_tree():
+def test_failed_tree() -> None:
     console.banner("Failed Tree")
 
     root = py_trees.composites.Selector(name="Root", memory=False)
@@ -598,7 +598,7 @@ def test_failed_tree():
     # TODO failed sequence tree
 
 
-def test_tree_errors():
+def test_tree_errors() -> None:
     console.banner("Tree Errors")
     root = 5.0
     print("__init__ raises a 'TypeError' due to invalid root variable type being passed")
@@ -650,7 +650,7 @@ def test_tree_errors():
     assert("Composite" in str(context.value))
 
 
-def test_tree_setup():
+def test_tree_setup() -> None:
     console.banner("Tree Setup")
     duration = 0.05
     first = SleepInSetup(name="First", duration=duration)
@@ -718,7 +718,7 @@ def test_tree_setup():
     assert(threading.active_count() == 1)
 
 
-def test_pre_post_tick_activity_sequence():
+def test_pre_post_tick_activity_sequence() -> None:
     """
     Ensure the sequence of visitor and pre/post tick handler callbacks fire in
     the correct order.
@@ -766,7 +766,7 @@ def test_pre_post_tick_activity_sequence():
         assert(expected == actual)
 
 
-def test_unicode_tree_debug():
+def test_unicode_tree_debug() -> None:
     """
     Just check the code path through to painting unicode art via
     tree visitors is executable

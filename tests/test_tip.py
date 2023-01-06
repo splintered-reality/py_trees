@@ -24,7 +24,7 @@ logger = py_trees.logging.Logger("Nosetest")
 ##############################################################################
 
 
-def test_single_behaviour():
+def test_single_behaviour() -> None:
     console.banner("Single Behaviour")
     failure = py_trees.behaviours.Failure(name="Failure")
     running = py_trees.behaviours.Running(name="Running")
@@ -46,7 +46,7 @@ def test_single_behaviour():
     assert(success.tip() is success)
 
 
-def test_sequence():
+def test_sequence() -> None:
     console.banner("Sequence")
     print("\n--------- Assertions ---------\n")
     root = py_trees.composites.Sequence(name="Root", memory=True)
@@ -80,7 +80,7 @@ def test_sequence():
     assert(root.tip() is root)
 
 
-def test_selector():
+def test_selector() -> None:
     console.banner("Selector")
     print("\n--------- Assertions ---------\n")
     root = py_trees.composites.Selector(name="Root", memory=False)
@@ -144,7 +144,7 @@ def test_selector():
     assert(root.tip() is root)
 
 
-def test_decorator():
+def test_decorator() -> None:
     console.banner("Decorators")
     print("\n--------- Assertions ---------\n")
 
@@ -171,7 +171,7 @@ def test_decorator():
     assert(root.tip() is child)
 
 
-def test_parallel():
+def test_parallel() -> None:
     console.banner("Parallel")
     root = py_trees.composites.Parallel(name="Root", policy=py_trees.common.ParallelPolicy.SuccessOnAll())
     failure = py_trees.behaviours.Failure(name="Failure")

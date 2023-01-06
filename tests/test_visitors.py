@@ -43,7 +43,7 @@ def create_fffrrs_repeat_status_queue(name: str):
 ##############################################################################
 
 
-def test_snapshot_visitor():
+def test_snapshot_visitor() -> None:
     console.banner("Snapshot Visitor")
 
     root = py_trees.composites.Selector(name='Selector', memory=False)

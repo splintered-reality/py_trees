@@ -25,11 +25,11 @@ logger = py_trees.logging.Logger("Tests")
 ##############################################################################
 
 
-def assert_banner():
+def assert_banner()  -> None:
     print(console.green + "----- Asserts -----" + console.reset)
 
 
-def assert_details(text, expected, result):
+def assert_details(text, expected, result) -> None:
     print(console.green + text +
           "." * (70 - len(text)) +
           console.cyan + "{}".format(expected) +
@@ -42,7 +42,7 @@ def assert_details(text, expected, result):
 ##############################################################################
 
 
-def test_replacing_children():
+def test_replacing_children() -> None:
     console.banner("Replacing Children")
     parent = py_trees.composites.Sequence(name="Parent", memory=True)
     front = py_trees.behaviours.Success(name="Front")
@@ -60,7 +60,7 @@ def test_replacing_children():
     assert(new_child.parent is parent)
 
 
-def test_removing_children():
+def test_removing_children() -> None:
     console.banner("Removing Children")
     parent = py_trees.composites.Sequence(name="Parent", memory=True)
     child = py_trees.behaviours.Success(name="Child")
@@ -79,7 +79,7 @@ def test_removing_children():
     assert(child.parent is None)
 
 
-def test_composite_add_child_exception():
+def test_composite_add_child_exception() -> None:
     console.banner("Composite Add Child Exception - Invalid Type")
     root = py_trees.composites.Selector(name="Selector", memory=False)
     with pytest.raises(TypeError) as context:  # if raised, context survives
@@ -91,7 +91,7 @@ def test_composite_add_child_exception():
     assert("behaviours" in str(context.value))
 
 
-def test_protect_against_multiple_parents():
+def test_protect_against_multiple_parents() -> None:
     console.banner("Protect Against Multiple Parents")
     child = py_trees.behaviours.Success()
     first_parent = py_trees.composites.Selector(name="Selector", memory=False)
@@ -107,7 +107,7 @@ def test_protect_against_multiple_parents():
     assert("parent" in str(context.value))
 
 
-def test_remove_nonexistant_child():
+def test_remove_nonexistant_child() -> None:
     console.banner("Remove non-existant child")
     root = py_trees.composites.Sequence(name="Sequence", memory=True)
     child = py_trees.behaviours.Success(name="Success")

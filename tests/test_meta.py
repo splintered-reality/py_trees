@@ -23,10 +23,10 @@ logger = py_trees.logging.Logger("Nosetest")
 ##############################################################################
 
 
-def test_behaviour_from_function_naming():
+def test_behaviour_from_function_naming() -> None:
     console.banner("Test Behaviour From Function Naming")
 
-    def foo():
+    def foo() -> py_trees.common.Status.SUCCESS:
         return py_trees.common.Status.SUCCESS
     foo_instance = py_trees.meta.create_behaviour_from_function(foo)()
     success = py_trees.behaviours.Success()

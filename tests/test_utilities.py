@@ -31,7 +31,7 @@ def test_valid_filenames():
         assert(utilities.get_valid_filename(name) == expected_name)
 
 
-def test_get_fully_qualified_name():
+def test_get_fully_qualified_name() -> None:
     console.banner("Fully Qualified Names")
     pairs = {
         "py_trees.behaviours.Periodic": py_trees.behaviours.Periodic(name="foo", n=3),
