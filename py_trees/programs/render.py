@@ -36,7 +36,7 @@ import py_trees.console as console
 ##############################################################################
 
 
-def examples():
+def examples() -> typing.List[str]:
     prefix = console.cyan + "py-trees-render" + console.yellow
     examples = [
         prefix + " py_trees.demos.stewardship.create_tree" + console.reset,
@@ -47,13 +47,12 @@ def examples():
     return examples
 
 
-def description():
+def description() -> str:
     short = "Point this program at a method which creates a root to render to dot/svg/png.\n\n"
 
     if py_trees.console.has_colours:
         banner_line = console.green + "*" * 79 + "\n" + console.reset
-        s = "\n"
-        s += banner_line
+        s = banner_line
         s += console.bold_white + "Trees".center(79) + "\n" + console.reset
         s += banner_line
         s += "\n"
@@ -82,7 +81,7 @@ def epilog() -> typing.Optional[str]:
         return None
 
 
-def command_line_argument_parser():
+def command_line_argument_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=description(),
                                      epilog=epilog(),
                                      formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -120,7 +119,7 @@ def command_line_argument_parser():
 # Main
 ##############################################################################
 
-def main():
+def main() -> None:
     """Entry point."""
     args = command_line_argument_parser().parse_args()
     args.enum_level = py_trees.common.string_to_visibility_level(args.level)
