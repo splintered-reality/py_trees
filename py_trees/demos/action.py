@@ -25,6 +25,7 @@ Demonstrates the characteristics of a typical 'action' behaviour.
 import argparse
 import atexit
 import multiprocessing
+import multiprocessing.connection
 import time
 import typing
 
@@ -72,7 +73,7 @@ def command_line_argument_parser() -> argparse.ArgumentParser:
                                    )
 
 
-def planning(pipe_connection):
+def planning(pipe_connection: multiprocessing.connection.Connection) -> None:
     """Emulate a (potentially) long running external process."""
     idle = True
     percentage_complete = 0
@@ -107,12 +108,12 @@ class Action(py_trees.behaviour.Behaviour):
     Key point - this behaviour itself should not be doing any work!
     """
 
-    def __init__(self, name: str="Action"):
+    def __init__(self, name: str):
         """Configure the name of the behaviour."""
         super(Action, self).__init__(name)
         self.logger.debug("%s.__init__()" % (self.__class__.__name__))
 
-    def setup(self):
+    def setup(self, **kwargs: int) -> None:
         """Kickstart the separate process this behaviour will work with.
 
         Ordinarily this process will be already running. In this case,
@@ -124,13 +125,13 @@ class Action(py_trees.behaviour.Behaviour):
         atexit.register(self.planning.terminate)
         self.planning.start()
 
-    def initialise(self):
+    def initialise(self) -> None:
         """Reset a counter variable."""
         self.logger.debug("%s.initialise()->sending new goal" % (self.__class__.__name__))
         self.parent_connection.send(['new goal'])
         self.percentage_completion = 0
 
-    def update(self):
+    def update(self) -> py_trees.common.Status:
         """Increment the counter, monitor and decide on a new status."""
         new_status = py_trees.common.Status.RUNNING
         if self.parent_connection.poll():
@@ -157,7 +158,7 @@ class Action(py_trees.behaviour.Behaviour):
             )
         return new_status
 
-    def terminate(self, new_status):
+    def terminate(self, new_status: py_trees.common.Status) -> None:
         """Nothing to clean up in this example."""
         self.logger.debug(
             "%s.terminate()[%s->%s]" % (
@@ -179,7 +180,7 @@ def main() -> None:
 
     py_trees.logging.level = py_trees.logging.Level.DEBUG
 
-    action = Action()
+    action = Action(name="Action")
     action.setup()
     try:
         for _unused_i in range(0, 12):

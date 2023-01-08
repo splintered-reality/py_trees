@@ -42,25 +42,31 @@ _status_colour_codes = {common.Status.SUCCESS: console.green,
                         }
 
 
-def status(status):
+def status(status: common.Status) -> str:
     """
     Retrieve a coloured string representing a :py:class:`~py_trees.common.Status`.
 
     This is used for syntax highlighting in various modes.
 
-    :param :py:class:`~py_trees.common.Status` Status: behaviour status
-    :returns: syntax highlighted string representation of the status
+    Args:
+        status: behaviour status
+
+    Returns:
+        syntax highlighted string representation of the status
     """
     return _status_colour_strings[status]
 
 
-def status_colour_code(status):
+def status_colour_code(status: common.Status) -> str:
     """
     Retrieve the colour code associated with a :py:class:`~py_trees.common.Status`.
 
     This is used for syntax highlighting in various modes.
 
-    :param :py:class:`~py_trees.common.Status` Status: behaviour status
-    :returns: console colour code associated with the status
+    Args:
+        Status: behaviour status
+
+    Returns:
+        console colour code associated with the status
     """
     return _status_colour_codes[status]

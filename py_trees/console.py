@@ -50,10 +50,10 @@ def has_unicode(encoding: str = sys.stdout.encoding) -> bool:
     Jenkins CI is often be configured with unicode disabled).
 
     Args:
-        encoding (:obj:`str`, optional): the encoding to check against.
+        encoding: the encoding to check against.
 
     Returns:
-        :obj:`bool`: true if capable, false otherwise
+        true if capable, false otherwise
     """
     try:
         u'\u26A1'.encode(encoding)
@@ -66,7 +66,11 @@ def has_unicode(encoding: str = sys.stdout.encoding) -> bool:
     return True
 
 
-def define_symbol_or_fallback(original: str, fallback: str, encoding: str = sys.stdout.encoding):
+def define_symbol_or_fallback(
+    original: str,
+    fallback: str,
+    encoding: str = sys.stdout.encoding
+) -> str:
     """
     Go unicode, or fallback to ascii.
 
@@ -75,12 +79,12 @@ def define_symbol_or_fallback(original: str, fallback: str, encoding: str = sys.
     is often the case on, e.g. Jenkins CI.
 
     Args:
-        original (:obj:`str`): the unicode string (usually just a character)
-        fallback (:obj:`str`): the fallback ascii string
-        encoding (:obj:`str`, optional): the encoding to check against.
+        original: the unicode string (usually just a character)
+        fallback: the fallback ascii string
+        encoding: the encoding to check against.
 
     Returns:
-        :obj:`str`: either original or fallback depending on whether exceptions were thrown.
+        either original or fallback depending on whether exceptions were thrown.
     """
     try:
         original.encode(encoding)
@@ -105,7 +109,7 @@ circled_m = u'\u24c2'
 ##############################################################################
 
 
-def read_single_keypress():
+def read_single_keypress() -> str:
     """Wait for a single keypress on stdin.
 
     This is a silly function to call if you need to do it a lot because it has
@@ -114,12 +118,12 @@ def read_single_keypress():
     keystroke.
 
     Returns:
-        :obj:`int`: the character of the key that was pressed
+        the character of the key that was pressed
 
     Raises:
         KeyboardInterrupt: if CTRL-C was pressed (keycode 0x03)
     """
-    def read_single_keypress_unix():
+    def read_single_keypress_unix() -> str:
         """For Unix case, where fcntl, termios is available."""
         import fcntl
         import termios
@@ -155,7 +159,7 @@ def read_single_keypress():
         fcntl.fcntl(fd, fcntl.F_SETFL, flags_save)
         return ret
 
-    def read_single_keypress_windows():
+    def read_single_keypress_windows() -> str:
         """Implement keypress functionality for windows, which can't use fcntl and termios.
         """
         import msvcrt  # noqa
@@ -182,7 +186,7 @@ def read_single_keypress():
 ##############################################################################
 
 
-def console_has_colours():
+def console_has_colours() -> bool:
     """
     Detect if the console (stdout) has colourising capability.
     """
@@ -231,7 +235,7 @@ colours = [bold, dim, underlined, blink,
 """List of all available colours."""
 
 
-def pretty_print(msg, colour=white):
+def pretty_print(msg: str, colour: str = white) -> None:
     if has_colours:
         seq = colour + msg + reset
         sys.stdout.write(seq)
@@ -239,7 +243,7 @@ def pretty_print(msg, colour=white):
         sys.stdout.write(msg)
 
 
-def pretty_println(msg, colour=white):
+def pretty_println(msg: str, colour: str = white) -> None:
     if has_colours:
         seq = colour + msg + reset
         sys.stdout.write(seq)
@@ -253,74 +257,74 @@ def pretty_println(msg, colour=white):
 ##############################################################################
 
 
-def banner(msg):
+def banner(msg: str) -> None:
     print(green + "\n" + 80 * "*" + reset)
     print(green + "* " + bold_white + msg.center(80) + reset)
     print(green + 80 * "*" + "\n" + reset)
 
 
-def debug(msg):
+def debug(msg: str) -> None:
     print(green + msg + reset)
 
 
-def warning(msg):
+def warning(msg: str) -> None:
     print(yellow + msg + reset)
 
 
-def info(msg):
+def info(msg: str) -> None:
     print(msg)
 
 
-def error(msg):
+def error(msg: str) -> None:
     print(red + msg + reset)
 
 
-def logdebug(message):
+def logdebug(message: str) -> None:
     """
     Prefixes ``[DEBUG]`` and colours the message green.
 
     Args:
-        message (:obj:`str`): message to log.
+        message: message to log.
     """
     print(green + "[DEBUG] " + message + reset)
 
 
-def loginfo(message):
+def loginfo(message: str) -> None:
     """
     Prefixes ``[ INFO]`` to the message.
 
     Args:
-        message (:obj:`str`): message to log.
+        message: message to log.
     """
     print("[ INFO] " + message)
 
 
-def logwarn(message):
+def logwarn(message: str) -> None:
     """
     Prefixes ``[ WARN]`` and colours the message yellow.
 
     Args:
-        message (:obj:`str`): message to log.
+        message: message to log.
     """
     print(yellow + "[ WARN] " + message + reset)
 
 
-def logerror(message):
+def logerror(message: str) -> None:
     """
     Prefixes ``[ERROR]`` and colours the message red.
 
     Args:
-        message (:obj:`str`): message to log.
+        message: message to log.
     """
     print(red + "[ERROR] " + message + reset)
 
 
-def logfatal(message):
+def logfatal(message: str) -> None:
     """
     Prefixes ``[FATAL]`` and colours the message bold red.
 
     Args:
-        message (:obj:`str`): message to log.
+        message: message to log.
     """
     print(bold_red + "[FATAL] " + message + reset)
 

@@ -97,7 +97,7 @@ class Nested(object):
 class BlackboardWriter(py_trees.behaviour.Behaviour):
     """Write some more interesting / complex types to the blacbkoard."""
 
-    def __init__(self, name: str="Writer"):
+    def __init__(self, name: str = "Writer"):
         super().__init__(name=name)
         self.blackboard = self.attach_blackboard_client()
         self.blackboard.register_key(key="dude", access=py_trees.common.Access.READ)
@@ -140,7 +140,7 @@ class ParamsAndState(py_trees.behaviour.Behaviour):
     parameters and state in a concise and convenient manner.
     """
 
-    def __init__(self, name: str="ParamsAndState"):
+    def __init__(self, name: str = "ParamsAndState"):
         super().__init__(name=name)
         # namespaces can include the separator or may leave it out
         # they can also be nested, e.g. /agent/state, /agent/parameters

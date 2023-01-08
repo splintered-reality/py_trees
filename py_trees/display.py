@@ -51,11 +51,11 @@ unicode_symbols = {
     'synchronised': console.lightning_bolt,
     'sequence_with_memory': u'{-}',
     'selector_with_memory': u'{o}',
-    composites.Sequence: u'[-]',
-    composites.Selector: u'[o]',
-    composites.Parallel: u'/_/',
-    decorators.Decorator: u'-^-',
-    behaviour.Behaviour: u'-->',
+    'sequence_without_memory': u'[-]',
+    'selector_without_memory': u'[o]',
+    'parallel': u'/_/',
+    'decorator': u'-^-',
+    'behaviour': u'-->',
     common.Status.SUCCESS: console.green + console.check_mark + console.reset,
     common.Status.FAILURE: console.red + console.multiplication_x + console.reset,
     common.Status.INVALID: console.yellow + u'-' + console.reset,
@@ -74,11 +74,11 @@ ascii_symbols = {
     'synchronised': 's',
     'sequence_with_memory': '{-}',
     'selector_with_memory': '{o}',
-    composites.Sequence: "[-]",
-    composites.Selector: "[o]",
-    composites.Parallel: "/_/",
-    decorators.Decorator: "-^-",
-    behaviour.Behaviour: "-->",
+    'sequence_without_memory': '[-]',
+    'selector_without_memory': '[o]',
+    'parallel': '/_/',
+    'decorator': '-^-',
+    'behaviour': '-->',
     common.Status.SUCCESS: console.green + 'o' + console.reset,
     common.Status.FAILURE: console.red + 'x' + console.reset,
     common.Status.INVALID: console.yellow + '-' + console.reset,
@@ -97,11 +97,11 @@ xhtml_symbols = {
     'synchronised': '<text>&#9889;</text>',
     'sequence_with_memory': '<text>{-}</text>',
     'selector_with_memory': '<text>{o}</text>',
-    composites.Sequence: '<text>[-]</text>',
-    composites.Selector: '<text>[o]</text>',
-    composites.Parallel: '<text style="color:green;">/_/</text>',
-    decorators.Decorator: '<text>-^-</text>',
-    behaviour.Behaviour: '<text>--></text>',
+    'sequence_without_memory': '<text>[-]</text>',
+    'selector_without_memory': '<text>[o]</text>',
+    'parallel': '<text style="color:green;">/_/</text>',
+    'decorator': '<text>-^-</text>',
+    'behaviour': '<text>--></text>',
     common.Status.SUCCESS: '<text style="color:green;">&#x2713;</text>',  # c.f. console.check_mark
     common.Status.FAILURE: '<text style="color:red;">&#x2715;</text>',  # c.f. console.multiplication_x
     common.Status.INVALID: '<text style="color:darkgoldenrod;">-</text>',
@@ -116,13 +116,14 @@ xhtml_symbols = {
 
 
 def _generate_text_tree(
-        root: behaviour.Behaviour,
-        show_only_visited: bool = False,
-        show_status: bool = False,
-        visited: typing.Dict[uuid.UUID, common.Status] = None,
-        previously_visited: typing.Dict[uuid.UUID, common.Status] = None,
-        indent: int = 0,
-        symbols=None):
+    root: behaviour.Behaviour,
+    show_only_visited: bool = False,
+    show_status: bool = False,
+    visited: typing.Optional[typing.Dict[uuid.UUID, common.Status]] = None,
+    previously_visited: typing.Optional[typing.Dict[uuid.UUID, common.Status]] = None,
+    indent: int = 0,
+    symbols: typing.Optional[Symbols] = None
+) -> str:
     """
     Generate a text tree utilising the specified symbol formatter.
 
@@ -130,43 +131,48 @@ def _generate_text_tree(
         root: the root of the tree, or subtree you want to show
         show_only_visited: show only visited behaviours
         show_status: always show status and feedback message (i.e. for every element, not just those visited)
-        visited (dict): dictionary of (uuid.UUID) and status (:class:`~py_trees.common.Status`)
+        visited: dictionary of (uuid.UUID) and status (:class:`~py_trees.common.Status`)
             pairs for behaviours visited on the current tick
-        previously_visited (dict): dictionary of behaviour id/status pairs from the previous tree tick
+        previously_visited: dictionary of behaviour id/status pairs from the previous tree tick
         indent: the number of characters to indent the tree
-        symbols (dict, optional): dictates formatting style
+        symbols: dictates formatting style
             (one of :data:`py_trees.display.unicode_symbols`
             || :data:`py_trees.display.ascii_symbols`
             || :data:`py_trees.display.xhtml_symbols`),
             defaults to unicode if stdout supports it, ascii otherwise
 
     Returns:
-        :obj:`str`: a text-based representation of the behaviour tree
+        a text-based representation of the behaviour tree
 
     .. seealso::
        :meth:`py_trees.display.ascii_tree`, :meth:`py_trees.display.unicode_tree`, :meth:`py_trees.display.xhtml_tree`
     """
-    if visited is None:
-        visited = {}
-    if previously_visited is None:
-        previously_visited = {}
+    _visited = visited if visited else {}
+    _previously_visited = previously_visited if previously_visited else {}
     # default to unicode if stdout supports it, ascii otherwise
-    if symbols is None:
-        symbols = unicode_symbols if console.has_unicode() else ascii_symbols
-    tip_id = root.tip().id if root.tip() else None
+    _symbols = symbols if symbols else (unicode_symbols if console.has_unicode() else ascii_symbols)
 
-    def get_behaviour_type(b):
+    if root.tip() is not None:
+        tip = root.tip()
+        assert tip is not None  # should never get here, help mypy
+        tip_id = tip.id
+    else:
+        tip_id = uuid.uuid4()
+
+    def get_behaviour_type(
+        b: behaviour.Behaviour
+    ) -> str:
         if isinstance(b, composites.Parallel):
-            return composites.Parallel
+            return "parallel"
         if isinstance(b, decorators.Decorator):
-            return decorators.Decorator
+            return "decorator"
         if isinstance(b, composites.Sequence):
-            return "sequence_with_memory" if b.memory else composites.Sequence
+            return "sequence_with_memory" if b.memory else "sequence_without_memory"
         if isinstance(b, composites.Selector):
-            return "selector_with_memory" if b.memory else composites.Selector
-        return behaviour.Behaviour
+            return "selector_with_memory" if b.memory else "selector_without_memory"
+        return "behaviour"
 
-    def style(s, font_weight=False):
+    def style(s: str, font_weight: bool = False) -> str:
         """
         Apply bold styling if specified.
 
@@ -174,29 +180,29 @@ def _generate_text_tree(
         single block of formatted text.
         """
         if font_weight:
-            return symbols['bold'] + s + symbols['bold_reset']
+            return _symbols['bold'] + s + _symbols['bold_reset']
         else:
             return s
 
-    def generate_lines(root, internal_indent):
+    def generate_lines(root: behaviour.Behaviour, internal_indent: int) -> typing.Iterator[str]:
 
-        def assemble_single_line(b):
-            font_weight = True if b.id == tip_id else False
+        def assemble_single_line(b: behaviour.Behaviour) -> str:
+            font_weight = True if (b.id == tip_id) else False
             s = ""
-            s += symbols['space'] * 4 * internal_indent
-            s += style(symbols[get_behaviour_type(b)], font_weight)
+            s += _symbols['space'] * 4 * internal_indent
+            s += style(_symbols[get_behaviour_type(b)], font_weight)
             s += " "
 
-            if show_status or b.id in visited.keys():
+            if show_status or b.id in _visited.keys():
                 s += style("{} [".format(b.name.replace('\n', ' ')), font_weight)
-                s += style("{}".format(symbols[b.status]), font_weight)
+                s += style("{}".format(_symbols[b.status]), font_weight)
                 message = "" if not b.feedback_message else " -- " + b.feedback_message
                 s += style("]" + message, font_weight)
-            elif (b.id in previously_visited.keys()
-                  and b.id not in visited.keys()
-                  and previously_visited[b.id] == common.Status.RUNNING):
+            elif (b.id in _previously_visited.keys()
+                  and b.id not in _visited.keys()
+                  and _previously_visited[b.id] == common.Status.RUNNING):
                 s += style("{} [".format(b.name.replace('\n', ' ')), font_weight)
-                s += style("{}".format(symbols[b.status]), font_weight)
+                s += style("{}".format(_symbols[b.status]), font_weight)
                 s += style("]", font_weight)
             else:
                 s += style("{}".format(b.name.replace('\n', ' ')), font_weight)
@@ -209,11 +215,11 @@ def _generate_text_tree(
         for child in root.children:
             yield assemble_single_line(child)
             if child.children != []:
-                if not show_only_visited or child.id in visited.keys():
+                if not show_only_visited or child.id in _visited.keys():
                     for line in generate_lines(child, internal_indent + 1):
                         yield line
                 else:
-                    yield "{}...".format(symbols['space'] * 4 * (internal_indent + 1))
+                    yield "{}...".format(_symbols['space'] * 4 * (internal_indent + 1))
     s = ""
     for line in generate_lines(root, indent):
         if line:
@@ -222,12 +228,13 @@ def _generate_text_tree(
 
 
 def ascii_tree(
-        root: behaviour.Behaviour,
-        show_only_visited: bool = False,
-        show_status: bool = False,
-        visited: typing.Dict[uuid.UUID, common.Status] = None,
-        previously_visited: typing.Dict[uuid.UUID, common.Status] = None,
-        indent: int = 0):
+    root: behaviour.Behaviour,
+    show_only_visited: bool = False,
+    show_status: bool = False,
+    visited: typing.Optional[typing.Dict[uuid.UUID, common.Status]] = None,
+    previously_visited: typing.Optional[typing.Dict[uuid.UUID, common.Status]] = None,
+    indent: int = 0
+) -> str:
     """
     Graffiti your console with ascii art for your trees.
 
@@ -299,12 +306,13 @@ def ascii_tree(
 
 
 def unicode_tree(
-        root: behaviour.Behaviour,
-        show_only_visited: bool = False,
-        show_status: bool = False,
-        visited: typing.Dict[uuid.UUID, common.Status] = None,
-        previously_visited: typing.Dict[uuid.UUID, common.Status] = None,
-        indent: int = 0):
+    root: behaviour.Behaviour,
+    show_only_visited: bool = False,
+    show_status: bool = False,
+    visited: typing.Optional[typing.Dict[uuid.UUID, common.Status]] = None,
+    previously_visited: typing.Optional[typing.Dict[uuid.UUID, common.Status]] = None,
+    indent: int = 0
+) -> str:
     """
     Graffiti your console with unicode art for your trees.
 
@@ -340,12 +348,13 @@ def unicode_tree(
 
 
 def xhtml_tree(
-        root: behaviour.Behaviour,
-        show_only_visited: bool = False,
-        show_status: bool = False,
-        visited: typing.Dict[uuid.UUID, common.Status] = None,
-        previously_visited: typing.Dict[uuid.UUID, common.Status] = None,
-        indent: int = 0):
+    root: behaviour.Behaviour,
+    show_only_visited: bool = False,
+    show_status: bool = False,
+    visited: typing.Optional[typing.Dict[uuid.UUID, common.Status]] = None,
+    previously_visited: typing.Optional[typing.Dict[uuid.UUID, common.Status]] = None,
+    indent: int = 0
+) -> str:
     """
     Paint your tree on an xhtml snippet.
 
@@ -353,13 +362,13 @@ def xhtml_tree(
         root: the root of the tree, or subtree you want to show
         show_only_visited: show only visited behaviours
         show_status: always show status and feedback message (i.e. for every element, not just those visited)
-        visited (dict): dictionary of (uuid.UUID) and status
+        visited: dictionary of (uuid.UUID) and status
             (:class:`~py_trees.common.Status`) pairs for behaviours visited on the current tick
-        previously_visited (dict): dictionary of behaviour id/status pairs from the previous tree tick
+        previously_visited: dictionary of behaviour id/status pairs from the previous tree tick
         indent: the number of characters to indent the tree
 
     Returns:
-        :obj:`str`: an ascii tree (i.e. as a xhtml snippet)
+        an ascii tree (i.e. as a xhtml snippet)
 
     .. seealso:: :meth:`py_trees.display.ascii_tree`, :meth:`py_trees.display.unicode_tree`
 
@@ -395,11 +404,12 @@ def xhtml_tree(
 
 
 def dot_tree(
-        root: behaviour.Behaviour,
-        visibility_level: common.VisibilityLevel = common.VisibilityLevel.DETAIL,
-        collapse_decorators: bool = False,
-        with_blackboard_variables: bool = False,
-        with_qualified_names: bool = False):
+    root: behaviour.Behaviour,
+    visibility_level: common.VisibilityLevel = common.VisibilityLevel.DETAIL,
+    collapse_decorators: bool = False,
+    with_blackboard_variables: bool = False,
+    with_qualified_names: bool = False
+) -> pydot.Dot:
     """
     Paint your tree on a pydot graph.
 
@@ -421,7 +431,7 @@ def dot_tree(
             # convert the pydot graph to a string object
             print("{}".format(py_trees.display.dot_graph(root).to_string()))
     """
-    def get_node_attributes(node):
+    def get_node_attributes(node: behaviour.Behaviour) -> typing.Tuple[str, str, str]:
         blackbox_font_colours = {common.BlackBoxLevel.DETAIL: "dodgerblue",
                                  common.BlackBoxLevel.COMPONENT: "lawngreen",
                                  common.BlackBoxLevel.BIG_PICTURE: "white"
@@ -444,7 +454,10 @@ def dot_tree(
             pass
         return attributes
 
-    def get_node_label(node_name, behaviour):
+    def get_node_label(
+        node_name: str,
+        behaviour: behaviour.Behaviour
+    ) -> str:
         """
         Create a more detailed string (when applicable) to use for the node name.
 
@@ -459,21 +472,24 @@ def dot_tree(
         symbols = unicode_symbols if console.has_unicode() else ascii_symbols
         if isinstance(behaviour, composites.Composite):
             try:
-                if behaviour.memory:
+                if behaviour.memory:  # type: ignore[attr-defined]
                     prefix += symbols["memory"]  # console.circled_m
             except AttributeError:
                 pass
             try:
-                if behaviour.policy.synchronise:
+                if behaviour.policy.synchronise:  # type: ignore[attr-defined]
                     prefix += symbols["synchronised"]  # console.lightning_bolt
             except AttributeError:
                 pass
             try:
-                policy = behaviour.policy.__class__.__name__
+                policy = behaviour.policy.__class__.__name__  # type: ignore[attr-defined]
             except AttributeError:
                 pass
             try:
-                indices = [str(behaviour.children.index(child)) for child in behaviour.policy.children]
+                indices = [
+                    str(behaviour.children.index(child))
+                    for child in behaviour.policy.children  # type: ignore[attr-defined]
+                ]
                 policy += "({})".format(', '.join(sorted(indices)))
             except AttributeError:
                 pass
@@ -505,7 +521,13 @@ def dot_tree(
     graph.add_node(node_root)
     behaviour_id_name_map = {root.id: root.name}
 
-    def add_children_and_edges(root, root_node, root_dot_name, visibility_level, collapse_decorators):
+    def add_children_and_edges(
+        root: behaviour.Behaviour,
+        root_node: pydot.Node,
+        root_dot_name: str,
+        visibility_level: common.VisibilityLevel,
+        collapse_decorators: bool
+    ) -> None:
         if isinstance(root, decorators.Decorator) and collapse_decorators:
             return
         if visibility_level < root.blackbox_level:
@@ -537,7 +559,7 @@ def dot_tree(
 
     add_children_and_edges(root, node_root, root.name, visibility_level, collapse_decorators)
 
-    def create_blackboard_client_node(blackboard_client_name: str):
+    def create_blackboard_client_node(blackboard_client_name: str) -> pydot.Node:
         return pydot.Node(
             name=blackboard_client_name,
             label=blackboard_client_name,
@@ -549,7 +571,7 @@ def dot_tree(
             fontcolor=blackboard_colour,
         )
 
-    def add_blackboard_nodes(blackboard_id_name_map: typing.Dict[uuid.UUID, str]):
+    def add_blackboard_nodes(blackboard_id_name_map: typing.Dict[uuid.UUID, str]) -> None:
         data = blackboard.Blackboard.storage
         metadata = blackboard.Blackboard.metadata
         clients = blackboard.Blackboard.clients
@@ -633,13 +655,15 @@ def dot_tree(
     return graph
 
 
-def render_dot_tree(root: behaviour.Behaviour,
-                    visibility_level: common.VisibilityLevel = common.VisibilityLevel.DETAIL,
-                    collapse_decorators: bool = False,
-                    name: str = None,
-                    target_directory: str = None,
-                    with_blackboard_variables: bool = False,
-                    with_qualified_names: bool = False):
+def render_dot_tree(
+    root: behaviour.Behaviour,
+    visibility_level: common.VisibilityLevel = common.VisibilityLevel.DETAIL,
+    collapse_decorators: bool = False,
+    name: typing.Optional[str] = None,
+    target_directory: typing.Optional[str] = None,
+    with_blackboard_variables: bool = False,
+    with_qualified_names: bool = False
+) -> typing.Dict[str, str]:
     """
     Render the dot tree to dot, svg, png. files.
 
@@ -685,7 +709,7 @@ def render_dot_tree(root: behaviour.Behaviour,
         with_qualified_names=with_qualified_names)
     filename_wo_extension_to_convert = root.name if name is None else name
     filename_wo_extension = utilities.get_valid_filename(filename_wo_extension_to_convert)
-    filenames = {}
+    filenames: typing.Dict[str, str] = {}
     for extension, writer in {"dot": graph.write, "png": graph.write_png, "svg": graph.write_svg}.items():
         filename = filename_wo_extension + '.' + extension
         pathname = os.path.join(target_directory, filename)
@@ -700,10 +724,10 @@ def render_dot_tree(root: behaviour.Behaviour,
 
 
 def _generate_text_blackboard(
-        key_filter: typing.Union[typing.Set[str], typing.List[str]] = None,
-        regex_filter: str = None,
-        client_filter: typing.Union[typing.Set[uuid.UUID], typing.List[uuid.UUID]] = None,
-        keys_to_highlight: typing.List[str] = None,
+        key_filter: typing.Optional[typing.Union[typing.Set[str], typing.List[str]]] = None,
+        regex_filter: typing.Optional[str] = None,
+        client_filter: typing.Optional[typing.Union[typing.Set[uuid.UUID], typing.List[uuid.UUID]]] = None,
+        keys_to_highlight: typing.Optional[typing.List[str]] = None,
         display_only_key_metadata: bool = False,
         indent: int = 0,
         symbols: typing.Optional[Symbols] = None) -> str:
@@ -728,19 +752,27 @@ def _generate_text_blackboard(
 
     .. seealso:: :meth:`py_trees.display.unicode_blackboard`
     """
-    if keys_to_highlight is None:
-        keys_to_highlight = []
-    if symbols is None:
-        symbols = unicode_symbols if console.has_unicode() else ascii_symbols
+    _keys_to_highlight: typing.List[str] = keys_to_highlight if keys_to_highlight else []
+    _symbols = symbols if symbols else (unicode_symbols if console.has_unicode() else ascii_symbols)
 
-    def style(s, font_weight=False):
+    def style(s: str, font_weight: bool = False) -> str:
         if font_weight:
-            return symbols['bold'] + s + symbols['bold_reset']
+            return _symbols['bold'] + s + _symbols['bold_reset']
         else:
             return s
 
-    def generate_lines(storage, metadata, indent):
-        def assemble_value_line(key, value, apply_highlight, indent, key_width):
+    def generate_lines(
+        storage: typing.Dict[str, typing.Any],
+        metadata: typing.Optional[typing.Dict[str, blackboard.KeyMetaData]],
+        indent: int
+    ) -> typing.Iterator[str]:
+        def assemble_value_line(
+            key: str,
+            value: typing.Any,
+            apply_highlight: bool,
+            indent: str,
+            key_width: int
+        ) -> str:
             s = ""
             lines = ('{0}'.format(value)).split('\n')
             if len(lines) > 1:
@@ -752,7 +784,13 @@ def _generate_text_blackboard(
                     + ": " + console.yellow + '{0}\n'.format(value) + console.reset
             return style(s, apply_highlight) + console.reset
 
-        def assemble_metadata_line(key, metadata, apply_highlight, indent, key_width):
+        def assemble_metadata_line(
+            key: str,
+            metadata: blackboard.KeyMetaData,
+            apply_highlight: bool,
+            indent: str,
+            key_width: int
+        ) -> str:
             s = ""
             s += console.cyan + indent + '{0: <{1}}'.format(key, key_width + 1) + ": "
             client_uuids = list(set(metadata.read) | set(metadata.write) | set(metadata.exclusive))
@@ -776,8 +814,8 @@ def _generate_text_blackboard(
             s += console.yellow + "{}\n".format(', '.join(metastrings))
             return style(s, apply_highlight) + console.reset
 
-        text_indent = symbols['space'] * (4 + indent)
-        key_width = 0
+        text_indent: str = _symbols['space'] * (4 + indent)
+        key_width: int = 0
         for key in storage.keys():
             key_width = len(key) if len(key) > key_width else key_width
         for key in sorted(storage.keys()):
@@ -785,18 +823,20 @@ def _generate_text_blackboard(
                 yield assemble_metadata_line(
                     key=key,
                     metadata=metadata[key],
-                    apply_highlight=key in keys_to_highlight,
+                    apply_highlight=key in _keys_to_highlight,
                     indent=text_indent,
                     key_width=key_width)
             else:
                 yield assemble_value_line(
                     key=key,
                     value=storage[key],
-                    apply_highlight=key in keys_to_highlight,
+                    apply_highlight=key in _keys_to_highlight,
                     indent=text_indent,
-                    key_width=key_width)
+                    key_width=key_width
+                )
 
-    blackboard_metadata = blackboard.Blackboard.metadata if display_only_key_metadata else None
+    blackboard_metadata: typing.Optional[typing.Dict[str, blackboard.KeyMetaData]] = \
+        blackboard.Blackboard.metadata if display_only_key_metadata else None
 
     if key_filter:
         if isinstance(key_filter, list):
@@ -808,7 +848,7 @@ def _generate_text_blackboard(
         all_keys = blackboard.Blackboard.keys_filtered_by_clients(client_filter)
     else:
         all_keys = blackboard.Blackboard.keys()
-    blackboard_storage = {}
+    blackboard_storage: typing.Dict[str, typing.Any] = {}
     for key in all_keys:
         try:
             blackboard_storage[key] = blackboard.Blackboard.storage[key]
@@ -816,23 +856,23 @@ def _generate_text_blackboard(
             blackboard_storage[key] = "-"
 
     title = "Clients" if display_only_key_metadata else "Data"
-    s = console.green + symbols['space'] * indent + "Blackboard {}\n".format(title) + console.reset
+    s = console.green + _symbols['space'] * indent + "Blackboard {}\n".format(title) + console.reset
     if key_filter:
-        s += symbols['space'] * (indent + 2) + "Filter: '{}'\n".format(key_filter)
+        s += _symbols['space'] * (indent + 2) + "Filter: '{}'\n".format(key_filter)
     elif regex_filter:
-        s += symbols['space'] * (indent + 2) + "Filter: '{}'\n".format(regex_filter)
+        s += _symbols['space'] * (indent + 2) + "Filter: '{}'\n".format(regex_filter)
     elif client_filter:
-        s += symbols['space'] * (indent + 2) + "Filter: {}\n".format(str(client_filter))
+        s += _symbols['space'] * (indent + 2) + "Filter: {}\n".format(str(client_filter))
     for line in generate_lines(blackboard_storage, blackboard_metadata, indent):
         s += "{}".format(line)
     return s
 
 
 def ascii_blackboard(
-        key_filter: typing.Union[typing.Set[str], typing.List[str]] = None,
-        regex_filter: str = None,
+        key_filter: typing.Optional[typing.Union[typing.Set[str], typing.List[str]]] = None,
+        regex_filter: typing.Optional[str] = None,
         client_filter: typing.Optional[typing.Union[typing.Set[uuid.UUID], typing.List[uuid.UUID]]] = None,
-        keys_to_highlight: typing.List[str] = None,
+        keys_to_highlight: typing.Optional[typing.List[str]] = None,
         display_only_key_metadata: bool = False,
         indent: int = 0) -> str:
     """
@@ -868,10 +908,10 @@ def ascii_blackboard(
 
 
 def unicode_blackboard(
-        key_filter: typing.Union[typing.Set[str], typing.List[str]] = None,
-        regex_filter: str = None,
+        key_filter: typing.Optional[typing.Union[typing.Set[str], typing.List[str]]] = None,
+        regex_filter: typing.Optional[str] = None,
         client_filter: typing.Optional[typing.Union[typing.Set[uuid.UUID], typing.List[uuid.UUID]]] = None,
-        keys_to_highlight: typing.List[str] = None,
+        keys_to_highlight: typing.Optional[typing.List[str]] = None,
         display_only_key_metadata: bool = False,
         indent: int = 0) -> str:
     """
@@ -995,10 +1035,10 @@ def _generate_text_activity(
 
 
 def unicode_blackboard_activity_stream(
-    activity_stream: typing.List[blackboard.ActivityItem] = None,
+    activity_stream: typing.Optional[typing.List[blackboard.ActivityItem]] = None,
     indent: int = 0,
     show_title: bool = True
-):
+) -> str:
     """
     Pretty print the blackboard stream to console.
 

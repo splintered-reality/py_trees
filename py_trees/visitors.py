@@ -23,7 +23,12 @@ runs its own method on the behaviour to do as it wishes - logging, introspecting
 # Imports
 ##############################################################################
 
+import typing
+import uuid
+
+from . import behaviour
 from . import blackboard
+from . import common
 from . import display
 
 ##############################################################################
@@ -39,28 +44,28 @@ class VisitorBase(object):
     but they can be used in the same way for other tree custodian implementations.
 
     Args:
-        full (:obj:`bool`): flag to indicate whether it should be used to visit only traversed nodes or the entire tree
+        full: flag to indicate whether it should be used to visit only traversed nodes or the entire tree
 
     Attributes:
-        full (:obj:`bool`): flag to indicate whether it should be used to visit only traversed nodes or the entire tree
+        full: flag to indicate whether it should be used to visit only traversed nodes or the entire tree
     """
 
-    def __init__(self, full=False):
-        self.full = full
+    def __init__(self, full: bool = False):
+        self.full: bool = full
 
-    def initialise(self):
+    def initialise(self) -> None:
         """
         Override if any resetting of variables needs to be performed between ticks (i.e. visitations).
         """
         pass
 
-    def finalise(self):
+    def finalise(self) -> None:
         """
         Override if any work needs to be performed after ticks (i.e. showing data).
         """
         pass
 
-    def run(self, behaviour):
+    def run(self, behaviour: behaviour.Behaviour) -> None:
         """
         Converse with the behaviour.
 
@@ -81,10 +86,10 @@ class DebugVisitor(VisitorBase):
     Logging is done with the behaviour's logger.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super(DebugVisitor, self).__init__(full=False)
 
-    def run(self, behaviour):
+    def run(self, behaviour: behaviour.Behaviour) -> None:
         if behaviour.feedback_message:
             behaviour.logger.debug("%s.run() [%s][%s]" % (
                 self.__class__.__name__,
@@ -119,15 +124,15 @@ class SnapshotVisitor(VisitorBase):
                  this visitor to trigger logging of a tree serialisation.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(full=False)
         self.changed = False
-        self.visited = {}
-        self.previously_visited = {}
-        self.visited_blackboard_keys = set()
-        self.visited_blackboard_client_ids = set()
+        self.visited: typing.Dict[uuid.UUID, common.Status] = {}
+        self.previously_visited: typing.Dict[uuid.UUID, common.Status] = {}
+        self.visited_blackboard_keys: typing.Set[str] = set()
+        self.visited_blackboard_client_ids: typing.Set[uuid.UUID] = set()
 
-    def initialise(self):
+    def initialise(self) -> None:
         """Store the last snapshot for comparison with the next incoming snapshot.
 
         This should get called before a tree ticks.
@@ -138,7 +143,7 @@ class SnapshotVisitor(VisitorBase):
         self.visited_blackboard_keys = set()
         self.visited_blackboard_client_ids = set()
 
-    def run(self, behaviour):
+    def run(self, behaviour: behaviour.Behaviour) -> None:
         """
         Catch the id, status and store it.
 
@@ -146,7 +151,7 @@ class SnapshotVisitor(VisitorBase):
         :data:`~py_trees.common.Status.RUNNING`.
 
         Args:
-            behaviour (:class:`~py_trees.behaviour.Behaviour`): behaviour that is ticking
+            behaviour: behaviour that is ticking
         """
         # behaviour status
         self.visited[behaviour.id] = behaviour.status
@@ -169,6 +174,7 @@ class DisplaySnapshotVisitor(SnapshotVisitor):
     Additionally print the snapshot to console.
 
     Args:
+        display_only_visited_behaviours: useful for cropping the unvisited part of a large tree
         display_blackboard: print to the console the relevant part of the blackboard associated with
             behaviours on the visited path
         display_activity_stream: print to the console a log of the activity on the blackboard
@@ -176,10 +182,10 @@ class DisplaySnapshotVisitor(SnapshotVisitor):
     """
 
     def __init__(
-            self,
-            display_only_visited_behaviours: bool = False,
-            display_blackboard: bool = False,
-            display_activity_stream: bool = False
+        self,
+        display_only_visited_behaviours: bool = False,
+        display_blackboard: bool = False,
+        display_activity_stream: bool = False
     ):
         super().__init__()
         self.display_only_visited_behaviours = display_only_visited_behaviours
@@ -188,26 +194,28 @@ class DisplaySnapshotVisitor(SnapshotVisitor):
         if self.display_activity_stream:
             blackboard.Blackboard.enable_activity_stream()
 
-    def initialise(self):
-        self.root = None
+    def initialise(self) -> None:
+        self.root: typing.Optional[behaviour.Behaviour] = None
         super().initialise()
         if self.display_activity_stream:
-            blackboard.Blackboard.activity_stream.clear()
+            if blackboard.Blackboard.activity_stream is not None:
+                blackboard.Blackboard.activity_stream.clear()
 
-    def run(self, behaviour):
+    def run(self, behaviour: behaviour.Behaviour) -> None:
         self.root = behaviour  # last behaviour visited will always be the root
         super().run(behaviour)
 
-    def finalise(self):
-        print(
-            "\n" + display.unicode_tree(
-                root=self.root,
-                show_only_visited=self.display_only_visited_behaviours,
-                show_status=False,
-                visited=self.visited,
-                previously_visited=self.previously_visited
+    def finalise(self) -> None:
+        if self.root is not None:
+            print(
+                "\n" + display.unicode_tree(
+                    root=self.root,
+                    show_only_visited=self.display_only_visited_behaviours,
+                    show_status=False,
+                    visited=self.visited,
+                    previously_visited=self.previously_visited
+                )
             )
-        )
         if self.display_blackboard:
             print(display.unicode_blackboard(key_filter=self.visited_blackboard_keys))
         if self.display_activity_stream:

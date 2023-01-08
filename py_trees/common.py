@@ -87,12 +87,12 @@ class ParallelPolicy(object):
         Base class for parallel policies. Should never be used directly.
         """
 
-        def __init__(self, synchronise=False):
+        def __init__(self, synchronise: bool = False):
             """
             Configure the policy to be synchronised or otherwise.
 
             Args:
-                synchronise (:obj:`bool`): stop ticking of children with status
+                synchronise: stop ticking of children with status
                     :py:data:`~py_trees.common.Status.SUCCESS` until the policy criteria is met
             """
             self.synchronise = synchronise
@@ -107,7 +107,7 @@ class ParallelPolicy(object):
         the policy criteria is met, or one of the children returns status :data:`~py_trees.common.Status.FAILURE`.
         """
 
-        def __init__(self, synchronise=True):
+        def __init__(self, synchronise: bool = True):
             """
             Policy configuration.
 
@@ -125,7 +125,7 @@ class ParallelPolicy(object):
         and the remainder are :py:data:`~py_trees.common.Status.RUNNING`
         """
 
-        def __init__(self):
+        def __init__(self) -> None:
             """
             No configuration necessary for this policy.
             """
@@ -140,13 +140,18 @@ class ParallelPolicy(object):
         the policy criteria is met, or one of the children returns status :data:`~py_trees.common.Status.FAILURE`.
         """
 
-        def __init__(self, children, synchronise=True):
+        def __init__(
+            self,
+            # TODO should be behaviour.Behaviour, but cyclic imports -> redesign
+            children: typing.List[typing.Any],
+            synchronise: bool = True
+        ):
             """
             Policy configuration.
 
             Args:
-                children ([:class:`~py_trees.behaviour.Behaviour`]): list of children to succeed on
-                synchronise (:obj:`bool`): stop ticking of children with status
+                children: list of children to succeed on
+                synchronise: stop ticking of children with status
                 :py:data:`~py_trees.common.Status.SUCCESS` until the policy criteria is met
             """
             super().__init__(synchronise=synchronise)
@@ -259,14 +264,14 @@ visibility_level_strings = ["all", "detail", "component", "big_picture"]
 """Convenient string representations to use for command line input (amongst other things)."""
 
 
-def string_to_visibility_level(level):
+def string_to_visibility_level(level: str) -> VisibilityLevel:
     """Will convert a string to a visibility level.
 
     Note that it will quietly return ALL if
     the string is not matched to any visibility level string identifier.
 
     Args:
-        level (str): visibility level as a string
+        level: visibility level as a string
 
     Returns:
         :class:`~py_trees.common.VisibilityLevel`: visibility level enum

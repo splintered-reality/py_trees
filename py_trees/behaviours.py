@@ -29,25 +29,25 @@ from . import meta
 ##############################################################################
 
 
-def success(self):
+def success(self: behaviour.Behaviour) -> common.Status:
     self.logger.debug("%s.update()" % self.__class__.__name__)
     self.feedback_message = "success"
     return common.Status.SUCCESS
 
 
-def failure(self):
+def failure(self: behaviour.Behaviour) -> common.Status:
     self.logger.debug("%s.update()" % self.__class__.__name__)
     self.feedback_message = "failure"
     return common.Status.FAILURE
 
 
-def running(self):
+def running(self: behaviour.Behaviour) -> common.Status:
     self.logger.debug("%s.update()" % self.__class__.__name__)
     self.feedback_message = "running"
     return common.Status.RUNNING
 
 
-def dummy(self):
+def dummy(self: behaviour.Behaviour) -> common.Status:
     self.logger.debug("%s.update()" % self.__class__.__name__)
     self.feedback_message = "crash test dummy"
     return common.Status.RUNNING
@@ -142,7 +142,7 @@ class StatusQueue(behaviour.Behaviour):
         self.eventually = eventually
         self.current_queue = copy.copy(queue)
 
-    def update(self):
+    def update(self) -> common.Status:
         self.logger.debug("%s.update()" % (self.__class__.__name__))
         if self.current_queue:
             status = self.current_queue.pop(0)
@@ -153,7 +153,7 @@ class StatusQueue(behaviour.Behaviour):
             status = self.current_queue.pop(0)
         return status
 
-    def terminate(self, new_status):
+    def terminate(self, new_status: common.Status) -> None:
         self.logger.debug("%s.terminate(%s->%s)" % (self.__class__.__name__, self.status, new_status))
 
 
@@ -218,13 +218,13 @@ class TickCounter(behaviour.Behaviour):
         self.duration = duration
         self.counter = 0
 
-    def initialise(self):
+    def initialise(self) -> None:
         """
         Reset the tick counter.
         """
         self.counter = 0
 
-    def update(self):
+    def update(self) -> common.Status:
         """
         Increment the tick counter and check to see if it should complete.
 
@@ -483,8 +483,8 @@ class CheckBlackboardVariableValue(behaviour.Behaviour):
     :data:`~py_trees.common.Status.FAILURE`.
 
     Args:
-        check: a comparison expression to check against
         name: name of the behaviour
+        check: a comparison expression to check against
 
     .. note::
         If the variable does not yet exist on the blackboard, the behaviour will
@@ -507,7 +507,7 @@ class CheckBlackboardVariableValue(behaviour.Behaviour):
         self.blackboard = self.attach_blackboard_client()
         self.blackboard.register_key(key=self.key, access=common.Access.READ)
 
-    def update(self):
+    def update(self) -> common.Status:
         """
         Check for existence, or the appropriate match on the expected value.
 
@@ -524,7 +524,7 @@ class CheckBlackboardVariableValue(behaviour.Behaviour):
                 except AttributeError:
                     self.feedback_message = (
                         "blackboard key-value pair exists, but the value does not "
-                        f"have the requested nested attributes [{self.variable_name}]"
+                        f"have the requested nested attributes [{self.key}]"
                     )
                     return common.Status.FAILURE
         except KeyError:
@@ -583,7 +583,7 @@ class WaitForBlackboardVariableValue(CheckBlackboardVariableValue):
             name=name
         )
 
-    def update(self):
+    def update(self) -> common.Status:
         """
         Check for existence, or the appropriate match on the expected value.
 
