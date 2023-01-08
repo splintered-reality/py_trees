@@ -26,7 +26,9 @@ import typing
 ##############################################################################
 
 
-def static_variables(**kwargs):
+def static_variables(
+    **kwargs: typing.Any
+) -> typing.Callable[[typing.Callable[[typing.Any], typing.Any]], typing.Any]:
     """
     Attach initialised static variables to a python method.
 
@@ -37,7 +39,9 @@ def static_variables(**kwargs):
            foo.counter += 1
            print("Counter: {}".format(foo.counter))
     """
-    def decorate(func):
+    def decorate(
+        func: typing.Callable[[typing.Any], typing.Any]
+    ) -> typing.Callable[[typing.Any], typing.Any]:
         for k in kwargs:
             setattr(func, k, kwargs[k])
         return func
@@ -76,12 +80,12 @@ def truncate(original: str, length: int) -> str:
 
 
 class Process(multiprocessing.Process):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: typing.Any, **kwargs: typing.Any):
         multiprocessing.Process.__init__(self, *args, **kwargs)
         self._pconn, self._cconn = multiprocessing.Pipe()
         self._exception = None
 
-    def run(self):
+    def run(self) -> None:
         try:
             multiprocessing.Process.run(self)
             self._cconn.send(None)
@@ -90,23 +94,23 @@ class Process(multiprocessing.Process):
             self._cconn.send((e, tb))
 
     @property
-    def exception(self):
+    def exception(self) -> typing.Any:
         if self._pconn.poll():
             self._exception = self._pconn.recv()
         return self._exception
 
 
-def which(program):
+def which(program: str) -> typing.Optional[str]:
     """
     Call the command line 'which' tool (convenience wrapper).
 
     Args:
-        program (:obj:`str`): name of the program to find.
+        program: name of the program to find.
 
     Returns:
-        :obj:`str`: path to the program or None if it doesnt exist.
+        path to the program or None if it doesnt exist.
     """
-    def is_exe(fpath):
+    def is_exe(fpath: str) -> bool:
         return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
 
     fpath, unused_fname = os.path.split(program)

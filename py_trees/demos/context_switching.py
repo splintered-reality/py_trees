@@ -91,7 +91,7 @@ class ContextSwitch(py_trees.behaviour.Behaviour):
         switch will never trigger.
     """
 
-    def __init__(self, name: str="ContextSwitch"):
+    def __init__(self, name: str = "ContextSwitch"):
         """Initialise with a behaviour name."""
         super(ContextSwitch, self).__init__(name)
         self.feedback_message = "no context"

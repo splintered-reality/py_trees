@@ -107,12 +107,18 @@ def logger(
                                    py_trees.decorators.Decorator]:
                 if isinstance(node, behaviour_type):
                     node_type_str = behaviour_type.__name__
+            if node.tip() is not None:
+                node_tip = node.tip()
+                assert node_tip is not None  # help mypy
+                node_tip_id = str(node_tip.id)
+            else:
+                node_tip_id = "none"
             node_snapshot = {
                 'name': node.name,
                 'id': str(node.id),
                 'parent_id': str(node.parent.id) if node.parent else "none",
                 'child_ids': [str(child.id) for child in node.children],
-                'tip_id': str(node.tip().id) if node.tip() else 'none',
+                'tip_id': node_tip_id,
                 'class_name': str(node.__module__) + '.' + str(type(node).__name__),
                 'type': node_type_str,
                 'status': node.status.value,

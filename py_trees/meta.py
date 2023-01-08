@@ -28,7 +28,7 @@ from . import common
 def create_behaviour_from_function(
     func: typing.Callable[[typing.Any,], common.Status],
     module: typing.Optional[str] = None
-):
+) -> "typing.Type[behaviour.Behaviour]":
     """
     Create a behaviour from the specified function.
 
@@ -47,10 +47,13 @@ def create_behaviour_from_function(
     """
     class_name = func.__name__.capitalize()
 
-    def init(self, name=class_name):
+    def init(self: behaviour.Behaviour, name: str = class_name) -> None:
         behaviour.Behaviour.__init__(self, name=name)
 
-    def terminate(self, new_status):
+    def terminate(
+        self: behaviour.Behaviour,
+        new_status: common.Status
+    ) -> None:
         if new_status == common.Status.INVALID:
             self.feedback_message = ""
 

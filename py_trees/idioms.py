@@ -31,8 +31,9 @@ from . import decorators
 
 
 def pick_up_where_you_left_off(
-        name: str = "Pickup Where You Left Off Idiom",
-        tasks: typing.List[behaviour.Behaviour] = None):
+    name: str,
+    tasks: typing.List[behaviour.Behaviour]
+) -> behaviour.Behaviour:
     """
     Create an idiom that enables a sequence of tasks to pick up where it left off.
 
@@ -71,8 +72,6 @@ def pick_up_where_you_left_off(
     Returns:
         :class:`~py_trees.behaviour.Behaviour`: root of the generated subtree
     """
-    if tasks is None:
-        tasks = []
     root = composites.Sequence(name=name, memory=True)
     for task in tasks:
         task_selector = composites.Selector(name="Do or Don't", memory=False)

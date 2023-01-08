@@ -15,6 +15,8 @@ The core behaviour template for all py_tree behaviours.
 # Imports
 ##############################################################################
 
+from __future__ import annotations
+
 import abc
 import re
 import typing
@@ -30,8 +32,7 @@ from . import logging
 
 
 class Behaviour(abc.ABC):
-    """
-    A parent class for all user definable tree behaviours.
+    """A parent class for all user definable tree behaviours.
 
     Args:
         name: the behaviour name, defaults to auto-generating from the class name
@@ -89,7 +90,7 @@ class Behaviour(abc.ABC):
     # User Customisable Callbacks
     ############################################
 
-    def setup(self, **kwargs) -> None:  # noqa: B027
+    def setup(self, **kwargs: int) -> None:  # noqa: B027
         """
         Set up and verify infrastructure (middleware connections, etc) is available.
 
@@ -143,7 +144,7 @@ class Behaviour(abc.ABC):
            amongst disparate libraries of behaviours.
 
         Args:
-            **kwargs (:obj:`dict`): distribute arguments to this
+            **kwargs: distribute arguments to this
                behaviour and in turn, all of it's children
 
         Raises:
@@ -236,8 +237,8 @@ class Behaviour(abc.ABC):
 
     def attach_blackboard_client(
             self,
-            name: str = None,
-            namespace: str = None
+            name: typing.Optional[str] = None,
+            namespace: typing.Optional[str] = None
     ) -> blackboard.Client:
         """
         Create and attach a blackboard to this behaviour.
@@ -263,7 +264,7 @@ class Behaviour(abc.ABC):
     # Public - lifecycle API
     ############################################
 
-    def setup_with_descendants(self):
+    def setup_with_descendants(self) -> None:
         """
         Call setup on this child, it's children (it's children's children, ).
         """
@@ -272,7 +273,7 @@ class Behaviour(abc.ABC):
                 node.setup()
         self.setup()
 
-    def tick_once(self):
+    def tick_once(self) -> None:
         """
         Tick the object without iterating step-by-step over the children (i.e. without generators).
         """
@@ -280,7 +281,7 @@ class Behaviour(abc.ABC):
         for _unused in self.tick():
             pass
 
-    def tick(self):
+    def tick(self) -> typing.Iterator[Behaviour]:
         """
         Tick the behaviour.
 
@@ -304,7 +305,7 @@ class Behaviour(abc.ABC):
            prefer :meth:`~py_trees.behaviour.Behaviour.tick_once` instead.
 
         Yields:
-            :class:`~py_trees.behaviour.Behaviour`: a reference to itself
+            a reference to itself
 
         .. warning::
            Users should not override this method to provide custom tick behaviour. The
@@ -326,7 +327,10 @@ class Behaviour(abc.ABC):
         self.status = new_status
         yield self
 
-    def iterate(self, direct_descendants=False):
+    def iterate(
+        self,
+        direct_descendants: bool = False
+    ) -> typing.Iterator[Behaviour]:
         """
         Iterate over this child and it's children.
 
@@ -351,7 +355,8 @@ class Behaviour(abc.ABC):
                 yield child
         yield self
 
-    def visit(self, visitor):
+    # TODO: better type refinement of 'viso=itor'
+    def visit(self, visitor: typing.Any) -> None:
         """
         Introspect on this behaviour with a visitor.
 
@@ -359,16 +364,19 @@ class Behaviour(abc.ABC):
         by the tree manager classes to collect information as ticking traverses a tree.
 
         Args:
-            visitor (:obj:`object`): the visiting class, must have a run(:class:`~py_trees.behaviour.Behaviour`) method.
+            visitor: the visiting class, must have a run(:class:`~py_trees.behaviour.Behaviour`) method.
         """
         visitor.run(self)
 
-    def stop(self, new_status=common.Status.INVALID):
+    def stop(
+        self,
+        new_status: common.Status
+    ) -> None:
         """
         Stop the behaviour with the specified status.
 
         Args:
-            new_status (:class:`~py_trees.common.Status`): the behaviour is transitioning to this new status
+            new_status: the behaviour is transitioning to this new status
 
         This is called to bring the current round of activity for the behaviour to completion, typically
         resulting in a final status of :data:`~py_trees.common.Status.SUCCESS`,
@@ -388,15 +396,15 @@ class Behaviour(abc.ABC):
     ############################################
     # Public - introspection API
     ############################################
-    def has_parent_with_name(self, name):
+    def has_parent_with_name(self, name: str) -> bool:
         """
         Search this behaviour's ancestors for one with the specified name.
 
         Args:
-            name (:obj:`str`): name of the parent to match, can be a regular expression
+            name: name of the parent to match, can be a regular expression
 
         Returns:
-            bool: whether a parent was found or not
+            whether a parent was found or not
         """
         pattern = re.compile(name)
         b = self
@@ -406,15 +414,18 @@ class Behaviour(abc.ABC):
             b = b.parent
         return False
 
-    def has_parent_with_instance_type(self, instance_type):
+    def has_parent_with_instance_type(
+        self,
+        instance_type: "typing.Type[Behaviour]"
+    ) -> bool:
         """
         Search this behaviour's ancestors for one of the specified type.
 
         Args:
-            instance_type (:obj:`str`): instance type of the parent to match
+            instance type of the parent to match
 
         Returns:
-            bool: whether a parent was found or not
+            whether a parent was found or not
         """
         b = self
         while b.parent is not None:
@@ -423,7 +434,7 @@ class Behaviour(abc.ABC):
             b = b.parent
         return False
 
-    def tip(self):
+    def tip(self) -> typing.Optional[Behaviour]:
         """
         Get the *tip* of this behaviour's subtree (if it has one).
 
@@ -431,7 +442,8 @@ class Behaviour(abc.ABC):
         subtree traversal reversed direction and headed back to this node.
 
         Returns:
-            :class:`~py_trees.behaviour.Behaviour` or :obj:`None`: child behaviour,
-                itself or :obj:`None` if its status is :data:`~py_trees.common.Status.INVALID`
+            The deepest node (behaviour) that was running before subtree traversal
+            reversed direction, or None if this behaviour's status is
+            :data:`~py_trees.common.Status.INVALID`.
         """
         return self if self.status != common.Status.INVALID else None

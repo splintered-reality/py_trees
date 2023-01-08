@@ -85,10 +85,10 @@ class KeyMetaData(object):
     Stores the aggregated metadata for a key on the blackboard.
     """
 
-    def __init__(self):
-        self.read = set()
-        self.write = set()
-        self.exclusive = set()
+    def __init__(self) -> None:
+        self.read: typing.Set[uuid.UUID] = set()
+        self.write: typing.Set[uuid.UUID] = set()
+        self.exclusive: typing.Set[uuid.UUID] = set()
 
 
 class ActivityType(enum.Enum):
@@ -126,13 +126,14 @@ class ActivityItem(object):
     """
 
     def __init__(
-            self,
-            key,
-            client_name: str,
-            client_id: uuid.UUID,
-            activity_type: str,
-            previous_value: typing.Any = None,
-            current_value: typing.Any = None):
+        self,
+        key: str,
+        client_name: str,
+        client_id: uuid.UUID,
+        activity_type: str,
+        previous_value: typing.Optional[typing.Any] = None,
+        current_value: typing.Optional[typing.Any] = None
+    ):
         # TODO validity checks for values passed/not passed on the
         # respective activity types. Note: consider using an enum
         # for 'no value here' since None is a perfectly acceptable
@@ -170,7 +171,7 @@ class ActivityStream(object):
         self.data: typing.List[ActivityItem] = []
         self.maximum_size = maximum_size
 
-    def push(self, activity_item: ActivityItem):
+    def push(self, activity_item: ActivityItem) -> None:
         """
         Push the next activity item to the stream.
 
@@ -181,7 +182,7 @@ class ActivityStream(object):
             self.data.pop()
         self.data.append(activity_item)
 
-    def clear(self):
+    def clear(self) -> None:
         """
         Delete all activities from the stream.
         """
@@ -259,7 +260,7 @@ class Blackboard(object):
         return value
 
     @staticmethod
-    def set(variable_name: str, value: typing.Any):
+    def set(variable_name: str, value: typing.Any) -> None:
         """
         Set a variable on the blackboard.
 
@@ -286,7 +287,7 @@ class Blackboard(object):
         Blackboard.metadata.setdefault(key, KeyMetaData())
 
     @staticmethod
-    def unset(key: str):
+    def unset(key: str) -> bool:
         """
         Unset a variable on the blackboard.
 
@@ -364,7 +365,7 @@ class Blackboard(object):
         return keys
 
     @staticmethod
-    def enable_activity_stream(maximum_size: int = 500):
+    def enable_activity_stream(maximum_size: int = 500) -> None:
         """
         Enable logging into the activity stream.
 
@@ -380,14 +381,14 @@ class Blackboard(object):
             RuntimeError("activity stream is already enabled for this blackboard")
 
     @staticmethod
-    def disable_activity_stream():
+    def disable_activity_stream() -> None:
         """
         Disable logging into the activity stream.
         """
         Blackboard.activity_stream = None
 
     @staticmethod
-    def clear():
+    def clear() -> None:
         """
         Completely clear all key, value and client information from the blackboard.
 
@@ -797,8 +798,8 @@ class Client(object):
 
     def __init__(
         self, *,
-        name: str = None,
-        namespace: str = None
+        name: typing.Optional[str] = None,
+        namespace: typing.Optional[str] = None
     ):
         """
         Initialise with a unique name and optionally, a namespace to operate within.
@@ -856,12 +857,11 @@ class Client(object):
         """
         return typing.cast(uuid.UUID, super().__getattribute__("unique_identifier"))
 
-    def __setattr__(self, name: str, value: typing.Any):
+    def __setattr__(self, name: str, value: typing.Any) -> None:
         """
         Set variables via a convenient attribute setter.
 
-        This is also responsible for checking permissions prior to writing the
-        variable.
+        This is also responsible for checking permissions prior to writing.
 
         Raises:
             AttributeError: if the client does not have write access to the variable
@@ -898,7 +898,7 @@ class Client(object):
                 )
         Blackboard.storage[remapped_name] = value
 
-    def __getattr__(self, name: str):
+    def __getattr__(self, name: str) -> typing.Any:
         """
         Access variables via a convenient attribute accessor.
 
@@ -1091,7 +1091,7 @@ class Client(object):
                 raise KeyError("Key exists, but does not have the specified nested attributes [{}]".format(name))
         return value
 
-    def unset(self, key: str):
+    def unset(self, key: str) -> bool:
         """
         Unset a blackboard variable.
 
@@ -1120,7 +1120,13 @@ class Client(object):
         except KeyError:
             return False
 
-    def _generate_activity_item(self, key, activity_type, previous_value=None, current_value=None):
+    def _generate_activity_item(
+        self,
+        key: str,
+        activity_type: ActivityType,
+        previous_value: typing.Optional[typing.Any] = None,
+        current_value: typing.Optional[typing.Any] = None
+    ) -> ActivityItem:
         return ActivityItem(
             key=key,
             client_name=super().__getattribute__("name"),
@@ -1131,7 +1137,7 @@ class Client(object):
             current_value=current_value
         )
 
-    def _update_namespaces(self, added_key=None):
+    def _update_namespaces(self, added_key: typing.Optional[str] = None) -> None:
         """
         Update the namespace cache.
 
@@ -1156,11 +1162,11 @@ class Client(object):
                     super().__getattribute__("namespaces").add(namespace)
                     namespace = namespace.rsplit("/", 1)[0]
 
-    def __str__(self):
+    def __str__(self) -> str:
         indent = "  "
         s = console.green + "Blackboard Client" + console.reset + "\n"
         s += console.white + indent + "Client Data" + console.reset + "\n"
-        keys = ["name", "namespace", "unique_identifier", "read", "write", "exclusive"]
+        keys = {"name", "namespace", "unique_identifier", "read", "write", "exclusive"}
         s += self._stringify_key_value_pairs(keys, self.__dict__, 2 * indent)
         keys = {k for k, v in self.remappings.items() if k != v}
         if keys:
@@ -1176,7 +1182,13 @@ class Client(object):
         s += self._stringify_key_value_pairs(keys, Blackboard.storage, 2 * indent)
         return s
 
-    def _stringify_key_value_pairs(self, keys, key_value_dict, indent, separator=":"):
+    def _stringify_key_value_pairs(
+        self,
+        keys: typing.Set[str],
+        key_value_dict: typing.Dict[str, str],
+        indent: str,
+        separator: str = ":"
+    ) -> str:
         s = ""
         max_length = 0
         for key in keys:
@@ -1199,7 +1211,7 @@ class Client(object):
         s += console.reset
         return s
 
-    def unregister(self, clear: bool = True):
+    def unregister(self, clear: bool = True) -> None:
         """
         Unregister this blackboard client.
 
@@ -1211,7 +1223,7 @@ class Client(object):
         self.unregister_all_keys(clear)
         del Blackboard.clients[super().__getattribute__("unique_identifier")]
 
-    def unregister_all_keys(self, clear: bool = True):
+    def unregister_all_keys(self, clear: bool = True) -> None:
         """
         Unregister all keys currently registered by this blackboard client.
 
@@ -1225,7 +1237,7 @@ class Client(object):
             self.unregister_key(key=key, clear=clear, update_namespace_cache=False)
         self._update_namespaces()
 
-    def verify_required_keys_exist(self):
+    def verify_required_keys_exist(self) -> None:
         """
         Check for existence of all keys registered as 'required'.
 
@@ -1267,12 +1279,12 @@ class Client(object):
             return absolute_name in self.read | self.write | self.exclusive
 
     def register_key(
-            self,
-            key: str,
-            access: common.Access,
-            required: bool = False,
-            remap_to: str = None,
-    ):
+        self,
+        key: str,
+        access: common.Access,
+        required: bool = False,
+        remap_to: typing.Optional[str] = None,
+    ) -> None:
         """
         Register a key on the blackboard to associate with this client.
 
@@ -1339,10 +1351,11 @@ class Client(object):
         self._update_namespaces(added_key=key)
 
     def unregister_key(
-            self,
-            key: str,
-            clear: bool = True,
-            update_namespace_cache: bool = True):
+        self,
+        key: str,
+        clear: bool = True,
+        update_namespace_cache: bool = True
+    ) -> None:
         """
         Unegister a key associated with this client.
 
@@ -1381,16 +1394,16 @@ class Client(object):
 
 
 class IntermediateVariableFetcher(object):
-    def __init__(self, blackboard, namespace):
+    def __init__(self, blackboard: Client, namespace: str):
         super().__setattr__("blackboard", blackboard)
         super().__setattr__("namespace", namespace)
 
-    def __getattr__(self, name: str):
+    def __getattr__(self, name: str) -> typing.Any:
         # print("Fetcher:__getattr__ [{}]".format(name))
         name = Blackboard.absolute_name(self.namespace, name)
         return self.blackboard.get(name)
 
-    def __setattr__(self, name: str, value: typing.Any):
+    def __setattr__(self, name: str, value: typing.Any) -> None:
         # print("Fetcher:__setattr__ [{}][{}]".format(name, value))
         name = Blackboard.absolute_name(self.namespace, name)
-        return self.blackboard.set(name, value)
+        self.blackboard.set(name, value)

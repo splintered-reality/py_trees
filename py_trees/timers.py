@@ -15,7 +15,6 @@ Time related behaviours.
 # Imports
 ##############################################################################
 
-import numbers
 import time
 
 from . import behaviour
@@ -41,8 +40,8 @@ class Timer(behaviour.Behaviour):
     interrupted by a higher priority or parent cancelling it.
 
     Args:
-        name (:obj:`str`): name of the behaviour
-        duration (:obj:`int`): length of time to run (in seconds)
+        name: name of the behaviour
+        duration: length of time to run (in seconds)
 
     Raises:
         TypeError: if the provided duration is not a real number
@@ -56,29 +55,30 @@ class Timer(behaviour.Behaviour):
         :data:`~py_trees.common.Status.FAILURE` until the timer finishes.
     """
 
-    def __init__(self, name="Timer", duration=5.0):
+    def __init__(self, name: str = "Timer", duration: float = 5.0):
         super(Timer, self).__init__(name)
-        if not isinstance(duration, numbers.Real):
+        if not isinstance(duration, float):
             raise TypeError("Timer: duration should be int or float, but you passed in {}".format(type(duration)))
-        self.duration = duration
-        self.finish_time = None
-        self.feedback_message = "duration set to '{0}'s".format(self.duration)
+        self.duration: float = duration
+        self.finish_time: float = 0.0
+        self.feedback_message: str = "duration set to '{0}'s".format(self.duration)
 
-    def initialise(self):
+    def initialise(self) -> None:
         """
         Store the expected finishing time.
         """
         self.logger.debug("%s.initialise()" % self.__class__.__name__)
-        if self.finish_time is None:
-            self.finish_time = time.time() + self.duration
+        self.finish_time = time.time() + self.duration
         self.feedback_message = "configured to fire in '{0}' seconds".format(self.duration)
 
-    def update(self):
+    def update(self) -> common.Status:
         """
         Check the timer and update the behaviour result accordingly.
 
-        Check current time against the expected finishing time. If it is in excess, flip to
-        :data:`~py_trees.common.Status.SUCCESS`.
+        Returns:
+            :data:`~py_trees.common.Status.RUNNING` until timer expires, then
+            :data:`~py_trees.common.Status.SUCCESS`.
+
         """
         self.logger.debug("%s.update()" % self.__class__.__name__)
         current_time = time.time()
@@ -90,15 +90,3 @@ class Timer(behaviour.Behaviour):
             # and we don't want to spam visualisations with almost meaningless updates
             self.feedback_message = "still running"  # (%s)" % (self.finish_time - current_time)
             return common.Status.RUNNING
-
-    def terminate(self, new_status):
-        """
-        Clear the expected finishing time.
-        """
-        self.logger.debug("%s.terminate(%s)" % (
-            self.__class__.__name__,
-            f"{self.status}->{new_status}" if self.status != new_status else f"{new_status}"
-        ))
-        # clear the time if finishing with SUCCESS or in the case of an interruption from INVALID
-        if new_status == common.Status.SUCCESS or new_status == common.Status.INVALID:
-            self.finish_time = None

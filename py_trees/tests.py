@@ -20,9 +20,11 @@ Bless my noggin with a tickle from your noodly appendages!
 
 import typing
 
+from . import behaviour
 from . import blackboard
 from . import console
 from . import display
+from . import trees
 from . import visitors
 
 ##############################################################################
@@ -30,11 +32,11 @@ from . import visitors
 ##############################################################################
 
 
-def print_assert_banner():
+def print_assert_banner() -> None:
     print(console.green + "\n--------- Assertions ---------\n" + console.reset)
 
 
-def print_assert_details(text, expected, result):
+def print_assert_details(text: str, expected: typing.Any, result: typing.Any) -> None:
     print(console.green + text
           + "." * (70 - len(text))
           + console.cyan + "{}".format(expected)
@@ -42,19 +44,19 @@ def print_assert_details(text, expected, result):
           + console.reset)
 
 
-def pre_tick_visitor(behaviour_tree):
+def pre_tick_visitor(behaviour_tree: trees.BehaviourTree) -> None:
     print("\n--------- Run %s ---------\n" % behaviour_tree.count)
 
 
 def tick_tree(
-    root,
-    from_tick,
-    to_tick,
+    root: behaviour.Behaviour,
+    from_tick: int,
+    to_tick: int,
     *,
-    visitors: typing.List[visitors.VisitorBase] = None,
+    visitors: typing.Optional[typing.List[visitors.VisitorBase]] = None,
     print_snapshot: bool = False,
     print_blackboard: bool = False
-):
+) -> None:
     if visitors is None:
         visitors = []
     print("\n================== Iteration {}-{} ==================\n".format(from_tick, to_tick))
@@ -72,14 +74,14 @@ def tick_tree(
         print(display.unicode_blackboard())
 
 
-def clear_blackboard():
+def clear_blackboard() -> None:
     # Useful between tests
     blackboard.Blackboard.storage = {}
     blackboard.Blackboard.clients = {}
     blackboard.Blackboard.metadata = {}
 
 
-def print_summary(nodes):
+def print_summary(nodes: typing.List[behaviour.Behaviour]) -> None:
     print("\n--------- Summary ---------\n")
     for node in nodes:
         print("%s" % node)

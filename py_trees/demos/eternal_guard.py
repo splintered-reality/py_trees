@@ -85,9 +85,9 @@ def pre_tick_handler(behaviour_tree: py_trees.trees.BehaviourTree) -> None:
 
 
 def post_tick_handler(
-        snapshot_visitor: py_trees.visitors.SnapshotVisitor,
-        behaviour_tree: py_trees.trees.BehaviourTree
-    ) -> None:
+    snapshot_visitor: py_trees.visitors.SnapshotVisitor,
+    behaviour_tree: py_trees.trees.BehaviourTree
+) -> None:
     print(
         "\n" + py_trees.display.unicode_tree(
             root=behaviour_tree.root,
