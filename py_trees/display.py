@@ -643,6 +643,24 @@ def dot_tree(
                         weight=0,
                     )
                 graph.add_edge(edge)
+            for unique_identifier in metadata[key].exclusive:
+                try:
+                    edge = pydot.Edge(
+                        blackboard_id_name_map[unique_identifier],
+                        blackboard_node,
+                        color=blackboard_colour,
+                        constraint=False,
+                        weight=0,
+                    )
+                except KeyError:
+                    edge = pydot.Edge(
+                        clients[unique_identifier].__getattribute__("name"),
+                        blackboard_node,
+                        color=blackboard_colour,
+                        constraint=False,
+                        weight=0,
+                    )
+                graph.add_edge(edge)
         graph.add_subgraph(subgraph)
 
     if with_blackboard_variables:
