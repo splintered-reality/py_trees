@@ -208,7 +208,7 @@ def main() -> None:
     py_trees.blackboard.Blackboard.enable_activity_stream(maximum_size=100)
     blackboard = py_trees.blackboard.Client(name="Configuration")
     blackboard.register_key(key="dude", access=py_trees.common.Access.WRITE)
-    blackboard.register_key(key="/parameters/default_speed", access=py_trees.common.Access.WRITE)
+    blackboard.register_key(key="/parameters/default_speed", access=py_trees.common.Access.EXCLUSIVE_WRITE)
     blackboard.dude = "Bob"
     blackboard.parameters.default_speed = 30.0
 

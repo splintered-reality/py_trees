@@ -582,7 +582,6 @@ def dot_tree(
             label="Blackboard",
             rank="sink",
         )
-
         for unique_identifier, client_name in clients.items():
             if unique_identifier not in blackboard_id_name_map:
                 subgraph.add_node(
@@ -619,7 +618,7 @@ def dot_tree(
                 except KeyError:
                     edge = pydot.Edge(
                         blackboard_node,
-                        clients[unique_identifier].__getattribute__("name"),
+                        clients[unique_identifier],
                         color="green",
                         constraint=False,
                         weight=0,
@@ -636,9 +635,27 @@ def dot_tree(
                     )
                 except KeyError:
                     edge = pydot.Edge(
-                        clients[unique_identifier].__getattribute__("name"),
+                        clients[unique_identifier],
                         blackboard_node,
                         color=blackboard_colour,
+                        constraint=False,
+                        weight=0,
+                    )
+                graph.add_edge(edge)
+            for unique_identifier in metadata[key].exclusive:
+                try:
+                    edge = pydot.Edge(
+                        blackboard_id_name_map[unique_identifier],
+                        blackboard_node,
+                        color="deepskyblue",
+                        constraint=False,
+                        weight=0,
+                    )
+                except KeyError:
+                    edge = pydot.Edge(
+                        clients[unique_identifier],
+                        blackboard_node,
+                        color="deepskyblue",
                         constraint=False,
                         weight=0,
                     )
