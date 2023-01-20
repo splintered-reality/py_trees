@@ -68,10 +68,8 @@ class Behaviour(abc.ABC):
 
     def __init__(
         self,
-        name: typing.Union[str, common.Name] = common.Name.AUTO_GENERATED
+        name: str
     ):
-        if not name or name == common.Name.AUTO_GENERATED:
-            name = self.__class__.__name__
         if not isinstance(name, str):
             raise TypeError("a behaviour name should be a string, but you passed in {}".format(type(name)))
         self.id = uuid.uuid4()  # used to uniquely identify this node (helps with removing children from a tree)
@@ -90,7 +88,7 @@ class Behaviour(abc.ABC):
     # User Customisable Callbacks
     ############################################
 
-    def setup(self, **kwargs: int) -> None:  # noqa: B027
+    def setup(self, **kwargs: typing.Any) -> None:  # noqa: B027
         """
         Set up and verify infrastructure (middleware connections, etc) is available.
 
@@ -447,3 +445,11 @@ class Behaviour(abc.ABC):
             :data:`~py_trees.common.Status.INVALID`.
         """
         return self if self.status != common.Status.INVALID else None
+
+##############################################################################
+# Mypy Convenience Types
+##############################################################################
+
+
+BehaviourSubClass = typing.TypeVar('BehaviourSubClass', bound=Behaviour)
+# BehaviourUpdateMethod = typing.Callable[[BehaviourSubClass], common.Status]

@@ -24,9 +24,9 @@ def test_symbols() -> None:
     # This test has no assertions, except from the human eye. When it fails,
     # ticks and crosses fail and must be inspected by the human eye
     if console.has_unicode():
-        symbol_groups = (display.xhtml_symbols, display.unicode_symbols, display.ascii_symbols)
+        symbol_groups = [ display.xhtml_symbols, display.unicode_symbols, display.ascii_symbols ]
     else:
-        symbol_groups = (display.xhtml_symbols, display.ascii_symbols)
+        symbol_groups = [ display.xhtml_symbols, display.ascii_symbols ]
 
     for symbols in symbol_groups:
 
@@ -129,7 +129,10 @@ def test_ascii_snapshot_priority_interrupt() -> None:
     if console.has_unicode():
         text_tree = display.unicode_tree if console.has_unicode() else display.ascii_tree
 
-    def post_tick_handler(snapshot_visitor, tree):
+    def post_tick_handler(
+        snapshot_visitor: py_trees.visitors.SnapshotVisitor,
+        tree: py_trees.trees.BehaviourTree
+    ) -> None:
         print(
             text_tree(
                 tree.root,

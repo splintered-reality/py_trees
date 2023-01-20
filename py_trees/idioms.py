@@ -32,7 +32,7 @@ from . import decorators
 
 def pick_up_where_you_left_off(
     name: str,
-    tasks: typing.List[behaviour.Behaviour]
+    tasks: typing.List[behaviour.BehaviourSubClass]
 ) -> behaviour.Behaviour:
     """
     Create an idiom that enables a sequence of tasks to pick up where it left off.

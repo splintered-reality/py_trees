@@ -27,7 +27,7 @@ class Motley(object):
     """
     To test nested access on the blackboard
     """
-    def __init__(self):
+    def __init__(self) -> None:
         self.nested = "nested"
 
 
@@ -39,7 +39,12 @@ class create_blackboards(object):
         self.namespace = ""
         return (self.foo, self.bar, self.namespace)
 
-    def __exit__(self, unused_type, unused_value, unused_traceback):
+    def __exit__(
+        self,
+        unused_type: typing.Any,
+        unused_value: typing.Any,
+        unused_traceback: typing.Any
+    ) -> None:
         self.foo.unregister(clear=True)
         self.bar.unregister(clear=True)
 
@@ -52,12 +57,26 @@ class create_namespaced_blackboards(object):
         self.bar = create_blackboard_bar(namespace=self.namespace)
         return (self.foo, self.bar, self.namespace)
 
-    def __exit__(self, unused_type, unused_value, unused_traceback):
+    def __exit__(
+        self,
+        unused_type: typing.Any,
+        unused_value: typing.Any,
+        unused_traceback: typing.Any
+    ) -> None:
         self.foo.unregister(clear=True)
         self.bar.unregister(clear=True)
 
+# mypy assistance
+BlackboardCreators = typing.List[typing.Union[typing.Type[create_blackboards], typing.Type[create_namespaced_blackboards]]]
 
-def create_blackboard_foo(namespace=None) -> py_trees.blackboard.Client:
+
+def blackboard_creators() -> BlackboardCreators:
+    return [create_blackboards, create_namespaced_blackboards]
+
+
+def create_blackboard_foo(
+    namespace: typing.Optional[str] = None
+) -> py_trees.blackboard.Client:
     """
     Create a blackboard client with a few variables.
     """
@@ -74,7 +93,9 @@ def create_blackboard_foo(namespace=None) -> py_trees.blackboard.Client:
     return blackboard
 
 
-def create_blackboard_bar(namespace=None) -> py_trees.blackboard.Client:
+def create_blackboard_bar(
+    namespace: typing.Optional[str] = None
+) -> py_trees.blackboard.Client:
     """
     Create another blackboard client with a few variables.
     """
@@ -109,7 +130,8 @@ def test_bad_name_exception() -> None:
     console.banner("Bad Name Exception")
 
     with pytest.raises(TypeError) as context:  # if raised, context survives
-        unused_blackboard = py_trees.blackboard.Client(name=5)
+        # intentional error - silence mypy
+        unused_blackboard = py_trees.blackboard.Client(name=5)  # type: ignore[arg-type]
         py_trees.tests.print_assert_details("TypeError raised", "raised", "not raised")
     py_trees.tests.print_assert_details("TypeError raised", "yes", "yes")
     assert("TypeError" == context.typename)
@@ -135,7 +157,7 @@ def test_unregister_keys_with_clear() -> None:
 
 def test_delayed_register_key() -> None:
     console.banner("Delayed Register Key")
-    for create in [create_blackboards, create_namespaced_blackboards]:
+    for create in blackboard_creators():
         with create() as (foo, bar, unused_namespace):
             with pytest.raises(AttributeError) as context:  # if raised, context survives
                 print("Expecting Attribute Error with substring 'does not have read/write access'")
@@ -212,7 +234,7 @@ def test_is_registered() -> None:
 
 def test_key_exists() -> None:
     console.banner("Key Exists")
-    for create in [create_blackboards, create_namespaced_blackboards]:
+    for create in blackboard_creators():
         with create() as (foo, unused_bar, namespace):
             py_trees.tests.print_assert_details("'dude' exists", foo.exists("dude"), True)
             assert(foo.exists("dude"))
@@ -236,7 +258,7 @@ def test_key_exists() -> None:
 
 def test_nested_exists() -> None:
     console.banner("Nested Read")
-    for create in [create_blackboards, create_namespaced_blackboards]:
+    for create in blackboard_creators():
         with create() as (foo, unused_bar, namespace):
             print("foo.exists('motley.nested') [{}][{}]".format(foo.exists("motley.nested"), True))
             assert(foo.exists("motley.nested"))
@@ -254,7 +276,7 @@ def test_nested_exists() -> None:
 
 def test_nested_read() -> None:
     console.banner("Nested Read")
-    for create in [create_blackboards, create_namespaced_blackboards]:
+    for create in blackboard_creators():
         with create() as (foo, unused_bar, unused_namespace):
             result = foo.motley.nested
             print("Read foo.motley.nested {} [{}]".format(result, "nested"))
@@ -289,7 +311,7 @@ def test_nested_read() -> None:
 
 def test_nested_write() -> None:
     console.banner("Nested Write")
-    for create in [create_blackboards, create_namespaced_blackboards]:
+    for create in blackboard_creators():
         with create() as (foo, bar, unused_namespace):
             print("Write bar.motley.nested [{}]".format("overwritten"))
             bar.motley.nested = "overwritten"
@@ -320,7 +342,7 @@ def test_nested_write() -> None:
 
 def test_key_filters() -> None:
     console.banner("Key Accessors")
-    for create in [create_blackboards, create_namespaced_blackboards]:
+    for create in blackboard_creators():
         with create() as (foo, bar, unused_namespace):
             no_of_keys = len(Blackboard.keys())
             print("{}".format(Blackboard.keys()))
@@ -388,6 +410,7 @@ def test_activity_stream() -> None:
         py_trees.blackboard.ActivityType.NO_OVERWRITE,
         py_trees.blackboard.ActivityType.UNSET,
     ]
+    assert Blackboard.activity_stream is not None
     for item, expected in zip(Blackboard.activity_stream.data, expected_types):
         assert(item.activity_type == expected.value)
     blackboard.unregister(clear=True)
@@ -395,7 +418,7 @@ def test_activity_stream() -> None:
 
 def test_lists() -> None:
     console.banner("Lists")
-    for create in [create_blackboards, create_namespaced_blackboards]:
+    for create in blackboard_creators():
         with create() as (foo, bar, unused_namespace):
             foo.dude = ["Bob", "Bill"]
             name = bar.dude[0]
@@ -405,7 +428,7 @@ def test_lists() -> None:
 
 def test_dicts() -> None:
     console.banner("Dicts")
-    for create in [create_blackboards, create_namespaced_blackboards]:
+    for create in blackboard_creators():
         with create() as (foo, bar, unused_namespace):
             foo.dude = {"Bob": 5, "Bill": 3}
             value = bar.dude["Bob"]
@@ -468,7 +491,7 @@ def test_static_get_set() -> None:
 
 def test_unregister_key() -> None:
     console.banner("Unregister Keys")
-    for create in [create_blackboards, create_namespaced_blackboards]:
+    for create in blackboard_creators():
         with create() as (foo, bar, namespace):
             print("'{}/foo' in foo.write".format(namespace))
             assert ("{}/foo".format(namespace) in foo.write)

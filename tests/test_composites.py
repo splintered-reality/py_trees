@@ -9,6 +9,7 @@
 ##############################################################################
 
 import pytest
+import typing
 
 import py_trees
 import py_trees.console as console
@@ -28,8 +29,13 @@ logger = py_trees.logging.Logger("Tests")
 def assert_banner()  -> None:
     print(console.green + "----- Asserts -----" + console.reset)
 
+AssertResultType = typing.TypeVar("AssertResultType")
 
-def assert_details(text, expected, result) -> None:
+def assert_details(
+    text: str,
+    expected: AssertResultType,
+    result: AssertResultType
+) -> None:
     print(console.green + text +
           "." * (70 - len(text)) +
           console.cyan + "{}".format(expected) +
@@ -83,7 +89,8 @@ def test_composite_add_child_exception() -> None:
     console.banner("Composite Add Child Exception - Invalid Type")
     root = py_trees.composites.Selector(name="Selector", memory=False)
     with pytest.raises(TypeError) as context:  # if raised, context survives
-        root.add_child(5.0)
+        # intentional error - silence mypy
+        root.add_child(5.0)  # type: ignore[arg-type]
         py_trees.tests.print_assert_details("TypeError raised", "raised", "not raised")
     py_trees.tests.print_assert_details("TypeError raised", "yes", "yes")
     assert("TypeError" == context.typename)
@@ -93,7 +100,7 @@ def test_composite_add_child_exception() -> None:
 
 def test_protect_against_multiple_parents() -> None:
     console.banner("Protect Against Multiple Parents")
-    child = py_trees.behaviours.Success()
+    child = py_trees.behaviours.Success(name="Success")
     first_parent = py_trees.composites.Selector(name="Selector", memory=False)
     second_parent = py_trees.composites.Sequence(name="Sequence", memory=True)
     with pytest.raises(RuntimeError) as context:  # if raised, context survives

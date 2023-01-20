@@ -29,7 +29,11 @@ logger = py_trees.logging.Logger("Tests")
 def test_timer_invalid_duration() -> None:
     console.banner("Timer Exceptions - Invalid Duration")
     with pytest.raises(TypeError) as context:  # if raised, context survives
-        unused_timer = py_trees.timers.Timer(name="Timer", duration="invalid_type")
+        # intentional error -> silence mypy
+        unused_timer = py_trees.timers.Timer(
+            name="Timer",
+            duration="invalid_type"  # type: ignore[arg-type]
+        )
         py_trees.tests.print_assert_details("TypeError raised", "raised", "not raised")
     py_trees.tests.print_assert_details("TypeError raised", "yes", "yes")
     assert("TypeError" == context.typename)

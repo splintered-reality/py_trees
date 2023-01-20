@@ -9,6 +9,7 @@
 ##############################################################################
 
 import time
+import typing
 
 import py_trees
 import py_trees.console as console
@@ -22,13 +23,13 @@ class Motley(object):
     """
     To test nested access on the blackboard
     """
-    def __init__(self):
+    def __init__(self) -> None:
         self.nested = "nested"
 
 
 class create_blackboards(object):
 
-    def __enter__(self):
+    def __enter__(self) -> typing.Tuple[py_trees.blackboard.Client, py_trees.blackboard.Client]:
         self.root = py_trees.blackboard.Client(
             name="Root"
         )
@@ -38,7 +39,12 @@ class create_blackboards(object):
         )
         return (self.root, self.parameters)
 
-    def __exit__(self, unused_type, unused_value, unused_traceback):
+    def __exit__(
+        self,
+        unused_type: typing.Any,
+        unused_value: typing.Any,
+        unused_traceback: typing.Any
+    ) -> None:
         self.parameters.unregister(clear=True)
         self.root.unregister(clear=True)
 
@@ -48,7 +54,7 @@ class create_blackboards(object):
 ##############################################################################
 
 
-def benchmark_registration():
+def benchmark_registration() -> None:
     console.banner("Registration Benchmarks (x1000)")
     start_time = None
     print("No Remaps")
@@ -85,10 +91,10 @@ def benchmark_registration():
     print(" - " + console.cyan + "{0: <{1}}".format("Unregister", width) + console.reset + ": " + console.yellow + "{0:.3f}".format(duration) + console.reset)
 
 
-def benchmark_read():
+def benchmark_read() -> None:
     console.banner("Read Benchmarks (x1000)")
 
-    def _impl(with_remaps=False):
+    def _impl(with_remaps: bool = False) -> None:
         with create_blackboards() as (root, parameters):
             width = max(len(root.name), len(parameters.name))
             for blackboard in (root, parameters):
@@ -115,7 +121,10 @@ def benchmark_read():
                     py_trees.blackboard.Blackboard.set("/colander_{}".format(i), i)
                     py_trees.blackboard.Blackboard.set("/parameters/colander_{}".format(i), i)
             relative_names = {}
-            absolute_names = {"Root": {}, "Namespaced": {}}
+            absolute_names: typing.Dict[str, typing.Dict[int, str]] = {
+                "Root": {},
+                "Namespaced": {}
+            }
             for i in range(0, 1000):
                 relative_names[i] = "colander_{}".format(i)
                 absolute_names["Root"][i] = "/colander_{}".format(i)
@@ -141,10 +150,10 @@ def benchmark_read():
     # _impl(with_remaps=True)
 
 
-def benchmark_write():
+def benchmark_write() -> None:
     console.banner("Write Benchmarks (x1000)")
 
-    def _impl(with_remaps=False):
+    def _impl(with_remaps: bool = False) -> None:
         with create_blackboards() as (root, parameters):
             width = max(len(root.name), len(parameters.name))
             for blackboard in (root, parameters):
@@ -164,7 +173,10 @@ def benchmark_write():
                             access=py_trees.common.Access.WRITE,
                         )
             relative_names = {}
-            absolute_names = {"Root": {}, "Namespaced": {}}
+            absolute_names: typing.Dict[str, typing.Dict[int, str]] = {
+                "Root": {},
+                "Namespaced": {}
+            }
             for i in range(0, 1000):
                 relative_names[i] = str(i)
                 absolute_names["Root"][i] = "/{}".format(str(i))

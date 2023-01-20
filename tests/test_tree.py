@@ -10,6 +10,7 @@
 
 import threading
 import time
+import typing
 
 import pytest
 
@@ -33,16 +34,16 @@ class SleepInSetup(py_trees.behaviour.Behaviour):
     """
     Used in testing of the tree setup timeout.
     """
-    def __init__(self, name, duration):
+    def __init__(self, name: str, duration: float):
         super().__init__(name=name)
         self.duration = duration
 
-    def setup(self):
+    def setup(self, **kwargs: typing.Any) -> None:
         self.logger.debug("{}.setup() [{}][{}]".format(
             self.__class__.__name__, self.name, time.time()))
         time.sleep(self.duration)
 
-    def update(self):
+    def update(self) -> py_trees.common.Status:
         return py_trees.common.Status.INVALID
 
 
@@ -51,14 +52,14 @@ class SetupVisitor(py_trees.visitors.VisitorBase):
     Picks up and logs feedback messages and the behaviour's status. Logging is done with
     the behaviour's logger.
     """
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(full=True)
 
-    def run(self, behaviour):
+    def run(self, behaviour: py_trees.behaviour.Behaviour) -> None:
         behaviour.logger.debug("{}.setup() [Visited: {}]".format(self.__class__.__name__, behaviour.name))
 
 
-def create_fffrrs_repeat_status_queue(name: str):
+def create_fffrrs_repeat_status_queue(name: str) -> py_trees.behaviours.StatusQueue:
     return py_trees.behaviours.StatusQueue(
         name=name,
         queue=[
@@ -72,7 +73,9 @@ def create_fffrrs_repeat_status_queue(name: str):
         eventually=None
     )
 
-def create_rrr_continuous_success_status_queue(name: str):
+def create_rrr_continuous_success_status_queue(
+    name: str
+) -> py_trees.behaviours.StatusQueue:
     return py_trees.behaviours.StatusQueue(
         name=name,
         queue=[
@@ -404,7 +407,7 @@ def test_success_failure_tree() -> None:
     failure = py_trees.behaviours.Failure(name="Failure")
     failure2 = py_trees.decorators.Inverter(
         name="Failure2",
-        child=py_trees.behaviours.Success()
+        child=py_trees.behaviours.Success(name="Success")
     )
     success = py_trees.behaviours.Success(name="Success")
     root.add_child(failure)
@@ -593,56 +596,64 @@ def test_failed_tree() -> None:
     tree.tick()
     print("\n--------- Assertions ---------\n")
     print("root.tip().name == Failure 3")
-    assert(root.tip().name == "Failure 3")
+    if root.tip() is not None:
+        root_tip = root.tip()
+        assert root_tip is not None  # help mypy
+        assert(root_tip.name == "Failure 3")
 
     # TODO failed sequence tree
 
 
 def test_tree_errors() -> None:
     console.banner("Tree Errors")
-    root = 5.0
+    invalid_root = 5.0
     print("__init__ raises a 'TypeError' due to invalid root variable type being passed")
 
     with pytest.raises(TypeError) as context:  # if raised, context survives
-        unused_tree = py_trees.trees.BehaviourTree(root)
+        # intentional error -> silence mypy
+        unused_tree = py_trees.trees.BehaviourTree(invalid_root)  # type: ignore[arg-type]
         py_trees.tests.print_assert_details("TypeError raised", "raised", "not raised")
     py_trees.tests.print_assert_details("TypeError raised", "yes", "yes")
     assert("TypeError" == context.typename)
     py_trees.tests.print_assert_details("  substring match", "instance", f"{context.value}")
     assert("instance" in str(context.value))
 
-    root = py_trees.behaviours.Success()
+    root = py_trees.behaviours.Success(name="Success")
     print("__init__ raises a 'RuntimeError' because we try to prune the root node")
 
-    with pytest.raises(RuntimeError) as context:  # if raised, context survives
+    with pytest.raises(RuntimeError) as cant_prune_root_context:  # if raised, context survives
         tree = py_trees.trees.BehaviourTree(root)
         tree.prune_subtree(root.id)
         py_trees.tests.print_assert_details("RuntimeError raised", "raised", "not raised")
     py_trees.tests.print_assert_details("RuntimeError raised", "yes", "yes")
-    assert("RuntimeError" == context.typename)
-    py_trees.tests.print_assert_details("  substring match", "prune", f"{context.value}")
-    assert("prune" in str(context.value))
+    assert("RuntimeError" == cant_prune_root_context.typename)
+    py_trees.tests.print_assert_details("  substring match", "prune", f"{cant_prune_root_context.value}")
+    assert("prune" in str(cant_prune_root_context.value))
 
-    root = py_trees.behaviours.Success()
-    new_subtree = py_trees.behaviours.Success()
+    root = py_trees.behaviours.Success(name="Success")
+    new_subtree = py_trees.behaviours.Success(name="Success")
     print("__init__ raises a 'RuntimeError' because we try to replace the root node")
 
-    with pytest.raises(RuntimeError) as context:  # if raised, context survives
+    with pytest.raises(RuntimeError) as cant_replace_root_context:  # if raised, context survives
         tree = py_trees.trees.BehaviourTree(root)
         tree.replace_subtree(root.id, new_subtree)
         py_trees.tests.print_assert_details("RuntimeError raised", "raised", "not raised")
     py_trees.tests.print_assert_details("RuntimeError raised", "yes", "yes")
-    assert("RuntimeError" == context.typename)
-    py_trees.tests.print_assert_details("  substring match", "replace", f"{context.value}")
-    assert("replace" in str(context.value))
+    assert("RuntimeError" == cant_replace_root_context.typename)
+    py_trees.tests.print_assert_details("  substring match", "replace", f"{cant_replace_root_context.value}")
+    assert("replace" in str(cant_replace_root_context.value))
 
-    root = py_trees.behaviours.Success()
-    new_subtree = py_trees.behaviours.Success()
+    root = py_trees.behaviours.Success(name="Success")
+    new_subtree = py_trees.behaviours.Success(name="Success")
     print("__init__ raises a 'TypeError' because we try to insert a subtree beneath a standalone behaviour")
 
     with pytest.raises(TypeError) as context:  # if raised, context survives
         tree = py_trees.trees.BehaviourTree(root)
-        tree.insert_subtree(child=new_subtree, unique_id=root.id, index=0)
+        tree.insert_subtree(
+            child=new_subtree,
+            unique_id=root.id,
+            index=0
+        )
         py_trees.tests.print_assert_details("TypeError raised", "raised", "not raised")
     py_trees.tests.print_assert_details("TypeError raised", "yes", "yes")
     assert("TypeError" == context.typename)
@@ -725,18 +736,18 @@ def test_pre_post_tick_activity_sequence() -> None:
     """
     console.banner("Pre-Post Tick Activity")
     root = py_trees.composites.Selector(name="Selector", memory=False)
-    root.add_child(py_trees.behaviours.Success())
+    root.add_child(py_trees.behaviours.Success(name="Success"))
     tree = py_trees.trees.BehaviourTree(root=root)
     breadcrumbs = list()
 
     class TestVisitor(py_trees.visitors.VisitorBase):
-        def __init__(self):
+        def __init__(self) -> None:
             super().__init__()
 
-        def initialise(self):
+        def initialise(self) -> None:
             breadcrumbs.append("visitor.initialise()")
 
-        def finalise(self):
+        def finalise(self) -> None:
             breadcrumbs.append("visitor.finalise()")
 
     tree.add_visitor(TestVisitor())

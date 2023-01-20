@@ -24,7 +24,9 @@ logger = py_trees.logging.Logger("Tests")
 ##############################################################################
 
 
-def create_fffrrs_repeat_status_queue(name: str):
+def create_fffrrs_repeat_status_queue(
+    name: str
+) -> py_trees.behaviours.StatusQueue:
     return py_trees.behaviours.StatusQueue(
         name=name,
         queue=[
