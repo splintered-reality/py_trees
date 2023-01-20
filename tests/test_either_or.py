@@ -8,33 +8,17 @@
 ##############################################################################
 
 import operator
+import typing
 
 import py_trees
 import py_trees.console as console
-
-##############################################################################
-# Helpers
-##############################################################################
-
-
-def assert_banner() -> None:
-    print(console.green + "----- Asserts -----" + console.reset)
-
-
-def assert_details(text, expected, result) -> None:
-    print(console.green + text +
-          "." * (40 - len(text)) +
-          console.cyan + "{}".format(expected) +
-          console.yellow + " [{}]".format(result) +
-          console.reset)
-
 
 ##############################################################################
 # Either Or
 ##############################################################################
 
 
-def create_root() -> None:
+def create_root() -> typing.Tuple[py_trees.behaviour.Behaviour, py_trees.behaviour.Behaviour, py_trees.behaviour.Behaviour]:
     trigger_one = py_trees.decorators.FailureIsRunning(
         name="FisR",
         child=py_trees.behaviours.SuccessEveryN(
@@ -102,7 +86,7 @@ def create_root() -> None:
     tasks = py_trees.composites.Selector(name="Tasks", memory=False)
     tasks.add_children([either_or, idle])
     root.add_children([reset, joystick_one_events, joystick_two_events, tasks])
-    return root, task_one, task_two
+    return (root, task_one, task_two)
 
 
 def test_basic_workflow() -> None:
@@ -111,8 +95,8 @@ def test_basic_workflow() -> None:
     # tree = py_trees.trees.BehaviourTree(root=root)
     root.tick_once()
     # tree.tick()
-    assert_banner()
-    assert_details(
+    py_trees.tests.print_assert_banner()
+    py_trees.tests.print_assert_details(
         text="Tick 1 - tasks not yet ticked",
         expected=py_trees.common.Status.INVALID,
         result=task_one.status,
@@ -121,7 +105,7 @@ def test_basic_workflow() -> None:
     root.tick_once()
     root.tick_once()
     root.tick_once()
-    assert_details(
+    py_trees.tests.print_assert_details(
         text="Tick 4 - task one running",
         expected=py_trees.common.Status.RUNNING,
         result=task_one.status,
@@ -129,28 +113,28 @@ def test_basic_workflow() -> None:
     assert(task_one.status == py_trees.common.Status.RUNNING)
     root.tick_once()
     root.tick_once()
-    assert_details(
+    py_trees.tests.print_assert_details(
         text="Tick 6 - task one finished",
         expected=py_trees.common.Status.SUCCESS,
         result=task_one.status,
     )
     assert(task_one.status == py_trees.common.Status.SUCCESS)
     root.tick_once()
-    assert_details(
+    py_trees.tests.print_assert_details(
         text="Tick 7 - task two starts",
         expected=py_trees.common.Status.RUNNING,
         result=task_two.status,
     )
     assert(task_two.status == py_trees.common.Status.RUNNING)
     root.tick_once()
-    assert_details(
+    py_trees.tests.print_assert_details(
         text="Tick 8 - task one ignored",
         expected=py_trees.common.Status.INVALID,
         result=task_one.status,
     )
     assert(task_one.status == py_trees.common.Status.INVALID)
     root.tick_once()
-    assert_details(
+    py_trees.tests.print_assert_details(
         text="Tick 7 - task two finished",
         expected=py_trees.common.Status.SUCCESS,
         result=task_two.status,

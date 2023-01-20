@@ -15,6 +15,8 @@ Assorted utility functions.
 # Imports
 ##############################################################################
 
+from __future__ import annotations
+
 import multiprocessing
 import os
 import re
@@ -25,10 +27,19 @@ import typing
 # Python Helpers
 ##############################################################################
 
+C = typing.TypeVar('C', bound=typing.Callable)
+
+# TODO: This currently doesn't work well with mypy - dynamic typing
+# is not its thing. Need to find a way to make this work without
+# creating errors on the user side. In the docstring's example, usage
+# of the static 'counter' variable results in:
+#
+# error: "Callable[[], Any]" has no attribute "counter"  [attr-defined]
+
 
 def static_variables(
     **kwargs: typing.Any
-) -> typing.Callable[[typing.Callable[[typing.Any], typing.Any]], typing.Any]:
+) -> typing.Callable[[C], C]:
     """
     Attach initialised static variables to a python method.
 
@@ -40,8 +51,8 @@ def static_variables(
            print("Counter: {}".format(foo.counter))
     """
     def decorate(
-        func: typing.Callable[[typing.Any], typing.Any]
-    ) -> typing.Callable[[typing.Any], typing.Any]:
+        func: C
+    ) -> C:
         for k in kwargs:
             setattr(func, k, kwargs[k])
         return func
@@ -60,7 +71,7 @@ def is_primitive(incoming: typing.Any) -> bool:
     Returns:
         True or false, depending on the check against the reserved primitives
     """
-    return type(incoming) in is_primitive.primitives
+    return type(incoming) in is_primitive.primitives  # type: ignore[attr-defined]
 
 
 def truncate(original: str, length: int) -> str:

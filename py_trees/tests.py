@@ -36,7 +36,14 @@ def print_assert_banner() -> None:
     print(console.green + "\n--------- Assertions ---------\n" + console.reset)
 
 
-def print_assert_details(text: str, expected: typing.Any, result: typing.Any) -> None:
+AssertResultType = typing.TypeVar("AssertResultType")
+
+
+def print_assert_details(
+    text: str,
+    expected: AssertResultType,
+    result: AssertResultType
+) -> None:
     print(console.green + text
           + "." * (70 - len(text))
           + console.cyan + "{}".format(expected)

@@ -10,6 +10,7 @@
 
 import itertools
 import pytest
+import typing
 
 import py_trees
 import py_trees.tests
@@ -22,21 +23,6 @@ import py_trees.console as console
 py_trees.logging.level = py_trees.logging.Level.DEBUG
 logger = py_trees.logging.Logger("Tests")
 
-##############################################################################
-# Helpers
-##############################################################################
-
-
-def assert_banner() -> None:
-    print(console.green + "----- Asserts -----" + console.reset)
-
-
-def assert_details(text, expected, result) -> None:
-    print(console.green + text +
-          "." * (70 - len(text)) +
-          console.cyan + "{}".format(expected) +
-          console.yellow + " [{}]".format(result) +
-          console.reset)
 
 ##############################################################################
 # Tests
@@ -286,7 +272,7 @@ def test_parallel_synchronisation() -> None:
         policy=py_trees.common.ParallelPolicy.SuccessOnAll(
             synchronise=True
         ))
-    success = py_trees.behaviours.Success()
+    success = py_trees.behaviours.Success(name="Success")
     success_every_second = py_trees.decorators.FailureIsRunning(
         name="SuccessEverySecond",
         child=py_trees.behaviours.SuccessEveryN(name="Flipper", n=2)
@@ -400,7 +386,7 @@ def test_parallel_no_synchronisation() -> None:
 
 def test_add_tick_remove_with_current_child() -> None:
     console.banner('Add (Failure)-Tick-Remove with Current Child')
-    assert_banner()
+    py_trees.tests.print_assert_banner()
     root = py_trees.composites.Parallel(
         name="Parallel",
         policy=py_trees.common.ParallelPolicy.SuccessOnAll(synchronise=False))
@@ -410,7 +396,7 @@ def test_add_tick_remove_with_current_child() -> None:
     print(py_trees.display.unicode_tree(root, show_status=True))
     root.remove_child(child)
     print(py_trees.display.unicode_tree(root, show_status=True))
-    assert_details("Current Child", None, root.current_child)
+    py_trees.tests.print_assert_details("Current Child", None, root.current_child)
     assert(root.current_child is None)
 
     root.add_child(child)
@@ -418,7 +404,7 @@ def test_add_tick_remove_with_current_child() -> None:
     print(py_trees.display.unicode_tree(root, show_status=True))
     root.remove_all_children()
     print(py_trees.display.unicode_tree(root, show_status=True))
-    assert_details("Current Child", None, root.current_child)
+    py_trees.tests.print_assert_details("Current Child", None, root.current_child)
     assert(root.current_child is None)
 
     replacement = py_trees.behaviours.Success(name="Replacement")
@@ -427,7 +413,7 @@ def test_add_tick_remove_with_current_child() -> None:
     print(py_trees.display.unicode_tree(root, show_status=True))
     root.replace_child(child=child, replacement=replacement)
     print(py_trees.display.unicode_tree(root, show_status=True))
-    assert_details("Current Child", None, root.current_child)
+    py_trees.tests.print_assert_details("Current Child", None, root.current_child)
     assert(root.current_child is None)
 
     root.remove_all_children()
@@ -436,26 +422,26 @@ def test_add_tick_remove_with_current_child() -> None:
     print(py_trees.display.unicode_tree(root, show_status=True))
     root.remove_child_by_id(child_id=child.id)
     print(py_trees.display.unicode_tree(root, show_status=True))
-    assert_details("Current Child", None, root.current_child)
+    py_trees.tests.print_assert_details("Current Child", None, root.current_child)
     assert(root.current_child is None)
 
 
 def test_tick_add_with_current_child() -> None:
     console.banner('Tick-Add with Current Child')
-    assert_banner()
+    py_trees.tests.print_assert_banner()
     root = py_trees.composites.Parallel(
         name="Parallel",
         policy=py_trees.common.ParallelPolicy.SuccessOnAll(synchronise=False))
     root.tick_once()
     child = py_trees.behaviours.Failure(name="Failure")
     root.add_child(child)
-    assert_details("Current Child", None, root.current_child)
+    py_trees.tests.print_assert_details("Current Child", None, root.current_child)
     assert(root.current_child is None)
 
 
 def test_add_tick_add_with_current_child() -> None:
     console.banner('Add-Tick-Add with Current Child')
-    assert_banner()
+    py_trees.tests.print_assert_banner()
     root = py_trees.composites.Parallel(
         name="Parallel",
         policy=py_trees.common.ParallelPolicy.SuccessOnAll(synchronise=False))
@@ -464,17 +450,19 @@ def test_add_tick_add_with_current_child() -> None:
     root.add_child(run1)
     root.tick_once()
     print(py_trees.display.unicode_tree(root, show_status=True))
-    assert_details("Current Child", run1.name, root.current_child.name)
+    assert root.current_child is not None
+    py_trees.tests.print_assert_details("Current Child", run1.name, root.current_child.name)
     assert(root.current_child.name == run1.name)
     root.add_child(run2)
     print(py_trees.display.unicode_tree(root, show_status=True))
-    assert_details("Current Child", run1.name, root.current_child.name)
+    assert root.current_child is not None
+    py_trees.tests.print_assert_details("Current Child", run1.name, root.current_child.name)
     assert(root.current_child.name == run1.name)
 
 
 def test_add_tick_insert_with_current_child() -> None:
     console.banner('Add-Tick-Insert with Current Child')
-    assert_banner()
+    py_trees.tests.print_assert_banner()
     root = py_trees.composites.Parallel(
         name="Parallel",
         policy=py_trees.common.ParallelPolicy.SuccessOnAll(synchronise=False))
@@ -483,9 +471,11 @@ def test_add_tick_insert_with_current_child() -> None:
     root.add_child(run1)
     root.tick_once()
     print(py_trees.display.unicode_tree(root, show_status=True))
-    assert_details("Current Child", run1.name, root.current_child.name)
+    assert root.current_child is not None
+    py_trees.tests.print_assert_details("Current Child", run1.name, root.current_child.name)
     assert(root.current_child.name == run1.name)
     root.insert_child(run2, index=0)
     print(py_trees.display.unicode_tree(root, show_status=True))
-    assert_details("Current Child", run1.name, root.current_child.name)
+    assert root.current_child is not None
+    py_trees.tests.print_assert_details("Current Child", run1.name, root.current_child.name)
     assert(root.current_child.name == run1.name)

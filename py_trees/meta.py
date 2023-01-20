@@ -25,8 +25,17 @@ from . import common
 ##############################################################################
 
 
+# BehaviourUpdateMethod = typing.Callable[[BehaviourSubClass], common.Status]
+# BehaviourUpdateMethod = typing.TypeVar(
+#    'BehaviourUpdateMethod',
+#    bound=typing.Callable[[behaviour.BehaviourSubClass], common.Status]
+# )
+
+BehaviourUpdateMethod = typing.TypeVar('BehaviourUpdateMethod', bound=typing.Callable)
+
+
 def create_behaviour_from_function(
-    func: typing.Callable[[typing.Any,], common.Status],
+    func: BehaviourUpdateMethod,
     module: typing.Optional[str] = None
 ) -> "typing.Type[behaviour.Behaviour]":
     """

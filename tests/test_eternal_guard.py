@@ -37,7 +37,12 @@ def create_tasks() -> typing.List[py_trees.behaviour.Behaviour]:
     ]
 
 
-def impl_eternal_guard_checks(name, root, eternal_guard, tasks):
+def impl_eternal_guard_checks(
+    name: str,
+    root: py_trees.behaviour.Behaviour,
+    eternal_guard: py_trees.behaviour.Behaviour,
+    tasks: typing.List[py_trees.behaviour.Behaviour]
+) -> None:
     console.banner(name)
 
     py_trees.tests.print_assert_banner()
@@ -95,7 +100,7 @@ def test_eternal_guard_sequence() -> None:
     success = py_trees.behaviours.Success(name="Success")
     task_sequence = py_trees.composites.Sequence(name="Task Sequence", memory=True)
     tasks = create_tasks()
-    idle = py_trees.behaviours.Running()
+    idle = py_trees.behaviours.Running(name="Running")
 
     root.add_children([eternal_guard, idle])
     eternal_guard.add_children([conditions, task_sequence])
@@ -118,7 +123,7 @@ def test_eternal_guard_decorator() -> None:
 
     # emulate py_trees.behaviours.StatusQueue
     class Count(object):
-        def __init__(self):
+        def __init__(self) -> None:
             self.results = [
                 py_trees.common.Status.FAILURE,
                 py_trees.common.Status.SUCCESS,
@@ -129,7 +134,10 @@ def test_eternal_guard_decorator() -> None:
                 py_trees.common.Status.FAILURE,
             ]
 
-        def condition(self, blackboard):
+        def condition(
+            self,
+            blackboard: py_trees.blackboard.Client,
+        ) -> py_trees.common.Status:
             try:
                 new_result = self.results.pop(0)
                 return new_result
@@ -139,7 +147,7 @@ def test_eternal_guard_decorator() -> None:
     tasks = create_tasks()
     task_sequence = py_trees.composites.Sequence(name="Task Sequence", memory=True)
     task_sequence.add_children(tasks)
-    idle = py_trees.behaviours.Running()
+    idle = py_trees.behaviours.Running(name="Running")
     nested_guard = py_trees.decorators.EternalGuard(
         name="Nested Guard",
         child=task_sequence,

@@ -10,6 +10,7 @@
 
 import operator
 import pytest
+import typing
 
 import py_trees
 import py_trees.tests
@@ -34,25 +35,13 @@ from py_trees.blackboard import Blackboard, Client
 ##############################################################################
 
 
-def assert_banner() -> None:
-    print(console.green + "----- Asserts -----" + console.reset)
-
-
-def assert_details(text, expected, result) -> None:
-    print(console.green + text +
-          "." * (70 - len(text)) +
-          console.cyan + "{}".format(expected) +
-          console.yellow + " [{}]".format(result) +
-          console.reset)
-
-
 class Nested(object):
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.foo = 'bar'
 
 
-def create_blackboard() -> None:
+def create_blackboard() -> py_trees.blackboard.Client:
     """
     Create a blackboard with a few variables.
 
@@ -96,9 +85,9 @@ def test_variable_exists() -> None:
         name="check_nested_bar_exists", variable_name="nested.bar"), Status.FAILURE))
     for b, unused in tuples:
         b.tick_once()
-    assert_banner()
+    py_trees.tests.print_assert_banner()
     for b, asserted_result in tuples:
-        assert_details(
+        py_trees.tests.print_assert_details(
             text="looking for '{}'".format(b.variable_name),
             expected=asserted_result,
             result=b.status
@@ -120,9 +109,9 @@ def test_wait_for_variable() -> None:
         name="Wait for nested.bar", variable_name="nested.bar"), Status.RUNNING))
     for b, unused in tuples:
         b.tick_once()
-    assert_banner()
+    py_trees.tests.print_assert_banner()
     for b, asserted_result in tuples:
-        assert_details(
+        py_trees.tests.print_assert_details(
             text="waiting for '{}'".format(b.variable_name),
             expected=asserted_result,
             result=b.status
@@ -137,8 +126,8 @@ def test_unset_blackboard_variable() -> None:
     clear_foo = py_trees.behaviours.UnsetBlackboardVariable(name="Clear Foo", key="foo")
     clear_bar = py_trees.behaviours.UnsetBlackboardVariable(name="Clear Bar", key="bar")
     py_trees.display.unicode_blackboard()
-    assert_banner()
-    assert_details(
+    py_trees.tests.print_assert_banner()
+    py_trees.tests.print_assert_details(
         text="'/foo' exists",
         expected=True,
         result="/foo" in Blackboard.storage.keys()
@@ -146,7 +135,7 @@ def test_unset_blackboard_variable() -> None:
     assert("/foo" in Blackboard.storage.keys())
     print("Ticking 'Clear Foo' once...")
     clear_foo.tick_once()
-    assert_details(
+    py_trees.tests.print_assert_details(
         text="'/foo' does not exist",
         expected=True,
         result="/foo" not in Blackboard.storage.keys()
@@ -154,13 +143,13 @@ def test_unset_blackboard_variable() -> None:
     assert("/foo" not in Blackboard.storage.keys())
     print("Ticking 'Clear Bar' once...")
     clear_bar.tick_once()
-    assert_details(
+    py_trees.tests.print_assert_details(
         text="'/bar' does not exist",
         expected=True,
         result="/bar" not in Blackboard.storage.keys()
     )
     assert("/bar" not in Blackboard.storage.keys())
-    assert_details(
+    py_trees.tests.print_assert_details(
         text="'/foo' still does not exist",
         expected=True,
         result="/foo" not in Blackboard.storage.keys()
@@ -185,9 +174,9 @@ def test_set_blackboard_variable() -> None:
     )
 
     blackboard.unset("foo")
-    assert_banner()
+    py_trees.tests.print_assert_banner()
     set_foo.tick_once()
-    assert_details(
+    py_trees.tests.print_assert_details(
         text="Set 'foo' (doesn't exist)",
         expected="bar",
         result=blackboard.foo
@@ -195,20 +184,20 @@ def test_set_blackboard_variable() -> None:
     assert("bar" == blackboard.foo)
     blackboard.foo = "whoop"
     set_foo.tick_once()
-    assert_details(
+    py_trees.tests.print_assert_details(
         text="Set 'foo' (exists)",
         expected="bar",
         result=blackboard.foo
     )
     blackboard.unset("foo")
-    assert_details(
+    py_trees.tests.print_assert_details(
         text="Set 'foo' Status",
         expected=py_trees.common.Status.SUCCESS,
         result=set_foo.status
     )
     assert(set_foo.status == Status.SUCCESS)
     conservative_set_foo.tick_once()
-    assert_details(
+    py_trees.tests.print_assert_details(
         text="Conservative 'foo' (doesn't exist)",
         expected="bar",
         result=blackboard.foo
@@ -216,13 +205,13 @@ def test_set_blackboard_variable() -> None:
     assert("bar" == blackboard.foo)
     blackboard.foo = "whoop"
     conservative_set_foo.tick_once()
-    assert_details(
+    py_trees.tests.print_assert_details(
         text="Conservative Set 'foo' (exists)",
         expected="whoop",
         result=blackboard.foo
     )
     assert("whoop" == blackboard.foo)
-    assert_details(
+    py_trees.tests.print_assert_details(
         text="Conservative Set 'foo' Status",
         expected=py_trees.common.Status.FAILURE,
         result=conservative_set_foo.status
@@ -236,13 +225,13 @@ def test_set_blackboard_variable() -> None:
         overwrite=True
     )
     nested_set_foo.tick_once()
-    assert_details(
+    py_trees.tests.print_assert_details(
         text="Nested set foo (value)",
         expected="dude",
         result=blackboard.nested.foo
     )
     assert(blackboard.nested.foo == "dude")
-    assert_details(
+    py_trees.tests.print_assert_details(
         text="Nested set foo (status)",
         expected=py_trees.common.Status.SUCCESS,
         result=nested_set_foo.status
@@ -250,17 +239,19 @@ def test_set_blackboard_variable() -> None:
     assert(nested_set_foo.status == py_trees.common.Status.SUCCESS)
     blackboard.nested = 5
     nested_set_foo.tick_once()
-    assert_details(
+    py_trees.tests.print_assert_details(
         text="Nested set foo, no nested attribute (status)",
         expected=py_trees.common.Status.FAILURE,
         result=nested_set_foo.status
     )
     assert(nested_set_foo.status == py_trees.common.Status.FAILURE)
 
-    @py_trees.utilities.static_variables(counter=0)
-    def generator():
-        generator.counter += 1
-        return generator.counter
+    class Count:
+        value: int = 0
+
+    def generator() -> int:
+        Count.value += 1
+        return Count.value
 
     blackboard.unset("foo")
     set_blackboard_variable_from_generator = py_trees.behaviours.SetBlackboardVariable(
@@ -270,14 +261,14 @@ def test_set_blackboard_variable() -> None:
         overwrite=True
     )
     set_blackboard_variable_from_generator.tick_once()
-    assert_details(
+    py_trees.tests.print_assert_details(
         text="Generated Foo",
         expected=1,
         result=blackboard.foo
     )
     assert(blackboard.foo == 1)
     set_blackboard_variable_from_generator.tick_once()
-    assert_details(
+    py_trees.tests.print_assert_details(
         text="Generated Foo",
         expected=2,
         result=blackboard.foo
@@ -285,7 +276,7 @@ def test_set_blackboard_variable() -> None:
     assert(blackboard.foo == 2)
 
 
-def test_check_variable_value():
+def test_check_variable_value() -> None:
     console.banner("Check Variable Value")
     unused_client = create_blackboard()
     tuples = []
@@ -359,9 +350,9 @@ def test_check_variable_value():
         b.tick_once()
         print("Feedback message {}".format(b.feedback_message))
     print("")
-    assert_banner()
+    py_trees.tests.print_assert_banner()
     for b, asserted_result in tuples:
-        assert_details(
+        py_trees.tests.print_assert_details(
             text=b.name,
             expected=asserted_result,
             result=b.status
@@ -443,9 +434,9 @@ def test_check_variable_value_inverted() -> None:
         b.tick_once()
         print("Feedback message {}".format(b.feedback_message))
     print("")
-    assert_banner()
+    py_trees.tests.print_assert_banner()
     for b, asserted_result in tuples:
-        assert_details(
+        py_trees.tests.print_assert_details(
             text=b.name,
             expected=asserted_result,
             result=b.status
@@ -527,9 +518,9 @@ def test_wait_for_variable_value() -> None:
         b.tick_once()
         print("Feedback message {}".format(b.feedback_message))
     print("")
-    assert_banner()
+    py_trees.tests.print_assert_banner()
     for b, asserted_result in tuples:
-        assert_details(
+        py_trees.tests.print_assert_details(
             text=b.name,
             expected=asserted_result,
             result=b.status
@@ -556,7 +547,17 @@ def test_check_variable_values() -> None:
         operator=operator.and_,
         namespace="results",
     )
-    datasets = [
+
+    class DataSets(typing.TypedDict):
+        a: str
+        b: str
+        c: str
+        d: str
+        operator: typing.Callable[[bool, bool], bool]
+        text: str
+        result: py_trees.common.Status
+
+    datasets: typing.List[DataSets] = [
         {'a': 'a', 'b': 'b', 'c': 'c', 'd': 'd', 'operator': operator.and_, 'text': 'AND', 'result': py_trees.common.Status.SUCCESS},
         {'a': 'z', 'b': 'b', 'c': 'c', 'd': 'd', 'operator': operator.and_, 'text': 'AND', 'result': py_trees.common.Status.FAILURE},
         {'a': 'z', 'b': 'b', 'c': 'c', 'd': 'd', 'operator': operator.or_, 'text': 'OR', 'result': py_trees.common.Status.SUCCESS},
@@ -566,7 +567,7 @@ def test_check_variable_values() -> None:
     ]
     print("Comparison Operator: operator.eq")
     print("")
-    assert_banner()
+    py_trees.tests.print_assert_banner()
     for data in datasets:
         blackboard.a = data['a']
         blackboard.b = data['b']
@@ -574,7 +575,7 @@ def test_check_variable_values() -> None:
         blackboard.d = data['d']
         b.operator = data['operator']
         b.tick_once()
-        assert_details(
+        py_trees.tests.print_assert_details(
             text="[a:{}|b:{}|c:{}|d:{}]{} - {}".format(blackboard.a, blackboard.b, blackboard.c, blackboard.d, b.feedback_message, data['text']),
             expected=data['result'],
             result=b.status
@@ -600,7 +601,7 @@ def test_check_blackboard_to_status() -> None:
     }:
         blackboard.status = result
         b.tick_once()
-        assert_details(
+        py_trees.tests.print_assert_details(
             text=f"ToStatus - {result}",
             expected=result,
             result=b.status
@@ -620,11 +621,11 @@ def test_check_blackboard_to_status() -> None:
 
     blackboard.status = 5
 
-    with pytest.raises(TypeError) as context:  # if raised, context survives
+    with pytest.raises(TypeError) as typeerror_context:  # if raised, context survives
         print("Set a different type - expecting a TypeError")
         b.tick_once()
         py_trees.tests.print_assert_details("TypeError raised", "raised", "not raised")
     py_trees.tests.print_assert_details("TypeError raised", "yes", "yes")
-    assert("TypeError" == context.typename)
-    py_trees.tests.print_assert_details("Substring match", "not of type", f"{context.value}")
-    assert("not of type" in str(context.value))
+    assert("TypeError" == typeerror_context.typename)
+    py_trees.tests.print_assert_details("Substring match", "not of type", f"{typeerror_context.value}")
+    assert("not of type" in str(typeerror_context.value))
