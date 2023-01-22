@@ -188,6 +188,20 @@ class ClearingPolicy(enum.IntEnum):
 ##############################################################################
 
 
+# TODO: There might be a case for allowing some widening of the arguments,
+# i.e. for left and right hand argument types to the ComparisonExpression
+# operator to vary and/or be covariant / contravariant so different classes
+# or base/derived variants can be compared.
+#
+# To do so however, starts to make the machinery awkward (e.g. forcing
+# the user to only use the 'value' as a right-hand argument to the operator.
+# If this is necessary, a different construct would be better.
+#
+# NB: Widening all the way to Any results in virally plaguing downstream
+# with the ramifications of Any (e.g. any-return).
+ComparisonV = typing.TypeVar('ComparisonV')
+
+
 class ComparisonExpression(object):
     """
     Store the parameters for a univariate comparison operation.
@@ -202,13 +216,23 @@ class ComparisonExpression(object):
 
     .. tip::
         The python `operator module`_ includes many useful comparison operations, e.g. operator.ne
+
+    .. code::
+        import operator
+
+        check = ComparisonExpression(
+            variable="foo",
+            value= 5,
+            operator=operator.eq
+        )
+        success = check.operator(blackboard[check.variable], check.value)
     """
 
     def __init__(
         self,
         variable: str,
-        value: typing.Any,
-        operator: typing.Callable[[typing.Any, typing.Any], bool]
+        value: ComparisonV,
+        operator: typing.Callable[[ComparisonV, ComparisonV], bool]
     ):
         self.variable = variable
         self.value = value
