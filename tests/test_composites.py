@@ -61,9 +61,9 @@ def test_replacing_children() -> None:
     print(py_trees.display.unicode_tree(parent, show_status=True))
     print("\n--------- Assertions ---------\n")
     print("old_child.parent is None")
-    assert(old_child.parent is None)
+    assert old_child.parent is None
     print("new_child.parent is parent")
-    assert(new_child.parent is parent)
+    assert new_child.parent is parent
 
 
 def test_removing_children() -> None:
@@ -74,15 +74,15 @@ def test_removing_children() -> None:
     print("child.parent is None after removing by instance")
     parent.add_child(child)
     parent.remove_child(child)
-    assert(child.parent is None)
+    assert child.parent is None
     print("child.parent is None after removing by id")
     parent.add_child(child)
     parent.remove_child_by_id(child.id)
-    assert(child.parent is None)
+    assert child.parent is None
     print("child.parent is None after removing all children")
     parent.add_child(child)
     parent.remove_all_children()
-    assert(child.parent is None)
+    assert child.parent is None
 
 
 def test_composite_add_child_exception() -> None:
@@ -93,9 +93,9 @@ def test_composite_add_child_exception() -> None:
         root.add_child(5.0)  # type: ignore[arg-type]
         py_trees.tests.print_assert_details("TypeError raised", "raised", "not raised")
     py_trees.tests.print_assert_details("TypeError raised", "yes", "yes")
-    assert("TypeError" == context.typename)
+    assert "TypeError" == context.typename
     py_trees.tests.print_assert_details("Substring match", "behaviours", f"{context.value}")
-    assert("behaviours" in str(context.value))
+    assert "behaviours" in str(context.value)
 
 
 def test_protect_against_multiple_parents() -> None:
@@ -109,9 +109,9 @@ def test_protect_against_multiple_parents() -> None:
             parent.add_child(child)
         py_trees.tests.print_assert_details("RuntimeError raised", "raised", "not raised")
     py_trees.tests.print_assert_details("RuntimeError raised", "yes", "yes")
-    assert("RuntimeError" == context.typename)
+    assert "RuntimeError" == context.typename
     py_trees.tests.print_assert_details("Substring match", "parent", f"{context.value}")
-    assert("parent" in str(context.value))
+    assert "parent" in str(context.value)
 
 
 def test_remove_nonexistant_child() -> None:
@@ -125,6 +125,6 @@ def test_remove_nonexistant_child() -> None:
         root.remove_child_by_id(non_existant_child.id)
         py_trees.tests.print_assert_details("IndexError raised", "raised", "not raised")
     py_trees.tests.print_assert_details("IndexError raised", "yes", "yes")
-    assert("IndexError" == context.typename)
+    assert "IndexError" == context.typename
     py_trees.tests.print_assert_details("Substring match", "not found", f"{context.value}")
-    assert("not found" in str(context.value))
+    assert "not found" in str(context.value)

@@ -28,7 +28,7 @@ def test_valid_filenames() -> None:
     print(console.green + "------------------ Assertions ------------------\n" + console.reset)
     for name, expected_name in names.items():
         print(console.cyan + repr(name) + ": " + console.yellow + expected_name + " [" + utilities.get_valid_filename(name) + "]" + console.reset)
-        assert(utilities.get_valid_filename(name) == expected_name)
+        assert utilities.get_valid_filename(name) == expected_name
 
 
 def test_get_fully_qualified_name() -> None:
@@ -49,4 +49,4 @@ def test_get_fully_qualified_name() -> None:
     print(console.green + "------------------ Assertions ------------------\n" + console.reset)
     for expected_name, object_instance in pairs.items():
         print(console.cyan + expected_name + console.white + " == " + console.yellow + utilities.get_fully_qualified_name(object_instance) + console.reset)
-        assert(expected_name == utilities.get_fully_qualified_name(object_instance))
+        assert expected_name == utilities.get_fully_qualified_name(object_instance)

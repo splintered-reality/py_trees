@@ -92,7 +92,7 @@ def test_variable_exists() -> None:
             expected=asserted_result,
             result=b.status
         )
-        assert(b.status == asserted_result)
+        assert b.status == asserted_result
 
 
 def test_wait_for_variable() -> None:
@@ -116,7 +116,7 @@ def test_wait_for_variable() -> None:
             expected=asserted_result,
             result=b.status
         )
-        assert(b.status == asserted_result)
+        assert b.status == asserted_result
 
 
 def test_unset_blackboard_variable() -> None:
@@ -357,7 +357,7 @@ def test_check_variable_value() -> None:
             expected=asserted_result,
             result=b.status
         )
-        assert(b.status == asserted_result)
+        assert b.status == asserted_result
 
 
 def test_check_variable_value_inverted() -> None:
@@ -441,7 +441,7 @@ def test_check_variable_value_inverted() -> None:
             expected=asserted_result,
             result=b.status
         )
-        assert(b.status == asserted_result)
+        assert b.status == asserted_result
 
 
 def test_wait_for_variable_value() -> None:
@@ -525,7 +525,7 @@ def test_wait_for_variable_value() -> None:
             expected=asserted_result,
             result=b.status
         )
-        assert(b.status == asserted_result)
+        assert b.status == asserted_result
 
 
 def test_check_variable_values() -> None:
@@ -580,7 +580,7 @@ def test_check_variable_values() -> None:
             expected=data['result'],
             result=b.status
         )
-        assert(b.status == data['result'])
+        assert b.status == data['result']
 
 
 def test_check_blackboard_to_status() -> None:
@@ -606,7 +606,7 @@ def test_check_blackboard_to_status() -> None:
             expected=result,
             result=b.status
         )
-        assert(b.status == blackboard.status)
+        assert b.status == blackboard.status
 
     blackboard.unset("status")
 
@@ -615,9 +615,9 @@ def test_check_blackboard_to_status() -> None:
         b.tick_once()
         py_trees.tests.print_assert_details("KeyError raised", "raised", "not raised")
     py_trees.tests.print_assert_details("KeyError raised", "yes", "yes")
-    assert("KeyError" == context.typename)
+    assert "KeyError" == context.typename
     py_trees.tests.print_assert_details("Substring match", "yet exist", f"{context.value}")
-    assert("yet exist" in str(context.value))
+    assert "yet exist" in str(context.value)
 
     blackboard.status = 5
 
@@ -626,6 +626,6 @@ def test_check_blackboard_to_status() -> None:
         b.tick_once()
         py_trees.tests.print_assert_details("TypeError raised", "raised", "not raised")
     py_trees.tests.print_assert_details("TypeError raised", "yes", "yes")
-    assert("TypeError" == typeerror_context.typename)
+    assert "TypeError" == typeerror_context.typename
     py_trees.tests.print_assert_details("Substring match", "not of type", f"{typeerror_context.value}")
-    assert("not of type" in str(typeerror_context.value))
+    assert "not of type" in str(typeerror_context.value)

@@ -101,7 +101,7 @@ def test_basic_workflow() -> None:
         expected=py_trees.common.Status.INVALID,
         result=task_one.status,
     )
-    assert(task_one.status == py_trees.common.Status.INVALID)
+    assert task_one.status == py_trees.common.Status.INVALID
     root.tick_once()
     root.tick_once()
     root.tick_once()
@@ -110,7 +110,7 @@ def test_basic_workflow() -> None:
         expected=py_trees.common.Status.RUNNING,
         result=task_one.status,
     )
-    assert(task_one.status == py_trees.common.Status.RUNNING)
+    assert task_one.status == py_trees.common.Status.RUNNING
     root.tick_once()
     root.tick_once()
     py_trees.tests.print_assert_details(
@@ -118,25 +118,25 @@ def test_basic_workflow() -> None:
         expected=py_trees.common.Status.SUCCESS,
         result=task_one.status,
     )
-    assert(task_one.status == py_trees.common.Status.SUCCESS)
+    assert task_one.status == py_trees.common.Status.SUCCESS
     root.tick_once()
     py_trees.tests.print_assert_details(
         text="Tick 7 - task two starts",
         expected=py_trees.common.Status.RUNNING,
         result=task_two.status,
     )
-    assert(task_two.status == py_trees.common.Status.RUNNING)
+    assert task_two.status == py_trees.common.Status.RUNNING
     root.tick_once()
     py_trees.tests.print_assert_details(
         text="Tick 8 - task one ignored",
         expected=py_trees.common.Status.INVALID,
         result=task_one.status,
     )
-    assert(task_one.status == py_trees.common.Status.INVALID)
+    assert task_one.status == py_trees.common.Status.INVALID
     root.tick_once()
     py_trees.tests.print_assert_details(
         text="Tick 7 - task two finished",
         expected=py_trees.common.Status.SUCCESS,
         result=task_two.status,
     )
-    assert(task_two.status == py_trees.common.Status.SUCCESS)
+    assert task_two.status == py_trees.common.Status.SUCCESS

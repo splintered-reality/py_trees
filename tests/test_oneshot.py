@@ -88,8 +88,8 @@ def test_oneshot_with_fail_causes_reentry() -> None:
                   console.yellow + "{}".format(fail_then_run.status) +
                   console.reset + " [{}]".format(py_trees.common.Status.FAILURE)
                   )
-            assert(oneshot.status == py_trees.common.Status.FAILURE)
-            assert(fail_then_run.status == py_trees.common.Status.FAILURE)
+            assert oneshot.status == py_trees.common.Status.FAILURE
+            assert fail_then_run.status == py_trees.common.Status.FAILURE
 
             # Ticking
             py_trees.tests.tick_tree(
@@ -122,8 +122,8 @@ def test_oneshot_with_fail_causes_reentry() -> None:
                   console.yellow + "{}".format(fail_then_run.status) +
                   console.reset + " [{}]".format(expected_behaviour_status[title][policy])
                   )
-            assert(oneshot.status == expected_oneshot_status[policy])
-            assert(fail_then_run.status == expected_behaviour_status[title][policy])
+            assert oneshot.status == expected_oneshot_status[policy]
+            assert fail_then_run.status == expected_behaviour_status[title][policy]
 
 
 def untest_oneshot_with_subtrees_and_interrupt() -> None:
@@ -195,8 +195,8 @@ def untest_oneshot_with_subtrees_and_interrupt() -> None:
                   console.yellow + "{}".format(worker_subtree.status) +
                   console.reset + " [{}]".format(py_trees.common.Status.INVALID)
                   )
-            assert(oneshot.status == py_trees.common.Status.INVALID)
-            assert(worker_subtree.status == py_trees.common.Status.INVALID)
+            assert oneshot.status == py_trees.common.Status.INVALID
+            assert worker_subtree.status == py_trees.common.Status.INVALID
             py_trees.tests.tick_tree(
                 root=root,
                 from_tick=3,
@@ -213,5 +213,5 @@ def untest_oneshot_with_subtrees_and_interrupt() -> None:
                   console.yellow + "{}".format(worker_subtree.status) +
                   console.reset + " [{}]".format(py_trees.common.Status.INVALID)
                   )
-            assert(oneshot.status == py_trees.common.Status.SUCCESS)
-            assert(worker_subtree.status == py_trees.common.Status.INVALID)
+            assert oneshot.status == py_trees.common.Status.SUCCESS
+            assert worker_subtree.status == py_trees.common.Status.INVALID

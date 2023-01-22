@@ -34,8 +34,8 @@ def test_behaviour_from_function_naming() -> None:
 
     print("\n--------- Assertions ---------\n")
     print("foo_instance.name = {} [Foo]".format(foo_instance.name))
-    assert(foo_instance.name == "Foo")
+    assert foo_instance.name == "Foo"
     print("success.name = {}".format(success.name))
-    assert(success.name == "Success")
+    assert success.name == "Success"
     print("named_success.name == {} Woohoo".format(named_success.name))
-    assert(named_success.name == "Woohoo")
+    assert named_success.name == "Woohoo"

@@ -36,6 +36,6 @@ def test_timer_invalid_duration() -> None:
         )
         py_trees.tests.print_assert_details("TypeError raised", "raised", "not raised")
     py_trees.tests.print_assert_details("TypeError raised", "yes", "yes")
-    assert("TypeError" == context.typename)
+    assert "TypeError" == context.typename
     py_trees.tests.print_assert_details("  substring match", "duration", f"{context.value}")
-    assert("duration" in str(context.value))
+    assert "duration" in str(context.value)
