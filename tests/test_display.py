@@ -102,12 +102,12 @@ def test_text_trees() -> None:
     for snippet_name, snippet in snippets.items():
         for b in root.iterate():
             py_trees.tests.print_assert_details("{} in {}".format(b.name, snippet_name), True, b.name in snippet)
-            assert(b.name in snippet)
+            assert b.name in snippet
 
     py_trees.tests.print_assert_details("status symbol '-' in visited_ascii_tree", True, '-' in snippets["visited_ascii_tree"])
-    assert('-' in snippets["visited_ascii_tree"])
+    assert '-' in snippets["visited_ascii_tree"]
     py_trees.tests.print_assert_details("status symbol '-' in non_visited_ascii_tree_status", True, '-' in snippets["non_visited_ascii_tree_status"])
-    assert('-' in snippets["non_visited_ascii_tree_status"])
+    assert '-' in snippets["non_visited_ascii_tree_status"]
     try:
         unused_element = xml.etree.ElementTree.fromstring(snippets["visited_xhtml"])
         unused_element = xml.etree.ElementTree.fromstring(snippets["non_visited_xhtml"])
@@ -163,4 +163,4 @@ def test_ascii_snapshot_priority_interrupt() -> None:
     ).splitlines()[-1]
     print("\n--------- Assertions ---------\n")
     print("Invalidated Lower Priority Symbol '-' is displayed")
-    assert('-' in last_line)
+    assert '-' in last_line

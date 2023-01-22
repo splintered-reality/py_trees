@@ -59,34 +59,34 @@ def test_high_priority_interrupt() -> None:
 
     print("\n--------- Assertions ---------\n")
     print("high_priority_interrupt.status == py_trees.common.Status.FAILURE")
-    assert(high_priority_interrupt.status == py_trees.common.Status.FAILURE)
+    assert high_priority_interrupt.status == py_trees.common.Status.FAILURE
     print("piwylo.status == py_trees.common.Status.RUNNING")
-    assert(piwylo.status == py_trees.common.Status.RUNNING)
+    assert piwylo.status == py_trees.common.Status.RUNNING
     print("task_one.status == py_trees.common.Status.SUCCESS")
-    assert(task_one.status == py_trees.common.Status.SUCCESS)
+    assert task_one.status == py_trees.common.Status.SUCCESS
     print("task_two.status == py_trees.common.Status.RUNNING")
-    assert(task_two.status == py_trees.common.Status.RUNNING)
+    assert task_two.status == py_trees.common.Status.RUNNING
 
     py_trees.tests.tick_tree(root, 4, 5, visitors=[visitor])
 
     print("\n--------- Assertions ---------\n")
     print("high_priority_interrupt.status == py_trees.common.Status.SUCCESS")
-    assert(high_priority_interrupt.status == py_trees.common.Status.SUCCESS)
+    assert high_priority_interrupt.status == py_trees.common.Status.SUCCESS
     print("piwylo.status == py_trees.common.Status.INVALID")
-    assert(piwylo.status == py_trees.common.Status.INVALID)
+    assert piwylo.status == py_trees.common.Status.INVALID
     print("task_one.status == py_trees.common.Status.INVALID")
-    assert(task_one.status == py_trees.common.Status.INVALID)
+    assert task_one.status == py_trees.common.Status.INVALID
     print("task_two.status == py_trees.common.Status.INVALID")
-    assert(task_two.status == py_trees.common.Status.INVALID)
+    assert task_two.status == py_trees.common.Status.INVALID
 
     py_trees.tests.tick_tree(root, 6, 8, visitors=[visitor])
 
     print("\n--------- Assertions ---------\n")
     print("high_priority_interrupt.status == py_trees.common.Status.FAILURE")
-    assert(high_priority_interrupt.status == py_trees.common.Status.FAILURE)
+    assert high_priority_interrupt.status == py_trees.common.Status.FAILURE
     print("piwylo.status == py_trees.common.Status.RUNNING")
-    assert(piwylo.status == py_trees.common.Status.RUNNING)
+    assert piwylo.status == py_trees.common.Status.RUNNING
     print("task_one.status == py_trees.common.Status.INVALID")
-    assert(task_one.status == py_trees.common.Status.INVALID)
+    assert task_one.status == py_trees.common.Status.INVALID
     print("task_two.status == py_trees.common.Status.RUNNING")
-    assert(task_two.status == py_trees.common.Status.RUNNING)
+    assert task_two.status == py_trees.common.Status.RUNNING

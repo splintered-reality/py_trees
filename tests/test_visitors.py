@@ -77,6 +77,6 @@ def test_snapshot_visitor() -> None:
         )
         print("--------- Assertions ---------\n")
         print("snapshot_visitor.changed == {}".format(result))
-        assert(snapshot_visitor.changed is result)
+        assert snapshot_visitor.changed is result
 
     print("Done")

@@ -50,28 +50,28 @@ def impl_eternal_guard_checks(
     py_trees.tests.tick_tree(root, 1, 1, print_snapshot=True)
     print(console.green + "Tick 1: first guard fails, eternal guard fails" + console.reset)
     py_trees.tests.print_assert_details("eternal_guard", py_trees.common.Status.FAILURE, eternal_guard.status)
-    assert(eternal_guard.status == py_trees.common.Status.FAILURE)
+    assert eternal_guard.status == py_trees.common.Status.FAILURE
 
     py_trees.tests.tick_tree(root, 2, 2, print_snapshot=True)
     print(console.green + "Tick 2: guard checks ok, task sequence is running" + console.reset)
     py_trees.tests.print_assert_details("eternal_guard", py_trees.common.Status.RUNNING, eternal_guard.status)
-    assert(eternal_guard.status == py_trees.common.Status.RUNNING)
+    assert eternal_guard.status == py_trees.common.Status.RUNNING
 
     py_trees.tests.tick_tree(root, 3, 3, print_snapshot=True)
     py_trees.tests.tick_tree(root, 4, 4, print_snapshot=True)
     py_trees.tests.tick_tree(root, 5, 5, print_snapshot=True)
     print(console.green + "Tick 5: guards still ok, task sequence finished" + console.reset)
     py_trees.tests.print_assert_details("eternal_guard", py_trees.common.Status.SUCCESS, eternal_guard.status)
-    assert(eternal_guard.status == py_trees.common.Status.SUCCESS)
+    assert eternal_guard.status == py_trees.common.Status.SUCCESS
 
     py_trees.tests.tick_tree(root, 6, 6, print_snapshot=True)
     py_trees.tests.tick_tree(root, 7, 7, print_snapshot=True)
     print(console.green + "Tick 7: tasks are running again, but the first guard fails" + console.reset)
     py_trees.tests.print_assert_details("eternal_guard", py_trees.common.Status.FAILURE, eternal_guard.status)
-    assert(eternal_guard.status == py_trees.common.Status.FAILURE)
+    assert eternal_guard.status == py_trees.common.Status.FAILURE
     for task in tasks:
         py_trees.tests.print_assert_details(task.name, py_trees.common.Status.INVALID, task.status)
-        assert(task.status == py_trees.common.Status.INVALID)
+        assert task.status == py_trees.common.Status.INVALID
 
 
 def test_eternal_guard_sequence() -> None:
