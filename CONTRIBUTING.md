@@ -30,8 +30,6 @@ Be sure to state clearly in the pull request's **description** (this helps exped
 * The motivation, i.e. what problem is this solving.
 * A concise summary of what was done (and why if relevant).
 
-Apply relevant **labels** - one of `component` & `type` is the norm. If the pull request is not yet ready, use the `status:do_not_merge` label.
-
 ### Style
 
 The repository aims to conform to PEP8, please endeavour to do so. There is a simple script `./lint/flake8` that can be used to check that the
