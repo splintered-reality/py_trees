@@ -21,15 +21,7 @@
 
   <build_depend>python3-setuptools</build_depend>
 
-  <doc_depend>python3-sphinx</doc_depend>
-  <doc_depend>python3-sphinx-argparse</doc_depend>
-  <doc_depend>python3-sphinx-rtd-theme</doc_depend>
-  <doc_depend>python3-pydot</doc_depend>
-
   <exec_depend>python3-pydot</exec_depend>
-
-  <test_depend>python3-mypy</test_depend>
-  <test_depend>python3-pytest</test_depend>
 
   <export>
     <build_type>ament_python</build_type>
