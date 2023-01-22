@@ -3,9 +3,9 @@ Release Notes
 
 Forthcoming
 -----------
-* [common] remove viral ramifications of Any from ComparisonExpression, `https://github.com/splintered-reality/py_trees/pull/386`_
-* [display] bugfix off-the-grid bb nodes and render exclusive write edges, `https://github.com/splintered-reality/py_trees/pull/383`_
-* [tests] it's mypy now, by the time this ends, it'll be someone else's py , `https://github.com/splintered-reality/py_trees/pull/380`_
+* [common] remove viral ramifications of Any from ComparisonExpression, `#386 <https://github.com/splintered-reality/py_trees/pull/386>`_
+* [display] bugfix off-the-grid bb nodes and render exclusive write edges, `#383 <https://github.com/splintered-reality/py_trees/pull/383>`_
+* [tests] it's mypy now, by the time this ends, it'll be someone else's py , `#380 <https://github.com/splintered-reality/py_trees/pull/380>`_
 * [behaviours, decorators] behaviours.Count -> behaviours.StatusQueue + decorators.Count (new), `#376 <https://github.com/splintered-reality/py_trees/pull/376>`_
 * [behaviours, decorators, composites] abstract base classes, `#375 <https://github.com/splintered-reality/py_trees/pull/375>`_
 * [behaviours] StatusSequence -> StatusQueue, `#372 <https://github.com/splintered-reality/py_trees/pull/372>`_
