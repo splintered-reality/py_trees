@@ -1,68 +1,75 @@
 name: push-poetry-container
-description: Push a poetry container for use in CI.
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  POETRY_VERSION: 1.3.2
+  PYTHON_PRIMARY_VERSION: 3.8.16
+  PYTHON_PRIMARY_TAG: py38
+  PYTHON_SECONDARY_VERSION: 3.10.9
+  PYTHON_SECONDARY_TAG: py310
+  DEBIAN_VERSION: bullseye
 
 on:
-  pull_request:
-  workflow_dispatch:  # manually trigger
-
+  push:
+    paths:
+      - .devcontainer/Dockerfile
+    branches:
+      - devel
+  workflow_dispatch:
 
 jobs:
-  pre-merge:
+  push-poetry-container:
     runs-on: ubuntu-22.04
-    strategy:
-      matrix:
-        python-version: ["3.8", "3.10"]
-        include:
-          - python-version: "3.8"
-            python-py-version: "py38"
-          - python-version: "3.10"
-            python-py-version: "py310"
-    container:
-      # NB: Github actions always force user=root
-      #     https://docs.github.com/en/actions/creating-actions/dockerfile-support-for-github-actions#user
-      image: arene-driving-docker-local-internal.artifactory-ha.tmc-stargate.com/python-zen:${{ matrix.python-py-version }}-poetry-bullseye
-      credentials:
-        username: ${{ secrets.USG_ARTIFACTORY_API_USER }}
-        password: ${{ secrets.USG_ARTIFACTORY_API_KEY }}
-
+    permissions: 
+      contents: read
+      packages: write 
     steps:
-    - uses: actions/checkout@v3
-    - name: Find the Poetry Cache
-      run: |
-        echo "POETRY_CACHE_DIR=$(poetry config virtualenvs.path)" >> $GITHUB_ENV
-        echo "Config ${POETRY_CACHE_DIR}"
-
-    - name: Cache the Poetry Cache
-      id: cache-deps
-      uses: actions/cache@v2
+    - name: Checkout
+      uses: actions/checkout@v3
+    - name: Login to GCR
+      uses: docker/login-action@v2
       with:
-        path: ${POETRY_CACHE_DIR}
-        # bump the suffix to force-refresh the cache
-        key: dependencies-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}-1
-
-    # Install all deps, sans the project (--no-root)
-    - name: (poetry-zen) Install Dependencies
-      run: cd poetry_zen && poetry install --no-interaction --no-root
-      if: steps.cache-deps.outputs.cache-hit != 'true'
-
-    # Project is installed separately to avoid always invalidating the cache
-    - name: (poetry-zen) Install Project
-      run: cd poetry_zen && poetry install --no-interaction
-
-    # TODO: Caching above doesn't make sense when tox effectively re-installs deps
-    - name: (poetry-zen) Tests
-      run: cd poetry_zen && poetry run tox -e ${{ matrix.python-py-version }}
-    - name: (poetry-zen) Formatters, Linters, Mypy
-      run: cd poetry_zen && poetry run tox -e check
-
-    # Only verifying the static pathway
-    - name: (poetry-bindings) Install System Dependencies
-      run: apt install -y build-essential make unzip zip
-    - name: (poetry-bindings) Build libadd.a
-      run: cd poetry_bindings/adder && make static
-    - name: (poetry-bindings) Build poetry_pybind11_example
-      run: cd poetry_bindings/poetry_pybind11_example && poetry build
-    - name: (poetry-bindings) Install Tox
-      run: cd poetry_bindings/poetry_pybind11_example && poetry install --no-interaction --no-root
-    - name: (poetry-bindings) Run Tox Tests
-      run: cd poetry_bindings/poetry_pybind11_example && poetry run tox -e ${{ matrix.python-py-version }}
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Metadata
+      id: meta
+      uses: docker/metadata-action@v4
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+    - name: Echo
+      run: |
+        echo "USER: ${{ github.actor }}"
+        echo "REPOSITORY: ${{ github.repository }}"
+        echo "POETRY_VERSION: ${POETRY_VERSION}"
+        echo "PYTHON_PRIMARY_VERSION: ${PYTHON_PRIMARY_VERSION}"
+        echo "PYTHON_SECONDARY_VERSION: ${PYTHON_SECONDARY_VERSION}"
+        echo "TAGS: ${{ steps.meta.outputs.tags }}"
+        echo "LABELS: ${{ steps.meta.outputs.labels }}"
+    - name: Image - poetry${{ env.POETRY_VERSION }}-python${{ env.PYTHON_PRIMARY_VERSION }}
+      uses: docker/build-push-action@v3
+      with:
+        file: ./.devcontainer/Dockerfile
+        push: true
+        build-args: |
+          PYTHON_VERSION=${{ env.PYTHON_PRIMARY_VERSION }}
+          POETRY_VERSION=${{ env.POETRY_VERSION }}
+          DEBIAN_VERSION=${{ env.DEBIAN_VERSION }}
+        tags: |
+          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.PYTHON_PRIMARY_TAG }}-poetry-${{ env.DEBIAN_VERSION }}
+          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:python${{ env.PYTHON_PRIMARY_VERSION }}-poetry${{ env.POETRY_VERSION }}-${{ env.DEBIAN_VERSION }}
+        labels: ${{ steps.meta.outputs.labels }}
+    - name: Image - poetry${{ env.POETRY_VERSION }}-python${{ env.PYTHON_SECONDARY_VERSION }}
+      uses: docker/build-push-action@v3
+      with:
+        file: ./.devcontainer/Dockerfile
+        push: true
+        build-args: |
+          PYTHON_VERSION=${{ env.PYTHON_SECONDARY_VERSION }}
+          POETRY_VERSION=${{ env.POETRY_VERSION }}
+          DEBIAN_VERSION=${{ env.DEBIAN_VERSION }}
+        tags: |
+          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.PYTHON_SECONDARY_TAG }}-poetry-${{ env.DEBIAN_VERSION }}
+          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:python${{ env.PYTHON_SECONDARY_VERSION }}-poetry${{ env.POETRY_VERSION }}-${{ env.DEBIAN_VERSION }}
+        labels: ${{ steps.meta.outputs.labels }}

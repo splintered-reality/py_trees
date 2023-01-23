@@ -9,8 +9,9 @@
 ################################################################################
 
 ARG PYTHON_VERSION=3.8.15
+ARG DEBIAN_VERSION=bullseye
 
-FROM python:${PYTHON_VERSION}-slim-bullseye
+FROM python:${PYTHON_VERSION}-slim-${DEBIAN_VERSION}
 
 ARG NAME=poetry-zen
 ARG POETRY_VERSION=1.3.2
