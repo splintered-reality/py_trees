@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format2.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>py_trees</name>
-  <!-- When updating, also update setup.py and version.py -->
+  <!-- When updating, also update setup.py, version.py, pyproject.toml -->
   <version>2.2.0</version>
   <description>
     Pythonic implementation of behaviour trees.
@@ -15,9 +15,9 @@
 
   <license>BSD</license>
 
-  <url type="website">https://py-trees.readthedocs.io/en/release-1.4.x</url>
-  <url type="repository">https://github.com/stonier/py_trees</url>
-  <url type="bugtracker">https://github.com/stonier/py_trees/issues</url>
+  <url type="website">https://py-trees.readthedocs.io/en/devel/</url>
+  <url type="repository">https://github.com/splintered-reality/py_trees</url>
+  <url type="bugtracker">https://github.com/splintered-reality/py_trees/issues</url>
 
   <build_depend>python3-setuptools</build_depend>
 

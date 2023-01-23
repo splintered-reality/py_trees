@@ -16,4 +16,4 @@ Package version number.
 
 # When changing, Also update setup.py and package.xml
 # TODO: use pkg_resources to fetch the version from setup.py
-__version__ = '2.1.6'
+__version__ = '2.2.0'

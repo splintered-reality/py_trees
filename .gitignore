@@ -1,3 +1,4 @@
+.coverage
 .venv
 py_trees.egg-info
 */doc/html
