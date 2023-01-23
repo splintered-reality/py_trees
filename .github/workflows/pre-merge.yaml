@@ -1,0 +1,68 @@
+name: pre-merge
+description: Pre-merge testing for pull requests.
+
+on:
+  pull_request:
+  workflow_dispatch:  # manually trigger
+
+
+jobs:
+  pre-merge:
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.10"]
+        include:
+          - python-version: "3.8"
+            python-py-version: "py38"
+          - python-version: "3.10"
+            python-py-version: "py310"
+    # container:
+    #   # NB: Github actions always force user=root
+    #   #     https://docs.github.com/en/actions/creating-actions/dockerfile-support-for-github-actions#user
+    #   image: arene-driving-docker-local-internal.artifactory-ha.tmc-stargate.com/python-zen:${{ matrix.python-py-version }}-poetry-bullseye
+    #   credentials:
+    #     username: ${{ secrets.USG_ARTIFACTORY_API_USER }}
+    #     password: ${{ secrets.USG_ARTIFACTORY_API_KEY }}
+
+    steps:
+    - uses: actions/checkout@v3
+    # - name: Find the Poetry Cache
+    #   run: |
+    #     echo "POETRY_CACHE_DIR=$(poetry config virtualenvs.path)" >> $GITHUB_ENV
+    #     echo "Config ${POETRY_CACHE_DIR}"
+
+    # - name: Cache the Poetry Cache
+    #   id: cache-deps
+    #   uses: actions/cache@v2
+    #   with:
+    #     path: ${POETRY_CACHE_DIR}
+    #     # bump the suffix to force-refresh the cache
+    #     key: dependencies-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}-1
+
+    # # Install all deps, sans the project (--no-root)
+    # - name: (poetry-zen) Install Dependencies
+    #   run: cd poetry_zen && poetry install --no-interaction --no-root
+    #   if: steps.cache-deps.outputs.cache-hit != 'true'
+
+    # # Project is installed separately to avoid always invalidating the cache
+    # - name: (poetry-zen) Install Project
+    #   run: cd poetry_zen && poetry install --no-interaction
+
+    # # TODO: Caching above doesn't make sense when tox effectively re-installs deps
+    # - name: (poetry-zen) Tests
+    #   run: cd poetry_zen && poetry run tox -e ${{ matrix.python-py-version }}
+    # - name: (poetry-zen) Formatters, Linters, Mypy
+    #   run: cd poetry_zen && poetry run tox -e check
+
+    # # Only verifying the static pathway
+    # - name: (poetry-bindings) Install System Dependencies
+    #   run: apt install -y build-essential make unzip zip
+    # - name: (poetry-bindings) Build libadd.a
+    #   run: cd poetry_bindings/adder && make static
+    # - name: (poetry-bindings) Build poetry_pybind11_example
+    #   run: cd poetry_bindings/poetry_pybind11_example && poetry build
+    # - name: (poetry-bindings) Install Tox
+    #   run: cd poetry_bindings/poetry_pybind11_example && poetry install --no-interaction --no-root
+    # - name: (poetry-bindings) Run Tox Tests
+    #   run: cd poetry_bindings/poetry_pybind11_example && poetry run tox -e ${{ matrix.python-py-version }}
