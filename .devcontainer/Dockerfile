@@ -13,7 +13,7 @@ ARG PYTHON_VERSION=3.8.15
 FROM python:${PYTHON_VERSION}-slim-bullseye
 
 ARG NAME=poetry-zen
-ARG POETRY_VERSION=1.2.2
+ARG POETRY_VERSION=1.3.2
 ENV POETRY_HOME=/opt/poetry
 ENV PATH="${POETRY_HOME}/bin:${PATH}"
 
@@ -29,6 +29,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     make \
     # For convenience
     bash \
+    bash-completion \
     ca-certificates \
     git \
     less \
@@ -36,7 +37,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
     && \
     curl -sSL https://install.python-poetry.org | POETRY_VERSION=${POETRY_VERSION} python3 - && \
-    poetry config virtualenvs.create false
+    poetry config virtualenvs.create false && \
+    poetry completions bash >> ~/.bash_completion
 
 ################################################################################
 # Login Shells for Debugging & Development
@@ -62,7 +64,10 @@ RUN groupadd --gid $USER_GID $USERNAME && \
     chmod 0440 /etc/sudoers.d/${USERNAME}
 RUN echo "export PS1='\[\033[01;36m\](docker)\[\033[00m\] \[\033[01;32m\]\u@${NAME}\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '" >> /home/${USERNAME}/.bashrc && \
     echo "alias ll='ls --color=auto -alFNh'" >> /home/${USERNAME}/.bashrc && \
-    echo "alias ls='ls --color=auto -Nh'" >> /home/${USERNAME}/.bashrc
+    echo "alias ls='ls --color=auto -Nh'" >> /home/${USERNAME}/.bashrc && \
+    poetry completions bash >> /home/${USERNAME}/.bash_completion
+
+#    touch /home/${USERNAME}/.bash_completion && chown ${USERNAME}:${USERNAME} /home/${USERNAME}/.bash_completion
 
 ################################################################################
 # Debugging with root
