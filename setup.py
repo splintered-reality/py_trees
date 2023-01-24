@@ -1,43 +1,31 @@
 #!/usr/bin/env python
 
+################################################################################
+# This is a minimal setup.py for enabling ROS builds.
+#
+# For all other modes of development, use poetry and pyproject.toml
+################################################################################
+
 from setuptools import find_packages, setup
 import os
 
-# You need install_requires if you don't have a ROS environment
-install_requires = [  # ] if os.environ.get('AMENT_PREFIX_PATH') else [
-    # build
+install_requires = [
     'setuptools',
-    # runtime
     'pydot'
 ]
 
-tests_require = ['flake8', 'mypy==0.812', 'pydot', 'pytest', 'tox']
-
-extras_require = {} if os.environ.get('AMENT_PREFIX_PATH') else {
-    'test': tests_require,
-    'docs': ["Sphinx", "sphinx-argparse", "sphinx_rtd_theme", "sphinx-autodoc-typehints"],
-    'debs': ['pyprof2calltree', 'stdeb', 'twine']
-}
-##############################
-# Pull in __version__
-##############################
-
-# Can't use __file__ of setup.py to determine
-# the relative path to ./py_trees/version.py since
-# ament doesn't actually use this file - it parses
-# this file and executes it directly.
-
-
-# Some duplication of properties here and in package.xml.
-# Make sure to update them both.
-# That is the price paid for a pypi and catkin package.
+# Some duplication of properties in:
+#  - setup.py,           (ros / legacy)
+#  - package.xml         (ros)
+#  - pyproject.toml      (poetry)
+#  - py_trees/version.py (common)
+# Keep them in sync.
 d = setup(
     name='py_trees',
-    version='2.2.0',  # remember to also update package.xml and version.py
+    version='2.2.0',
     packages=find_packages(exclude=['tests*', 'docs*']),
     package_data={"py_trees": ["py.typed"]},
     install_requires=install_requires,
-    extras_require=extras_require,
     author='Daniel Stonier, Naveed Usmani, Michal Staniaszek',
     maintainer='Daniel Stonier <d.stonier@gmail.com>',
     url='https://github.com/splintered-reality/py_trees',
@@ -54,8 +42,6 @@ d = setup(
     description="pythonic implementation of behaviour trees",
     long_description="A behaviour tree implementation for rapid development of small scale decision making engines that don't need to be real time reactive.",
     license='BSD',
-    test_suite='tests',
-    tests_require=tests_require,
     entry_points={
         'console_scripts': [
             'py-trees-render = py_trees.programs.render:main',
