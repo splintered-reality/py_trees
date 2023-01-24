@@ -3,6 +3,7 @@ Release Notes
 
 Forthcoming
 -----------
+* [poetry] setuptools -> poetry, `#389 <https://github.com/splintered-reality/py_trees/pull/389>`_
 * [common] remove viral ramifications of Any from ComparisonExpression, `#386 <https://github.com/splintered-reality/py_trees/pull/386>`_
 * [display] bugfix off-the-grid bb nodes and render exclusive write edges, `#383 <https://github.com/splintered-reality/py_trees/pull/383>`_
 * [tests] it's mypy now, by the time this ends, it'll be someone else's py , `#380 <https://github.com/splintered-reality/py_trees/pull/380>`_
