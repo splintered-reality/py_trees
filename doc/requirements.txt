@@ -1,4 +1,0 @@
--r ../rtd-requirements.txt
-Sphinx<2
-sphinx-argparse<0.3
-sphinx_rtd_theme<0.5
