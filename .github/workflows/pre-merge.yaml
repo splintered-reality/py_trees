@@ -20,7 +20,7 @@ jobs:
           - python-version: "3.10"
             python-py-version: "py310"
     container:
-      image: ghcr.io/${{ github.repository }}:${{ matrix.python-py-version }}-poetry-bullseye
+      image: ghcr.io/${{ github.repository }}-ci:${{ matrix.python-py-version }}-poetry-bullseye
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -37,7 +37,7 @@ jobs:
       with:
         path: ${{ env.POETRY_CACHE_DIR }}
         # bump the suffix if you need to force-refresh the cache
-        key: dependencies-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}-1
+        key: poetry-cache-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}-1
 
     # Install all deps, sans the project (--no-root)
     - name: Install Dependencies

@@ -2,7 +2,7 @@ name: push-poetry-container
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME: ${{ github.repository }}-ci
   POETRY_VERSION: 1.3.2
   PYTHON_PRIMARY_VERSION: 3.8.16
   PYTHON_PRIMARY_TAG: py38
