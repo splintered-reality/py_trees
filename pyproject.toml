@@ -50,6 +50,11 @@ darglint = ">=1.8"                # checks docstrings match implementation
 flake8-bandit = ">=4.1"           # secure code
 flake8-bugbear = ">=22.9"         # bugs & design not strictly pep8
 
+[tool.poetry.group.docs.dependencies]
+sphinx = "<6"
+sphinx-rtd-theme = ">=1.1"        # not yet ready for sphinx 6
+sphinx-argparse = ">=0.4"
+
 [tool.poetry.scripts]
 py-trees-render = "py_trees.programs.render:main"
 py-trees-demo-action-behaviour = "py_trees.demos.action:main"

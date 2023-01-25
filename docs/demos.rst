@@ -9,10 +9,10 @@ py-trees-demo-action-behaviour
 ------------------------------
 
 .. automodule:: py_trees.demos.action
-    :members:
-    :special-members:
-    :show-inheritance:
-    :synopsis: demo a complex action style behaviour
+   :members:
+   :special-members:
+   :show-inheritance:
+   :synopsis: demo a complex action style behaviour
 
 .. literalinclude:: ../py_trees/demos/action.py
    :language: python
@@ -25,10 +25,10 @@ py-trees-demo-behaviour-lifecycle
 ---------------------------------
 
 .. automodule:: py_trees.demos.lifecycle
-    :members:
-    :special-members:
-    :show-inheritance:
-    :synopsis: demo the lifecycle of a behaviour
+   :members:
+   :special-members:
+   :show-inheritance:
+   :synopsis: demo the lifecycle of a behaviour
 
 .. literalinclude:: ../py_trees/demos/lifecycle.py
    :language: python
@@ -134,7 +134,7 @@ py-trees-demo-either-or
 .. _py-trees-demo-eternal-guard:
 
 py-trees-demo-eternal-guard
------------------------
+---------------------------
 
 .. automodule:: py_trees.demos.eternal_guard
     :members:
