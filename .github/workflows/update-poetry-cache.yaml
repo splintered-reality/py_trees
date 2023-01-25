@@ -1,15 +1,22 @@
-name: pre-merge
-
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+################################################################################
+# Store a cache for dependencies on every merge to devel.
+#
+# All PR's have access to devel's caches. This makes sure it gets generated and
+# is available for the next PR. Otherwise every PR will always generate a cache
+# for the first commit of the PR (subsequent commits will reuse that).
+#
+# https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows
+################################################################################
+name: update-poetry-cache
 
 on:
-  pull_request:
+  push:
+    branches:
+      - devel
   workflow_dispatch:
 
 jobs:
-  pre-merge:
+  update-poetry-cache:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
@@ -44,14 +51,4 @@ jobs:
       run: poetry install --no-interaction --no-root
       if: steps.cache-deps.outputs.cache-hit != 'true'
 
-    # Project is installed separately to avoid always invalidating the cache
-    - name: Install Project
-      run: poetry install --no-interaction
 
-    # TODO: Caching above doesn't make much sense when tox effectively re-installs deps
-    - name: Tests
-      run: poetry run tox -e ${{ matrix.python-py-version }}
-    - name: Formatters, Linters
-      run: poetry run tox -e check
-    - name: MyPy
-      run: poetry run tox -e my${{ matrix.python-py-version }}
