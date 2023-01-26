@@ -7,9 +7,7 @@
 # Documentation
 ##############################################################################
 
-"""
-Meta methods to create behaviours without creating behaviours themselves.
-"""
+"""Meta methods to create behaviours without creating behaviours themselves."""
 
 ##############################################################################
 # Imports
@@ -17,8 +15,7 @@ Meta methods to create behaviours without creating behaviours themselves.
 
 import typing
 
-from . import behaviour
-from . import common
+from . import behaviour, common
 
 ##############################################################################
 # Utility Methods
@@ -31,12 +28,11 @@ from . import common
 #    bound=typing.Callable[[behaviour.BehaviourSubClass], common.Status]
 # )
 
-BehaviourUpdateMethod = typing.TypeVar('BehaviourUpdateMethod', bound=typing.Callable)
+BehaviourUpdateMethod = typing.TypeVar("BehaviourUpdateMethod", bound=typing.Callable)
 
 
 def create_behaviour_from_function(
-    func: BehaviourUpdateMethod,
-    module: typing.Optional[str] = None
+    func: BehaviourUpdateMethod, module: typing.Optional[str] = None
 ) -> "typing.Type[behaviour.Behaviour]":
     """
     Create a behaviour from the specified function.
@@ -59,17 +55,14 @@ def create_behaviour_from_function(
     def init(self: behaviour.Behaviour, name: str = class_name) -> None:
         behaviour.Behaviour.__init__(self, name=name)
 
-    def terminate(
-        self: behaviour.Behaviour,
-        new_status: common.Status
-    ) -> None:
+    def terminate(self: behaviour.Behaviour, new_status: common.Status) -> None:
         if new_status == common.Status.INVALID:
             self.feedback_message = ""
 
     class_type = type(
         class_name,
         (behaviour.Behaviour,),
-        dict(__init__=init, update=func, terminate=terminate)
+        dict(__init__=init, update=func, terminate=terminate),
     )
 
     # When module is None, it will default to 'abc.' since behaviour.Behaviour is an ABC.

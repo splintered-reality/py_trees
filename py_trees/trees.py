@@ -34,14 +34,11 @@ import os
 import signal
 import threading
 import time
-import typing
 import types
+import typing
 import uuid
 
-from . import behaviour
-from . import common
-from . import composites
-from . import visitors
+from . import behaviour, common, composites, visitors
 
 CONTINUOUS_TICK_TOCK = -1
 
@@ -54,7 +51,7 @@ def setup(
     root: behaviour.Behaviour,
     timeout: typing.Union[float, common.Duration] = common.Duration.INFINITE,
     visitor: typing.Optional[visitors.VisitorBase] = None,
-    **kwargs: int
+    **kwargs: int,
 ) -> None:
     """
     Crawl across a (sub)tree of behaviours calling :meth:`~py_trees.behaviour.Behaviour.setup` on each behaviour.
@@ -96,12 +93,12 @@ def setup(
     def signal_handler(
         unused_signum: int,
         unused_frame: types.FrameType,
-        original_signal_handler: typing.Optional[signal.Handlers]
+        original_signal_handler: typing.Optional[signal.Handlers],
     ) -> None:
         global current_behaviour_name
         signal.signal(_SIGNAL, original_signal_handler)
         raise RuntimeError(
-            f"tree setup interrupted or timed out [{current_behaviour_name}]"   # type: ignore[name-defined]
+            f"tree setup interrupted or timed out [{current_behaviour_name}]"  # type: ignore[name-defined]
         )
 
     def visited_setup() -> None:
@@ -125,19 +122,17 @@ def setup(
         signal.signal(
             _SIGNAL,
             functools.partial(
-                signal_handler,
-                original_signal_handler=original_signal_handler)
+                signal_handler, original_signal_handler=original_signal_handler
+            ),
         )
         try:
-            timer = threading.Timer(
-                interval=timeout,
-                function=on_timer_timed_out
-            )
+            timer = threading.Timer(interval=timeout, function=on_timer_timed_out)
             timer.start()
             visited_setup()
         finally:
             timer.cancel()  # this only works if the timer is still waiting
             signal.signal(_SIGNAL, original_signal_handler)
+
 
 ##############################################################################
 # Trees
@@ -176,17 +171,24 @@ class BehaviourTree(object):
     def __init__(self, root: behaviour.Behaviour):
         self.count: int = 0
         if not isinstance(root, behaviour.Behaviour):
-            raise TypeError("root node must be an instance of 'py_trees.behaviour.Behaviour' [{}]".format(type(root)))
+            raise TypeError(
+                "root node must be an instance of 'py_trees.behaviour.Behaviour' [{}]".format(
+                    type(root)
+                )
+            )
         self.root: behaviour.Behaviour = root
         self.visitors: typing.List[visitors.VisitorBase] = []
-        self.pre_tick_handlers: typing.List[typing.Callable[['BehaviourTree'], None]] = []
-        self.post_tick_handlers: typing.List[typing.Callable[['BehaviourTree'], None]] = []
+        self.pre_tick_handlers: typing.List[
+            typing.Callable[["BehaviourTree"], None]
+        ] = []
+        self.post_tick_handlers: typing.List[
+            typing.Callable[["BehaviourTree"], None]
+        ] = []
         self.interrupt_tick_tocking = False
         self.tree_update_handler: typing.Optional[typing.Callable[[], None]] = None
 
     def add_pre_tick_handler(
-        self,
-        handler: typing.Callable[['BehaviourTree'], None]
+        self, handler: typing.Callable[["BehaviourTree"], None]
     ) -> None:
         """
         Add a function to execute before the tree is ticked.
@@ -205,8 +207,7 @@ class BehaviourTree(object):
         self.pre_tick_handlers.append(handler)
 
     def add_post_tick_handler(
-        self,
-        handler: typing.Callable[['BehaviourTree'], None]
+        self, handler: typing.Callable[["BehaviourTree"], None]
     ) -> None:
         """
         Add a function to execute after the tree has ticked.
@@ -266,17 +267,16 @@ class BehaviourTree(object):
                     if callable(parent_remove_child):
                         parent_remove_child(child)
                     else:
-                        raise RuntimeError(f"parent type does not have 'remove_child' [{type(parent)}]")
+                        raise RuntimeError(
+                            f"parent type does not have 'remove_child' [{type(parent)}]"
+                        )
                     if self.tree_update_handler is not None:
                         self.tree_update_handler()
                     return True
         return False
 
     def insert_subtree(
-        self,
-        child: behaviour.Behaviour,
-        unique_id: uuid.UUID,
-        index: int
+        self, child: behaviour.Behaviour, unique_id: uuid.UUID, index: int
     ) -> bool:
         """
         Insert a subtree as a child of the specified parent.
@@ -314,9 +314,7 @@ class BehaviourTree(object):
         return False
 
     def replace_subtree(
-        self,
-        unique_id: uuid.UUID,
-        subtree: behaviour.Behaviour
+        self, unique_id: uuid.UUID, subtree: behaviour.Behaviour
     ) -> bool:
         """
         Replace the subtree with the specified id for the new subtree.
@@ -344,8 +342,10 @@ class BehaviourTree(object):
                     if callable(parent_replace_child):
                         parent_replace_child(child, subtree)
                     else:
-                        raise RuntimeError(f"parent type does not have 'replace_child' [{type(parent)}]")
-#                    parent.replace_child(child, subtree)
+                        raise RuntimeError(
+                            f"parent type does not have 'replace_child' [{type(parent)}]"
+                        )
+                    #                    parent.replace_child(child, subtree)
                     if self.tree_update_handler is not None:
                         self.tree_update_handler()
                     return True
@@ -355,7 +355,7 @@ class BehaviourTree(object):
         self,
         timeout: typing.Union[float, common.Duration] = common.Duration.INFINITE,
         visitor: typing.Optional[visitors.VisitorBase] = None,
-        **kwargs: int
+        **kwargs: int,
     ) -> None:
         """
         Crawl across the tree calling :meth:`~py_trees.behaviour.Behaviour.setup` on each behaviour.
@@ -375,17 +375,16 @@ class BehaviourTree(object):
             Exception: be ready to catch if any of the behaviours raise an exception
             RuntimeError: in case setup() times out
         """
-        setup(
-            root=self.root,
-            timeout=timeout,
-            visitor=visitor,
-            **kwargs
-        )
+        setup(root=self.root, timeout=timeout, visitor=visitor, **kwargs)
 
     def tick(
         self: BehaviourTree,
-        pre_tick_handler: typing.Optional[typing.Callable[[BehaviourTree], None]] = None,
-        post_tick_handler: typing.Optional[typing.Callable[[BehaviourTree], None]] = None
+        pre_tick_handler: typing.Optional[
+            typing.Callable[[BehaviourTree], None]
+        ] = None,
+        post_tick_handler: typing.Optional[
+            typing.Callable[[BehaviourTree], None]
+        ] = None,
     ) -> None:
         """
         Tick the tree just once and run any handlers before and after the tick.
@@ -431,8 +430,12 @@ class BehaviourTree(object):
         self: BehaviourTree,
         period_ms: int,
         number_of_iterations: int = CONTINUOUS_TICK_TOCK,
-        pre_tick_handler: typing.Optional[typing.Callable[[BehaviourTree], None]] = None,
-        post_tick_handler: typing.Optional[typing.Callable[[BehaviourTree], None]] = None
+        pre_tick_handler: typing.Optional[
+            typing.Callable[[BehaviourTree], None]
+        ] = None,
+        post_tick_handler: typing.Optional[
+            typing.Callable[[BehaviourTree], None]
+        ] = None,
     ) -> None:
         """
         Tick continuously with period as specified.
@@ -457,9 +460,9 @@ class BehaviourTree(object):
             post_tick_handler (:obj:`func`): function to execute after ticking
         """
         tick_tocks = 0
-        while (
-            not self.interrupt_tick_tocking
-            and (tick_tocks < number_of_iterations or number_of_iterations == CONTINUOUS_TICK_TOCK)
+        while not self.interrupt_tick_tocking and (
+            tick_tocks < number_of_iterations
+            or number_of_iterations == CONTINUOUS_TICK_TOCK
         ):
             self.tick(pre_tick_handler, post_tick_handler)
             try:

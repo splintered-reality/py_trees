@@ -11,71 +11,72 @@ import operator
 import typing
 
 import py_trees
-import py_trees.console as console
 
 ##############################################################################
 # Either Or
 ##############################################################################
 
 
-def create_root() -> typing.Tuple[py_trees.behaviour.Behaviour, py_trees.behaviour.Behaviour, py_trees.behaviour.Behaviour]:
+def create_root() -> (
+    typing.Tuple[
+        py_trees.behaviour.Behaviour,
+        py_trees.behaviour.Behaviour,
+        py_trees.behaviour.Behaviour,
+    ]
+):
     trigger_one = py_trees.decorators.FailureIsRunning(
-        name="FisR",
-        child=py_trees.behaviours.SuccessEveryN(
-            name="Joystick 1",
-            n=4
-        )
+        name="FisR", child=py_trees.behaviours.SuccessEveryN(name="Joystick 1", n=4)
     )
     trigger_two = py_trees.decorators.FailureIsRunning(
-        name="FisR",
-        child=py_trees.behaviours.SuccessEveryN(
-            name="Joystick 2",
-            n=7
-        )
+        name="FisR", child=py_trees.behaviours.SuccessEveryN(name="Joystick 2", n=7)
     )
     enable_joystick_one = py_trees.behaviours.SetBlackboardVariable(
         name="Joy1 - Enabled",
         variable_name="joystick_one",
         variable_value="enabled",
-        overwrite=True)
+        overwrite=True,
+    )
     enable_joystick_two = py_trees.behaviours.SetBlackboardVariable(
         name="Joy2 - Enabled",
         variable_name="joystick_two",
         variable_value="enabled",
-        overwrite=True)
+        overwrite=True,
+    )
     reset_joystick_one = py_trees.behaviours.SetBlackboardVariable(
         name="Joy1 - Disabled",
         variable_name="joystick_one",
         variable_value="disabled",
-        overwrite=True)
+        overwrite=True,
+    )
     reset_joystick_two = py_trees.behaviours.SetBlackboardVariable(
         name="Joy2 - Disabled",
         variable_name="joystick_two",
         variable_value="disabled",
-        overwrite=True)
+        overwrite=True,
+    )
     task_one = py_trees.behaviours.TickCounter(
-        name="Task 1",
-        duration=2,
-        completion_status=py_trees.common.Status.SUCCESS
+        name="Task 1", duration=2, completion_status=py_trees.common.Status.SUCCESS
     )
     task_two = py_trees.behaviours.TickCounter(
-        name="Task 2",
-        duration=2,
-        completion_status=py_trees.common.Status.SUCCESS
+        name="Task 2", duration=2, completion_status=py_trees.common.Status.SUCCESS
     )
     idle = py_trees.behaviours.Running(name="Idle")
     either_or = py_trees.idioms.either_or(
         name="EitherOr",
         conditions=[
-            py_trees.common.ComparisonExpression("joystick_one", "enabled", operator.eq),
-            py_trees.common.ComparisonExpression("joystick_two", "enabled", operator.eq),
+            py_trees.common.ComparisonExpression(
+                "joystick_one", "enabled", operator.eq
+            ),
+            py_trees.common.ComparisonExpression(
+                "joystick_two", "enabled", operator.eq
+            ),
         ],
         subtrees=[task_one, task_two],
         namespace="either_or",
     )
     root = py_trees.composites.Parallel(
         name="Root",
-        policy=py_trees.common.ParallelPolicy.SuccessOnAll(synchronise=False)
+        policy=py_trees.common.ParallelPolicy.SuccessOnAll(synchronise=False),
     )
     reset = py_trees.composites.Sequence(name="Reset", memory=True)
     reset.add_children([reset_joystick_one, reset_joystick_two])

@@ -28,9 +28,12 @@ def test_behaviour_from_function_naming() -> None:
 
     def foo() -> py_trees.common.Status:
         return py_trees.common.Status.SUCCESS
+
     foo_instance = py_trees.meta.create_behaviour_from_function(foo)(name="Foo")
     success = py_trees.behaviours.Success(name="Success")
-    named_success = py_trees.meta.create_behaviour_from_function(py_trees.behaviours.success)(name="Woohoo")
+    named_success = py_trees.meta.create_behaviour_from_function(
+        py_trees.behaviours.success
+    )(name="Woohoo")
 
     print("\n--------- Assertions ---------\n")
     print("foo_instance.name = {} [Foo]".format(foo_instance.name))

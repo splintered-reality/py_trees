@@ -7,9 +7,7 @@
 # Documentation
 ##############################################################################
 
-"""
-Common definitions, methods and variables used by the py_trees library.
-"""
+"""Common definitions, methods and variables used by the py_trees library."""
 
 ##############################################################################
 # Imports
@@ -25,18 +23,14 @@ import typing
 
 
 class Name(enum.Enum):
-    """
-    Naming conventions.
-    """
+    """Naming conventions."""
 
     AUTO_GENERATED = "AUTO_GENERATED"
     """Automagically generate (hopefully) something sensible.."""
 
 
 class Status(enum.Enum):
-    """
-    An enumerator representing the status of a behaviour.
-    """
+    """An enumerator representing the status of a behaviour."""
 
     SUCCESS = "SUCCESS"
     """Behaviour check has passed, or execution of its action has finished with a successful result."""
@@ -49,9 +43,7 @@ class Status(enum.Enum):
 
 
 class Duration(enum.Enum):
-    """
-    Naming conventions.
-    """
+    """Naming conventions."""
 
     INFINITE = sys.float_info.max
     """:py:data:`~py_trees.common.Duration.INFINITE` oft used for perpetually blocking operations."""
@@ -61,9 +53,7 @@ class Duration(enum.Enum):
 
 
 class Access(enum.Enum):
-    """
-    Use to distinguish types of access to, e.g. variables on a blackboard.
-    """
+    """Use to distinguish types of access to, e.g. variables on a blackboard."""
 
     READ = "READ"
     """Read access."""
@@ -77,15 +67,12 @@ class Access(enum.Enum):
 # Policies
 ##############################################################################
 
+
 class ParallelPolicy(object):
-    """
-    Configurable policies for :py:class:`~py_trees.composites.Parallel` behaviours.
-    """
+    """Configurable policies for :py:class:`~py_trees.composites.Parallel` behaviours."""
 
     class Base(object):
-        """
-        Base class for parallel policies. Should never be used directly.
-        """
+        """Base class for parallel policies. Should never be used directly."""
 
         def __init__(self, synchronise: bool = False):
             """
@@ -126,9 +113,7 @@ class ParallelPolicy(object):
         """
 
         def __init__(self) -> None:
-            """
-            No configuration necessary for this policy.
-            """
+            """No configuration necessary for this policy."""
             super().__init__(synchronise=False)
 
     class SuccessOnSelected(Base):
@@ -144,7 +129,7 @@ class ParallelPolicy(object):
             self,
             # TODO should be behaviour.Behaviour, but cyclic imports -> redesign
             children: typing.List[typing.Any],
-            synchronise: bool = True
+            synchronise: bool = True,
         ):
             """
             Policy configuration.
@@ -172,9 +157,7 @@ class OneShotPolicy(enum.Enum):
 
 
 class ClearingPolicy(enum.IntEnum):
-    """
-    Policy rules for behaviours to dictate when data should be cleared/reset.
-    """
+    """Policy rules for behaviours to dictate when data should be cleared/reset."""
 
     ON_INITIALISE = 1
     """Clear when entering the :py:meth:`~py_trees.behaviour.Behaviour.initialise` method."""
@@ -182,6 +165,7 @@ class ClearingPolicy(enum.IntEnum):
     """Clear when returning :py:data:`~py_trees.common.Status.SUCCESS`."""
     NEVER = 3
     """Never clear the data"""
+
 
 ##############################################################################
 # Blackboards
@@ -199,7 +183,7 @@ class ClearingPolicy(enum.IntEnum):
 #
 # NB: Widening all the way to Any results in virally plaguing downstream
 # with the ramifications of Any (e.g. any-return).
-ComparisonV = typing.TypeVar('ComparisonV')
+ComparisonV = typing.TypeVar("ComparisonV")
 
 
 class ComparisonExpression(object):
@@ -232,8 +216,15 @@ class ComparisonExpression(object):
         self,
         variable: str,
         value: ComparisonV,
-        operator: typing.Callable[[ComparisonV, ComparisonV], bool]
+        operator: typing.Callable[[ComparisonV, ComparisonV], bool],
     ):
+        """Initialise variables.
+
+        Args:
+            variable: the variable name to use
+            value: the value to use on the RHS of the expression
+            operator: a logical operator to enable comparisons
+        """
         self.variable = variable
         self.value = value
         self.operator = operator
@@ -242,6 +233,7 @@ class ComparisonExpression(object):
 ##############################################################################
 # BlackBoxes
 ##############################################################################
+
 
 class BlackBoxLevel(enum.IntEnum):
     """

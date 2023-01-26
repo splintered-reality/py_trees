@@ -40,6 +40,12 @@ import py_trees.console as console
 
 
 def description(root: py_trees.behaviour.Behaviour) -> str:
+    """
+    Print description and usage information about the program.
+
+    Returns:
+       the program description string
+    """
     content = "A demonstration of the 'eternal guard' concept.\n\n"
     content += "Two binary (F|S) conditional checks will fire every\n"
     content += "tick, thus providing a fail-fast mechanism for the\n"
@@ -62,43 +68,85 @@ def description(root: py_trees.behaviour.Behaviour) -> str:
 
 
 def epilog() -> typing.Optional[str]:
+    """
+    Print a noodly epilog for --help.
+
+    Returns:
+       the noodly message
+    """
     if py_trees.console.has_colours:
-        return console.cyan + "And his noodly appendage reached forth to tickle the blessed...\n" + console.reset
+        return (
+            console.cyan
+            + "And his noodly appendage reached forth to tickle the blessed...\n"
+            + console.reset
+        )
     else:
         return None
 
 
 def command_line_argument_parser() -> argparse.ArgumentParser:
+    """
+    Process command line arguments.
+
+    Returns:
+        the argument parser
+    """
     parser = argparse.ArgumentParser(
         description=description(create_root()),
         epilog=epilog(),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     group = parser.add_mutually_exclusive_group()
-    group.add_argument('-r', '--render', action='store_true', help='render dot tree to file')
-    group.add_argument('-i', '--interactive', action='store_true', help='pause and wait for keypress at each tick')
+    group.add_argument(
+        "-r", "--render", action="store_true", help="render dot tree to file"
+    )
+    group.add_argument(
+        "-i",
+        "--interactive",
+        action="store_true",
+        help="pause and wait for keypress at each tick",
+    )
     return parser
 
 
 def pre_tick_handler(behaviour_tree: py_trees.trees.BehaviourTree) -> None:
+    """Print a banner with current tick count prior to ticking the tree.
+
+    Args:
+       behaviour_tree: the tree to tick (used to fetch the count number)
+    """
     print("\n--------- Run %s ---------\n" % behaviour_tree.count)
 
 
 def post_tick_handler(
     snapshot_visitor: py_trees.visitors.SnapshotVisitor,
-    behaviour_tree: py_trees.trees.BehaviourTree
+    behaviour_tree: py_trees.trees.BehaviourTree,
 ) -> None:
+    """
+    Print data about the part of the tree visited.
+
+    Args:
+        snapshot_handler: gather data about the part of the tree visited
+        behaviour_tree: tree to gather data from
+    """
     print(
-        "\n" + py_trees.display.unicode_tree(
+        "\n"
+        + py_trees.display.unicode_tree(
             root=behaviour_tree.root,
             visited=snapshot_visitor.visited,
-            previously_visited=snapshot_visitor.previously_visited
+            previously_visited=snapshot_visitor.previously_visited,
         )
     )
     print(py_trees.display.unicode_blackboard())
 
 
 def create_root() -> py_trees.behaviour.Behaviour:
+    """
+    Create the root behaviour and it's subtree.
+
+    Returns:
+        the root behaviour
+    """
     eternal_guard = py_trees.composites.Sequence(name="Eternal Guard", memory=False)
     condition_one = py_trees.behaviours.StatusQueue(
         name="Condition 1",
@@ -107,7 +155,7 @@ def create_root() -> py_trees.behaviour.Behaviour:
             py_trees.common.Status.FAILURE,
             py_trees.common.Status.SUCCESS,
         ],
-        eventually=py_trees.common.Status.SUCCESS
+        eventually=py_trees.common.Status.SUCCESS,
     )
     condition_two = py_trees.behaviours.StatusQueue(
         name="Condition 2",
@@ -116,7 +164,7 @@ def create_root() -> py_trees.behaviour.Behaviour:
             py_trees.common.Status.SUCCESS,
             py_trees.common.Status.FAILURE,
         ],
-        eventually=py_trees.common.Status.SUCCESS
+        eventually=py_trees.common.Status.SUCCESS,
     )
     task_sequence = py_trees.composites.Sequence(name="Task Sequence", memory=True)
     task_one = py_trees.behaviours.Success(name="Worker 1")
@@ -153,7 +201,9 @@ def main() -> None:
     behaviour_tree.add_pre_tick_handler(pre_tick_handler)
     behaviour_tree.visitors.append(py_trees.visitors.DebugVisitor())
     snapshot_visitor = py_trees.visitors.SnapshotVisitor()
-    behaviour_tree.add_post_tick_handler(functools.partial(post_tick_handler, snapshot_visitor))
+    behaviour_tree.add_post_tick_handler(
+        functools.partial(post_tick_handler, snapshot_visitor)
+    )
     behaviour_tree.visitors.append(snapshot_visitor)
     behaviour_tree.setup(timeout=15)
 

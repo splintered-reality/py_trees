@@ -81,22 +81,46 @@ class Logger(object):
     """
 
     def __init__(self, name: typing.Optional[str] = None):
-        self.prefix = '{:<20}'.format(name.replace("\n", " ")) + " : " if name else ""
+        self.prefix = "{:<20}".format(name.replace("\n", " ")) + " : " if name else ""
 
     def debug(self, msg: str) -> None:
+        """
+        Log a debug message.
+
+        Args:
+           msg: the message to log
+        """
         global level
         if level < Level.INFO:
             console.logdebug(self.prefix + msg)
 
     def info(self, msg: str) -> None:
+        """
+        Log a message.
+
+        Args:
+           msg: the message to log
+        """
         global level
         if level < Level.WARN:
             console.loginfo(self.prefix + msg)
 
     def warning(self, msg: str) -> None:
+        """
+        Log an warning message.
+
+        Args:
+           msg: the message to log
+        """
         global level
         if level < Level.ERROR:
             console.logwarn(self.prefix + msg)
 
     def error(self, msg: str) -> None:
+        """
+        Log an error message.
+
+        Args:
+           msg: the message to log
+        """
         console.logerror(self.prefix + msg)

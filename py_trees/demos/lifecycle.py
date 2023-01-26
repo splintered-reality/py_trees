@@ -35,14 +35,24 @@ import py_trees.console as console
 
 
 def description() -> str:
+    """
+    Print description and usage information about the program.
+
+    Returns:
+       the program description string
+    """
     content = "Demonstrates a typical day in the life of a behaviour.\n\n"
-    content += "This behaviour will count from 1 to 3 and then reset and repeat. As it does\n"
+    content += (
+        "This behaviour will count from 1 to 3 and then reset and repeat. As it does\n"
+    )
     content += "so, it logs and displays the methods as they are called - construction, setup,\n"
     content += "initialisation, ticking and termination.\n"
     if py_trees.console.has_colours:
         banner_line = console.green + "*" * 79 + "\n" + console.reset
         s = banner_line
-        s += console.bold_white + "Behaviour Lifecycle".center(79) + "\n" + console.reset
+        s += (
+            console.bold_white + "Behaviour Lifecycle".center(79) + "\n" + console.reset
+        )
         s += banner_line
         s += "\n"
         s += content
@@ -54,17 +64,34 @@ def description() -> str:
 
 
 def epilog() -> typing.Optional[str]:
+    """
+    Print a noodly epilog for --help.
+
+    Returns:
+       the noodly message
+    """
     if py_trees.console.has_colours:
-        return console.cyan + "And his noodly appendage reached forth to tickle the blessed...\n" + console.reset
+        return (
+            console.cyan
+            + "And his noodly appendage reached forth to tickle the blessed...\n"
+            + console.reset
+        )
     else:
         return None
 
 
 def command_line_argument_parser() -> argparse.ArgumentParser:
-    return argparse.ArgumentParser(description=description(),
-                                   epilog=epilog(),
-                                   formatter_class=argparse.RawDescriptionHelpFormatter,
-                                   )
+    """
+    Process command line arguments.
+
+    Returns:
+        the argument parser
+    """
+    return argparse.ArgumentParser(
+        description=description(),
+        epilog=epilog(),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
 
 
 class Counter(py_trees.behaviour.Behaviour):
@@ -92,28 +119,35 @@ class Counter(py_trees.behaviour.Behaviour):
     def update(self) -> py_trees.common.Status:
         """Increment the counter and decide on a new status."""
         self.counter += 1
-        new_status = py_trees.common.Status.SUCCESS if self.counter == 3 else py_trees.common.Status.RUNNING
+        new_status = (
+            py_trees.common.Status.SUCCESS
+            if self.counter == 3
+            else py_trees.common.Status.RUNNING
+        )
         if new_status == py_trees.common.Status.SUCCESS:
-            self.feedback_message = "counting...{0} - phew, thats enough for today".format(self.counter)
+            self.feedback_message = (
+                "counting...{0} - phew, thats enough for today".format(self.counter)
+            )
         else:
             self.feedback_message = "still counting"
         self.logger.debug(
-            "%s.update()[%s->%s][%s]" % (
-                self.__class__.__name__,
-                self.status, new_status,
-                self.feedback_message
-            )
+            "%s.update()[%s->%s][%s]"
+            % (self.__class__.__name__, self.status, new_status, self.feedback_message)
         )
         return new_status
 
     def terminate(self, new_status: py_trees.common.Status) -> None:
         """Nothing to clean up in this example."""
-        self.logger.debug("%s.terminate()[%s->%s]" % (self.__class__.__name__, self.status, new_status))
+        self.logger.debug(
+            "%s.terminate()[%s->%s]"
+            % (self.__class__.__name__, self.status, new_status)
+        )
 
 
 ##############################################################################
 # Main
 ##############################################################################
+
 
 def main() -> None:
     """Entry point for the demo script."""

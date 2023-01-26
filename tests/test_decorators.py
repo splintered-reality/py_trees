@@ -8,13 +8,12 @@
 # Imports
 ##############################################################################
 
-import pytest
+import time
 
 import py_trees
-import py_trees.tests
 import py_trees.console as console
-
-import time
+import py_trees.tests
+import pytest
 
 ##############################################################################
 # Logging Level
@@ -36,6 +35,7 @@ class DummyDecorator(py_trees.decorators.Decorator):
     def update(self) -> py_trees.common.Status:
         return py_trees.common.Status.INVALID
 
+
 ##############################################################################
 # Tests
 ##############################################################################
@@ -45,11 +45,14 @@ def test_invalid_child() -> None:
     console.banner("Decorator Exceptions - Invalid Child Type")
     with pytest.raises(TypeError) as context:  # if raised, context survives
         # intentional error -> silence mypy
-        unused_decorator = DummyDecorator(name = "dummy", child=5)  # type: ignore[arg-type]
+        decorator = DummyDecorator(name="dummy", child=5)  # type: ignore[arg-type]
+        print(f"Name: {decorator.name}")
         py_trees.tests.print_assert_details("TypeError raised", "raised", "not raised")
     py_trees.tests.print_assert_details("TypeError raised", "yes", "yes")
     assert "TypeError" == context.typename
-    py_trees.tests.print_assert_details("Substring match", "instance", f"{context.value}")
+    py_trees.tests.print_assert_details(
+        "Substring match", "instance", f"{context.value}"
+    )
     assert "instance" in str(context.value)
 
 
@@ -60,15 +63,11 @@ def test_repeat_until_success() -> None:
         queue=[
             py_trees.common.Status.RUNNING,
             py_trees.common.Status.SUCCESS,
-            py_trees.common.Status.SUCCESS
+            py_trees.common.Status.SUCCESS,
         ],
-        eventually=None
+        eventually=None,
     )
-    decorator = py_trees.decorators.Repeat(
-        name="Repeat",
-        num_success=2,
-        child=child
-    )
+    decorator = py_trees.decorators.Repeat(name="Repeat", num_success=2, child=child)
     decorator.tick_once()
     print("\n--------- Tick 1 ---------\n")
     print("decorator.status == py_trees.common.Status.RUNNING")
@@ -98,15 +97,11 @@ def test_repeat_interrupting_failure() -> None:
         queue=[
             py_trees.common.Status.RUNNING,
             py_trees.common.Status.SUCCESS,
-            py_trees.common.Status.FAILURE
+            py_trees.common.Status.FAILURE,
         ],
-        eventually=None
+        eventually=None,
     )
-    decorator = py_trees.decorators.Repeat(
-        name="Repeat",
-        num_success=2,
-        child=child
-    )
+    decorator = py_trees.decorators.Repeat(name="Repeat", num_success=2, child=child)
     decorator.tick_once()
     print("\n--------- Tick 1 ---------\n")
     print("decorator.status == py_trees.common.Status.RUNNING")
@@ -136,15 +131,11 @@ def test_retry_until_success() -> None:
         queue=[
             py_trees.common.Status.RUNNING,
             py_trees.common.Status.FAILURE,
-            py_trees.common.Status.SUCCESS
+            py_trees.common.Status.SUCCESS,
         ],
-        eventually=None
+        eventually=None,
     )
-    decorator = py_trees.decorators.Retry(
-        name="Retry",
-        num_failures=2,
-        child=child
-    )
+    decorator = py_trees.decorators.Retry(name="Retry", num_failures=2, child=child)
     decorator.tick_once()
     print("\n--------- Tick 1 ---------\n")
     print("decorator.status == py_trees.common.Status.RUNNING")
@@ -180,15 +171,11 @@ def test_retry_eventual_failure() -> None:
         queue=[
             py_trees.common.Status.RUNNING,
             py_trees.common.Status.FAILURE,
-            py_trees.common.Status.FAILURE
+            py_trees.common.Status.FAILURE,
         ],
-        eventually=None
+        eventually=None,
     )
-    decorator = py_trees.decorators.Retry(
-        name="Retry",
-        num_failures=2,
-        child=child
-    )
+    decorator = py_trees.decorators.Retry(name="Retry", num_failures=2, child=child)
     decorator.tick_once()
     print("\n--------- Tick 1 ---------\n")
     print("decorator.status == py_trees.common.Status.RUNNING")
@@ -222,8 +209,7 @@ def test_failure_is_success_tree() -> None:
     root = py_trees.composites.Selector(name="Root", memory=False)
     failure = py_trees.behaviours.Failure(name="Failure")
     failure_is_success = py_trees.decorators.FailureIsSuccess(
-        name="Failure Is Success",
-        child=py_trees.behaviours.Failure(name="Failure")
+        name="Failure Is Success", child=py_trees.behaviours.Failure(name="Failure")
     )
     root.add_child(failure)
     root.add_child(failure_is_success)
@@ -244,18 +230,17 @@ def test_failure_is_success_tree() -> None:
 
 def test_failure_is_running_tree() -> None:
     console.banner("Failure is Running Tree")
-    root = py_trees.composites.Parallel(name="Root", policy=py_trees.common.ParallelPolicy.SuccessOnAll())
+    root = py_trees.composites.Parallel(
+        name="Root", policy=py_trees.common.ParallelPolicy.SuccessOnAll()
+    )
     running = py_trees.decorators.FailureIsRunning(
-        name="Failure Is Running",
-        child=py_trees.behaviours.Running(name="Running")
+        name="Failure Is Running", child=py_trees.behaviours.Running(name="Running")
     )
     failure = py_trees.decorators.FailureIsRunning(
-        name="Failure Is Running",
-        child=py_trees.behaviours.Failure(name="Failure")
+        name="Failure Is Running", child=py_trees.behaviours.Failure(name="Failure")
     )
     success = py_trees.decorators.FailureIsRunning(
-        name="Failure Is Running",
-        child=py_trees.behaviours.Success(name="Success")
+        name="Failure Is Running", child=py_trees.behaviours.Success(name="Success")
     )
     root.add_child(running)
     root.add_child(failure)
@@ -282,18 +267,17 @@ def test_failure_is_running_tree() -> None:
 
 def test_running_is_success_tree() -> None:
     console.banner("Running is Success Tree")
-    root = py_trees.composites.Parallel(name="Root", policy=py_trees.common.ParallelPolicy.SuccessOnAll())
+    root = py_trees.composites.Parallel(
+        name="Root", policy=py_trees.common.ParallelPolicy.SuccessOnAll()
+    )
     running = py_trees.decorators.RunningIsSuccess(
-        name="Running is Success",
-        child=py_trees.behaviours.Running(name="Running")
+        name="Running is Success", child=py_trees.behaviours.Running(name="Running")
     )
     failure = py_trees.decorators.RunningIsSuccess(
-        name="Running is Success",
-        child=py_trees.behaviours.Failure(name="Failure")
+        name="Running is Success", child=py_trees.behaviours.Failure(name="Failure")
     )
     success = py_trees.decorators.RunningIsSuccess(
-        name="Running is Success",
-        child=py_trees.behaviours.Success(name="Success")
+        name="Running is Success", child=py_trees.behaviours.Success(name="Success")
     )
     root.add_child(running)
     root.add_child(failure)
@@ -322,17 +306,16 @@ def test_success_is_running_tree() -> None:
     console.banner("Success is Running Tree")
     root = py_trees.composites.Selector(name="Root", memory=False)
     failure = py_trees.decorators.SuccessIsRunning(
-        name="Success is Running",
-        child=py_trees.behaviours.Failure(name="Failure")
+        name="Success is Running", child=py_trees.behaviours.Failure(name="Failure")
     )
-    parallel = py_trees.composites.Parallel(name="Parallel", policy=py_trees.common.ParallelPolicy.SuccessOnAll())
+    parallel = py_trees.composites.Parallel(
+        name="Parallel", policy=py_trees.common.ParallelPolicy.SuccessOnAll()
+    )
     running = py_trees.decorators.SuccessIsRunning(
-        name="Success is Running",
-        child=py_trees.behaviours.Running(name="Running")
+        name="Success is Running", child=py_trees.behaviours.Running(name="Running")
     )
     success = py_trees.decorators.SuccessIsRunning(
-        name="Success is Running",
-        child=py_trees.behaviours.Success(name="Success")
+        name="Success is Running", child=py_trees.behaviours.Success(name="Success")
     )
     root.add_child(failure)
     parallel.add_child(success)
@@ -365,8 +348,7 @@ def test_success_is_failure_tree() -> None:
     root = py_trees.composites.Selector(name="Root", memory=False)
     failure = py_trees.behaviours.Failure(name="Failure")
     success_is_failure = py_trees.decorators.SuccessIsFailure(
-        name="Success Is Failure",
-        child=py_trees.behaviours.Success(name="Success")
+        name="Success Is Failure", child=py_trees.behaviours.Success(name="Success")
     )
     root.add_child(failure)
     root.add_child(success_is_failure)
@@ -391,13 +373,11 @@ def test_inverter() -> None:
     selector = py_trees.composites.Selector(name="Selector", memory=False)
     failure = py_trees.behaviours.Failure(name="Failure")
     success_inverter = py_trees.decorators.Inverter(
-        name="Inverter",
-        child=py_trees.behaviours.Success(name="Success")
+        name="Inverter", child=py_trees.behaviours.Success(name="Success")
     )
     success = py_trees.behaviours.Success(name="Success")
     failure_inverter = py_trees.decorators.Inverter(
-        name="Inverter",
-        child=py_trees.behaviours.Failure(name="Failure")
+        name="Inverter", child=py_trees.behaviours.Failure(name="Failure")
     )
     selector.add_child(failure)
     selector.add_child(success_inverter)
@@ -408,7 +388,6 @@ def test_inverter() -> None:
     visitor = py_trees.visitors.DebugVisitor()
 
     for i in range(0, 2):
-
         py_trees.tests.tick_tree(root, i, i, visitors=[visitor], print_snapshot=True)
 
         print("\n--------- Assertions ---------\n")
@@ -432,16 +411,13 @@ def test_running_is_failure_tree() -> None:
     console.banner("Running is Failure Tree")
     root = py_trees.composites.Selector(name="Root", memory=False)
     running = py_trees.decorators.RunningIsFailure(
-        name="Running is Failure",
-        child=py_trees.behaviours.Running(name="Running")
+        name="Running is Failure", child=py_trees.behaviours.Running(name="Running")
     )
     failure = py_trees.decorators.RunningIsFailure(
-        name="Running is Failure",
-        child=py_trees.behaviours.Failure(name="Failure")
+        name="Running is Failure", child=py_trees.behaviours.Failure(name="Failure")
     )
     success = py_trees.decorators.RunningIsFailure(
-        name="Running is Failure",
-        child=py_trees.behaviours.Success(name="Success")
+        name="Running is Failure", child=py_trees.behaviours.Success(name="Success")
     )
     root.add_child(running)
     root.add_child(failure)
@@ -495,10 +471,8 @@ def test_timeout() -> None:
     # test that it passes on success
     count = py_trees.behaviours.StatusQueue(
         name="Queue",
-        queue=[
-            py_trees.common.Status.RUNNING
-        ],
-        eventually=py_trees.common.Status.SUCCESS
+        queue=[py_trees.common.Status.RUNNING],
+        eventually=py_trees.common.Status.SUCCESS,
     )
     timeout = py_trees.decorators.Timeout(name="Timeout", child=count, duration=0.2)
     print(py_trees.display.unicode_tree(timeout))
@@ -535,10 +509,8 @@ def test_timeout() -> None:
     # test that it succeeds if child succeeds on last tick
     count = py_trees.behaviours.StatusQueue(
         name="Queue",
-        queue=[
-            py_trees.common.Status.RUNNING
-        ],
-        eventually=py_trees.common.Status.SUCCESS
+        queue=[py_trees.common.Status.RUNNING],
+        eventually=py_trees.common.Status.SUCCESS,
     )
     timeout = py_trees.decorators.Timeout(name="Timeout", child=count, duration=0.1)
     print(py_trees.display.unicode_tree(timeout))
@@ -570,12 +542,10 @@ def test_condition() -> None:
             py_trees.common.Status.FAILURE,
             py_trees.common.Status.FAILURE,
         ],
-        eventually=py_trees.common.Status.SUCCESS
+        eventually=py_trees.common.Status.SUCCESS,
     )
     condition = py_trees.decorators.Condition(
-        name="Condition",
-        child=child,
-        status=py_trees.common.Status.SUCCESS
+        name="Condition", child=child, status=py_trees.common.Status.SUCCESS
     )
 
     visitor = py_trees.visitors.DebugVisitor()
@@ -609,9 +579,7 @@ def test_status_to_blackboard() -> None:
 
     child = py_trees.behaviours.Success(name="Success")
     decorator = py_trees.decorators.StatusToBlackboard(
-        name="Status2BB",
-        child=child,
-        variable_name="foo"
+        name="Status2BB", child=child, variable_name="foo"
     )
     blackboard = py_trees.blackboard.Client()
     blackboard.register_key(key="foo", access=py_trees.common.Access.READ)
@@ -621,18 +589,18 @@ def test_status_to_blackboard() -> None:
     py_trees.tests.print_assert_details(
         text="Blackboard Variable (foo)",
         expected=py_trees.common.Status.SUCCESS,
-        result=blackboard.foo
+        result=blackboard.foo,
     )
     assert blackboard.foo == py_trees.common.Status.SUCCESS
     py_trees.tests.print_assert_details(
         text="Child Status",
         expected=py_trees.common.Status.SUCCESS,
-        result=child.status
+        result=child.status,
     )
     assert child.status == py_trees.common.Status.SUCCESS
     py_trees.tests.print_assert_details(
         text="Decorator Status",
         expected=py_trees.common.Status.SUCCESS,
-        result=decorator.status
+        result=decorator.status,
     )
     assert decorator.status == py_trees.common.Status.SUCCESS

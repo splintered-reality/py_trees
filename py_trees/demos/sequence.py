@@ -38,8 +38,16 @@ import py_trees.console as console
 
 
 def description() -> str:
+    """
+    Print description and usage information about the program.
+
+    Returns:
+       the program description string
+    """
     content = "Demonstrates sequences in action.\n\n"
-    content += "A sequence is populated with 2-tick jobs that are allowed to run through to\n"
+    content += (
+        "A sequence is populated with 2-tick jobs that are allowed to run through to\n"
+    )
     content += "completion.\n"
 
     if py_trees.console.has_colours:
@@ -57,22 +65,47 @@ def description() -> str:
 
 
 def epilog() -> typing.Optional[str]:
+    """
+    Print a noodly epilog for --help.
+
+    Returns:
+       the noodly message
+    """
     if py_trees.console.has_colours:
-        return console.cyan + "And his noodly appendage reached forth to tickle the blessed...\n" + console.reset
+        return (
+            console.cyan
+            + "And his noodly appendage reached forth to tickle the blessed...\n"
+            + console.reset
+        )
     else:
         return None
 
 
 def command_line_argument_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description=description(),
-                                     epilog=epilog(),
-                                     formatter_class=argparse.RawDescriptionHelpFormatter,
-                                     )
-    parser.add_argument('-r', '--render', action='store_true', help='render dot tree to file')
+    """
+    Process command line arguments.
+
+    Returns:
+        the argument parser
+    """
+    parser = argparse.ArgumentParser(
+        description=description(),
+        epilog=epilog(),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument(
+        "-r", "--render", action="store_true", help="render dot tree to file"
+    )
     return parser
 
 
 def create_root() -> py_trees.behaviour.Behaviour:
+    """
+    Create the root behaviour and it's subtree.
+
+    Returns:
+        the root behaviour
+    """
     root = py_trees.composites.Sequence(name="Sequence", memory=True)
     for action in ["Action 1", "Action 2", "Action 3"]:
         rssss = py_trees.behaviours.StatusQueue(
@@ -81,7 +114,7 @@ def create_root() -> py_trees.behaviour.Behaviour:
                 py_trees.common.Status.RUNNING,
                 py_trees.common.Status.SUCCESS,
             ],
-            eventually=py_trees.common.Status.SUCCESS
+            eventually=py_trees.common.Status.SUCCESS,
         )
         root.add_child(rssss)
     return root
@@ -90,6 +123,7 @@ def create_root() -> py_trees.behaviour.Behaviour:
 ##############################################################################
 # Main
 ##############################################################################
+
 
 def main() -> None:
     """Entry point for the demo script."""
