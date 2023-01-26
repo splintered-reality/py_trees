@@ -27,31 +27,31 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: Poetry Cache Dir
+    - name: Poetry Venv Dir
       run: |
-        echo "POETRY_CACHE_DIR=$(poetry config virtualenvs.path)" >> $GITHUB_ENV
+        echo "VENV_DIR=$(poetry config virtualenvs.path)" >> $GITHUB_ENV
 
-    - name: Poetry Cache from Cache
+    - name: Restore the Cache
       id: cache-deps
       uses: actions/cache@v3
       with:
-        path: ${{ env.POETRY_CACHE_DIR }}
+        path: ${{ env.VENV_DIR }}
         # bump the suffix if you need to force-refresh the cache
-        key: poetry-cache-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}-1
+        key: py-trees-ci-cache-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock', '**/tox.ini') }}-1
 
     # Install all deps, sans the project (--no-root)
-    - name: Install Dependencies
+    - name: Poetry - Install Dependencies
       run: poetry install --no-interaction --no-root
       if: steps.cache-deps.outputs.cache-hit != 'true'
 
     # Project is installed separately to avoid always invalidating the cache
-    - name: Install Project
+    - name: Poetry - Install Project
       run: poetry install --no-interaction
 
     # TODO: Caching above doesn't make much sense when tox effectively re-installs deps
-    - name: Tests
-      run: poetry run tox -e ${{ matrix.python-py-version }}
-    - name: Formatters, Linters
-      run: poetry run tox -e check
-    - name: MyPy
-      run: poetry run tox -e my${{ matrix.python-py-version }}
+    - name: Tox - Tests
+      run: poetry run tox --workdir ${{ env.VENV_DIR }} -e ${{ matrix.python-py-version }}
+    - name: Tox - Formatters, Linters
+      run: poetry run tox --workdir ${{ env.VENV_DIR }} -e check
+    - name: Tox - MyPy
+      run: poetry run tox --workdir ${{ env.VENV_DIR }} -e my${{ matrix.python-py-version }}

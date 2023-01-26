@@ -14,11 +14,47 @@ PyTrees is a python implementation of behaviour trees designed to facilitate the
 * Python decorators for enabling meta behaviours
 * Render trees to dot graphs or visualise with ascii graphs on stdout
 
-## Docs and Demos
-
-Core API documentation (also includes some explanation concerning the demo scripts):
+## Documentation
 
 [![devel][docs-devel-image]][docs-devel] [![2.1.x][docs-2.1.x-image]][docs-2.1.x] [![0.7.x][docs-0.7.x-image]][docs-0.7.x] [![0.6.x][docs-0.6.x-image]][docs-0.6.x]
+
+## Getting Started
+
+VSCode and a [py38 DevContainer](.devcontainer/devcontainer.json) on CodeSpaces will set you up with an environment
+for running demos, tests and/or creating PRs in less than five minutes. If you're just looking for releases,
+fetch them from  [PyPi](https://pypi.org/project/py-trees/).
+
+1. Fork the project to your personal account
+2. Click on Code -> Codespaces -> + Create a Codespace
+3. Be froody
+
+```
+(docker) zen@py_trees:/workspaces/py_trees$ poetry install
+(docker) zen@py_trees:/workspaces/py_trees$ poetry shell
+
+(py-trees-py3.8) (docker) zen@py_trees:/workspaces/py_trees$ py-trees-demo-<tab>-<tab>
+py-trees-demo-action-behaviour            py-trees-demo-context-switching           py-trees-demo-logging
+py-trees-demo-behaviour-lifecycle         py-trees-demo-display-modes               py-trees-demo-pick-up-where-you-left-off
+py-trees-demo-blackboard                  py-trees-demo-dot-graphs                  py-trees-demo-selector
+py-trees-demo-blackboard-namespaces       py-trees-demo-either-or                   py-trees-demo-sequence
+py-trees-demo-blackboard-remappings       py-trees-demo-eternal-guard               py-trees-demo-tree-stewardship
+
+(py-trees-py3.8) (docker) zen@py_trees:/workspaces/py_trees$ py-trees-demo-blackboard
+*******************************************************************************
+                                   Blackboard
+*******************************************************************************
+
+Demonstrates usage of the blackboard and related behaviours.
+
+A sequence is populated with a few behaviours that exercise
+reading and writing on the Blackboard in interesting ways.
+
+*******************************************************************************
+
+[DEBUG] Writer               : BlackboardWriter.__init__()
+...
+...
+```
 
 If you're really looking for something more edifying than hello world examples, walk through the [ros tutorials](https://py-trees-ros-tutorials.readthedocs.io/en/release-2.0.x/index.html) which incrementally step through the process of building a scenario handling layer for a robot.
 

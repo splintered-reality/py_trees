@@ -1,9 +1,9 @@
 ################################################################################
-# Store a cache for dependencies on every merge to devel.
+# Ensure poetry and tox installed dependencies are in the cache.
 #
-# All PR's have access to devel's caches. This makes sure it gets generated and
-# is available for the next PR. Otherwise every PR will always generate a cache
-# for the first commit of the PR (subsequent commits will reuse that).
+# All PR's can reuse devel's caches, but a PR's cache cannot be reused from
+# one PR to the next. This jobs' sole purpose is to make sure every PR updates
+# devel's cache (if changes are needed) on merging.
 #
 # https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows
 ################################################################################
@@ -34,21 +34,25 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: Poetry Cache Dir
+    - name: Poetry Venv Dir
       run: |
-        echo "POETRY_CACHE_DIR=$(poetry config virtualenvs.path)" >> $GITHUB_ENV
+        echo "VENV_DIR=$(poetry config virtualenvs.path)" >> $GITHUB_ENV
 
-    - name: Poetry Cache from Cache
+    - name: Restore the Cache
       id: cache-deps
       uses: actions/cache@v3
       with:
-        path: ${{ env.POETRY_CACHE_DIR }}
+        path: ${{ env.VENV_DIR }}
         # bump the suffix if you need to force-refresh the cache
-        key: poetry-cache-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}-1
+        key: py-trees-ci-cache-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock', '**/tox.ini') }}-1
 
     # Install all deps, sans the project (--no-root)
-    - name: Install Dependencies
+    - name: Poetry - Install Dependencies
       run: poetry install --no-interaction --no-root
+      if: steps.cache-deps.outputs.cache-hit != 'true'
+
+    - name: Tox - Install Dependencies
+      run: poetry run tox --workdir ${{ env.VENV_DIR }} --notest -e ${{ matrix.python-py-version }} check my${{ matrix.python-py-version }}
       if: steps.cache-deps.outputs.cache-hit != 'true'
 
 
