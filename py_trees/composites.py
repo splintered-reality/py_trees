@@ -64,8 +64,7 @@ import itertools
 import typing
 import uuid
 
-from . import behaviour
-from . import common
+from . import behaviour, common
 
 ##############################################################################
 # Composites
@@ -84,7 +83,7 @@ class Composite(behaviour.Behaviour, abc.ABC):
     def __init__(
         self,
         name: str,
-        children: typing.Optional[typing.List[behaviour.Behaviour]] = None
+        children: typing.Optional[typing.List[behaviour.Behaviour]] = None,
     ):
         super(Composite, self).__init__(name)
         if children is not None:
@@ -151,10 +150,7 @@ class Composite(behaviour.Behaviour, abc.ABC):
     # Overrides
     ############################################
 
-    def stop(
-        self,
-        new_status: common.Status = common.Status.INVALID
-    ) -> None:
+    def stop(self, new_status: common.Status = common.Status.INVALID) -> None:
         """
         Provide common stop-level functionality for all composites.
 
@@ -173,7 +169,9 @@ class Composite(behaviour.Behaviour, abc.ABC):
         if new_status == common.Status.INVALID:
             self.current_child = None
             for child in self.children:
-                if child.status != common.Status.INVALID:  # redundant if INVALID->INVALID
+                if (
+                    child.status != common.Status.INVALID
+                ):  # redundant if INVALID->INVALID
                     child.stop(new_status)
 
         # Regular Behaviour.stop() handling
@@ -213,14 +211,22 @@ class Composite(behaviour.Behaviour, abc.ABC):
             unique id of the child
         """
         if not isinstance(child, behaviour.Behaviour):
-            raise TypeError("children must be behaviours, but you passed in {}".format(type(child)))
+            raise TypeError(
+                "children must be behaviours, but you passed in {}".format(type(child))
+            )
         self.children.append(child)
         if child.parent is not None:
-            raise RuntimeError("behaviour '{}' already has parent '{}'".format(child.name, child.parent.name))
+            raise RuntimeError(
+                "behaviour '{}' already has parent '{}'".format(
+                    child.name, child.parent.name
+                )
+            )
         child.parent = self
         return child.id
 
-    def add_children(self, children: typing.List[behaviour.Behaviour]) -> behaviour.Behaviour:
+    def add_children(
+        self, children: typing.List[behaviour.Behaviour]
+    ) -> behaviour.Behaviour:
         """
         Append a list of children to the current list.
 
@@ -253,9 +259,7 @@ class Composite(behaviour.Behaviour, abc.ABC):
         return child_index
 
     def remove_all_children(self) -> None:
-        """
-        Remove all children. Makes sure to stop each child if necessary.
-        """
+        """Remove all children. Makes sure to stop each child if necessary."""
         self.current_child = None
         for child in self.children:
             if child.status == common.Status.RUNNING:
@@ -265,7 +269,9 @@ class Composite(behaviour.Behaviour, abc.ABC):
         #   http://stackoverflow.com/questions/850795/clearing-python-lists
         del self.children[:]
 
-    def replace_child(self, child: behaviour.Behaviour, replacement: behaviour.Behaviour) -> None:
+    def replace_child(
+        self, child: behaviour.Behaviour, replacement: behaviour.Behaviour
+    ) -> None:
         """
         Replace the child behaviour with another.
 
@@ -273,7 +279,10 @@ class Composite(behaviour.Behaviour, abc.ABC):
             child: child to delete
             replacement: child to insert
         """
-        self.logger.debug("%s.replace_child()[%s->%s]" % (self.__class__.__name__, child.name, replacement.name))
+        self.logger.debug(
+            "%s.replace_child()[%s->%s]"
+            % (self.__class__.__name__, child.name, replacement.name)
+        )
         child_index = self.children.index(child)
         self.remove_child(child)
         self.insert_child(replacement, child_index)
@@ -293,7 +302,9 @@ class Composite(behaviour.Behaviour, abc.ABC):
         if child is not None:
             self.remove_child(child)
         else:
-            raise IndexError('child was not found with the specified id [%s]' % child_id)
+            raise IndexError(
+                "child was not found with the specified id [%s]" % child_id
+            )
 
     def prepend_child(self, child: behaviour.Behaviour) -> uuid.UUID:
         """
@@ -309,11 +320,7 @@ class Composite(behaviour.Behaviour, abc.ABC):
         child.parent = self
         return child.id
 
-    def insert_child(
-        self,
-        child: behaviour.Behaviour,
-        index: int
-    ) -> uuid.UUID:
+    def insert_child(self, child: behaviour.Behaviour, index: int) -> uuid.UUID:
         """
         Insert child at the specified index.
 
@@ -329,6 +336,7 @@ class Composite(behaviour.Behaviour, abc.ABC):
         self.children.insert(index, child)
         child.parent = self
         return child.id
+
 
 ##############################################################################
 # Selector
@@ -373,7 +381,7 @@ class Selector(Composite):
         self,
         name: str,
         memory: bool,
-        children: typing.Optional[typing.List[behaviour.Behaviour]] = None
+        children: typing.Optional[typing.List[behaviour.Behaviour]] = None,
     ):
         super(Selector, self).__init__(name, children)
         self.memory = memory
@@ -393,7 +401,9 @@ class Selector(Composite):
         if self.status != common.Status.RUNNING:
             # selector specific initialisation - leave initialise() free for users to
             # re-implement without having to make calls to super()
-            self.logger.debug("%s.tick() [!RUNNING->reset current_child]" % self.__class__.__name__)
+            self.logger.debug(
+                "%s.tick() [!RUNNING->reset current_child]" % self.__class__.__name__
+            )
             self.current_child = self.children[0] if self.children else None
 
             # reset the children - don't need to worry since they will be handled
@@ -427,7 +437,10 @@ class Selector(Composite):
             for node in child.tick():
                 yield node
                 if node is child:
-                    if node.status == common.Status.RUNNING or node.status == common.Status.SUCCESS:
+                    if (
+                        node.status == common.Status.RUNNING
+                        or node.status == common.Status.SUCCESS
+                    ):
                         self.current_child = child
                         self.status = node.status
                         if previous is None or previous != self.current_child:
@@ -455,8 +468,11 @@ class Selector(Composite):
         Args:
             new_status : the composite is transitioning to this new status
         """
-        self.logger.debug(f"{self.__class__.__name__}.stop()[{self.status}->{new_status}]")
+        self.logger.debug(
+            f"{self.__class__.__name__}.stop()[{self.status}->{new_status}]"
+        )
         Composite.stop(self, new_status)
+
 
 ##############################################################################
 # Sequence
@@ -501,7 +517,7 @@ class Sequence(Composite):
         self,
         name: str,
         memory: bool,
-        children: typing.Optional[typing.List[behaviour.Behaviour]] = None
+        children: typing.Optional[typing.List[behaviour.Behaviour]] = None,
     ):
         super(Sequence, self).__init__(name, children)
         self.memory = memory
@@ -570,7 +586,9 @@ class Sequence(Composite):
         Args:
             new_status : the composite is transitioning to this new status
         """
-        self.logger.debug(f"{self.__class__.__name__}.stop()[{self.status}->{new_status}]")
+        self.logger.debug(
+            f"{self.__class__.__name__}.stop()[{self.status}->{new_status}]"
+        )
         Composite.stop(self, new_status)
 
 
@@ -625,11 +643,12 @@ class Parallel(Composite):
        * :ref:`Context Switching Demo <py-trees-demo-context-switching-program>`
     """
 
-    def __init__(self,
-                 name: str,
-                 policy: common.ParallelPolicy.Base,
-                 children: typing.Optional[typing.List[behaviour.Behaviour]] = None
-                 ):
+    def __init__(
+        self,
+        name: str,
+        policy: common.ParallelPolicy.Base,
+        children: typing.Optional[typing.List[behaviour.Behaviour]] = None,
+    ):
         """
         Initialise the behaviour with name, policy and a list of children.
 
@@ -699,7 +718,11 @@ class Parallel(Composite):
         new_status = common.Status.RUNNING
         self.current_child = self.children[-1]
         try:
-            failed_child = next(child for child in self.children if child.status == common.Status.FAILURE)
+            failed_child = next(
+                child
+                for child in self.children
+                if child.status == common.Status.FAILURE
+            )
             self.current_child = failed_child
             new_status = common.Status.FAILURE
         except StopIteration:
@@ -708,12 +731,18 @@ class Parallel(Composite):
                     new_status = common.Status.SUCCESS
                     self.current_child = self.children[-1]
             elif type(self.policy) is common.ParallelPolicy.SuccessOnOne:
-                successful = [child for child in self.children if child.status == common.Status.SUCCESS]
+                successful = [
+                    child
+                    for child in self.children
+                    if child.status == common.Status.SUCCESS
+                ]
                 if successful:
                     new_status = common.Status.SUCCESS
                     self.current_child = successful[-1]
             elif type(self.policy) is common.ParallelPolicy.SuccessOnSelected:
-                if all([c.status == common.Status.SUCCESS for c in self.policy.children]):
+                if all(
+                    [c.status == common.Status.SUCCESS for c in self.policy.children]
+                ):
                     new_status = common.Status.SUCCESS
                     self.current_child = self.policy.children[-1]
             else:
@@ -737,7 +766,9 @@ class Parallel(Composite):
         Args:
             new_status : the composite is transitioning to this new status
         """
-        self.logger.debug(f"{self.__class__.__name__}.stop()[{self.status}->{new_status}]")
+        self.logger.debug(
+            f"{self.__class__.__name__}.stop()[{self.status}->{new_status}]"
+        )
 
         # clean up dangling (running) children
         for child in self.children:
@@ -760,14 +791,23 @@ class Parallel(Composite):
         """
         if type(self.policy) is common.ParallelPolicy.SuccessOnSelected:
             if not self.policy.children:
-                error_message = ("policy SuccessOnSelected requires a non-empty "
-                                 "selection of children [{}]".format(self.name))
+                error_message = (
+                    "policy SuccessOnSelected requires a non-empty "
+                    "selection of children [{}]".format(self.name)
+                )
                 self.logger.error(error_message)
                 raise RuntimeError(error_message)
-            missing_children_names = [child.name for child in self.policy.children if child not in self.children]
+            missing_children_names = [
+                child.name
+                for child in self.policy.children
+                if child not in self.children
+            ]
 
             if missing_children_names:
-                error_message = ("policy SuccessOnSelected has selected behaviours that are "
-                                 "not children of this parallel {}[{}]""".format(missing_children_names, self.name))
+                error_message = (
+                    "policy SuccessOnSelected has selected behaviours that are "
+                    "not children of this parallel {}[{}]"
+                    "".format(missing_children_names, self.name)
+                )
                 self.logger.error(error_message)
                 raise RuntimeError(error_message)

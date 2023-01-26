@@ -8,11 +8,10 @@
 # Imports
 ##############################################################################
 
-import pytest
-
 import py_trees
-import py_trees.tests
 import py_trees.console as console
+import py_trees.tests
+import pytest
 
 ##############################################################################
 # Logging Level
@@ -30,12 +29,13 @@ def test_timer_invalid_duration() -> None:
     console.banner("Timer Exceptions - Invalid Duration")
     with pytest.raises(TypeError) as context:  # if raised, context survives
         # intentional error -> silence mypy
-        unused_timer = py_trees.timers.Timer(
-            name="Timer",
-            duration="invalid_type"  # type: ignore[arg-type]
+        unused_timer = py_trees.timers.Timer(  # noqa: F841 [unused]
+            name="Timer", duration="invalid_type"  # type: ignore[arg-type]
         )
         py_trees.tests.print_assert_details("TypeError raised", "raised", "not raised")
     py_trees.tests.print_assert_details("TypeError raised", "yes", "yes")
     assert "TypeError" == context.typename
-    py_trees.tests.print_assert_details("  substring match", "duration", f"{context.value}")
+    py_trees.tests.print_assert_details(
+        "  substring match", "duration", f"{context.value}"
+    )
     assert "duration" in str(context.value)

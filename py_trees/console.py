@@ -56,7 +56,7 @@ def has_unicode(encoding: str = sys.stdout.encoding) -> bool:
         true if capable, false otherwise
     """
     try:
-        u'\u26A1'.encode(encoding)
+        "\u26A1".encode(encoding)
     except TypeError:
         # if sys.stdout.encoding is not available, it is None
         # this will occur if you run nosetests3 or pytest-3 without -s
@@ -67,9 +67,7 @@ def has_unicode(encoding: str = sys.stdout.encoding) -> bool:
 
 
 def define_symbol_or_fallback(
-    original: str,
-    fallback: str,
-    encoding: str = sys.stdout.encoding
+    original: str, fallback: str, encoding: str = sys.stdout.encoding
 ) -> str:
     """
     Go unicode, or fallback to ascii.
@@ -93,16 +91,16 @@ def define_symbol_or_fallback(
     return original
 
 
-circle = u'\u26ac'
-lightning_bolt = u'\u26A1'
-double_vertical_line = u'\u2016'
-check_mark = u'\u2713'
-multiplication_x = u'\u2715'
-left_arrow = u'\u2190'  # u'\u2190'
-right_arrow = u'\u2192'
-left_right_arrow = u'\u2194'
-forbidden_circle = u'\u29B8'
-circled_m = u'\u24c2'
+circle = "\u26ac"
+lightning_bolt = "\u26A1"
+double_vertical_line = "\u2016"
+check_mark = "\u2713"
+multiplication_x = "\u2715"
+left_arrow = "\u2190"  # u'\u2190'
+right_arrow = "\u2192"
+left_right_arrow = "\u2194"
+forbidden_circle = "\u29B8"
+circled_m = "\u24c2"
 
 ##############################################################################
 # Keypress
@@ -123,10 +121,12 @@ def read_single_keypress() -> str:
     Raises:
         KeyboardInterrupt: if CTRL-C was pressed (keycode 0x03)
     """
+
     def read_single_keypress_unix() -> str:
         """For Unix case, where fcntl, termios is available."""
         import fcntl
         import termios
+
         fd = sys.stdin.fileno()
         # save old state
         flags_save = fcntl.fcntl(fd, fcntl.F_GETFL)
@@ -134,17 +134,29 @@ def read_single_keypress() -> str:
         # make raw - the way to do this comes from the termios(3) man page.
         attrs = list(attrs_save)  # copy the stored version to update
         # iflag
-        attrs[0] &= ~(termios.IGNBRK | termios.BRKINT | termios.PARMRK
-                      | termios.ISTRIP | termios.INLCR | termios. IGNCR
-                      | termios.ICRNL | termios.IXON)
+        attrs[0] &= ~(
+            termios.IGNBRK
+            | termios.BRKINT
+            | termios.PARMRK
+            | termios.ISTRIP
+            | termios.INLCR
+            | termios.IGNCR
+            | termios.ICRNL
+            | termios.IXON
+        )
         # oflag
         attrs[1] &= ~termios.OPOST
         # cflag
-        attrs[2] &= ~(termios.CSIZE | termios. PARENB)
+        attrs[2] &= ~(termios.CSIZE | termios.PARENB)
         attrs[2] |= termios.CS8
         # lflag
-        attrs[3] &= ~(termios.ECHONL | termios.ECHO | termios.ICANON
-                      | termios.ISIG | termios.IEXTEN)
+        attrs[3] &= ~(
+            termios.ECHONL
+            | termios.ECHO
+            | termios.ICANON
+            | termios.ISIG
+            | termios.IEXTEN
+        )
         termios.tcsetattr(fd, termios.TCSANOW, attrs)
         # turn off non-blocking
         fcntl.fcntl(fd, fcntl.F_SETFL, flags_save & ~os.O_NONBLOCK)
@@ -160,14 +172,15 @@ def read_single_keypress() -> str:
         return ret
 
     def read_single_keypress_windows() -> str:
-        """Implement keypress functionality for windows, which can't use fcntl and termios.
-        """
+        """Implement keypress functionality for windows, which can't use fcntl and termios."""
         import msvcrt  # noqa
+
         # read a single keystroke
         ret = sys.stdin.read(1)
         if ord(ret) == 3:  # CTRL-C
             raise KeyboardInterrupt("Ctrl-c")
         return ret
+
     try:
         return read_single_keypress_unix()
     except ImportError as e_unix:
@@ -176,10 +189,10 @@ def read_single_keypress() -> str:
         except ImportError as e_windows:
             raise ImportError(
                 "Neither unix nor windows implementations supported [{}][{}]".format(
-                    str(e_unix),
-                    str(e_windows)
+                    str(e_unix), str(e_windows)
                 )
             )
+
 
 ##############################################################################
 # Methods
@@ -187,18 +200,17 @@ def read_single_keypress() -> str:
 
 
 def console_has_colours() -> bool:
-    """
-    Detect if the console (stdout) has colourising capability.
-    """
+    """Detect if the console (stdout) has colourising capability."""
     if os.environ.get("PY_TREES_DISABLE_COLORS"):
         return False
     # From django.core.management.color.supports_color
     #   https://github.com/django/django/blob/master/django/core/management/color.py
     plat = sys.platform
-    supported_platform = plat != 'Pocket PC' and (plat != 'win32'
-                                                  or 'ANSICON' in os.environ)
+    supported_platform = plat != "Pocket PC" and (
+        plat != "win32" or "ANSICON" in os.environ
+    )
     # isatty is not always implemented, #6223.
-    is_a_tty = hasattr(sys.stdout, 'isatty') and sys.stdout.isatty()
+    is_a_tty = hasattr(sys.stdout, "isatty") and sys.stdout.isatty()
     if not supported_platform or not is_a_tty:
         return False
     return True
@@ -211,13 +223,23 @@ has_colours = console_has_colours()
 if has_colours:
     # reset = "\x1b[0;0m"
     reset = "\x1b[0m"
-    bold = "\x1b[%sm" % '1'
-    dim = "\x1b[%sm" % '2'
-    underlined = "\x1b[%sm" % '4'
-    blink = "\x1b[%sm" % '5'
-    black, red, green, yellow, blue, magenta, cyan, white = ["\x1b[%sm" % str(i) for i in range(30, 38)]
-    bold_black, bold_red, bold_green, bold_yellow, bold_blue, bold_magenta, bold_cyan, bold_white = \
-        ["\x1b[%sm" % ('1;' + str(i)) for i in range(30, 38)]
+    bold = "\x1b[%sm" % "1"
+    dim = "\x1b[%sm" % "2"
+    underlined = "\x1b[%sm" % "4"
+    blink = "\x1b[%sm" % "5"
+    black, red, green, yellow, blue, magenta, cyan, white = [
+        "\x1b[%sm" % str(i) for i in range(30, 38)
+    ]
+    (
+        bold_black,
+        bold_red,
+        bold_green,
+        bold_yellow,
+        bold_blue,
+        bold_magenta,
+        bold_cyan,
+        bold_white,
+    ) = ["\x1b[%sm" % ("1;" + str(i)) for i in range(30, 38)]
 else:
     reset = ""
     bold = ""
@@ -225,17 +247,49 @@ else:
     underlined = ""
     blink = ""
     black, red, green, yellow, blue, magenta, cyan, white = ["" for i in range(30, 38)]
-    bold_black, bold_red, bold_green, bold_yellow, bold_blue, bold_magenta, bold_cyan, bold_white = \
-        ["" for i in range(30, 38)]
+    (
+        bold_black,
+        bold_red,
+        bold_green,
+        bold_yellow,
+        bold_blue,
+        bold_magenta,
+        bold_cyan,
+        bold_white,
+    ) = ["" for i in range(30, 38)]
 
-colours = [bold, dim, underlined, blink,
-           black, red, green, yellow, blue, magenta, cyan, white,
-           bold_black, bold_red, bold_green, bold_yellow, bold_blue, bold_magenta, bold_cyan, bold_white
-           ]
+colours = [
+    bold,
+    dim,
+    underlined,
+    blink,
+    black,
+    red,
+    green,
+    yellow,
+    blue,
+    magenta,
+    cyan,
+    white,
+    bold_black,
+    bold_red,
+    bold_green,
+    bold_yellow,
+    bold_blue,
+    bold_magenta,
+    bold_cyan,
+    bold_white,
+]
 """List of all available colours."""
 
 
 def pretty_print(msg: str, colour: str = white) -> None:
+    """Pretty print a coloured message.
+
+    Args:
+       msg: text to print
+       colour: ascii colour to use
+    """
     if has_colours:
         seq = colour + msg + reset
         sys.stdout.write(seq)
@@ -244,6 +298,12 @@ def pretty_print(msg: str, colour: str = white) -> None:
 
 
 def pretty_println(msg: str, colour: str = white) -> None:
+    """Pretty print a coloured message with a newline.
+
+    Args:
+       msg: text to print
+       colour: ascii colour to use
+    """
     if has_colours:
         seq = colour + msg + reset
         sys.stdout.write(seq)
@@ -258,24 +318,49 @@ def pretty_println(msg: str, colour: str = white) -> None:
 
 
 def banner(msg: str) -> None:
+    """Print a banner with centred text to stdout.
+
+    Args:
+        msg: text to centre in the banner
+    """
     print(green + "\n" + 80 * "*" + reset)
     print(green + "* " + bold_white + msg.center(80) + reset)
     print(green + 80 * "*" + "\n" + reset)
 
 
 def debug(msg: str) -> None:
+    """Print a debug message.
+
+    Args:
+       str: message to print
+    """
     print(green + msg + reset)
 
 
 def warning(msg: str) -> None:
+    """Print a warning message.
+
+    Args:
+       str: message to print
+    """
     print(yellow + msg + reset)
 
 
 def info(msg: str) -> None:
+    """Print an info message.
+
+    Args:
+       str: message to print
+    """
     print(msg)
 
 
 def error(msg: str) -> None:
+    """Print an error message.
+
+    Args:
+       str: message to print
+    """
     print(red + msg + reset)
 
 
@@ -333,8 +418,7 @@ def logfatal(message: str) -> None:
 # Main
 ##############################################################################
 
-if __name__ == '__main__':
-
+if __name__ == "__main__":
     # To test without unicode, configure a non utf-8 locale:
     #
     #   $ cat /usr/share/i18n/SUPPORTED | grep en_US

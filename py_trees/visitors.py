@@ -26,10 +26,7 @@ runs its own method on the behaviour to do as it wishes - logging, introspecting
 import typing
 import uuid
 
-from . import behaviour
-from . import blackboard
-from . import common
-from . import display
+from . import behaviour, blackboard, common, display
 
 ##############################################################################
 # Visitors
@@ -54,15 +51,11 @@ class VisitorBase(object):
         self.full: bool = full
 
     def initialise(self) -> None:
-        """
-        Override if any resetting of variables needs to be performed between ticks (i.e. visitations).
-        """
+        """Override if any resetting of variables needs to be performed between ticks (i.e. visitations)."""
         pass
 
     def finalise(self) -> None:
-        """
-        Override if any work needs to be performed after ticks (i.e. showing data).
-        """
+        """Override if any work needs to be performed after ticks (i.e. showing data)."""
         pass
 
     def run(self, behaviour: behaviour.Behaviour) -> None:
@@ -90,14 +83,25 @@ class DebugVisitor(VisitorBase):
         super(DebugVisitor, self).__init__(full=False)
 
     def run(self, behaviour: behaviour.Behaviour) -> None:
+        """
+        Log behaviour information on the debug channel.
+
+        Args:
+            behaviour: behaviour being visited.
+        """
         if behaviour.feedback_message:
-            behaviour.logger.debug("%s.run() [%s][%s]" % (
-                self.__class__.__name__,
-                behaviour.feedback_message,
-                behaviour.status
-            ))
+            behaviour.logger.debug(
+                "%s.run() [%s][%s]"
+                % (
+                    self.__class__.__name__,
+                    behaviour.feedback_message,
+                    behaviour.status,
+                )
+            )
         else:
-            behaviour.logger.debug("%s.run() [%s]" % (self.__class__.__name__, behaviour.status))
+            behaviour.logger.debug(
+                "%s.run() [%s]" % (self.__class__.__name__, behaviour.status)
+            )
 
 
 class SnapshotVisitor(VisitorBase):
@@ -163,8 +167,9 @@ class SnapshotVisitor(VisitorBase):
         # blackboards
         for b in behaviour.blackboards:
             self.visited_blackboard_client_ids.add(b.id())
-            self.visited_blackboard_keys = \
+            self.visited_blackboard_keys = (
                 self.visited_blackboard_keys | b.read | b.write | b.exclusive
+            )
 
 
 class DisplaySnapshotVisitor(SnapshotVisitor):
@@ -185,7 +190,7 @@ class DisplaySnapshotVisitor(SnapshotVisitor):
         self,
         display_only_visited_behaviours: bool = False,
         display_blackboard: bool = False,
-        display_activity_stream: bool = False
+        display_activity_stream: bool = False,
     ):
         super().__init__()
         self.display_only_visited_behaviours = display_only_visited_behaviours
@@ -195,6 +200,7 @@ class DisplaySnapshotVisitor(SnapshotVisitor):
             blackboard.Blackboard.enable_activity_stream()
 
     def initialise(self) -> None:
+        """Reset and initialise all variables."""
         self.root: typing.Optional[behaviour.Behaviour] = None
         super().initialise()
         if self.display_activity_stream:
@@ -202,18 +208,26 @@ class DisplaySnapshotVisitor(SnapshotVisitor):
                 blackboard.Blackboard.activity_stream.clear()
 
     def run(self, behaviour: behaviour.Behaviour) -> None:
+        """
+        Track the root of the tree and run :class:`~py_trees.visitors.SnapshotVisitor`.
+
+        Args:
+            behaviour: behaviour being visited.
+        """
         self.root = behaviour  # last behaviour visited will always be the root
         super().run(behaviour)
 
     def finalise(self) -> None:
+        """Print a summary on stdout after all behaviours have been visited."""
         if self.root is not None:
             print(
-                "\n" + display.unicode_tree(
+                "\n"
+                + display.unicode_tree(
                     root=self.root,
                     show_only_visited=self.display_only_visited_behaviours,
                     show_status=False,
                     visited=self.visited,
-                    previously_visited=self.previously_visited
+                    previously_visited=self.previously_visited,
                 )
             )
         if self.display_blackboard:

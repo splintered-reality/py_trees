@@ -47,7 +47,6 @@ flake8 = ">=5.0"                  # combines pyflakes (errors) & pycodestyle (pe
 flake8-docstrings = ">=1.6"       # docstrings (integrates pydocstyle)
 darglint = ">=1.8"                # checks docstrings match implementation
 # optional, these go above and beyond
-flake8-bandit = ">=4.1"           # secure code
 flake8-bugbear = ">=22.9"         # bugs & design not strictly pep8
 
 [tool.poetry.group.docs.dependencies]

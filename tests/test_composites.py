@@ -8,11 +8,11 @@
 # Imports
 ##############################################################################
 
-import pytest
 import typing
 
 import py_trees
 import py_trees.console as console
+import pytest
 
 ##############################################################################
 # Logging Level
@@ -26,21 +26,26 @@ logger = py_trees.logging.Logger("Tests")
 ##############################################################################
 
 
-def assert_banner()  -> None:
+def assert_banner() -> None:
     print(console.green + "----- Asserts -----" + console.reset)
+
 
 AssertResultType = typing.TypeVar("AssertResultType")
 
+
 def assert_details(
-    text: str,
-    expected: AssertResultType,
-    result: AssertResultType
+    text: str, expected: AssertResultType, result: AssertResultType
 ) -> None:
-    print(console.green + text +
-          "." * (70 - len(text)) +
-          console.cyan + "{}".format(expected) +
-          console.yellow + " [{}]".format(result) +
-          console.reset)
+    print(
+        console.green
+        + text
+        + "." * (70 - len(text))
+        + console.cyan
+        + "{}".format(expected)
+        + console.yellow
+        + " [{}]".format(result)
+        + console.reset
+    )
 
 
 ##############################################################################
@@ -94,7 +99,9 @@ def test_composite_add_child_exception() -> None:
         py_trees.tests.print_assert_details("TypeError raised", "raised", "not raised")
     py_trees.tests.print_assert_details("TypeError raised", "yes", "yes")
     assert "TypeError" == context.typename
-    py_trees.tests.print_assert_details("Substring match", "behaviours", f"{context.value}")
+    py_trees.tests.print_assert_details(
+        "Substring match", "behaviours", f"{context.value}"
+    )
     assert "behaviours" in str(context.value)
 
 
@@ -107,7 +114,9 @@ def test_protect_against_multiple_parents() -> None:
         # Adding a child to two parents - expecting a RuntimeError
         for parent in [first_parent, second_parent]:
             parent.add_child(child)
-        py_trees.tests.print_assert_details("RuntimeError raised", "raised", "not raised")
+        py_trees.tests.print_assert_details(
+            "RuntimeError raised", "raised", "not raised"
+        )
     py_trees.tests.print_assert_details("RuntimeError raised", "yes", "yes")
     assert "RuntimeError" == context.typename
     py_trees.tests.print_assert_details("Substring match", "parent", f"{context.value}")
@@ -126,5 +135,7 @@ def test_remove_nonexistant_child() -> None:
         py_trees.tests.print_assert_details("IndexError raised", "raised", "not raised")
     py_trees.tests.print_assert_details("IndexError raised", "yes", "yes")
     assert "IndexError" == context.typename
-    py_trees.tests.print_assert_details("Substring match", "not found", f"{context.value}")
+    py_trees.tests.print_assert_details(
+        "Substring match", "not found", f"{context.value}"
+    )
     assert "not found" in str(context.value)

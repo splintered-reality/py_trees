@@ -37,6 +37,12 @@ import py_trees.console as console
 
 
 def description() -> str:
+    """
+    Print description and usage information about the program.
+
+    Returns:
+       the program description string
+    """
     content = "Demonstrates usage of blackbord remappings.\n"
     content += "\n"
     content += "Demonstration is via an exemplar behaviour making use of remappings..\n"
@@ -56,17 +62,34 @@ def description() -> str:
 
 
 def epilog() -> typing.Optional[str]:
+    """
+    Print a noodly epilog for --help.
+
+    Returns:
+       the noodly message
+    """
     if py_trees.console.has_colours:
-        return console.cyan + "And his noodly appendage reached forth to tickle the blessed...\n" + console.reset
+        return (
+            console.cyan
+            + "And his noodly appendage reached forth to tickle the blessed...\n"
+            + console.reset
+        )
     else:
         return None
 
 
 def command_line_argument_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description=description(),
-                                     epilog=epilog(),
-                                     formatter_class=argparse.RawDescriptionHelpFormatter,
-                                     )
+    """
+    Process command line arguments.
+
+    Returns:
+        the argument parser
+    """
+    parser = argparse.ArgumentParser(
+        description=description(),
+        epilog=epilog(),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
     return parser
 
 
@@ -74,13 +97,20 @@ class Remap(py_trees.behaviour.Behaviour):
     """Custom writer that submits a more complicated variable to the blackboard."""
 
     def __init__(self, name: str, remap_to: typing.Dict[str, str]):
+        """
+        Set up the blackboard and remap variables.
+
+        Args:
+            name: behaviour name
+            remap_to: remappings (from variable name to variable name)
+        """
         super().__init__(name=name)
         self.logger.debug("%s.__init__()" % (self.__class__.__name__))
         self.blackboard = self.attach_blackboard_client()
         self.blackboard.register_key(
             key="/foo/bar/wow",
             access=py_trees.common.Access.WRITE,
-            remap_to=remap_to["/foo/bar/wow"]
+            remap_to=remap_to["/foo/bar/wow"],
         )
 
     def update(self) -> py_trees.common.Status:
@@ -93,6 +123,7 @@ class Remap(py_trees.behaviour.Behaviour):
 
         return py_trees.common.Status.SUCCESS
 
+
 ##############################################################################
 # Main
 ##############################################################################
@@ -100,7 +131,9 @@ class Remap(py_trees.behaviour.Behaviour):
 
 def main() -> None:
     """Entry point for the demo script."""
-    _ = command_line_argument_parser().parse_args()  # configuration only, no arg processing
+    _ = (
+        command_line_argument_parser().parse_args()
+    )  # configuration only, no arg processing
     print(description())
     py_trees.logging.level = py_trees.logging.Level.DEBUG
     py_trees.blackboard.Blackboard.enable_activity_stream(maximum_size=100)

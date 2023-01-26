@@ -38,12 +38,22 @@ import py_trees.console as console
 
 
 def description() -> str:
+    """
+    Print description and usage information about the program.
+
+    Returns:
+       the program description string
+    """
     content = "Demonstrates the characteristics of a typical 'action' behaviour.\n"
     content += "\n"
     content += "* Mocks an external process and connects to it in the setup() method\n"
-    content += "* Kickstarts new goals with the external process in the initialise() method\n"
+    content += (
+        "* Kickstarts new goals with the external process in the initialise() method\n"
+    )
     content += "* Monitors the ongoing goal status in the update() method\n"
-    content += "* Determines RUNNING/SUCCESS pending feedback from the external process\n"
+    content += (
+        "* Determines RUNNING/SUCCESS pending feedback from the external process\n"
+    )
 
     if py_trees.console.has_colours:
         banner_line = console.green + "*" * 79 + "\n" + console.reset
@@ -60,25 +70,46 @@ def description() -> str:
 
 
 def epilog() -> typing.Optional[str]:
+    """
+    Print a noodly epilog for --help.
+
+    Returns:
+       the noodly message
+    """
     if py_trees.console.has_colours:
-        return console.cyan + "And his noodly appendage reached forth to tickle the blessed...\n" + console.reset
+        return (
+            console.cyan
+            + "And his noodly appendage reached forth to tickle the blessed...\n"
+            + console.reset
+        )
     else:
         return None
 
 
 def command_line_argument_parser() -> argparse.ArgumentParser:
-    return argparse.ArgumentParser(description=description(),
-                                   epilog=epilog(),
-                                   formatter_class=argparse.RawDescriptionHelpFormatter,
-                                   )
+    """
+    Process command line arguments.
+
+    Returns:
+        the argument parser
+    """
+    return argparse.ArgumentParser(
+        description=description(),
+        epilog=epilog(),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
 
 
 def planning(pipe_connection: multiprocessing.connection.Connection) -> None:
-    """Emulate a (potentially) long running external process."""
+    """Emulate a (potentially) long running external process.
+
+    Args:
+        pipe_connection: connection to the planning process
+    """
     idle = True
     percentage_complete = 0
     try:
-        while (True):
+        while True:
             if pipe_connection.poll():
                 pipe_connection.recv()
                 percentage_complete = 0
@@ -119,16 +150,22 @@ class Action(py_trees.behaviour.Behaviour):
         Ordinarily this process will be already running. In this case,
         setup is usually just responsible for verifying it exists.
         """
-        self.logger.debug("%s.setup()->connections to an external process" % (self.__class__.__name__))
+        self.logger.debug(
+            "%s.setup()->connections to an external process" % (self.__class__.__name__)
+        )
         self.parent_connection, self.child_connection = multiprocessing.Pipe()
-        self.planning = multiprocessing.Process(target=planning, args=(self.child_connection,))
+        self.planning = multiprocessing.Process(
+            target=planning, args=(self.child_connection,)
+        )
         atexit.register(self.planning.terminate)
         self.planning.start()
 
     def initialise(self) -> None:
         """Reset a counter variable."""
-        self.logger.debug("%s.initialise()->sending new goal" % (self.__class__.__name__))
-        self.parent_connection.send(['new goal'])
+        self.logger.debug(
+            "%s.initialise()->sending new goal" % (self.__class__.__name__)
+        )
+        self.parent_connection.send(["new goal"])
         self.percentage_completion = 0
 
     def update(self) -> py_trees.common.Status:
@@ -141,36 +178,34 @@ class Action(py_trees.behaviour.Behaviour):
         if new_status == py_trees.common.Status.SUCCESS:
             self.feedback_message = "Processing finished"
             self.logger.debug(
-                "%s.update()[%s->%s][%s]" % (
+                "%s.update()[%s->%s][%s]"
+                % (
                     self.__class__.__name__,
-                    self.status, new_status,
-                    self.feedback_message
+                    self.status,
+                    new_status,
+                    self.feedback_message,
                 )
             )
         else:
             self.feedback_message = "{0}%".format(self.percentage_completion)
             self.logger.debug(
-                "%s.update()[%s][%s]" % (
-                    self.__class__.__name__,
-                    self.status,
-                    self.feedback_message
-                )
+                "%s.update()[%s][%s]"
+                % (self.__class__.__name__, self.status, self.feedback_message)
             )
         return new_status
 
     def terminate(self, new_status: py_trees.common.Status) -> None:
         """Nothing to clean up in this example."""
         self.logger.debug(
-            "%s.terminate()[%s->%s]" % (
-                self.__class__.__name__,
-                self.status, new_status
-            )
+            "%s.terminate()[%s->%s]"
+            % (self.__class__.__name__, self.status, new_status)
         )
 
 
 ##############################################################################
 # Main
 ##############################################################################
+
 
 def main() -> None:
     """Entry point for the demo script."""

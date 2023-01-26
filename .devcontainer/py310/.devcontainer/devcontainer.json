@@ -14,7 +14,9 @@
     "extensions": [
         "bierner.github-markdown-preview",
         "bungcip.better-toml",
-        "ms-python.python"
+        "ms-python.python",
+        "omnilib.ufmt"
+
     ],
     "containerEnv": {
         "POETRY_HTTP_BASIC_PYPI_USERNAME": "${localEnv:POETRY_HTTP_BASIC_PYPI_USERNAME}",

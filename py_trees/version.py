@@ -6,9 +6,7 @@
 # Documentation
 ##############################################################################
 
-"""
-Package version number.
-"""
+"""Package version number."""
 
 ##############################################################################
 # Version
@@ -16,4 +14,4 @@ Package version number.
 
 # When changing, Also update setup.py and package.xml
 # TODO: use pkg_resources to fetch the version from setup.py
-__version__ = '2.2.0'
+__version__ = "2.2.0"

@@ -32,7 +32,7 @@ def test_single_behaviour() -> None:
     print("\nAll status' except INVALID are permissable.")
     print("\n--------- Assertions ---------\n")
     print("failure.tip()[before tick]......None [{}]".format(failure.tip()))
-    assert(failure.tip() is None)
+    assert failure.tip() is None
     print("")
     failure.tick_once()
     running.tick_once()
@@ -45,11 +45,11 @@ def test_single_behaviour() -> None:
     assert success_tip is not None
     print("")
     print("failure.tip()...................Failure [{}]".format(failure_tip.name))
-    assert(failure.tip() is failure)
+    assert failure.tip() is failure
     print("running.tip()...................Running [{}]".format(running_tip.name))
-    assert(running.tip() is running)
+    assert running.tip() is running
     print("success.tip()...................Success [{}]".format(success_tip.name))
-    assert(success.tip() is success)
+    assert success.tip() is success
 
 
 def test_sequence() -> None:
@@ -63,7 +63,7 @@ def test_sequence() -> None:
     tip = root.tip()
     assert tip is not None
     print("root.tip()...................running [{}]".format(tip))
-    assert(tip is running)
+    assert tip is running
 
     root = py_trees.composites.Sequence(name="Root", memory=True)
     success_one = py_trees.behaviours.Success(name="Success 1")
@@ -148,8 +148,8 @@ def test_selector() -> None:
     root = py_trees.composites.Selector(name="Root", memory=False)
     fail_then_run = py_trees.behaviours.StatusQueue(
         name="Fail Then Run",
-        queue = [py_trees.common.Status.FAILURE],
-        eventually=py_trees.common.Status.RUNNING
+        queue=[py_trees.common.Status.FAILURE],
+        eventually=py_trees.common.Status.RUNNING,
     )
     running = py_trees.behaviours.Running(name="Running")
     root.add_children([fail_then_run, running])
@@ -189,10 +189,7 @@ def test_decorator() -> None:
     assert tip is root
 
     child = py_trees.behaviours.Success(name="Child")
-    root = py_trees.decorators.RunningIsSuccess(
-        name="Decorator",
-        child=child
-    )
+    root = py_trees.decorators.RunningIsSuccess(name="Decorator", child=child)
     py_trees.tests.tick_tree(root, 1, 1, print_snapshot=True)
     tip = root.tip()
     assert tip is not None
@@ -211,7 +208,9 @@ def test_decorator() -> None:
 
 def test_parallel() -> None:
     console.banner("Parallel")
-    root = py_trees.composites.Parallel(name="Root", policy=py_trees.common.ParallelPolicy.SuccessOnAll())
+    root = py_trees.composites.Parallel(
+        name="Root", policy=py_trees.common.ParallelPolicy.SuccessOnAll()
+    )
     failure = py_trees.behaviours.Failure(name="Failure")
     running = py_trees.behaviours.Running(name="Running")
     root.add_children([failure, running])
@@ -223,7 +222,9 @@ def test_parallel() -> None:
     print("root.tip()...................failure [{}]".format(tip.name))
     assert tip is failure
 
-    root = py_trees.composites.Parallel(name="Root", policy=py_trees.common.ParallelPolicy.SuccessOnAll())
+    root = py_trees.composites.Parallel(
+        name="Root", policy=py_trees.common.ParallelPolicy.SuccessOnAll()
+    )
     failure = py_trees.behaviours.Failure(name="Failure")
     success = py_trees.behaviours.Success(name="Success")
     root.add_children([failure, success])
@@ -234,7 +235,9 @@ def test_parallel() -> None:
     print("root.tip()...................failure [{}]".format(tip.name))
     assert tip is failure
 
-    root = py_trees.composites.Parallel(name="Root", policy=py_trees.common.ParallelPolicy.SuccessOnOne())
+    root = py_trees.composites.Parallel(
+        name="Root", policy=py_trees.common.ParallelPolicy.SuccessOnOne()
+    )
     failure = py_trees.behaviours.Failure(name="Failure")
     success = py_trees.behaviours.Success(name="Success")
     root.add_children([failure, success])
@@ -246,7 +249,9 @@ def test_parallel() -> None:
     print("root.tip()...................failure [{}]".format(tip.name))
     assert tip is failure
 
-    root = py_trees.composites.Parallel(name="Root", policy=py_trees.common.ParallelPolicy.SuccessOnAll())
+    root = py_trees.composites.Parallel(
+        name="Root", policy=py_trees.common.ParallelPolicy.SuccessOnAll()
+    )
     success = py_trees.behaviours.Success(name="Success")
     running = py_trees.behaviours.Running(name="Running")
     root.add_children([success, running])
@@ -258,7 +263,9 @@ def test_parallel() -> None:
     print("root.tip()...................running [{}]".format(tip.name))
     assert tip is running
 
-    root = py_trees.composites.Parallel(name="Root", policy=py_trees.common.ParallelPolicy.SuccessOnOne())
+    root = py_trees.composites.Parallel(
+        name="Root", policy=py_trees.common.ParallelPolicy.SuccessOnOne()
+    )
     success = py_trees.behaviours.Success(name="Success")
     running = py_trees.behaviours.Running(name="Running")
     root.add_children([success, running])
@@ -270,7 +277,9 @@ def test_parallel() -> None:
     print("root.tip()...................success [{}]".format(tip.name))
     assert tip is success
 
-    root = py_trees.composites.Parallel(name="Root", policy=py_trees.common.ParallelPolicy.SuccessOnAll())
+    root = py_trees.composites.Parallel(
+        name="Root", policy=py_trees.common.ParallelPolicy.SuccessOnAll()
+    )
     running = py_trees.behaviours.Running(name="Running 1")
     running_two = py_trees.behaviours.Running(name="Running 2")
     root.add_children([running, running_two])

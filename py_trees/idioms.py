@@ -7,9 +7,7 @@
 # Documentation
 ##############################################################################
 
-"""
-A library of subtree creators that build common, but complex patterns of behaviours.
-"""
+"""Creators of common subtree patterns."""
 
 ##############################################################################
 # Imports
@@ -18,12 +16,7 @@ A library of subtree creators that build common, but complex patterns of behavio
 import operator
 import typing
 
-from . import behaviour
-from . import behaviours
-from . import blackboard
-from . import common
-from . import composites
-from . import decorators
+from . import behaviour, behaviours, blackboard, common, composites, decorators
 
 ##############################################################################
 # Creational Methods
@@ -31,8 +24,7 @@ from . import decorators
 
 
 def pick_up_where_you_left_off(
-    name: str,
-    tasks: typing.List[behaviour.BehaviourSubClass]
+    name: str, tasks: typing.List[behaviour.BehaviourSubClass]
 ) -> behaviour.Behaviour:
     """
     Create an idiom that enables a sequence of tasks to pick up where it left off.
@@ -80,15 +72,15 @@ def pick_up_where_you_left_off(
             check=common.ComparisonExpression(
                 variable=task.name.lower().replace(" ", "_") + "_done",
                 value=True,
-                operator=operator.eq
-            )
+                operator=operator.eq,
+            ),
         )
         sequence = composites.Sequence(name="Worker", memory=True)
         mark_task_done = behaviours.SetBlackboardVariable(
             name="Mark\n" + task.name.lower().replace(" ", "_") + "_done",
             variable_name=task.name.lower().replace(" ", "_") + "_done",
             variable_value=True,
-            overwrite=True
+            overwrite=True,
         )
         sequence.add_children([task, mark_task_done])
         task_selector.add_children([task_guard, sequence])
@@ -96,7 +88,7 @@ def pick_up_where_you_left_off(
     for task in tasks:
         clear_mark_done = behaviours.UnsetBlackboardVariable(
             name="Clear\n" + task.name.lower().replace(" ", "_") + "_done",
-            key=task.name.lower().replace(" ", "_") + "_done"
+            key=task.name.lower().replace(" ", "_") + "_done",
         )
         root.add_child(clear_mark_done)
     return root
@@ -106,7 +98,7 @@ def either_or(
     conditions: typing.List[common.ComparisonExpression],
     subtrees: typing.List[behaviour.Behaviour],
     name: str = "Either Or",
-    namespace: typing.Optional[str] = None
+    namespace: typing.Optional[str] = None,
 ) -> behaviour.Behaviour:
     """
     Create an idiom with selector-like qualities, but no priority concerns.
@@ -164,31 +156,41 @@ def either_or(
     .. todo:: a version for which other subtrees can preempt (in an unprioritised manner) the active branch
     """
     if len(conditions) != len(subtrees):
-        raise ValueError("Must be the same number of conditions as subtrees [{} != {}]".format(
-            len(conditions), len(subtrees))
+        raise ValueError(
+            "Must be the same number of conditions as subtrees [{} != {}]".format(
+                len(conditions), len(subtrees)
+            )
         )
     root = composites.Sequence(name=name, memory=True)
-    configured_namespace: str = namespace if namespace is not None else \
-        blackboard.Blackboard.separator + name.lower().replace("-", "_").replace(" ", "_") + \
-        blackboard.Blackboard.separator + str(root.id).replace("-", "_").replace(" ", "_") + \
-        blackboard.Blackboard.separator + "conditions"
+    configured_namespace: str = (
+        namespace
+        if namespace is not None
+        else blackboard.Blackboard.separator
+        + name.lower().replace("-", "_").replace(" ", "_")
+        + blackboard.Blackboard.separator
+        + str(root.id).replace("-", "_").replace(" ", "_")
+        + blackboard.Blackboard.separator
+        + "conditions"
+    )
     xor = behaviours.CheckBlackboardVariableValues(
         name="XOR",
         checks=conditions,
         operator=operator.xor,
-        namespace=configured_namespace
+        namespace=configured_namespace,
     )
     chooser = composites.Selector(name="Chooser", memory=False)
     for counter in range(1, len(conditions) + 1):
-        sequence = composites.Sequence(name="Option {}".format(str(counter)), memory=True)
-        variable_name = configured_namespace + blackboard.Blackboard.separator + str(counter)
+        sequence = composites.Sequence(
+            name="Option {}".format(str(counter)), memory=True
+        )
+        variable_name = (
+            configured_namespace + blackboard.Blackboard.separator + str(counter)
+        )
         disabled = behaviours.CheckBlackboardVariableValue(
             name="Enabled?",
             check=common.ComparisonExpression(
-                variable=variable_name,
-                value=True,
-                operator=operator.eq
-            )
+                variable=variable_name, value=True, operator=operator.eq
+            ),
         )
         sequence.add_children([disabled, subtrees[counter - 1]])
         chooser.add_child(sequence)
@@ -200,7 +202,7 @@ def oneshot(
     behaviour: behaviour.Behaviour,
     name: str = "Oneshot",
     variable_name: str = "oneshot",
-    policy: common.OneShotPolicy = common.OneShotPolicy.ON_SUCCESSFUL_COMPLETION
+    policy: common.OneShotPolicy = common.OneShotPolicy.ON_SUCCESSFUL_COMPLETION,
 ) -> behaviour.Behaviour:
     """
     Ensure that a particular pattern is executed through to completion just once.
@@ -231,15 +233,14 @@ def oneshot(
     check_not_done = decorators.Inverter(
         name="Not Completed?",
         child=behaviours.CheckBlackboardVariableExists(
-            name="Completed?",
-            variable_name=variable_name
-        )
+            name="Completed?", variable_name=variable_name
+        ),
     )
     set_flag_on_success = behaviours.SetBlackboardVariable(
         name="Mark Done\n[SUCCESS]",
         variable_name=variable_name,
         variable_value=common.Status.SUCCESS,
-        overwrite=True
+        overwrite=True,
     )
     # If it's a sequence, don't double-nest it in a redundant manner
     if isinstance(behaviour, composites.Sequence):
@@ -259,22 +260,19 @@ def oneshot(
             name="Mark Done\n[FAILURE]",
             variable_name=variable_name,
             variable_value=common.Status.FAILURE,
-            overwrite=True
+            overwrite=True,
         )
         bookkeeping.add_children(
-            [set_flag_on_failure,
-             behaviours.Failure(name="Failure")
-             ])
+            [set_flag_on_failure, behaviours.Failure(name="Failure")]
+        )
         oneshot_handler.add_children([sequence, bookkeeping])
         oneshot_with_guard.add_child(oneshot_handler)
 
     oneshot_result = behaviours.CheckBlackboardVariableValue(
         name="Oneshot Result",
         check=common.ComparisonExpression(
-            variable=variable_name,
-            value=common.Status.SUCCESS,
-            operator=operator.eq
-        )
+            variable=variable_name, value=common.Status.SUCCESS, operator=operator.eq
+        ),
     )
     subtree_root.add_children([oneshot_with_guard, oneshot_result])
     return subtree_root

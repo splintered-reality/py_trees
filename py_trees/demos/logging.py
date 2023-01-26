@@ -40,6 +40,12 @@ import py_trees.console as console
 
 
 def description(root: py_trees.behaviour.Behaviour) -> str:
+    """
+    Print description and usage information about the program.
+
+    Returns:
+       the program description string
+    """
     content = "A demonstration of logging with trees.\n\n"
     content += "This demo utilises a SnapshotVisitor to trigger\n"
     content += "a post-tick handler to dump a serialisation of the\n"
@@ -68,26 +74,50 @@ def description(root: py_trees.behaviour.Behaviour) -> str:
 
 
 def epilog() -> typing.Optional[str]:
+    """
+    Print a noodly epilog for --help.
+
+    Returns:
+       the noodly message
+    """
     if py_trees.console.has_colours:
-        return console.cyan + "And his noodly appendage reached forth to tickle the blessed...\n" + console.reset
+        return (
+            console.cyan
+            + "And his noodly appendage reached forth to tickle the blessed...\n"
+            + console.reset
+        )
     else:
         return None
 
 
 def command_line_argument_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description=description(create_tree()),
-                                     epilog=epilog(),
-                                     formatter_class=argparse.RawDescriptionHelpFormatter,
-                                     )
+    """
+    Process command line arguments.
+
+    Returns:
+        the argument parser
+    """
+    parser = argparse.ArgumentParser(
+        description=description(create_tree()),
+        epilog=epilog(),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
     group = parser.add_mutually_exclusive_group()
-    group.add_argument('-r', '--render', action='store_true', help='render dot tree to file')
-    group.add_argument('-i', '--interactive', action='store_true', help='pause and wait for keypress at each tick')
+    group.add_argument(
+        "-r", "--render", action="store_true", help="render dot tree to file"
+    )
+    group.add_argument(
+        "-i",
+        "--interactive",
+        action="store_true",
+        help="pause and wait for keypress at each tick",
+    )
     return parser
 
 
 def logger(
     snapshot_visitor: py_trees.visitors.DisplaySnapshotVisitor,
-    behaviour_tree: py_trees.trees.BehaviourTree
+    behaviour_tree: py_trees.trees.BehaviourTree,
 ) -> None:
     """Log the tree (relevant parts thereof) to a yaml file.
 
@@ -95,16 +125,15 @@ def logger(
     """
     if snapshot_visitor.changed:
         print(console.cyan + "Logging.......................yes\n" + console.reset)
-        tree_serialisation = {
-            'tick': behaviour_tree.count,
-            'nodes': []
-        }
+        tree_serialisation = {"tick": behaviour_tree.count, "nodes": []}
         for node in behaviour_tree.root.iterate():
             node_type_str = "Behaviour"
-            for behaviour_type in [py_trees.composites.Sequence,
-                                   py_trees.composites.Selector,
-                                   py_trees.composites.Parallel,
-                                   py_trees.decorators.Decorator]:
+            for behaviour_type in [
+                py_trees.composites.Sequence,
+                py_trees.composites.Selector,
+                py_trees.composites.Parallel,
+                py_trees.decorators.Decorator,
+            ]:
                 if isinstance(node, behaviour_type):
                     node_type_str = behaviour_type.__name__
             if node.tip() is not None:
@@ -114,29 +143,35 @@ def logger(
             else:
                 node_tip_id = "none"
             node_snapshot = {
-                'name': node.name,
-                'id': str(node.id),
-                'parent_id': str(node.parent.id) if node.parent else "none",
-                'child_ids': [str(child.id) for child in node.children],
-                'tip_id': node_tip_id,
-                'class_name': str(node.__module__) + '.' + str(type(node).__name__),
-                'type': node_type_str,
-                'status': node.status.value,
-                'message': node.feedback_message,
-                'is_active': True if node.id in snapshot_visitor.visited else False
+                "name": node.name,
+                "id": str(node.id),
+                "parent_id": str(node.parent.id) if node.parent else "none",
+                "child_ids": [str(child.id) for child in node.children],
+                "tip_id": node_tip_id,
+                "class_name": str(node.__module__) + "." + str(type(node).__name__),
+                "type": node_type_str,
+                "status": node.status.value,
+                "message": node.feedback_message,
+                "is_active": True if node.id in snapshot_visitor.visited else False,
             }
-            typing.cast(list, tree_serialisation['nodes']).append(node_snapshot)
+            typing.cast(list, tree_serialisation["nodes"]).append(node_snapshot)
         if behaviour_tree.count == 0:
-            with open('dump.json', 'w+') as outfile:
+            with open("dump.json", "w+") as outfile:
                 json.dump(tree_serialisation, outfile, indent=4)
         else:
-            with open('dump.json', 'a') as outfile:
+            with open("dump.json", "a") as outfile:
                 json.dump(tree_serialisation, outfile, indent=4)
     else:
         print(console.yellow + "Logging.......................no\n" + console.reset)
 
 
 def create_tree() -> py_trees.behaviour.Behaviour:
+    """
+    Create the root behaviour and it's subtree.
+
+    Returns:
+        the root behaviour
+    """
     every_n_success = py_trees.behaviours.SuccessEveryN("EveryN", 5)
     sequence = py_trees.composites.Sequence(name="Sequence", memory=True)
     guard = py_trees.behaviours.Success("Guard")
@@ -157,6 +192,7 @@ def create_tree() -> py_trees.behaviour.Behaviour:
 ##############################################################################
 # Main
 ##############################################################################
+
 
 def main() -> None:
     """Entry point for the demo script."""

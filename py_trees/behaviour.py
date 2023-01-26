@@ -7,9 +7,7 @@
 # Documentation
 ##############################################################################
 
-"""
-The core behaviour template for all py_tree behaviours.
-"""
+"""The core behaviour template for all py_tree behaviours."""
 
 ##############################################################################
 # Imports
@@ -22,9 +20,7 @@ import re
 import typing
 import uuid
 
-from . import blackboard
-from . import common
-from . import logging
+from . import blackboard, common, logging
 
 ##############################################################################
 # Behaviour BluePrint
@@ -66,19 +62,26 @@ class Behaviour(abc.ABC):
        * :ref:`The Action Behaviour Demo <py-trees-demo-action-behaviour-program>`
     """
 
-    def __init__(
-        self,
-        name: str
-    ):
+    def __init__(self, name: str):
         if not isinstance(name, str):
-            raise TypeError("a behaviour name should be a string, but you passed in {}".format(type(name)))
-        self.id = uuid.uuid4()  # used to uniquely identify this node (helps with removing children from a tree)
+            raise TypeError(
+                "a behaviour name should be a string, but you passed in {}".format(
+                    type(name)
+                )
+            )
+        self.id = (
+            uuid.uuid4()
+        )  # used to uniquely identify this node (helps with removing children from a tree)
         self.name: str = name
         self.blackboards: typing.List[blackboard.Client] = []
-        self.qualified_name = "{}/{}".format(self.__class__.__qualname__, self.name)  # convenience
+        self.qualified_name = "{}/{}".format(
+            self.__class__.__qualname__, self.name
+        )  # convenience
         self.status = common.Status.INVALID
         self.iterator = self.tick()
-        self.parent: typing.Optional[Behaviour] = None  # will get set if a behaviour is added to a composite
+        self.parent: typing.Optional[
+            Behaviour
+        ] = None  # will get set if a behaviour is added to a composite
         self.children: typing.List[Behaviour] = []  # only set by composite behaviours
         self.logger = logging.Logger(name)
         self.feedback_message = ""  # useful for debugging, or human readable updates, but not necessary to implement
@@ -207,7 +210,7 @@ class Behaviour(abc.ABC):
         by the :meth:`~py_trees.behaviour.Behaviour.tick` mechanism.
 
         Returns:
-            :class:`~py_trees.common.Status`: the behaviour's new status :class:`~py_trees.common.Status`
+            the behaviour's new status :class:`~py_trees.common.Status`
 
         .. tip:: This method should be almost instantaneous and non-blocking
 
@@ -234,9 +237,7 @@ class Behaviour(abc.ABC):
     ############################################
 
     def attach_blackboard_client(
-            self,
-            name: typing.Optional[str] = None,
-            namespace: typing.Optional[str] = None
+        self, name: typing.Optional[str] = None, namespace: typing.Optional[str] = None
     ) -> blackboard.Client:
         """
         Create and attach a blackboard to this behaviour.
@@ -251,10 +252,7 @@ class Behaviour(abc.ABC):
         if name is None:
             count = len(self.blackboards)
             name = self.name if (count == 0) else self.name + "-{}".format(count)
-        new_blackboard = blackboard.Client(
-            name=name,
-            namespace=namespace
-        )
+        new_blackboard = blackboard.Client(name=name, namespace=namespace)
         self.blackboards.append(new_blackboard)
         return new_blackboard
 
@@ -263,18 +261,14 @@ class Behaviour(abc.ABC):
     ############################################
 
     def setup_with_descendants(self) -> None:
-        """
-        Call setup on this child, it's children (it's children's children, ).
-        """
+        """Call setup on this child, it's children (it's children's children, )."""
         for child in self.children:
             for node in child.iterate():
                 node.setup()
         self.setup()
 
     def tick_once(self) -> None:
-        """
-        Tick the object without iterating step-by-step over the children (i.e. without generators).
-        """
+        """Tick the object without iterating step-by-step over the children (i.e. without generators)."""
         # no logger necessary here...it directly relays to tick
         for _unused in self.tick():
             pass
@@ -315,20 +309,17 @@ class Behaviour(abc.ABC):
         # don't set self.status yet, terminate() may need to check what the current state is first
         new_status = self.update()
         if new_status not in list(common.Status):
-            self.logger.error("A behaviour returned an invalid status, setting to INVALID [%s][%s]" % (
-                new_status,
-                self.name
-            ))
+            self.logger.error(
+                "A behaviour returned an invalid status, setting to INVALID [%s][%s]"
+                % (new_status, self.name)
+            )
             new_status = common.Status.INVALID
         if new_status != common.Status.RUNNING:
             self.stop(new_status)
         self.status = new_status
         yield self
 
-    def iterate(
-        self,
-        direct_descendants: bool = False
-    ) -> typing.Iterator[Behaviour]:
+    def iterate(self, direct_descendants: bool = False) -> typing.Iterator[Behaviour]:
         """
         Iterate over this child and it's children.
 
@@ -366,10 +357,7 @@ class Behaviour(abc.ABC):
         """
         visitor.run(self)
 
-    def stop(
-        self,
-        new_status: common.Status
-    ) -> None:
+    def stop(self, new_status: common.Status) -> None:
         """
         Stop the behaviour with the specified status.
 
@@ -384,8 +372,14 @@ class Behaviour(abc.ABC):
            Users should not override this method to provide custom termination behaviour. The
            :meth:`~py_trees.behaviour.Behaviour.terminate` method has been provided for that purpose.
         """
-        self.logger.debug("%s.stop(%s)" % (self.__class__.__name__, "%s->%s" % (
-            self.status, new_status) if self.status != new_status else "%s" % new_status)
+        self.logger.debug(
+            "%s.stop(%s)"
+            % (
+                self.__class__.__name__,
+                "%s->%s" % (self.status, new_status)
+                if self.status != new_status
+                else "%s" % new_status,
+            )
         )
         self.terminate(new_status)
         self.status = new_status
@@ -413,8 +407,7 @@ class Behaviour(abc.ABC):
         return False
 
     def has_parent_with_instance_type(
-        self,
-        instance_type: "typing.Type[Behaviour]"
+        self, instance_type: "typing.Type[Behaviour]"
     ) -> bool:
         """
         Search this behaviour's ancestors for one of the specified type.
@@ -446,10 +439,11 @@ class Behaviour(abc.ABC):
         """
         return self if self.status != common.Status.INVALID else None
 
+
 ##############################################################################
 # Mypy Convenience Types
 ##############################################################################
 
 
-BehaviourSubClass = typing.TypeVar('BehaviourSubClass', bound=Behaviour)
+BehaviourSubClass = typing.TypeVar("BehaviourSubClass", bound=Behaviour)
 # BehaviourUpdateMethod = typing.Callable[[BehaviourSubClass], common.Status]

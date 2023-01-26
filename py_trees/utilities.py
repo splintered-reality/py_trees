@@ -7,9 +7,7 @@
 # Documentation
 ##############################################################################
 
-"""
-Assorted utility functions.
-"""
+"""Assorted utility functions."""
 
 ##############################################################################
 # Imports
@@ -27,7 +25,7 @@ import typing
 # Python Helpers
 ##############################################################################
 
-C = typing.TypeVar('C', bound=typing.Callable)
+C = typing.TypeVar("C", bound=typing.Callable)
 
 # TODO: This currently doesn't work well with mypy - dynamic typing
 # is not its thing. Need to find a way to make this work without
@@ -37,9 +35,7 @@ C = typing.TypeVar('C', bound=typing.Callable)
 # error: "Callable[[], Any]" has no attribute "counter"  [attr-defined]
 
 
-def static_variables(
-    **kwargs: typing.Any
-) -> typing.Callable[[C], C]:
+def static_variables(**kwargs: typing.Any) -> typing.Callable[[C], C]:
     """
     Attach initialised static variables to a python method.
 
@@ -50,12 +46,12 @@ def static_variables(
            foo.counter += 1
            print("Counter: {}".format(foo.counter))
     """
-    def decorate(
-        func: C
-    ) -> C:
+
+    def decorate(func: C) -> C:
         for k in kwargs:
             setattr(func, k, kwargs[k])
         return func
+
     return decorate
 
 
@@ -82,8 +78,9 @@ def truncate(original: str, length: int) -> str:
         original: string to elide
         length: constrain the elided string to this
     """
-    s = (original[:length - 3] + '...') if len(original) > length else original
+    s = (original[: length - 3] + "...") if len(original) > length else original
     return s
+
 
 ##############################################################################
 # System Tools
@@ -91,12 +88,15 @@ def truncate(original: str, length: int) -> str:
 
 
 class Process(multiprocessing.Process):
+    """Convenience wrapper around multiprocessing.Process."""
+
     def __init__(self, *args: typing.Any, **kwargs: typing.Any):
         multiprocessing.Process.__init__(self, *args, **kwargs)
         self._pconn, self._cconn = multiprocessing.Pipe()
         self._exception = None
 
     def run(self) -> None:
+        """Start the process, handle exceptions if needed."""
         try:
             multiprocessing.Process.run(self)
             self._cconn.send(None)
@@ -106,6 +106,12 @@ class Process(multiprocessing.Process):
 
     @property
     def exception(self) -> typing.Any:
+        """
+        Check the connection, if there is an error, reflect it as an exception.
+
+        Returns:
+            The exception.
+        """
         if self._pconn.poll():
             self._exception = self._pconn.recv()
         return self._exception
@@ -121,6 +127,7 @@ def which(program: str) -> typing.Optional[str]:
     Returns:
         path to the program or None if it doesnt exist.
     """
+
     def is_exe(fpath: str) -> bool:
         return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
 
@@ -161,8 +168,8 @@ def get_valid_filename(s: str) -> str:
     Returns:
         :obj:`str`: a representation of the specified string as a valid filename
     """
-    s = str(s).strip().lower().replace(' ', '_').replace('\n', '_')
-    return re.sub(r'(?u)[^-\w.]', '', s)
+    s = str(s).strip().lower().replace(" ", "_").replace("\n", "_")
+    return re.sub(r"(?u)[^-\w.]", "", s)
 
 
 def get_fully_qualified_name(instance: object) -> str:
@@ -186,4 +193,4 @@ def get_fully_qualified_name(instance: object) -> str:
     if module is None or module == builtin:
         return instance.__class__.__name__
     else:
-        return module + '.' + instance.__class__.__name__
+        return module + "." + instance.__class__.__name__

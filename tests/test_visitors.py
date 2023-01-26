@@ -24,9 +24,7 @@ logger = py_trees.logging.Logger("Tests")
 ##############################################################################
 
 
-def create_fffrrs_repeat_status_queue(
-    name: str
-) -> py_trees.behaviours.StatusQueue:
+def create_fffrrs_repeat_status_queue(name: str) -> py_trees.behaviours.StatusQueue:
     return py_trees.behaviours.StatusQueue(
         name=name,
         queue=[
@@ -37,8 +35,9 @@ def create_fffrrs_repeat_status_queue(
             py_trees.common.Status.RUNNING,
             py_trees.common.Status.SUCCESS,
         ],
-        eventually=None
+        eventually=None,
     )
+
 
 ##############################################################################
 # Tests
@@ -48,7 +47,7 @@ def create_fffrrs_repeat_status_queue(
 def test_snapshot_visitor() -> None:
     console.banner("Snapshot Visitor")
 
-    root = py_trees.composites.Selector(name='Selector', memory=False)
+    root = py_trees.composites.Selector(name="Selector", memory=False)
     a = create_fffrrs_repeat_status_queue(name="A")
     b = create_fffrrs_repeat_status_queue(name="B")
     c = py_trees.behaviours.StatusQueue(
@@ -58,7 +57,7 @@ def test_snapshot_visitor() -> None:
             py_trees.common.Status.RUNNING,
             py_trees.common.Status.RUNNING,
         ],
-        eventually=py_trees.common.Status.SUCCESS
+        eventually=py_trees.common.Status.SUCCESS,
     )
     root.add_child(a)
     root.add_child(b)
@@ -70,10 +69,7 @@ def test_snapshot_visitor() -> None:
 
     for i, result in zip(range(1, 5), [True, False, False, True]):
         py_trees.tests.tick_tree(
-            root, i, i,
-            visitors=[debug_visitor,
-                      snapshot_visitor],
-            print_snapshot=True
+            root, i, i, visitors=[debug_visitor, snapshot_visitor], print_snapshot=True
         )
         print("--------- Assertions ---------\n")
         print("snapshot_visitor.changed == {}".format(result))

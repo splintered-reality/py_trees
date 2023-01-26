@@ -6,31 +6,32 @@
 # Documentation
 ##############################################################################
 
-"""
-This is the top-level namespace of the py_trees package.
-"""
+"""This is the top-level namespace of the py_trees package."""
+
 ##############################################################################
 # Imports
 ##############################################################################
 
-from . import behaviour  # noqa
-from . import behaviours  # noqa
-from . import blackboard  # noqa
-from . import common  # noqa
-from . import composites  # noqa
-from . import console  # noqa
-from . import decorators  # noqa
-from . import display  # noqa
-from . import idioms  # noqa
-from . import logging  # noqa
-from . import meta  # noqa
-from . import syntax_highlighting  # noqa
-from . import tests  # noqa
-from . import timers  # noqa
-from . import trees  # noqa
-from . import utilities  # noqa
-from . import version  # noqa
-from . import visitors  # noqa
+# fmt: off
+from . import behaviour  # usort:skip
+from . import behaviours  # usort:skip
+from . import blackboard  # usort:skip
+from . import common  # usort:skip
+from . import composites  # usort:skip
+from . import console  # usort:skip
+from . import decorators  # usort:skip
+from . import display  # usort:skip
+from . import idioms  # usort:skip
+from . import logging  # usort:skip
+from . import meta  # usort:skip
+from . import syntax_highlighting  # usort:skip
+from . import tests  # usort:skip
+from . import timers  # usort:skip
+from . import trees  # usort:skip
+from . import utilities  # usort:skip
+from . import version  # usort:skip
+from . import visitors  # usort:skip
 
-from . import demos  # noqa
-from . import programs  # noqa
+from . import demos  # usort:skip
+from . import programs  # usort:skip
+# fmt: on

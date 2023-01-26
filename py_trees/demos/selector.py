@@ -38,11 +38,21 @@ import py_trees.console as console
 
 
 def description() -> str:
-    content = "Higher priority switching and interruption in the children of a selector.\n"
+    """
+    Print description and usage information about the program.
+
+    Returns:
+       the program description string
+    """
+    content = (
+        "Higher priority switching and interruption in the children of a selector.\n"
+    )
     content += "\n"
     content += "In this example the higher priority child is setup to fail initially,\n"
     content += "falling back to the continually running second child. On the third\n"
-    content += "tick, the first child succeeds and cancels the hitherto running child.\n"
+    content += (
+        "tick, the first child succeeds and cancels the hitherto running child.\n"
+    )
     if py_trees.console.has_colours:
         banner_line = console.green + "*" * 79 + "\n" + console.reset
         s = banner_line
@@ -58,22 +68,47 @@ def description() -> str:
 
 
 def epilog() -> typing.Optional[str]:
+    """
+    Print a noodly epilog for --help.
+
+    Returns:
+       the noodly message
+    """
     if py_trees.console.has_colours:
-        return console.cyan + "And his noodly appendage reached forth to tickle the blessed...\n" + console.reset
+        return (
+            console.cyan
+            + "And his noodly appendage reached forth to tickle the blessed...\n"
+            + console.reset
+        )
     else:
         return None
 
 
 def command_line_argument_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description=description(),
-                                     epilog=epilog(),
-                                     formatter_class=argparse.RawDescriptionHelpFormatter,
-                                     )
-    parser.add_argument('-r', '--render', action='store_true', help='render dot tree to file')
+    """
+    Process command line arguments.
+
+    Returns:
+        the argument parser
+    """
+    parser = argparse.ArgumentParser(
+        description=description(),
+        epilog=epilog(),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument(
+        "-r", "--render", action="store_true", help="render dot tree to file"
+    )
     return parser
 
 
 def create_root() -> py_trees.behaviour.Behaviour:
+    """
+    Create the root behaviour and it's subtree.
+
+    Returns:
+        the root behaviour
+    """
     root = py_trees.composites.Selector(name="Selector", memory=False)
     ffs = py_trees.behaviours.StatusQueue(
         name="FFS",
@@ -82,7 +117,7 @@ def create_root() -> py_trees.behaviour.Behaviour:
             py_trees.common.Status.FAILURE,
             py_trees.common.Status.SUCCESS,
         ],
-        eventually=py_trees.common.Status.SUCCESS
+        eventually=py_trees.common.Status.SUCCESS,
     )
     always_running = py_trees.behaviours.Running(name="Running")
     root.add_children([ffs, always_running])
@@ -92,6 +127,7 @@ def create_root() -> py_trees.behaviour.Behaviour:
 ##############################################################################
 # Main
 ##############################################################################
+
 
 def main() -> None:
     """Entry point for the demo script."""
