@@ -1,6 +1,6 @@
 # Py Trees
 
-[[About](#about)][[Docs & Demos](#docs-and-demos)][[Releases](#releases)][[Installation](#installation)][[PyTrees-Ros Ecosystem](#pytrees-ros-ecosystem)]
+[[About](#about)][[Documentation](#documentation)][[Getting Started](#getting-started)][[Releases](#releases)][[Installation](#installation)][[PyTrees-Ros Ecosystem](#pytrees-ros-ecosystem)][[Developers](#developers)]
 
 ----
 
