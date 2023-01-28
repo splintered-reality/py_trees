@@ -2,6 +2,12 @@
 
 Successfully collaborating on common problems is always an edifying experience that increases the desire to do more. 
 
+## Development Environment
+
+Short of having a poetry environment of your own, you can make use of github's codespaces.
+
+Refer to the [README - Getting Started](../README.md#geting-started) for details.
+
 ## Pull Requests
 
 ### Before Submitting
@@ -19,10 +25,6 @@ Some recommendations to help align your contribution and minimise the eventual b
 If it is a feature or bugfix that you'd like to see backported to one of the release branches, open a parallel PR for that
 release branch or mention that you'd like to see it backported in the original PR's description.
 
-### Coding
-
-Running `. ./venv.bash` in the root of the repository can create a nice, self-contained sandbox within which you can develop and test your contribution.
-
 ### The Pull Request
 
 Be sure to state clearly in the pull request's **description** (this helps expedite review):
@@ -30,25 +32,44 @@ Be sure to state clearly in the pull request's **description** (this helps exped
 * The motivation, i.e. what problem is this solving.
 * A concise summary of what was done (and why if relevant).
 
-### Style
+### Format, Lint, Type-Check and Test
 
-The repository aims to conform to PEP8, please endeavour to do so. There is a simple script `./lint/flake8` that can be used to check that the
-code conforms. This is run as part of the CI checks.
+The repository aims to conform to PEP8, please endeavour to do so. CI will get cranky if you don't ;)
 
-### Tests
+Test against at least one of `py38`, `py310`.
 
-See [tests/README.md](tests/README.md) for instructions on how to run the tests all together or manually. If you are contributing new features, or
-bugfixing a problem that did not have coverage, it is expected that the pull requests will include a test for regression purposes.
+```
+# Auto-format your code (if using VSCode, install the ufmt extension)
+$ poetry run tox -e format
+
+# Style, Format
+$ poetry run tox -e check
+
+# Type-Check
+$ poetry run mypy38
+
+# Tests
+$ poetry run tox -e py38
+```
 
 ### Documentation
 
 Documentation is auto-generated as part of the PR process, but if you do wish to make changes and check locally:
 
+Generate the docs, view them from `./docs/html` in a browser.
+
 ```
-. ./venv.bash
-make docs
-...
-The HTML pages are in doc/html.
+# Install dependencies
+$ poetry install --with docs
+
+# Build
+$ poetry run make -C docs html
+```
+
+On doc dependency changes in `pyproject.toml`, export the requirements for ReadTheDocs.
+
+```
+$ poetry export -f requirements.txt --with docs -o docs/requirements.txt
 ```
 
 ### Changelog
@@ -68,8 +89,7 @@ Once the large button has gone `GREEN`, you or the reviewer may merge the pull r
 
 ## Releasing
 
-If you are interested in seeing your changes make it into a release (sooner rather than later) and distributed on
-PyPi, PPA or via the ROS ecosystem, please make the request via a comment in your PR or in an issue.
+If you are interested in seeing your changes make it into a release (sooner rather than later), please make the request via a comment in your PR or in an issue.
 
 ## Social Conduct
 

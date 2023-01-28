@@ -8,7 +8,7 @@
 ##############################################################################
 
 """
-Demonstrates usage of blackboard remappings.
+A py_trees demo.
 
 .. argparse::
    :module: py_trees.demos.blackboard_remappings

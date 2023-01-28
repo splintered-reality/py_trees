@@ -8,7 +8,7 @@
 ##############################################################################
 
 """
-Demonstrates various aspects of tree stewardship.
+A py_trees demo.
 
 .. argparse::
    :module: py_trees.demos.stewardship

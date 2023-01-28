@@ -8,7 +8,7 @@
 ##############################################################################
 
 """
-Demonstrate the context switching design pattern.
+A py_trees demo.
 
 .. argparse::
    :module: py_trees.demos.context_switching

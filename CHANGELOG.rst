@@ -3,29 +3,87 @@ Release Notes
 
 Forthcoming
 -----------
+* [docs] 2.2.x release documentation, bugfix for graphviz on read-the-docs, `#400 <https://github.com/splintered-reality/py_trees/pull/400>`_
 
 2.2.1 (2023-01-28)
 ------------------
 * [tox] format with black, usort and fix flake8 warnings, `#397 <https://github.com/splintered-reality/py_trees/pull/397>`_
 * [docs] sphinx 1.4 -> 5.3, `#391 <https://github.com/splintered-reality/py_trees/pull/391>`_
 
-2.2.0 (2023-01-23)
-------------------
-* [poetry] setuptools -> poetry, `#389 <https://github.com/splintered-reality/py_trees/pull/389>`_
-* [common] remove viral ramifications of Any from ComparisonExpression, `#386 <https://github.com/splintered-reality/py_trees/pull/386>`_
-* [display] bugfix off-the-grid bb nodes and render exclusive write edges, `#383 <https://github.com/splintered-reality/py_trees/pull/383>`_
-* [tests] it's mypy now, by the time this ends, it'll be someone else's py , `#380 <https://github.com/splintered-reality/py_trees/pull/380>`_
+2.2.x (2023-01-23) - Sequences and Selectors with and without Memory!
+---------------------------------------------------------------------
+
+**Headline Feature**
+
+* [composites] sequences and selectors with and without memory (previously experimental in 2.1.6)
+
+This can become confusing, so pay attention and let's define some terminology:
+
+.. code-block:: python
+
+    Without Memory - ticking starts with the **first** child
+    With Memory - ticking attempts to start with the **current** child
+
+Whether the current child exists or not, the composite will always follow the logic above. The only bearing
+that the current child has on proceedings is in what happens next. Without memory, if the current child is reached,
+it will tick it without re-initialising it since it is already RUNNING (all other children are not RUNNING
+and subsequently will be re-initialised). With memory, if no current child is found on that first tick,
+it will fall back to starting with the first child.
+
+Previously **Selectors** operated without memory and **Sequences** with memory. Now both composites support both
+paradigms. Not only does this bring a pleasing symmetry to the universe that his noodliness would approve of,
+but it does unlock several practical use cases that previously required rather complex idioms
+(combinations of behaviours / subtrees).
+
+Refer to the `Eternal Guard Demo <https://py-trees.readthedocs.io/en/release-2.2.x/demos.html#py-trees-demo-eternal-guard>`_
+for an example of a practically useful idiom with two Sequences, one with and the other without memory.
+
+**Other New Features**
+
+* [decorators] Repeat and Retry, `#371 <https://github.com/splintered-reality/py_trees/pull/371>`_
+* [devenv] much improved development environment, comprehensive formatting, linting, type-checking and testing
+
+  * [poetry] setuptools -> poetry, `#389 <https://github.com/splintered-reality/py_trees/pull/389>`_
+  * [common] remove viral ramifications of Any from ComparisonExpression, `#386 <https://github.com/splintered-reality/py_trees/pull/386>`_
+  * [tests] it's mypy now, by the time this ends, it'll be someone else's py , `#380 <https://github.com/splintered-reality/py_trees/pull/380>`_
+  * [tests] use tox, flake8 in prem-merge `#354 <https://github.com/splintered-reality/py_trees/pull/354>`_
+  * [tests] switch from deprecating nose to pytest, `#350 <https://github.com/splintered-reality/py_trees/pull/350>`_
+
+**Breaking API**
+
 * [behaviours, decorators] behaviours.Count -> behaviours.StatusQueue + decorators.Count (new), `#376 <https://github.com/splintered-reality/py_trees/pull/376>`_
-* [behaviours, decorators, composites] abstract base classes, `#375 <https://github.com/splintered-reality/py_trees/pull/375>`_
 * [behaviours] StatusSequence -> StatusQueue, `#372 <https://github.com/splintered-reality/py_trees/pull/372>`_
-* [decorators] repeat and retry, `#371 <https://github.com/splintered-reality/py_trees/pull/371>`_
+* [behaviours, decorators, composites] abstract base classes, `#375 <https://github.com/splintered-reality/py_trees/pull/375>`_
 * [composites] use explicit composite arguments, `#370 <https://github.com/splintered-reality/py_trees/pull/370>`_
-* [composites] restart the sequence, but allow children to retain their state `#368 <https://github.com/splintered-reality/py_trees/pull/368>`_
+
+The latter is a theme adopted more liberally across (most) of the py_trees library. As this library has grown, it's
+become apparent that being explicit about passing arguments to constructors is more important than the convenience
+of eliminating a few characters. Not only does it prevent bugs, it eases refactoring and greatly
+improves readability of the code. In fact, you'll save time in the long run.
+
+.. code-block:: python
+
+    # This:
+    parallel = py_trees.composite.Parallel(
+        name="Parallel",
+        policy=py_trees.common.ParallelPolicy.SuccessOnAll()
+    )
+
+    # Is better than:
+    parallel = py_trees.composite.Parallel()
+
+When upgrading, if you don't regularly pass in arguments with keywords, i.e. you do ``Parallel("Foo")`` instead of
+``Parallel(name="Foo")``, be on the lookout for bugs created by the ordering having changed in the method signatures.
+Quite often the argument for ``name`` had a default and was at the end of the line. With these changes it has moved
+to the front of the line in order to adopt a consistent convention across the whole library.
+
+**Bugfixes**
+
+* [display] bugfix off-the-grid bb nodes and render exclusive write edges, `#383 <https://github.com/splintered-reality/py_trees/pull/383>`_
 * [common] a practical inf, `#366 <https://github.com/splintered-reality/py_trees/pull/366>`_
 * [composites] avoid redundant stop for non-running children `#360 <https://github.com/splintered-reality/py_trees/pull/360>`_
 * [display] bugfix unicode use when no unicode for dot `#359 <https://github.com/splintered-reality/py_trees/pull/359>`_
-* [tests] use tox, flake8 in prem-merge `#354 <https://github.com/splintered-reality/py_trees/pull/354>`_
-* [tests] switch from deprecating nose to pytest, `#350 <https://github.com/splintered-reality/py_trees/pull/350>`_
+* [composites] restart the sequence, but allow children to retain their state `#368 <https://github.com/splintered-reality/py_trees/pull/368>`_
 
 2.1.6 (2021-05-31)
 ------------------

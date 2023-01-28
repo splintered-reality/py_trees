@@ -8,7 +8,7 @@
 ##############################################################################
 
 """
-Demonstrates the characteristics of a typical 'action' behaviour.
+A py_trees demo.
 
 .. argparse::
    :module: py_trees.demos.action

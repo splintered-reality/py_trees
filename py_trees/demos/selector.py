@@ -8,7 +8,7 @@
 ##############################################################################
 
 """
-Demonstrates priority switching and interruption in selectors.
+A py_trees demo.
 
 .. argparse::
    :module: py_trees.demos.selector

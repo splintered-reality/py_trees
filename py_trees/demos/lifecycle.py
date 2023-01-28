@@ -8,9 +8,9 @@
 ##############################################################################
 
 """
-Demonstrates the behaviour lifecycle.
+A py_trees demo.
 
-.. argparse::
+. argparse::
    :module: py_trees.demos.lifecycle
    :func: command_line_argument_parser
    :prog: py-trees-demo-behaviour-lifecycle

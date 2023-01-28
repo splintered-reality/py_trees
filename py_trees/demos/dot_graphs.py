@@ -8,7 +8,7 @@
 ##############################################################################
 
 """
-Renders a dot graph for a simple tree, with blackboxes.
+A py_trees demo.
 
 .. argparse::
    :module: py_trees.demos.dot_graphs

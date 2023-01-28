@@ -8,7 +8,7 @@
 ##############################################################################
 
 """
-Demonstrates the 'pick up where you left off idiom'.
+A py_trees demo.
 
 .. argparse::
    :module: py_trees.demos.pick_up_where_you_left_off

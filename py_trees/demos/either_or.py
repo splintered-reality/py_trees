@@ -8,7 +8,7 @@
 ##############################################################################
 
 """
-A demonstration of the 'either_or' idiom.
+A py_trees demo.
 
 .. argparse::
    :module: py_trees.demos.either_or

@@ -8,7 +8,7 @@
 ##############################################################################
 
 """
-Demonstrates blackboard usage.
+A py_trees demo.
 
 .. argparse::
    :module: py_trees.demos.blackboard
