@@ -3,6 +3,14 @@ Release Notes
 
 Forthcoming
 -----------
+
+2.2.1 (2023-01-28)
+------------------
+* [tox] format with black, usort and fix flake8 warnings, `#397 <https://github.com/splintered-reality/py_trees/pull/397>`_
+* [docs] sphinx 1.4 -> 5.3, `#391 <https://github.com/splintered-reality/py_trees/pull/391>`_
+
+2.2.0 (2023-01-23)
+------------------
 * [poetry] setuptools -> poetry, `#389 <https://github.com/splintered-reality/py_trees/pull/389>`_
 * [common] remove viral ramifications of Any from ComparisonExpression, `#386 <https://github.com/splintered-reality/py_trees/pull/386>`_
 * [display] bugfix off-the-grid bb nodes and render exclusive write edges, `#383 <https://github.com/splintered-reality/py_trees/pull/383>`_
