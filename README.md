@@ -16,8 +16,10 @@ PyTrees is a python implementation of behaviour trees designed to facilitate the
 
 ## What's New?
 
-* [2023-01-23] The [2.2.x Release][new-2.2.x] is out! Sequences and Selectors with AND without memory.
-* [2023-01-23] [Get Started](#getting-started) with py_trees in under 5mins.
+* [2023-01-28] The [2.2.x Release][new-2.2.x] is out! Sequences and Selectors with AND without memory.
+* [2023-01-28] [Get Started](#getting-started) with py_trees in under 5mins.
+* [2023-01-28] This is now a `poetry` project with configuration governed by `pyproject.toml`.
+  * The vestigial `setup.py` is only to assist distribution where [PEP-517](https://peps.python.org/pep-0517/) is not yet well supported.
 
 ## Documentation
 
