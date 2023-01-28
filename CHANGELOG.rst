@@ -3,6 +3,10 @@ Release Notes
 
 Forthcoming
 -----------
+* ...
+
+2.2.2 (2023-01-28)
+------------------
 * [docs] 2.2.x release documentation, bugfix for graphviz on read-the-docs, `#400 <https://github.com/splintered-reality/py_trees/pull/400>`_
 
 2.2.1 (2023-01-28)
