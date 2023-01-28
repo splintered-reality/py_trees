@@ -8,7 +8,7 @@
 ##############################################################################
 
 """
-A demonstration of the 'eternal_guard' concept.
+A py_trees demo.
 
 .. argparse::
    :module: py_trees.demos.eternal_guard

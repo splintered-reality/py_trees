@@ -2,5 +2,6 @@
     "python.linting.flake8Enabled": false,
     "[python]": {
         "editor.defaultFormatter": "omnilib.ufmt"
-    }
+    },
+    "esbonio.sphinx.confDir": ""
 }

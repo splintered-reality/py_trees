@@ -8,7 +8,7 @@
 ##############################################################################
 
 """
-Demonstrates a simple logging capability.
+A py_trees demo.
 
 .. argparse::
    :module: py_trees.demos.logging

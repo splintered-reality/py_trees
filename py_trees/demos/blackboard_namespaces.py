@@ -8,7 +8,7 @@
 ##############################################################################
 
 """
-Demonstrates usage of blackboard namespaces.
+A py_trees demo.
 
 .. argparse::
    :module: py_trees.demos.blackboard_namespaces
