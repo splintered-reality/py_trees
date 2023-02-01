@@ -38,9 +38,9 @@ author = "Daniel Stonier"
 version = __version__
 release = version
 
+
 ################################################################################
-# General configuration
-# https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
+# Extensions
 ################################################################################
 
 extensions = [
@@ -57,11 +57,6 @@ extensions = [
     "sphinxarg.ext",
 ]
 
-templates_path = ["_templates"]
-exclude_patterns = ["_build", "weblinks.rst"]
-
-language = "en"
-
 ################################################################################
 # Extensions Configuration
 ################################################################################
@@ -71,6 +66,15 @@ napoleon_use_ivar = True
 
 # If you don't add this, todos don't appear
 todo_include_todos = True
+
+################################################################################
+# General configuration
+# https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
+################################################################################
+
+templates_path = ["_templates"]
+exclude_patterns = ["_build", "weblinks.rst"]
+language = "en"
 
 ################################################################################
 # HTML
