@@ -1,7 +1,20 @@
 {
-    "python.linting.flake8Enabled": false,
+    "python.linting.enabled": false,
+    "python.formatting.provider": "none",
     "[python]": {
-        "editor.defaultFormatter": "omnilib.ufmt"
+        "editor.defaultFormatter": "omnilib.ufmt",
+        "editor.formatOnSave": true
     },
-    "esbonio.sphinx.confDir": ""
+    "cSpell.words": [
+        "behaviour",
+        "behaviours",
+        "bierner",
+        "bungcip",
+        "omnilib",
+        "py_trees",
+        "pydot",
+        "pypi",
+        "ufmt",
+        "usort"
+    ]
 }
