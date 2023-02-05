@@ -29,6 +29,7 @@
         }
     },
     "postCreateCommand": "poetry install",
-    "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces,type=bind",
-    "workspaceFolder": "/workspaces"
+    // Breaks codespaces
+    // "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces,type=bind",
+    // "workspaceFolder": "/workspaces"
  }
