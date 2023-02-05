@@ -11,17 +11,24 @@
         },
         "context": ".."
     },
-    "extensions": [
-        "bierner.github-markdown-preview",
-        "bungcip.better-toml",
-        "lextudio.restructuredtext",
-        "ms-python.python",
-        "omnilib.ufmt"
-        
-    ],
     "containerEnv": {
         "POETRY_HTTP_BASIC_PYPI_USERNAME": "${localEnv:POETRY_HTTP_BASIC_PYPI_USERNAME}",
         "POETRY_HTTP_BASIC_PYPI_PASSWORD": "${localEnv:POETRY_HTTP_BASIC_PYPI_PASSWORD}"
     },
-    "remoteUser": "zen"
-}
+    "remoteUser": "zen",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "bierner.github-markdown-preview",
+                "bungcip.better-toml",
+                "streetsidesoftware.code-spell-checker",
+                "lextudio.restructuredtext",
+                "ms-python.python",
+                "omnilib.ufmt"
+            ]
+        }
+    },
+    "postCreateCommand": "poetry install",
+    "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces,type=bind",
+    "workspaceFolder": "/workspaces"
+ }
