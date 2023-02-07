@@ -3,6 +3,7 @@ Release Notes
 
 Forthcoming
 -----------
+* [decorators] a passthrough for debugging and visualisation, `#407 <https://github.com/splintered-reality/py_trees/pull/407>`_
 * ...
 
 2.2.2 (2023-01-28)
