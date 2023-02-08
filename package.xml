@@ -3,7 +3,7 @@
 <package format="3">
   <name>py_trees</name>
   <!-- When updating, also update setup.py, version.py, pyproject.toml, package.xml -->
-  <version>2.2.2</version>
+  <version>2.2.3</version>
   <description>
     Pythonic implementation of behaviour trees.
   </description>

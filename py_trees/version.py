@@ -14,4 +14,4 @@
 
 # When changing, Also update setup.py and package.xml
 # TODO: use pkg_resources to fetch the version from setup.py
-__version__ = "2.2.2"
+__version__ = "2.2.3"
