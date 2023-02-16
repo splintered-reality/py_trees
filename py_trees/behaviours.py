@@ -763,7 +763,7 @@ class ProbabilisticBehaviour(behaviour.Behaviour):
     """
 
     def __init__(self, name: str, weights: typing.Optional[typing.List[float]] = None):
-        assert _weights is None or len(_weights) == 3, "either all or none of the probabilities must be specified"
+        assert weights is None or len(weights) == 3, "either all or none of the probabilities must be specified"
 
         super(ProbabilisticBehaviour, self).__init__(name=name)
 
