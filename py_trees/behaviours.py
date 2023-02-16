@@ -16,6 +16,7 @@
 import copy
 import functools
 import operator
+import random
 import typing
 
 from . import behaviour, blackboard, common, meta
@@ -761,16 +762,17 @@ class ProbabilisticBehaviour(behaviour.Behaviour):
 
     """
 
-    def __init__(self, name: str,
-                 success_probability: Optional[float] = None,
-                 failure_probability: Optional[float] = None,
-                 running_probability: Optional[float] = None):
+    def __init__(self,
+                 name: str,
+                 success_probability: typing.Optional[float] = None,
+                 failure_probability: typing.Optional[float] = None,
+                 running_probability: typing.Optional[float] = None):
         assert \
             (success_probability is None and failure_probability is None and running_probability is None) or \
             (success_probability is not None and failure_probability is not None and running_probability is not None), \
             "either all or none of the probabilities must be specified"
 
-        super(self).__init__(name=name)
+        super(ProbabilisticBehaviour, self).__init__(name=name)
 
         self._population = [common.Status.SUCCESS, common.Status.FAILURE, common.Status.RUNNING]
         if success_probability is None and failure_probability is None and running_probability is None:
