@@ -736,3 +736,58 @@ class CheckBlackboardVariableValues(behaviour.Behaviour):
                 "|".join(["T" if result else "F" for result in results])
             )
             return common.Status.FAILURE
+
+
+class ProbabilisticBehaviour(behaviour.Behaviour):
+    """
+    Return a status based on a probability distribution.
+
+    That is, :data:`~py_trees.common.Status.RUNNING` with probability success_probability,
+    :data:`~py_trees.common.Status.SUCCESS` with probability failure_probability and
+    :data:`~py_trees.common.Status.FAILURE` with probability running_probability.
+    
+    If unspecified - a uniform distribution will be used.
+
+    Args:
+        name: name of the behaviour
+        success_probability: probability of returning :data:`~py_trees.common.Status.SUCCESS`
+        failure_probability: probability of returning :data:`~py_trees.common.Status.FAILURE`
+        running_probability: probability of returning :data:`~py_trees.common.Status.RUNNING`
+
+    .. note:: Probability distribution does not need to be normalised, it will be normalised internally.
+
+    Raises:
+        ValueError if only some of the probabilities are specified
+
+    """
+
+    def __init__(self, name: str,
+                 success_probability: Optional[float] = None,
+                 failure_probability: Optional[float] = None,
+                 running_probability: Optional[float] = None):
+        assert \
+            (success_probability is None and failure_probability is None and running_probability is None) or \
+            (success_probability is not None and failure_probability is not None and running_probability is not None), \
+            "either all or none of the probabilities must be specified"
+
+        super(self).__init__(name=name)
+
+        self._population = [common.Status.SUCCESS, common.Status.FAILURE, common.Status.RUNNING]
+        if success_probability is None and failure_probability is None and running_probability is None:
+            self._weights = [1., 1., 1.]
+        elif success_probability is not None and failure_probability is not None and running_probability is not None:
+            self._weights = [success_probability, failure_probability, running_probability]
+        else:
+            raise ValueError("either all or none of the probabilities must be specified")
+
+    def update(self) -> common.Status:
+        """
+        Return a status based on a probability distribution.
+
+        Returns:
+             :data:`~py_trees.common.Status.RUNNING` with probability success_probability,
+             :data:`~py_trees.common.Status.SUCCESS` with probability failure_probability and
+             :data:`~py_trees.common.Status.FAILURE` with probability running_probability.
+        """
+        self.logger.debug("%s.update()" % self.__class__.__name__)
+        return random.choices(self._population, self._weights, k=1)[0]
