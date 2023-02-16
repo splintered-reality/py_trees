@@ -743,9 +743,9 @@ class ProbabilisticBehaviour(behaviour.Behaviour):
     """
     Return a status based on a probability distribution.
 
-    That is, :data:`~py_trees.common.Status.RUNNING` with probability success_probability,
-    :data:`~py_trees.common.Status.SUCCESS` with probability failure_probability and
-    :data:`~py_trees.common.Status.FAILURE` with probability running_probability.
+    That is, :data:`~py_trees.common.Status.SUCCESS` with probability success_probability,
+    :data:`~py_trees.common.Status.FAILURE` with probability failure_probability and
+    :data:`~py_trees.common.Status.RUNNING` with probability running_probability.
     
     If unspecified - a uniform distribution will be used.
 
@@ -787,9 +787,9 @@ class ProbabilisticBehaviour(behaviour.Behaviour):
         Return a status based on a probability distribution.
 
         Returns:
-             :data:`~py_trees.common.Status.RUNNING` with probability success_probability,
-             :data:`~py_trees.common.Status.SUCCESS` with probability failure_probability and
-             :data:`~py_trees.common.Status.FAILURE` with probability running_probability.
+             :data:`~py_trees.common.Status.SUCCESS` with probability success_probability,
+             :data:`~py_trees.common.Status.FAILURE` with probability failure_probability and
+             :data:`~py_trees.common.Status.RUNNING` with probability running_probability.
         """
         self.logger.debug("%s.update()" % self.__class__.__name__)
         return random.choices(self._population, self._weights, k=1)[0]
