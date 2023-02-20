@@ -751,19 +751,18 @@ class ProbabilisticBehaviour(behaviour.Behaviour):
 
     Args:
         name: name of the behaviour
-        success_probability: probability of returning :data:`~py_trees.common.Status.SUCCESS`
-        failure_probability: probability of returning :data:`~py_trees.common.Status.FAILURE`
-        running_probability: probability of returning :data:`~py_trees.common.Status.RUNNING`
+        weights: 3 probabilities that correspond to returning :data:`~py_trees.common.Status.SUCCESS`,
+        :data:`~py_trees.common.Status.FAILURE` and :data:`~py_trees.common.Status.RUNNING` respectively.
 
     .. note:: Probability distribution does not need to be normalised, it will be normalised internally.
 
     Raises:
-        ValueError if only some of the probabilities are specified
+        ValueError if only some probabilities are specified
 
     """
 
     def __init__(self, name: str, weights: typing.Optional[typing.List[float]] = None):
-        if weights is not None and len(weights) == 3:
+        if weights is not None and (type(weights) is not list or len(weights) != 3):
             raise ValueError("Either all or none of the probabilities must be specified")
 
         super(ProbabilisticBehaviour, self).__init__(name=name)
@@ -776,9 +775,9 @@ class ProbabilisticBehaviour(behaviour.Behaviour):
         Return a status based on a probability distribution.
 
         Returns:
-             :data:`~py_trees.common.Status.SUCCESS` with probability success_probability,
-             :data:`~py_trees.common.Status.FAILURE` with probability failure_probability and
-             :data:`~py_trees.common.Status.RUNNING` with probability running_probability.
+             :data:`~py_trees.common.Status.SUCCESS` with probability weights[0],
+             :data:`~py_trees.common.Status.FAILURE` with probability weights[1] and
+             :data:`~py_trees.common.Status.RUNNING` with probability weights[2].
         """
         self.logger.debug("%s.update()" % self.__class__.__name__)
         return random.choices(self._population, self._weights, k=1)[0]
