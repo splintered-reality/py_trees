@@ -15,15 +15,14 @@ Refer to the [README - Getting Started](../README.md#geting-started) for details
 Some recommendations to help align your contribution and minimise the eventual back and forth on a PR:
 
 * Engage in an issue thread or in the discussion section.
-* Actual code in the form of a minimal PR with a `status:do_not_merge` label is a great tool for generating useful dialogue.
+* Actual code in the form of a minimal PR with a `status:do_not_merge` label helps generate useful dialogue.
 
 ### Which Branch?
 
 * If it's a new feature, or bugfix applicable to the latest code, `devel`
 * If it's a bugfix that can't be applied to `devel`, but critical for a release, point it at the release branch (e.g. `release/0.6.x`)
 
-If it is a feature or bugfix that you'd like to see backported to one of the release branches, open a parallel PR for that
-release branch or mention that you'd like to see it backported in the original PR's description.
+If it is a feature or bugfix that you'd like to see backported to one of the release branches, open a parallel PR for that release branch or mention that you'd like to see it backported in the original PR's description.
 
 ### The Pull Request
 
@@ -32,45 +31,13 @@ Be sure to state clearly in the pull request's **description** (this helps exped
 * The motivation, i.e. what problem is this solving.
 * A concise summary of what was done (and why if relevant).
 
-### Format, Lint, Type-Check and Test
+### Pre-Merge Checks
 
-The repository aims to conform to PEP8, please endeavour to do so. CI will get cranky if you don't ;)
+CI get cranky on a variety of things - if it complains, make sure your PR is passing the following checks
+locally.
 
-Test against at least one of `py38`, `py310`.
-
-```
-# Auto-format your code (if using VSCode, install the ufmt extension)
-$ poetry run tox -e format
-
-# Style, Format
-$ poetry run tox -e check
-
-# Type-Check
-$ poetry run mypy38
-
-# Tests
-$ poetry run tox -e py38
-```
-
-### Documentation
-
-Documentation is auto-generated as part of the PR process, but if you do wish to make changes and check locally:
-
-Generate the docs, view them from `./docs/html` in a browser.
-
-```
-# Install dependencies
-$ poetry install --with docs
-
-# Build
-$ poetry run make -C docs html
-```
-
-On doc dependency changes in `pyproject.toml`, export the requirements for ReadTheDocs.
-
-```
-$ poetry export -f requirements.txt --with docs -o docs/requirements.txt
-```
+* [Test-Lint-Format](./DEVELOPING.md#test-format-lint)
+* [Make Docs](./DEVELOPING#documentation)
 
 ### Changelog
 
@@ -80,8 +47,7 @@ $ poetry export -f requirements.txt --with docs -o docs/requirements.txt
 
 ### Review
 
-Once submitted, a reviewer will be assigned. You do not need to select. If no-one has self-assigned in a reasonable time window,
-feel free to append a *friendly bump* comment to your PR.
+Once submitted, a reviewer will be assigned. You do not need to select. If no-one has self-assigned in a reasonable time window, feel free to append a *friendly bump* comment to your PR.
 
 ### Merging
 

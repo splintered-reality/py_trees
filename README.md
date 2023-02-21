@@ -1,6 +1,6 @@
 # Py Trees
 
-[[About](#about)] [[What's New?](#whats-new)] [[Documentation](#documentation)] [[Getting Started](#getting-started)] [[Next Steps](#next-steps)] [[Releases](#releases)] [[Developers](#developers)]
+[[About](#about)] [[What's New?](#whats-new)] [[Documentation](#documentation)] [[Getting Started](#getting-started)] [[Next Steps](#next-steps)] [[Releases](#releases)]
 
 ----
 
@@ -101,54 +101,6 @@ Robotics:
 | CI | [![devel-Status][devel-build-status-image]][devel-build-status] | [![2.2.x-Status][2.2.x-build-status-image]][2.2.x-build-status] | - | - | - | - | - | 
 | Documentation | [![devel-Docs][rtd-devel-image]][docs-devel] | [![2.2.x-Docs][rtd-2.2.x-image]][docs-2.2.x] | [![2.1.x-Docs][rtd-2.1.x-image]][docs-2.1.x] | [![2.0.x-Docs][rtd-2.0.x-image]][docs-2.0.x] | [![1.2.x-Docs][rtd-1.2.x-image]][docs-1.2.x] | [![0.7.x-Docs][rtd-0.7.x-image]][docs-0.7.x] | [![0.6.x-Docs][rtd-0.6.x-image]][docs-0.6.x]
 
-## Developers
-
-### Format, Check, MyPy, Test
-
-Check against at least one of py38 / py310 [1].
-
-```
-# Auto-format your code (if using VSCode, install the ufmt extension)
-$ poetry run tox -e format
-
-# Style, Format
-$ poetry run tox -e check
-
-# Type-Check
-$ poetry run mypy38
-
-# Tests
-$ poetry run tox -e py38
-```
-
-[1] CI will test against both python versions for you, but should you wish to do so locally, open up two VSCode windows, one with the project opened in the default [py38 devcontainer](.devcontainer) and the other with the [py310 devcontainer](.devcontainer/py310).
-
-### Generate Documentation
-
-Generate the docs, view them from `./docs/html` in a browser.
-
-```
-# Install dependencies
-$ poetry install --with docs
-
-# Build
-$ poetry run make -C docs html
-```
-
-On Doc dependency changes, export the requirements for ReadTheDocs
-
-```
-$ poetry export -f requirements.txt --with docs -o docs/requirements.txt
-```
-
-### Publish to PyPi
-
-If you have permission to publish on pypi:
-
-```
-$ poetry config http-basic.pypi ${POETRY_HTTP_BASIC_PYPI_USERNAME} ${POETRY_HTTP_BASIC_PYPI_PASSWORD}
-$ poetry publish
-```
 
 [license-image]: https://img.shields.io/badge/License-BSD%203--Clause-orange.svg?style=plastic
 [license]: LICENSE
