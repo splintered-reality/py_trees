@@ -1,0 +1,11 @@
+{
+    "recommendations": [
+            "bierner.github-markdown-preview",
+            "bungcip.better-toml",
+            "streetsidesoftware.code-spell-checker",
+            "lextudio.restructuredtext",
+            "ms-python.python",
+            "ms-vscode-remote.vscode-remote-extensionpack",
+            "omnilib.ufmt"
+    ]
+}
