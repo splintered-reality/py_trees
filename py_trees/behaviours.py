@@ -741,18 +741,12 @@ class CheckBlackboardVariableValues(behaviour.Behaviour):
 
 class ProbabilisticBehaviour(behaviour.Behaviour):
     """
-    Return a status based on a probability distribution.
-
-    That is, :data:`~py_trees.common.Status.SUCCESS` with probability success_probability,
-    :data:`~py_trees.common.Status.FAILURE` with probability failure_probability and
-    :data:`~py_trees.common.Status.RUNNING` with probability running_probability.
-    
-    If unspecified - a uniform distribution will be used.
+    Return a status based on a probability distribution. If unspecified - a uniform distribution will be used.
 
     Args:
         name: name of the behaviour
         weights: 3 probabilities that correspond to returning :data:`~py_trees.common.Status.SUCCESS`,
-        :data:`~py_trees.common.Status.FAILURE` and :data:`~py_trees.common.Status.RUNNING` respectively.
+           :data:`~py_trees.common.Status.FAILURE` and :data:`~py_trees.common.Status.RUNNING` respectively.
 
     .. note:: Probability distribution does not need to be normalised, it will be normalised internally.
 
