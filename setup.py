@@ -6,8 +6,6 @@
 # For all other modes of development, use poetry and pyproject.toml
 ################################################################################
 
-import os
-
 from setuptools import find_packages, setup
 
 install_requires = ["setuptools", "pydot"]
