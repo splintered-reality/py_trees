@@ -757,12 +757,18 @@ class ProbabilisticBehaviour(behaviour.Behaviour):
 
     def __init__(self, name: str, weights: typing.Optional[typing.List[float]] = None):
         if weights is not None and (type(weights) is not list or len(weights) != 3):
-            raise ValueError("Either all or none of the probabilities must be specified")
+            raise ValueError(
+                "Either all or none of the probabilities must be specified"
+            )
 
         super(ProbabilisticBehaviour, self).__init__(name=name)
 
-        self._population = [common.Status.SUCCESS, common.Status.FAILURE, common.Status.RUNNING]
-        self._weights = weights if weights is not None else [1., 1., 1.]
+        self._population = [
+            common.Status.SUCCESS,
+            common.Status.FAILURE,
+            common.Status.RUNNING,
+        ]
+        self._weights = weights if weights is not None else [1.0, 1.0, 1.0]
 
     def update(self) -> common.Status:
         """

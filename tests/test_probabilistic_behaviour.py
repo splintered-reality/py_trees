@@ -38,7 +38,7 @@ def test_probabilistic_behaviour_workflow() -> None:
     assert "ValueError" == context.typename
 
     root = py_trees.behaviours.ProbabilisticBehaviour(
-        name="ProbabilisticBehaviour", weights=[0., 0., 1.]
+        name="ProbabilisticBehaviour", weights=[0.0, 0.0, 1.0]
     )
 
     py_trees.tests.print_assert_details(
