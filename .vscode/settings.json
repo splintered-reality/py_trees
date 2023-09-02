@@ -5,6 +5,7 @@
         "editor.defaultFormatter": "omnilib.ufmt",
         "editor.formatOnSave": true
     },
+    "cSpell.language": "en-GB",
     "cSpell.words": [
         "backported",
         "behaviour",
