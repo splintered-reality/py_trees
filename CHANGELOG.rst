@@ -3,7 +3,7 @@ Release Notes
 
 Forthcoming
 -----------
-* ...
+* [decorators] finally-style decorators and idioms, `#427 <https://github.com/splintered-reality/py_trees/pull/427>`_
 
 2.2.3 (2023-02-08)
 ------------------

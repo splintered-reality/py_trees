@@ -30,6 +30,18 @@ Either Or
 
 .. _oneshot-section:
 
+Eventually
+----------
+
+.. automethod:: py_trees.idioms.eventually
+    :noindex:
+
+Eventually - Swiss Variant
+--------------------------
+
+.. automethod:: py_trees.idioms.eventually_swiss
+    :noindex:
+
 Oneshot
 -------
 

@@ -1,0 +1,13 @@
+digraph pastafarianism {
+ordering=out;
+graph [fontname="times-roman"];
+node [fontname="times-roman"];
+edge [fontname="times-roman"];
+Eventually [fillcolor=gold, fontcolor=black, fontsize=9, label="Eventually\nSuccessOnOne", shape=parallelogram, style=filled];
+Worker [fillcolor=gray, fontcolor=black, fontsize=9, label=Worker, shape=ellipse, style=filled];
+Eventually -> Worker;
+"Eventually*" [fillcolor=ghostwhite, fontcolor=black, fontsize=9, label="Eventually*", shape=ellipse, style=filled];
+Eventually -> "Eventually*";
+"On Completion" [fillcolor=gray, fontcolor=black, fontsize=9, label="On Completion", shape=ellipse, style=filled];
+"Eventually*" -> "On Completion";
+}

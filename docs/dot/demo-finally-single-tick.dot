@@ -1,0 +1,17 @@
+digraph pastafarianism {
+ordering=out;
+graph [fontname="times-roman"];
+node [fontname="times-roman"];
+edge [fontname="times-roman"];
+root [fillcolor=orange, fontcolor=black, fontsize=9, label="Ⓜ root", shape=box, style=filled];
+SetFlagFalse [fillcolor=gray, fontcolor=black, fontsize=9, label=SetFlagFalse, shape=ellipse, style=filled];
+root -> SetFlagFalse;
+Parallel [fillcolor=gold, fontcolor=black, fontsize=9, label="Parallel\nSuccessOnOne", shape=parallelogram, style=filled];
+root -> Parallel;
+Counter [fillcolor=gray, fontcolor=black, fontsize=9, label=Counter, shape=ellipse, style=filled];
+Parallel -> Counter;
+Finally [fillcolor=ghostwhite, fontcolor=black, fontsize=9, label=Finally, shape=ellipse, style=filled];
+Parallel -> Finally;
+SetFlagTrue [fillcolor=gray, fontcolor=black, fontsize=9, label=SetFlagTrue, shape=ellipse, style=filled];
+Finally -> SetFlagTrue;
+}

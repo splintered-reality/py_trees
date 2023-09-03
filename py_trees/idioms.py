@@ -19,7 +19,7 @@ import typing
 from . import behaviour, behaviours, blackboard, common, composites, decorators
 
 ##############################################################################
-# Creational Methods
+# Idioms
 ##############################################################################
 
 
@@ -275,4 +275,87 @@ def oneshot(
         ),
     )
     subtree_root.add_children([oneshot_with_guard, oneshot_result])
+    return subtree_root
+
+
+def eventually(
+    name: str,
+    worker: behaviour.Behaviour,
+    on_completion: behaviour.Behaviour,
+) -> behaviour.Behaviour:
+    """
+    Implement a single-tick 'try-finally'-like pattern.
+
+    This idiom uses the :class:`~py_trees.decorators.OnTerminate`
+    decorator along with a parallel to trigger an
+    on_completion behaviour (or subtree) as soon as the
+    worker returns :data:`~py_trees.common.Status.SUCCESS` or
+    :data:`~py_trees.common.Status.FAILURE`).
+
+    .. note: The on_completion behaviour is only ticked once
+
+    .. tip:
+
+        If you have multiple workers, put them in a sequence and
+        pass that to the idiom.
+
+    .. graphviz:: dot/eventually.dot
+
+    Args:
+        worker: the worker behaviour or subtree
+        name: the name to use for the idiom root
+        on_completion: the behaviour or subtree to tick on work completion
+
+    Returns:
+        :class:`~py_trees.behaviour.Behaviour`: the root of the oneshot subtree
+
+    .. seealso:: :ref:`py-trees-demo-eventually-program`, :meth:`py_trees.idioms.eventually_swiss`
+    """
+    subtree_root = composites.Parallel(
+        name=name,
+        policy=common.ParallelPolicy.SuccessOnOne(),
+        children=[],
+    )
+    decorator = decorators.OnTerminate(name="Eventually", child=on_completion)
+    subtree_root.add_children([worker, decorator])
+    return subtree_root
+
+
+def eventually_swiss(
+    name: str,
+    workers: typing.List[behaviour.Behaviour],
+    on_failure: behaviour.Behaviour,
+    on_success: behaviour.Behaviour,
+) -> behaviour.Behaviour:
+    """
+    Implement a multi-tick, general purpose 'try-except-else'-like pattern.
+
+    This is a swiss knife version of the eventually idiom
+    that facilitates a multi-tick response for specialised
+    handling work sequence's completion status.
+
+    .. graphviz:: dot/eventually-swiss.dot
+
+    Args:
+        name: the name to use for the idiom root
+        workers: the worker behaviours or subtrees
+        on_success: the behaviour or subtree to tick on work success
+        on_failure: the behaviour or subtree to tick on work failure
+
+    Returns:
+        :class:`~py_trees.behaviour.Behaviour`: the root of the oneshot subtree
+
+    .. seealso:: :meth:`py_trees.idioms.eventually`, :ref:`py-trees-demo-eventually-swiss-program`
+    """
+    on_success_sequence = composites.Sequence(
+        name="Work to Success", memory=True, children=workers + [on_success]
+    )
+    on_failure_sequence = composites.Sequence(
+        name="On Failure",
+        memory=True,
+        children=[on_failure, behaviours.Failure(name="Failure")],
+    )
+    subtree_root = composites.Selector(
+        name=name, memory=False, children=[on_success_sequence, on_failure_sequence]
+    )
     return subtree_root

@@ -1,0 +1,19 @@
+digraph pastafarianism {
+ordering=out;
+graph [fontname="times-roman"];
+node [fontname="times-roman"];
+edge [fontname="times-roman"];
+"Count with Result" [fillcolor=cyan, fontcolor=black, fontsize=9, label="Count with Result", shape=octagon, style=filled];
+"Work to Success" [fillcolor=orange, fontcolor=black, fontsize=9, label="Ⓜ Work to Success", shape=box, style=filled];
+"Count with Result" -> "Work to Success";
+Counter [fillcolor=gray, fontcolor=black, fontsize=9, label=Counter, shape=ellipse, style=filled];
+"Work to Success" -> Counter;
+SetResultTrue [fillcolor=gray, fontcolor=black, fontsize=9, label=SetResultTrue, shape=ellipse, style=filled];
+"Work to Success" -> SetResultTrue;
+"On Failure" [fillcolor=orange, fontcolor=black, fontsize=9, label="Ⓜ On Failure", shape=box, style=filled];
+"Count with Result" -> "On Failure";
+SetResultFalse [fillcolor=gray, fontcolor=black, fontsize=9, label=SetResultFalse, shape=ellipse, style=filled];
+"On Failure" -> SetResultFalse;
+Failure [fillcolor=gray, fontcolor=black, fontsize=9, label=Failure, shape=ellipse, style=filled];
+"On Failure" -> Failure;
+}
