@@ -12,10 +12,15 @@
         "behaviours",
         "bierner",
         "bungcip",
+        "epilog",
+        "graphviz",
+        "literalinclude",
+        "noodly",
         "omnilib",
         "py_trees",
         "pydot",
         "pypi",
+        "seealso",
         "ufmt",
         "usort"
     ]

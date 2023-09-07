@@ -604,3 +604,44 @@ def test_status_to_blackboard() -> None:
         result=decorator.status,
     )
     assert decorator.status == py_trees.common.Status.SUCCESS
+
+
+def test_on_terminate() -> None:
+    console.banner("OnTerminate")
+
+    blackboard = py_trees.blackboard.Client()
+    blackboard.register_key(key="flag", access=py_trees.common.Access.WRITE)
+    blackboard.flag = False
+
+    set_flag_true = py_trees.behaviours.SetBlackboardVariable(
+        name="SetFlag", variable_name="flag", variable_value=True, overwrite=True
+    )
+    worker = py_trees.behaviours.TickCounter(
+        name="Counter-1", duration=1, completion_status=py_trees.common.Status.SUCCESS
+    )
+    parallel = py_trees.composites.Parallel(
+        name="Parallel",
+        policy=py_trees.common.ParallelPolicy.SuccessOnOne(),
+        children=[],
+    )
+    decorator = py_trees.decorators.OnTerminate(name="Eventually", child=set_flag_true)
+    parallel.add_children([worker, decorator])
+    parallel.tick_once()
+    py_trees.tests.print_assert_banner()
+    py_trees.tests.print_assert_details(
+        text="BB Variable (flag)",
+        expected=False,
+        result=blackboard.flag,
+    )
+    print(py_trees.display.unicode_tree(root=parallel, show_status=True))
+    assert not blackboard.flag
+
+    parallel.tick_once()
+    py_trees.tests.print_assert_banner()
+    py_trees.tests.print_assert_details(
+        text="BB Variable (flag)",
+        expected=True,
+        result=blackboard.flag,
+    )
+    print(py_trees.display.unicode_tree(root=parallel, show_status=True))
+    assert blackboard.flag

@@ -344,7 +344,7 @@ class Behaviour(abc.ABC):
                 yield child
         yield self
 
-    # TODO: better type refinement of 'viso=itor'
+    # TODO: better type refinement of 'visitor'
     def visit(self, visitor: typing.Any) -> None:
         """
         Introspect on this behaviour with a visitor.

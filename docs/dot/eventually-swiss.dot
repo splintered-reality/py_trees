@@ -1,0 +1,19 @@
+digraph pastafarianism {
+ordering=out;
+graph [fontname="times-roman"];
+node [fontname="times-roman"];
+edge [fontname="times-roman"];
+"Eventually (Swiss)" [fillcolor=cyan, fontcolor=black, fontsize=9, label="Eventually (Swiss)", shape=octagon, style=filled];
+"Work to Success" [fillcolor=orange, fontcolor=black, fontsize=9, label="Ⓜ Work to Success", shape=box, style=filled];
+"Eventually (Swiss)" -> "Work to Success";
+Worker [fillcolor=gray, fontcolor=black, fontsize=9, label=Worker, shape=ellipse, style=filled];
+"Work to Success" -> Worker;
+"On Success" [fillcolor=gray, fontcolor=black, fontsize=9, label="On Success", shape=ellipse, style=filled];
+"Work to Success" -> "On Success";
+"On Failure" [fillcolor=orange, fontcolor=black, fontsize=9, label="Ⓜ On Failure", shape=box, style=filled];
+"Eventually (Swiss)" -> "On Failure";
+"On Failure*" [fillcolor=gray, fontcolor=black, fontsize=9, label="On Failure*", shape=ellipse, style=filled];
+"On Failure" -> "On Failure*";
+Failure [fillcolor=gray, fontcolor=black, fontsize=9, label=Failure, shape=ellipse, style=filled];
+"On Failure" -> Failure;
+}

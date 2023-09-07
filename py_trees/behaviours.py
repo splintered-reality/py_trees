@@ -280,6 +280,7 @@ class TickCounter(behaviour.Behaviour):
             :data:`~py_trees.common.Status.RUNNING` while not expired, the given completion status otherwise
         """
         self.counter += 1
+        self.feedback_message = f"count: {self.counter}"
         if self.counter <= self.duration:
             return common.Status.RUNNING
         else:

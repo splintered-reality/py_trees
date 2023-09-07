@@ -19,11 +19,15 @@
         "vscode": {
             "extensions": [
                 "bierner.github-markdown-preview",
+                "bierner.markdown-preview-github-styles",
                 "bungcip.better-toml",
-                "streetsidesoftware.code-spell-checker",
-                "lextudio.restructuredtext",
+                "eamodio.gitlens",
+                "joaompinto.vscode-graphviz",
                 "ms-python.python",
-                "omnilib.ufmt"
+                "omnilib.ufmt",
+                "redhat.vscode-yaml",
+                "streetsidesoftware.code-spell-checker",
+                "tht13.rst-vscode"
             ]
         }
     },

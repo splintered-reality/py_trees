@@ -1,0 +1,17 @@
+digraph pastafarianism {
+ordering=out;
+graph [fontname="times-roman"];
+node [fontname="times-roman"];
+edge [fontname="times-roman"];
+"Count and Record" [fillcolor=gold, fontcolor=black, fontsize=9, label="Count and Record\nSuccessOnOne", shape=parallelogram, style=filled];
+Counting [fillcolor=orange, fontcolor=black, fontsize=9, label="Ⓜ Counting", shape=box, style=filled];
+"Count and Record" -> Counting;
+SetCountingFlagTrue [fillcolor=gray, fontcolor=black, fontsize=9, label=SetCountingFlagTrue, shape=ellipse, style=filled];
+Counting -> SetCountingFlagTrue;
+Counter [fillcolor=gray, fontcolor=black, fontsize=9, label=Counter, shape=ellipse, style=filled];
+Counting -> Counter;
+Eventually [fillcolor=ghostwhite, fontcolor=black, fontsize=9, label=Eventually, shape=ellipse, style=filled];
+"Count and Record" -> Eventually;
+SetCountingFlagFalse [fillcolor=gray, fontcolor=black, fontsize=9, label=SetCountingFlagFalse, shape=ellipse, style=filled];
+Eventually -> SetCountingFlagFalse;
+}

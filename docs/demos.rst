@@ -147,6 +147,38 @@ py-trees-demo-eternal-guard
    :linenos:
    :caption: py_trees/demos/eternal_guard.py
 
+.. _py-trees-demo-eventually-program:
+
+py-trees-demo-eventually
+------------------------
+
+.. automodule:: py_trees.demos.eventually
+    :members:
+    :special-members:
+    :show-inheritance:
+    :synopsis: demo the eventually idiom
+
+.. literalinclude:: ../py_trees/demos/eventually.py
+   :language: python
+   :linenos:
+   :caption: py_trees/demos/eventually.py
+
+.. _py-trees-demo-eventually-swiss-program:
+
+py-trees-demo-eventually-swiss
+------------------------------
+
+.. automodule:: py_trees.demos.eventually_swiss
+    :members:
+    :special-members:
+    :show-inheritance:
+    :synopsis: demo the general purpose eventually idiom
+
+.. literalinclude:: ../py_trees/demos/eventually_swiss.py
+   :language: python
+   :linenos:
+   :caption: py_trees/demos/eventually_swiss.py
+
 .. _py-trees-demo-logging-program:
 
 py-trees-demo-logging

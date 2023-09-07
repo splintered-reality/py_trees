@@ -21,6 +21,8 @@ from . import context_switching  # usort:skip  # noqa: F401
 from . import display_modes  # usort:skip  # noqa: F401
 from . import dot_graphs  # usort:skip  # noqa: F401
 from . import either_or  # usort:skip  # noqa: F401
+from . import eventually  # usort:skip  # noqa: F401
+from . import eventually_swiss  # usort:skip  # noqa: F401
 from . import lifecycle  # usort:skip  # noqa: F401
 from . import selector  # usort:skip  # noqa: F401
 from . import sequence  # usort:skip  # noqa: F401
