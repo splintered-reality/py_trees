@@ -65,6 +65,9 @@ Terminology
       happening somewhere else with a behaviour simply in charge of starting/monitoring and
       catching the result of that work.
 
-      Add an image of a ticking tree here.
+      .. image:: images/ticking_tree.jpg
+         :width: 300px
+         :align: center
+
 
 .. _pastafarianism: http://www.venganza.org/
