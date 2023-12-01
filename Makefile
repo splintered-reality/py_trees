@@ -7,9 +7,9 @@ help:
 	@echo "  docs      : buidl sphinx documentation"
 
 docs:
-	PY_TREES_DISABLE_COLORS=1 sphinx-build -E -b html doc doc/html
+	PY_TREES_DISABLE_COLORS=1 sphinx-build -E -b html docs docs/html
 
 clean:
-	-rm -rf doc/html
+	-rm -rf docs/html
 
 .PHONY: docs clean
