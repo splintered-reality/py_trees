@@ -753,7 +753,7 @@ def render_dot_tree(
         filename = filename_wo_extension + "." + extension
         pathname = os.path.join(target_directory, filename)
         print("Writing {}".format(pathname))
-        writer(pathname)
+        writer(pathname, encoding="utf-8")
         filenames[extension] = pathname
     return filenames
 
