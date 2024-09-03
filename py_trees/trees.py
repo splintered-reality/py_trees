@@ -455,7 +455,8 @@ class BehaviourTree(object):
         Args:
             period_ms (:obj:`float`): sleep this much between ticks (milliseconds)
             number_of_iterations (:obj:`int`): number of iterations to tick-tock
-            stop_on_terminal_state (:obj: `bool`): if true, stops when the tree's status is :data:`~py_trees.common.Status.SUCCESS` or `:data:`~py_trees.common.Status.FAILURE`.
+            stop_on_terminal_state (:obj: `bool`): if true, stops when the tree's status is
+               :data:`~py_trees.common.Status.SUCCESS` or `:data:`~py_trees.common.Status.FAILURE`.
             pre_tick_handler (:obj:`func`): function to execute before ticking
             post_tick_handler (:obj:`func`): function to execute after ticking
         """
