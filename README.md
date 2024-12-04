@@ -53,10 +53,10 @@ py-trees-demo-blackboard-remappings       py-trees-demo-eternal-guard           
 
 # Run the Formatter, Tests, Linters and Mypy
 (docker) zen@py_trees:/workspaces/py_trees$ poetry run tox -l
-py38 py310 format check mypy38 mypy310
+py310 py312 format check mypy310 mypy312
 (docker) zen@py_trees:/workspaces/py_trees$ poetry run tox -e format
 ...
-(docker) zen@py_trees:/workspaces/py_trees$ poetry run tox -e py38
+(docker) zen@py_trees:/workspaces/py_trees$ poetry run tox -e py310
 ...
 (docker) zen@py_trees:/workspaces/py_trees$ poetry run tox -e check
 ...

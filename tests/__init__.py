@@ -3,7 +3,6 @@ import unittest
 
 
 class ImportTest(unittest.TestCase):
-
     def test_import(self):
         """
         This test serves to make the buildfarm happy in Python 3.12 and later.
