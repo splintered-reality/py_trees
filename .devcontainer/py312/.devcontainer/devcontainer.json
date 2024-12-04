@@ -6,7 +6,7 @@
         "args": {
             "NAME": "py_trees-312",
             "POETRY_VERSION": "1.8.4",
-            "PYTHON_VERSION": "3.12.8",
+            "PYTHON_VERSION": "3.12.4",
             "DEBIAN_VERSION": "bullseye"
         },
         "context": ".."
