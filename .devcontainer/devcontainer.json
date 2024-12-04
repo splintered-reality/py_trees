@@ -2,7 +2,7 @@
     "name": "py_trees-310",
 
     "build": {
-        "dockerfile": "../../Dockerfile",
+        "dockerfile": "./Dockerfile",
         "args": {
             "NAME": "py_trees-310",
             "POETRY_VERSION": "1.8.4",
