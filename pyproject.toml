@@ -25,6 +25,7 @@ keywords=["py_trees", "py-trees", "behaviour-trees"]
 [tool.poetry.dependencies]
 python = "^3.8"
 pydot = ">=1.4"
+py = "^1.11.0"
 
 [tool.poetry.group.dev.dependencies]
 tox = ">=3.26"
