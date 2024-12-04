@@ -17,13 +17,11 @@ import py_trees
 ##############################################################################
 
 
-def create_root() -> (
-    typing.Tuple[
-        py_trees.behaviour.Behaviour,
-        py_trees.behaviour.Behaviour,
-        py_trees.behaviour.Behaviour,
-    ]
-):
+def create_root() -> typing.Tuple[
+    py_trees.behaviour.Behaviour,
+    py_trees.behaviour.Behaviour,
+    py_trees.behaviour.Behaviour,
+]:
     trigger_one = py_trees.decorators.FailureIsRunning(
         name="FisR", child=py_trees.behaviours.SuccessEveryN(name="Joystick 1", n=4)
     )
