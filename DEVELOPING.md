@@ -5,7 +5,7 @@
 
 ## Test-Format-Lint
 
-Check against at least one of py38 / py310 [1].
+Check against at least one of py310 / py312 [1].
 
 ```
 # Auto-format your code (if using VSCode, install the ufmt extension)
@@ -15,13 +15,13 @@ $ poetry run tox -e format
 $ poetry run tox -e check
 
 # Type-Check
-$ poetry run mypy38
+$ poetry run mypy310
 
 # Tests
-$ poetry run tox -e py38
+$ poetry run tox -e py310
 ```
 
-[1] CI will test against both python versions for you, but should you wish to do so locally, open up two VSCode windows, one with the project opened in the default [py38 devcontainer](.devcontainer) and the other with the [py310 devcontainer](.devcontainer/py310).
+[1] CI will test against both python versions for you, but should you wish to do so locally, open up two VSCode windows, one with the project opened in the default [py310 devcontainer](.devcontainer) and the other with the [py312 devcontainer](.devcontainer/py312).
 
 ## Documentation
 
