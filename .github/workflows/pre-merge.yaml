@@ -10,15 +10,15 @@ on:
 
 jobs:
   pre-merge:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
-        python-version: ["3.8", "3.10"]
+        python-version: ["3.10", "3.12"]
         include:
-          - python-version: "3.8"
-            python-py-version: "py38"
           - python-version: "3.10"
             python-py-version: "py310"
+          - python-version: "3.12"
+            python-py-version: "py312"
     container:
       image: ghcr.io/${{ github.repository }}-ci:${{ matrix.python-py-version }}-poetry-bullseye
       credentials:
@@ -26,14 +26,14 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Poetry Venv Dir
       run: |
         echo "VENV_DIR=$(poetry config virtualenvs.path)" >> $GITHUB_ENV
 
     - name: Restore the Cache
       id: cache-deps
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ${{ env.VENV_DIR }}
         # bump the suffix if you need to force-refresh the cache
