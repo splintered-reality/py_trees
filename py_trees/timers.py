@@ -54,7 +54,7 @@ class Timer(behaviour.Behaviour):
 
     def __init__(self, name: str = "Timer", duration: float = 5.0):
         super(Timer, self).__init__(name)
-        if not isinstance(duration, float):
+        if not isinstance(duration, (int, float)):
             raise TypeError(
                 "Timer: duration should be int or float, but you passed in {}".format(
                     type(duration)
