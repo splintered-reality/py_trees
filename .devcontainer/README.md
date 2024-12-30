@@ -1,7 +1,7 @@
 # Development Environment
 
 These VSCode devcontainers setup multiple environments for testing against
-different python versins.
+different python versions.
 
 ## Setup
 
