@@ -7,7 +7,7 @@ import py_trees
 class Foo(py_trees.behaviour.Behaviour):
     """Example behaviour that reads from and writes to the blackboard."""
 
-    def __init__(self, name):
+    def __init__(self, name: str) -> None:
         """Construct a new behaviour instance and sets up blackboard access."""
         super().__init__(name=name)
         self.blackboard = self.attach_blackboard_client(name="Foo Global")
@@ -25,11 +25,11 @@ class Foo(py_trees.behaviour.Behaviour):
             "number_of_noodles", access=py_trees.common.Access.WRITE
         )
 
-    def initialise(self):
+    def initialise(self) -> None:
         """Initialise blackboard variables based on parameters."""
         self.state.number_of_noodles = self.parameters.init
 
-    def update(self):
+    def update(self) -> py_trees.common.Status:
         """Update blackboard variables as the behaviour ticks."""
         self.state.number_of_noodles += 1
         self.feedback_message = self.state.number_of_noodles

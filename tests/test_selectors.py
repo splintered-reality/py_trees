@@ -54,7 +54,7 @@ def test_tick_running_with_no_memory() -> None:
         "2::Selector Status", py_trees.common.Status.SUCCESS, root.status
     )
     assert root.status == py_trees.common.Status.SUCCESS
-    py_trees.tests.print_assert_details(
+    py_trees.tests.print_assert_details(  # type: ignore[unreachable]
         "2::Child 1 Status", py_trees.common.Status.SUCCESS, child_1.status
     )
     assert child_1.status == py_trees.common.Status.SUCCESS
@@ -103,7 +103,7 @@ def test_with_memory_priority_handling() -> None:
         "1::Selector Status", py_trees.common.Status.SUCCESS, root.status
     )
     assert root.status == py_trees.common.Status.SUCCESS
-    py_trees.tests.print_assert_details(
+    py_trees.tests.print_assert_details(  # type: ignore[unreachable]
         "2::Child 1 Status", py_trees.common.Status.INVALID, child_1.status
     )
     assert child_1.status == py_trees.common.Status.INVALID

@@ -240,4 +240,4 @@ def untest_oneshot_with_subtrees_and_interrupt() -> None:
                 + " [{}]".format(py_trees.common.Status.INVALID)
             )
             assert oneshot.status == py_trees.common.Status.SUCCESS
-            assert worker_subtree.status == py_trees.common.Status.INVALID
+            assert worker_subtree.status == py_trees.common.Status.INVALID  # type: ignore[unreachable]

@@ -82,7 +82,7 @@ def test_repeat_until_success() -> None:
     print("child.status == py_trees.common.Status.SUCCESS")
     assert child.status == py_trees.common.Status.SUCCESS
 
-    decorator.tick_once()
+    decorator.tick_once()  # type: ignore[unreachable]
     print("\n--------- Tick 3 ---------\n")
     print("decorator.status == py_trees.common.Status.SUCCESS")
     assert decorator.status == py_trees.common.Status.SUCCESS
@@ -116,7 +116,7 @@ def test_repeat_interrupting_failure() -> None:
     print("child.status == py_trees.common.Status.SUCCESS")
     assert child.status == py_trees.common.Status.SUCCESS
 
-    decorator.tick_once()
+    decorator.tick_once()  # type: ignore[unreachable]
     print("\n--------- Tick 3 ---------\n")
     print("decorator.status == py_trees.common.Status.FAILURE")
     assert decorator.status == py_trees.common.Status.FAILURE
@@ -154,7 +154,7 @@ def test_retry_until_success() -> None:
     print("child.status == py_trees.common.Status.FAILURE")
     assert child.status == py_trees.common.Status.FAILURE
 
-    decorator.tick_once()
+    decorator.tick_once()  # type: ignore[unreachable]
     print("\n--------- Tick 3 ---------\n")
     print("decorator.status == py_trees.common.Status.SUCCESS")
     assert decorator.status == py_trees.common.Status.SUCCESS
@@ -194,7 +194,7 @@ def test_retry_eventual_failure() -> None:
     print("child.status == py_trees.common.Status.FAILURE")
     assert child.status == py_trees.common.Status.FAILURE
 
-    decorator.tick_once()
+    decorator.tick_once()  # type: ignore[unreachable]
     print("\n--------- Tick 3 ---------\n")
     print("decorator.status == py_trees.common.Status.FAILURE")
     assert decorator.status == py_trees.common.Status.FAILURE
@@ -465,7 +465,7 @@ def test_timeout() -> None:
         print("\n--------- Assertions ---------\n")
         print("timeout.status == py_trees.common.Status.FAILURE")
         assert timeout.status == py_trees.common.Status.FAILURE
-        print("running.status == py_trees.common.Status.INVALID")
+        print("running.status == py_trees.common.Status.INVALID")  # type: ignore[unreachable]
         assert running.status == py_trees.common.Status.INVALID
 
     # test that it passes on success
@@ -490,7 +490,7 @@ def test_timeout() -> None:
     print("\n--------- Assertions ---------\n")
     print("timeout.status == py_trees.common.Status.SUCCESS")
     assert timeout.status == py_trees.common.Status.SUCCESS
-    print("count.status == py_trees.common.Status.SUCCESS")
+    print("count.status == py_trees.common.Status.SUCCESS")  # type: ignore[unreachable]
     assert count.status == py_trees.common.Status.SUCCESS
 
     # test that it passes on failure
@@ -570,7 +570,7 @@ def test_condition() -> None:
     print("\n--------- Assertions ---------\n")
     print("child.status == py_trees.common.Status.SUCCESS")
     assert child.status == py_trees.common.Status.SUCCESS
-    print("condition.status == py_trees.common.Status.SUCCESS")
+    print("condition.status == py_trees.common.Status.SUCCESS")  # type: ignore[unreachable]
     assert condition.status == py_trees.common.Status.SUCCESS
 
 

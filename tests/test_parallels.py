@@ -141,7 +141,7 @@ def test_parallel_running() -> None:
     print("\n--------- Assertions ---------\n")
     print("root.status == py_trees.common.Status.RUNNING")
     assert root.status == py_trees.common.Status.RUNNING
-    print("success_after_1.status == py_trees.common.Status.SUCCESS")
+    print("success_after_1.status == py_trees.common.Status.SUCCESS")  # type: ignore[unreachable]
     assert success_after_1.status == py_trees.common.Status.SUCCESS
     print("running.status == py_trees.common.Status.RUNNING")
     assert running.status == py_trees.common.Status.RUNNING
@@ -220,7 +220,7 @@ def test_parallel_success_on_selected() -> None:
     print("\n--------- Assertions ---------\n")
     print("root.status == py_trees.common.Status.SUCCESS")
     assert root.status == py_trees.common.Status.SUCCESS
-    print("running1.status == py_trees.common.Status.INVALID")
+    print("running1.status == py_trees.common.Status.INVALID")  # type: ignore[unreachable]
     assert running1.status == py_trees.common.Status.INVALID
     print("success1.status == py_trees.common.Status.SUCCESS")
     assert success1.status == py_trees.common.Status.SUCCESS
@@ -329,7 +329,7 @@ def test_parallel_synchronisation() -> None:
     print("\n--------- Assertions ---------\n")
     print("root.status == py_trees.common.Status.SUCCESS")
     assert root.status == py_trees.common.Status.SUCCESS
-    print("success.status == py_trees.common.Status.SUCCESS")
+    print("success.status == py_trees.common.Status.SUCCESS")  # type: ignore[unreachable]
     assert success.status == py_trees.common.Status.SUCCESS
     print("success_every_second.status == py_trees.common.Status.SUCCESS")
     assert success_every_second.status == py_trees.common.Status.SUCCESS

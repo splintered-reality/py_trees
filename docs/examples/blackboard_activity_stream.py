@@ -12,4 +12,5 @@ writer.foo = "bar"
 writer.foo = "foobar"
 unused_result = reader.foo
 print(py_trees.display.unicode_blackboard_activity_stream())
+assert py_trees.blackboard.Blackboard.activity_stream is not None
 py_trees.blackboard.Blackboard.activity_stream.clear()

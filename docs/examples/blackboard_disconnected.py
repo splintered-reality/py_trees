@@ -4,7 +4,7 @@
 import py_trees
 
 
-def check_foo():
+def check_foo() -> None:
     """Read the value of a blackboard variable in a different scope."""
     blackboard = py_trees.blackboard.Client(name="Reader")
     blackboard.register_key(key="foo", access=py_trees.common.Access.READ)

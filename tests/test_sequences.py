@@ -60,7 +60,7 @@ def test_running_with_no_memory_children_do_not_reset() -> None:
         "2::Selector Status", py_trees.common.Status.SUCCESS, root.status
     )
     assert root.status == py_trees.common.Status.SUCCESS
-    py_trees.tests.print_assert_details(
+    py_trees.tests.print_assert_details(  # type: ignore[unreachable]
         "2::Child 1 Status", py_trees.common.Status.SUCCESS, child_1.status
     )
     assert child_1.status == py_trees.common.Status.SUCCESS
@@ -111,7 +111,7 @@ def test_running_with_no_memory_invalidate_dangling_runners() -> None:
         "2::Child 1 Status", py_trees.common.Status.RUNNING, child_1.status
     )
     assert child_1.status == py_trees.common.Status.RUNNING
-    py_trees.tests.print_assert_details(
+    py_trees.tests.print_assert_details(  # type: ignore[unreachable]
         "2::Child 2 Status", py_trees.common.Status.INVALID, child_2.status
     )
     assert child_2.status == py_trees.common.Status.INVALID
@@ -166,7 +166,7 @@ def test_running_with_memory_proceeds() -> None:
         "2::Child 2 Status", py_trees.common.Status.SUCCESS, child_2.status
     )
     assert child_2.status == py_trees.common.Status.SUCCESS
-    py_trees.tests.print_assert_details(
+    py_trees.tests.print_assert_details(  # type: ignore[unreachable]
         "3::Child 3 Status", py_trees.common.Status.RUNNING, child_3.status
     )
     assert child_3.status == py_trees.common.Status.RUNNING

@@ -7,11 +7,11 @@ import py_trees
 class Nested(object):
     """Simple object that contains a few attributes."""
 
-    def __init__(self):
-        self.foo = None
-        self.bar = None
+    def __init__(self) -> None:
+        self.foo: str | None = None
+        self.bar: str | None = None
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.__dict__)
 
 

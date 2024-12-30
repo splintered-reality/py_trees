@@ -122,7 +122,7 @@ def setup(
         signal.signal(
             _SIGNAL,
             functools.partial(
-                signal_handler, original_signal_handler=original_signal_handler
+                signal_handler, original_signal_handler=original_signal_handler  # type: ignore[arg-type]
             ),
         )
         try:

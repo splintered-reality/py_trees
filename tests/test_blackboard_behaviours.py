@@ -262,7 +262,7 @@ def test_set_blackboard_variable() -> None:
     )
     assert nested_set_foo.status == py_trees.common.Status.FAILURE
 
-    class Count:
+    class Count:  # type: ignore[unreachable]
         value: int = 0
 
     def generator() -> int:

@@ -67,7 +67,7 @@ def impl_eternal_guard_checks(
     )
     assert eternal_guard.status == py_trees.common.Status.RUNNING
 
-    py_trees.tests.tick_tree(root, 3, 3, print_snapshot=True)
+    py_trees.tests.tick_tree(root, 3, 3, print_snapshot=True)  # type: ignore[unreachable]
     py_trees.tests.tick_tree(root, 4, 4, print_snapshot=True)
     py_trees.tests.tick_tree(root, 5, 5, print_snapshot=True)
     print(

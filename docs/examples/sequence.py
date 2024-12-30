@@ -5,7 +5,7 @@
 import py_trees
 
 if __name__ == "__main__":
-    root = py_trees.composites.Sequence("Sequence")
+    root = py_trees.composites.Sequence("Sequence", memory=False)
     guard = py_trees.behaviours.Success(name="Guard")
     a1 = py_trees.behaviours.Success(name="Action 1")
     a2 = py_trees.behaviours.Success(name="Action 2")

@@ -70,7 +70,7 @@ def test_high_priority_interrupt() -> None:
     print("\n--------- Assertions ---------\n")
     print("high_priority_interrupt.status == py_trees.common.Status.SUCCESS")
     assert high_priority_interrupt.status == py_trees.common.Status.SUCCESS
-    print("piwylo.status == py_trees.common.Status.INVALID")
+    print("piwylo.status == py_trees.common.Status.INVALID")  # type: ignore[unreachable]
     assert piwylo.status == py_trees.common.Status.INVALID
     print("task_one.status == py_trees.common.Status.INVALID")
     assert task_one.status == py_trees.common.Status.INVALID

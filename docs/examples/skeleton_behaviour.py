@@ -3,6 +3,7 @@
 """Example showing how to create a skeleton behaviour."""
 
 import random
+import typing
 
 import py_trees
 
@@ -10,7 +11,7 @@ import py_trees
 class Foo(py_trees.behaviour.Behaviour):
     """A skeleton behaviour that inherits from the PyTrees Behaviour class."""
 
-    def __init__(self, name):
+    def __init__(self, name: str) -> None:
         """
         Minimal one-time initialisation.
 
@@ -22,7 +23,7 @@ class Foo(py_trees.behaviour.Behaviour):
         """
         super(Foo, self).__init__(name)
 
-    def setup(self):
+    def setup(self, **kwargs: typing.Any) -> None:
         """
         Minimal setup implementation.
 
@@ -54,7 +55,7 @@ class Foo(py_trees.behaviour.Behaviour):
         """
         self.logger.debug("  %s [Foo::setup()]" % self.name)
 
-    def initialise(self):
+    def initialise(self) -> None:
         """
         Minimal initialisation implementation.
 
@@ -68,7 +69,7 @@ class Foo(py_trees.behaviour.Behaviour):
         """
         self.logger.debug("  %s [Foo::initialise()]" % self.name)
 
-    def update(self):
+    def update(self) -> py_trees.common.Status:
         """
         Minimal update implementation.
 
@@ -92,7 +93,7 @@ class Foo(py_trees.behaviour.Behaviour):
             self.feedback_message = "Uh oh"
             return py_trees.common.Status.FAILURE
 
-    def terminate(self, new_status):
+    def terminate(self, new_status: py_trees.common.Status) -> None:
         """
         Minimal termination implementation.
 

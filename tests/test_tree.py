@@ -135,7 +135,7 @@ def test_selector_composite() -> None:
     print("--------- Assertions ---------\n")
     print("a.status == py_trees.common.Status.RUNNING")
     assert a.status == py_trees.common.Status.RUNNING
-    print("c.interrupt_count == 1")
+    print("c.interrupt_count == 1")  # type: ignore[unreachable]
     assert c.interrupt_count == 1
     print("c.status == py_trees.common.Status.INVALID")
     assert c.status == py_trees.common.Status.INVALID
@@ -170,7 +170,7 @@ def test_sequence_composite() -> None:
     assert a.status == py_trees.common.Status.SUCCESS
     print("b.status == py_trees.common.Status.SUCCESS")
     assert b.status == py_trees.common.Status.SUCCESS
-    print("b.status == py_trees.common.Status.SUCCESS")
+    print("b.status == py_trees.common.Status.SUCCESS")  # type: ignore[unreachable]
     assert c.status == py_trees.common.Status.SUCCESS
     print("tree.status == py_trees.common.Status.SUCCESS")
     assert tree.status == py_trees.common.Status.SUCCESS
@@ -271,7 +271,7 @@ def test_mixed_tree() -> None:
     assert a.status == py_trees.common.Status.FAILURE
     print("sequence.status == py_trees.common.Status.SUCCESS")
     assert sequence.status == py_trees.common.Status.SUCCESS
-    print("c.status == py_trees.common.Status.SUCCESS")
+    print("c.status == py_trees.common.Status.SUCCESS")  # type: ignore[unreachable]
     assert c.status == py_trees.common.Status.SUCCESS
     print("root.status == py_trees.common.Status.SUCCESS")
     assert root.status == py_trees.common.Status.SUCCESS
@@ -492,7 +492,7 @@ def test_tip_simple() -> None:
     tree.tick()
     print(py_trees.display.unicode_tree(tree.root, show_status=True))
     assert a.status == py_trees.common.Status.SUCCESS
-    assert b.status == py_trees.common.Status.RUNNING
+    assert b.status == py_trees.common.Status.RUNNING  # type: ignore[unreachable]
     # the root of sequence and tree should be the currently running node
     assert tree.root.tip() == b
     assert seq.tip() == b
@@ -581,7 +581,7 @@ def test_tip_complex() -> None:
     print("\n--------- Assertions ---------\n")
     print("a.status == py_trees.common.Status.SUCCESS")
     assert a.status == py_trees.common.Status.SUCCESS
-    print("b.status == py_trees.common.Status.RUNNING")
+    print("b.status == py_trees.common.Status.RUNNING")  # type: ignore[unreachable]
     assert b.status == py_trees.common.Status.RUNNING
     print("c.status == py_trees.common.Status.INVALID")
     assert c.status == py_trees.common.Status.INVALID

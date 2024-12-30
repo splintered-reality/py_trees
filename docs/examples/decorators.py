@@ -6,7 +6,7 @@ import py_trees.decorators
 import py_trees.display
 
 if __name__ == "__main__":
-    root = py_trees.composites.Sequence(name="Life")
+    root = py_trees.composites.Sequence(name="Life", memory=False)
     timeout = py_trees.decorators.Timeout(
         name="Timeout", child=py_trees.behaviours.Success(name="Have a Beer!")
     )

@@ -110,7 +110,7 @@ def test_basic_workflow() -> None:
         result=task_one.status,
     )
     assert task_one.status == py_trees.common.Status.RUNNING
-    root.tick_once()
+    root.tick_once()  # type: ignore[unreachable]
     root.tick_once()
     py_trees.tests.print_assert_details(
         text="Tick 6 - task one finished",
