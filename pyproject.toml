@@ -23,7 +23,7 @@ classifiers = [
 keywords=["py_trees", "py-trees", "behaviour-trees"]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = ">=3.9,<4.0"
 pydot = ">=1.4"
 py = "^1.11.0"
 
@@ -31,7 +31,7 @@ py = "^1.11.0"
 tox = ">=3.26"
 tox-poetry-installer = {extras = ["poetry"], version = ">=0.9.0"}
 pytest = [
-    { version = ">=7.1", python = "^3.7" }
+    { version = ">=7.1", python = ">=3.9,<4.0" }
 ]
 pytest-console-scripts = ">=1.3"
 pytest-cov = ">=3.0.0"             # transitively depends on coverage[toml]
