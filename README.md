@@ -105,6 +105,8 @@ Robotics:
 [license-image]: https://img.shields.io/badge/License-BSD%203--Clause-orange.svg?style=plastic
 [license]: LICENSE
 
+[python312-image]: https://img.shields.io/badge/python-3.12-green.svg?style=plastic
+[python312-docs]: https://docs.python.org/3.12/
 [python310-image]: https://img.shields.io/badge/python-3.10-green.svg?style=plastic
 [python310-docs]: https://docs.python.org/3.10/
 [python38-image]: https://img.shields.io/badge/python-3.8-green.svg?style=plastic
