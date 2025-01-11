@@ -1,8 +1,8 @@
 Release Notes
 =============
 
-Forthcoming
------------
+2.3.0 (2025-01-11)
+------------------
 * [code] Fix CI and update to latest Ubuntu/Python versions (`#454 <https://github.com/splintered-reality/py_trees/issues/454>`_)
 * [behaviours] Shorten line in docstring (`#450 <https://github.com/splintered-reality/py_trees/issues/450>`_)
 * [docs] add ticking tree
