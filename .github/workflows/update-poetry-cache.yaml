@@ -52,7 +52,7 @@ jobs:
       if: steps.cache-deps.outputs.cache-hit != 'true'
 
     - name: Tox - Install Dependencies
-      run: poetry run tox --workdir ${{ env.VENV_DIR }} --notest -e ${{ matrix.python-py-version }} check my${{ matrix.python-py-version }}
+      run: poetry run tox --workdir ${{ env.VENV_DIR }} --notest -e ${{ matrix.python-py-version }},check,my${{ matrix.python-py-version }}
       if: steps.cache-deps.outputs.cache-hit != 'true'
 
 
