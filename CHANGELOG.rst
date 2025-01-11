@@ -3,7 +3,20 @@ Release Notes
 
 Forthcoming
 -----------
-* ...
+* [code] Fix CI and update to latest Ubuntu/Python versions (`#454 <https://github.com/splintered-reality/py_trees/issues/454>`_)
+* [behaviours] Shorten line in docstring (`#450 <https://github.com/splintered-reality/py_trees/issues/450>`_)
+* [docs] add ticking tree
+* [composites] Reduce circulation when the parallel node policy is SuccessOnOne (`#440 <https://github.com/splintered-reality/py_trees/issues/440>`_)
+* [docs] fix make target (`#430 <https://github.com/splintered-reality/py_trees/issues/430>`_)
+* [composites] use typing.Sequence for children argument (`#436 <https://github.com/splintered-reality/py_trees/issues/436>`_)
+* Improve timing of tick_tock() and allow stopping on terminal state (`#444 <https://github.com/splintered-reality/py_trees/issues/444>`_)
+* [vscode] update extensions, set spell checking to UK
+* [behaviours] add ProbabilisticBehaviour(Behaviour)
+* [readme] consolidate development instructions
+* [code] remove unused import
+* [vscode] recommend extensions, especially devcontainers
+* Contributors: Daniel Stonier, Efe Mert Demir, Nino Walker, Sebastian Castro, gitpushoriginmaster, wanfeng
+
 
 2.2.3 (2023-02-08)
 ------------------
