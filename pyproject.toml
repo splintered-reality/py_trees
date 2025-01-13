@@ -1,9 +1,9 @@
 [tool.poetry]
 name = "py_trees"
-version = "2.2.3"
+version = "2.3.0"
 description = "pythonic implementation of behaviour trees"
 authors = ["Daniel Stonier", "Naveed Usmani", "Michal Staniaszek"]
-maintainers = ["Daniel Stonier <d.stonier@gmail.com>"]
+maintainers = ["Daniel Stonier <d.stonier@gmail.com>", "Sebastian Castro <sebas.a.castro@gmail.com>"]
 readme = "README.md"
 license = "BSD"
 homepage = "https://github.com/splintered-reality/py_trees"
