@@ -22,7 +22,7 @@ Brief feature list:
 
 ## Documentation
 
-[![devel][docs-devel-image]][docs-devel] [![2.3.x][docs-2.3.x-image]][docs-2.2.x] [![2.2.x][docs-2.2.x-image]][docs-2.2.x] [![2.1.x][docs-2.1.x-image]][docs-2.1.x]
+[![devel][docs-devel-image]][docs-devel] [![2.3.x][docs-2.3.x-image]][docs-2.3.x] [![2.2.x][docs-2.2.x-image]][docs-2.2.x] [![2.1.x][docs-2.1.x-image]][docs-2.1.x]
 
 ## Getting Started
 
