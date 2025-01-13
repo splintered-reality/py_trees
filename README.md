@@ -74,7 +74,7 @@ On PyPi:
 * [py_trees_js](https://pypi.org/project/py-trees-js/)
 
 Examples:
-* [ReadTheDocs - PyTrees ROS Tutorials](https://py-trees-ros-tutorials.readthedocs.io/en/release-2.0.x/index.html) - significantly more edifying than the demos, these incrementally walk through the process of building a decision making layer for a robot. These use ROS2 (sparsely), but merely browsing should be enlightening regardless.
+* [ReadTheDocs - PyTrees ROS Tutorials](https://py-trees-ros-tutorials.readthedocs.io/en/devel/index.html) - significantly more edifying than the demos, these incrementally walk through the process of building a decision making layer for a robot. These use ROS2 (sparsely), but merely browsing should be enlightening regardless.
 
 Visualisation:
 * [py_trees_js](https://github.com/splintered-reality/py_trees_js) - a javascript library for building your own runtime visualisation tool
