@@ -25,7 +25,7 @@ of these allowing a bend of purposeful planning towards goals with enough reacti
 to shift in the presence of important events. Some standout features:
 
 * **Ticking** - the ability to :term:`tick` allows for work between executions without multi-threading
-* **Priority Handling** - switching mechansims that allow higher priority interruptions is very natural
+* **Priority Handling** - switching mechanisms that allow higher priority interruptions is very natural
 * **Simplicity** - very few core components, making it easy for designers to work with it
 * **Scalable** - do not suffer from combinatorial explosion as nodes increase (as state machines do)
 * **Dynamic** - change the graph on the fly, between ticks or from parent behaviours themselves
