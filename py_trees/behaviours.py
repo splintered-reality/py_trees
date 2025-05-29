@@ -570,10 +570,10 @@ class CheckBlackboardVariableValue(behaviour.Behaviour):
         """
         self.logger.debug("%s.update()" % self.__class__.__name__)
         try:
-            value = self.blackboard.get(self.key)
+            lhs_value = self.blackboard.get(self.key)
             if self.key_attributes:
                 try:
-                    value = operator.attrgetter(self.key_attributes)(value)
+                    lhs_value = operator.attrgetter(self.key_attributes)(lhs_value)
                 except AttributeError:
                     self.feedback_message = (
                         "blackboard key-value pair exists, but the value does not "
@@ -588,20 +588,21 @@ class CheckBlackboardVariableValue(behaviour.Behaviour):
             )
             return common.Status.FAILURE
 
-        success = self.check.operator(value, self.check.value)
+        rhs_value = self.check.value_generator()
+        success = self.check.operator(lhs_value, rhs_value)
 
         if success:
             self.feedback_message = "'%s' comparison succeeded [v: %s][e: %s]" % (
                 self.check.variable,
-                value,
-                self.check.value,
+                lhs_value,
+                rhs_value,
             )
             return common.Status.SUCCESS
         else:
             self.feedback_message = "'%s' comparison failed [v: %s][e: %s]" % (
                 self.check.variable,
-                value,
-                self.check.value,
+                lhs_value,
+                rhs_value,
             )
             return common.Status.FAILURE
 
@@ -722,7 +723,7 @@ class CheckBlackboardVariableValues(behaviour.Behaviour):
                     )
                 )
                 return common.Status.FAILURE
-            results.append(check.operator(value, check.value))
+            results.append(check.operator(value, check.value_generator()))
         if self.blackboard_results is not None:
             for counter in range(1, len(results) + 1):
                 self.blackboard_results.set(str(counter), results[counter - 1])
