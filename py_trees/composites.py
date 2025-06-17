@@ -727,7 +727,7 @@ class Parallel(Composite):
             new_status = common.Status.FAILURE
         except StopIteration:
             if type(self.policy) is common.ParallelPolicy.SuccessOnAll:
-                if all([c.status == common.Status.SUCCESS for c in self.children]):
+                if all(c.status == common.Status.SUCCESS for c in self.children):
                     new_status = common.Status.SUCCESS
                     self.current_child = self.children[-1]
             elif type(self.policy) is common.ParallelPolicy.SuccessOnOne:
