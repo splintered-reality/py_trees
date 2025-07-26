@@ -607,6 +607,68 @@ class CheckBlackboardVariableValue(behaviour.Behaviour):
             return common.Status.FAILURE
 
 
+class CompareBlackboardVariables(behaviour.Behaviour):
+    """
+    Non-blocking comparison between two blackboard variables.
+
+    Gets two blackboard variables and applies the given operator between them,
+    returning SUCCESS if the comparison holds.
+    This is non-blocking, so it will always tick with
+    :data:`~py_trees.common.Status.SUCCESS` or
+    :data:`~py_trees.common.Status.FAILURE`.
+
+    Args:
+        name: name of the behaviour
+        var1_key: blackboard key for the first variable
+        var2_key: blackboard key for the second variable
+        operator: a callable comparison operator
+
+    .. note::
+        If the variables does not yet exist on the blackboard, the behaviour will
+        return with status :data:`~py_trees.common.Status.FAILURE`.
+
+    .. tip::
+        The python `operator module`_ includes many useful comparison operations.
+    """
+
+    def __init__(
+        self,
+        name: str,
+        var1_key: str,
+        var2_key: str,
+        operator: typing.Callable[[common.ComparisonV, common.ComparisonV], bool],
+    ):
+        super().__init__(name=name)
+
+        self.var1_key = var1_key
+        self.var2_key = var2_key
+        self.operator = operator
+        self.blackboard = self.attach_blackboard_client()
+        self.blackboard.register_key(key=self.var1_key, access=common.Access.READ)
+        self.blackboard.register_key(key=self.var2_key, access=common.Access.READ)
+
+    def update(self) -> common.Status:
+        """
+        Check for the two variables and applies the operator between them.
+
+        Returns:
+             :class:`~py_trees.common.Status`: :data:`~py_trees.common.Status.FAILURE`
+                 if not matched, :data:`~py_trees.common.Status.SUCCESS` otherwise.
+        """
+        self.logger.debug("%s.update()" % self.__class__.__name__)
+        try:
+            lhs_value = self.blackboard.get(self.var1_key)
+            rhs_value = self.blackboard.get(self.var2_key)
+        except KeyError as err:
+            self.logger.error(str(err))
+            return common.Status.FAILURE
+
+        if self.operator(lhs_value, rhs_value):
+            return common.Status.SUCCESS
+        else:
+            return common.Status.FAILURE
+
+
 class WaitForBlackboardVariableValue(CheckBlackboardVariableValue):
     """
     Block until a blackboard variable matches a given value/expression.

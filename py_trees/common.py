@@ -209,7 +209,7 @@ class ComparisonExpression(object):
             value=5,
             operator=operator.eq
         )
-        success = check.operator(blackboard[check.variable], check.value)
+        success = check.operator(blackboard[check.variable], check.value_generator())
     """
 
     def __init__(
