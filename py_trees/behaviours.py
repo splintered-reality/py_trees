@@ -624,7 +624,7 @@ class CompareBlackboardVariables(behaviour.Behaviour):
         operator: a callable comparison operator
 
     .. note::
-        If the variables does not yet exist on the blackboard, the behaviour will
+        If the variables do not yet exist on the blackboard, the behaviour will
         return with status :data:`~py_trees.common.Status.FAILURE`.
 
     .. tip::
@@ -664,8 +664,20 @@ class CompareBlackboardVariables(behaviour.Behaviour):
             return common.Status.FAILURE
 
         if self.operator(lhs_value, rhs_value):
+            self.feedback_message = "'%s, %s' comparison succeeded [v1: %s][v2: %s]" % (
+                self.var1_key,
+                self.var2_key,
+                lhs_value,
+                rhs_value,
+            )
             return common.Status.SUCCESS
         else:
+            self.feedback_message = "'%s, %s' comparison failed [v1: %s][v2: %s]" % (
+                self.var1_key,
+                self.var2_key,
+                lhs_value,
+                rhs_value,
+            )
             return common.Status.FAILURE
 
 
