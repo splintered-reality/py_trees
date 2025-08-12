@@ -52,8 +52,10 @@ def create_behaviour_from_function(
     """
     class_name = func.__name__.capitalize()
 
-    def init(self: behaviour.Behaviour, name: str = class_name) -> None:
-        behaviour.Behaviour.__init__(self, name=name)
+    def init(
+        self: behaviour.Behaviour, name: str = class_name, verbose: bool = True
+    ) -> None:
+        behaviour.Behaviour.__init__(self, name=name, verbose=verbose)
 
     def terminate(self: behaviour.Behaviour, new_status: common.Status) -> None:
         if new_status == common.Status.INVALID:

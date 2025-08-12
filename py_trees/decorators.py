@@ -100,14 +100,14 @@ class Decorator(behaviour.Behaviour):
         TypeError: if the child is not an instance of :class:`~py_trees.behaviour.Behaviour`
     """
 
-    def __init__(self, name: str, child: behaviour.Behaviour):
+    def __init__(self, name: str, child: behaviour.Behaviour, verbose: bool = True):
         # Checks
         if not isinstance(child, behaviour.Behaviour):
             raise TypeError(
                 "A decorator's child must be an instance of py_trees.behaviours.Behaviour"
             )
         # Initialise
-        super().__init__(name=name)
+        super().__init__(name=name, verbose=verbose)
         self.children.append(child)
         # Give a convenient alias
         self.decorated = self.children[0]
@@ -196,8 +196,14 @@ class Repeat(Decorator):
         name: the decorator name
     """
 
-    def __init__(self, name: str, child: behaviour.Behaviour, num_success: int):
-        super().__init__(name=name, child=child)
+    def __init__(
+        self,
+        name: str,
+        child: behaviour.Behaviour,
+        num_success: int,
+        verbose: bool = True,
+    ):
+        super().__init__(name=name, child=child, verbose=verbose)
         self.success = 0
         self.num_success = num_success
 
@@ -215,21 +221,24 @@ class Repeat(Decorator):
             :data:`~py_trees.common.Status.FAILURE` failure.
         """
         if self.decorated.status == common.Status.FAILURE:
-            self.feedback_message = f"failed, aborting [status: {self.success} success from {self.num_success}]"
+            if self.verbose:
+                self.feedback_message = f"failed, aborting [status: {self.success} success from {self.num_success}]"
             return common.Status.FAILURE
         elif self.decorated.status == common.Status.SUCCESS:
             self.success += 1
-            self.feedback_message = (
-                f"success [status: {self.success} success from {self.num_success}]"
-            )
+            if self.verbose:
+                self.feedback_message = (
+                    f"success [status: {self.success} success from {self.num_success}]"
+                )
             if self.success == self.num_success:
                 return common.Status.SUCCESS
             else:
                 return common.Status.RUNNING
         else:  # RUNNING
-            self.feedback_message = (
-                f"running [status: {self.success} success from {self.num_success}]"
-            )
+            if self.verbose:
+                self.feedback_message = (
+                    f"running [status: {self.success} success from {self.num_success}]"
+                )
             return common.Status.RUNNING
 
 
@@ -247,8 +256,14 @@ class Retry(Decorator):
         name: the decorator name
     """
 
-    def __init__(self, name: str, child: behaviour.Behaviour, num_failures: int):
-        super().__init__(name=name, child=child)
+    def __init__(
+        self,
+        name: str,
+        child: behaviour.Behaviour,
+        num_failures: int,
+        verbose: bool = True,
+    ):
+        super().__init__(name=name, child=child, verbose=verbose)
         self.failures = 0
         self.num_failures = num_failures
 
@@ -268,20 +283,20 @@ class Retry(Decorator):
         if self.decorated.status == common.Status.FAILURE:
             self.failures += 1
             if self.failures < self.num_failures:
-                self.feedback_message = f"attempt failed [status: {self.failures} failure from {self.num_failures}]"
+                if self.verbose:
+                    self.feedback_message = f"attempt failed [status: {self.failures} failure from {self.num_failures}]"
                 return common.Status.RUNNING
             else:
-                self.feedback_message = f"final failure [status: {self.failures} failure from {self.num_failures}]"
+                if self.verbose:
+                    self.feedback_message = f"final failure [status: {self.failures} failure from {self.num_failures}]"
                 return common.Status.FAILURE
         elif self.decorated.status == common.Status.RUNNING:
-            self.feedback_message = (
-                f"running [status: {self.failures} failure from {self.num_failures}]"
-            )
+            if self.verbose:
+                self.feedback_message = f"running [status: {self.failures} failure from {self.num_failures}]"
             return common.Status.RUNNING
         else:  # SUCCESS
-            self.feedback_message = (
-                f"succeeded [status: {self.failures} failure from {self.num_failures}]"
-            )
+            if self.verbose:
+                self.feedback_message = f"succeeded [status: {self.failures} failure from {self.num_failures}]"
             return common.Status.SUCCESS
 
 
@@ -295,8 +310,14 @@ class StatusToBlackboard(Decorator):
         name: the decorator name
     """
 
-    def __init__(self, name: str, child: behaviour.Behaviour, variable_name: str):
-        super().__init__(name=name, child=child)
+    def __init__(
+        self,
+        name: str,
+        child: behaviour.Behaviour,
+        variable_name: str,
+        verbose: bool = True,
+    ):
+        super().__init__(name=name, child=child, verbose=verbose)
         self.variable_name = variable_name
         name_components = variable_name.split(".")
         self.key = name_components[0]
@@ -407,10 +428,11 @@ class EternalGuard(Decorator):
         blackboard_keys: typing.Optional[
             typing.Union[typing.List[str], typing.Set[str]]
         ] = None,
+        verbose: bool = True,
     ):
         if blackboard_keys is None:
             blackboard_keys = []
-        super().__init__(name=name, child=child)
+        super().__init__(name=name, child=child, verbose=verbose)
         self.blackboard = self.attach_blackboard_client(self.name)
         for key in blackboard_keys:
             self.blackboard.register_key(key=key, access=common.Access.READ)
@@ -476,7 +498,13 @@ class Timeout(Decorator):
     as that of it's encapsulated behaviour.
     """
 
-    def __init__(self, name: str, child: behaviour.Behaviour, duration: float = 5.0):
+    def __init__(
+        self,
+        name: str,
+        child: behaviour.Behaviour,
+        duration: float = 5.0,
+        verbose: bool = True,
+    ):
         """
         Init with the decorated child and a timeout duration.
 
@@ -485,7 +513,7 @@ class Timeout(Decorator):
             name: the decorator name
             duration: timeout length in seconds
         """
-        super(Timeout, self).__init__(name=name, child=child)
+        super(Timeout, self).__init__(name=name, child=child, verbose=verbose)
         self.duration = duration
         self.finish_time = 0.0
 
@@ -510,7 +538,8 @@ class Timeout(Decorator):
             self.decorated.status == common.Status.RUNNING
             and current_time > self.finish_time
         ):
-            self.feedback_message = "timed out"
+            if self.verbose:
+                self.feedback_message = "timed out"
             self.logger.debug(
                 "{}.update() {}".format(self.__class__.__name__, self.feedback_message)
             )
@@ -518,11 +547,15 @@ class Timeout(Decorator):
             self.decorated.stop(common.Status.INVALID)
             return common.Status.FAILURE
         if self.decorated.status == common.Status.RUNNING:
-            self.feedback_message = "time still ticking ... [remaining: {}s]".format(
-                self.finish_time - current_time
-            )
+            if self.verbose:
+                self.feedback_message = (
+                    "time still ticking ... [remaining: {}s]".format(
+                        self.finish_time - current_time
+                    )
+                )
         else:
-            self.feedback_message = "child finished before timeout triggered"
+            if self.verbose:
+                self.feedback_message = "child finished before timeout triggered"
         return self.decorated.status
 
 
@@ -545,7 +578,7 @@ class Count(Decorator):
         interrupt_count: number of times a higher priority has interrupted
     """
 
-    def __init__(self, name: str, child: behaviour.Behaviour):
+    def __init__(self, name: str, child: behaviour.Behaviour, verbose: bool = True):
         """
         Init the counter.
 
@@ -553,7 +586,7 @@ class Count(Decorator):
             name: the decorator name
             child: the child behaviour or subtree
         """
-        super(Count, self).__init__(name=name, child=child)
+        super(Count, self).__init__(name=name, child=child, verbose=verbose)
         self.total_tick_count = 0
         self.failure_count = 0
         self.success_count = 0
@@ -593,7 +626,8 @@ class Count(Decorator):
         elif new_status == common.Status.FAILURE:
             self.failure_count += 1
         sft = f"S: {self.success_count}, F: {self.failure_count}, T: {self.total_tick_count}"
-        self.feedback_message = f"R: {self.running_count}, {sft}"
+        if self.verbose:
+            self.feedback_message = f"R: {self.running_count}, {sft}"
 
     def __repr__(self) -> str:
         """
@@ -633,7 +667,11 @@ class OneShot(Decorator):
     """
 
     def __init__(
-        self, name: str, child: behaviour.Behaviour, policy: common.OneShotPolicy
+        self,
+        name: str,
+        child: behaviour.Behaviour,
+        policy: common.OneShotPolicy,
+        verbose: bool = True,
     ):
         """
         Init with the decorated child.
@@ -643,7 +681,7 @@ class OneShot(Decorator):
             name: the decorator name
             policy: policy determining when the oneshot should activate
         """
-        super(OneShot, self).__init__(name=name, child=child)
+        super(OneShot, self).__init__(name=name, child=child, verbose=verbose)
         self.final_status: typing.Optional[common.Status] = None
         self.policy = policy
 
@@ -689,7 +727,8 @@ class OneShot(Decorator):
                     self.__class__.__name__, new_status
                 )
             )
-            self.feedback_message = "oneshot completed"
+            if self.verbose:
+                self.feedback_message = "oneshot completed"
             self.final_status = new_status
         else:
             self.logger.debug(
@@ -700,7 +739,7 @@ class OneShot(Decorator):
 class Inverter(Decorator):
     """A decorator that inverts the result of a class's update function."""
 
-    def __init__(self, name: str, child: behaviour.Behaviour):
+    def __init__(self, name: str, child: behaviour.Behaviour, verbose: bool = True):
         """
         Init with the decorated child.
 
@@ -708,7 +747,7 @@ class Inverter(Decorator):
             name : the decorator name
             child : behaviour to invert
         """
-        super(Inverter, self).__init__(name=name, child=child)
+        super(Inverter, self).__init__(name=name, child=child, verbose=verbose)
 
     def update(self) -> common.Status:
         """
@@ -718,12 +757,15 @@ class Inverter(Decorator):
             the behaviour's new status :class:`~py_trees.common.Status`
         """
         if self.decorated.status == common.Status.SUCCESS:
-            self.feedback_message = "success -> failure"
+            if self.verbose:
+                self.feedback_message = "success -> failure"
             return common.Status.FAILURE
         elif self.decorated.status == common.Status.FAILURE:
-            self.feedback_message = "failure -> success"
+            if self.verbose:
+                self.feedback_message = "failure -> success"
             return common.Status.SUCCESS
-        self.feedback_message = self.decorated.feedback_message
+        if self.verbose:
+            self.feedback_message = self.decorated.feedback_message
         return self.decorated.status
 
 
@@ -738,14 +780,16 @@ class RunningIsFailure(Decorator):
             the behaviour's new status :class:`~py_trees.common.Status`
         """
         if self.decorated.status == common.Status.RUNNING:
-            self.feedback_message = "running is failure" + (
-                " [%s]" % self.decorated.feedback_message
-                if self.decorated.feedback_message
-                else ""
-            )
+            if self.verbose:
+                self.feedback_message = "running is failure" + (
+                    " [%s]" % self.decorated.feedback_message
+                    if self.decorated.feedback_message
+                    else ""
+                )
             return common.Status.FAILURE
         else:
-            self.feedback_message = self.decorated.feedback_message
+            if self.verbose:
+                self.feedback_message = self.decorated.feedback_message
             return self.decorated.status
 
 
@@ -760,13 +804,15 @@ class RunningIsSuccess(Decorator):
             the behaviour's new status :class:`~py_trees.common.Status`
         """
         if self.decorated.status == common.Status.RUNNING:
-            self.feedback_message = "running is success" + (
-                " [%s]" % self.decorated.feedback_message
-                if self.decorated.feedback_message
-                else ""
-            )
+            if self.verbose:
+                self.feedback_message = "running is success" + (
+                    " [%s]" % self.decorated.feedback_message
+                    if self.decorated.feedback_message
+                    else ""
+                )
             return common.Status.SUCCESS
-        self.feedback_message = self.decorated.feedback_message
+        if self.verbose:
+            self.feedback_message = self.decorated.feedback_message
         return self.decorated.status
 
 
@@ -781,13 +827,15 @@ class FailureIsSuccess(Decorator):
             the behaviour's new status :class:`~py_trees.common.Status`
         """
         if self.decorated.status == common.Status.FAILURE:
-            self.feedback_message = "failure is success" + (
-                " [%s]" % self.decorated.feedback_message
-                if self.decorated.feedback_message
-                else ""
-            )
+            if self.verbose:
+                self.feedback_message = "failure is success" + (
+                    " [%s]" % self.decorated.feedback_message
+                    if self.decorated.feedback_message
+                    else ""
+                )
             return common.Status.SUCCESS
-        self.feedback_message = self.decorated.feedback_message
+        if self.verbose:
+            self.feedback_message = self.decorated.feedback_message
         return self.decorated.status
 
 
@@ -802,13 +850,15 @@ class FailureIsRunning(Decorator):
             the behaviour's new status :class:`~py_trees.common.Status`
         """
         if self.decorated.status == common.Status.FAILURE:
-            self.feedback_message = "failure is running" + (
-                " [%s]" % self.decorated.feedback_message
-                if self.decorated.feedback_message
-                else ""
-            )
+            if self.verbose:
+                self.feedback_message = "failure is running" + (
+                    " [%s]" % self.decorated.feedback_message
+                    if self.decorated.feedback_message
+                    else ""
+                )
             return common.Status.RUNNING
-        self.feedback_message = self.decorated.feedback_message
+        if self.verbose:
+            self.feedback_message = self.decorated.feedback_message
         return self.decorated.status
 
 
@@ -823,13 +873,15 @@ class SuccessIsFailure(Decorator):
             the behaviour's new status :class:`~py_trees.common.Status`
         """
         if self.decorated.status == common.Status.SUCCESS:
-            self.feedback_message = "success is failure" + (
-                " [%s]" % self.decorated.feedback_message
-                if self.decorated.feedback_message
-                else ""
-            )
+            if self.verbose:
+                self.feedback_message = "success is failure" + (
+                    " [%s]" % self.decorated.feedback_message
+                    if self.decorated.feedback_message
+                    else ""
+                )
             return common.Status.FAILURE
-        self.feedback_message = self.decorated.feedback_message
+        if self.verbose:
+            self.feedback_message = self.decorated.feedback_message
         return self.decorated.status
 
 
@@ -844,11 +896,13 @@ class SuccessIsRunning(Decorator):
             the behaviour's new status :class:`~py_trees.common.Status`
         """
         if self.decorated.status == common.Status.SUCCESS:
-            self.feedback_message = (
-                "success is running [%s]" % self.decorated.feedback_message
-            )
+            if self.verbose:
+                self.feedback_message = (
+                    "success is running [%s]" % self.decorated.feedback_message
+                )
             return common.Status.RUNNING
-        self.feedback_message = self.decorated.feedback_message
+        if self.verbose:
+            self.feedback_message = self.decorated.feedback_message
         return self.decorated.status
 
 
@@ -862,7 +916,13 @@ class Condition(Decorator):
     :data:`~py_trees.common.Status.SUCCESS` when the flip occurs.
     """
 
-    def __init__(self, name: str, child: behaviour.Behaviour, status: common.Status):
+    def __init__(
+        self,
+        name: str,
+        child: behaviour.Behaviour,
+        status: common.Status,
+        verbose: bool = True,
+    ):
         """
         Initialise with child and optional name, status variables.
 
@@ -871,7 +931,7 @@ class Condition(Decorator):
             child: the child to be decorated
             status: the desired status to watch for
         """
-        super(Condition, self).__init__(name=name, child=child)
+        super(Condition, self).__init__(name=name, child=child, verbose=verbose)
         self.succeed_status = status
 
     def update(self) -> common.Status:
@@ -886,10 +946,11 @@ class Condition(Decorator):
             the behaviour's new status :class:`~py_trees.common.Status`
         """
         self.logger.debug("%s.update()" % self.__class__.__name__)
-        self.feedback_message = (
-            f"'{self.decorated.name}' has status {self.decorated.status}, "
-            f"waiting for {self.succeed_status}"
-        )
+        if self.verbose:
+            self.feedback_message = (
+                f"'{self.decorated.name}' has status {self.decorated.status}, "
+                f"waiting for {self.succeed_status}"
+            )
         if self.decorated.status == self.succeed_status:
             return common.Status.SUCCESS
         return common.Status.RUNNING
@@ -902,7 +963,7 @@ class PassThrough(Decorator):
     This behaviour is useful for debugging or visualisation purposes.
     """
 
-    def __init__(self, name: str, child: behaviour.Behaviour):
+    def __init__(self, name: str, child: behaviour.Behaviour, verbose: bool = True):
         """
         Initialise with the standard decorator arguments.
 
@@ -910,7 +971,7 @@ class PassThrough(Decorator):
             name: the decorator name
             child: the child to be decorated
         """
-        super(PassThrough, self).__init__(name=name, child=child)
+        super(PassThrough, self).__init__(name=name, child=child, verbose=verbose)
 
     def update(self) -> common.Status:
         """

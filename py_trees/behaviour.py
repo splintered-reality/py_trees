@@ -32,6 +32,10 @@ class Behaviour(abc.ABC):
 
     Args:
         name: the behaviour name, defaults to auto-generating from the class name
+        verbose: Whether to populate feedback_message with routine status updates.
+            (Depending on the tree, various visitor functionality gets less
+            useful if every tick generates a feedback message, drowning out
+            the actually important ones.)
 
     Raises:
         TypeError: if the provided name is not a string
@@ -62,7 +66,7 @@ class Behaviour(abc.ABC):
        * :ref:`The Action Behaviour Demo <py-trees-demo-action-behaviour-program>`
     """
 
-    def __init__(self, name: str):
+    def __init__(self, name: str, verbose: bool = True):
         if not isinstance(name, str):
             raise TypeError(
                 "a behaviour name should be a string, but you passed in {}".format(
@@ -84,6 +88,7 @@ class Behaviour(abc.ABC):
         ] = None  # will get set if a behaviour is added to a composite
         self.children: typing.List[Behaviour] = []  # only set by composite behaviours
         self.logger = logging.Logger(name)
+        self.verbose = verbose
         self.feedback_message = ""  # useful for debugging, or human readable updates, but not necessary to implement
         self.blackbox_level = common.BlackBoxLevel.NOT_A_BLACKBOX
 
