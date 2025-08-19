@@ -560,7 +560,7 @@ class Count(Decorator):
         self.running_count = 0
         self.interrupt_count = 0
 
-    def setup(self, **kwargs: int) -> None:
+    def setup(self, **kwargs: typing.Any) -> None:
         """Reset the counters."""
         self.total_tick_count = 0
         self.failure_count = 0

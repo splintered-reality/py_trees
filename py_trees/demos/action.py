@@ -144,7 +144,7 @@ class Action(py_trees.behaviour.Behaviour):
         super(Action, self).__init__(name)
         self.logger.debug("%s.__init__()" % (self.__class__.__name__))
 
-    def setup(self, **kwargs: int) -> None:
+    def setup(self, **kwargs: typing.Any) -> None:
         """Kickstart the separate process this behaviour will work with.
 
         Ordinarily this process will be already running. In this case,
