@@ -660,7 +660,7 @@ class Parallel(Composite):
         super(Parallel, self).__init__(name, children)
         self.policy = policy
 
-    def setup(self, **kwargs: int) -> None:
+    def setup(self, **kwargs: typing.Any) -> None:
         """
         Detect before ticking whether the policy configuration is invalid.
 

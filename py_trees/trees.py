@@ -51,7 +51,7 @@ def setup(
     root: behaviour.Behaviour,
     timeout: typing.Union[float, common.Duration] = common.Duration.INFINITE,
     visitor: typing.Optional[visitors.VisitorBase] = None,
-    **kwargs: int,
+    **kwargs: typing.Any,
 ) -> None:
     """
     Crawl across a (sub)tree of behaviours calling :meth:`~py_trees.behaviour.Behaviour.setup` on each behaviour.
@@ -355,7 +355,7 @@ class BehaviourTree(object):
         self,
         timeout: typing.Union[float, common.Duration] = common.Duration.INFINITE,
         visitor: typing.Optional[visitors.VisitorBase] = None,
-        **kwargs: int,
+        **kwargs: typing.Any,
     ) -> None:
         """
         Crawl across the tree calling :meth:`~py_trees.behaviour.Behaviour.setup` on each behaviour.
