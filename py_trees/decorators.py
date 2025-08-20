@@ -36,6 +36,7 @@ Decorators with specific functionality:
 * :class:`py_trees.decorators.Condition`
 * :class:`py_trees.decorators.Count`
 * :class:`py_trees.decorators.EternalGuard`
+* :class:`py_trees.decorators.ForEach`
 * :class:`py_trees.decorators.Inverter`
 * :class:`py_trees.decorators.OneShot`
 * :class:`py_trees.decorators.Repeat`
@@ -920,3 +921,67 @@ class PassThrough(Decorator):
             the behaviour's new status :class:`~py_trees.common.Status`
         """
         return self.decorated.status
+
+
+class ForEach(Decorator):
+    """
+    List iterator.
+
+    A decorator that iterates over a list stored in the blackboard, assigning
+    each element to a target key and executing the child behaviour once per item.
+
+    The child behaviour should be designed to run for a single item and return
+    SUCCESS to continue to the next item, or FAILURE to halt the iteration.
+    """
+
+    def __init__(
+        self, name: str, child: behaviour.Behaviour, source_key: str, target_key: str
+    ):
+        """
+        Initialise the ForEach decorator.
+
+        Args:
+            name (:obj:`str`): name of the behaviour
+            child (:obj:`Behaviour`): the child behaviour to decorate
+            source_key (:obj:`str`): blackboard key to read the input list
+            target_key (:obj:`str`): blackboard key to set for each iteration
+        """
+        super().__init__(name=name, child=child)
+        self.source_key = source_key
+        self.target_key = target_key
+        self.blackboard = blackboard.Client(name=name)
+        self.blackboard.register_key(key=self.source_key, access=common.Access.READ)
+        self.blackboard.register_key(key=self.target_key, access=common.Access.WRITE)
+        self.items: list[typing.Any] = []
+        self.index = 0
+
+    def initialise(self) -> None:
+        """Reset iteration on first tick."""
+        self.items = self.blackboard.get(self.source_key) or []
+        if not isinstance(self.items, list):
+            raise TypeError(
+                f"[{self.name}] source_key '{self.source_key}' is not a list"
+            )
+        self.index = 0
+
+    def update(self) -> common.Status:
+        """Execute the child for the current item and manage iteration state."""
+        if self.index >= len(self.items):
+            return common.Status.SUCCESS
+
+        child_status = self.decorated.status
+
+        if child_status == common.Status.SUCCESS:
+            self.decorated.stop(common.Status.INVALID)
+            self.index += 1
+            if self.index < len(self.items):
+                # list not exhausted, so we proceed with the next element
+                self.blackboard.set(self.target_key, self.items[self.index])
+                return common.Status.RUNNING
+
+        return child_status
+
+    def terminate(self, new_status: common.Status) -> None:
+        """Reset on termination."""
+        self.index = 0
+        self.items = []
