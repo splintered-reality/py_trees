@@ -4,8 +4,6 @@
 #   https://raw.githubusercontent.com/splintered-reality/py_trees/devel/LICENSE
 #
 
-# mypy: disable-error-code=unreachable
-
 ##############################################################################
 # Imports
 ##############################################################################
@@ -640,7 +638,7 @@ def test_for_each_fixed() -> None:
     assert decorator.status == py_trees.common.Status.RUNNING
     print("child.status == py_trees.common.Status.SUCCESS")
     assert child.status == py_trees.common.Status.SUCCESS
-    assert blackboard.element == 2
+    assert blackboard.element == 2  # type: ignore[unreachable]
 
     decorator.tick_once()  # run second element
     print("\n--------- Tick 3 ---------\n")
