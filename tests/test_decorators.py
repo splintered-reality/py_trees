@@ -618,10 +618,10 @@ def test_for_each_iterator() -> None:
     )
     blackboard = py_trees.blackboard.Client()
     blackboard.register_key(key="element", access=py_trees.common.Access.READ)
-    blackboard.register_key(key="iterable", access=py_trees.common.Access.WRITE)
-    blackboard.iterable = [1, 2, 3]
+    blackboard.register_key(key="sequence", access=py_trees.common.Access.WRITE)
+    blackboard.sequence = [1, 2, 3]
     decorator = py_trees.decorators.ForEach(
-        name="ForEach", child=child, source_key="iterable", target_key="element"
+        name="ForEach", child=child, source_key="sequence", target_key="element"
     )
 
     decorator.tick_once()  # run first element

@@ -81,7 +81,7 @@ import functools
 import inspect
 import time
 import typing
-from collections.abc import Iterable
+from collections.abc import Sequence
 
 from . import behaviour, blackboard, common
 
@@ -926,11 +926,11 @@ class PassThrough(Decorator):
 
 class ForEach(Decorator):
     """
-    Run the child for each element in an iterable.
+    Run the child for each element in a sequence.
 
-    On initialization, the iterable is loaded from the blackboard and the first
+    On initialization, the sequence is loaded from the blackboard and the first
     element is stored. Every time the child succeeds, we store the next element.
-    We keep running until the iterable is exhausted.
+    We keep running until the sequence is exhausted.
     """
 
     def __init__(
@@ -942,7 +942,7 @@ class ForEach(Decorator):
         Args:
             name (:obj:`str`): name of the behaviour
             child (:obj:`Behaviour`): the child behaviour to decorate
-            source_key (:obj:`str`): blackboard key to read the input iterable
+            source_key (:obj:`str`): blackboard key to read the input sequence
             target_key (:obj:`str`): blackboard key to set for each iteration
         """
         super().__init__(name=name, child=child)
@@ -951,15 +951,15 @@ class ForEach(Decorator):
         self.blackboard = blackboard.Client(name=name)
         self.blackboard.register_key(key=self.source_key, access=common.Access.READ)
         self.blackboard.register_key(key=self.target_key, access=common.Access.WRITE)
-        self.items: Iterable[typing.Any] = []
+        self.items: Sequence[typing.Any] = []
         self.index = 0
 
     def initialise(self) -> None:
         """Reset iteration on first tick."""
         self.items = self.blackboard.get(self.source_key) or []
-        if not isinstance(self.items, Iterable):
+        if not isinstance(self.items, Sequence):
             raise TypeError(
-                f"[{self.name}] source_key '{self.source_key}' is not an iterable"
+                f"[{self.name}] source_key '{self.source_key}' is not a sequence"
             )
         self.index = 0
         if self.index < len(self.items):
@@ -975,7 +975,7 @@ class ForEach(Decorator):
         if child_status == common.Status.SUCCESS:
             self.index += 1
             if self.index < len(self.items):
-                # iterable not exhausted, so we proceed with the next element
+                # sequence not exhausted, so we proceed with the next element
                 self.blackboard.set(self.target_key, self.items[self.index])
                 return common.Status.RUNNING
 
