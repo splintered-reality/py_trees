@@ -81,6 +81,7 @@ import functools
 import inspect
 import time
 import typing
+from collections.abc import Iterable
 
 from . import behaviour, blackboard, common
 
@@ -925,13 +926,11 @@ class PassThrough(Decorator):
 
 class ForEach(Decorator):
     """
-    List iterator.
+    Run the child for each element in an iterable.
 
-    A decorator that iterates over a list stored in the blackboard, assigning
-    each element to a target key and executing the child behaviour once per item.
-
-    The child behaviour should be designed to run for a single item and return
-    SUCCESS to continue to the next item, or FAILURE to halt the iteration.
+    On initialization, the iterable is loaded from the blackboard and the first
+    element is stored. Every time the child succeeds, we store the next element.
+    We keep running until the iterable is exhausted.
     """
 
     def __init__(
@@ -943,7 +942,7 @@ class ForEach(Decorator):
         Args:
             name (:obj:`str`): name of the behaviour
             child (:obj:`Behaviour`): the child behaviour to decorate
-            source_key (:obj:`str`): blackboard key to read the input list
+            source_key (:obj:`str`): blackboard key to read the input iterable
             target_key (:obj:`str`): blackboard key to set for each iteration
         """
         super().__init__(name=name, child=child)
@@ -952,17 +951,19 @@ class ForEach(Decorator):
         self.blackboard = blackboard.Client(name=name)
         self.blackboard.register_key(key=self.source_key, access=common.Access.READ)
         self.blackboard.register_key(key=self.target_key, access=common.Access.WRITE)
-        self.items: list[typing.Any] = []
+        self.items: Iterable[typing.Any] = []
         self.index = 0
 
     def initialise(self) -> None:
         """Reset iteration on first tick."""
         self.items = self.blackboard.get(self.source_key) or []
-        if not isinstance(self.items, list):
+        if not isinstance(self.items, Iterable):
             raise TypeError(
-                f"[{self.name}] source_key '{self.source_key}' is not a list"
+                f"[{self.name}] source_key '{self.source_key}' is not an iterable"
             )
         self.index = 0
+        if self.index < len(self.items):
+            self.blackboard.set(self.target_key, self.items[self.index])
 
     def update(self) -> common.Status:
         """Execute the child for the current item and manage iteration state."""
@@ -972,10 +973,9 @@ class ForEach(Decorator):
         child_status = self.decorated.status
 
         if child_status == common.Status.SUCCESS:
-            self.decorated.stop(common.Status.INVALID)
             self.index += 1
             if self.index < len(self.items):
-                # list not exhausted, so we proceed with the next element
+                # iterable not exhausted, so we proceed with the next element
                 self.blackboard.set(self.target_key, self.items[self.index])
                 return common.Status.RUNNING
 
