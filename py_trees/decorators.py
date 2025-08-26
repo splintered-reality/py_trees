@@ -81,7 +81,7 @@ import functools
 import inspect
 import time
 import typing
-from collections.abc import Sequence
+from collections.abc import Iterable
 
 from . import behaviour, blackboard, common
 
@@ -926,11 +926,11 @@ class PassThrough(Decorator):
 
 class ForEach(Decorator):
     """
-    Run the child for each element in a sequence.
+    Run the child behavior for each item in an iterable.
 
-    On initialization, the sequence is loaded from the blackboard and the first
-    element is stored. Every time the child succeeds, we store the next element.
-    We keep running until the sequence is exhausted.
+    On initialization, the iterable is loaded from the blackboard and an
+    iterator is created. Every time the child succeeds, we advance to
+    the next item. We keep running until the iterable is exhausted.
     """
 
     def __init__(
@@ -942,7 +942,7 @@ class ForEach(Decorator):
         Args:
             name (:obj:`str`): name of the behaviour
             child (:obj:`Behaviour`): the child behaviour to decorate
-            source_key (:obj:`str`): blackboard key to read the input sequence
+            source_key (:obj:`str`): blackboard key to read the input iterable
             target_key (:obj:`str`): blackboard key to set for each iteration
         """
         super().__init__(name=name, child=child)
@@ -951,37 +951,45 @@ class ForEach(Decorator):
         self.blackboard = blackboard.Client(name=name)
         self.blackboard.register_key(key=self.source_key, access=common.Access.READ)
         self.blackboard.register_key(key=self.target_key, access=common.Access.WRITE)
-        self.items: Sequence[typing.Any] = []
-        self.index = 0
+        self._iterator: typing.Optional[typing.Iterator] = None
+        self._current_item: typing.Any | None = None
 
     def initialise(self) -> None:
         """Reset iteration on first tick."""
-        self.items = self.blackboard.get(self.source_key) or []
-        if not isinstance(self.items, Sequence):
+        iterable = self.blackboard.get(self.source_key) or []
+        if not isinstance(iterable, Iterable):
             raise TypeError(
-                f"[{self.name}] source_key '{self.source_key}' is not a sequence"
+                f"[{self.name}] source_key '{self.source_key}' is not an iterable"
             )
-        self.index = 0
-        if self.index < len(self.items):
-            self.blackboard.set(self.target_key, self.items[self.index])
+        self._iterator = iter(iterable)
+        self._advance()
+
+    def _advance(self) -> None:
+        """Advance to the next item in the iterator, or mark as finished."""
+        try:
+            if self._iterator is not None:
+                self._current_item = next(self._iterator)
+                self.blackboard.set(self.target_key, self._current_item)
+        except StopIteration:
+            self._current_item = None
 
     def update(self) -> common.Status:
         """Execute the child for the current item and manage iteration state."""
-        if self.index >= len(self.items):
+        if self._current_item is None:
+            # no more items left
             return common.Status.SUCCESS
 
         child_status = self.decorated.status
 
         if child_status == common.Status.SUCCESS:
-            self.index += 1
-            if self.index < len(self.items):
-                # sequence not exhausted, so we proceed with the next element
-                self.blackboard.set(self.target_key, self.items[self.index])
+            # move to next item
+            self._advance()
+            if self._current_item is not None:
                 return common.Status.RUNNING
 
         return child_status
 
     def terminate(self, new_status: common.Status) -> None:
         """Reset on termination."""
-        self.index = 0
-        self.items = []
+        self._iterator = None
+        self._current_item = None
