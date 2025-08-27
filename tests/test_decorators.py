@@ -9,6 +9,7 @@
 ##############################################################################
 
 import time
+import typing
 
 import py_trees
 import py_trees.console as console
@@ -606,8 +607,17 @@ def test_status_to_blackboard() -> None:
     assert decorator.status == py_trees.common.Status.SUCCESS
 
 
-def test_for_each_fixed() -> None:
-    console.banner("ForEach - 3 elements")
+@pytest.mark.parametrize(
+    "iterable",
+    [
+        [1, 2, 3],  # list
+        (1, 2, 3),  # tuple
+        (i for i in range(1, 4)),  # generator
+    ],
+    ids=["list", "tuple", "generator"],
+)
+def test_for_each_fixed(iterable: typing.Iterable[int]) -> None:
+    console.banner("ForEach - 3 elements on multiple iterables")
     child = py_trees.behaviours.StatusQueue(
         name="R-S",
         queue=[
@@ -619,7 +629,7 @@ def test_for_each_fixed() -> None:
     blackboard = py_trees.blackboard.Client()
     blackboard.register_key(key="element", access=py_trees.common.Access.READ)
     blackboard.register_key(key="iterable", access=py_trees.common.Access.WRITE)
-    blackboard.iterable = [1, 2, 3]
+    blackboard.iterable = iterable
     decorator = py_trees.decorators.ForEach(
         name="ForEach", child=child, source_key="iterable", target_key="element"
     )
