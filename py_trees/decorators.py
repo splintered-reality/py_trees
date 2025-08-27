@@ -951,7 +951,7 @@ class ForEach(Decorator):
         self.blackboard = blackboard.Client(name=name)
         self.blackboard.register_key(key=self.source_key, access=common.Access.READ)
         self.blackboard.register_key(key=self.target_key, access=common.Access.WRITE)
-        self._iterator: typing.Optional[typing.Iterator] = None
+        self._iterator: typing.Iterator | None = None
         self._current_item: typing.Any | None = None
 
     def initialise(self) -> None:
