@@ -36,6 +36,7 @@ Decorators with specific functionality:
 * :class:`py_trees.decorators.Condition`
 * :class:`py_trees.decorators.Count`
 * :class:`py_trees.decorators.EternalGuard`
+* :class:`py_trees.decorators.ForEach`
 * :class:`py_trees.decorators.Inverter`
 * :class:`py_trees.decorators.OneShot`
 * :class:`py_trees.decorators.Repeat`
@@ -80,6 +81,7 @@ import functools
 import inspect
 import time
 import typing
+from collections.abc import Iterable
 
 from . import behaviour, blackboard, common
 
@@ -920,3 +922,74 @@ class PassThrough(Decorator):
             the behaviour's new status :class:`~py_trees.common.Status`
         """
         return self.decorated.status
+
+
+class ForEach(Decorator):
+    """
+    Run the child behavior for each item in an iterable.
+
+    On initialization, the iterable is loaded from the blackboard and an
+    iterator is created. Every time the child succeeds, we advance to
+    the next item. We keep running until the iterable is exhausted.
+    """
+
+    def __init__(
+        self, name: str, child: behaviour.Behaviour, source_key: str, target_key: str
+    ):
+        """
+        Initialise the ForEach decorator.
+
+        Args:
+            name (:obj:`str`): name of the behaviour
+            child (:obj:`Behaviour`): the child behaviour to decorate
+            source_key (:obj:`str`): blackboard key to read the input iterable
+            target_key (:obj:`str`): blackboard key to set for each iteration
+        """
+        super().__init__(name=name, child=child)
+        self.source_key = source_key
+        self.target_key = target_key
+        self.blackboard = blackboard.Client(name=name)
+        self.blackboard.register_key(key=self.source_key, access=common.Access.READ)
+        self.blackboard.register_key(key=self.target_key, access=common.Access.WRITE)
+        self._iterator: typing.Iterator | None = None
+        self._current_item: typing.Any | None = None
+
+    def initialise(self) -> None:
+        """Reset iteration on first tick."""
+        iterable = self.blackboard.get(self.source_key) or []
+        if not isinstance(iterable, Iterable):
+            raise TypeError(
+                f"[{self.name}] source_key '{self.source_key}' is not an iterable"
+            )
+        self._iterator = iter(iterable)
+        self._advance()
+
+    def _advance(self) -> None:
+        """Advance to the next item in the iterator, or mark as finished."""
+        try:
+            if self._iterator is not None:
+                self._current_item = next(self._iterator)
+                self.blackboard.set(self.target_key, self._current_item)
+        except StopIteration:
+            self._current_item = None
+
+    def update(self) -> common.Status:
+        """Execute the child for the current item and manage iteration state."""
+        if self._current_item is None:
+            # no more items left
+            return common.Status.SUCCESS
+
+        child_status = self.decorated.status
+
+        if child_status == common.Status.SUCCESS:
+            # move to next item
+            self._advance()
+            if self._current_item is not None:
+                return common.Status.RUNNING
+
+        return child_status
+
+    def terminate(self, new_status: common.Status) -> None:
+        """Reset on termination."""
+        self._iterator = None
+        self._current_item = None

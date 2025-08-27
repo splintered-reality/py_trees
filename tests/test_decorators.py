@@ -9,6 +9,7 @@
 ##############################################################################
 
 import time
+import typing
 
 import py_trees
 import py_trees.console as console
@@ -604,3 +605,159 @@ def test_status_to_blackboard() -> None:
         result=decorator.status,
     )
     assert decorator.status == py_trees.common.Status.SUCCESS
+
+
+@pytest.mark.parametrize(
+    "iterable",
+    [
+        [1, 2, 3],  # list
+        (1, 2, 3),  # tuple
+        (i for i in range(1, 4)),  # generator
+    ],
+    ids=["list", "tuple", "generator"],
+)
+def test_for_each_fixed(iterable: typing.Iterable[int]) -> None:
+    console.banner("ForEach - 3 elements on multiple iterables")
+    child = py_trees.behaviours.StatusQueue(
+        name="R-S",
+        queue=[
+            py_trees.common.Status.RUNNING,
+            py_trees.common.Status.SUCCESS,
+        ],
+        eventually=None,
+    )
+    blackboard = py_trees.blackboard.Client()
+    blackboard.register_key(key="element", access=py_trees.common.Access.READ)
+    blackboard.register_key(key="iterable", access=py_trees.common.Access.WRITE)
+    blackboard.iterable = iterable
+    decorator = py_trees.decorators.ForEach(
+        name="ForEach", child=child, source_key="iterable", target_key="element"
+    )
+
+    decorator.tick_once()  # run first element
+    print("\n--------- Tick 1 ---------\n")
+    print("decorator.status == py_trees.common.Status.RUNNING")
+    assert decorator.status == py_trees.common.Status.RUNNING
+    print("child.status == py_trees.common.Status.RUNNING")
+    assert child.status == py_trees.common.Status.RUNNING
+    assert blackboard.element == 1
+
+    decorator.tick_once()  # complete first element; load second
+    print("\n--------- Tick 2 ---------\n")
+    print("decorator.status == py_trees.common.Status.RUNNING")
+    assert decorator.status == py_trees.common.Status.RUNNING
+    print("child.status == py_trees.common.Status.SUCCESS")
+    assert child.status == py_trees.common.Status.SUCCESS
+    assert blackboard.element == 2  # type: ignore[unreachable]
+
+    decorator.tick_once()  # run second element
+    print("\n--------- Tick 3 ---------\n")
+    print("decorator.status == py_trees.common.Status.RUNNING")
+    assert decorator.status == py_trees.common.Status.RUNNING
+    print("child.status == py_trees.common.Status.RUNNING")
+    assert child.status == py_trees.common.Status.RUNNING
+    assert blackboard.element == 2
+
+    decorator.tick_once()  # complete second element; load third
+    print("\n--------- Tick 4 ---------\n")
+    print("decorator.status == py_trees.common.Status.RUNNING")
+    assert decorator.status == py_trees.common.Status.RUNNING
+    print("child.status == py_trees.common.Status.SUCCESS")
+    assert child.status == py_trees.common.Status.SUCCESS
+    assert blackboard.element == 3
+
+    decorator.tick_once()  # run third element
+    print("\n--------- Tick 5 ---------\n")
+    print("decorator.status == py_trees.common.Status.RUNNING")
+    assert decorator.status == py_trees.common.Status.RUNNING
+    print("child.status == py_trees.common.Status.RUNNING")
+    assert child.status == py_trees.common.Status.RUNNING
+    assert blackboard.element == 3
+
+    decorator.tick_once()  # complete third element
+    print("\n--------- Tick 6 ---------\n")
+    print("decorator.status == py_trees.common.Status.SUCCESS")
+    assert decorator.status == py_trees.common.Status.SUCCESS
+    print("child.status == py_trees.common.Status.SUCCESS")
+    assert child.status == py_trees.common.Status.SUCCESS
+    assert blackboard.element == 3
+
+
+def test_for_each_append() -> None:
+    console.banner("ForEach - 3 + 2 elements")
+    child = py_trees.behaviours.StatusQueue(
+        name="S",
+        queue=[
+            py_trees.common.Status.SUCCESS,
+        ],
+        eventually=None,
+    )
+    blackboard = py_trees.blackboard.Client()
+    blackboard.register_key(key="element", access=py_trees.common.Access.READ)
+    blackboard.register_key(key="iterable", access=py_trees.common.Access.WRITE)
+    blackboard.iterable = [1, 2, 3]
+    decorator = py_trees.decorators.ForEach(
+        name="ForEach", child=child, source_key="iterable", target_key="element"
+    )
+
+    decorator.tick_once()
+    print("\n--------- Tick 1 ---------\n")
+    assert blackboard.element == 2
+
+    decorator.tick_once()
+    print("\n--------- Tick 2 ---------\n")
+    assert blackboard.element == 3
+
+    # add two elements, so we need two more ticks to succeed
+    blackboard.iterable.extend([4, 5])
+
+    decorator.tick_once()
+    print("\n--------- Tick 3 ---------\n")
+    assert blackboard.element == 4
+
+    decorator.tick_once()
+    print("\n--------- Tick 4 ---------\n")
+    assert blackboard.element == 5
+
+    decorator.tick_once()
+    print("\n--------- Tick 5 ---------\n")
+    print("decorator.status == py_trees.common.Status.SUCCESS")
+    assert decorator.status == py_trees.common.Status.SUCCESS
+    print("child.status == py_trees.common.Status.SUCCESS")
+    assert child.status == py_trees.common.Status.SUCCESS
+
+
+def test_for_each_delete() -> None:
+    console.banner("ForEach - 4 + 1 elements")
+    child = py_trees.behaviours.StatusQueue(
+        name="S",
+        queue=[
+            py_trees.common.Status.SUCCESS,
+        ],
+        eventually=None,
+    )
+    blackboard = py_trees.blackboard.Client()
+    blackboard.register_key(key="element", access=py_trees.common.Access.READ)
+    blackboard.register_key(key="iterable", access=py_trees.common.Access.WRITE)
+    blackboard.iterable = [1, 2, 3, 4]
+    decorator = py_trees.decorators.ForEach(
+        name="ForEach", child=child, source_key="iterable", target_key="element"
+    )
+
+    decorator.tick_once()
+    print("\n--------- Tick 1 ---------\n")
+    assert blackboard.element == 2
+
+    decorator.tick_once()
+    print("\n--------- Tick 2 ---------\n")
+    assert blackboard.element == 3
+
+    # remove last element, so we skip one tick to succeed
+    blackboard.iterable.pop()
+
+    decorator.tick_once()
+    print("\n--------- Tick 3 ---------\n")
+    print("decorator.status == py_trees.common.Status.SUCCESS")
+    assert decorator.status == py_trees.common.Status.SUCCESS
+    print("child.status == py_trees.common.Status.SUCCESS")
+    assert child.status == py_trees.common.Status.SUCCESS
