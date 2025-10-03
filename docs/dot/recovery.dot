@@ -1,0 +1,19 @@
+digraph recovery {
+    graph [fontname="times-roman"];
+    node [fontname="times-roman"];
+    edge [fontname="times-roman"];
+
+    recovery [label="Recovery", shape=box, style=rounded, fontsize=11];
+
+    main [label="Main Behaviour", shape=ellipse, fontsize=10];
+    rec1 [label="Recovery #1", shape=ellipse, fontsize=10];
+    rec2 [label="Recovery #2", shape=ellipse, fontsize=10];
+    recN [label="Recovery #N", shape=ellipse, fontsize=10];
+
+    recovery -> main;
+    recovery -> rec1;
+    recovery -> rec2;
+    recovery -> recN;
+
+    {rank=same; rec1 rec2 recN}
+}
