@@ -726,17 +726,17 @@ class Parallel(Composite):
             self.current_child = failed_child
             new_status = common.Status.FAILURE
         except StopIteration:
-            if type(self.policy) is common.ParallelPolicy.SuccessOnAll:
+            if isinstance(self.policy, common.ParallelPolicy.SuccessOnAll):
                 if all(c.status == common.Status.SUCCESS for c in self.children):
                     new_status = common.Status.SUCCESS
                     self.current_child = self.children[-1]
-            elif type(self.policy) is common.ParallelPolicy.SuccessOnOne:
+            elif isinstance(self.policy, common.ParallelPolicy.SuccessOnOne):
                 for child in reversed(self.children):
                     if child.status == common.Status.SUCCESS:
                         new_status = common.Status.SUCCESS
                         self.current_child = child
                         break
-            elif type(self.policy) is common.ParallelPolicy.SuccessOnSelected:
+            elif isinstance(self.policy, common.ParallelPolicy.SuccessOnSelected):
                 if all(
                     [c.status == common.Status.SUCCESS for c in self.policy.children]
                 ):
@@ -786,7 +786,7 @@ class Parallel(Composite):
         Raises:
             RuntimeError: if policy configuration was invalid
         """
-        if type(self.policy) is common.ParallelPolicy.SuccessOnSelected:
+        if isinstance(self.policy, common.ParallelPolicy.SuccessOnSelected):
             if not self.policy.children:
                 error_message = (
                     "policy SuccessOnSelected requires a non-empty "
