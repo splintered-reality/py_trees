@@ -1,8 +1,8 @@
 Release Notes
 =============
 
-Forthcoming
------------
+2.4.0 (2025-11-13)
+------------------
 * [code] Replace type checks with instance checks (`#479 <https://github.com/splintered-reality/py_trees/issues/479>`_)
 * [behaviours] Add ForEach decorator to iterate over a list (`#476 <https://github.com/splintered-reality/py_trees/issues/476>`_)
 * [code] Use typing.Any for type hints in kwargs (`#475 <https://github.com/splintered-reality/py_trees/issues/475>`_)
