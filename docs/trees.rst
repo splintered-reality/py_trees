@@ -19,7 +19,7 @@ The Behaviour Tree
 Skeleton
 --------
 
-The most basic feature of the behaviour tree is it's automatic tick-tock. You can
+The most basic feature of the behaviour tree is its automatic tick-tock. You can
 :meth:`~py_trees.trees.BehaviourTree.tick_tock` for a specific number of iterations,
 or indefinitely and use the :meth:`~py_trees.trees.BehaviourTree.interrupt` method to stop it.
 
