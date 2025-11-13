@@ -165,7 +165,7 @@ def main() -> None:
         "-------------------------------------------------------------------------------"
     )
     foo.awesome = True
-    # Only accessable via set since it's not in the namespace
+    # Only accessible via set since it's not in the namespace
     foo.set("/brilliant", False)
     # This will fail since it looks for the namespaced /foo/brilliant key
     # foo.brilliant = False

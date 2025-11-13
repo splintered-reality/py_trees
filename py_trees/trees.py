@@ -65,7 +65,7 @@ def setup(
     Args:
         root: unmanaged (sub)tree root behaviour
         timeout: time (s) to wait (use common.Duration.INFINITE to block indefinitely)
-        visitor: runnable entities on each node after it's setup
+        visitor: runnable entities on each node after its setup
         **kwargs: dictionary of args to distribute to all behaviours in the (sub)tree
 
     Raises:
@@ -368,8 +368,8 @@ class BehaviourTree(object):
 
         Args:
             timeout: time (s) to wait (use common.Duration.INFINITE to block indefinitely)
-            visitor: runnable entities on each node after it's setup
-            **kwargs: distribute args to this behaviour and in turn, to it's children
+            visitor: runnable entities on each node after its setup
+            **kwargs: distribute args to this behaviour and in turn, to its children
 
         Raises:
             Exception: be ready to catch if any of the behaviours raise an exception

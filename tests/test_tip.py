@@ -272,7 +272,7 @@ def test_parallel() -> None:
     py_trees.tests.tick_tree(root, 1, 1, print_snapshot=True)
     tip = root.tip()
     assert tip is not None
-    # success is tip because it flipped it's parent to success
+    # success is tip because it flipped its parent to success
     print("\n----- Assertions (OnOne) -----\n")
     print("root.tip()...................success [{}]".format(tip.name))
     assert tip is success

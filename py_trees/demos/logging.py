@@ -167,7 +167,7 @@ def logger(
 
 def create_tree() -> py_trees.behaviour.Behaviour:
     """
-    Create the root behaviour and it's subtree.
+    Create the root behaviour and its subtree.
 
     Returns:
         the root behaviour
