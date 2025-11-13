@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "py_trees"
-version = "2.3.0"
+version = "2.4.0"
 description = "pythonic implementation of behaviour trees"
 authors = ["Daniel Stonier", "Naveed Usmani", "Michal Staniaszek"]
 maintainers = ["Daniel Stonier <d.stonier@gmail.com>", "Sebastian Castro <sebas.a.castro@gmail.com>"]
