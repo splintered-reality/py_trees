@@ -218,7 +218,7 @@ class ParamsAndState(py_trees.behaviour.Behaviour):
 
 def create_root() -> py_trees.behaviour.Behaviour:
     """
-    Create the root behaviour and it's subtree.
+    Create the root behaviour and its subtree.
 
     Returns:
         the root behaviour

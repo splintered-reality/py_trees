@@ -174,7 +174,7 @@ class SnapshotVisitor(VisitorBase):
 
 class DisplaySnapshotVisitor(SnapshotVisitor):
     """
-    Visit the tree, capturing the visited path, it's changes since the last tick.
+    Visit the tree, capturing the visited path and its changes since the last tick.
 
     Additionally print the snapshot to console.
 
