@@ -120,7 +120,7 @@ class Composite(behaviour.Behaviour, abc.ABC):
         behaviours do the real work.
 
         Such flows are a consequence of how the composite
-        interacts with it's children. The success of
+        interacts with its children. The success of
         behaviour trees depends on this logic being simple,
         well defined and limited to a few well established
         patterns - this is what ensures that visualising
@@ -391,7 +391,7 @@ class Selector(Composite):
         Customise the tick behaviour for a selector.
 
         This implements priority-interrupt style handling amongst the selector's children.
-        The selector's status is always a reflection of it's children's status.
+        The selector's status is always a reflection of its children's status.
 
         Yields:
             :class:`~py_trees.behaviour.Behaviour`: a reference to itself or one of its children
@@ -427,7 +427,8 @@ class Selector(Composite):
             # clear out preceding status' - not actually necessary but helps
             # visualise the case of memory vs no memory
             for child in itertools.islice(self.children, None, index):
-                child.stop(common.Status.INVALID)
+                if child.status != common.Status.INVALID:
+                    child.stop(common.Status.INVALID)
         else:
             index = 0
 
@@ -442,7 +443,6 @@ class Selector(Composite):
                         or node.status == common.Status.SUCCESS
                     ):
                         self.current_child = child
-                        self.status = node.status
                         if previous is None or previous != self.current_child:
                             # we interrupted, invalidate everything at a lower priority
                             passed = False
@@ -451,10 +451,18 @@ class Selector(Composite):
                                     if child.status != common.Status.INVALID:
                                         child.stop(common.Status.INVALID)
                                 passed = True if child == self.current_child else passed
+
+                        # terminate the selector if a terminal state was reached
+                        if node.status == common.Status.SUCCESS:
+                            self.stop(node.status)
+                        else:
+                            self.status = node.status
+
                         yield self
                         return
+
         # all children failed, set failure ourselves and current child to the last bugger who failed us
-        self.status = common.Status.FAILURE
+        self.stop(common.Status.FAILURE)
         try:
             self.current_child = self.children[-1]
         except IndexError:
@@ -560,13 +568,19 @@ class Sequence(Composite):
             for node in child.tick():
                 yield node
                 if node is child and node.status != common.Status.SUCCESS:
-                    self.status = node.status
                     if not self.memory:
                         # invalidate the remainder of the sequence
                         # i.e. kill dangling runners
                         for child in itertools.islice(self.children, index + 1, None):
                             if child.status != common.Status.INVALID:
                                 child.stop(common.Status.INVALID)
+
+                    # stop the sequence if a terminal (non-success) state was reached
+                    if node.status != common.Status.RUNNING:
+                        self.stop(node.status)
+                    else:
+                        self.status = node.status
+
                     yield self
                     return
             try:
@@ -666,7 +680,7 @@ class Parallel(Composite):
 
         Args:
             **kwargs (:obj:`dict`): distribute arguments to this
-               behaviour and in turn, all of it's children
+               behaviour and in turn, all of its children
 
         Raises:
             RuntimeError: if the parallel's policy configuration is invalid
