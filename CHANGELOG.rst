@@ -1,6 +1,21 @@
 Release Notes
 =============
 
+2.4.0 (2025-11-13)
+------------------
+* [code] Replace type checks with instance checks (`#479 <https://github.com/splintered-reality/py_trees/issues/479>`_)
+* [behaviours] Add ForEach decorator to iterate over a list (`#476 <https://github.com/splintered-reality/py_trees/issues/476>`_)
+* [code] Use typing.Any for type hints in kwargs (`#475 <https://github.com/splintered-reality/py_trees/issues/475>`_)
+* [behaviours] Add behavior CompareBlackboardVariables (`#472 <https://github.com/splintered-reality/py_trees/issues/472>`_)
+* [code] use generator expression in all() for short-circuit evaluation (`#470 <https://github.com/splintered-reality/py_trees/issues/470>`_)
+* [behaviours] Extend ComparisonExpression so we can get the value from a callable (`#468 <https://github.com/splintered-reality/py_trees/issues/468>`_)
+* [code] remove py package, no longer needed for pytest-benchmark (`#466 <https://github.com/splintered-reality/py_trees/issues/466>`_)
+* [docs] Update introduction.rst -fixed typo (`#464 <https://github.com/splintered-reality/py_trees/issues/464>`_)
+* [readme] Update README for version 2.3.x (`#460 <https://github.com/splintered-reality/py_trees/issues/460>`_)
+* [infra] Update Python package version to 2.3.0 (`#461 <https://github.com/splintered-reality/py_trees/issues/461>`_)
+* [infra] Use commas to separate multiple tox commands
+* Contributors: FrankvVeelen, Jorge Santos Simón, Lei Zhang, Robert Tang-Kong, Sebastian Castro, Sid Sarasvati
+
 2.3.0 (2025-01-11)
 ------------------
 * [code] Fix CI and update to latest Ubuntu/Python versions (`#454 <https://github.com/splintered-reality/py_trees/issues/454>`_)
