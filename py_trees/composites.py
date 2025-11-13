@@ -120,7 +120,7 @@ class Composite(behaviour.Behaviour, abc.ABC):
         behaviours do the real work.
 
         Such flows are a consequence of how the composite
-        interacts with its children. The success of
+        interacts with it's children. The success of
         behaviour trees depends on this logic being simple,
         well defined and limited to a few well established
         patterns - this is what ensures that visualising
@@ -391,7 +391,7 @@ class Selector(Composite):
         Customise the tick behaviour for a selector.
 
         This implements priority-interrupt style handling amongst the selector's children.
-        The selector's status is always a reflection of its children's status.
+        The selector's status is always a reflection of it's children's status.
 
         Yields:
             :class:`~py_trees.behaviour.Behaviour`: a reference to itself or one of its children
@@ -547,10 +547,9 @@ class Sequence(Composite):
                 if child.status != common.Status.INVALID:
                     child.stop(common.Status.INVALID)
             self.initialise()  # user specific initialisation
-        elif self.memory and common.Status.RUNNING:
-            assert self.current_child is not None  # should never be true, help mypy out
+        elif self.memory and self.current_child is not None:
             index = self.children.index(self.current_child)
-        elif not self.memory and common.Status.RUNNING:
+        elif not self.memory:
             self.current_child = self.children[0] if self.children else None
         else:
             # previous conditional checks should cover all variations
@@ -680,7 +679,7 @@ class Parallel(Composite):
 
         Args:
             **kwargs (:obj:`dict`): distribute arguments to this
-               behaviour and in turn, all of its children
+               behaviour and in turn, all of it's children
 
         Raises:
             RuntimeError: if the parallel's policy configuration is invalid
