@@ -427,7 +427,8 @@ class Selector(Composite):
             # clear out preceding status' - not actually necessary but helps
             # visualise the case of memory vs no memory
             for child in itertools.islice(self.children, None, index):
-                child.stop(common.Status.INVALID)
+                if child.status != common.Status.INVALID:
+                    child.stop(common.Status.INVALID)
         else:
             index = 0
 
@@ -442,7 +443,6 @@ class Selector(Composite):
                         or node.status == common.Status.SUCCESS
                     ):
                         self.current_child = child
-                        self.status = node.status
                         if previous is None or previous != self.current_child:
                             # we interrupted, invalidate everything at a lower priority
                             passed = False
@@ -451,10 +451,18 @@ class Selector(Composite):
                                     if child.status != common.Status.INVALID:
                                         child.stop(common.Status.INVALID)
                                 passed = True if child == self.current_child else passed
+
+                        # terminate the selector if a terminal state was reached
+                        if node.status == common.Status.SUCCESS:
+                            self.stop(node.status)
+                        else:
+                            self.status = node.status
+
                         yield self
                         return
+
         # all children failed, set failure ourselves and current child to the last bugger who failed us
-        self.status = common.Status.FAILURE
+        self.stop(common.Status.FAILURE)
         try:
             self.current_child = self.children[-1]
         except IndexError:
@@ -539,10 +547,9 @@ class Sequence(Composite):
                 if child.status != common.Status.INVALID:
                     child.stop(common.Status.INVALID)
             self.initialise()  # user specific initialisation
-        elif self.memory and common.Status.RUNNING:
-            assert self.current_child is not None  # should never be true, help mypy out
+        elif self.memory and self.current_child is not None:
             index = self.children.index(self.current_child)
-        elif not self.memory and common.Status.RUNNING:
+        elif not self.memory:
             self.current_child = self.children[0] if self.children else None
         else:
             # previous conditional checks should cover all variations
@@ -560,13 +567,19 @@ class Sequence(Composite):
             for node in child.tick():
                 yield node
                 if node is child and node.status != common.Status.SUCCESS:
-                    self.status = node.status
                     if not self.memory:
                         # invalidate the remainder of the sequence
                         # i.e. kill dangling runners
                         for child in itertools.islice(self.children, index + 1, None):
                             if child.status != common.Status.INVALID:
                                 child.stop(common.Status.INVALID)
+
+                    # stop the sequence if a terminal (non-success) state was reached
+                    if node.status != common.Status.RUNNING:
+                        self.stop(node.status)
+                    else:
+                        self.status = node.status
+
                     yield self
                     return
             try:
