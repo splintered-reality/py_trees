@@ -86,7 +86,7 @@ def tick_tree(
         to_tick: with from_tick, used to determine the # ticks required
         visitors: a list of visitors to run on each tree tick
         print_snapshot: print ascii/unicode snapshots after each tick
-        print_blackboard: display the blackboard and it's update after each tick
+        print_blackboard: display the blackboard and its update after each tick
     """
     if visitors is None:
         visitors = []

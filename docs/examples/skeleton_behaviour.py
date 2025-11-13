@@ -32,7 +32,7 @@ class Foo(py_trees.behaviour.Behaviour):
           to setup this behaviour alone, or more commonly, via
           :meth:`~py_trees.behaviour.Behaviour.setup_with_descendants`
           or :meth:`~py_trees.trees.BehaviourTree.setup`, both of which
-          will iterate over this behaviour, it's children (it's children's
+          will iterate over this behaviour, its children (its children's
           children ...) calling :meth:`~py_trees.behaviour.Behaviour.setup`
           on each in turn.
 

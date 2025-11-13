@@ -45,7 +45,7 @@ Motivation
 
 The use case that drove the early development of py_trees was robotics. In particular, the higher level
 decision making for a single robot, i.e. the scenario / application layer. For example, the scenario
-that enables a robot to navigate through a building to deliver a parcel and return to it's
+that enables a robot to navigate through a building to deliver a parcel and return to its
 homebase safely.
 
 In scope was any decision making that did not need a low-latency response (e.g. reactive safety
