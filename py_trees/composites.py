@@ -874,7 +874,10 @@ class Recovery(Composite):
                 yield node
                 if node is self.main:
                     if node.status in (common.Status.SUCCESS, common.Status.RUNNING):
-                        self.status = node.status
+                        if node.status == common.Status.SUCCESS:
+                            self.stop(node.status)
+                        else:
+                            self.status = node.status
                         yield self
                         return
                     elif node.status == common.Status.FAILURE:
@@ -907,7 +910,7 @@ class Recovery(Composite):
                         yield self
 
         # No recoveries left → fail
-        self.status = common.Status.FAILURE
+        self.stop(common.Status.FAILURE)
         yield self
 
     def stop(self, new_status: common.Status = common.Status.INVALID) -> None:
@@ -917,8 +920,11 @@ class Recovery(Composite):
         Args:
             new_status : the composite is transitioning to this new status
         """
-        for child in self.children:
+        self.logger.debug(
+            f"{self.__class__.__name__}.stop()[{self.status}->{new_status}]"
+        )
+        for child in self.children[1:]:
             if child.status != common.Status.INVALID:
                 child.stop(common.Status.INVALID)
         self.current_recovery_index = 0
-        super().stop(new_status)
+        Composite.stop(self, new_status)
