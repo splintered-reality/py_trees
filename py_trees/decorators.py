@@ -62,7 +62,7 @@ or  :data:`~py_trees.common.Status.FAILURE`.
 
 A decorator, such as :func:`py_trees.decorators.RunningIsSuccess` on
 a blocking behaviour will immediately terminate the underlying child and
-re-intialise on it's next tick. This is often surprising (to the user) but
+re-intialise on its next tick. This is often surprising (to the user) but
 is necessary to ensure the underlying child isn't left in a dangling state (i.e.
 :data:`~py_trees.common.Status.RUNNING`) as subsequent ticks move on to other
 parts of the tree.
@@ -475,7 +475,7 @@ class Timeout(Decorator):
     :meth:`~py_trees.behaviour.Behaviour.stop` method is called with
     status :data:`~py_trees.common.Status.FAILURE` otherwise it will
     simply directly tick and return with the same status
-    as that of it's encapsulated behaviour.
+    as that of its encapsulated behaviour.
     """
 
     def __init__(self, name: str, child: behaviour.Behaviour, duration: float = 5.0):
@@ -530,10 +530,10 @@ class Timeout(Decorator):
 
 class Count(Decorator):
     """
-    Count the number of times it's child has been ticked.
+    Count the number of times its child has been ticked.
 
     This increments counters tracking the total number of times
-    it's child has been ticked as well as the number of times it
+    its child has been ticked as well as the number of times it
     has landed in each respective state.
 
     It will always re-zero counters on
@@ -621,7 +621,7 @@ class OneShot(Decorator):
 
     This decorator ensures that the underlying child is ticked through
     to completion just once and while doing so, will return
-    with the same status as it's child. Thereafter it will return
+    with the same status as its child. Thereafter it will return
     with the final status of the underlying child.
 
     Completion status is determined by the policy given on construction.
@@ -666,7 +666,7 @@ class OneShot(Decorator):
         Tick the child or bounce back with the original status if already completed.
 
         Yields:
-            a reference to itself or a behaviour in it's child subtree
+            a reference to itself or a behaviour in its child subtree
         """
         if self.final_status:
             # ignore the child
@@ -858,7 +858,7 @@ class Condition(Decorator):
     """
     A blocking conditional decorator.
 
-    Encapsulates a behaviour and wait for it's status to flip to the
+    Encapsulates a behaviour and wait for its status to flip to the
     desired state. This behaviour will tick with
     :data:`~py_trees.common.Status.RUNNING` while waiting and
     :data:`~py_trees.common.Status.SUCCESS` when the flip occurs.

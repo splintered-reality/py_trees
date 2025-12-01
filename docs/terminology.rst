@@ -9,7 +9,7 @@ Terminology
    block
    blocking
       A behaviour is sometimes referred to as a 'blocking' behaviour. Technically, the execution
-      of a behaviour should be non-blocking (i.e. the tick part), however when it's progress from
+      of a behaviour should be non-blocking (i.e. the tick part), however when its progress from
       'RUNNING' to 'FAILURE/SUCCESS' takes more than one tick, we say that the behaviour itself
       is blocking. In short, `blocking == RUNNING`.
 

@@ -151,7 +151,7 @@ concepts discussed above, but not present in the very simple lifecycle
 
 .. note:: A behaviour's ``update()`` method never blocks, at most it just monitors the
     progress and holds up any decision making required by a tree that is ticking the
-    behaviour by setting it's status to ``RUNNING``. At the risk of being confusing, this
+    behaviour by setting its status to ``RUNNING``. At the risk of being confusing, this
     is what is generally referred to as a :term:`blocking` behaviour.
 
 .. image:: images/action.gif

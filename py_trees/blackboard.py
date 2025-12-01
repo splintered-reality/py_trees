@@ -188,7 +188,7 @@ class Blackboard(object):
     Centralised key-value store for sharing data between behaviours.
 
     This class is a coat-hanger for the centralised data store, metadata
-    for it's administration and static methods for interacting with it.
+    for its administration and static methods for interacting with it.
 
     This api is intended for authors of debugging and introspection
     tools on the blackboard. Users should make use of the :class:`Client`.
@@ -234,7 +234,7 @@ class Blackboard(object):
             variable_name: of the variable to get, can be nested, e.g. battery.percentage
 
         Raises:
-            KeyError: if the variable or it's nested attributes do not yet exist on the blackboard
+            KeyError: if the variable or its nested attributes do not yet exist on the blackboard
 
         Return:
             The stored value for the given variable
@@ -528,7 +528,7 @@ class Blackboard(object):
             variable_name: blackboard variable name - can be nested, e.g. battery.percentage
 
         Returns:
-            a tuple consisting of the key and it's attributes (in string form)
+            a tuple consisting of the key and its attributes (in string form)
         """
         name_components = variable_name.split(".")
         key = name_components[0]
@@ -986,7 +986,7 @@ class Client(object):
         opportunity followed by higher priority behaviours in the tree and so forth.
         Lower priority behaviours would use this to respect the pre-configured
         setting and at most, just validate that it is acceptable to the functionality
-        of it's own behaviour.
+        of its own behaviour.
 
         Args:
             name: name of the variable to set
@@ -1092,7 +1092,7 @@ class Client(object):
 
         Raises:
             AttributeError: if the client does not have read access to the variable
-            KeyError: if the variable or it's nested attributes do not yet exist on the blackboard
+            KeyError: if the variable or its nested attributes do not yet exist on the blackboard
         """
         # key attributes is an empty string if not a nested variable name
         name_components = name.split(".")

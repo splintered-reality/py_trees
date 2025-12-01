@@ -18,7 +18,7 @@ install_requires = ["setuptools", "pydot"]
 # Keep them in sync.
 d = setup(
     name="py_trees",
-    version="2.3.0",
+    version="2.4.0",
     packages=find_packages(exclude=["tests*", "docs*"]),
     package_data={"py_trees": ["py.typed"]},
     install_requires=install_requires,

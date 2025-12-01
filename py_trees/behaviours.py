@@ -109,7 +109,7 @@ Crash test dummy used for anything dangerous.
 
 class Periodic(behaviour.Behaviour):
     """
-    Simply periodically rotates it's status over all each status.
+    Simply periodically rotates its status over all each status.
 
     That is, :data:`~py_trees.common.Status.RUNNING` for N ticks,
     :data:`~py_trees.common.Status.SUCCESS` for N ticks,
@@ -210,7 +210,7 @@ class SuccessEveryN(behaviour.Behaviour):
     """
     Non-blocking, periodic success.
 
-    This behaviour updates it's status with :data:`~py_trees.common.Status.SUCCESS`
+    This behaviour updates its status with :data:`~py_trees.common.Status.SUCCESS`
     once every N ticks, :data:`~py_trees.common.Status.FAILURE` otherwise.
 
     Args:

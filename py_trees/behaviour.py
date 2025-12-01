@@ -146,7 +146,7 @@ class Behaviour(abc.ABC):
 
         Args:
             **kwargs: distribute arguments to this
-               behaviour and in turn, all of it's children
+               behaviour and in turn, all of its children
 
         Raises:
             Exception: if this behaviour has a fault in construction or configuration
@@ -261,7 +261,7 @@ class Behaviour(abc.ABC):
     ############################################
 
     def setup_with_descendants(self) -> None:
-        """Call setup on this child, it's children (it's children's children, )."""
+        """Call setup on this child, its children (its children's children, )."""
         for child in self.children:
             for node in child.iterate():
                 node.setup()
@@ -321,7 +321,7 @@ class Behaviour(abc.ABC):
 
     def iterate(self, direct_descendants: bool = False) -> typing.Iterator[Behaviour]:
         """
-        Iterate over this child and it's children.
+        Iterate over this child and its children.
 
         This utilises python generators for looping. To traverse the entire tree:
 
@@ -334,7 +334,7 @@ class Behaviour(abc.ABC):
             direct_descendants (:obj:`bool`): only yield children one step away from this behaviour.
 
         Yields:
-            :class:`~py_trees.behaviour.Behaviour`: one of it's children
+            :class:`~py_trees.behaviour.Behaviour`: one of its children
         """
         for child in self.children:
             if not direct_descendants:
