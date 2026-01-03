@@ -26,14 +26,14 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Poetry Venv Dir
       run: |
         echo "VENV_DIR=$(poetry config virtualenvs.path)" >> $GITHUB_ENV
 
     - name: Restore the Cache
       id: cache-deps
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ${{ env.VENV_DIR }}
         # bump the suffix if you need to force-refresh the cache

@@ -4,7 +4,7 @@ Successfully collaborating on common problems is always an edifying experience t
 
 ## Development Environment
 
-Short of having a poetry environment of your own, you can make use of github's codespaces.
+Short of having a virtual environment environment of your own, you can make use of github's codespaces.
 
 Refer to the [README - Getting Started](../README.md#geting-started) for details.
 

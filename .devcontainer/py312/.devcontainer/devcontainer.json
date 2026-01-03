@@ -31,7 +31,7 @@
             ]
         }
     },
-    "postCreateCommand": "poetry install",
+    "postCreateCommand": "uv pip install ."
     // Breaks codespaces
     // "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces,type=bind",
     // "workspaceFolder": "/workspaces"

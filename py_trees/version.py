@@ -12,6 +12,8 @@
 # Version
 ##############################################################################
 
-# When changing, Also update setup.py and package.xml
-# TODO: use pkg_resources to fetch the version from setup.py
-__version__ = "2.4.0"
+# When changing, update pyproject.toml and package.xml
+from importlib.metadata import version
+
+
+__version__ = version("py_trees")
