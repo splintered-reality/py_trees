@@ -6,6 +6,8 @@
             "lextudio.restructuredtext",
             "ms-python.python",
             "ms-vscode-remote.vscode-remote-extensionpack",
-            "omnilib.ufmt"
+            // "omnilib.ufmt"
+            "charliermarsh.ruff",
+            "astral-sh.ty"
     ]
 }

@@ -2,7 +2,8 @@
     "python.linting.enabled": false,
     "python.formatting.provider": "none",
     "[python]": {
-        "editor.defaultFormatter": "omnilib.ufmt",
+        //"editor.defaultFormatter": "omnilib.ufmt",
+        "editor.defaultFormatter": "charliermarsh.ruff",
         "editor.formatOnSave": true
     },
     "cSpell.language": "en-GB",

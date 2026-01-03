@@ -1,47 +1,57 @@
 ################################################################################
 # Base
-#  - a single-version python slim-bullseye image
+#  - a single-version python uv image
 # Installs
-#  - poetry in /opt/poetry
+#  - uv
+#  - graphviz
+#  - make
 #  - adds a user called 'zen'
 # Size
 #  - 300MB
 ################################################################################
 
-ARG PYTHON_VERSION=3.8.15
-ARG DEBIAN_VERSION=bullseye
+# Use a Python image with uv pre-installed
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS base
 
-FROM python:${PYTHON_VERSION}-slim-${DEBIAN_VERSION}
+# Enable bytecode compilation
+ENV UV_COMPILE_BYTECODE=1
+# Copy from the cache instead of linking since it's a mounted volume
+ENV UV_LINK_MODE=copy
 
-ARG NAME=poetry-zen
-# ARG POETRY_VERSION=1.3.2
-# ENV POETRY_HOME=/opt/poetry
-# ENV PATH="${POETRY_HOME}/bin:${PATH}"
+# Configure the Python directory so it is consistent
+ENV UV_PYTHON_INSTALL_DIR /python
 
-################################################################################
-# Poetry
-################################################################################
+# Install Python before the project for caching
+RUN uv python install 3.12
 
-# RUN apt-get update && apt-get install -y --no-install-recommends \
-#     # For poetry
-#     # curl \
-#     # For pytrees
-#     graphviz \
-#     make \
-#     # For convenience
-#     bash \
-#     bash-completion \
-#     ca-certificates \
-#     git \
-#     less \
-#     ssh \
-#     vim \
-#     wget 
-#     # \
-#     # && \
-#     # curl -sSL https://install.python-poetry.org | POETRY_VERSION=${POETRY_VERSION} python3 - && \
-#     # poetry config virtualenvs.create false && \
-#     # poetry completions bash >> ~/.bash_completion
+WORKDIR /app
+
+# Install the project's dependencies using the lockfile and settings
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv sync --frozen --no-install-project --no-dev
+
+ADD . /app
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev
+
+# Place executables in the environment at the front of the path
+ENV PATH="/app/.venv/bin:$PATH"
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    # For pytrees
+    graphviz \
+    make \
+    # For convenience
+    bash \
+    bash-completion \
+    ca-certificates \
+    git \
+    less \
+    ssh \
+    vim \
+    wget 
 
 ################################################################################
 # Login Shells for Debugging & Development
@@ -68,10 +78,6 @@ RUN groupadd --gid $USER_GID $USERNAME && \
 RUN echo "export PS1='\[\033[01;36m\](docker)\[\033[00m\] \[\033[01;32m\]\u@${NAME}\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '" >> /home/${USERNAME}/.bashrc && \
     echo "alias ll='ls --color=auto -alFNh'" >> /home/${USERNAME}/.bashrc && \
     echo "alias ls='ls --color=auto -Nh'" >> /home/${USERNAME}/.bashrc
-    # && \
-    # poetry completions bash >> /home/${USERNAME}/.bash_completion
-
-#    touch /home/${USERNAME}/.bash_completion && chown ${USERNAME}:${USERNAME} /home/${USERNAME}/.bash_completion
 
 ################################################################################
 # Debugging with root

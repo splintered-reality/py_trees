@@ -5,14 +5,14 @@
         "dockerfile": "./Dockerfile",
         "args": {
             "NAME": "py_trees-310",
-            "POETRY_VERSION": "1.8.4",
+            // "POETRY_VERSION": "1.8.4",
             "PYTHON_VERSION": "3.10.15",
-            "DEBIAN_VERSION": "bullseye"
+            "DEBIAN_VERSION": "bookworm"
         }
     },
     "containerEnv": {
-        "POETRY_HTTP_BASIC_PYPI_USERNAME": "${localEnv:POETRY_HTTP_BASIC_PYPI_USERNAME}",
-        "POETRY_HTTP_BASIC_PYPI_PASSWORD": "${localEnv:POETRY_HTTP_BASIC_PYPI_PASSWORD}"
+        // "POETRY_HTTP_BASIC_PYPI_USERNAME": "${localEnv:POETRY_HTTP_BASIC_PYPI_USERNAME}",
+        // "POETRY_HTTP_BASIC_PYPI_PASSWORD": "${localEnv:POETRY_HTTP_BASIC_PYPI_PASSWORD}"
     },
     "remoteUser": "zen",
     "customizations": {
@@ -23,7 +23,9 @@
                 "streetsidesoftware.code-spell-checker",
                 "lextudio.restructuredtext",
                 "ms-python.python",
-                "omnilib.ufmt"
+                "charliermarsh.ruff",
+                "astral-sh.ty"
+                // "omnilib.ufmt"
             ]
         }
     },

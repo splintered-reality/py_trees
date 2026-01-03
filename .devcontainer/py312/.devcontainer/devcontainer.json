@@ -5,15 +5,18 @@
         "dockerfile": "../../Dockerfile",
         "args": {
             "NAME": "py_trees-312",
-            "POETRY_VERSION": "1.8.4",
+            // "POETRY_VERSION": "1.8.4",
+            // TODO(AS): Upgrade to later Python
             "PYTHON_VERSION": "3.12.4",
-            "DEBIAN_VERSION": "bullseye"
+            // trixie, forky, duke upgrades in future
+            "DEBIAN_VERSION": "bookworm"
         },
         "context": ".."
     },
     "containerEnv": {
-        "POETRY_HTTP_BASIC_PYPI_USERNAME": "${localEnv:POETRY_HTTP_BASIC_PYPI_USERNAME}",
-        "POETRY_HTTP_BASIC_PYPI_PASSWORD": "${localEnv:POETRY_HTTP_BASIC_PYPI_PASSWORD}"
+        // TODO(AS): Fix this properly with uv
+        // "POETRY_HTTP_BASIC_PYPI_USERNAME": "${localEnv:POETRY_HTTP_BASIC_PYPI_USERNAME}",
+        // "POETRY_HTTP_BASIC_PYPI_PASSWORD": "${localEnv:POETRY_HTTP_BASIC_PYPI_PASSWORD}"
     },
     "remoteUser": "zen",
     "customizations": {
@@ -24,10 +27,12 @@
                 "bungcip.better-toml",
                 "eamodio.gitlens",
                 "ms-python.python",
-                "omnilib.ufmt",
+                // "omnilib.ufmt",
                 "redhat.vscode-yaml",
                 "streetsidesoftware.code-spell-checker",
-                "tht13.rst-vscode"
+                "tht13.rst-vscode",
+                "charliermarsh.ruff",
+                "astral-sh.ty"
             ]
         }
     },
