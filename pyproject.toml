@@ -53,7 +53,7 @@ static = ["mypy", "ty"]
 lint = ["ruff"]
 
 # docs extras
-docs = ["sphinx<6", "sphinx-rtd-theme>=1.1", "sphinx-argparse>=0.4"]
+docs = ["sphinx<6", "sphinx-rtd-theme", "sphinx-argparse"]
 
 [project.scripts]
 "py-trees-render" = "py_trees.programs.render:main"

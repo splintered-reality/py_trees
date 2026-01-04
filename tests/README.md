@@ -7,20 +7,22 @@ Make sure you have an sourced the appropriate environment
 
 ```bash
 # run all tests in the current directory
-$ pytest-3
+$ pytest
 
 # All tests with full stdout (-s / --capture=no)
-$ pytest-3 -s
+$ pytest -s
 
 # A single test module
-$ pytest-3 -s test_alakazam.py
+$ pytest -s test_alakazam.py
 
 # A single test
-$ pytest-3 -s test_action_clients.py::test_success
+$ pytest -s test_action_clients.py::test_success
 
 # Using tox from the root dir
 $ tox -l         # list runnable contexts
 $ tox            # everything
-$ tox -e py38    # tests only
-$ tox -e flake8  # lint only
+$ tox -e py312   # tests only
+$ tox -e check   # lint only
+$ tox -e format  # format only
+$ tox -e mypy312 # check types
 ```
