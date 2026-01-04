@@ -100,6 +100,4 @@ html_show_sphinx = False
 ################################################################################
 
 # Refer to the Python standard library.
-intersphinx_mapping = {
-    "python": ("https://docs.python.org/3", None),
-}
+intersphinx_mapping = {"python": ("https://docs.python.org/3", None)}
