@@ -44,6 +44,7 @@ dev = [
 # formatting extras
 # format = [
 #     "ufmt>=2.0",
+#     "ruff-api",
 # ]
 
 # static analysis extras
@@ -97,6 +98,9 @@ sorter = "usort"
 preview = false
 line-length = 120
 output-format = "concise"
+
+[tool.ruff.format]
+skip-magic-trailing-comma = true
 
 [tool.ruff.lint]
 select = ["ALL"]
