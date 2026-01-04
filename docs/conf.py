@@ -14,7 +14,7 @@ import os
 import sys
 from importlib.metadata import version
 
-__version__ = version("py_trees")
+
 project_dir = os.path.abspath(os.path.join(os.path.abspath(__file__), os.pardir, os.pardir))
 
 ################################################################################
@@ -23,6 +23,8 @@ project_dir = os.path.abspath(os.path.join(os.path.abspath(__file__), os.pardir,
 ################################################################################
 
 sys.path.insert(0, project_dir)
+
+__version__ = version("py_trees")
 
 ################################################################################
 # Project Info
