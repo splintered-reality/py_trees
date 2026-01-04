@@ -13,9 +13,7 @@
 import os
 import sys
 
-project_dir = os.path.abspath(
-    os.path.join(os.path.abspath(__file__), os.pardir, os.pardir)
-)
+project_dir = os.path.abspath(os.path.join(os.path.abspath(__file__), os.pardir, os.pardir))
 version_file = os.path.join(project_dir, "py_trees", "version.py")
 with open(version_file) as f:
     exec(f.read())  # makes __version__ available

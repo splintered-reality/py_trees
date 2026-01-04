@@ -33,9 +33,7 @@ class create_blackboards(object):
         self,
     ) -> typing.Tuple[py_trees.blackboard.Client, py_trees.blackboard.Client]:
         self.root = py_trees.blackboard.Client(name="Root")
-        self.parameters = py_trees.blackboard.Client(
-            name="Namespaced", namespace="parameters"
-        )
+        self.parameters = py_trees.blackboard.Client(name="Namespaced", namespace="parameters")
         return (self.root, self.parameters)
 
     def __exit__(
@@ -62,10 +60,7 @@ def benchmark_registration() -> None:
         for blackboard in (root, parameters):
             start_time = time.monotonic()
             for i in range(0, 1000):
-                blackboard.register_key(
-                    key=str(i),
-                    access=py_trees.common.Access.READ,
-                )
+                blackboard.register_key(key=str(i), access=py_trees.common.Access.READ)
             duration = time.monotonic() - start_time
             print(
                 " - "
@@ -79,16 +74,7 @@ def benchmark_registration() -> None:
             )
         start_time = time.monotonic()
     duration = time.monotonic() - start_time
-    print(
-        " - "
-        + console.cyan
-        + "{0: <{1}}".format("Unregister", width)
-        + console.reset
-        + ": "
-        + console.yellow
-        + "{0:.3f}".format(duration)
-        + console.reset
-    )
+    print(" - " + console.cyan + "{0: <{1}}".format("Unregister", width) + console.reset + ": " + console.yellow + "{0:.3f}".format(duration) + console.reset)
 
     with create_blackboards() as (root, parameters):
         remaps = {i: "/state/{}".format(i) for i in range(0, 1000)}
@@ -96,9 +82,7 @@ def benchmark_registration() -> None:
         for blackboard in (root, parameters):
             start_time = time.monotonic()
             for i in range(0, 1000):
-                blackboard.register_key(
-                    key=str(i), access=py_trees.common.Access.READ, remap_to=remaps[i]
-                )
+                blackboard.register_key(key=str(i), access=py_trees.common.Access.READ, remap_to=remaps[i])
             duration = time.monotonic() - start_time
             print(
                 " - "
@@ -112,16 +96,7 @@ def benchmark_registration() -> None:
             )
         start_time = time.monotonic()
     duration = time.monotonic() - start_time
-    print(
-        " - "
-        + console.cyan
-        + "{0: <{1}}".format("Unregister", width)
-        + console.reset
-        + ": "
-        + console.yellow
-        + "{0:.3f}".format(duration)
-        + console.reset
-    )
+    print(" - " + console.cyan + "{0: <{1}}".format("Unregister", width) + console.reset + ": " + console.yellow + "{0:.3f}".format(duration) + console.reset)
 
 
 def benchmark_read() -> None:
@@ -133,12 +108,7 @@ def benchmark_read() -> None:
             for blackboard in (root, parameters):
                 for i in range(0, 1000):
                     if with_remaps:
-                        remaps = {
-                            i: "/state/{}/colander_{}".format(
-                                blackboard.name.lower(), i
-                            )
-                            for i in range(0, 1000)
-                        }
+                        remaps = {i: "/state/{}/colander_{}".format(blackboard.name.lower(), i) for i in range(0, 1000)}
                         suffix = " with Remaps"
                         blackboard.register_key(
                             key="colander_{}".format(i),
@@ -160,9 +130,7 @@ def benchmark_read() -> None:
                         )
                 else:
                     py_trees.blackboard.Blackboard.set("/colander_{}".format(i), i)
-                    py_trees.blackboard.Blackboard.set(
-                        "/parameters/colander_{}".format(i), i
-                    )
+                    py_trees.blackboard.Blackboard.set("/parameters/colander_{}".format(i), i)
             relative_names = {}
             absolute_names: typing.Dict[str, typing.Dict[int, str]] = {
                 "Root": {},
@@ -221,10 +189,7 @@ def benchmark_write() -> None:
             for blackboard in (root, parameters):
                 for i in range(0, 1000):
                     if with_remaps:
-                        remaps = {
-                            i: "/state/{}/{}".format(blackboard.name.lower(), i)
-                            for i in range(0, 1000)
-                        }
+                        remaps = {i: "/state/{}/{}".format(blackboard.name.lower(), i) for i in range(0, 1000)}
                         suffix = " with Remaps"
                         blackboard.register_key(
                             key=str(i),
@@ -233,10 +198,7 @@ def benchmark_write() -> None:
                         )
                     else:
                         suffix = ""
-                        blackboard.register_key(
-                            key=str(i),
-                            access=py_trees.common.Access.WRITE,
-                        )
+                        blackboard.register_key(key=str(i), access=py_trees.common.Access.WRITE)
             relative_names = {}
             absolute_names: typing.Dict[str, typing.Dict[int, str]] = {
                 "Root": {},

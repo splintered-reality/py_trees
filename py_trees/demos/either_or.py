@@ -80,11 +80,7 @@ def epilog() -> typing.Optional[str]:
        the noodly message
     """
     if py_trees.console.has_colours:
-        return (
-            console.cyan
-            + "And his noodly appendage reached forth to tickle the blessed...\n"
-            + console.reset
-        )
+        return console.cyan + "And his noodly appendage reached forth to tickle the blessed...\n" + console.reset
     else:
         return None
 
@@ -102,9 +98,7 @@ def command_line_argument_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     group = parser.add_mutually_exclusive_group()
-    group.add_argument(
-        "-r", "--render", action="store_true", help="render dot tree to file"
-    )
+    group.add_argument("-r", "--render", action="store_true", help="render dot tree to file")
     group.add_argument(
         "-i",
         "--interactive",
@@ -152,12 +146,8 @@ def create_root() -> py_trees.behaviour.Behaviour:
     Returns:
         the root behaviour
     """
-    trigger_one = py_trees.decorators.FailureIsRunning(
-        name="FisR", child=py_trees.behaviours.SuccessEveryN(name="Joystick 1", n=4)
-    )
-    trigger_two = py_trees.decorators.FailureIsRunning(
-        name="FisR", child=py_trees.behaviours.SuccessEveryN(name="Joystick 2", n=7)
-    )
+    trigger_one = py_trees.decorators.FailureIsRunning(name="FisR", child=py_trees.behaviours.SuccessEveryN(name="Joystick 1", n=4))
+    trigger_two = py_trees.decorators.FailureIsRunning(name="FisR", child=py_trees.behaviours.SuccessEveryN(name="Joystick 2", n=7))
     enable_joystick_one = py_trees.behaviours.SetBlackboardVariable(
         name="Joy1 - Enabled",
         variable_name="joystick_one",
@@ -182,22 +172,14 @@ def create_root() -> py_trees.behaviour.Behaviour:
         variable_value="disabled",
         overwrite=True,
     )
-    task_one = py_trees.behaviours.TickCounter(
-        name="Task 1", duration=2, completion_status=py_trees.common.Status.SUCCESS
-    )
-    task_two = py_trees.behaviours.TickCounter(
-        name="Task 2", duration=2, completion_status=py_trees.common.Status.SUCCESS
-    )
+    task_one = py_trees.behaviours.TickCounter(name="Task 1", duration=2, completion_status=py_trees.common.Status.SUCCESS)
+    task_two = py_trees.behaviours.TickCounter(name="Task 2", duration=2, completion_status=py_trees.common.Status.SUCCESS)
     idle = py_trees.behaviours.Running(name="Idle")
     either_or = py_trees.idioms.either_or(
         name="Either Or",
         conditions=[
-            py_trees.common.ComparisonExpression(
-                "joystick_one", "enabled", operator.eq
-            ),
-            py_trees.common.ComparisonExpression(
-                "joystick_two", "enabled", operator.eq
-            ),
+            py_trees.common.ComparisonExpression("joystick_one", "enabled", operator.eq),
+            py_trees.common.ComparisonExpression("joystick_two", "enabled", operator.eq),
         ],
         subtrees=[task_one, task_two],
         namespace="either_or",
@@ -244,9 +226,7 @@ def main() -> None:
     behaviour_tree.add_pre_tick_handler(pre_tick_handler)
     behaviour_tree.visitors.append(py_trees.visitors.DebugVisitor())
     snapshot_visitor = py_trees.visitors.SnapshotVisitor()
-    behaviour_tree.add_post_tick_handler(
-        functools.partial(post_tick_handler, snapshot_visitor)
-    )
+    behaviour_tree.add_post_tick_handler(functools.partial(post_tick_handler, snapshot_visitor))
     behaviour_tree.visitors.append(snapshot_visitor)
     behaviour_tree.setup(timeout=15)
 

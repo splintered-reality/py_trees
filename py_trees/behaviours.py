@@ -201,9 +201,7 @@ class StatusQueue(behaviour.Behaviour):
         Args:
             new_status: the behaviour is transitioning to this new status
         """
-        self.logger.debug(
-            "%s.terminate(%s->%s)" % (self.__class__.__name__, self.status, new_status)
-        )
+        self.logger.debug("%s.terminate(%s->%s)" % (self.__class__.__name__, self.status, new_status))
 
 
 class SuccessEveryN(behaviour.Behaviour):
@@ -317,17 +315,11 @@ class BlackboardToStatus(behaviour.Behaviour):
         TypeError: if the variable isn't of type :py:data:`~py_trees.common.Status`
     """
 
-    def __init__(
-        self,
-        name: str,
-        variable_name: str,
-    ):
+    def __init__(self, name: str, variable_name: str):
         super().__init__(name=name)
         name_components = variable_name.split(".")
         self.key = name_components[0]
-        self.key_attributes = ".".join(
-            name_components[1:]
-        )  # empty string if no other parts
+        self.key_attributes = ".".join(name_components[1:])  # empty string if no other parts
         self.variable_name = variable_name
         self.blackboard = self.attach_blackboard_client()
         self.blackboard.register_key(key=self.key, access=common.Access.READ)
@@ -343,9 +335,7 @@ class BlackboardToStatus(behaviour.Behaviour):
         # raises a KeyError if the variable doesn't exist
         status = self.blackboard.get(self.variable_name)
         if not isinstance(status, common.Status):
-            raise TypeError(
-                f"{self.variable_name} is not of type py_trees.common.Status"
-            )
+            raise TypeError(f"{self.variable_name} is not of type py_trees.common.Status")
         self.feedback_message = f"{self.variable_name}: {status}"
         return status
 
@@ -369,18 +359,12 @@ class CheckBlackboardVariableExists(behaviour.Behaviour):
         name: name of the behaviour
     """
 
-    def __init__(
-        self,
-        name: str,
-        variable_name: str,
-    ):
+    def __init__(self, name: str, variable_name: str):
         super().__init__(name=name)
         self.variable_name = variable_name
         name_components = variable_name.split(".")
         self.key = name_components[0]
-        self.key_attributes = ".".join(
-            name_components[1:]
-        )  # empty string if no other parts
+        self.key_attributes = ".".join(name_components[1:])  # empty string if no other parts
         self.blackboard = self.attach_blackboard_client()
         self.blackboard.register_key(key=self.key, access=common.Access.READ)
 
@@ -419,11 +403,7 @@ class WaitForBlackboardVariable(CheckBlackboardVariableExists):
         name: name of the behaviour
     """
 
-    def __init__(
-        self,
-        name: str,
-        variable_name: str,
-    ):
+    def __init__(self, name: str, variable_name: str):
         super().__init__(name=name, variable_name=variable_name)
 
     def update(self) -> common.Status:
@@ -499,14 +479,10 @@ class SetBlackboardVariable(behaviour.Behaviour):
         self.variable_name = variable_name
         name_components = variable_name.split(".")
         self.key = name_components[0]
-        self.key_attributes = ".".join(
-            name_components[1:]
-        )  # empty string if no other parts
+        self.key_attributes = ".".join(name_components[1:])  # empty string if no other parts
         self.blackboard = self.attach_blackboard_client()
         self.blackboard.register_key(key=self.key, access=common.Access.WRITE)
-        self.variable_value_generator = (
-            variable_value if callable(variable_value) else lambda: variable_value
-        )
+        self.variable_value_generator = variable_value if callable(variable_value) else lambda: variable_value
         self.overwrite = overwrite
 
     def update(self) -> common.Status:
@@ -554,9 +530,7 @@ class CheckBlackboardVariableValue(behaviour.Behaviour):
         self.check = check
         name_components = self.check.variable.split(".")
         self.key = name_components[0]
-        self.key_attributes = ".".join(
-            name_components[1:]
-        )  # empty string if no other parts
+        self.key_attributes = ".".join(name_components[1:])  # empty string if no other parts
         self.blackboard = self.attach_blackboard_client()
         self.blackboard.register_key(key=self.key, access=common.Access.READ)
 
@@ -575,17 +549,10 @@ class CheckBlackboardVariableValue(behaviour.Behaviour):
                 try:
                     lhs_value = operator.attrgetter(self.key_attributes)(lhs_value)
                 except AttributeError:
-                    self.feedback_message = (
-                        "blackboard key-value pair exists, but the value does not "
-                        f"have the requested nested attributes [{self.key}]"
-                    )
+                    self.feedback_message = "blackboard key-value pair exists, but the value does not " f"have the requested nested attributes [{self.key}]"
                     return common.Status.FAILURE
         except KeyError:
-            self.feedback_message = (
-                "key '{}' does not yet exist on the blackboard".format(
-                    self.check.variable
-                )
-            )
+            self.feedback_message = "key '{}' does not yet exist on the blackboard".format(self.check.variable)
             return common.Status.FAILURE
 
         rhs_value = self.check.value_generator()
@@ -705,11 +672,7 @@ class WaitForBlackboardVariableValue(CheckBlackboardVariableValue):
         name: name of the behaviour
     """
 
-    def __init__(
-        self,
-        name: str,
-        check: common.ComparisonExpression,
-    ):
+    def __init__(self, name: str, check: common.ComparisonExpression):
         super().__init__(check=check, name=name)
 
     def update(self) -> common.Status:
@@ -760,22 +723,14 @@ class CheckBlackboardVariableValues(behaviour.Behaviour):
         self.operator = operator
         self.blackboard = self.attach_blackboard_client()
         if len(checks) < 2:
-            raise ValueError(
-                "Must be at least two variables to operate on [only {} provided]".format(
-                    len(checks)
-                )
-            )
+            raise ValueError("Must be at least two variables to operate on [only {} provided]".format(len(checks)))
         for check in self.checks:
-            self.blackboard.register_key(
-                key=blackboard.Blackboard.key(check.variable), access=common.Access.READ
-            )
+            self.blackboard.register_key(key=blackboard.Blackboard.key(check.variable), access=common.Access.READ)
         self.blackboard_results = None
         if namespace is not None:
             self.blackboard_results = self.attach_blackboard_client(namespace=namespace)
             for counter in range(1, len(self.checks) + 1):
-                self.blackboard_results.register_key(
-                    key=str(counter), access=common.Access.WRITE
-                )
+                self.blackboard_results.register_key(key=str(counter), access=common.Access.WRITE)
 
     def update(self) -> common.Status:
         """
@@ -791,11 +746,7 @@ class CheckBlackboardVariableValues(behaviour.Behaviour):
             try:
                 value = self.blackboard.get(check.variable)
             except KeyError:
-                self.feedback_message = (
-                    "variable '{}' does not yet exist on the blackboard".format(
-                        check.variable
-                    )
-                )
+                self.feedback_message = "variable '{}' does not yet exist on the blackboard".format(check.variable)
                 return common.Status.FAILURE
             results.append(check.operator(value, check.value_generator()))
         if self.blackboard_results is not None:
@@ -803,14 +754,10 @@ class CheckBlackboardVariableValues(behaviour.Behaviour):
                 self.blackboard_results.set(str(counter), results[counter - 1])
         logical_result = functools.reduce(self.operator, results)
         if logical_result:
-            self.feedback_message = "[{}]".format(
-                "|".join(["T" if result else "F" for result in results])
-            )
+            self.feedback_message = "[{}]".format("|".join(["T" if result else "F" for result in results]))
             return common.Status.SUCCESS
         else:
-            self.feedback_message = "[{}]".format(
-                "|".join(["T" if result else "F" for result in results])
-            )
+            self.feedback_message = "[{}]".format("|".join(["T" if result else "F" for result in results]))
             return common.Status.FAILURE
 
 
@@ -832,9 +779,7 @@ class ProbabilisticBehaviour(behaviour.Behaviour):
 
     def __init__(self, name: str, weights: typing.Optional[typing.List[float]] = None):
         if weights is not None and (type(weights) is not list or len(weights) != 3):
-            raise ValueError(
-                "Either all or none of the probabilities must be specified"
-            )
+            raise ValueError("Either all or none of the probabilities must be specified")
 
         super(ProbabilisticBehaviour, self).__init__(name=name)
 

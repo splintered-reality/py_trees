@@ -3,24 +3,42 @@ name = "py_trees"
 version = "2.4.0"
 description = "pythonic implementation of behaviour trees"
 authors = ["Daniel Stonier", "Naveed Usmani", "Michal Staniaszek"]
-maintainers = ["Daniel Stonier <d.stonier@gmail.com>", "Sebastian Castro <sebas.a.castro@gmail.com>"]
+maintainers = [
+    "Daniel Stonier <d.stonier@gmail.com>",
+    "Sebastian Castro <sebas.a.castro@gmail.com>",
+]
 readme = "README.md"
 license = "BSD"
 homepage = "https://github.com/splintered-reality/py_trees"
 repository = "https://github.com/splintered-reality/py_trees"
 documentation = "https://py-trees.readthedocs.io/en/devel/"
-packages = [
-    { include = "py_trees" },
-]
+packages = [{ include = "py_trees" }]
 classifiers = [
     'Environment :: Console',
     'Intended Audience :: Developers',
     'License :: OSI Approved :: BSD License',
     'Programming Language :: Python',
     'Topic :: Scientific/Engineering :: Artificial Intelligence',
-    'Topic :: Software Development :: Libraries'
+    'Topic :: Software Development :: Libraries',
 ]
-keywords=["py_trees", "py-trees", "behaviour-trees"]
+keywords = ["py_trees", "py-trees", "behaviour-trees"]
+
+[tool.ruff]
+line-length = 160
+
+[tool.black]
+line-length = 160
+force-exclude = """
+(?x)          # verbose
+(^|[\\/])    # start or path separator
+(?:
+    py_trees[\\/]composites\\.py
+    | tests[\\/]test_either_or\\.py
+)$
+"""
+
+[tool.ufmt]
+excludes = ["py_trees/composites.py", "tests/test_either_or.py"]
 
 [tool.poetry.dependencies]
 python = ">=3.9,<4.0"
@@ -28,30 +46,28 @@ pydot = ">=1.4"
 
 [tool.poetry.group.dev.dependencies]
 tox = ">=3.26"
-tox-poetry-installer = {extras = ["poetry"], version = ">=0.9.0"}
-pytest = [
-    { version = ">=7.1", python = ">=3.9,<4.0" }
-]
+tox-poetry-installer = { extras = ["poetry"], version = ">=0.9.0" }
+pytest = [{ version = ">=7.1", python = ">=3.9,<4.0" }]
 pytest-console-scripts = ">=1.3"
-pytest-cov = ">=3.0.0"             # transitively depends on coverage[toml]
+pytest-cov = ">=3.0.0"                                              # transitively depends on coverage[toml]
 
 [tool.poetry.group.format.dependencies]
-ufmt = ">=2.0"                     # black (style) + usort (import order)
+ufmt = ">=2.0" # black (style) + usort (import order)
 
 [tool.poetry.group.static.dependencies]
 mypy = ">=0.991"
 
 [tool.poetry.group.lint.dependencies]
 # strongly recommended
-flake8 = ">=5.0"                  # combines pyflakes (errors) & pycodestyle (pep8 style)
-flake8-docstrings = ">=1.6"       # docstrings (integrates pydocstyle)
-darglint = ">=1.8"                # checks docstrings match implementation
+flake8 = ">=5.0"            # combines pyflakes (errors) & pycodestyle (pep8 style)
+flake8-docstrings = ">=1.6" # docstrings (integrates pydocstyle)
+darglint = ">=1.8"          # checks docstrings match implementation
 # optional, these go above and beyond
-flake8-bugbear = ">=22.9"         # bugs & design not strictly pep8
+flake8-bugbear = ">=22.9" # bugs & design not strictly pep8
 
 [tool.poetry.group.docs.dependencies]
 sphinx = "<6"
-sphinx-rtd-theme = ">=1.1"        # not yet ready for sphinx 6
+sphinx-rtd-theme = ">=1.1" # not yet ready for sphinx 6
 sphinx-argparse = ">=0.4"
 
 [tool.poetry.scripts]

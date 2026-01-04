@@ -48,9 +48,7 @@ def examples() -> typing.List[str]:
         prefix + " py_trees.demos.stewardship.create_tree" + console.reset,
         prefix + " --with-blackboard-variables" + console.reset,
         prefix + " --name=foo py_trees.demos.stewardship.create_tree" + console.reset,
-        prefix
-        + ' --kwargs=\'{"level":"all"}\' py_trees.demos.dot_graphs.create_tree'
-        + console.reset,
+        prefix + ' --kwargs=\'{"level":"all"}\' py_trees.demos.dot_graphs.create_tree' + console.reset,
     ]
     return examples
 
@@ -96,11 +94,7 @@ def epilog() -> typing.Optional[str]:
        the noodly message
     """
     if py_trees.console.has_colours:
-        return (
-            console.cyan
-            + "And his noodly appendage reached forth to tickle the blessed...\n"
-            + console.reset
-        )
+        return console.cyan + "And his noodly appendage reached forth to tickle the blessed...\n" + console.reset
     else:
         return None
 
@@ -181,9 +175,7 @@ def main() -> None:
         try:
             module_itself = importlib.import_module(module_name)
         except ImportError:
-            console.logerror(
-                "Could not import module [{0}]".format(module_or_class_name)
-            )
+            console.logerror("Could not import module [{0}]".format(module_or_class_name))
             sys.exit(1)
     if class_name is not None:
         class_type = getattr(module_itself, class_name)
@@ -195,9 +187,7 @@ def main() -> None:
             try:
                 method_itself = getattr(class_type(), method_name)
             except TypeError:
-                console.logerror(
-                    "Can only instantiate class methods if the class __init__ has no non-default arguments"
-                )
+                console.logerror("Can only instantiate class methods if the class __init__ has no non-default arguments")
                 sys.exit(1)
             root = method_itself(**(args.kwargs))
     else:

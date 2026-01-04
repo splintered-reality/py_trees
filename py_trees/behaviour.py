@@ -64,24 +64,14 @@ class Behaviour(abc.ABC):
 
     def __init__(self, name: str):
         if not isinstance(name, str):
-            raise TypeError(
-                "a behaviour name should be a string, but you passed in {}".format(
-                    type(name)
-                )
-            )
-        self.id = (
-            uuid.uuid4()
-        )  # used to uniquely identify this node (helps with removing children from a tree)
+            raise TypeError("a behaviour name should be a string, but you passed in {}".format(type(name)))
+        self.id = uuid.uuid4()  # used to uniquely identify this node (helps with removing children from a tree)
         self.name: str = name
         self.blackboards: typing.List[blackboard.Client] = []
-        self.qualified_name = "{}/{}".format(
-            self.__class__.__qualname__, self.name
-        )  # convenience
+        self.qualified_name = "{}/{}".format(self.__class__.__qualname__, self.name)  # convenience
         self.status = common.Status.INVALID
         self.iterator = self.tick()
-        self.parent: typing.Optional[Behaviour] = (
-            None  # will get set if a behaviour is added to a composite
-        )
+        self.parent: typing.Optional[Behaviour] = None  # will get set if a behaviour is added to a composite
         self.children: typing.List[Behaviour] = []  # only set by composite behaviours
         self.logger = logging.Logger(name)
         self.feedback_message = ""  # useful for debugging, or human readable updates, but not necessary to implement
@@ -236,9 +226,7 @@ class Behaviour(abc.ABC):
     # Private Methods - use inside a behaviour
     ############################################
 
-    def attach_blackboard_client(
-        self, name: typing.Optional[str] = None, namespace: typing.Optional[str] = None
-    ) -> blackboard.Client:
+    def attach_blackboard_client(self, name: typing.Optional[str] = None, namespace: typing.Optional[str] = None) -> blackboard.Client:
         """
         Create and attach a blackboard to this behaviour.
 
@@ -309,10 +297,7 @@ class Behaviour(abc.ABC):
         # don't set self.status yet, terminate() may need to check what the current state is first
         new_status = self.update()
         if new_status not in list(common.Status):
-            self.logger.error(
-                "A behaviour returned an invalid status, setting to INVALID [%s][%s]"
-                % (new_status, self.name)
-            )
+            self.logger.error("A behaviour returned an invalid status, setting to INVALID [%s][%s]" % (new_status, self.name))
             new_status = common.Status.INVALID
         if new_status != common.Status.RUNNING:
             self.stop(new_status)
@@ -376,11 +361,7 @@ class Behaviour(abc.ABC):
             "%s.stop(%s)"
             % (
                 self.__class__.__name__,
-                (
-                    "%s->%s" % (self.status, new_status)
-                    if self.status != new_status
-                    else "%s" % new_status
-                ),
+                ("%s->%s" % (self.status, new_status) if self.status != new_status else "%s" % new_status),
             )
         )
         self.terminate(new_status)
@@ -408,9 +389,7 @@ class Behaviour(abc.ABC):
             b = b.parent
         return False
 
-    def has_parent_with_instance_type(
-        self, instance_type: "typing.Type[Behaviour]"
-    ) -> bool:
+    def has_parent_with_instance_type(self, instance_type: "typing.Type[Behaviour]") -> bool:
         """
         Search this behaviour's ancestors for one of the specified type.
 

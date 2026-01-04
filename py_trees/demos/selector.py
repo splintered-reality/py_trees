@@ -44,15 +44,11 @@ def description() -> str:
     Returns:
        the program description string
     """
-    content = (
-        "Higher priority switching and interruption in the children of a selector.\n"
-    )
+    content = "Higher priority switching and interruption in the children of a selector.\n"
     content += "\n"
     content += "In this example the higher priority child is setup to fail initially,\n"
     content += "falling back to the continually running second child. On the third\n"
-    content += (
-        "tick, the first child succeeds and cancels the hitherto running child.\n"
-    )
+    content += "tick, the first child succeeds and cancels the hitherto running child.\n"
     if py_trees.console.has_colours:
         banner_line = console.green + "*" * 79 + "\n" + console.reset
         s = banner_line
@@ -75,11 +71,7 @@ def epilog() -> typing.Optional[str]:
        the noodly message
     """
     if py_trees.console.has_colours:
-        return (
-            console.cyan
-            + "And his noodly appendage reached forth to tickle the blessed...\n"
-            + console.reset
-        )
+        return console.cyan + "And his noodly appendage reached forth to tickle the blessed...\n" + console.reset
     else:
         return None
 
@@ -96,9 +88,7 @@ def command_line_argument_parser() -> argparse.ArgumentParser:
         epilog=epilog(),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument(
-        "-r", "--render", action="store_true", help="render dot tree to file"
-    )
+    parser.add_argument("-r", "--render", action="store_true", help="render dot tree to file")
     return parser
 
 

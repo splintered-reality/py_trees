@@ -63,17 +63,11 @@ def test_text_trees() -> None:
         eventually=py_trees.common.Status.SUCCESS,
     )
     low_priority = py_trees.behaviours.Running(name="Low Priority")
-    selector_with_memory = py_trees.composites.Selector(
-        name="Selector w/ Memory", memory=True
-    )
-    sequence_with_memory = py_trees.composites.Sequence(
-        name="Sequence w/ Memory", memory=True
-    )
+    selector_with_memory = py_trees.composites.Selector(name="Selector w/ Memory", memory=True)
+    sequence_with_memory = py_trees.composites.Sequence(name="Sequence w/ Memory", memory=True)
     success = py_trees.behaviours.Success("Success")
     selector_with_memory.add_child(success)
-    root.add_children(
-        [high_priority, low_priority, selector_with_memory, sequence_with_memory]
-    )
+    root.add_children([high_priority, low_priority, selector_with_memory, sequence_with_memory])
     tree = py_trees.trees.BehaviourTree(root)
     snapshot_visitor = py_trees.visitors.SnapshotVisitor()
     tree.visitors.append(snapshot_visitor)
@@ -103,23 +97,17 @@ def test_text_trees() -> None:
     print()
 
     # Non-Visited with Status
-    snippets["non_visited_ascii_tree_status"] = display.ascii_tree(
-        tree.root, show_status=True
-    )
+    snippets["non_visited_ascii_tree_status"] = display.ascii_tree(tree.root, show_status=True)
     print(snippets["non_visited_ascii_tree_status"])
     print()
-    snippets["non_visited_xhtml_status"] = display.xhtml_tree(
-        tree.root, show_status=True
-    )
+    snippets["non_visited_xhtml_status"] = display.xhtml_tree(tree.root, show_status=True)
     print(snippets["non_visited_xhtml_status"])
     print()
 
     py_trees.tests.print_assert_banner()
     for snippet_name, snippet in snippets.items():
         for b in root.iterate():
-            py_trees.tests.print_assert_details(
-                "{} in {}".format(b.name, snippet_name), True, b.name in snippet
-            )
+            py_trees.tests.print_assert_details("{} in {}".format(b.name, snippet_name), True, b.name in snippet)
             assert b.name in snippet
 
     py_trees.tests.print_assert_details(
@@ -135,15 +123,9 @@ def test_text_trees() -> None:
     )
     assert "-" in snippets["non_visited_ascii_tree_status"]
     try:
-        unused_element = xml.etree.ElementTree.fromstring(  # noqa: F841 [unused]
-            snippets["visited_xhtml"]
-        )
-        unused_element = xml.etree.ElementTree.fromstring(  # noqa: F841 [unused]
-            snippets["non_visited_xhtml"]
-        )
-        unused_element = xml.etree.ElementTree.fromstring(  # noqa: F841 [unused]
-            snippets["non_visited_xhtml_status"]
-        )
+        unused_element = xml.etree.ElementTree.fromstring(snippets["visited_xhtml"])  # noqa: F841 [unused]
+        unused_element = xml.etree.ElementTree.fromstring(snippets["non_visited_xhtml"])  # noqa: F841 [unused]
+        unused_element = xml.etree.ElementTree.fromstring(snippets["non_visited_xhtml_status"])  # noqa: F841 [unused]
         py_trees.tests.print_assert_details("xml ParseError", None, None)
     except xml.etree.ElementTree.ParseError as e:
         py_trees.tests.print_assert_details("xml ParseError", None, str(e))
@@ -159,9 +141,7 @@ def test_ascii_snapshot_priority_interrupt() -> None:
     console.banner("Ascii Snapshots - Priority Interrupt")
 
     if console.has_unicode():
-        text_tree = (
-            display.unicode_tree if console.has_unicode() else display.ascii_tree
-        )
+        text_tree = display.unicode_tree if console.has_unicode() else display.ascii_tree
 
     def post_tick_handler(
         snapshot_visitor: py_trees.visitors.SnapshotVisitor,

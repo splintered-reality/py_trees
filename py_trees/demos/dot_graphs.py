@@ -59,38 +59,10 @@ def description() -> str:
         s += "\n"
         s += console.bold + "    With Varying Visibility Levels" + console.reset + "\n"
         s += "\n"
-        s += (
-            console.cyan
-            + "        {0}".format(name)
-            + console.yellow
-            + " --level=all"
-            + console.reset
-            + "\n"
-        )
-        s += (
-            console.cyan
-            + "        {0}".format(name)
-            + console.yellow
-            + " --level=detail"
-            + console.reset
-            + "\n"
-        )
-        s += (
-            console.cyan
-            + "        {0}".format(name)
-            + console.yellow
-            + " --level=component"
-            + console.reset
-            + "\n"
-        )
-        s += (
-            console.cyan
-            + "        {0}".format(name)
-            + console.yellow
-            + " --level=big_picture"
-            + console.reset
-            + "\n"
-        )
+        s += console.cyan + "        {0}".format(name) + console.yellow + " --level=all" + console.reset + "\n"
+        s += console.cyan + "        {0}".format(name) + console.yellow + " --level=detail" + console.reset + "\n"
+        s += console.cyan + "        {0}".format(name) + console.yellow + " --level=component" + console.reset + "\n"
+        s += console.cyan + "        {0}".format(name) + console.yellow + " --level=big_picture" + console.reset + "\n"
         s += "\n"
         s += banner_line
     else:
@@ -106,11 +78,7 @@ def epilog() -> typing.Optional[str]:
        the noodly message
     """
     if py_trees.console.has_colours:
-        return (
-            console.cyan
-            + "And his noodly appendage reached forth to tickle the blessed...\n"
-            + console.reset
-        )
+        return console.cyan + "And his noodly appendage reached forth to tickle the blessed...\n" + console.reset
     else:
         return None
 
@@ -189,7 +157,5 @@ def main() -> None:
             pass
     else:
         print("")
-        console.logerror(
-            "No xdot viewer found, skipping display [hint: sudo apt install xdot]"
-        )
+        console.logerror("No xdot viewer found, skipping display [hint: sudo apt install xdot]")
         print("")

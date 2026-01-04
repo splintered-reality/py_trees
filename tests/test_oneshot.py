@@ -27,14 +27,10 @@ logger = py_trees.logging.Logger("Nosetest")
 
 
 def test_oneshot_with_fail_causes_reentry() -> None:
-    def decorator_oneshot(
-        child: py_trees.behaviour.Behaviour, policy: py_trees.common.OneShotPolicy
-    ) -> py_trees.decorators.OneShot:
+    def decorator_oneshot(child: py_trees.behaviour.Behaviour, policy: py_trees.common.OneShotPolicy) -> py_trees.decorators.OneShot:
         return py_trees.decorators.OneShot(name="OneShot", child=child, policy=policy)
 
-    def idiom_oneshot(
-        child: py_trees.behaviour.Behaviour, policy: py_trees.common.OneShotPolicy
-    ) -> py_trees.behaviour.Behaviour:
+    def idiom_oneshot(child: py_trees.behaviour.Behaviour, policy: py_trees.common.OneShotPolicy) -> py_trees.behaviour.Behaviour:
         return py_trees.idioms.oneshot(
             name="Oneshot Idiom",
             variable_name="oneshot",
@@ -48,9 +44,7 @@ def test_oneshot_with_fail_causes_reentry() -> None:
     ]:
         for policy in py_trees.common.OneShotPolicy:
             # Setup
-            console.banner(
-                "{} w/ Failure Causes Reentry [policy: {}]".format(title, policy.name)
-            )
+            console.banner("{} w/ Failure Causes Reentry [policy: {}]".format(title, policy.name))
             py_trees.tests.clear_blackboard()
 
             # Tree
@@ -159,9 +153,7 @@ def untest_oneshot_with_subtrees_and_interrupt() -> None:
             child=worker_subtree,
             policy=py_trees.common.OneShotPolicy.ON_SUCCESSFUL_COMPLETION,
         )
-        idiom_oneshot = py_trees.idioms.oneshot(
-            name="OneShot", variable_name="oneshot", behaviour=worker_subtree
-        )
+        idiom_oneshot = py_trees.idioms.oneshot(name="OneShot", variable_name="oneshot", behaviour=worker_subtree)
         for title, oneshot in [
             ("Idiom", idiom_oneshot),
             ("Decorator", decorator_oneshot),
@@ -173,10 +165,7 @@ def untest_oneshot_with_subtrees_and_interrupt() -> None:
             root = py_trees.composites.Selector(name="Root", memory=False)
             high_priority = py_trees.behaviours.StatusQueue(
                 name="High Priority",
-                queue=[
-                    py_trees.common.Status.FAILURE,
-                    py_trees.common.Status.SUCCESS,
-                ],
+                queue=[py_trees.common.Status.FAILURE, py_trees.common.Status.SUCCESS],
                 eventually=None,
             )
             root.add_children([high_priority, oneshot])

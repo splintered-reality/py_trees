@@ -56,7 +56,7 @@ def has_unicode(encoding: str = sys.stdout.encoding) -> bool:
         true if capable, false otherwise
     """
     try:
-        "\u26A1".encode(encoding)
+        "\u26a1".encode(encoding)
     except TypeError:
         # if sys.stdout.encoding is not available, it is None
         # this will occur if you run nosetests3 or pytest-3 without -s
@@ -66,9 +66,7 @@ def has_unicode(encoding: str = sys.stdout.encoding) -> bool:
     return True
 
 
-def define_symbol_or_fallback(
-    original: str, fallback: str, encoding: str = sys.stdout.encoding
-) -> str:
+def define_symbol_or_fallback(original: str, fallback: str, encoding: str = sys.stdout.encoding) -> str:
     """
     Go unicode, or fallback to ascii.
 
@@ -92,14 +90,14 @@ def define_symbol_or_fallback(
 
 
 circle = "\u26ac"
-lightning_bolt = "\u26A1"
+lightning_bolt = "\u26a1"
 double_vertical_line = "\u2016"
 check_mark = "\u2713"
 multiplication_x = "\u2715"
 left_arrow = "\u2190"  # u'\u2190'
 right_arrow = "\u2192"
 left_right_arrow = "\u2194"
-forbidden_circle = "\u29B8"
+forbidden_circle = "\u29b8"
 circled_m = "\u24c2"
 
 ##############################################################################
@@ -134,29 +132,14 @@ def read_single_keypress() -> str:
         # make raw - the way to do this comes from the termios(3) man page.
         attrs = list(attrs_save)  # copy the stored version to update
         # iflag
-        attrs[0] &= ~(
-            termios.IGNBRK
-            | termios.BRKINT
-            | termios.PARMRK
-            | termios.ISTRIP
-            | termios.INLCR
-            | termios.IGNCR
-            | termios.ICRNL
-            | termios.IXON
-        )
+        attrs[0] &= ~(termios.IGNBRK | termios.BRKINT | termios.PARMRK | termios.ISTRIP | termios.INLCR | termios.IGNCR | termios.ICRNL | termios.IXON)
         # oflag
         attrs[1] &= ~termios.OPOST
         # cflag
         attrs[2] &= ~(termios.CSIZE | termios.PARENB)
         attrs[2] |= termios.CS8
         # lflag
-        attrs[3] &= ~(
-            termios.ECHONL
-            | termios.ECHO
-            | termios.ICANON
-            | termios.ISIG
-            | termios.IEXTEN
-        )
+        attrs[3] &= ~(termios.ECHONL | termios.ECHO | termios.ICANON | termios.ISIG | termios.IEXTEN)
         termios.tcsetattr(fd, termios.TCSANOW, attrs)
         # turn off non-blocking
         fcntl.fcntl(fd, fcntl.F_SETFL, flags_save & ~os.O_NONBLOCK)
@@ -187,11 +170,7 @@ def read_single_keypress() -> str:
         try:
             return read_single_keypress_windows()
         except ImportError as e_windows:
-            raise ImportError(
-                "Neither unix nor windows implementations supported [{}][{}]".format(
-                    str(e_unix), str(e_windows)
-                )
-            )
+            raise ImportError("Neither unix nor windows implementations supported [{}][{}]".format(str(e_unix), str(e_windows)))
 
 
 ##############################################################################
@@ -206,9 +185,7 @@ def console_has_colours() -> bool:
     # From django.core.management.color.supports_color
     #   https://github.com/django/django/blob/master/django/core/management/color.py
     plat = sys.platform
-    supported_platform = plat != "Pocket PC" and (
-        plat != "win32" or "ANSICON" in os.environ
-    )
+    supported_platform = plat != "Pocket PC" and (plat != "win32" or "ANSICON" in os.environ)
     # isatty is not always implemented, #6223.
     is_a_tty = hasattr(sys.stdout, "isatty") and sys.stdout.isatty()
     if not supported_platform or not is_a_tty:
@@ -227,9 +204,7 @@ if has_colours:
     dim = "\x1b[%sm" % "2"
     underlined = "\x1b[%sm" % "4"
     blink = "\x1b[%sm" % "5"
-    black, red, green, yellow, blue, magenta, cyan, white = [
-        "\x1b[%sm" % str(i) for i in range(30, 38)
-    ]
+    black, red, green, yellow, blue, magenta, cyan, white = ["\x1b[%sm" % str(i) for i in range(30, 38)]
     (
         bold_black,
         bold_red,

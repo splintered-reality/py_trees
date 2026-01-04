@@ -99,9 +99,7 @@ class DebugVisitor(VisitorBase):
                 )
             )
         else:
-            behaviour.logger.debug(
-                "%s.run() [%s]" % (self.__class__.__name__, behaviour.status)
-            )
+            behaviour.logger.debug("%s.run() [%s]" % (self.__class__.__name__, behaviour.status))
 
 
 class SnapshotVisitor(VisitorBase):
@@ -167,9 +165,7 @@ class SnapshotVisitor(VisitorBase):
         # blackboards
         for b in behaviour.blackboards:
             self.visited_blackboard_client_ids.add(b.id())
-            self.visited_blackboard_keys = (
-                self.visited_blackboard_keys | b.read | b.write | b.exclusive
-            )
+            self.visited_blackboard_keys = self.visited_blackboard_keys | b.read | b.write | b.exclusive
 
 
 class DisplaySnapshotVisitor(SnapshotVisitor):
