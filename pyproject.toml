@@ -92,7 +92,7 @@ target-version = ["py310"]
 [tool.ufmt]
 excludes = []
 formatter = "ruff-api"
-sorter = "usort"
+sorter = "ruff-api"
 
 [tool.ruff]
 preview = false
