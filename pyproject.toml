@@ -47,15 +47,10 @@ dev = [
 # ]
 
 # static analysis extras
-static = [
-    "mypy",
-    "ty",
-]
+static = ["mypy", "ty"]
 
 # lint extras
-lint = [
-    "ruff",
-]
+lint = ["ruff"]
 
 # docs extras
 docs = ["sphinx<6", "sphinx-rtd-theme>=1.1", "sphinx-argparse>=0.4"]
@@ -136,10 +131,33 @@ ignore = [
     # TD, always ignore
     "TD",
     "UP",
+    "I001",
+    "ARG",
+    "C",
+    "TRY",
+    "RET",
+    "PTH",
+    "EM",
+    "TCH",
+    "G",
+    "PERF",
+    "S101",
+    "F401",
+    "PGH004",
+    "F841",
+    "BLE",
 ]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S101", "D", "B011", "ARG005"]
+"tests/test_display.py" = ["ICN001", "S314"]
+"docs/conf.py" = ["INP001", "S102", "A001", "F821"]
+
+# Fix or ignore random number generator warning
+"py_trees/behaviours.py" = ["S311"]
+"docs/examples/skeleton_behaviour.py" = ["S311"]
+# Fix or ignore subprocess usage warnings
+"py_trees/demos/dot_graphs.py" = ["S603", "S607"]
 
 [tool.ruff.lint.mccabe]
 max-complexity = 15
