@@ -15,7 +15,7 @@ import sys
 from importlib.metadata import version
 
 
-project_dir = os.path.abspath(os.path.join(os.path.abspath(__file__), os.pardir, os.pardir))
+project_dir = os.path.abspath(os.path.join(os.path.abspath(__file__), os.pardir))
 
 ################################################################################
 # Autodoc - help it find the project
