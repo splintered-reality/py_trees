@@ -97,7 +97,9 @@ def setup(
     ) -> None:
         global current_behaviour_name
         signal.signal(_SIGNAL, original_signal_handler)
-        raise RuntimeError(f"tree setup interrupted or timed out [{current_behaviour_name}]")  # type: ignore[name-defined]
+        raise RuntimeError(
+            f"tree setup interrupted or timed out [{current_behaviour_name}]"  # type: ignore[name-defined]
+        )
 
     def visited_setup() -> None:
         global current_behaviour_name

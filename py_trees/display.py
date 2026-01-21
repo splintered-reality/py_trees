@@ -483,7 +483,10 @@ def dot_tree(
             except AttributeError:
                 pass
             try:
-                indices = [str(behaviour.children.index(child)) for child in behaviour.policy.children]  # type: ignore[attr-defined]
+                indices = [
+                    str(behaviour.children.index(child))
+                    for child in behaviour.policy.children  # type: ignore[attr-defined]
+                ]
                 policy += "({})".format(", ".join(sorted(indices)))
             except AttributeError:
                 pass
