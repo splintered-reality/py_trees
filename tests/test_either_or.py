@@ -24,8 +24,12 @@ def create_root() -> (
         py_trees.behaviour.Behaviour,
     ]
 ):
-    trigger_one = py_trees.decorators.FailureIsRunning(name="FisR", child=py_trees.behaviours.SuccessEveryN(name="Joystick 1", n=4))
-    trigger_two = py_trees.decorators.FailureIsRunning(name="FisR", child=py_trees.behaviours.SuccessEveryN(name="Joystick 2", n=7))
+    trigger_one = py_trees.decorators.FailureIsRunning(
+        name="FisR", child=py_trees.behaviours.SuccessEveryN(name="Joystick 1", n=4)
+    )
+    trigger_two = py_trees.decorators.FailureIsRunning(
+        name="FisR", child=py_trees.behaviours.SuccessEveryN(name="Joystick 2", n=7)
+    )
     enable_joystick_one = py_trees.behaviours.SetBlackboardVariable(
         name="Joy1 - Enabled",
         variable_name="joystick_one",
@@ -50,8 +54,12 @@ def create_root() -> (
         variable_value="disabled",
         overwrite=True,
     )
-    task_one = py_trees.behaviours.TickCounter(name="Task 1", duration=2, completion_status=py_trees.common.Status.SUCCESS)
-    task_two = py_trees.behaviours.TickCounter(name="Task 2", duration=2, completion_status=py_trees.common.Status.SUCCESS)
+    task_one = py_trees.behaviours.TickCounter(
+        name="Task 1", duration=2, completion_status=py_trees.common.Status.SUCCESS
+    )
+    task_two = py_trees.behaviours.TickCounter(
+        name="Task 2", duration=2, completion_status=py_trees.common.Status.SUCCESS
+    )
     idle = py_trees.behaviours.Running(name="Idle")
     either_or = py_trees.idioms.either_or(
         name="EitherOr",

@@ -131,7 +131,9 @@ class ContextSwitch(py_trees.behaviour.Behaviour):
 
     def terminate(self, new_status: py_trees.common.Status) -> None:
         """Restore the context with the previously backed up context."""
-        self.logger.debug("%s.terminate()[%s->%s][restore context]" % (self.__class__.__name__, self.status, new_status))
+        self.logger.debug(
+            "%s.terminate()[%s->%s][restore context]" % (self.__class__.__name__, self.status, new_status)
+        )
         # Some actions that:
         #   1. restore the cached context
         self.feedback_message = "restored context"

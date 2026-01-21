@@ -240,7 +240,9 @@ def main() -> None:
     behaviour_tree = py_trees.trees.BehaviourTree(tree)
     behaviour_tree.add_pre_tick_handler(pre_tick_handler)
     behaviour_tree.visitors.append(py_trees.visitors.DebugVisitor())
-    behaviour_tree.visitors.append(py_trees.visitors.DisplaySnapshotVisitor(display_blackboard=True, display_activity_stream=True))
+    behaviour_tree.visitors.append(
+        py_trees.visitors.DisplaySnapshotVisitor(display_blackboard=True, display_activity_stream=True)
+    )
     behaviour_tree.setup(timeout=15)
 
     ####################

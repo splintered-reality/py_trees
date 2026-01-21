@@ -27,10 +27,14 @@ logger = py_trees.logging.Logger("Nosetest")
 
 
 def test_oneshot_with_fail_causes_reentry() -> None:
-    def decorator_oneshot(child: py_trees.behaviour.Behaviour, policy: py_trees.common.OneShotPolicy) -> py_trees.decorators.OneShot:
+    def decorator_oneshot(
+        child: py_trees.behaviour.Behaviour, policy: py_trees.common.OneShotPolicy
+    ) -> py_trees.decorators.OneShot:
         return py_trees.decorators.OneShot(name="OneShot", child=child, policy=policy)
 
-    def idiom_oneshot(child: py_trees.behaviour.Behaviour, policy: py_trees.common.OneShotPolicy) -> py_trees.behaviour.Behaviour:
+    def idiom_oneshot(
+        child: py_trees.behaviour.Behaviour, policy: py_trees.common.OneShotPolicy
+    ) -> py_trees.behaviour.Behaviour:
         return py_trees.idioms.oneshot(
             name="Oneshot Idiom",
             variable_name="oneshot",

@@ -724,7 +724,9 @@ class Parallel(Composite):
                     new_status = common.Status.SUCCESS
                     self.current_child = self.policy.children[-1]
             else:
-                raise RuntimeError("this parallel has been configured with an unrecognised policy [{}]".format(type(self.policy)))
+                raise RuntimeError(
+                    "this parallel has been configured with an unrecognised policy [{}]".format(type(self.policy))
+                )
         # this parallel may have children that are still running
         # so if the parallel itself has reached a final status, then
         # these running children need to be terminated so they don't dangle
@@ -763,14 +765,18 @@ class Parallel(Composite):
         """
         if isinstance(self.policy, common.ParallelPolicy.SuccessOnSelected):
             if not self.policy.children:
-                error_message = "policy SuccessOnSelected requires a non-empty " "selection of children [{}]".format(self.name)
+                error_message = "policy SuccessOnSelected requires a non-empty " "selection of children [{}]".format(
+                    self.name
+                )
                 self.logger.error(error_message)
                 raise RuntimeError(error_message)
             missing_children_names = [child.name for child in self.policy.children if child not in self.children]
 
             if missing_children_names:
-                error_message = "policy SuccessOnSelected has selected behaviours that are " "not children of this parallel {}[{}]" "".format(
-                    missing_children_names, self.name
+                error_message = (
+                    "policy SuccessOnSelected has selected behaviours that are "
+                    "not children of this parallel {}[{}]"
+                    "".format(missing_children_names, self.name)
                 )
                 self.logger.error(error_message)
                 raise RuntimeError(error_message)

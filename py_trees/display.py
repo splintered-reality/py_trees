@@ -189,7 +189,11 @@ def _generate_text_tree(
                 s += style("{}".format(_symbols[b.status]), font_weight)
                 message = "" if not b.feedback_message else " -- " + b.feedback_message
                 s += style("]" + message, font_weight)
-            elif b.id in _previously_visited.keys() and b.id not in _visited.keys() and _previously_visited[b.id] == common.Status.RUNNING:
+            elif (
+                b.id in _previously_visited.keys()
+                and b.id not in _visited.keys()
+                and _previously_visited[b.id] == common.Status.RUNNING
+            ):
                 s += style("{} [".format(b.name.replace("\n", " ")), font_weight)
                 s += style("{}".format(_symbols[b.status]), font_weight)
                 s += style("]", font_weight)
@@ -793,7 +797,16 @@ def _generate_text_blackboard(
                 for line in lines:
                     s += console.yellow + indent + "  {0}\n".format(line)
             else:
-                s += console.cyan + indent + "{0: <{1}}".format(key, key_width) + console.white + ": " + console.yellow + "{0}\n".format(value) + console.reset
+                s += (
+                    console.cyan
+                    + indent
+                    + "{0: <{1}}".format(key, key_width)
+                    + console.white
+                    + ": "
+                    + console.yellow
+                    + "{0}\n".format(value)
+                    + console.reset
+                )
             return style(s, apply_highlight) + console.reset
 
         def assemble_metadata_line(
@@ -844,7 +857,9 @@ def _generate_text_blackboard(
                     key_width=key_width,
                 )
 
-    blackboard_metadata: typing.Optional[typing.Dict[str, blackboard.KeyMetaData]] = blackboard.Blackboard.metadata if display_only_key_metadata else None
+    blackboard_metadata: typing.Optional[typing.Dict[str, blackboard.KeyMetaData]] = (
+        blackboard.Blackboard.metadata if display_only_key_metadata else None
+    )
 
     if key_filter:
         if isinstance(key_filter, list):
@@ -1002,7 +1017,11 @@ def _generate_text_activity(
             )
             s += "|" + space
             if item.activity_type == blackboard.ActivityType.READ.value:
-                s += symbols["left_arrow"] + space + "{}\n".format(utilities.truncate(str(item.current_value), value_width))
+                s += (
+                    symbols["left_arrow"]
+                    + space
+                    + "{}\n".format(utilities.truncate(str(item.current_value), value_width))
+                )
             elif item.activity_type == blackboard.ActivityType.WRITE.value:
                 s += console.green
                 s += symbols["right_arrow"] + space

@@ -137,9 +137,13 @@ def test_eternal_guard_decorator() -> None:
     task_sequence = py_trees.composites.Sequence(name="Task Sequence", memory=True)
     task_sequence.add_children(tasks)
     idle = py_trees.behaviours.Running(name="Running")
-    nested_guard = py_trees.decorators.EternalGuard(name="Nested Guard", child=task_sequence, condition=condition_success)
+    nested_guard = py_trees.decorators.EternalGuard(
+        name="Nested Guard", child=task_sequence, condition=condition_success
+    )
     count = Count()
-    eternal_guard = py_trees.decorators.EternalGuard(name="Eternal Guard", child=nested_guard, condition=count.condition)
+    eternal_guard = py_trees.decorators.EternalGuard(
+        name="Eternal Guard", child=nested_guard, condition=count.condition
+    )
     root.add_children([eternal_guard, idle])
 
     impl_eternal_guard_checks(

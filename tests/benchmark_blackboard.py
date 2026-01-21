@@ -74,7 +74,16 @@ def benchmark_registration() -> None:
             )
         start_time = time.monotonic()
     duration = time.monotonic() - start_time
-    print(" - " + console.cyan + "{0: <{1}}".format("Unregister", width) + console.reset + ": " + console.yellow + "{0:.3f}".format(duration) + console.reset)
+    print(
+        " - "
+        + console.cyan
+        + "{0: <{1}}".format("Unregister", width)
+        + console.reset
+        + ": "
+        + console.yellow
+        + "{0:.3f}".format(duration)
+        + console.reset
+    )
 
     with create_blackboards() as (root, parameters):
         remaps = {i: "/state/{}".format(i) for i in range(0, 1000)}
@@ -96,7 +105,16 @@ def benchmark_registration() -> None:
             )
         start_time = time.monotonic()
     duration = time.monotonic() - start_time
-    print(" - " + console.cyan + "{0: <{1}}".format("Unregister", width) + console.reset + ": " + console.yellow + "{0:.3f}".format(duration) + console.reset)
+    print(
+        " - "
+        + console.cyan
+        + "{0: <{1}}".format("Unregister", width)
+        + console.reset
+        + ": "
+        + console.yellow
+        + "{0:.3f}".format(duration)
+        + console.reset
+    )
 
 
 def benchmark_read() -> None:

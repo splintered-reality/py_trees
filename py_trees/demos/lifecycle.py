@@ -116,7 +116,9 @@ class Counter(py_trees.behaviour.Behaviour):
             self.feedback_message = "counting...{0} - phew, thats enough for today".format(self.counter)
         else:
             self.feedback_message = "still counting"
-        self.logger.debug("%s.update()[%s->%s][%s]" % (self.__class__.__name__, self.status, new_status, self.feedback_message))
+        self.logger.debug(
+            "%s.update()[%s->%s][%s]" % (self.__class__.__name__, self.status, new_status, self.feedback_message)
+        )
         return new_status
 
     def terminate(self, new_status: py_trees.common.Status) -> None:

@@ -44,7 +44,16 @@ def print_assert_details(text: str, expected: AssertResultType, result: AssertRe
         expected: expected result
         result: actual result
     """
-    print(console.green + text + "." * (70 - len(text)) + console.cyan + "{}".format(expected) + console.yellow + " [{}]".format(result) + console.reset)
+    print(
+        console.green
+        + text
+        + "." * (70 - len(text))
+        + console.cyan
+        + "{}".format(expected)
+        + console.yellow
+        + " [{}]".format(result)
+        + console.reset
+    )
 
 
 def pre_tick_visitor(behaviour_tree: trees.BehaviourTree) -> None:

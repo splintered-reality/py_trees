@@ -132,7 +132,16 @@ def read_single_keypress() -> str:
         # make raw - the way to do this comes from the termios(3) man page.
         attrs = list(attrs_save)  # copy the stored version to update
         # iflag
-        attrs[0] &= ~(termios.IGNBRK | termios.BRKINT | termios.PARMRK | termios.ISTRIP | termios.INLCR | termios.IGNCR | termios.ICRNL | termios.IXON)
+        attrs[0] &= ~(
+            termios.IGNBRK
+            | termios.BRKINT
+            | termios.PARMRK
+            | termios.ISTRIP
+            | termios.INLCR
+            | termios.IGNCR
+            | termios.ICRNL
+            | termios.IXON
+        )
         # oflag
         attrs[1] &= ~termios.OPOST
         # cflag
@@ -170,7 +179,9 @@ def read_single_keypress() -> str:
         try:
             return read_single_keypress_windows()
         except ImportError as e_windows:
-            raise ImportError("Neither unix nor windows implementations supported [{}][{}]".format(str(e_unix), str(e_windows)))
+            raise ImportError(
+                "Neither unix nor windows implementations supported [{}][{}]".format(str(e_unix), str(e_windows))
+            )
 
 
 ##############################################################################

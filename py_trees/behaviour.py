@@ -226,7 +226,9 @@ class Behaviour(abc.ABC):
     # Private Methods - use inside a behaviour
     ############################################
 
-    def attach_blackboard_client(self, name: typing.Optional[str] = None, namespace: typing.Optional[str] = None) -> blackboard.Client:
+    def attach_blackboard_client(
+        self, name: typing.Optional[str] = None, namespace: typing.Optional[str] = None
+    ) -> blackboard.Client:
         """
         Create and attach a blackboard to this behaviour.
 
@@ -297,7 +299,9 @@ class Behaviour(abc.ABC):
         # don't set self.status yet, terminate() may need to check what the current state is first
         new_status = self.update()
         if new_status not in list(common.Status):
-            self.logger.error("A behaviour returned an invalid status, setting to INVALID [%s][%s]" % (new_status, self.name))
+            self.logger.error(
+                "A behaviour returned an invalid status, setting to INVALID [%s][%s]" % (new_status, self.name)
+            )
             new_status = common.Status.INVALID
         if new_status != common.Status.RUNNING:
             self.stop(new_status)

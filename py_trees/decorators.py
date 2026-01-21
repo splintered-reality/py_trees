@@ -131,7 +131,9 @@ class Decorator(behaviour.Behaviour):
         # resume normal proceedings for a Behaviour's tick
         new_status = self.update()
         if new_status not in list(common.Status):
-            self.logger.error("A behaviour returned an invalid status, setting to INVALID [%s][%s]" % (new_status, self.name))
+            self.logger.error(
+                "A behaviour returned an invalid status, setting to INVALID [%s][%s]" % (new_status, self.name)
+            )
             new_status = common.Status.INVALID
         if new_status != common.Status.RUNNING:
             self.stop(new_status)
@@ -700,7 +702,9 @@ class RunningIsFailure(Decorator):
             the behaviour's new status :class:`~py_trees.common.Status`
         """
         if self.decorated.status == common.Status.RUNNING:
-            self.feedback_message = "running is failure" + (" [%s]" % self.decorated.feedback_message if self.decorated.feedback_message else "")
+            self.feedback_message = "running is failure" + (
+                " [%s]" % self.decorated.feedback_message if self.decorated.feedback_message else ""
+            )
             return common.Status.FAILURE
         else:
             self.feedback_message = self.decorated.feedback_message
@@ -718,7 +722,9 @@ class RunningIsSuccess(Decorator):
             the behaviour's new status :class:`~py_trees.common.Status`
         """
         if self.decorated.status == common.Status.RUNNING:
-            self.feedback_message = "running is success" + (" [%s]" % self.decorated.feedback_message if self.decorated.feedback_message else "")
+            self.feedback_message = "running is success" + (
+                " [%s]" % self.decorated.feedback_message if self.decorated.feedback_message else ""
+            )
             return common.Status.SUCCESS
         self.feedback_message = self.decorated.feedback_message
         return self.decorated.status
@@ -735,7 +741,9 @@ class FailureIsSuccess(Decorator):
             the behaviour's new status :class:`~py_trees.common.Status`
         """
         if self.decorated.status == common.Status.FAILURE:
-            self.feedback_message = "failure is success" + (" [%s]" % self.decorated.feedback_message if self.decorated.feedback_message else "")
+            self.feedback_message = "failure is success" + (
+                " [%s]" % self.decorated.feedback_message if self.decorated.feedback_message else ""
+            )
             return common.Status.SUCCESS
         self.feedback_message = self.decorated.feedback_message
         return self.decorated.status
@@ -752,7 +760,9 @@ class FailureIsRunning(Decorator):
             the behaviour's new status :class:`~py_trees.common.Status`
         """
         if self.decorated.status == common.Status.FAILURE:
-            self.feedback_message = "failure is running" + (" [%s]" % self.decorated.feedback_message if self.decorated.feedback_message else "")
+            self.feedback_message = "failure is running" + (
+                " [%s]" % self.decorated.feedback_message if self.decorated.feedback_message else ""
+            )
             return common.Status.RUNNING
         self.feedback_message = self.decorated.feedback_message
         return self.decorated.status
@@ -769,7 +779,9 @@ class SuccessIsFailure(Decorator):
             the behaviour's new status :class:`~py_trees.common.Status`
         """
         if self.decorated.status == common.Status.SUCCESS:
-            self.feedback_message = "success is failure" + (" [%s]" % self.decorated.feedback_message if self.decorated.feedback_message else "")
+            self.feedback_message = "success is failure" + (
+                " [%s]" % self.decorated.feedback_message if self.decorated.feedback_message else ""
+            )
             return common.Status.FAILURE
         self.feedback_message = self.decorated.feedback_message
         return self.decorated.status
@@ -826,7 +838,9 @@ class Condition(Decorator):
             the behaviour's new status :class:`~py_trees.common.Status`
         """
         self.logger.debug("%s.update()" % self.__class__.__name__)
-        self.feedback_message = f"'{self.decorated.name}' has status {self.decorated.status}, waiting for {self.succeed_status}"
+        self.feedback_message = (
+            f"'{self.decorated.name}' has status {self.decorated.status}, waiting for {self.succeed_status}"
+        )
         if self.decorated.status == self.succeed_status:
             return common.Status.SUCCESS
         return common.Status.RUNNING

@@ -232,8 +232,16 @@ def test_parallel_success_on_selected_invalid_configuration() -> None:
     )
     for policy in [different_policy, empty_policy]:
         print("")
-        print(console.cyan + "Policy Children: " + console.yellow + str([c.name for c in policy.children]) + console.reset)
-        print(console.cyan + "Parallel Children: " + console.yellow + str([c.name for c in parallel.children]) + console.reset)
+        print(
+            console.cyan + "Policy Children: " + console.yellow + str([c.name for c in policy.children]) + console.reset
+        )
+        print(
+            console.cyan
+            + "Parallel Children: "
+            + console.yellow
+            + str([c.name for c in parallel.children])
+            + console.reset
+        )
         parallel.policy = policy
         print("\n--------- Assertions ---------\n")
         print("setup() raises a 'RuntimeError' due to invalid configuration")
@@ -293,7 +301,11 @@ def test_parallel_synchronisation() -> None:
     assert success.status == py_trees.common.Status.SUCCESS
     print("success_every_second.status == py_trees.common.Status.SUCCESS")
     assert success_every_second.status == py_trees.common.Status.SUCCESS
-    print("success [id: {}] did not get ticked [snapshot: {}]".format(success.id, [str(ident) for ident in snapshot_visitor.visited.keys()]))
+    print(
+        "success [id: {}] did not get ticked [snapshot: {}]".format(
+            success.id, [str(ident) for ident in snapshot_visitor.visited.keys()]
+        )
+    )
     assert success.id not in snapshot_visitor.visited
 
     snapshot_visitor.initialise()

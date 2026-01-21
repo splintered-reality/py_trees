@@ -759,7 +759,14 @@ def test_pre_post_tick_activity_sequence() -> None:
     print("")
     assert len(breadcrumbs) == len(expected_breadcrumbs)
     for expected, actual in zip(expected_breadcrumbs, breadcrumbs):
-        print(console.green + "Breadcrumb..................." + console.cyan + "{} ".format(expected) + console.yellow + "[{}]".format(actual))
+        print(
+            console.green
+            + "Breadcrumb..................."
+            + console.cyan
+            + "{} ".format(expected)
+            + console.yellow
+            + "[{}]".format(actual)
+        )
         assert expected == actual
 
 

@@ -154,7 +154,9 @@ def either_or(
     .. todo:: a version for which other subtrees can preempt (in an unprioritised manner) the active branch
     """
     if len(conditions) != len(subtrees):
-        raise ValueError("Must be the same number of conditions as subtrees [{} != {}]".format(len(conditions), len(subtrees)))
+        raise ValueError(
+            "Must be the same number of conditions as subtrees [{} != {}]".format(len(conditions), len(subtrees))
+        )
     root = composites.Sequence(name=name, memory=True)
     configured_namespace: str = (
         namespace

@@ -187,7 +187,9 @@ def main() -> None:
             try:
                 method_itself = getattr(class_type(), method_name)
             except TypeError:
-                console.logerror("Can only instantiate class methods if the class __init__ has no non-default arguments")
+                console.logerror(
+                    "Can only instantiate class methods if the class __init__ has no non-default arguments"
+                )
                 sys.exit(1)
             root = method_itself(**(args.kwargs))
     else:

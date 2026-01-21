@@ -24,10 +24,10 @@ classifiers = [
 keywords = ["py_trees", "py-trees", "behaviour-trees"]
 
 [tool.ruff]
-line-length = 160
+line-length = 120
 
 [tool.black]
-line-length = 160
+line-length = 120
 force-exclude = """
 (?x)          # verbose
 (^|[\\/])    # start or path separator

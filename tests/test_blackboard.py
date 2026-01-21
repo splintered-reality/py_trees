@@ -69,7 +69,9 @@ class create_namespaced_blackboards(object):
 
 
 # mypy assistance
-BlackboardCreators = typing.List[typing.Union[typing.Type[create_blackboards], typing.Type[create_namespaced_blackboards]]]
+BlackboardCreators = typing.List[
+    typing.Union[typing.Type[create_blackboards], typing.Type[create_namespaced_blackboards]]
+]
 
 
 def blackboard_creators() -> BlackboardCreators:
@@ -162,7 +164,9 @@ def test_delayed_register_key() -> None:
                 py_trees.tests.print_assert_details("AttributeError raised", "raised", "not raised")
             py_trees.tests.print_assert_details("AttributeError raised", "yes", "yes")
             assert "AttributeError" == context.typename
-            py_trees.tests.print_assert_details("Substring match", "does not have read/write access", f"{context.value}")
+            py_trees.tests.print_assert_details(
+                "Substring match", "does not have read/write access", f"{context.value}"
+            )
             assert "does not have read/write access" in str(context.value)
 
             with pytest.raises(AttributeError) as context:  # if raised, context survives
@@ -187,7 +191,9 @@ def test_delayed_register_key() -> None:
                 py_trees.tests.print_assert_details("AttributeError raised", "raised", "not raised")
             py_trees.tests.print_assert_details("AttributeError raised", "yes", "yes")
             assert "AttributeError" == context.typename
-            py_trees.tests.print_assert_details("Substring match", "does not have read/write access", f"{context.value}")
+            py_trees.tests.print_assert_details(
+                "Substring match", "does not have read/write access", f"{context.value}"
+            )
             assert "does not have read/write access" in str(context.value)
 
             print("register other for reading")
@@ -245,7 +251,9 @@ def test_key_exists() -> None:
                 py_trees.tests.print_assert_details("AttributeError raised", "raised", "not raised")
             py_trees.tests.print_assert_details("AttributeError raised", "yes", "yes")
             assert "AttributeError" == context.typename
-            py_trees.tests.print_assert_details("Substring match", "does not have read/write access", f"{context.value}")
+            py_trees.tests.print_assert_details(
+                "Substring match", "does not have read/write access", f"{context.value}"
+            )
             assert "does not have read/write access" in str(context.value)
 
 
@@ -535,7 +543,9 @@ def test_absolute_name() -> None:
         ("/foo/", "foo/bar", "/foo/foo/bar"),
     ]
     for namespace, key, absolute_name in test_tuples:
-        print("[{}][{}]..........[{}][{}]".format(namespace, key, absolute_name, Blackboard.absolute_name(namespace, key)))
+        print(
+            "[{}][{}]..........[{}][{}]".format(namespace, key, absolute_name, Blackboard.absolute_name(namespace, key))
+        )
         assert absolute_name == Blackboard.absolute_name(namespace, key)
 
 
@@ -553,7 +563,9 @@ def test_relative_name() -> None:
         ("/foo/", "/foo/bar", "bar"),
     ]
     for namespace, key, absolute_name in test_tuples:
-        print("[{}][{}]..........[{}][{}]".format(namespace, key, absolute_name, Blackboard.absolute_name(namespace, key)))
+        print(
+            "[{}][{}]..........[{}][{}]".format(namespace, key, absolute_name, Blackboard.absolute_name(namespace, key))
+        )
         assert absolute_name == Blackboard.relative_name(namespace, key)
 
     namespace = "/bar"

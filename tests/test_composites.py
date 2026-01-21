@@ -34,7 +34,16 @@ AssertResultType = typing.TypeVar("AssertResultType")
 
 
 def assert_details(text: str, expected: AssertResultType, result: AssertResultType) -> None:
-    print(console.green + text + "." * (70 - len(text)) + console.cyan + "{}".format(expected) + console.yellow + " [{}]".format(result) + console.reset)
+    print(
+        console.green
+        + text
+        + "." * (70 - len(text))
+        + console.cyan
+        + "{}".format(expected)
+        + console.yellow
+        + " [{}]".format(result)
+        + console.reset
+    )
 
 
 ##############################################################################

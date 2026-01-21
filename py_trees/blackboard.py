@@ -348,7 +348,11 @@ class Blackboard(object):
         keys = set()
         for key in Blackboard.metadata.keys():
             # for sets, | is union, & is intersection
-            key_clients = set(Blackboard.metadata[key].read) | set(Blackboard.metadata[key].write) | set(Blackboard.metadata[key].exclusive)
+            key_clients = (
+                set(Blackboard.metadata[key].read)
+                | set(Blackboard.metadata[key].write)
+                | set(Blackboard.metadata[key].exclusive)
+            )
             if key_clients & client_ids:
                 keys.add(key)
         return keys
@@ -934,7 +938,9 @@ class Client(object):
         except KeyError as e:
             if Blackboard.activity_stream is not None:
                 Blackboard.activity_stream.push(self._generate_activity_item(remapped_name, ActivityType.NO_KEY))
-            raise KeyError(f"client '{self.name}' tried to access '{remapped_name}' but it does not yet exist on the blackboard") from e
+            raise KeyError(
+                f"client '{self.name}' tried to access '{remapped_name}' but it does not yet exist on the blackboard"
+            ) from e
 
     def set(self, name: str, value: typing.Any, overwrite: bool = True) -> bool:
         """
@@ -1166,7 +1172,14 @@ class Client(object):
                 value = key_value_dict[key]
                 lines = ("{0}".format(value)).split("\n")
                 if len(lines) > 1:
-                    s += console.cyan + indent + "{0: <{1}}".format(key, max_length + 1) + console.reset + separator + "\n"
+                    s += (
+                        console.cyan
+                        + indent
+                        + "{0: <{1}}".format(key, max_length + 1)
+                        + console.reset
+                        + separator
+                        + "\n"
+                    )
                     for line in lines:
                         s += console.yellow + indent + "  {0}\n".format(line) + console.reset
                 else:
@@ -1182,7 +1195,17 @@ class Client(object):
                         + console.reset
                     )
             except KeyError:
-                s += console.cyan + indent + "{0: <{1}}".format(key, max_length + 1) + console.reset + separator + " " + console.yellow + "-\n" + console.reset
+                s += (
+                    console.cyan
+                    + indent
+                    + "{0: <{1}}".format(key, max_length + 1)
+                    + console.reset
+                    + separator
+                    + " "
+                    + console.yellow
+                    + "-\n"
+                    + console.reset
+                )
         s += console.reset
         return s
 
@@ -1340,7 +1363,11 @@ class Client(object):
         Blackboard.metadata[remapped_key].read.discard(super().__getattribute__("unique_identifier"))
         Blackboard.metadata[remapped_key].write.discard(super().__getattribute__("unique_identifier"))
         Blackboard.metadata[remapped_key].exclusive.discard(super().__getattribute__("unique_identifier"))
-        if (not Blackboard.metadata[remapped_key].read) and (not Blackboard.metadata[remapped_key].write) and (not Blackboard.metadata[remapped_key].exclusive):
+        if (
+            (not Blackboard.metadata[remapped_key].read)
+            and (not Blackboard.metadata[remapped_key].write)
+            and (not Blackboard.metadata[remapped_key].exclusive)
+        ):
             del Blackboard.metadata[remapped_key]
             if clear:
                 try:

@@ -178,7 +178,9 @@ def test_unset_blackboard_variable() -> None:
 def test_set_blackboard_variable() -> None:
     console.banner("Set Blackboard Variable")
     blackboard = create_blackboard()
-    set_foo = py_trees.behaviours.SetBlackboardVariable(name="Set Foo", variable_name="foo", variable_value="bar", overwrite=True)
+    set_foo = py_trees.behaviours.SetBlackboardVariable(
+        name="Set Foo", variable_name="foo", variable_value="bar", overwrite=True
+    )
     conservative_set_foo = py_trees.behaviours.SetBlackboardVariable(
         name="Conservative Set Foo",
         variable_name="foo",
@@ -202,7 +204,9 @@ def test_set_blackboard_variable() -> None:
     )
     assert set_foo.status == Status.SUCCESS
     conservative_set_foo.tick_once()
-    py_trees.tests.print_assert_details(text="Conservative 'foo' (doesn't exist)", expected="bar", result=blackboard.foo)
+    py_trees.tests.print_assert_details(
+        text="Conservative 'foo' (doesn't exist)", expected="bar", result=blackboard.foo
+    )
     assert "bar" == blackboard.foo
     blackboard.foo = "whoop"
     conservative_set_foo.tick_once()

@@ -35,7 +35,9 @@ def test_high_priority_interrupt() -> None:
         eventually=py_trees.common.Status.SUCCESS,
     )
     tasks = [task_one, task_two]
-    high_priority_interrupt = py_trees.decorators.RunningIsFailure(name="High Priority", child=py_trees.behaviours.Periodic(name="Periodic", n=3))
+    high_priority_interrupt = py_trees.decorators.RunningIsFailure(
+        name="High Priority", child=py_trees.behaviours.Periodic(name="Periodic", n=3)
+    )
     piwylo = py_trees.idioms.pick_up_where_you_left_off(name="Pick Up\nWhere You\nLeft Off", tasks=tasks)
     root = py_trees.composites.Selector(name="Root", memory=False)
     root.add_children([high_priority_interrupt, piwylo])

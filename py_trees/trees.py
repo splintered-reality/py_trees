@@ -433,7 +433,9 @@ class BehaviourTree(object):
         """
         tick_tocks = 0
         period_s = period_ms / 1000.0
-        while not self.interrupt_tick_tocking and (tick_tocks < number_of_iterations or number_of_iterations == CONTINUOUS_TICK_TOCK):
+        while not self.interrupt_tick_tocking and (
+            tick_tocks < number_of_iterations or number_of_iterations == CONTINUOUS_TICK_TOCK
+        ):
             start_time = time.time()
             self.tick(pre_tick_handler, post_tick_handler)
             try:

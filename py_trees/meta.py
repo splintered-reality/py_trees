@@ -31,7 +31,9 @@ from . import behaviour, common
 BehaviourUpdateMethod = typing.TypeVar("BehaviourUpdateMethod", bound=typing.Callable)
 
 
-def create_behaviour_from_function(func: BehaviourUpdateMethod, module: typing.Optional[str] = None) -> "typing.Type[behaviour.Behaviour]":
+def create_behaviour_from_function(
+    func: BehaviourUpdateMethod, module: typing.Optional[str] = None
+) -> "typing.Type[behaviour.Behaviour]":
     """
     Create a behaviour from the specified function.
 
