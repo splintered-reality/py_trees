@@ -1,0 +1,36 @@
+<root main_tree_to_execute="MainTree">
+
+  <BehaviorTree ID="TransformationPipeline">
+    <Sequence>
+      <ConsumerProducer name="ConsumerProducer1" input="{tp_input}"  output="{tp_tmp}"   />
+      <ConsumerProducer name="ConsumerProducer2" input="{tp_tmp}"    output="{tp_output}" />
+    </Sequence>
+  </BehaviorTree>
+
+  <BehaviorTree ID="NestedTransformationPipeline">
+    <Sequence>
+      <SubTreePlus name="SubTree1" ID="TransformationPipeline"
+               tp_input="{ntp_input}"
+               tp_output="{nested_stage1}" />
+      <SubTreePlus name="SubTree2" ID="TransformationPipeline"
+               tp_input="{nested_stage1}"
+               tp_output="{ntp_output}" />
+      <ConsumerProducer name="SomeInternal" input="{ntp_output}" output="{tmp}"   />
+      <Consumer name="InternalConsumer" input="{tmp}" />
+    </Sequence>
+  </BehaviorTree>
+
+  <BehaviorTree ID="MainTree">
+    <Sequence>
+      <Producer output="{initial_value}" name="ProducerMain" />
+      <SubTreePlus name="SubTreeMain1" ID="NestedTransformationPipeline"
+               ntp_input="{initial_value}"
+               ntp_output="{nested_result_1}" />
+      <SubTreePlus name="SubTreeMain2" ID="NestedTransformationPipeline"
+               ntp_input="{nested_result_1}" 
+               ntp_output="{final_result}" />
+      <Consumer name="ConsumerMain" input="{final_result}" />
+    </Sequence>
+  </BehaviorTree>
+
+</root>
