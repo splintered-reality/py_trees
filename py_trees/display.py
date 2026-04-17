@@ -583,7 +583,7 @@ def dot_tree(
         )
 
     def add_blackboard_nodes(
-        blackboard_id_name_map: typing.Dict[uuid.UUID, str]
+        blackboard_id_name_map: typing.Dict[uuid.UUID, str],
     ) -> None:
         data = blackboard.Blackboard.storage
         metadata = blackboard.Blackboard.metadata

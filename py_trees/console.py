@@ -56,7 +56,7 @@ def has_unicode(encoding: str = sys.stdout.encoding) -> bool:
         true if capable, false otherwise
     """
     try:
-        "\u26A1".encode(encoding)
+        "\u26a1".encode(encoding)
     except TypeError:
         # if sys.stdout.encoding is not available, it is None
         # this will occur if you run nosetests3 or pytest-3 without -s
@@ -92,14 +92,14 @@ def define_symbol_or_fallback(
 
 
 circle = "\u26ac"
-lightning_bolt = "\u26A1"
+lightning_bolt = "\u26a1"
 double_vertical_line = "\u2016"
 check_mark = "\u2713"
 multiplication_x = "\u2715"
 left_arrow = "\u2190"  # u'\u2190'
 right_arrow = "\u2192"
 left_right_arrow = "\u2194"
-forbidden_circle = "\u29B8"
+forbidden_circle = "\u29b8"
 circled_m = "\u24c2"
 
 ##############################################################################

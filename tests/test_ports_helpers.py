@@ -17,7 +17,9 @@ class Producer(BehaviourWithPorts):
         return {cls.OUTPUT_PORT: (str, True)}
 
     def update(self):
-        self._set_output(self.OUTPUT_PORT, f"Producer[{self.subtree_namespace}:{self.name}]")
+        self._set_output(
+            self.OUTPUT_PORT, f"Producer[{self.subtree_namespace}:{self.name}]"
+        )
         return py_trees.common.Status.SUCCESS
 
 
@@ -35,7 +37,9 @@ class ConsumerProducer(BehaviourWithPorts):
 
     def update(self):
         input_value = self.get_input(self.INPUT_PORT)
-        self._set_output(self.OUTPUT_PORT, f"{input_value}[{self.subtree_namespace}:{self.name}]")
+        self._set_output(
+            self.OUTPUT_PORT, f"{input_value}[{self.subtree_namespace}:{self.name}]"
+        )
         return py_trees.common.Status.SUCCESS
 
 

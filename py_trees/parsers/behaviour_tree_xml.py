@@ -107,9 +107,14 @@ import xml.etree.ElementTree as ET
 from copy import deepcopy
 
 import py_trees
+from py_trees._ports_utils import (
+    apply_type_hints,
+    generate_node_name,
+    NOOP_LOGGER,
+    PortsLogger,
+)
 
 from py_trees.ports import BehaviourWithPorts, CONST_PREFIX, DOT_REPLACEMENT, PortsMixin
-from py_trees._ports_utils import NOOP_LOGGER, PortsLogger, apply_type_hints, generate_node_name
 
 # Helper: parse curly-brace keys
 CURLY_PATTERN = re.compile(r"^{(.+)}$")
@@ -117,9 +122,21 @@ CURLY_PATTERN = re.compile(r"^{(.+)}$")
 # All composite or decorator tags which can have children and have ports (case-insensitive)
 # Migration note: this hard-coded set is a known limitation.
 # A follow-up should replace it with dynamic PortsMixin detection.
-PARENT_NODES_WITH_PORTS_TAGS = {"ifelse", "repeat", "retry", "caseswitch", "ifdataavailable", "ifnodataavailable"}
+PARENT_NODES_WITH_PORTS_TAGS = {
+    "ifelse",
+    "repeat",
+    "retry",
+    "caseswitch",
+    "ifdataavailable",
+    "ifnodataavailable",
+}
 # All composite or decorator tags which can have children (case-insensitive)
-PARENT_NODES_TAGS = set(PARENT_NODES_WITH_PORTS_TAGS) | {"sequence", "selector", "fallback", "parallel"}
+PARENT_NODES_TAGS = set(PARENT_NODES_WITH_PORTS_TAGS) | {
+    "sequence",
+    "selector",
+    "fallback",
+    "parallel",
+}
 
 
 def build_bt_index(root):
@@ -217,7 +234,7 @@ def get_absolute_reference(value, subtree_namespace) -> str:
     return subtree_namespace.rstrip("/") + "/" + value
 
 
-def get_class_from_init_lookup(class_name, init_lookup) -> type['PortsMixin']:
+def get_class_from_init_lookup(class_name, init_lookup) -> type["PortsMixin"]:
     """
     Get the class from the init_lookup dictionary, ensuring it is a subclass of PortsMixin.
 
@@ -239,7 +256,9 @@ def get_class_from_init_lookup(class_name, init_lookup) -> type['PortsMixin']:
             or if the class is not a subclass of PortsMixin.
     """
     if class_name not in init_lookup:
-        raise KeyError(f"Class name '{class_name}' not found in init_lookup: {init_lookup}")
+        raise KeyError(
+            f"Class name '{class_name}' not found in init_lookup: {init_lookup}"
+        )
     entry = init_lookup[class_name]
 
     # Case 1: Direct class reference
@@ -373,7 +392,10 @@ def add_new_key_to_remapping_table(value, remapping_table, subtree_namespace):
 
 
 def build_subtree_remapping(
-    elem: ET.Element, remapping_table: dict, parent_namespace: str, logger: PortsLogger = NOOP_LOGGER
+    elem: ET.Element,
+    remapping_table: dict,
+    parent_namespace: str,
+    logger: PortsLogger = NOOP_LOGGER,
 ) -> dict[str, str]:
     """
     Processes the <SubTree> XML element.
@@ -404,7 +426,9 @@ def build_subtree_remapping(
         if k in ("ID", "name"):
             continue
         logger.debug(f"Checking to add new key for SubTree attribute: {k} -> {v}")
-        add_new_key_to_remapping_table(v, remapping_table=remapping_table, subtree_namespace=parent_namespace)
+        add_new_key_to_remapping_table(
+            v, remapping_table=remapping_table, subtree_namespace=parent_namespace
+        )
     logger.debug(f"Updated remapping table: {remapping_table}")
 
     # Build the new remapping table for this subtree. We build a new remapping table because we need to ensure that
@@ -426,19 +450,27 @@ def build_subtree_remapping(
             # If the value is a key and it is in the remapping table,
             # we resolve it to its absolute path.
             v = resolve_key_remapping(v, remapping_table)
-            logger.debug(f"[Key] Adding remapping from parent remapping table: {k} -> {v}")
+            logger.debug(
+                f"[Key] Adding remapping from parent remapping table: {k} -> {v}"
+            )
         else:
             # If the value is not a key, it is a direct value which is input in the subtree,
             # for example `<SubTree ID="subtree1" in="500" />`.
             v = resolve_direct_value_remapping(v, remapping_table)
-            logger.debug(f"[Direct value] Adding remapping from parent remapping table: {k} -> {v}")
+            logger.debug(
+                f"[Direct value] Adding remapping from parent remapping table: {k} -> {v}"
+            )
         new_remapping[k] = v
     logger.debug(f"Subtree '{elem.attrib['ID']}' new remapping table: {new_remapping}")
     return new_remapping
 
 
 def build_port_remappings(
-    elem: ET.Element, class_: type[PortsMixin], remapping_table: dict, subtree_namespace: str, logger: PortsLogger = NOOP_LOGGER
+    elem: ET.Element,
+    class_: type[PortsMixin],
+    remapping_table: dict,
+    subtree_namespace: str,
+    logger: PortsLogger = NOOP_LOGGER,
 ) -> dict[str, str]:
     """
     Build {port_name -> absolute_key} for any PortsMixin node from XML attributes.
@@ -456,7 +488,10 @@ def build_port_remappings(
     for attrib_key, attrib_value in elem.attrib.items():
         if attrib_key == "name":
             continue
-        if attrib_key not in class_.input_ports() and attrib_key not in class_.output_ports():
+        if (
+            attrib_key not in class_.input_ports()
+            and attrib_key not in class_.output_ports()
+        ):
             logger.debug(
                 f"Attribute '{attrib_key}' is not defined in class '{class_.__name__}'. "
                 f"Treating as additional parameter."
@@ -467,7 +502,9 @@ def build_port_remappings(
             # If the value is a key, and we haven't yet encountered it, we need to add it to the remapping table,
             # so that it can be resolved to its absolute path.
             add_new_key_to_remapping_table(
-                attrib_value, remapping_table=remapping_table, subtree_namespace=subtree_namespace
+                attrib_value,
+                remapping_table=remapping_table,
+                subtree_namespace=subtree_namespace,
             )
             # Resolve the value to its absolute path.
             absolute_key = resolve_key_remapping(attrib_value, remapping_table)
@@ -476,7 +513,9 @@ def build_port_remappings(
             # We need to add a new blackboard key in this namespace.
             # Then we need to add the key to the remapping table.
             add_new_key_to_remapping_table(
-                attrib_value, remapping_table=remapping_table, subtree_namespace=subtree_namespace
+                attrib_value,
+                remapping_table=remapping_table,
+                subtree_namespace=subtree_namespace,
             )
             absolute_key = resolve_direct_value_remapping(attrib_value, remapping_table)
 
@@ -540,12 +579,18 @@ def instantiate_ports_node(
     )
 
     instance_name = generate_node_name(
-        explicit_name=elem.attrib.get("name", None), general_name=portsmixin_name, prefix=parent_names_str
+        explicit_name=elem.attrib.get("name", None),
+        general_name=portsmixin_name,
+        prefix=parent_names_str,
     )
-    logger.debug(f"PortsMixin node '{instance_name}' in namespace {subtree_namespace} remappings: {port_remappings}")
+    logger.debug(
+        f"PortsMixin node '{instance_name}' in namespace {subtree_namespace} remappings: {port_remappings}"
+    )
 
     if portsmixin_name not in init_lookup:
-        raise ValueError(f"PortsMixin class '{portsmixin_name}' not found in init_lookup table")
+        raise ValueError(
+            f"PortsMixin class '{portsmixin_name}' not found in init_lookup table"
+        )
 
     constructor_kwargs = constructor_kwargs or {}  # create constructor_kwargs
     for attrib_key, attrib_value in elem.attrib.items():
@@ -575,7 +620,9 @@ def instantiate_ports_node(
     ctor_callable = init_lookup[portsmixin_name]
     # Try to convert the constructor arguments to the correct type.
     ignore_keys = {"child", "children", "behaviour_class_name"}
-    constructor_kwargs, success = apply_type_hints(ctor_callable, constructor_kwargs, logger=logger, ignore=ignore_keys)
+    constructor_kwargs, success = apply_type_hints(
+        ctor_callable, constructor_kwargs, logger=logger, ignore=ignore_keys
+    )
     if not success:
         logger.warning(
             "Failed to apply type hints to constructor arguments. See error log. Proceeding, but leaving "
@@ -584,7 +631,9 @@ def instantiate_ports_node(
     try:
         # Pass the behaviour_class_name (the tag/registry name) to the constructor
         node = init_lookup[portsmixin_name](
-            name=instance_name, behaviour_class_name=portsmixin_name, **constructor_kwargs
+            name=instance_name,
+            behaviour_class_name=portsmixin_name,
+            **constructor_kwargs,
         )
     except Exception as e:  # Catch everything that may go wrong in the constructor
         # TODO: make XMLParserError to be more specific
@@ -630,20 +679,24 @@ def build_tree_from_xml(
         ValueError: For missing trees or unsupported tags.
         AssertionError: If a <BehaviorTree> does not have exactly one child.
     """
-    if logger is None and hasattr(elem, '_logger_placeholder'):
+    if logger is None and hasattr(elem, "_logger_placeholder"):
         pass  # keep logger as None
     tag = elem.tag.lower()
-    logger.debug(f"Processing tag: '{elem.tag}' with attributes {elem.attrib}. Remapping table: {remapping_table}")
+    logger.debug(
+        f"Processing tag: '{elem.tag}' with attributes {elem.attrib}. Remapping table: {remapping_table}"
+    )
     # Composite/Decorator nodes which can have children:
     if tag in PARENT_NODES_TAGS:
         has_children = len(elem) > 0
         node_name = generate_node_name(
-            explicit_name=elem.attrib.get("name", None), general_name=elem.tag, prefix=parent_names_str
+            explicit_name=elem.attrib.get("name", None),
+            general_name=elem.tag,
+            prefix=parent_names_str,
         )
         logger.debug(
-                f"Entering composite node: {tag} (given name {node_name} with parent names {parent_names_str}). "
-                "Build children first, so we can pass them to the constructor."
-            )
+            f"Entering composite node: {tag} (given name {node_name} with parent names {parent_names_str}). "
+            "Build children first, so we can pass them to the constructor."
+        )
         children = []
         for child in elem:
             # Use no general name fallback for the parent_names_str to pass to the children.
@@ -651,7 +704,10 @@ def build_tree_from_xml(
             # It also means that we lose the guarantee of unique names, but that can be avoided by
             # assigning an explicit name to the parent tags.
             concise_parent_names_str = generate_node_name(
-                explicit_name=elem.attrib.get("name", None), general_name="", prefix=parent_names_str, no_uuid=True
+                explicit_name=elem.attrib.get("name", None),
+                general_name="",
+                prefix=parent_names_str,
+                no_uuid=True,
             )
             child_node = build_tree_from_xml(
                 child,
@@ -663,14 +719,20 @@ def build_tree_from_xml(
                 parent_names_str=concise_parent_names_str,
             )
             if not isinstance(child_node, py_trees.behaviour.Behaviour):
-                raise TypeError(f"Child node of type {type(child_node).__name__} is not a valid py_trees Behavior.")
+                raise TypeError(
+                    f"Child node of type {type(child_node).__name__} is not a valid py_trees Behavior."
+                )
             children.append(child_node)
 
         memory = elem.attrib.get("memory", "true").lower() == "true"
         if tag == "sequence":
-            node = py_trees.composites.Sequence(name=node_name, memory=memory, children=children)
+            node = py_trees.composites.Sequence(
+                name=node_name, memory=memory, children=children
+            )
         elif tag == "selector" or tag == "fallback":
-            node = py_trees.composites.Selector(name=node_name, memory=memory, children=children)
+            node = py_trees.composites.Selector(
+                name=node_name, memory=memory, children=children
+            )
         elif tag == "parallel":
             policy = elem.attrib.get("policy", "success_on_one")
             mapping = {
@@ -680,7 +742,9 @@ def build_tree_from_xml(
             }
             node = py_trees.composites.Parallel(
                 name=node_name,
-                policy=mapping.get(policy, py_trees.common.ParallelPolicy.SuccessOnAll)(),
+                policy=mapping.get(
+                    policy, py_trees.common.ParallelPolicy.SuccessOnAll
+                )(),
                 children=children,
             )
         elif tag in PARENT_NODES_WITH_PORTS_TAGS:
@@ -689,7 +753,9 @@ def build_tree_from_xml(
             cls = get_class_from_init_lookup(elem.tag, init_lookup)
             if issubclass(cls, py_trees.decorators.Decorator):
                 if not len(children) == 1:
-                    raise ValueError(f"Decorator '{elem.tag}' must have exactly one child, but got {len(children)}.")
+                    raise ValueError(
+                        f"Decorator '{elem.tag}' must have exactly one child, but got {len(children)}."
+                    )
                 constructor_kwargs["child"] = children[0] if children else None
             else:
                 constructor_kwargs["children"] = children
@@ -705,8 +771,12 @@ def build_tree_from_xml(
         else:
             raise NotImplementedError(f"Unknown composite tag: {tag}")
 
-        if not isinstance(node, py_trees.composites.Composite) and not isinstance(node, py_trees.decorators.Decorator):
-            raise TypeError(f"XML tag '{elem.tag}' did not instantiate a Composite; got {type(node).__name__}")
+        if not isinstance(node, py_trees.composites.Composite) and not isinstance(
+            node, py_trees.decorators.Decorator
+        ):
+            raise TypeError(
+                f"XML tag '{elem.tag}' did not instantiate a Composite; got {type(node).__name__}"
+            )
         return node
     elif tag == "behaviortree":
         # This branch is reached when the parser encounters a <BehaviorTree> tag during recursion.
@@ -741,7 +811,9 @@ def build_tree_from_xml(
         # It recurses into that child, passing along the current remapping table and the subtree namespace.
         # The remapping table is updated to include the remappings from the <subtreeplus> or <subtree> element.
         # The subtree is then instantiated with the new remapping table.
-        logger.debug(f"Instantiating subtree '{elem.attrib['ID']}' with remapping table BEFORE: {remapping_table}")
+        logger.debug(
+            f"Instantiating subtree '{elem.attrib['ID']}' with remapping table BEFORE: {remapping_table}"
+        )
         subtree_id = elem.attrib["ID"]
         subtree_name = elem.attrib.get("name", str(uuid.uuid4()))
         if subtree_id not in bt_index:
@@ -750,7 +822,9 @@ def build_tree_from_xml(
         # Build the new namespace by prepending the subtree ID
         new_namespace = get_absolute_reference(subtree_name, subtree_namespace)
         # Build the new remapping table for this subtree.
-        new_remapping = build_subtree_remapping(elem, remapping_table, subtree_namespace, logger)
+        new_remapping = build_subtree_remapping(
+            elem, remapping_table, subtree_namespace, logger
+        )
         # Recursively build the subtree with the new remapping table
         return build_tree_from_xml(
             subtree_elem,
@@ -759,7 +833,8 @@ def build_tree_from_xml(
             bt_index,
             logger=logger,
             subtree_namespace=new_namespace,
-            parent_names_str=((parent_names_str + ".") if parent_names_str else "") + subtree_name,
+            parent_names_str=((parent_names_str + ".") if parent_names_str else "")
+            + subtree_name,
         )
     elif elem.tag in init_lookup:
         # This must be a BehaviourWithPorts node. Create the behavior node.
@@ -773,7 +848,9 @@ def build_tree_from_xml(
             parent_names_str=parent_names_str,
         )
         if not isinstance(node, BehaviourWithPorts):
-            raise TypeError(f"XML tag '{elem.tag}' did not instantiate a BehaviourWithPorts; got {type(node).__name__}")
+            raise TypeError(
+                f"XML tag '{elem.tag}' did not instantiate a BehaviourWithPorts; got {type(node).__name__}"
+            )
         return node
     else:
         logger.error(f"Unsupported tag encountered: {elem.tag}")
@@ -799,7 +876,9 @@ def _collect_bt_ids(root: ET.Element) -> set[str]:
     return {bt.attrib["ID"] for bt in root.findall("BehaviorTree")}
 
 
-def _resolve_import_path(src: str, base_dir: str, search_paths: list[str] | None) -> str:
+def _resolve_import_path(
+    src: str, base_dir: str, search_paths: list[str] | None
+) -> str:
     """
     Resolve import path to an absolute file on disk.
 
@@ -877,7 +956,9 @@ def _inline_imports_into_root(
         raise ValueError(f"BehaviorTree missing ID in '{current_file}'") from e
 
     # Only handle top-level children named Import/Include (case-insensitive).
-    imports = [child for child in list(root) if child.tag.lower() in ("import", "include")]
+    imports = [
+        child for child in list(root) if child.tag.lower() in ("import", "include")
+    ]
 
     logger.debug(f"Found {len(imports)} import(s) in '{current_file}'")
 
@@ -903,8 +984,12 @@ def _inline_imports_into_root(
         # Parse the imported file and inline its imports first (depth-first)
         imported_tree = ET.parse(resolved)
         imported_root = imported_tree.getroot()
-        _inline_imports_into_root(imported_root, resolved, logger, search_paths, visited)
-        logger.debug(f"Imported XML: '{ET.tostring(imported_root, encoding='unicode')}'")
+        _inline_imports_into_root(
+            imported_root, resolved, logger, search_paths, visited
+        )
+        logger.debug(
+            f"Imported XML: '{ET.tostring(imported_root, encoding='unicode')}'"
+        )
 
         # Append all BehaviorTrees from imported file, but forbid ID collisions
         for bt in imported_root.findall("BehaviorTree"):
@@ -915,7 +1000,9 @@ def _inline_imports_into_root(
 
             if bt_id in existing_ids:
                 # Simple mode: collisions are hard errors
-                raise ValueError(f"BehaviorTree ID collision: '{bt_id}' already exists while importing '{resolved}'")
+                raise ValueError(
+                    f"BehaviorTree ID collision: '{bt_id}' already exists while importing '{resolved}'"
+                )
 
             # Deep-copy to detach from the imported tree and append into 'root'
             root.append(deepcopy(bt))

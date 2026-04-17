@@ -11,7 +11,9 @@ from .test_ports_helpers import Consumer, ConsumerProducer, Producer
 # test_behavior_with_ports.py to here.
 class TestPortsMixin(unittest.TestCase):
     def setUp(self):
-        self.mixin = Producer("test")  # Use Producer class so we don't have to worry about PortsMixin abstract methods
+        self.mixin = Producer(
+            "test"
+        )  # Use Producer class so we don't have to worry about PortsMixin abstract methods
 
     def test_basic_types(self):
         self.assertTrue(self.mixin._is_instance_of_type(5, int))
@@ -23,7 +25,9 @@ class TestPortsMixin(unittest.TestCase):
     def test_list_of_int(self):
         self.assertTrue(self.mixin._is_instance_of_type([1, 2, 3], list[int]))
         self.assertFalse(self.mixin._is_instance_of_type([1, "2", 3], list[int]))
-        self.assertTrue(self.mixin._is_instance_of_type([], list[int]))  # empty list is valid
+        self.assertTrue(
+            self.mixin._is_instance_of_type([], list[int])
+        )  # empty list is valid
 
     def test_union_type(self):
         T = int | str
@@ -75,7 +79,9 @@ class TestBehaviourWithPorts(unittest.TestCase):
         cap = Consumer("FaultyInput")
         cap.setup_ports(port_remappings={"input": "/sometest/input"})
         blackboard_client = py_trees.blackboard.Client(name="SomeoneElse")
-        blackboard_client.register_key(key="/sometest/input", access=py_trees.common.Access.WRITE, required=True)
+        blackboard_client.register_key(
+            key="/sometest/input", access=py_trees.common.Access.WRITE, required=True
+        )
         blackboard_client.set("/sometest/input", 123)
         with self.assertRaises(TypeError):
             cap.get_input("input")
@@ -103,7 +109,9 @@ class TestBehaviourWithPorts(unittest.TestCase):
 
         self.assertEqual(prod_a.get_last_output("output"), "value_a")
         self.assertEqual(prod_b.get_last_output("output"), "value_b")
-        self.assertNotEqual(prod_a._get_blackboard_key("output"), prod_b._get_blackboard_key("output"))
+        self.assertNotEqual(
+            prod_a._get_blackboard_key("output"), prod_b._get_blackboard_key("output")
+        )
 
     def test_multilevel_remapping(self):
         """Test that multi-level port remapping through nested subtrees propagates values correctly."""
@@ -114,7 +122,8 @@ class TestBehaviourWithPorts(unittest.TestCase):
         sbtr1_consprod1 = ConsumerProducer("sbtr1_consprod1")
         sbtr1_consprod2 = ConsumerProducer("sbtr1_consprod2")
         sbtr1_consprod1.setup_ports(
-            port_remappings={"input": "/root", "output": "transfer"}, subtree_namespace="/subtree1"
+            port_remappings={"input": "/root", "output": "transfer"},
+            subtree_namespace="/subtree1",
         )
         sbtr1_consprod2.setup_ports(
             port_remappings={"input": "transfer", "output": "subtree1_output"},
@@ -125,10 +134,12 @@ class TestBehaviourWithPorts(unittest.TestCase):
         sbtr2_consprod1 = ConsumerProducer("sbtr2_consprod1")
         sbtr2_consprod2 = ConsumerProducer("sbtr2_consprod2")
         sbtr2_consprod1.setup_ports(
-            port_remappings={"input": "subtree1_output", "output": "transfer"}, subtree_namespace="/subtree1/subtree2"
+            port_remappings={"input": "subtree1_output", "output": "transfer"},
+            subtree_namespace="/subtree1/subtree2",
         )
         sbtr2_consprod2.setup_ports(
-            port_remappings={"input": "transfer", "output": "/result"}, subtree_namespace="/subtree1/subtree2"
+            port_remappings={"input": "transfer", "output": "/result"},
+            subtree_namespace="/subtree1/subtree2",
         )
 
         # Set up a consumer in the root namespace
@@ -193,7 +204,9 @@ class TestBehaviourWithPorts(unittest.TestCase):
 
         # Now set a value and ensure it overrides the default. We also need to re-register the key because
         # input ports are only registered with read access.
-        cons.blackboard_client.register_key(key="/shared", access=py_trees.common.Access.WRITE, required=True)
+        cons.blackboard_client.register_key(
+            key="/shared", access=py_trees.common.Access.WRITE, required=True
+        )
         cons.blackboard_client.set("/shared", "ActualValue")
         self.assertEqual(cons.get_input("input", default=default_value), "ActualValue")
 

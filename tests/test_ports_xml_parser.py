@@ -7,8 +7,6 @@ from dataclasses import dataclass
 from functools import partial
 
 import py_trees
-
-from py_trees.ports import BehaviourWithPorts
 from py_trees._ports_utils import (
     find_node_by_class,
     find_node_by_name,
@@ -16,6 +14,8 @@ from py_trees._ports_utils import (
     strip_trailing_uuid4,
 )
 from py_trees.parsers.behaviour_tree_xml import parse_behaviour_tree_xml
+
+from py_trees.ports import BehaviourWithPorts
 
 from .test_ports_helpers import Consumer, ConsumerProducer, Producer
 
@@ -80,7 +80,9 @@ class RobotData:
     commander: object | None
 
 
-def get_behaviors_lookup(factory: DummyFactory, _robot_data: dict[int, RobotData]) -> dict:
+def get_behaviors_lookup(
+    factory: DummyFactory, _robot_data: dict[int, RobotData]
+) -> dict:
     return {"Wait": partial(Wait, factory=factory)}
 
 
@@ -103,7 +105,9 @@ class TestXMLParser(unittest.TestCase):
           </Sequence>
         </BehaviorTree>
       </root>"""
-        self.tempfile = tempfile.NamedTemporaryFile(delete=False, mode="w", suffix=".xml")
+        self.tempfile = tempfile.NamedTemporaryFile(
+            delete=False, mode="w", suffix=".xml"
+        )
         self.tempfile.write(self.xml)
         self.tempfile.close()
         # BehaviourWithPorts lookup for test helpers
@@ -120,7 +124,9 @@ class TestXMLParser(unittest.TestCase):
 
     def test_xml_parser_remapping(self):
         """Ensure remapping between subtrees works correctly."""
-        root_node = parse_behaviour_tree_xml(self.tempfile.name, init_lookup=self.init_lookup, logger=StdoutLogger())
+        root_node = parse_behaviour_tree_xml(
+            self.tempfile.name, init_lookup=self.init_lookup, logger=StdoutLogger()
+        )
         # Wrap in a py_trees BehaviourTree and tick until complete
         btree = py_trees.trees.BehaviourTree(root_node)
         btree.tick()
@@ -131,7 +137,9 @@ class TestXMLParser(unittest.TestCase):
     def test_grandparent_xml(self):
         """Test XML parser with grandparent-child relationships and correct value propagation."""
         xml_path = os.path.join(os.path.dirname(__file__), "grandparent_test.xml")
-        root_node = parse_behaviour_tree_xml(xml_path, init_lookup=self.init_lookup, logger=StdoutLogger())
+        root_node = parse_behaviour_tree_xml(
+            xml_path, init_lookup=self.init_lookup, logger=StdoutLogger()
+        )
         btree = py_trees.trees.BehaviourTree(root_node)
         btree.tick()
         cons = find_node_by_name(btree.root, generate_node_name("ConsumerMain"))
@@ -180,10 +188,14 @@ class TestXMLParser(unittest.TestCase):
 
         # Use partial to provide the extra argument
         custom_lookup = dict(self.init_lookup)
-        custom_lookup["CustomBehaviourWithPorts"] = partial(CustomBehaviourWithPorts, extra_arg="hello-world")
+        custom_lookup["CustomBehaviourWithPorts"] = partial(
+            CustomBehaviourWithPorts, extra_arg="hello-world"
+        )
 
         try:
-            root_node = parse_behaviour_tree_xml(temp_xml_path, init_lookup=custom_lookup, logger=StdoutLogger())
+            root_node = parse_behaviour_tree_xml(
+                temp_xml_path, init_lookup=custom_lookup, logger=StdoutLogger()
+            )
             custom = find_node_by_class(root_node, CustomBehaviourWithPorts)
             self.assertIsNotNone(custom)
             self.assertEqual(custom.extra_arg, "hello-world")
@@ -232,7 +244,9 @@ class TestXMLParser(unittest.TestCase):
 
     def test_tree_structure(self):
         """Verify that the structure of the behavior tree matches the XML."""
-        root_node = parse_behaviour_tree_xml(self.tempfile.name, init_lookup=self.init_lookup, logger=StdoutLogger())
+        root_node = parse_behaviour_tree_xml(
+            self.tempfile.name, init_lookup=self.init_lookup, logger=StdoutLogger()
+        )
         # Check root node is a Sequence
         self.assertIsInstance(root_node, py_trees.composites.Sequence)
         self.assertEqual(len(root_node.children), 2)
@@ -265,11 +279,15 @@ class TestXMLParser(unittest.TestCase):
         </BehaviorTree>
         </root>"""
 
-        self.tempfile = tempfile.NamedTemporaryFile(delete=False, mode="w", suffix=".xml")
+        self.tempfile = tempfile.NamedTemporaryFile(
+            delete=False, mode="w", suffix=".xml"
+        )
         self.tempfile.write(self.xml)
         self.tempfile.close()
 
-        root_node = parse_behaviour_tree_xml(self.tempfile.name, init_lookup=self.init_lookup, logger=StdoutLogger())
+        root_node = parse_behaviour_tree_xml(
+            self.tempfile.name, init_lookup=self.init_lookup, logger=StdoutLogger()
+        )
         btree = py_trees.trees.BehaviourTree(root_node)
 
         btree.tick()
@@ -299,11 +317,15 @@ class TestXMLParser(unittest.TestCase):
         </BehaviorTree>
         </root>"""
 
-        self.tempfile = tempfile.NamedTemporaryFile(delete=False, mode="w", suffix=".xml")
+        self.tempfile = tempfile.NamedTemporaryFile(
+            delete=False, mode="w", suffix=".xml"
+        )
         self.tempfile.write(self.xml)
         self.tempfile.close()
 
-        root_node = parse_behaviour_tree_xml(self.tempfile.name, init_lookup=self.init_lookup, logger=StdoutLogger())
+        root_node = parse_behaviour_tree_xml(
+            self.tempfile.name, init_lookup=self.init_lookup, logger=StdoutLogger()
+        )
         btree = py_trees.trees.BehaviourTree(root_node)
 
         btree.tick()
@@ -344,11 +366,15 @@ class TestXMLParser(unittest.TestCase):
         </BehaviorTree>
         </root>"""
 
-        self.tempfile = tempfile.NamedTemporaryFile(delete=False, mode="w", suffix=".xml")
+        self.tempfile = tempfile.NamedTemporaryFile(
+            delete=False, mode="w", suffix=".xml"
+        )
         self.tempfile.write(self.xml)
         self.tempfile.close()
 
-        root_node = parse_behaviour_tree_xml(self.tempfile.name, init_lookup=self.init_lookup, logger=StdoutLogger())
+        root_node = parse_behaviour_tree_xml(
+            self.tempfile.name, init_lookup=self.init_lookup, logger=StdoutLogger()
+        )
         btree = py_trees.trees.BehaviourTree(root_node)
 
         btree.tick()
@@ -385,13 +411,17 @@ class TestXMLParser(unittest.TestCase):
         </BehaviorTree>
         </root>"""
 
-        self.tempfile = tempfile.NamedTemporaryFile(delete=False, mode="w", suffix=".xml")
+        self.tempfile = tempfile.NamedTemporaryFile(
+            delete=False, mode="w", suffix=".xml"
+        )
         self.tempfile.write(self.xml)
         self.tempfile.close()
 
         init_lookup = {"Wait": partial(Wait, factory=self.factory)}
 
-        root_node = parse_behaviour_tree_xml(self.tempfile.name, init_lookup=init_lookup, logger=StdoutLogger())
+        root_node = parse_behaviour_tree_xml(
+            self.tempfile.name, init_lookup=init_lookup, logger=StdoutLogger()
+        )
         btree = py_trees.trees.BehaviourTree(root_node)
 
         start_time = time.time()
@@ -418,19 +448,26 @@ class TestXMLParser(unittest.TestCase):
         </BehaviorTree>
         </root>"""
 
-        self.tempfile = tempfile.NamedTemporaryFile(delete=False, mode="w", suffix=".xml")
+        self.tempfile = tempfile.NamedTemporaryFile(
+            delete=False, mode="w", suffix=".xml"
+        )
         self.tempfile.write(self.xml)
         self.tempfile.close()
 
         # Getting from the registry
-        SMALL_JOINT_NAMES = [f'robot_small_joint_{i}' for i in range(1, 7)]
-        BIG_JOINT_NAMES = [f'robot_big_joint_{i}' for i in range(1, 7)]
+        SMALL_JOINT_NAMES = [f"robot_small_joint_{i}" for i in range(1, 7)]
+        BIG_JOINT_NAMES = [f"robot_big_joint_{i}" for i in range(1, 7)]
         init_lookup = get_behaviors_lookup(
             self.factory,
-            {0: RobotData('robot_small', SMALL_JOINT_NAMES, None), 1: RobotData('robot_big', BIG_JOINT_NAMES, None)},
+            {
+                0: RobotData("robot_small", SMALL_JOINT_NAMES, None),
+                1: RobotData("robot_big", BIG_JOINT_NAMES, None),
+            },
         )
 
-        root_node = parse_behaviour_tree_xml(self.tempfile.name, init_lookup=init_lookup, logger=StdoutLogger())
+        root_node = parse_behaviour_tree_xml(
+            self.tempfile.name, init_lookup=init_lookup, logger=StdoutLogger()
+        )
         btree = py_trees.trees.BehaviourTree(root_node)
 
         start_time = time.time()
@@ -482,7 +519,9 @@ class TestXMLParser(unittest.TestCase):
             init_lookup = dict(self.init_lookup)
             init_lookup["EchoCtorArgs"] = EchoCtorArgs
 
-            root = parse_behaviour_tree_xml(path, init_lookup=init_lookup, logger=StdoutLogger())
+            root = parse_behaviour_tree_xml(
+                path, init_lookup=init_lookup, logger=StdoutLogger()
+            )
             node = find_node_by_class(root, EchoCtorArgs)
             self.assertIsNotNone(node)
             # No auto type-casting: still strings
@@ -532,7 +571,9 @@ class TestXMLParser(unittest.TestCase):
             init_lookup = dict(self.init_lookup)
             init_lookup["PortAndCtor"] = PortAndCtor
 
-            root = parse_behaviour_tree_xml(path, init_lookup=init_lookup, logger=StdoutLogger())
+            root = parse_behaviour_tree_xml(
+                path, init_lookup=init_lookup, logger=StdoutLogger()
+            )
             tree = py_trees.trees.BehaviourTree(root)
             tree.tick()
 
@@ -580,7 +621,9 @@ class TestXMLParser(unittest.TestCase):
         init_lookup = dict(self.init_lookup)
         init_lookup["TakesKeyString"] = TakesKeyString
         with self.assertRaises(ValueError):
-            root = parse_behaviour_tree_xml(path, init_lookup=init_lookup, logger=StdoutLogger())
+            root = parse_behaviour_tree_xml(
+                path, init_lookup=init_lookup, logger=StdoutLogger()
+            )
         os.unlink(path)
 
 
@@ -629,7 +672,9 @@ class TestXMLParserImports(unittest.TestCase):
         main_path = self._write_temp_xml(main_xml)
 
         try:
-            root = parse_behaviour_tree_xml(main_path, init_lookup=self.init_lookup, logger=StdoutLogger())
+            root = parse_behaviour_tree_xml(
+                main_path, init_lookup=self.init_lookup, logger=StdoutLogger()
+            )
             tree = py_trees.trees.BehaviourTree(root)
             tree.tick()
             c = find_node_by_name(root, "C", strip_prefix=True)
@@ -655,7 +700,9 @@ class TestXMLParserImports(unittest.TestCase):
 
         try:
             with self.assertRaises(ValueError):
-                parse_behaviour_tree_xml(main_path, init_lookup=self.init_lookup, logger=StdoutLogger())
+                parse_behaviour_tree_xml(
+                    main_path, init_lookup=self.init_lookup, logger=StdoutLogger()
+                )
         finally:
             os.unlink(lib_path)
             os.unlink(main_path)
@@ -676,7 +723,9 @@ class TestXMLParserImports(unittest.TestCase):
 
         try:
             with self.assertRaises(ValueError):
-                parse_behaviour_tree_xml(main_path, init_lookup=self.init_lookup, logger=StdoutLogger())
+                parse_behaviour_tree_xml(
+                    main_path, init_lookup=self.init_lookup, logger=StdoutLogger()
+                )
         finally:
             os.unlink(path_a)
             os.unlink(path_b)
@@ -691,7 +740,9 @@ class TestXMLParserImports(unittest.TestCase):
         main_path = self._write_temp_xml(main_xml)
         try:
             with self.assertRaises(FileNotFoundError):
-                parse_behaviour_tree_xml(main_path, init_lookup=self.init_lookup, logger=StdoutLogger())
+                parse_behaviour_tree_xml(
+                    main_path, init_lookup=self.init_lookup, logger=StdoutLogger()
+                )
         finally:
             os.unlink(main_path)
 
@@ -712,7 +763,9 @@ class TestXMLParserImports(unittest.TestCase):
         main_path = self._write_temp_xml(main_xml)
 
         try:
-            root = parse_behaviour_tree_xml(main_path, init_lookup=self.init_lookup, logger=StdoutLogger())
+            root = parse_behaviour_tree_xml(
+                main_path, init_lookup=self.init_lookup, logger=StdoutLogger()
+            )
             tree = py_trees.trees.BehaviourTree(root)
             tree.tick()
             x = find_node_by_name(root, "X", strip_prefix=True)
@@ -742,7 +795,9 @@ class TestXMLParserImports(unittest.TestCase):
 
         try:
             with self.assertRaises(ValueError):
-                parse_behaviour_tree_xml(main_path, init_lookup=self.init_lookup, logger=StdoutLogger())
+                parse_behaviour_tree_xml(
+                    main_path, init_lookup=self.init_lookup, logger=StdoutLogger()
+                )
         finally:
             os.unlink(lib_path)
             os.unlink(main_path)
@@ -752,17 +807,20 @@ class TestXMLParserImports(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d_main, tempfile.TemporaryDirectory() as d_lib:
             lib_path = os.path.join(d_lib, "lib.xml")
             with open(lib_path, "w") as f:
-                f.write("""<root>
+                f.write(
+                    """<root>
                   <BehaviorTree ID="LibTree">
                     <Sequence name="MySeq">
                         <Producer name="P" output="{o}"/>
                     </Sequence>
                   </BehaviorTree>
-                </root>""")
+                </root>"""
+                )
 
             main_path = os.path.join(d_main, "main.xml")
             with open(main_path, "w") as f:
-                f.write("""<root main_tree_to_execute="Main">
+                f.write(
+                    """<root main_tree_to_execute="Main">
                   <Include src="lib.xml"/>
                   <BehaviorTree ID="Main">
                     <Sequence>
@@ -770,7 +828,8 @@ class TestXMLParserImports(unittest.TestCase):
                       <Consumer name="C" input="{f}"/>
                     </Sequence>
                   </BehaviorTree>
-                </root>""")
+                </root>"""
+                )
 
             root = parse_behaviour_tree_xml(
                 main_path,
@@ -786,14 +845,20 @@ class TestXMLParserImports(unittest.TestCase):
 
     def test_imported_bt_missing_id(self):
         """Imported file containing a <BehaviorTree> without an ID raises ValueError."""
-        lib_path = self._write_temp_xml("""<root><BehaviorTree><Sequence/></BehaviorTree></root>""")
-        main_path = self._write_temp_xml(f"""<root main_tree_to_execute="Main">
+        lib_path = self._write_temp_xml(
+            """<root><BehaviorTree><Sequence/></BehaviorTree></root>"""
+        )
+        main_path = self._write_temp_xml(
+            f"""<root main_tree_to_execute="Main">
           <Import src="{lib_path}"/>
           <BehaviorTree ID="Main"><Sequence/></BehaviorTree>
-        </root>""")
+        </root>"""
+        )
         try:
             with self.assertRaises(ValueError):
-                parse_behaviour_tree_xml(main_path, init_lookup=self.init_lookup, logger=StdoutLogger())
+                parse_behaviour_tree_xml(
+                    main_path, init_lookup=self.init_lookup, logger=StdoutLogger()
+                )
         finally:
             os.unlink(lib_path)
             os.unlink(main_path)
@@ -808,11 +873,15 @@ class TestXMLParserImports(unittest.TestCase):
           </BehaviorTree>
           </root>"""
 
-        self.tempfile = tempfile.NamedTemporaryFile(delete=False, mode="w", suffix=".xml")
+        self.tempfile = tempfile.NamedTemporaryFile(
+            delete=False, mode="w", suffix=".xml"
+        )
         self.tempfile.write(self.xml)
         self.tempfile.close()
 
-        root_node = parse_behaviour_tree_xml(self.tempfile.name, init_lookup=self.init_lookup, logger=StdoutLogger())
+        root_node = parse_behaviour_tree_xml(
+            self.tempfile.name, init_lookup=self.init_lookup, logger=StdoutLogger()
+        )
         btree = py_trees.trees.BehaviourTree(root_node)
 
         btree.tick()
@@ -842,7 +911,9 @@ class TestXMLParserImports(unittest.TestCase):
             temp_xml_path = tf.name
 
         try:
-            root_node = parse_behaviour_tree_xml(temp_xml_path, init_lookup=init_lookup, logger=StdoutLogger())
+            root_node = parse_behaviour_tree_xml(
+                temp_xml_path, init_lookup=init_lookup, logger=StdoutLogger()
+            )
             btree = py_trees.trees.BehaviourTree(root_node)
             btree.tick()
 
