@@ -10,6 +10,8 @@ import py_trees
 
 
 class LogLevel(Enum):
+    """Severity levels accepted by :class:`PortsLogger`-compatible loggers."""
+
     DEBUG = "debug"
     INFO = "info"
     WARNING = "warning"
@@ -25,10 +27,17 @@ class PortsLogger(Protocol):
     ``py_trees.logging.Logger``, and typical ROS 2 loggers.
     """
 
-    def debug(self, msg: str) -> None: ...
-    def info(self, msg: str) -> None: ...
-    def warning(self, msg: str) -> None: ...
-    def error(self, msg: str) -> None: ...
+    def debug(self, msg: str) -> None:  # noqa: D102
+        ...
+
+    def info(self, msg: str) -> None:  # noqa: D102
+        ...
+
+    def warning(self, msg: str) -> None:  # noqa: D102
+        ...
+
+    def error(self, msg: str) -> None:  # noqa: D102
+        ...
 
 
 class _NoOpLogger:
@@ -106,6 +115,7 @@ def _convert_simple(value: str, target_type: type) -> Any:
 def convert_str_to_type(
     value: str, target_type: type | UnionType, logger: PortsLogger | None = None
 ) -> Any:
+    """Convert a string *value* to *target_type* (handles unions, list, tuple, enum)."""
     if logger is None:
         logger = NOOP_LOGGER
     origin = get_origin(target_type)
@@ -162,6 +172,7 @@ def apply_type_hints(
 ) -> tuple[dict[str, Any], bool]:
     """
     Convert XML string kwargs into hinted types from the constructor signature.
+
     Keys that are in the `ignore` set will be kept as-is.
 
     - If `constructor` is a class, its `__init__` is inspected (excluding `self`).
@@ -241,6 +252,7 @@ def apply_type_hints(
 def reset_blackboard_key(
     blackboard_client, key_name: str, node_name: str = "unknown"
 ) -> None:
+    """Clear the stored value for *key_name* on *blackboard_client*."""
     if not blackboard_client.is_registered(key_name):
         raise KeyError(
             f"{node_name}: Port '{key_name}' is not registered in the blackboard client."
@@ -272,10 +284,12 @@ def reset_blackboard_key(
 
 
 def uuid4_regex(at_end=False) -> str:
+    """Return a regex fragment matching a UUID4 string."""
     return r"((_)?[a-f0-9\-]{36})" + "$" if at_end else ""
 
 
 def strip_trailing_uuid4(name: str) -> str:
+    """Remove a trailing UUID4 suffix from *name*."""
     return re.sub(f"{uuid4_regex(at_end=True)}", "", name, flags=re.IGNORECASE)
 
 
@@ -321,6 +335,7 @@ def generate_node_name(
 def sanitize_name_for_blackboard_use(
     component: str, extra_allowed_chars: str = ""
 ) -> str:
+    """Replace characters py_trees treats as separators with underscores."""
     safe_extra = re.escape(extra_allowed_chars)
     expr_str = f"[^A-Za-z0-9_-{safe_extra}]"
     return re.sub(expr_str, "_", component)
@@ -335,6 +350,7 @@ def set_feedback_and_log(
     logger: PortsLogger | None = None,
     return_only: bool = False,
 ) -> str:
+    """Format *message*, update *behaviour.feedback_message*, and log at *level*."""
     if logger is None:
         logger = NOOP_LOGGER
     message = str(message)
@@ -359,9 +375,7 @@ def find_node_by_name(
     strip_uuid: bool = False,
     find_all: bool = False,
 ) -> py_trees.behaviour.Behaviour | list[py_trees.behaviour.Behaviour] | None:
-    """
-    Find a node (or nodes) by name in a behavior tree.
-    """
+    """Find a node (or nodes) by name in a behavior tree."""
     if find_all:
         results: list[py_trees.behaviour.Behaviour] = []
         _find_node_by_name_recursive(node, name, strip_prefix, strip_uuid, results)
@@ -414,9 +428,7 @@ def _find_node_by_name_recursive(
 
 
 def find_node_by_class(node: py_trees.behaviour.Behaviour, class_: type) -> Any:
-    """
-    Recursively search a tree for the first node instance of a class.
-    """
+    """Recursively search a tree for the first node instance of a class."""
     if isinstance(node, class_):
         return node
     if hasattr(node, "children"):

@@ -1,4 +1,5 @@
-"""
+"""XML parser for the BehaviorTree format.
+
 XML Parser for BehaviorTree Format
 ==================================
 
@@ -140,14 +141,17 @@ PARENT_NODES_TAGS = set(PARENT_NODES_WITH_PORTS_TAGS) | {
 
 
 def build_bt_index(root):
+    """Return ``{ID: element}`` for every ``<BehaviorTree>`` child of *root*."""
     return {bt.attrib["ID"]: bt for bt in root.findall("BehaviorTree")}
 
 
 def is_key(value):
+    """Return a regex match if *value* is a ``{key}`` reference."""
     return CURLY_PATTERN.match(value)
 
 
 def get_key_name(value):
+    """Extract the key name from a ``{key}`` reference string."""
     match = CURLY_PATTERN.match(value)
     assert match, f"Key '{value}' is not a valid key"
     return match.group(1)
@@ -156,6 +160,7 @@ def get_key_name(value):
 def resolve_key_remapping(key, remapping_table) -> str:
     """
     Recursively resolve a key through the remapping table until it is not a curly-brace key.
+
     Cyclic remappings are explicitly checked and will raise a RuntimeError if detected.
 
     Args:
@@ -195,7 +200,7 @@ def resolve_key_remapping(key, remapping_table) -> str:
 
 def resolve_direct_value_remapping(key, remapping_table) -> str:
     """
-    Obtaining direct value from the remapping table.
+    Obtain a direct value from the remapping table.
 
     Args:
         key: The direct value.
@@ -224,6 +229,7 @@ def resolve_direct_value_remapping(key, remapping_table) -> str:
 def get_absolute_reference(value, subtree_namespace) -> str:
     """
     Get the absolute path of a value (e.g. a key) by prepending the namespace.
+
     Args:
         value (str): The value to make absolute.
         subtree_namespace (str): The current subtree namespace.
@@ -359,7 +365,7 @@ def parse_behaviour_tree_xml(
 
 def add_new_key_to_remapping_table(value, remapping_table, subtree_namespace):
     """
-    Adds the value to the remapping table, **if** it is a key itself.
+    Add the value to the remapping table, **if** it is a key itself.
 
     If we encounter a remapping in a `SubTree` or `BehaviourWithPorts`-derived tag,
     e.g. `remapped_key={other_key}` and the *value* (i.e. {other_key}) is a key itself,
@@ -398,7 +404,7 @@ def build_subtree_remapping(
     logger: PortsLogger = NOOP_LOGGER,
 ) -> dict[str, str]:
     """
-    Processes the <SubTree> XML element.
+    Process the <SubTree> XML element.
 
     The remapping table is updated to include the remappings from the <subtreeplus> or <subtree> element.
     The subtree is then instantiated with the new remapping table.
@@ -519,10 +525,6 @@ def build_port_remappings(
             )
             absolute_key = resolve_direct_value_remapping(attrib_value, remapping_table)
 
-        # Check if the port name in the subtree namespace is different from the absolute key.
-        # If it is, we need to remap the port to the absolute key. If it isn't, it will be treated
-        # as local key in the subtree namespace.
-        port_in_namespace = get_absolute_reference(attrib_key, subtree_namespace)
         # Always record the remapping if an explicit attribute is provided. Even if the
         # resolved key matches the natural namespace location, the explicit declaration
         # means the user intends to share that port, and the PortsMixin will use the
@@ -542,7 +544,8 @@ def instantiate_ports_node(
     parent_names_str: str = "",
 ) -> PortsMixin:
     """
-    Generic helper to instantiate any PortsMixin-based node (leaf or composite):
+    Instantiate any PortsMixin-based node (leaf or composite).
+
     - looks up the class via `init_lookup` (validated with `get_class_from_init_lookup`)
     - builds port remappings from `elem.attrib`
     - constructs the instance (using `name` attribute or class_name)
@@ -661,6 +664,7 @@ def build_tree_from_xml(
 ) -> py_trees.behaviour.Behaviour:
     """
     Recursively build the tree from XML element.
+
     Args:
         elem: XML element
         remapping_table (dict[str, str]): Remapping table.
@@ -687,7 +691,6 @@ def build_tree_from_xml(
     )
     # Composite/Decorator nodes which can have children:
     if tag in PARENT_NODES_TAGS:
-        has_children = len(elem) > 0
         node_name = generate_node_name(
             explicit_name=elem.attrib.get("name", None),
             general_name=elem.tag,

@@ -621,7 +621,7 @@ class TestXMLParser(unittest.TestCase):
         init_lookup = dict(self.init_lookup)
         init_lookup["TakesKeyString"] = TakesKeyString
         with self.assertRaises(ValueError):
-            root = parse_behaviour_tree_xml(
+            parse_behaviour_tree_xml(
                 path, init_lookup=init_lookup, logger=StdoutLogger()
             )
         os.unlink(path)
