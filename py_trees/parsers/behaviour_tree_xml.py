@@ -109,7 +109,7 @@ from copy import deepcopy
 import py_trees
 
 from py_trees.ports import BehaviourWithPorts, CONST_PREFIX, DOT_REPLACEMENT, PortsMixin
-from py_trees._ports_utils import apply_type_hints, generate_node_name
+from py_trees._ports_utils import NOOP_LOGGER, PortsLogger, apply_type_hints, generate_node_name
 
 # Helper: parse curly-brace keys
 CURLY_PATTERN = re.compile(r"^{(.+)}$")
@@ -261,7 +261,7 @@ def parse_behaviour_tree_xml(
     xml_file,
     main_tree_id=None,
     init_lookup=None,
-    logger=None,
+    logger: PortsLogger | None = None,
     search_paths: list[str] | None = None,
 ) -> py_trees.behaviour.Behaviour:
     """
@@ -279,7 +279,7 @@ def parse_behaviour_tree_xml(
         xml_file (str): Path to the main XML file.
         main_tree_id (str | None): ID of the tree to execute; if None, read from 'main_tree_to_execute'.
         init_lookup (dict): Mapping from tag -> constructor/partial for PortsMixin nodes (required).
-        logger: Optional logger-like object with debug()/info()/warning()/error() methods.
+        logger (PortsLogger | None): Optional logger (NoOp if None).
         search_paths (list[str] | None): Optional extra directories to resolve imports.
 
     Returns:
@@ -289,6 +289,8 @@ def parse_behaviour_tree_xml(
         ValueError: If init_lookup is missing or the main BehaviorTree ID is not found.
         FileNotFoundError / RuntimeError: From the import pre-pass if relevant.
     """
+    if logger is None:
+        logger = NOOP_LOGGER
     if init_lookup is None:
         raise ValueError("init_lookup dictionary must be provided")
 
@@ -307,14 +309,12 @@ def parse_behaviour_tree_xml(
         main_tree_id = root.attrib.get("main_tree_to_execute")
 
     # Pretty-print the whole of the XML tree after imports
-    if logger is not None:
-        logger.debug(ET.tostring(root, encoding="unicode"))
+    logger.debug(ET.tostring(root, encoding="unicode"))
 
     bt_index = build_bt_index(root)
     if main_tree_id not in bt_index:
         raise ValueError(f"BehaviorTree with ID '{main_tree_id}' not found.")
-    if logger is not None:
-        logger.debug(f"[DEBUG] Starting parse of main tree ID='{main_tree_id}'")
+    logger.debug(f"[DEBUG] Starting parse of main tree ID='{main_tree_id}'")
     bt_elem = bt_index[main_tree_id]
 
     tree = build_tree_from_xml(
@@ -329,8 +329,7 @@ def parse_behaviour_tree_xml(
     # Consistency check: traverse the whole tree and check if any nodes have duplicate names.
     seen_names = set()
     for node in tree.iterate():
-        if logger is not None:
-            logger.debug(f"Node in tree: {node.name} ({node.__class__.__name__})")
+        logger.debug(f"Node in tree: {node.name} ({node.__class__.__name__})")
         if node.name in seen_names:
             raise ValueError(
                 f"Duplicate node name found: {node.name}. Mitigate by assigning explicit names to parent tags."
@@ -374,7 +373,7 @@ def add_new_key_to_remapping_table(value, remapping_table, subtree_namespace):
 
 
 def build_subtree_remapping(
-    elem: ET.Element, remapping_table: dict, parent_namespace: str, logger=None
+    elem: ET.Element, remapping_table: dict, parent_namespace: str, logger: PortsLogger = NOOP_LOGGER
 ) -> dict[str, str]:
     """
     Processes the <SubTree> XML element.
@@ -404,11 +403,9 @@ def build_subtree_remapping(
     for k, v in elem.attrib.items():
         if k in ("ID", "name"):
             continue
-        if logger is not None:
-            logger.debug(f"Checking to add new key for SubTree attribute: {k} -> {v}")
+        logger.debug(f"Checking to add new key for SubTree attribute: {k} -> {v}")
         add_new_key_to_remapping_table(v, remapping_table=remapping_table, subtree_namespace=parent_namespace)
-    if logger is not None:
-        logger.debug(f"Updated remapping table: {remapping_table}")
+    logger.debug(f"Updated remapping table: {remapping_table}")
 
     # Build the new remapping table for this subtree. We build a new remapping table because we need to ensure that
     # *only* the keys that are explicitly remapped in the <SubTree> element are included. The parent remapping table
@@ -422,30 +419,26 @@ def build_subtree_remapping(
     for k, v in elem.attrib.items():
         if k in ("ID", "name"):
             continue
-        if logger is not None:
-            logger.debug(f"Processing SubTree attribute: {k} -> {v}")
+        logger.debug(f"Processing SubTree attribute: {k} -> {v}")
         if is_key(v):
             if get_key_name(v) not in remapping_table:
                 raise ValueError(f"Key {v} not found in remapping table")
             # If the value is a key and it is in the remapping table,
             # we resolve it to its absolute path.
             v = resolve_key_remapping(v, remapping_table)
-            if logger is not None:
-                logger.debug(f"[Key] Adding remapping from parent remapping table: {k} -> {v}")
+            logger.debug(f"[Key] Adding remapping from parent remapping table: {k} -> {v}")
         else:
             # If the value is not a key, it is a direct value which is input in the subtree,
             # for example `<SubTree ID="subtree1" in="500" />`.
             v = resolve_direct_value_remapping(v, remapping_table)
-            if logger is not None:
-                logger.debug(f"[Direct value] Adding remapping from parent remapping table: {k} -> {v}")
+            logger.debug(f"[Direct value] Adding remapping from parent remapping table: {k} -> {v}")
         new_remapping[k] = v
-    if logger is not None:
-        logger.debug(f"Subtree '{elem.attrib['ID']}' new remapping table: {new_remapping}")
+    logger.debug(f"Subtree '{elem.attrib['ID']}' new remapping table: {new_remapping}")
     return new_remapping
 
 
 def build_port_remappings(
-    elem: ET.Element, class_: type[PortsMixin], remapping_table: dict, subtree_namespace: str, logger=None
+    elem: ET.Element, class_: type[PortsMixin], remapping_table: dict, subtree_namespace: str, logger: PortsLogger = NOOP_LOGGER
 ) -> dict[str, str]:
     """
     Build {port_name -> absolute_key} for any PortsMixin node from XML attributes.
@@ -464,11 +457,10 @@ def build_port_remappings(
         if attrib_key == "name":
             continue
         if attrib_key not in class_.input_ports() and attrib_key not in class_.output_ports():
-            if logger is not None:
-                logger.debug(
-                    f"Attribute '{attrib_key}' is not defined in class '{class_.__name__}'. "
-                    f"Treating as additional parameter."
-                )
+            logger.debug(
+                f"Attribute '{attrib_key}' is not defined in class '{class_.__name__}'. "
+                f"Treating as additional parameter."
+            )
             continue
 
         if is_key(attrib_value):
@@ -506,7 +498,7 @@ def instantiate_ports_node(
     init_lookup: dict,
     remapping_table: dict,
     subtree_namespace: str,
-    logger=None,
+    logger: PortsLogger = NOOP_LOGGER,
     constructor_kwargs: dict | None = None,
     parent_names_str: str = "",
 ) -> PortsMixin:
@@ -550,8 +542,7 @@ def instantiate_ports_node(
     instance_name = generate_node_name(
         explicit_name=elem.attrib.get("name", None), general_name=portsmixin_name, prefix=parent_names_str
     )
-    if logger is not None:
-        logger.debug(f"PortsMixin node '{instance_name}' in namespace {subtree_namespace} remappings: {port_remappings}")
+    logger.debug(f"PortsMixin node '{instance_name}' in namespace {subtree_namespace} remappings: {port_remappings}")
 
     if portsmixin_name not in init_lookup:
         raise ValueError(f"PortsMixin class '{portsmixin_name}' not found in init_lookup table")
@@ -571,16 +562,14 @@ def instantiate_ports_node(
             if constructor_kwargs and attrib_key in constructor_kwargs:
                 existing_entry = constructor_kwargs[attrib_key]
                 if existing_entry != attrib_value:
-                    if logger is not None:
-                        logger.warning(
-                            f"Conflicting values for attribute '{attrib_key}': "
-                            f"{existing_entry} (existing) vs {attrib_value} (new). "
-                            f"Using {attrib_value}."
-                        )
-            if logger is not None:
-                logger.debug(
-                    f"Attribute '{attrib_key}' is not defined in class '{cls.__name__}'. Treating as additional parameter."
-                )
+                    logger.warning(
+                        f"Conflicting values for attribute '{attrib_key}': "
+                        f"{existing_entry} (existing) vs {attrib_value} (new). "
+                        f"Using {attrib_value}."
+                    )
+            logger.debug(
+                f"Attribute '{attrib_key}' is not defined in class '{cls.__name__}'. Treating as additional parameter."
+            )
             constructor_kwargs[attrib_key] = attrib_value
 
     ctor_callable = init_lookup[portsmixin_name]
@@ -588,11 +577,10 @@ def instantiate_ports_node(
     ignore_keys = {"child", "children", "behaviour_class_name"}
     constructor_kwargs, success = apply_type_hints(ctor_callable, constructor_kwargs, logger=logger, ignore=ignore_keys)
     if not success:
-        if logger is not None:
-            logger.warning(
-                "Failed to apply type hints to constructor arguments. See error log. Proceeding, but leaving "
-                "the conversion to the constructors."
-            )
+        logger.warning(
+            "Failed to apply type hints to constructor arguments. See error log. Proceeding, but leaving "
+            "the conversion to the constructors."
+        )
     try:
         # Pass the behaviour_class_name (the tag/registry name) to the constructor
         node = init_lookup[portsmixin_name](
@@ -618,7 +606,7 @@ def build_tree_from_xml(
     remapping_table: dict,
     init_lookup: dict,
     bt_index: dict,
-    logger=None,
+    logger: PortsLogger = NOOP_LOGGER,
     subtree_namespace="/",
     parent_names_str: str = "",
 ) -> py_trees.behaviour.Behaviour:
@@ -645,16 +633,14 @@ def build_tree_from_xml(
     if logger is None and hasattr(elem, '_logger_placeholder'):
         pass  # keep logger as None
     tag = elem.tag.lower()
-    if logger is not None:
-        logger.debug(f"Processing tag: '{elem.tag}' with attributes {elem.attrib}. Remapping table: {remapping_table}")
+    logger.debug(f"Processing tag: '{elem.tag}' with attributes {elem.attrib}. Remapping table: {remapping_table}")
     # Composite/Decorator nodes which can have children:
     if tag in PARENT_NODES_TAGS:
         has_children = len(elem) > 0
         node_name = generate_node_name(
             explicit_name=elem.attrib.get("name", None), general_name=elem.tag, prefix=parent_names_str
         )
-        if logger is not None:
-            logger.debug(
+        logger.debug(
                 f"Entering composite node: {tag} (given name {node_name} with parent names {parent_names_str}). "
                 "Build children first, so we can pass them to the constructor."
             )
@@ -734,8 +720,7 @@ def build_tree_from_xml(
         # It recurses into that child, passing along the current remapping table and other context.
         # This is NOT a subtree instantiation (which is handled by the 'subtreeplus'/'subtree' branch),
         # but simply the entry point for parsing the structure of a tree or subtree definition.
-        if logger is not None:
-            logger.debug(f"Entering <BehaviorTree> ID='{elem.attrib.get('ID', '')}'")
+        logger.debug(f"Entering <BehaviorTree> ID='{elem.attrib.get('ID', '')}'")
         children = list(elem)
         assert len(children) == 1, (
             f"<BehaviorTree ID='{elem.attrib.get('ID', '')}'> must have exactly one child (the root node), "
@@ -756,8 +741,7 @@ def build_tree_from_xml(
         # It recurses into that child, passing along the current remapping table and the subtree namespace.
         # The remapping table is updated to include the remappings from the <subtreeplus> or <subtree> element.
         # The subtree is then instantiated with the new remapping table.
-        if logger is not None:
-            logger.debug(f"Instantiating subtree '{elem.attrib['ID']}' with remapping table BEFORE: {remapping_table}")
+        logger.debug(f"Instantiating subtree '{elem.attrib['ID']}' with remapping table BEFORE: {remapping_table}")
         subtree_id = elem.attrib["ID"]
         subtree_name = elem.attrib.get("name", str(uuid.uuid4()))
         if subtree_id not in bt_index:
@@ -779,8 +763,7 @@ def build_tree_from_xml(
         )
     elif elem.tag in init_lookup:
         # This must be a BehaviourWithPorts node. Create the behavior node.
-        if logger is not None:
-            logger.debug(f"Creating BehaviourWithPorts node for tag {elem.tag}.")
+        logger.debug(f"Creating BehaviourWithPorts node for tag {elem.tag}.")
         node = instantiate_ports_node(
             elem=elem,
             init_lookup=init_lookup,
@@ -793,8 +776,7 @@ def build_tree_from_xml(
             raise TypeError(f"XML tag '{elem.tag}' did not instantiate a BehaviourWithPorts; got {type(node).__name__}")
         return node
     else:
-        if logger is not None:
-            logger.error(f"Unsupported tag encountered: {elem.tag}")
+        logger.error(f"Unsupported tag encountered: {elem.tag}")
         raise ValueError(
             f"Unsupported tag '{elem.tag}' encountered in XML. "
             "This is not a known composite, subtree, or BehaviourWithPorts node."
@@ -854,7 +836,7 @@ def _resolve_import_path(src: str, base_dir: str, search_paths: list[str] | None
 def _inline_imports_into_root(
     root: ET.Element,
     current_file: str,
-    logger,
+    logger: PortsLogger,
     search_paths: list[str] | None,
     visited: set[str] | None = None,
 ) -> None:
@@ -897,12 +879,10 @@ def _inline_imports_into_root(
     # Only handle top-level children named Import/Include (case-insensitive).
     imports = [child for child in list(root) if child.tag.lower() in ("import", "include")]
 
-    if logger is not None:
-        logger.debug(f"Found {len(imports)} import(s) in '{current_file}'")
+    logger.debug(f"Found {len(imports)} import(s) in '{current_file}'")
 
     for imp in imports:
-        if logger is not None:
-            logger.debug(f"Processing import directive '{imp.tag}': {imp.attrib}")
+        logger.debug(f"Processing import directive '{imp.tag}': {imp.attrib}")
         # Support either src= or file=
         src = imp.attrib.get("src") or imp.attrib.get("file")
         if not src:
@@ -918,20 +898,17 @@ def _inline_imports_into_root(
 
         visited.add(resolved)
 
-        if logger is not None:
-            logger.debug(f"Inlining {imp.tag} from '{resolved}'")
+        logger.debug(f"Inlining {imp.tag} from '{resolved}'")
 
         # Parse the imported file and inline its imports first (depth-first)
         imported_tree = ET.parse(resolved)
         imported_root = imported_tree.getroot()
         _inline_imports_into_root(imported_root, resolved, logger, search_paths, visited)
-        if logger is not None:
-            logger.debug(f"Imported XML: '{ET.tostring(imported_root, encoding='unicode')}'")
+        logger.debug(f"Imported XML: '{ET.tostring(imported_root, encoding='unicode')}'")
 
         # Append all BehaviorTrees from imported file, but forbid ID collisions
         for bt in imported_root.findall("BehaviorTree"):
-            if logger is not None:
-                logger.debug(f"Processing ID={bt.attrib.get('ID')}")
+            logger.debug(f"Processing ID={bt.attrib.get('ID')}")
             bt_id = bt.attrib.get("ID")
             if not bt_id:
                 raise ValueError(f"Imported BehaviorTree missing ID in '{resolved}'")
@@ -943,8 +920,7 @@ def _inline_imports_into_root(
             # Deep-copy to detach from the imported tree and append into 'root'
             root.append(deepcopy(bt))
             existing_ids.add(bt_id)
-            if logger is not None:
-                logger.debug(f"Imported BehaviorTree ID='{bt_id}' from '{resolved}'")
+            logger.debug(f"Imported BehaviorTree ID='{bt_id}' from '{resolved}'")
 
         # Remove the import directive after successful inlining
         root.remove(imp)

@@ -6,6 +6,9 @@ from typing import Any
 import py_trees
 
 from ._ports_utils import (
+    NOOP_LOGGER,
+    LogLevel,
+    PortsLogger,
     convert_str_to_type,
     reset_blackboard_key,
     sanitize_name_for_blackboard_use,
@@ -236,7 +239,7 @@ class PortsMixin(ABC):
             if port in self.output_ports():
                 raise ValueError(f"Port '{port}' appears in both input and output ports")
 
-    def setup_ports(self, port_remappings: dict | None = None, subtree_namespace: str = "/", logger=None):
+    def setup_ports(self, port_remappings: dict | None = None, subtree_namespace: str = "/", logger: PortsLogger | None = None):
         """
         Initialize the ports and prepare the blackboard interface.
         It registers all declared input and output ports with the blackboard client, optionally applying custom key
@@ -413,10 +416,10 @@ class PortsMixin(ABC):
         else:
             return isinstance(value, expected_type)
 
-    def get_logger(self):
+    def get_logger(self) -> PortsLogger:
         """
         Return:
-            Logger: The logger instance.
+            PortsLogger: The logger instance.
 
         Raises:
             RuntimeError: If `setup_ports()` has not been called before accessing the logger.
@@ -427,7 +430,7 @@ class PortsMixin(ABC):
             )
         return self._ports_logger
 
-    def log(self, level: str, msg: str, return_only: bool = False, print_name: bool = True) -> str:
+    def log(self, level: LogLevel, msg: str, return_only: bool = False, print_name: bool = True) -> str:
         """Log a message at the specified severity level and update feedback."""
         assert isinstance(
             self, py_trees.behaviour.Behaviour
@@ -442,16 +445,16 @@ class PortsMixin(ABC):
         )
 
     def log_debug(self, msg: str, return_only: bool = False, print_name: bool = True) -> str:
-        return self.log("debug", msg, return_only=return_only, print_name=print_name)
+        return self.log(LogLevel.DEBUG, msg, return_only=return_only, print_name=print_name)
 
     def log_info(self, msg: str, return_only: bool = False, print_name: bool = True) -> str:
-        return self.log("info", msg, return_only=return_only, print_name=print_name)
+        return self.log(LogLevel.INFO, msg, return_only=return_only, print_name=print_name)
 
     def log_warning(self, msg: str, return_only: bool = False, print_name: bool = True) -> str:
-        return self.log("warning", msg, return_only=return_only, print_name=print_name)
+        return self.log(LogLevel.WARNING, msg, return_only=return_only, print_name=print_name)
 
     def log_error(self, msg: str, return_only: bool = False, print_name: bool = True) -> str:
-        return self.log("error", msg, return_only=return_only, print_name=print_name)
+        return self.log(LogLevel.ERROR, msg, return_only=return_only, print_name=print_name)
 
     def get_input(self, port_name: str, default=None):
         """

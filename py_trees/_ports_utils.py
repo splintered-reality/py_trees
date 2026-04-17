@@ -4,9 +4,50 @@ import uuid
 from collections.abc import Callable
 from enum import Enum
 from types import UnionType
-from typing import Any, Union, get_args, get_origin
+from typing import Any, Protocol, Union, get_args, get_origin
 
 import py_trees
+
+
+class LogLevel(Enum):
+    DEBUG = "debug"
+    INFO = "info"
+    WARNING = "warning"
+    ERROR = "error"
+
+
+class PortsLogger(Protocol):
+    """Minimal logger interface used by the ports subsystem.
+
+    Any object that provides these four methods is accepted wherever
+    the ports code takes an optional ``logger`` parameter.  This is
+    satisfied by Python's ``logging.Logger``, py_trees'
+    ``py_trees.logging.Logger``, and typical ROS 2 loggers.
+    """
+
+    def debug(self, msg: str) -> None: ...
+    def info(self, msg: str) -> None: ...
+    def warning(self, msg: str) -> None: ...
+    def error(self, msg: str) -> None: ...
+
+
+class _NoOpLogger:
+    """Silent logger used as default when no logger is provided."""
+
+    def debug(self, msg: str) -> None:
+        pass
+
+    def info(self, msg: str) -> None:
+        pass
+
+    def warning(self, msg: str) -> None:
+        pass
+
+    def error(self, msg: str) -> None:
+        pass
+
+
+NOOP_LOGGER = _NoOpLogger()
 
 
 def _try_bool(value: str) -> bool:
@@ -62,7 +103,9 @@ def _convert_simple(value: str, target_type: type) -> Any:
     return value
 
 
-def convert_str_to_type(value: str, target_type: type | UnionType, logger: Any = None) -> Any:
+def convert_str_to_type(value: str, target_type: type | UnionType, logger: PortsLogger | None = None) -> Any:
+    if logger is None:
+        logger = NOOP_LOGGER
     origin = get_origin(target_type)
 
     if isinstance(target_type, type) and issubclass(target_type, list):
@@ -110,7 +153,7 @@ def convert_str_to_type(value: str, target_type: type | UnionType, logger: Any =
 
 
 def apply_type_hints(
-    constructor: Callable, kwargs: dict[str, str], logger: Any = None, ignore: set[str] | None = None
+    constructor: Callable, kwargs: dict[str, str], logger: PortsLogger | None = None, ignore: set[str] | None = None
 ) -> tuple[dict[str, Any], bool]:
     """
     Convert XML string kwargs into hinted types from the constructor signature.
@@ -127,6 +170,8 @@ def apply_type_hints(
     """
     if ignore is None:
         ignore = set()
+    if logger is None:
+        logger = NOOP_LOGGER
 
     sig = inspect.signature(constructor.__init__ if inspect.isclass(constructor) else constructor)
     hints: dict[str, Any] = {}
@@ -150,8 +195,7 @@ def apply_type_hints(
 
         # No type hint given: keep the original value
         if tp is None:
-            if logger is not None:
-                logger.warning(f"Skipping conversion for '{k}': no type hint available.")
+            logger.warning(f"Skipping conversion for '{k}': no type hint available.")
             success = False
             continue
 
@@ -163,11 +207,10 @@ def apply_type_hints(
         # Not a string: if the target is already of the correct type, we can just keep it as-is.
         if not isinstance(v, str):
             if tp is not type(v):
-                if logger is not None:
-                    logger.warning(
-                        f"Type {type(v)} is not a string which can be converted, and not of the required "
-                        f"target type {tp}. Keeping the string and leaving conversion to the constructor."
-                    )
+                logger.warning(
+                    f"Type {type(v)} is not a string which can be converted, and not of the required "
+                    f"target type {tp}. Keeping the string and leaving conversion to the constructor."
+                )
                 success = False
             # Keep as-is.
             continue
@@ -175,14 +218,12 @@ def apply_type_hints(
         try:
             converted[k] = convert_str_to_type(v, tp, logger)
         except ValueError as e:
-            if logger is not None:
-                logger.warning(f"Failed to convert '{k}: {v}' to type '{tp}': {e}")
+            logger.warning(f"Failed to convert '{k}: {v}' to type '{tp}': {e}")
             success = False
             continue
 
         if converted[k] == v:
-            if logger is not None:
-                logger.warning(f"Failed to convert '{k}: {v}' to type '{tp}'. Preserved original value.")
+            logger.warning(f"Failed to convert '{k}: {v}' to type '{tp}'. Preserved original value.")
             success = False
 
     return converted, success
@@ -270,20 +311,22 @@ def set_feedback_and_log(
     *,
     name: str,
     message: str,
-    level: str = "info",
-    logger: Any = None,
+    level: LogLevel = LogLevel.INFO,
+    logger: PortsLogger | None = None,
     return_only: bool = False,
 ) -> str:
+    if logger is None:
+        logger = NOOP_LOGGER
     message = str(message)
     formatted = f"{name}: {message}" if name else message
     if return_only:
         return formatted
 
-    if level != "debug":
+    if level != LogLevel.DEBUG:
         behaviour.feedback_message = formatted
 
     if logger is not None:
-        log_fn = getattr(logger, level, None)
+        log_fn = getattr(logger, level.value, None)
         if callable(log_fn):
             log_fn(formatted)
     return formatted
