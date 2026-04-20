@@ -1,6 +1,6 @@
 # PyTrees
 
-[[About](#about)] [[What's New?](#whats-new)] [[Documentation](#documentation)] [[Getting Started](#getting-started)] [[Next Steps](#next-steps)] [[Releases](#releases)]
+[[About](#about)] [[What's New?](#whats-new)] [[Documentation](#documentation)] [[Getting Started](#getting-started)] [[Next Steps](#next-steps)] [[Acknowledgments](#acknowledgments)] [[Releases](#releases)]
 
 ----
 
@@ -84,6 +84,86 @@ Visualisation:
 Robotics:
 * [py_trees_ros](https://github.com/splintered-reality/py_trees_ros) - a tree manager and behaviours designed for use specifically with `ROS2`
 * [py_trees_ros_viewer](https://github.com/splintered-reality/py_trees_ros_viewer) - a `Qt/ROS2` implementation of `py_trees_js`
+
+## Acknowledgments
+
+`py_trees` has grown thanks to contributions from the community.
+
+### Typed input/output ports (2026)
+
+Port declarations, type validation, and XML parser. Contributed by [Sunrise Robotics](https://sunriserobotics.co/). Work performed by Jennifer Buehler ([@JenniferBuehler](https://github.com/JenniferBuehler)) while engaged at Sunrise Robotics.
+
+### 2.4.x — ForEach, CompareBlackboardVariables, callables in comparisons (2025)
+
+* **`ForEach` decorator** — Jorge Santos Simón
+* **`CompareBlackboardVariables` behaviour** — Jorge Santos Simón
+* **Callables in `ComparisonExpression`** — Jorge Santos Simón
+* **`typing.Any` for kwargs type hints, release management** — Sebastian Castro ([@sea-bass](https://github.com/sea-bass))
+* **Replace type checks with instance checks** — FrankvVeelen ([@FrankvVeelen](https://github.com/FrankvVeelen))
+* **Short-circuit evaluation in `all()` via generator expressions** — Lei Zhang
+* **Remove `py` package (pytest-benchmark)** — Robert Tang-Kong ([@tangkong](https://github.com/tangkong))
+* **Docs typo fix** — Sid Sarasvati
+
+### 2.3.x — Python 3.12 support, ProbabilisticBehaviour (2025)
+
+* **Python 3.12 support, CI modernisation, mypy fixes, tick-tock improvements** — Sebastian Castro ([@sea-bass](https://github.com/sea-bass))
+* **`ProbabilisticBehaviour`** — [@gitpushoriginmaster](https://github.com/gitpushoriginmaster)
+* **Parallel `SuccessOnOne` short-circuit fix** — wanfeng ([@starrye](https://github.com/starrye))
+* **`typing.Sequence` for composite `children` argument** — Efe Mert Demir
+* **Timer duration type-check fix** — Naveed Usmani
+* **Docs: ticking tree, make target fix** — Nino Walker
+* **Fixed broken examples** — [@Tunglies](https://github.com/Tunglies)
+* **Dev environment polish (VSCode extensions, devcontainers, README)** — Daniel Stonier ([@stonier](https://github.com/stonier))
+
+### 2.2.x — Sequences & selectors with/without memory (2023)
+
+* **Sequences and selectors with and without memory, `Repeat`/`Retry` decorators, explicit composite/behaviour arguments, poetry + tox + mypy + black/usort, new abstract base classes, `StatusQueue`** — Daniel Stonier ([@stonier](https://github.com/stonier))
+* **Display bugfix for off-the-grid blackboard client nodes, exclusive-write edge styling** — Matt Sprague
+* **Docs: `py_trees.common.Access` added to modules** — Jan-Hendrik Ewers
+* **Typos** — Liang Fok
+* **Tutorial URL update** — Andrew Best ([@andrewbest-tri](https://github.com/andrewbest-tri))
+
+### 2.1.x — Chooser deprecated, API housekeeping (2020–2021)
+
+* **Chain-able `add_children()` for composites** — [@iovsiann](https://github.com/iovsiann)
+* **Bugfix: current-child setting while moving through children** — Sara Sinback
+* **Blackboard fix** — Gabriel Rodrigues
+* **`Chooser` deprecation, `either_or` idiom, `TickCounter`, `CheckBlackboardVariableValues`, `ComparisonExpression`, mypy conformance** — Daniel Stonier ([@stonier](https://github.com/stonier))
+
+### 2.0.x — Blackboards V2 (2019)
+
+* **Blackboards V2: namespaced clients, read/write access control, exclusive-write access, key remappings, activity stream, required keys, `Access` enum, `DisplaySnapshotVisitor`** — Daniel Stonier ([@stonier](https://github.com/stonier))
+* **`show_only_visited` indentation fix** — [@andrewbest-tri](https://github.com/andrewbest-tri)
+* **Additional Parallel behaviour tests** — Sachit Vithaldas ([@sachit-tri](https://github.com/sachit-tri))
+
+### 1.2.x — `shutdown()`, `EternalGuard`, `StatusToBlackboard` (2019)
+
+* **`Behaviour.shutdown()`, `EternalGuard` decorator + idiom, `StatusToBlackboard` decorator, `xhtml_tree` display** — Daniel Stonier ([@stonier](https://github.com/stonier))
+* **`Visitor.finalise()` method** — Jan Feil ([@jfeil](https://github.com/jfeil))
+* **Timer licence header fix** — Naveed Usmani
+
+### 1.0.x — New-style decorators (2019)
+
+* **New-style decorators in `py_trees.decorators`, tip-in-ascii-tree highlighting, flexible `setup()` via kwargs, `add_visitor()`** — Daniel Stonier ([@stonier](https://github.com/stonier))
+* **Unicode-char fallbacks when stdout is not UTF-8, synchronous tree setup on infinite timeout, double-edge fix, section labels** — Sachit Vithaldas ([@sachit-tri](https://github.com/sachit-tri))
+* **`Blackboard.unset()`, parent field correctly set in `Behaviour.replace_child()`** — Kevin Greene
+* **Windows compatibility (keypress handling)** — Fredrik Baberg
+* **Documentation / code typo fixes** — Chris Lalancette
+
+### 0.x — Foundations (2015–2018)
+
+* **Initial implementation of behaviour trees in Python, `OneShot`, `PickUpWhereYouLeftOff` idioms, ROS 2 compatibility, dot-tree/ASCII-tree display, visitors and generators, ComparisonExpression, namespaces consolidation** — Daniel Stonier ([@stonier](https://github.com/stonier))
+* **Blackboard watcher/monitor, `SubBlackboard`, subscriber behaviours, `Imposter` tick fixes, meta `add_child()`, license / docstring cleanup** — Naveed Usmani
+* **`gopher_behaviours`: elevator transfer & autonomous rides (field-test-era behaviours)** — Marcus Liebhardt
+* **Maintainer handover & project metadata** — Michal Staniaszek
+* **Python 2/3 compatibility** — Aadesh Neupane
+* **Improved error logging** — Alex V
+* **Test/doc dependency isolation from installed deps, pytest fix for issue #80** — Sachit Vithaldas ([@sachit-tri](https://github.com/sachit-tri))
+* **Early maintenance & packaging** — dwlee, Alexander Reimann
+
+### Maintainers
+
+Daniel Stonier ([@stonier](https://github.com/stonier)), Naveed Usmani, Michal Staniaszek, Sebastian Castro ([@sea-bass](https://github.com/sea-bass)).
 
 ## Releases
 
