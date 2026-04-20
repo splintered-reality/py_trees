@@ -10,37 +10,37 @@ from .test_ports_helpers import Consumer, ConsumerProducer, Producer
 # TODO: Add more tests for PortsMixin methods as needed. There are also some tests that can be ported over from
 # test_behavior_with_ports.py to here.
 class TestPortsMixin(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.mixin = Producer(
             "test"
         )  # Use Producer class so we don't have to worry about PortsMixin abstract methods
 
-    def test_basic_types(self):
+    def test_basic_types(self) -> None:
         self.assertTrue(self.mixin._is_instance_of_type(5, int))
         self.assertTrue(self.mixin._is_instance_of_type(3.14, float))
         self.assertTrue(self.mixin._is_instance_of_type("hello", str))
         self.assertFalse(self.mixin._is_instance_of_type("5", int))
         self.assertFalse(self.mixin._is_instance_of_type(5, str))
 
-    def test_list_of_int(self):
+    def test_list_of_int(self) -> None:
         self.assertTrue(self.mixin._is_instance_of_type([1, 2, 3], list[int]))
         self.assertFalse(self.mixin._is_instance_of_type([1, "2", 3], list[int]))
         self.assertTrue(
             self.mixin._is_instance_of_type([], list[int])
         )  # empty list is valid
 
-    def test_union_type(self):
+    def test_union_type(self) -> None:
         T = int | str
         self.assertTrue(self.mixin._is_instance_of_type(5, T))
         self.assertTrue(self.mixin._is_instance_of_type("hello", T))
         self.assertFalse(self.mixin._is_instance_of_type(3.14, T))
 
-    def test_list_of_union(self):
+    def test_list_of_union(self) -> None:
         T = list[int | str]
         self.assertTrue(self.mixin._is_instance_of_type([1, "a", 2], T))
         self.assertFalse(self.mixin._is_instance_of_type([1, 2.0], T))
 
-    def test_or_operator(self):
+    def test_or_operator(self) -> None:
         T = int | str
         self.assertTrue(self.mixin._is_instance_of_type(5, T))
         self.assertTrue(self.mixin._is_instance_of_type("hello", T))
@@ -50,31 +50,31 @@ class TestPortsMixin(unittest.TestCase):
         self.assertTrue(self.mixin._is_instance_of_type([1, "a", 2], T_list))
         self.assertFalse(self.mixin._is_instance_of_type([1, 2.0], T_list))
 
-    def test_list_or_element(self):
+    def test_list_or_element(self) -> None:
         T = int | list[int]
         self.assertTrue(self.mixin._is_instance_of_type(5, T))
         self.assertTrue(self.mixin._is_instance_of_type([1, 2, 3], T))
         self.assertFalse(self.mixin._is_instance_of_type("hello", T))
         self.assertFalse(self.mixin._is_instance_of_type([1, "2"], T))
 
-    def test_not_implemented_for_dict(self):
+    def test_not_implemented_for_dict(self) -> None:
         with self.assertRaises(NotImplementedError):
             self.mixin._is_instance_of_type({"a": 1}, dict[str, int])
 
 
 class TestBehaviourWithPorts(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         """Reset the blackboard before each test."""
         py_trees.blackboard.Blackboard.clear()
 
-    def test_faulty_output_type(self):
+    def test_faulty_output_type(self) -> None:
         """Test that setting an output with an incorrect type raises a TypeError."""
         cap = Producer("FaultyOutput")
         cap.setup_ports()
         with self.assertRaises(TypeError):
             cap._set_output("output", 123)
 
-    def test_faulty_input_type(self):
+    def test_faulty_input_type(self) -> None:
         """Test that getting an input with an incorrect type raises a TypeError."""
         cap = Consumer("FaultyInput")
         cap.setup_ports(port_remappings={"input": "/sometest/input"})
@@ -86,7 +86,7 @@ class TestBehaviourWithPorts(unittest.TestCase):
         with self.assertRaises(TypeError):
             cap.get_input("input")
 
-    def test_simple_remapping(self):
+    def test_simple_remapping(self) -> None:
         """Test that a simple port remapping between producer and consumer works as expected."""
         # Producer out -> /shared, Consumer in -> /shared
         prod = Producer("prod")
@@ -96,7 +96,7 @@ class TestBehaviourWithPorts(unittest.TestCase):
         prod._set_output("output", "HelloWorld")
         self.assertEqual(cons.get_input("input"), "HelloWorld")
 
-    def test_default_ports_are_unique_per_node(self):
+    def test_default_ports_are_unique_per_node(self) -> None:
         """Ports without explicit remapping should not collide between sibling nodes."""
         prod_a = Producer("duplicate_name")
         prod_b = Producer("duplicate_name")
@@ -113,7 +113,7 @@ class TestBehaviourWithPorts(unittest.TestCase):
             prod_a._get_blackboard_key("output"), prod_b._get_blackboard_key("output")
         )
 
-    def test_multilevel_remapping(self):
+    def test_multilevel_remapping(self) -> None:
         """Test that multi-level port remapping through nested subtrees propagates values correctly."""
         # Producer out -> /shared, Consumer in -> /shared
         prod = Producer("prod")
@@ -163,7 +163,7 @@ class TestBehaviourWithPorts(unittest.TestCase):
         )
         self.assertEqual(cons.get_input("input"), expected_output)
 
-    def test_type_checking(self):
+    def test_type_checking(self) -> None:
         """Test that type checking is enforced when setting output values."""
         prod = Producer("prod")
         cons = Consumer("cons")
@@ -172,7 +172,7 @@ class TestBehaviourWithPorts(unittest.TestCase):
         with self.assertRaises(TypeError):
             prod._set_output("output", 123)
 
-    def test_subtree_namespace_remapping(self):
+    def test_subtree_namespace_remapping(self) -> None:
         """Test that remapping a port to the subtree namespace behaves as expected and is accessible via both keys."""
         # If the remapping key is the subtree namespace + port, there should be no remap_to
         subtree_ns = "/mysubtree"
@@ -194,7 +194,7 @@ class TestBehaviourWithPorts(unittest.TestCase):
         # print(prod.blackboard_client)
         self.assertEqual(prod.blackboard_client.remappings, {key: key})
 
-    def test_get_input_with_default(self):
+    def test_get_input_with_default(self) -> None:
         """Test that get_input returns the default value when no value is set on the blackboard."""
         cons = Consumer("cons")
         cons.setup_ports(port_remappings={"input": "/shared"})
@@ -210,7 +210,7 @@ class TestBehaviourWithPorts(unittest.TestCase):
         cons.blackboard_client.set("/shared", "ActualValue")
         self.assertEqual(cons.get_input("input", default=default_value), "ActualValue")
 
-    def test_get_input_with_default_none_and_no_data(self):
+    def test_get_input_with_default_none_and_no_data(self) -> None:
         """Test that get_input raises an exception when default is None and no value is set."""
         cons = Consumer("cons")
         cons.setup_ports(port_remappings={"input": "/shared"})

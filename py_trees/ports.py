@@ -3,7 +3,7 @@
 import types
 import typing
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 import py_trees
 
@@ -16,6 +16,15 @@ from ._ports_utils import (
     set_feedback_and_log,
     strip_trailing_uuid4,
 )
+
+# At type-check time, PortsMixin inherits from Behaviour so mypy knows about
+# self.name / self.id / self.logger / self.attach_blackboard_client / self.blackboards.
+# At runtime, PortsMixin inherits only from ABC; concrete classes combine it with
+# Behaviour explicitly (e.g. ``class MyNode(PortsMixin, py_trees.behaviour.Behaviour)``).
+if TYPE_CHECKING:
+    _MixinBase = py_trees.behaviour.Behaviour
+else:
+    _MixinBase = ABC
 
 # Const Prefix for parsing direct values to the XML parser
 # Any entry having this prefix should be interpreted as a direct value (not key) to the XML parser
@@ -33,7 +42,7 @@ class NoDataAvailable(Exception):  # noqa: N818
     pass
 
 
-class PortsMixin(ABC):
+class PortsMixin(_MixinBase):
     """
     Mixin class for enabling input and output ports on behavior tree nodes.
 
@@ -179,9 +188,11 @@ class PortsMixin(ABC):
             KeyError: If the port name is not defined in either input or output ports.
         """
         if port_name in cls.input_ports():
-            return cls.input_ports()[port_name][0]
+            port_type: type = cls.input_ports()[port_name][0]
+            return port_type
         elif port_name in cls.output_ports():
-            return cls.output_ports()[port_name][0]
+            port_type = cls.output_ports()[port_name][0]
+            return port_type
         else:
             raise KeyError(f"Port '{port_name}' not defined.")
 
@@ -199,13 +210,17 @@ class PortsMixin(ABC):
             KeyError: If the port name is not defined in either input or output ports.
         """
         if port_name in cls.input_ports():
-            return cls.input_ports()[port_name][1]
+            required: bool = cls.input_ports()[port_name][1]
+            return required
         elif port_name in cls.output_ports():
-            return cls.output_ports()[port_name][1]
+            required = cls.output_ports()[port_name][1]
+            return required
         else:
             raise KeyError(f"Port '{port_name}' not defined.")
 
-    def __init__(self, *args, behaviour_class_name: str | None = None, **kwargs):
+    def __init__(
+        self, *args: Any, behaviour_class_name: str | None = None, **kwargs: Any
+    ) -> None:
         """
         Initialize the PortsMixin.
 
@@ -223,9 +238,9 @@ class PortsMixin(ABC):
         super().__init__(*args, **kwargs)
         # The following fields will be added in the setup_ports function and are non-functional intentionally till it
         # gets added to the setup_ports function.
-        self._blackboard_client = None
-        self._subtree_namespace = None
-        self._ports_logger = None
+        self._blackboard_client: py_trees.blackboard.Client | None = None
+        self._subtree_namespace: str | None = None
+        self._ports_logger: PortsLogger | None = None
         # The name under which this behavior class is registered (e.g., in a registry).
         # Usually corresponds to the class name, but can also be an alias for a partial instantiation.
         # Defaults to the actual class name if not provided.
@@ -247,7 +262,7 @@ class PortsMixin(ABC):
         port_remappings: dict | None = None,
         subtree_namespace: str = "/",
         logger: PortsLogger | None = None,
-    ):
+    ) -> None:
         """
         Initialize the ports and prepare the blackboard interface.
 
@@ -285,7 +300,7 @@ class PortsMixin(ABC):
         if port_remappings is None:
             port_remappings = {}
 
-        name = self.name  # type: ignore[attr-defined]
+        name = self.name
 
         # Consistency check: all ports that are remapped must be present in the input or output ports
         for port in port_remappings:
@@ -296,10 +311,10 @@ class PortsMixin(ABC):
 
         # Use attach_blackboard_client() so the client is visible in self.blackboards
         # (upstream introspection / display).
-        self._blackboard_client = self.attach_blackboard_client(  # type: ignore[attr-defined]
+        self._blackboard_client = self.attach_blackboard_client(
             name=name, namespace=subtree_namespace
         )
-        self._ports_logger = logger if logger is not None else self.logger  # type: ignore[attr-defined]
+        self._ports_logger = logger if logger is not None else self.logger
         self._subtree_namespace = subtree_namespace
 
         # Register all keys for reading/writing that are remapped
@@ -380,7 +395,7 @@ class PortsMixin(ABC):
                 )
 
     @property
-    def subtree_namespace(self):
+    def subtree_namespace(self) -> str:
         """Return the namespace associated with the subtree, used to scope blackboard keys.
 
         Raises:
@@ -417,7 +432,7 @@ class PortsMixin(ABC):
         """
         return self._behaviour_class_name
 
-    def _is_instance_of_type(self, value, expected_type):
+    def _is_instance_of_type(self, value: Any, expected_type: Any) -> bool:
         """
         Check if a value is an instance of a specific type.
 
@@ -462,7 +477,7 @@ class PortsMixin(ABC):
             RuntimeError: If `setup_ports()` has not been called before accessing the logger.
         """
         if self._ports_logger is None:
-            raise RuntimeError(  # type: ignore[attr-defined]
+            raise RuntimeError(
                 f"{self.name}: PortsMixin.setup_ports() must be called before accessing the logger."
             )
         return self._ports_logger
@@ -480,7 +495,7 @@ class PortsMixin(ABC):
         ), "PortsMixin class needs to derive also from py_trees.behaviour.Behaviour"
         return set_feedback_and_log(
             self,
-            name=strip_trailing_uuid4(self.name) if print_name else "",  # type: ignore[attr-defined]
+            name=strip_trailing_uuid4(self.name) if print_name else "",
             level=level,
             message=msg,
             logger=self.get_logger(),
@@ -519,7 +534,7 @@ class PortsMixin(ABC):
             LogLevel.ERROR, msg, return_only=return_only, print_name=print_name
         )
 
-    def get_input(self, port_name: str, default=None):
+    def get_input(self, port_name: str, default: Any = None) -> Any:
         """Read the value of the given input port from the blackboard.
 
         Args:
@@ -535,9 +550,9 @@ class PortsMixin(ABC):
             NoDataAvailable: If no data is available on the input port and no default is given.
         """
         if port_name not in self.input_ports():
-            raise KeyError(f"{self.name}: Input port '{port_name}' not defined.")  # type: ignore[attr-defined]
+            raise KeyError(f"{self.name}: Input port '{port_name}' not defined.")
         if not self.blackboard_client.is_registered(port_name):
-            raise KeyError(  # type: ignore[attr-defined]
+            raise KeyError(
                 f"{self.name}: Input port '{port_name}' is not registered in the blackboard client."
             )
         # Get the value from the blackboard
@@ -546,7 +561,7 @@ class PortsMixin(ABC):
             if default is not None:
                 return default
             raise NoDataAvailable(
-                f"{self.name}: Input port '{port_name}' (mapped to "  # type: ignore[attr-defined]
+                f"{self.name}: Input port '{port_name}' (mapped to "
                 f"'{self._get_blackboard_key(port_name)}') has no data available."
             )
         value = self.blackboard_client.get(port_name)
@@ -561,7 +576,7 @@ class PortsMixin(ABC):
             )
         port_type, _ = self.input_ports()[port_name]
         if not self._is_instance_of_type(value, port_type):
-            raise TypeError(  # type: ignore[attr-defined]
+            raise TypeError(
                 f"{self.name}: Value '{value}' is not of type {port_type}, but {type(value)}"
             )
         return value
@@ -581,13 +596,13 @@ class PortsMixin(ABC):
             NoDataAvailable: If no data has (yet) been written to the output port.
         """
         if port_name not in self.output_ports():
-            raise KeyError(f"{self.name}: output port '{port_name}' not defined.")  # type: ignore[attr-defined]
+            raise KeyError(f"{self.name}: output port '{port_name}' not defined.")
         if not self.blackboard_client.is_registered(port_name):
-            raise KeyError(  # type: ignore[attr-defined]
+            raise KeyError(
                 f"{self.name}: output port '{port_name}' is not registered in the blackboard client."
             )
         if not self.blackboard_client.exists(port_name):
-            raise NoDataAvailable(  # type: ignore[attr-defined]
+            raise NoDataAvailable(
                 f"{self.name}: output port '{port_name}' has no data available."
             )
         # Get the value from the blackboard
@@ -598,10 +613,10 @@ class PortsMixin(ABC):
             )
         port_type, _ = self.output_ports()[port_name]
         if not self._is_instance_of_type(value, port_type):
-            raise TypeError(f"{self.name}: Value '{value}' is not of type {port_type}")  # type: ignore[attr-defined]
+            raise TypeError(f"{self.name}: Value '{value}' is not of type {port_type}")
         return value
 
-    def _set_output(self, port_name: str, value):
+    def _set_output(self, port_name: str, value: Any) -> None:
         """Write *value* to the given output port on the blackboard.
 
         Args:
@@ -616,18 +631,17 @@ class PortsMixin(ABC):
             TypeError: If the value does not match the expected type of the port.
         """
         if port_name not in self.output_ports():
-            raise KeyError(f"{self.name}: Output port '{port_name}' not defined.")  # type: ignore[attr-defined]
+            raise KeyError(f"{self.name}: Output port '{port_name}' not defined.")
         port_type, _ = self.output_ports()[port_name]
         if not self._is_instance_of_type(value, port_type):
-            raise TypeError(f"{self.name}: Value '{value}' is not of type {port_type}")  # type: ignore[attr-defined]
-
+            raise TypeError(f"{self.name}: Value '{value}' is not of type {port_type}")
         # DEEP DEBUG
         # self.log_debug(f"Setting blackboard variable "
         #                f"'{self._get_blackboard_key(port_name)}' to value '{value}'")
 
         self.blackboard_client.set(port_name, value)
 
-    def reset_port(self, port_name: str):
+    def reset_port(self, port_name: str) -> None:
         """
         Clear the value stored for a (usually output) port.
 
@@ -645,13 +659,13 @@ class PortsMixin(ABC):
         if (port_name not in self.input_ports()) and (
             port_name not in self.output_ports()
         ):
-            raise KeyError(  # type: ignore[attr-defined]
+            raise KeyError(
                 f"{self.name}: Port '{port_name}' not defined on {self.__class__.__name__}."
             )
 
-        reset_blackboard_key(self.blackboard_client, port_name, node_name=self.name)  # type: ignore[attr-defined]
+        reset_blackboard_key(self.blackboard_client, port_name, node_name=self.name)
 
-    def reset_all_output_ports(self):
+    def reset_all_output_ports(self) -> None:
         """
         Clear all output ports registered on this node.
 
@@ -668,8 +682,9 @@ class PortsMixin(ABC):
         for port in self.output_ports():
             self.reset_port(port)
 
-    def _get_blackboard_key(self, port_name):
+    def _get_blackboard_key(self, port_name: str) -> str:
         """Return the blackboard key that the port writes to, considering remappings."""
+        remapped_key: str
         try:
             abs_name = self.blackboard_client.absolute_name(port_name)
             remapped_key = self.blackboard_client.__getattribute__("remappings")[
@@ -679,10 +694,10 @@ class PortsMixin(ABC):
             remapped_key = self.blackboard_client.absolute_name(port_name)
         return remapped_key
 
-    def __str__(self):
-        return f"{self.__class__.__name__}=='{self.name}'"  # type: ignore[attr-defined]
+    def __str__(self) -> str:
+        return f"{self.__class__.__name__}=='{self.name}'"
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self.__str__()
 
     def _scoped_node_name(self) -> str:
@@ -692,7 +707,7 @@ class PortsMixin(ABC):
         Combines the subtree namespace, node name, and node UUID to ensure uniqueness.
         """
         namespace = (self._subtree_namespace or "/").rstrip("/")
-        unique_node_name = sanitize_name_for_blackboard_use(f"{self.name}_{self.id}")  # type: ignore[attr-defined]
+        unique_node_name = sanitize_name_for_blackboard_use(f"{self.name}_{self.id}")
         if namespace:
             return f"{namespace}/{unique_node_name}"
         return f"/{unique_node_name}"
@@ -743,10 +758,10 @@ class BehaviourWithPorts(PortsMixin, py_trees.behaviour.Behaviour):
       Instead, indicate such logical outcomes via node outputs (e.g., an empty list of detected objects).
     """
 
-    def __init__(self, name: str, **kwargs):
+    def __init__(self, name: str, **kwargs: Any) -> None:
         """Initialise the behaviour with *name* (forwarded to :class:`~py_trees.behaviour.Behaviour`)."""
         super().__init__(name=name, **kwargs)
 
-    def update(self):
+    def update(self) -> py_trees.common.Status:
         """Subclass-defined tick logic. Must return a :class:`~py_trees.common.Status`."""
         raise NotImplementedError("Subclasses must implement update()")

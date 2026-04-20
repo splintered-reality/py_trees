@@ -124,6 +124,7 @@ def convert_str_to_type(
         origin = list
 
     if origin is None:
+        assert isinstance(target_type, type)
         return _convert_simple(value, target_type)
 
     if origin is Union or origin is UnionType:
@@ -166,7 +167,7 @@ def convert_str_to_type(
 
 def apply_type_hints(
     constructor: Callable,
-    kwargs: dict[str, str],
+    kwargs: dict[str, Any],
     logger: PortsLogger | None = None,
     ignore: set[str] | None = None,
 ) -> tuple[dict[str, Any], bool]:
@@ -250,7 +251,7 @@ def apply_type_hints(
 
 
 def reset_blackboard_key(
-    blackboard_client, key_name: str, node_name: str = "unknown"
+    blackboard_client: "py_trees.blackboard.Client", key_name: str, node_name: str = "unknown"
 ) -> None:
     """Clear the stored value for *key_name* on *blackboard_client*."""
     if not blackboard_client.is_registered(key_name):
@@ -264,7 +265,7 @@ def reset_blackboard_key(
         return
 
     try:
-        py_trees.blackboard.Blackboard.unset(key_name)  # type: ignore[attr-defined]
+        py_trees.blackboard.Blackboard.unset(key_name)
         return
     except AttributeError:
         pass
@@ -283,7 +284,7 @@ def reset_blackboard_key(
     )
 
 
-def uuid4_regex(at_end=False) -> str:
+def uuid4_regex(at_end: bool = False) -> str:
     """Return a regex fragment matching a UUID4 string."""
     return r"((_)?[a-f0-9\-]{36})" + "$" if at_end else ""
 
@@ -313,7 +314,7 @@ def generate_node_name(
     general_name: str = "",
     prefix: str = "",
     no_uuid: bool = False,
-):
+) -> str:
     """
     Generate a node name.
 

@@ -5,6 +5,7 @@ import time
 import unittest
 from dataclasses import dataclass
 from functools import partial
+from typing import Any
 
 import py_trees
 from py_trees._ports_utils import (
@@ -23,16 +24,16 @@ from .test_ports_helpers import Consumer, ConsumerProducer, Producer
 class StdoutLogger:
     """Simple stdout logger for test debug output (replaces the removed standalone StdoutLogger class)."""
 
-    def info(self, msg: str):
+    def info(self, msg: str) -> None:
         print(f"[INFO] {msg}")
 
-    def warning(self, msg: str):
+    def warning(self, msg: str) -> None:
         print(f"[WARNING] {msg}")
 
-    def error(self, msg: str):
+    def error(self, msg: str) -> None:
         print(f"[ERROR] {msg}")
 
-    def debug(self, msg: str):
+    def debug(self, msg: str) -> None:
         print(f"[DEBUG] {msg}")
 
 
@@ -43,23 +44,23 @@ class DummyFactory:
 class Wait(BehaviourWithPorts):
     INPUT_DURATION_MS_PORT = "input_duration_ms"
 
-    def __init__(self, name: str, factory: DummyFactory, **kwargs):
+    def __init__(self, name: str, factory: DummyFactory, **kwargs: Any) -> None:
         super().__init__(name=name, **kwargs)
         self._factory = factory
         self.start_time = 0.0
 
     @classmethod
-    def input_ports(cls):
+    def input_ports(cls) -> dict:
         return {cls.INPUT_DURATION_MS_PORT: (int, True)}
 
     @classmethod
-    def output_ports(cls):
+    def output_ports(cls) -> dict:
         return {}
 
-    def initialise(self):
+    def initialise(self) -> None:
         self.start_time = time.time()
 
-    def update(self):
+    def update(self) -> py_trees.common.Status:
         if self.duration_value_ms < 0:
             return py_trees.common.Status.RUNNING
         return (
@@ -69,7 +70,7 @@ class Wait(BehaviourWithPorts):
         )
 
     @property
-    def duration_value_ms(self):
+    def duration_value_ms(self) -> Any:
         return self.get_input(self.INPUT_DURATION_MS_PORT)
 
 
@@ -89,7 +90,7 @@ def get_behaviors_lookup(
 class TestXMLParser(unittest.TestCase):
     # Find the final consumer node
 
-    def setUp(self):
+    def setUp(self) -> None:
         py_trees.blackboard.Blackboard.clear()
         # Minimal XML with remapping and a subtree
         self.xml = """<root main_tree_to_execute="MainTree">
@@ -111,7 +112,7 @@ class TestXMLParser(unittest.TestCase):
         self.tempfile.write(self.xml)
         self.tempfile.close()
         # BehaviourWithPorts lookup for test helpers
-        self.init_lookup = {
+        self.init_lookup: dict[str, Any] = {
             "Producer": Producer,
             "Consumer": Consumer,
             "ConsumerProducer": ConsumerProducer,
@@ -119,10 +120,10 @@ class TestXMLParser(unittest.TestCase):
 
         self.factory = DummyFactory()
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         os.unlink(self.tempfile.name)
 
-    def test_xml_parser_remapping(self):
+    def test_xml_parser_remapping(self) -> None:
         """Ensure remapping between subtrees works correctly."""
         root_node = parse_behaviour_tree_xml(
             self.tempfile.name, init_lookup=self.init_lookup, logger=StdoutLogger()
@@ -134,7 +135,7 @@ class TestXMLParser(unittest.TestCase):
         self.assertIsNotNone(cons)
         self.assertEqual(cons.consumed_value, "Producer[/SubTree:SubTree.prod]")
 
-    def test_grandparent_xml(self):
+    def test_grandparent_xml(self) -> None:
         """Test XML parser with grandparent-child relationships and correct value propagation."""
         xml_path = os.path.join(os.path.dirname(__file__), "grandparent_test.xml")
         root_node = parse_behaviour_tree_xml(
@@ -143,7 +144,7 @@ class TestXMLParser(unittest.TestCase):
         btree = py_trees.trees.BehaviourTree(root_node)
         btree.tick()
         cons = find_node_by_name(btree.root, generate_node_name("ConsumerMain"))
-        self.assertIsNotNone(cons)
+        assert isinstance(cons, Consumer)
         expected_value = (
             "Producer"
             "[/:ProducerMain]"
@@ -158,19 +159,19 @@ class TestXMLParser(unittest.TestCase):
         )
         self.assertEqual(cons.consumed_value, expected_value)
 
-    def test_custom_behavior_with_extra_arg(self):
+    def test_custom_behavior_with_extra_arg(self) -> None:
         """Test custom behavior with an additional argument."""
 
         class CustomBehaviourWithPorts(BehaviourWithPorts):
             @classmethod
-            def input_ports(cls):
+            def input_ports(cls) -> dict:
                 return {"in": (str, False)}
 
             @classmethod
-            def output_ports(cls):
+            def output_ports(cls) -> dict:
                 return {"out": (str, False)}
 
-            def __init__(self, name, extra_arg, **kwargs):
+            def __init__(self, name: str, extra_arg: str, **kwargs: Any) -> None:
                 super().__init__(name, **kwargs)
                 self.extra_arg = extra_arg
 
@@ -202,7 +203,7 @@ class TestXMLParser(unittest.TestCase):
         finally:
             os.unlink(temp_xml_path)
 
-    def test_subtree_remapping_only_explicit_keys(self):
+    def test_subtree_remapping_only_explicit_keys(self) -> None:
         """Check that only explicitly remapped keys are used in subtrees."""
         xml_content = """
         <root main_tree_to_execute="MainTree">
@@ -237,12 +238,12 @@ class TestXMLParser(unittest.TestCase):
 
         # MyInternalConsumer does not get the {transfer_key} in the main namespace
         node = find_node_by_name(root, "MyInternalConsumer", strip_prefix=True)
-        self.assertIsNotNone(node)
+        assert isinstance(node, Consumer)
 
         expected_value = "Producer[/Subtree1:Subtree1.MyInternalProducer]"
         self.assertEqual(node.consumed_value, expected_value)
 
-    def test_tree_structure(self):
+    def test_tree_structure(self) -> None:
         """Verify that the structure of the behavior tree matches the XML."""
         root_node = parse_behaviour_tree_xml(
             self.tempfile.name, init_lookup=self.init_lookup, logger=StdoutLogger()
@@ -268,7 +269,7 @@ class TestXMLParser(unittest.TestCase):
         self.assertEqual(producer.name, "SubTree.prod")
         self.assertIsInstance(producer, Producer)
 
-    def test_parsing_simple_direct_values_to_XML(self):
+    def test_parsing_simple_direct_values_to_XML(self) -> None:
         """Verify that simple direct values are successfully parsed via the XML parser."""
         # Minimal XML with direct values and a subtree
         self.xml = """<root main_tree_to_execute="MainTree">
@@ -293,12 +294,12 @@ class TestXMLParser(unittest.TestCase):
         btree.tick()
 
         node = find_node_by_name(root_node, "cons")
-        self.assertIsNotNone(node)
+        assert isinstance(node, Consumer)
 
         self.assertEqual(type(node.consumed_value), str)
         self.assertEqual(node.consumed_value, "ABC")
 
-    def test_parsing_direct_values_to_XML(self):
+    def test_parsing_direct_values_to_XML(self) -> None:
         """Verify that direct values are successfully parsed via the XML parser."""
         # Minimal XML with direct values and a subtree
         self.xml = """<root main_tree_to_execute="MainTree">
@@ -331,19 +332,19 @@ class TestXMLParser(unittest.TestCase):
         btree.tick()
 
         node = find_node_by_name(root_node, "internalcons", strip_prefix=True)
-        self.assertIsNotNone(node)
+        assert isinstance(node, Consumer)
 
         expected_value = "Producer[/Subtree1:Subtree1.prod]"
         self.assertEqual(node.consumed_value, expected_value)
 
         node = find_node_by_name(root_node, "cons", strip_prefix=True)
-        self.assertIsNotNone(node)
+        assert isinstance(node, Consumer)
 
         expected_value = "500"
 
         self.assertEqual(node.consumed_value, expected_value)
 
-    def test_subtree_parsing_direct_values_to_XML(self):
+    def test_subtree_parsing_direct_values_to_XML(self) -> None:
         """Verify that direct values are successfully parsed via the XML parser."""
         # Minimal XML with direct values and a subtree
         self.xml = """<root main_tree_to_execute="MainTree">
@@ -380,26 +381,26 @@ class TestXMLParser(unittest.TestCase):
         btree.tick()
 
         node = find_node_by_name(root_node, "InternalConsumer3", strip_prefix=True)
-        self.assertIsNotNone(node)
+        assert isinstance(node, Consumer)
 
         expected_value = "Producer[/SubTree1:SubTree1.Producer2]"
         self.assertEqual(node.consumed_value, expected_value)
 
         node = find_node_by_name(root_node, "Consumer1", strip_prefix=True)
-        self.assertIsNotNone(node)
+        assert isinstance(node, Consumer)
 
         expected_value = "sunrise"
 
         self.assertEqual(node.consumed_value, expected_value)
 
         node = find_node_by_name(root_node, "Consumer2", strip_prefix=True)
-        self.assertIsNotNone(node)
+        assert isinstance(node, Consumer)
 
         expected_value = "100"
 
         self.assertEqual(node.consumed_value, expected_value)
 
-    def test_wait_node(self):
+    def test_wait_node(self) -> None:
         """Verify that the duration value is successfully used by the Wait node."""
         wait_duration_ms = 500
         # Minimal XML using the Wait behavior.
@@ -431,12 +432,12 @@ class TestXMLParser(unittest.TestCase):
         duration = time.time() - start_time
 
         node = find_node_by_name(root_node, "Pause1", strip_prefix=True)
-        self.assertIsNotNone(node)
+        assert isinstance(node, Wait)
 
         self.assertEqual(node.duration_value_ms, wait_duration_ms)
         self.assertAlmostEqual(duration, wait_duration_ms / 1000.0, delta=1)
 
-    def test_wait_with_registry_node(self):
+    def test_wait_with_registry_node(self) -> None:
         """Verify that the duration value is successfully used by the Wait node using the registry."""
         wait_duration_ms = 2000
         # Minimal XML using the Wait behavior.
@@ -477,12 +478,12 @@ class TestXMLParser(unittest.TestCase):
         duration = time.time() - start_time
 
         node = find_node_by_name(root_node, "Pause1", strip_prefix=True)
-        self.assertIsNotNone(node)
+        assert isinstance(node, Wait)
 
         self.assertEqual(node.duration_value_ms, wait_duration_ms)
         self.assertAlmostEqual(duration, wait_duration_ms / 1000.0, delta=1)
 
-    def test_ctor_args_passed_as_kwargs(self):
+    def test_ctor_args_passed_as_kwargs(self) -> None:
         """
         Non-port XML attributes must be passed as constructor kwargs.
         Values are left as strings (no automatic type coercion).
@@ -490,14 +491,16 @@ class TestXMLParser(unittest.TestCase):
 
         class EchoCtorArgs(BehaviourWithPorts):
             @classmethod
-            def input_ports(cls):
+            def input_ports(cls) -> dict:
                 return {"in": (str, False)}  # not used here
 
             @classmethod
-            def output_ports(cls):
+            def output_ports(cls) -> dict:
                 return {"out": (str, False)}  # not used here
 
-            def __init__(self, name, greeting, times, flag, **kwargs):
+            def __init__(
+                self, name: str, greeting: str, times: str, flag: str, **kwargs: Any
+            ) -> None:
                 super().__init__(name, **kwargs)
                 self.greeting = greeting
                 self.times = times
@@ -531,7 +534,7 @@ class TestXMLParser(unittest.TestCase):
         finally:
             os.unlink(path)
 
-    def test_mixed_ports_and_ctor_kwargs(self):
+    def test_mixed_ports_and_ctor_kwargs(self) -> None:
         """
         If an attribute matches a declared port, it is handled as a port (remap/resolve)
         and must NOT be passed as a constructor kwarg. Non-port attributes become ctor kwargs.
@@ -539,19 +542,19 @@ class TestXMLParser(unittest.TestCase):
 
         class PortAndCtor(BehaviourWithPorts):
             @classmethod
-            def input_ports(cls):
+            def input_ports(cls) -> dict:
                 return {"in": (str, True)}  # only this is a port
 
             @classmethod
-            def output_ports(cls):
+            def output_ports(cls) -> dict:
                 return {"out": (str, False)}
 
-            def __init__(self, name, label, **kwargs):
+            def __init__(self, name: str, label: str, **kwargs: Any) -> None:
                 super().__init__(name, **kwargs)
                 self.label = label
-                self.in_value = None
+                self.in_value: Any = None
 
-            def update(self):
+            def update(self) -> py_trees.common.Status:
                 self.in_value = self.get_input("in")
                 return py_trees.common.Status.SUCCESS
 
@@ -588,21 +591,21 @@ class TestXMLParser(unittest.TestCase):
         finally:
             os.unlink(path)
 
-    def test_ctor_arg_with_curly_value_is_not_resolved(self):
+    def test_ctor_arg_with_curly_value_is_not_resolved(self) -> None:
         """
         Non-port attributes that look like keys (e.g., "{foo}") raise an exception.
         """
 
         class TakesKeyString(BehaviourWithPorts):
             @classmethod
-            def input_ports(cls):
+            def input_ports(cls) -> dict:
                 return {}  # no ports at all
 
             @classmethod
-            def output_ports(cls):
+            def output_ports(cls) -> dict:
                 return {}
 
-            def __init__(self, name, token):
+            def __init__(self, name: str, token: str) -> None:
                 super().__init__(name)
                 self.token = token
 
@@ -630,10 +633,10 @@ class TestXMLParser(unittest.TestCase):
 class TestXMLParserImports(unittest.TestCase):
     """Tests for XML import pre-processing (top-level <Import>/<Include>)."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         py_trees.blackboard.Blackboard.clear()
         # Reuse simple helpers
-        self.init_lookup = {
+        self.init_lookup: dict[str, Any] = {
             "Producer": Producer,
             "Consumer": Consumer,
             "ConsumerProducer": ConsumerProducer,
@@ -645,11 +648,11 @@ class TestXMLParserImports(unittest.TestCase):
         tf.close()
         return tf.name
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         # Nothing to do; each test cleans its own temps
         pass
 
-    def test_import_basic(self):
+    def test_import_basic(self) -> None:
         """Main references a subtree defined in an imported file."""
         lib_xml = """<root>
           <BehaviorTree ID="LibTree">
@@ -678,13 +681,13 @@ class TestXMLParserImports(unittest.TestCase):
             tree = py_trees.trees.BehaviourTree(root)
             tree.tick()
             c = find_node_by_name(root, "C", strip_prefix=True)
-            self.assertIsNotNone(c)
+            assert isinstance(c, Consumer)
             self.assertEqual(c.consumed_value, "Producer[/Lib1:MYSEQ.Lib1.lib_prod]")
         finally:
             os.unlink(lib_path)
             os.unlink(main_path)
 
-    def test_import_duplicate_id_conflict_with_local(self):
+    def test_import_duplicate_id_conflict_with_local(self) -> None:
         """Duplicate BehaviorTree ID between main file and imported file raises ValueError."""
         lib_xml = """<root>
           <BehaviorTree ID="DupTree"><Sequence/></BehaviorTree>
@@ -707,7 +710,7 @@ class TestXMLParserImports(unittest.TestCase):
             os.unlink(lib_path)
             os.unlink(main_path)
 
-    def test_import_duplicate_id_conflict_between_imports(self):
+    def test_import_duplicate_id_conflict_between_imports(self) -> None:
         """Duplicate BehaviorTree ID across two imported files raises ValueError."""
         lib_a = """<root><BehaviorTree ID="SameID"><Sequence/></BehaviorTree></root>"""
         lib_b = """<root><BehaviorTree ID="SameID"><Sequence/></BehaviorTree></root>"""
@@ -731,7 +734,7 @@ class TestXMLParserImports(unittest.TestCase):
             os.unlink(path_b)
             os.unlink(main_path)
 
-    def test_import_missing_file(self):
+    def test_import_missing_file(self) -> None:
         """Missing import target raises FileNotFoundError."""
         main_xml = """<root main_tree_to_execute="Main">
           <Import src="/does/not/exist/lib.xml"/>
@@ -746,7 +749,7 @@ class TestXMLParserImports(unittest.TestCase):
         finally:
             os.unlink(main_path)
 
-    def test_import_main_tree_from_import(self):
+    def test_import_main_tree_from_import(self) -> None:
         """main_tree_to_execute can point to a BehaviorTree defined in an imported file."""
         lib_xml = """<root>
           <BehaviorTree ID="ExternalMain">
@@ -769,13 +772,13 @@ class TestXMLParserImports(unittest.TestCase):
             tree = py_trees.trees.BehaviourTree(root)
             tree.tick()
             x = find_node_by_name(root, "X", strip_prefix=True)
-            self.assertIsNotNone(x)
+            assert isinstance(x, Consumer)
             self.assertEqual(x.consumed_value, "OK")
         finally:
             os.unlink(lib_path)
             os.unlink(main_path)
 
-    def test_import_nested_not_supported(self):
+    def test_import_nested_not_supported(self) -> None:
         """Nested <Import> inside a BehaviorTree is not supported and causes a parse error."""
         lib_xml = """<root>
           <BehaviorTree ID="Lib"><Sequence/></BehaviorTree>
@@ -802,7 +805,7 @@ class TestXMLParserImports(unittest.TestCase):
             os.unlink(lib_path)
             os.unlink(main_path)
 
-    def test_import_with_search_paths(self):
+    def test_import_with_search_paths(self) -> None:
         """Import path can be resolved via the 'search_paths' argument."""
         with tempfile.TemporaryDirectory() as d_main, tempfile.TemporaryDirectory() as d_lib:
             lib_path = os.path.join(d_lib, "lib.xml")
@@ -840,10 +843,10 @@ class TestXMLParserImports(unittest.TestCase):
             tree = py_trees.trees.BehaviourTree(root)
             tree.tick()
             c = find_node_by_name(root, "C", strip_prefix=True)
-            self.assertIsNotNone(c)
+            assert isinstance(c, Consumer)
             self.assertEqual(c.consumed_value, "Producer[/L:L.MySeq.P]")
 
-    def test_imported_bt_missing_id(self):
+    def test_imported_bt_missing_id(self) -> None:
         """Imported file containing a <BehaviorTree> without an ID raises ValueError."""
         lib_path = self._write_temp_xml(
             """<root><BehaviorTree><Sequence/></BehaviorTree></root>"""
@@ -863,7 +866,7 @@ class TestXMLParserImports(unittest.TestCase):
             os.unlink(lib_path)
             os.unlink(main_path)
 
-    def test_parsing_floating_point_direct_values(self):
+    def test_parsing_floating_point_direct_values(self) -> None:
         """Verify that floating point direct values are successfully parsed via the XML parser."""
         self.xml = """<root main_tree_to_execute="MainTree">
           <BehaviorTree ID="MainTree">
@@ -887,11 +890,11 @@ class TestXMLParserImports(unittest.TestCase):
         btree.tick()
 
         node = find_node_by_name(root_node, "cons", strip_prefix=True)
-        self.assertIsNotNone(node)
+        assert isinstance(node, Consumer)
 
         self.assertEqual(node.consumed_value, "10.0")
 
-    def test_type_coercion_with_float_consumer(self):
+    def test_type_coercion_with_float_consumer(self) -> None:
         """Test that string values are converted to float when appropriate."""
         from .test_ports_helpers import FloatConsumer
 
@@ -918,7 +921,7 @@ class TestXMLParserImports(unittest.TestCase):
             btree.tick()
 
             node = find_node_by_name(root_node, "float_cons", strip_prefix=True)
-            self.assertIsNotNone(node)
+            assert isinstance(node, FloatConsumer)
             self.assertEqual(node.consumed_value, 3.14)
             self.assertIsInstance(node.consumed_value, float)
         finally:

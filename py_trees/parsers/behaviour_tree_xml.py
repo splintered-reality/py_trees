@@ -106,6 +106,7 @@ import re
 import uuid
 import xml.etree.ElementTree as ET
 from copy import deepcopy
+from typing import Any
 
 import py_trees
 from py_trees._ports_utils import (
@@ -140,24 +141,24 @@ PARENT_NODES_TAGS = set(PARENT_NODES_WITH_PORTS_TAGS) | {
 }
 
 
-def build_bt_index(root):
+def build_bt_index(root: ET.Element) -> dict[str, ET.Element]:
     """Return ``{ID: element}`` for every ``<BehaviorTree>`` child of *root*."""
     return {bt.attrib["ID"]: bt for bt in root.findall("BehaviorTree")}
 
 
-def is_key(value):
+def is_key(value: str) -> re.Match | None:
     """Return a regex match if *value* is a ``{key}`` reference."""
     return CURLY_PATTERN.match(value)
 
 
-def get_key_name(value):
+def get_key_name(value: str) -> str:
     """Extract the key name from a ``{key}`` reference string."""
     match = CURLY_PATTERN.match(value)
     assert match, f"Key '{value}' is not a valid key"
     return match.group(1)
 
 
-def resolve_key_remapping(key, remapping_table) -> str:
+def resolve_key_remapping(key: str, remapping_table: dict[str, str]) -> str:
     """
     Recursively resolve a key through the remapping table until it is not a curly-brace key.
 
@@ -198,7 +199,7 @@ def resolve_key_remapping(key, remapping_table) -> str:
             raise ValueError(f"Key '{inner}' not found in remapping table")
 
 
-def resolve_direct_value_remapping(key, remapping_table) -> str:
+def resolve_direct_value_remapping(key: str, remapping_table: dict[str, str]) -> str:
     """
     Obtain a direct value from the remapping table.
 
@@ -226,7 +227,7 @@ def resolve_direct_value_remapping(key, remapping_table) -> str:
     return key
 
 
-def get_absolute_reference(value, subtree_namespace) -> str:
+def get_absolute_reference(value: str, subtree_namespace: str) -> str:
     """
     Get the absolute path of a value (e.g. a key) by prepending the namespace.
 
@@ -240,7 +241,7 @@ def get_absolute_reference(value, subtree_namespace) -> str:
     return subtree_namespace.rstrip("/") + "/" + value
 
 
-def get_class_from_init_lookup(class_name, init_lookup) -> type["PortsMixin"]:
+def get_class_from_init_lookup(class_name: str, init_lookup: dict) -> type["PortsMixin"]:
     """
     Get the class from the init_lookup dictionary, ensuring it is a subclass of PortsMixin.
 
@@ -283,9 +284,9 @@ def get_class_from_init_lookup(class_name, init_lookup) -> type["PortsMixin"]:
 
 
 def parse_behaviour_tree_xml(
-    xml_file,
-    main_tree_id=None,
-    init_lookup=None,
+    xml_file: str,
+    main_tree_id: str | None = None,
+    init_lookup: dict | None = None,
     logger: PortsLogger | None = None,
     search_paths: list[str] | None = None,
 ) -> py_trees.behaviour.Behaviour:
@@ -319,8 +320,8 @@ def parse_behaviour_tree_xml(
     if init_lookup is None:
         raise ValueError("init_lookup dictionary must be provided")
 
-    tree = ET.parse(xml_file)
-    root = tree.getroot()
+    xml_tree = ET.parse(xml_file)
+    root = xml_tree.getroot()
 
     # Load and inline any imports *before* building the index
     _inline_imports_into_root(
@@ -363,7 +364,7 @@ def parse_behaviour_tree_xml(
     return tree
 
 
-def add_new_key_to_remapping_table(value, remapping_table, subtree_namespace):
+def add_new_key_to_remapping_table(value: str, remapping_table: dict[str, str], subtree_namespace: str) -> None:
     """
     Add the value to the remapping table, **if** it is a key itself.
 
@@ -399,7 +400,7 @@ def add_new_key_to_remapping_table(value, remapping_table, subtree_namespace):
 
 def build_subtree_remapping(
     elem: ET.Element,
-    remapping_table: dict,
+    remapping_table: dict[str, str],
     parent_namespace: str,
     logger: PortsLogger = NOOP_LOGGER,
 ) -> dict[str, str]:
@@ -474,7 +475,7 @@ def build_subtree_remapping(
 def build_port_remappings(
     elem: ET.Element,
     class_: type[PortsMixin],
-    remapping_table: dict,
+    remapping_table: dict[str, str],
     subtree_namespace: str,
     logger: PortsLogger = NOOP_LOGGER,
 ) -> dict[str, str]:
@@ -537,7 +538,7 @@ def build_port_remappings(
 def instantiate_ports_node(
     elem: ET.Element,
     init_lookup: dict,
-    remapping_table: dict,
+    remapping_table: dict[str, str],
     subtree_namespace: str,
     logger: PortsLogger = NOOP_LOGGER,
     constructor_kwargs: dict | None = None,
@@ -633,7 +634,7 @@ def instantiate_ports_node(
         )
     try:
         # Pass the behaviour_class_name (the tag/registry name) to the constructor
-        node = init_lookup[portsmixin_name](
+        node: PortsMixin = init_lookup[portsmixin_name](
             name=instance_name,
             behaviour_class_name=portsmixin_name,
             **constructor_kwargs,
@@ -655,11 +656,11 @@ def instantiate_ports_node(
 
 def build_tree_from_xml(
     elem: ET.Element,
-    remapping_table: dict,
+    remapping_table: dict[str, str],
     init_lookup: dict,
     bt_index: dict,
     logger: PortsLogger = NOOP_LOGGER,
-    subtree_namespace="/",
+    subtree_namespace: str = "/",
     parent_names_str: str = "",
 ) -> py_trees.behaviour.Behaviour:
     """
@@ -683,8 +684,6 @@ def build_tree_from_xml(
         ValueError: For missing trees or unsupported tags.
         AssertionError: If a <BehaviorTree> does not have exactly one child.
     """
-    if logger is None and hasattr(elem, "_logger_placeholder"):
-        pass  # keep logger as None
     tag = elem.tag.lower()
     logger.debug(
         f"Processing tag: '{elem.tag}' with attributes {elem.attrib}. Remapping table: {remapping_table}"
@@ -728,6 +727,7 @@ def build_tree_from_xml(
             children.append(child_node)
 
         memory = elem.attrib.get("memory", "true").lower() == "true"
+        node: py_trees.behaviour.Behaviour
         if tag == "sequence":
             node = py_trees.composites.Sequence(
                 name=node_name, memory=memory, children=children
@@ -752,7 +752,7 @@ def build_tree_from_xml(
             )
         elif tag in PARENT_NODES_WITH_PORTS_TAGS:
             # Instantiate ports-enabled composite
-            constructor_kwargs = {}
+            constructor_kwargs: dict[str, Any] = {}
             cls = get_class_from_init_lookup(elem.tag, init_lookup)
             if issubclass(cls, py_trees.decorators.Decorator):
                 if not len(children) == 1:
@@ -794,13 +794,13 @@ def build_tree_from_xml(
         # This is NOT a subtree instantiation (which is handled by the 'subtreeplus'/'subtree' branch),
         # but simply the entry point for parsing the structure of a tree or subtree definition.
         logger.debug(f"Entering <BehaviorTree> ID='{elem.attrib.get('ID', '')}'")
-        children = list(elem)
-        assert len(children) == 1, (
+        child_elems = list(elem)
+        assert len(child_elems) == 1, (
             f"<BehaviorTree ID='{elem.attrib.get('ID', '')}'> must have exactly one child (the root node), "
-            f"but found {len(children)} children."
+            f"but found {len(child_elems)} children."
         )
         return build_tree_from_xml(
-            children[0],
+            child_elems[0],
             remapping_table,
             init_lookup,
             bt_index,
