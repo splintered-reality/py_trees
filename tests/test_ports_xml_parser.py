@@ -639,6 +639,66 @@ class TestXMLParser(unittest.TestCase):
             )
         os.unlink(path)
 
+    def test_direct_portsmixin_leaf_accepted(self) -> None:
+        """
+        A leaf class that is ``PortsMixin + Behaviour`` (not via ``BehaviourWithPorts``)
+        should be parsed successfully.
+
+        Regression test: the parser previously rejected anything that wasn't
+        specifically an instance of ``BehaviourWithPorts``. The gate has been
+        relaxed to accept any ``PortsMixin`` + ``py_trees.behaviour.Behaviour``.
+        """
+        from py_trees.ports import PortsMixin
+
+        class DirectPortsLeaf(PortsMixin, py_trees.behaviour.Behaviour):
+            """PortsMixin leaf that does NOT go through BehaviourWithPorts."""
+
+            def __init__(self, name: str, **kwargs: Any) -> None:
+                super().__init__(name=name, **kwargs)
+
+            @classmethod
+            def input_ports(cls) -> dict:
+                return {}
+
+            @classmethod
+            def output_ports(cls) -> dict:
+                return {"out": (str, True)}
+
+            def update(self) -> py_trees.common.Status:
+                self._set_output("out", "direct-ports-leaf-ran")
+                return py_trees.common.Status.SUCCESS
+
+        # Sanity: not a BehaviourWithPorts, but is a PortsMixin + Behaviour.
+        from py_trees.ports import BehaviourWithPorts
+
+        self.assertFalse(issubclass(DirectPortsLeaf, BehaviourWithPorts))
+        self.assertTrue(issubclass(DirectPortsLeaf, PortsMixin))
+        self.assertTrue(issubclass(DirectPortsLeaf, py_trees.behaviour.Behaviour))
+
+        xml = """<root main_tree_to_execute="Main">
+          <BehaviorTree ID="Main">
+            <Sequence>
+              <DirectPortsLeaf name="direct" out="{result}"/>
+            </Sequence>
+          </BehaviorTree>
+        </root>"""
+        with tempfile.NamedTemporaryFile(delete=False, mode="w", suffix=".xml") as tf:
+            tf.write(xml)
+            path = tf.name
+
+        try:
+            init_lookup = {"DirectPortsLeaf": DirectPortsLeaf}
+            root = parse_behaviour_tree_xml(
+                path, init_lookup=init_lookup, logger=StdoutLogger()
+            )
+            tree = py_trees.trees.BehaviourTree(root)
+            tree.tick()
+            leaf = find_node_by_class(root, DirectPortsLeaf)
+            self.assertIsNotNone(leaf)
+            self.assertEqual(leaf.get_last_output("out"), "direct-ports-leaf-ran")
+        finally:
+            os.unlink(path)
+
 
 class TestXMLParserImports(unittest.TestCase):
     """Tests for XML import pre-processing (top-level <Import>/<Include>)."""
