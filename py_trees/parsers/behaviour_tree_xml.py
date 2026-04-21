@@ -1,3 +1,12 @@
+#!/usr/bin/env python
+#
+# License: BSD
+#   https://raw.githubusercontent.com/splintered-reality/py_trees/devel/LICENSE
+#
+##############################################################################
+# Documentation
+##############################################################################
+
 """
 XML parser for the BehaviorTree format.
 

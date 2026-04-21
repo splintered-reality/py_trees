@@ -1,3 +1,13 @@
+#!/usr/bin/env python
+#
+# License: BSD
+#   https://raw.githubusercontent.com/splintered-reality/py_trees/devel/LICENSE
+#
+
+##############################################################################
+# Imports
+##############################################################################
+
 # ruff: noqa: SIM115
 import os
 import tempfile

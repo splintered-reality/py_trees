@@ -1,3 +1,13 @@
+#!/usr/bin/env python
+#
+# License: BSD
+#   https://raw.githubusercontent.com/splintered-reality/py_trees/devel/LICENSE
+#
+
+##############################################################################
+# Imports
+##############################################################################
+
 import unittest
 
 import py_trees

@@ -1,3 +1,18 @@
+#!/usr/bin/env python
+#
+# License: BSD
+#   https://raw.githubusercontent.com/splintered-reality/py_trees/devel/LICENSE
+#
+##############################################################################
+# Documentation
+##############################################################################
+
+"""Private helpers shared between :mod:`py_trees.ports` and :mod:`py_trees.parsers`."""
+
+##############################################################################
+# Imports
+##############################################################################
+
 import inspect
 import re
 import uuid
@@ -251,7 +266,9 @@ def apply_type_hints(
 
 
 def reset_blackboard_key(
-    blackboard_client: "py_trees.blackboard.Client", key_name: str, node_name: str = "unknown"
+    blackboard_client: "py_trees.blackboard.Client",
+    key_name: str,
+    node_name: str = "unknown",
 ) -> None:
     """Clear the stored value for *key_name* on *blackboard_client*."""
     if not blackboard_client.is_registered(key_name):

@@ -1,4 +1,17 @@
+#!/usr/bin/env python
+#
+# License: BSD
+#   https://raw.githubusercontent.com/splintered-reality/py_trees/devel/LICENSE
+#
+##############################################################################
+# Documentation
+##############################################################################
+
 """Typed input/output ports for py_trees behaviours."""
+
+##############################################################################
+# Imports
+##############################################################################
 
 import types
 import typing
