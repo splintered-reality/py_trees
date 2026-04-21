@@ -371,6 +371,14 @@ class PortsMixin(_MixinBase):
                         )
                     key = local_key  # Remap to the local key holding the constant value
                     self._blackboard_client.set(key, updated_value)
+                # Resolve relative remap targets under the subtree namespace.
+                # py_trees.blackboard.Client.register_key() uses remap_to as-is
+                # without applying the client's namespace, so relative keys
+                # like "transfer" would become the global literal key "transfer"
+                # and collide across sibling subtrees.
+                key = py_trees.blackboard.Blackboard.absolute_name(
+                    subtree_namespace, key
+                )
                 self._blackboard_client.register_key(
                     key=port,
                     access=py_trees.common.Access.READ,
@@ -382,6 +390,11 @@ class PortsMixin(_MixinBase):
                     f"Port '{port}': Registered blackboard key '{abs_port_name}' for reading [remapped to {key}]."
                 )
             elif port in self.output_ports():
+                # Resolve relative remap targets under the subtree namespace
+                # (see comment in the input branch above for rationale).
+                key = py_trees.blackboard.Blackboard.absolute_name(
+                    subtree_namespace, key
+                )
                 self._blackboard_client.register_key(
                     key=port,
                     access=py_trees.common.Access.WRITE,
