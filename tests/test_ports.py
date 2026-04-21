@@ -128,7 +128,11 @@ class TestBehaviourWithPorts(unittest.TestCase):
         # Producer out -> /shared, Consumer in -> /shared
         prod = Producer("prod")
         prod.setup_ports(port_remappings={"output": "/root"}, subtree_namespace="/")
-        # Set up a subtree with 2 ConsumerProducers
+        # Set up a subtree with 2 ConsumerProducers. Note: "transfer" is a relative
+        # remap — it is scoped under the node's subtree namespace (here /subtree1),
+        # so it is safe to reuse the same name in a sibling subtree without
+        # collision. For data that needs to cross subtree boundaries, use an
+        # absolute key (starts with "/"), as done with "/subtree1_output" below.
         sbtr1_consprod1 = ConsumerProducer("sbtr1_consprod1")
         sbtr1_consprod2 = ConsumerProducer("sbtr1_consprod2")
         sbtr1_consprod1.setup_ports(
@@ -136,15 +140,17 @@ class TestBehaviourWithPorts(unittest.TestCase):
             subtree_namespace="/subtree1",
         )
         sbtr1_consprod2.setup_ports(
-            port_remappings={"input": "transfer", "output": "subtree1_output"},
+            port_remappings={"input": "transfer", "output": "/subtree1_output"},
             subtree_namespace="/subtree1",
         )
 
-        # Set up another nested subtree (grandchild) with 2 ConsumerProducers
+        # Set up another nested subtree (grandchild) with 2 ConsumerProducers.
+        # It reuses the relative key "transfer" internally — scoped under
+        # /subtree1/subtree2, so it does NOT collide with /subtree1/transfer.
         sbtr2_consprod1 = ConsumerProducer("sbtr2_consprod1")
         sbtr2_consprod2 = ConsumerProducer("sbtr2_consprod2")
         sbtr2_consprod1.setup_ports(
-            port_remappings={"input": "subtree1_output", "output": "transfer"},
+            port_remappings={"input": "/subtree1_output", "output": "transfer"},
             subtree_namespace="/subtree1/subtree2",
         )
         sbtr2_consprod2.setup_ports(
@@ -227,6 +233,47 @@ class TestBehaviourWithPorts(unittest.TestCase):
         # No value is set on the blackboard for the input port
         with self.assertRaises(NoDataAvailable):
             cons.get_input("input")
+
+    def test_relative_remap_resolves_against_subtree_namespace(self) -> None:
+        """
+        Two sibling subtrees using the *same* relative remap key must not collide.
+
+        Regression test: a remap like ``{"output": "transfer"}`` under
+        ``subtree_namespace="/ns1"`` must resolve to ``/ns1/transfer``, not
+        to the global literal key ``"transfer"``. Otherwise sibling subtrees
+        silently overwrite each other's data.
+        """
+        prod_a = Producer("prod_a")
+        prod_b = Producer("prod_b")
+
+        prod_a.setup_ports(
+            port_remappings={"output": "transfer"}, subtree_namespace="/ns1"
+        )
+        prod_b.setup_ports(
+            port_remappings={"output": "transfer"}, subtree_namespace="/ns2"
+        )
+
+        # Keys should resolve to their respective subtree namespaces.
+        self.assertEqual(prod_a._get_blackboard_key("output"), "/ns1/transfer")
+        self.assertEqual(prod_b._get_blackboard_key("output"), "/ns2/transfer")
+
+        # And, critically, the two subtrees must not overwrite each other.
+        prod_a._set_output("output", "value_a")
+        prod_b._set_output("output", "value_b")
+        self.assertEqual(prod_a.get_last_output("output"), "value_a")
+        self.assertEqual(prod_b.get_last_output("output"), "value_b")
+
+    def test_relative_remap_wires_siblings_within_same_subtree(self) -> None:
+        """A relative remap shared by two nodes in the same namespace wires them together."""
+        prod = Producer("prod")
+        cons = Consumer("cons")
+        prod.setup_ports(port_remappings={"output": "shared"}, subtree_namespace="/ns")
+        cons.setup_ports(port_remappings={"input": "shared"}, subtree_namespace="/ns")
+        self.assertEqual(prod._get_blackboard_key("output"), "/ns/shared")
+        self.assertEqual(cons._get_blackboard_key("input"), "/ns/shared")
+
+        prod._set_output("output", "wired")
+        self.assertEqual(cons.get_input("input"), "wired")
 
 
 if __name__ == "__main__":
