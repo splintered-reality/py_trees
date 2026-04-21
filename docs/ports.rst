@@ -20,6 +20,50 @@ way of data exchange between nodes which is less error-prone and easier to debug
 than simply writing data on the blackboard and letting nodes read from and
 write to that entry directly.
 
+Why use ports?
+~~~~~~~~~~~~~~
+
+Using ports instead of ad-hoc blackboard reads and writes pays off in
+several concrete ways:
+
+* **Explicit data contracts.**  A node's ``input_ports()`` and
+  ``output_ports()`` declarations *are* its data-flow API.  A reader can
+  see at a glance what a node consumes and produces without reading
+  through its :meth:`~py_trees.behaviour.Behaviour.update` method.
+
+* **Structured, early error detection.**  Port values are type-checked
+  at runtime (``TypeError`` on mismatched writes/reads), required
+  inputs without data raise :class:`~py_trees.ports.NoDataAvailable`
+  instead of returning ``None`` silently, and misconfiguration (a
+  remap for a port that isn't declared, or a port type that can't
+  accept the wiring) surfaces at setup time rather than deep in a tick.
+
+* **XML authoring.**  Once a library of port-enabled nodes exists,
+  trees become declarative data. Non-programmers can read and edit
+  tree structure (and the data wiring) without touching Python.  See
+  the :ref:`XML parser section <py-trees-demo-ports-xml-tree-program>`
+  below.
+
+* **Reusable subtrees via rewiring.**  A subtree is configured
+  from the outside by rewiring its port remappings. A subtree can be re-used
+  with different inputs and outputs without touching the internal code.
+  In combination with the XML parser, this concept of re-usable subtrees
+  becomes really powerful to quickly put together new behaviors.
+
+* **Automatic subtree isolation.**  Sibling subtrees can freely reuse
+  the same port names internally; the subtree namespace scopes them on
+  the blackboard so they don't collide.
+
+* **Refactoring safety.**  Changing the blackboard key a data item
+  lives under is a *rewiring* change at setup time, not a code change
+  scattered across every node that used to read or write that key by
+  name.
+
+* **Easier to test.**  A single node can be exercised in isolation by
+  wiring its ports to known blackboard keys, seeding the inputs, and
+  ticking once.  No tree scaffolding required; the ports contract
+  becomes the test surface.
+
 The primary API is :class:`py_trees.ports.PortsMixin`.  Concrete nodes
 typically inherit from the convenience base
 :class:`py_trees.ports.BehaviourWithPorts`, which combines the mixin with
