@@ -374,7 +374,7 @@ class PortsMixin(_MixinBase):
                 # Resolve relative remap targets under the subtree namespace.
                 # py_trees.blackboard.Client.register_key() uses remap_to as-is
                 # without applying the client's namespace, so relative keys
-                # like "transfer" would become the global literal key "transfer"
+                # like "transfer" would become the global literal key "/transfer"
                 # and collide across sibling subtrees.
                 key = py_trees.blackboard.Blackboard.absolute_name(
                     subtree_namespace, key

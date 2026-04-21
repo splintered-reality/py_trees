@@ -127,7 +127,7 @@ from py_trees._ports_utils import (
     PortsLogger,
 )
 
-from py_trees.ports import BehaviourWithPorts, CONST_PREFIX, DOT_REPLACEMENT, PortsMixin
+from py_trees.ports import CONST_PREFIX, DOT_REPLACEMENT, PortsMixin
 
 # Helper: parse curly-brace keys
 CURLY_PATTERN = re.compile(r"^{(.+)}$")
@@ -379,7 +379,7 @@ def add_new_key_to_remapping_table(
     """
     Add the value to the remapping table, **if** it is a key itself.
 
-    If we encounter a remapping in a `SubTree` or `BehaviourWithPorts`-derived tag,
+    If we encounter a remapping in a ``SubTree`` or ``PortsMixin``-derived tag,
     e.g. `remapped_key={other_key}` and the *value* (i.e. {other_key}) is a key itself,
     and this key is *not* yet in the remapping table, then it means that in the
     current subtree namespace, we have encountered this key for the first time.
@@ -493,7 +493,7 @@ def build_port_remappings(
     """
     Build ``{port_name -> absolute_key}`` for any :class:`PortsMixin` node from XML attributes.
 
-    Mirrors the logic used for :class:`BehaviourWithPorts` leaves:
+    Mirrors the logic used for :class:`PortsMixin` leaves:
 
     - Attributes must correspond to declared input/output ports
       (otherwise ``NotImplementedError``).
@@ -568,7 +568,7 @@ def instantiate_ports_node(
     Args:
         elem: The XML element to parse.
         init_lookup (dict): Mapping from class names (str) to callables (constructors or partials)
-            that return BehaviourWithPorts-derived instances.
+            that return ``PortsMixin``-derived instances.
         remapping_table (dict): Mapping from keys (str) to absolute keys (str).
         subtree_namespace (str): The namespace for this subtree.
         logger: Optional logger-like object.
@@ -683,7 +683,7 @@ def build_tree_from_xml(
         elem: XML element
         remapping_table (dict[str, str]): Remapping table.
         init_lookup (dict): Mapping from class names (str) to callables (constructors or partials)
-            that return BehaviourWithPorts-derived instances.
+            that return ``PortsMixin``-derived instances.
         bt_index (dict[str, BehaviorTree]): dictionary {ID: BehaviorTree element} for subtree lookup.
         subtree_namespace (str): current blackboard namespace.
         logger: Optional logger-like object.
@@ -853,8 +853,8 @@ def build_tree_from_xml(
             + subtree_name,
         )
     elif elem.tag in init_lookup:
-        # This must be a BehaviourWithPorts node. Create the behavior node.
-        logger.debug(f"Creating BehaviourWithPorts node for tag {elem.tag}.")
+        # Leaf PortsMixin node (any PortsMixin + Behaviour combination).
+        logger.debug(f"Creating PortsMixin leaf node for tag {elem.tag}.")
         node = instantiate_ports_node(
             elem=elem,
             init_lookup=init_lookup,
@@ -863,16 +863,20 @@ def build_tree_from_xml(
             logger=logger,
             parent_names_str=parent_names_str,
         )
-        if not isinstance(node, BehaviourWithPorts):
+        if not (
+            isinstance(node, PortsMixin)
+            and isinstance(node, py_trees.behaviour.Behaviour)
+        ):
             raise TypeError(
-                f"XML tag '{elem.tag}' did not instantiate a BehaviourWithPorts; got {type(node).__name__}"
+                f"XML tag '{elem.tag}' did not instantiate a PortsMixin + "
+                f"py_trees.behaviour.Behaviour; got {type(node).__name__}"
             )
         return node
     else:
         logger.error(f"Unsupported tag encountered: {elem.tag}")
         raise ValueError(
             f"Unsupported tag '{elem.tag}' encountered in XML. "
-            "This is not a known composite, subtree, or BehaviourWithPorts node."
+            "This is not a known composite, subtree, or PortsMixin node."
         )
 
 
