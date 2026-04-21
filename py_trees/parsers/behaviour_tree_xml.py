@@ -1,48 +1,47 @@
-"""XML parser for the BehaviorTree format.
+"""
+XML parser for the BehaviorTree format.
 
-XML Parser for BehaviorTree Format
-==================================
+.. note::
 
-> [!NOTE]
-> The parser is experimental and its API may change between releases.
+   The parser is experimental and its API may change between releases.
 
-This module provides a parser for the BehaviorTree XML format, used to construct behavior trees with key remapping
+This module provides a parser for the BehaviorTree XML format, used to construct behaviour trees with key remapping
 and subtree instantiation.
 
 Overview
 --------
 
-The parser recursively builds a behavior tree from an XML file, using a remapping table to track key assignments
-and substitutions. The remapping table is a dictionary that maps keys (referenced in curly braces in the XML, e.g.,
-`{key}`) to either their absolute paths (e.g., `/some/key`) or to other keys (e.g.,
-`{other_key}`), which are then further resolved to absolute paths.
+The parser recursively builds a behaviour tree from an XML file, using a remapping table to track key assignments
+and substitutions. The remapping table is a dictionary that maps keys (referenced in curly braces in the XML,
+e.g. ``{key}``) to either their absolute paths (e.g. ``/some/key``) or to other keys
+(e.g. ``{other_key}``), which are then further resolved to absolute paths.
+
 In the end, all keys in the tree map to absolute paths which can be used to address the value in a map,
 blackboard, or similar structure.
 
-Remapping Table Example:
-```python
+Remapping table example::
+
     {
         "curly_reference": "/absolute/path",
         "curly_reference2": "{curly_reference}",
-        ...
     }
-```
 
 Keys are resolved recursively until an absolute path is found. This allows flexible wiring of data flow between
 nodes and subtrees.
 
-Subtree Templates and Instantiation
+Subtree templates and instantiation
 -----------------------------------
 
-Subtrees are defined as `<BehaviorTree ID="...">` elements in the XML. These act as templates, which can be
-instantiated elsewhere in the tree using a `<SubTree>` tag. When a subtree is instantiated, the parser:
+Subtrees are defined as ``<BehaviorTree ID="...">`` elements in the XML. These act as templates, which can be
+instantiated elsewhere in the tree using a ``<SubTree>`` tag. When a subtree is instantiated, the parser:
 
-- Makes a local remapping table by applying any remappings specified in the `<SubTree>` tag.
+- Makes a local remapping table by applying any remappings specified in the ``<SubTree>`` tag.
 - Recursively parses the referenced subtree template, using the updated remapping table and a new namespace.
 
-Example Subtree Template:
+Example subtree template:
 
-```xml
+.. code-block:: xml
+
     <BehaviorTree ID="MySubtree">
         <Sequence>
             <Reader name="MyReader" input="{input_key}" />
@@ -50,53 +49,56 @@ Example Subtree Template:
             <Reader name="MyInternalReader" input="{transfer_key}" />
         </Sequence>
     </BehaviorTree>
-```
 
-Example Main Tree Instantiating a Subtree:
+Example main tree instantiating a subtree:
 
-```xml
+.. code-block:: xml
+
     <BehaviorTree ID="MainTree">
         <Writer output="{some_key}" name="WriterMain" />
         <SubTree ID="MySubtree" name="Subtree1" input_key="{some_key}"/>
     </BehaviorTree>
-```
 
-This example will map `{some_key}` to `/some_key` in the remapping table (the root namespace is `/`),
-and when the `MySubtree` is instantiated, it will create a new namespace `/Subtree1` where:
-- `{input_key}` resolves to `/some_key`
-- `{transfer_key}` (which is not remapped in the `SubTree` tag) resolves to
-    `/Subtree1/transfer_key` - so a new key is created for the subtree.
+This example will map ``{some_key}`` to ``/some_key`` in the remapping table (the root namespace is ``/``),
+and when the ``MySubtree`` is instantiated, it will create a new namespace ``/Subtree1`` where:
 
-A good documentation of remapping and subtrees can be found on
-[the BT.CPP documentation](https://www.behaviortree.dev/docs/tutorial-basics/tutorial_06_subtree_ports).
+- ``{input_key}`` resolves to ``/some_key``
+- ``{transfer_key}`` (which is not remapped in the ``SubTree`` tag) resolves to
+  ``/Subtree1/transfer_key`` --- so a new key is created for the subtree.
 
-Parsing Walkthrough
-------------------
+A good documentation of remapping and subtrees can be found on the
+`BT.CPP documentation <https://www.behaviortree.dev/docs/tutorial-basics/tutorial_06_subtree_ports>`_.
+
+Parsing walkthrough
+-------------------
 
 Given the above example, parsing proceeds as follows:
 
-1. The parser starts at the "MainTree" with an empty remapping table and namespace "/".
-2. It encounters the "Writer" node, which uses `{some_key}`. Since this key is new, it is mapped to `/some_key`
-   in the remapping table.
-3. The "SubTree" node is encountered. The parser:
-    - Copies the current remapping table.
-    - Adds `input_key -> {some_key}` to the remapping table for the subtree.
-    - Sets the namespace to `/Subtree1`.
-    - Recursively parses the "MySubtree" template.
-4. Inside "MySubtree":
-    - The "Reader" node uses `{input_key}`, which resolves (via remapping) to `/some_key`.
-    - The "Writer" node uses `{transfer_key}`, which is new, so it is mapped to `/Subtree1/transfer_key`.
-    - The second "Reader" node uses `{transfer_key}`, which now resolves to `/Subtree1/transfer_key`.
+1. The parser starts at the ``MainTree`` with an empty remapping table and namespace ``/``.
+2. It encounters the ``Writer`` node, which uses ``{some_key}``. Since this key is new, it is mapped to
+   ``/some_key`` in the remapping table.
+3. The ``SubTree`` node is encountered. The parser:
 
-Key Concepts
+   - Copies the current remapping table.
+   - Adds ``input_key -> {some_key}`` to the remapping table for the subtree.
+   - Sets the namespace to ``/Subtree1``.
+   - Recursively parses the ``MySubtree`` template.
+
+4. Inside ``MySubtree``:
+
+   - The ``Reader`` node uses ``{input_key}``, which resolves (via remapping) to ``/some_key``.
+   - The ``Writer`` node uses ``{transfer_key}``, which is new, so it is mapped to ``/Subtree1/transfer_key``.
+   - The second ``Reader`` node uses ``{transfer_key}``, which now resolves to ``/Subtree1/transfer_key``.
+
+Key concepts
 ------------
 
-- **Remapping Table:** Tracks how keys in curly braces are resolved to absolute paths or to other keys.
-- **Namespace:** Each subtree instantiation gets its own namespace, ensuring keys are scoped and do not collide.
-- **Subtree Instantiation:** Subtrees are templates; instantiating them is like copy-pasting their structure, but
-  with remapped keys and a new namespace.
+- **Remapping table**: Tracks how keys in curly braces are resolved to absolute paths or to other keys.
+- **Namespace**: Each subtree instantiation gets its own namespace, ensuring keys are scoped and do not collide.
+- **Subtree instantiation**: Subtrees are templates; instantiating them is like copy-pasting their structure,
+  but with remapped keys and a new namespace.
 
-For more details, see the code and the accompanying tests in `test_ports_xml_parser.py`.
+For more details, see the code and the accompanying tests in ``test_ports_xml_parser.py``.
 """
 
 import functools
@@ -241,26 +243,24 @@ def get_absolute_reference(value: str, subtree_namespace: str) -> str:
     return subtree_namespace.rstrip("/") + "/" + value
 
 
-def get_class_from_init_lookup(class_name: str, init_lookup: dict) -> type["PortsMixin"]:
+def get_class_from_init_lookup(
+    class_name: str, init_lookup: dict
+) -> type["PortsMixin"]:
     """
-    Get the class from the init_lookup dictionary, ensuring it is a subclass of PortsMixin.
+    Get the class from the init_lookup dictionary, ensuring it is a subclass of :class:`PortsMixin`.
 
     Args:
         class_name (str): The name of the class to look up.
-        init_lookup (dict): A dictionary mapping class names to class constructors or partial callables. Example:
-            ```
-            {
-                "Producer": Producer,
-                "Consumer": partial(Consumer, name=name),
-            }
-            ```
+        init_lookup (dict): A dictionary mapping class names to class constructors or partial callables,
+            e.g. ``{"Producer": Producer, "Consumer": partial(Consumer, name=name)}``.
+
     Returns:
-        The class (subclass of PortsMixin).
+        The class (subclass of :class:`PortsMixin`).
 
     Raises:
         KeyError: If the class name is not found in the init_lookup.
         TypeError: If the entry is not a class or partial callable,
-            or if the class is not a subclass of PortsMixin.
+            or if the class is not a subclass of :class:`PortsMixin`.
     """
     if class_name not in init_lookup:
         raise KeyError(
@@ -364,7 +364,9 @@ def parse_behaviour_tree_xml(
     return tree
 
 
-def add_new_key_to_remapping_table(value: str, remapping_table: dict[str, str], subtree_namespace: str) -> None:
+def add_new_key_to_remapping_table(
+    value: str, remapping_table: dict[str, str], subtree_namespace: str
+) -> None:
     """
     Add the value to the remapping table, **if** it is a key itself.
 
@@ -480,13 +482,15 @@ def build_port_remappings(
     logger: PortsLogger = NOOP_LOGGER,
 ) -> dict[str, str]:
     """
-    Build {port_name -> absolute_key} for any PortsMixin node from XML attributes.
+    Build ``{port_name -> absolute_key}`` for any :class:`PortsMixin` node from XML attributes.
 
-    Mirrors the logic used for BehaviourWithPorts leaves:
-    - Attributes must correspond to declared input/output ports (otherwise NotImplementedError).
-    - Each attribute value may be a "{key}" reference or a direct value; both are resolved
+    Mirrors the logic used for :class:`BehaviourWithPorts` leaves:
+
+    - Attributes must correspond to declared input/output ports
+      (otherwise ``NotImplementedError``).
+    - Each attribute value may be a ``"{key}"`` reference or a direct value; both are resolved
       to absolute keys via the remapping table (adding entries as needed).
-    - If the natural in-namespace key (/{ns}/{port}) differs from the resolved absolute key,
+    - If the natural in-namespace key (``/{ns}/{port}``) differs from the resolved absolute key,
       a remapping is recorded.
     """
     # Build port remappings for this PortsMixin node.

@@ -22,6 +22,7 @@ from . import display_modes  # usort:skip  # noqa: F401
 from . import dot_graphs  # usort:skip  # noqa: F401
 from . import either_or  # usort:skip  # noqa: F401
 from . import lifecycle  # usort:skip  # noqa: F401
+from . import ports  # usort:skip  # noqa: F401
 from . import selector  # usort:skip  # noqa: F401
 from . import sequence  # usort:skip  # noqa: F401
 from . import stewardship  # usort:skip  # noqa: F401

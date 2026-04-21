@@ -1,0 +1,15 @@
+<root main_tree_to_execute="MainTree">
+  <BehaviorTree ID="ComposeGreeting">
+    <Sequence name="ComposeSeq">
+      <GreetingProducer name="producer" output="{greeting}" />
+      <AddSuffix name="suffixer" input="{greeting}" suffix=" from greeting composer" output="{result}" />
+    </Sequence>
+  </BehaviorTree>
+
+  <BehaviorTree ID="MainTree">
+    <Sequence name="MainSeq">
+      <SubTree ID="ComposeGreeting" name="Composer1" result="{final_message}" />
+      <PrintConsumer name="consumer" input="{final_message}" />
+    </Sequence>
+  </BehaviorTree>
+</root>

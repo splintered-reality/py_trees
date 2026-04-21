@@ -44,122 +44,131 @@ class NoDataAvailable(Exception):  # noqa: N818
 
 class PortsMixin(_MixinBase):
     """
-    Mixin class for enabling input and output ports on behavior tree nodes.
+    Mixin class for enabling input and output ports on behaviour tree nodes.
 
     This mixin provides the core infrastructure needed to wire, validate, and execute data-driven
-    behavior tree nodes in a modular and reusable way. It is designed to be used as a base class
-    for behaviors, composites, and decorators in behavior trees.
+    behaviour tree nodes in a modular and reusable way. It is designed to be used as a base class
+    for behaviours, composites, and decorators in behaviour trees.
 
-    A class using PortsMixin must:
-    1. Inherit from PortsMixin first, followed by a concrete py_trees class (e.g., py_trees.behaviour.Behaviour).
-    2. Define its input and output ports as class-level information by implementing the @classmethods
-       `input_ports` and `output_ports`.
+    A class using ``PortsMixin`` must:
 
-    A `PortsMixin` represents a modular unit that interacts with input and output data through
+    1. Inherit from ``PortsMixin`` first, followed by a concrete py_trees class
+       (e.g. ``py_trees.behaviour.Behaviour``).
+    2. Define its input and output ports as class-level information by implementing the
+       ``@classmethod`` s ``input_ports`` and ``output_ports``.
+
+    A ``PortsMixin`` represents a modular unit that interacts with input and output data through
     well-defined ports. These ports are typed and validated at runtime to ensure consistency and facilitate
     composability between different nodes.
 
     Subclasses must define their input and output ports as class-level information by implementing
-    the @classmethods input_ports and output_ports.
+    the ``@classmethod`` s ``input_ports`` and ``output_ports``.
 
-    * `input_ports(cls)`: Returns a dictionary mapping input port names to a tuple of (type, required).
-    * `output_ports(cls)' : Returns a dictionary mapping output port names to a tuple of (type, required).
+    * ``input_ports(cls)``: returns a dictionary mapping input port names to a tuple of (type, required).
+    * ``output_ports(cls)``: returns a dictionary mapping output port names to a tuple of (type, required).
 
     These methods return the expected port definitions for the class and do not change at runtime.
     These port definitions are used to:
+
     1. Register blackboard keys for communication.
     2. Enforce type and presence validation at runtime.
-    3. Provide clear contracts for each behavior's data dependencies and outputs.
+    3. Provide clear contracts for each behaviour's data dependencies and outputs.
 
-    Example Usage:
-    ```python
-    class MyBehavior(PortsMixin, py_trees.behaviour.Behaviour):
-        @classmethod
-        def input_ports(cls):
-            return {"input": (str, True)}
+    Example usage::
 
-        @classmethod
-        def output_ports(cls):
-            return {"output": (str, True)}
+        class MyBehaviour(PortsMixin, py_trees.behaviour.Behaviour):
+            @classmethod
+            def input_ports(cls):
+                return {"input": (str, True)}
 
-        def __init__(self, name: str):
-            super().__init__(name=name)
+            @classmethod
+            def output_ports(cls):
+                return {"output": (str, True)}
 
-        def update(self):
-            input_val = self.get_input("input")
-            self.set_output("output", f"Processed({input_val})")
-            return py_trees.common.Status.SUCCESS
-    ```
+            def __init__(self, name: str):
+                super().__init__(name=name)
 
-    Port specification format in `input_ports()` and `output_ports()`:
+            def update(self):
+                input_val = self.get_input("input")
+                self._set_output("output", f"Processed({input_val})")
+                return py_trees.common.Status.SUCCESS
 
-    ```
-    {
-      "<port_name>": (<expected_type>, <required: bool>)
-    }
-    ```
+    Port specification format in ``input_ports()`` and ``output_ports()``::
 
-    Input and output port names must be unique across both sets, overlapping names are not allowed and will raise a
-    ValueError at instantiation.
+        {
+            "<port_name>": (<expected_type>, <required: bool>),
+        }
 
-    # Subtrees
-    PortsMixin is designed to be used in complex behavior trees that may consist of multiple subtrees.
-    Each behavior operates within a specified subtree_namespace, allowing multiple instances of the same behavior
-    to run in parallel without interfering with each other's blackboard keys. The namespace ensures logical separation
-    between behaviors and enables modular composition of behavior trees.
+    Input and output port names must be unique across both sets; overlapping names are not allowed and
+    will raise a ``ValueError`` at instantiation.
 
-    # Blackboard Access
-    PortsMixin operates within a scoped subtree namespace to ensure their blackboard keys don't clash when used
-    in multiple subtrees. Always use the blackboard property, as it provides access to the correctly namespaced client.
-    The class abstracts away direct blackboard access in favor of `get_input()` and `set_output()` methods.
-    Direct access to the blackboard is discouraged and only permitted through the `blackboard` property after
-    `setup_ports()` has been called. However, be aware that the blackboard is shared with all other behaviors in the
-    same subtree, so care must be taken to avoid key collisions.
+    **Subtrees**
 
-    # Blackboard Namespace Strategy
-    When a port is **not** explicitly remapped (via XML or constructor arguments), a dedicated
-    storage key is generated, so that sibling nodes with the same port name do not accidentally share data.
-    This "synthesized" key is derived from:
-        - the current subtree namespace,
-        - the node's name (sanitised to remove characters that py_trees treats as separators),
-        - and the node's UUID.
-    Behaviours can continue to share ports by wiring the same absolute key on purpose (e.g., `/shared/output`).
+    ``PortsMixin`` is designed to be used in complex behaviour trees that may consist of multiple subtrees.
+    Each behaviour operates within a specified ``subtree_namespace``, allowing multiple instances of the
+    same behaviour to run in parallel without interfering with each other's blackboard keys. The namespace
+    ensures logical separation between behaviours and enables modular composition of behaviour trees.
 
-    # Port Remapping
-    During setup, ports may be remapped to alternate blackboard keys using the `port_remappings` argument.
+    **Blackboard access**
 
-    # Port Setup Lifecycle
+    ``PortsMixin`` operates within a scoped subtree namespace to ensure its blackboard keys don't clash when
+    used in multiple subtrees. Always use the ``blackboard`` property, as it provides access to the correctly
+    namespaced client. The class abstracts away direct blackboard access in favour of ``get_input()`` and
+    ``_set_output()`` methods. Direct access to the blackboard is discouraged and only permitted through the
+    ``blackboard`` property after ``setup_ports()`` has been called. However, be aware that the blackboard
+    is shared with all other behaviours in the same subtree, so care must be taken to avoid key collisions.
+
+    **Blackboard namespace strategy**
+
+    When a port is **not** explicitly remapped (via XML or constructor arguments), a dedicated storage key
+    is generated, so that sibling nodes with the same port name do not accidentally share data. This
+    "synthesised" key is derived from:
+
+    - the current subtree namespace,
+    - the node's name (sanitised to remove characters that py_trees treats as separators),
+    - and the node's UUID.
+
+    Behaviours can continue to share ports by wiring the same absolute key on purpose
+    (e.g. ``/shared/output``).
+
+    **Port remapping**
+
+    During setup, ports may be remapped to alternate blackboard keys using the ``port_remappings`` argument.
+
+    **Port setup lifecycle**
+
     ``setup_ports()`` is a separate explicit call rather than part of ``Behaviour.setup()`` because port
     setup requires the full remapping table, which may require parsing the entire tree to compute.
-    The remapping is the "wiring" of ports — connecting one node's inputs to another node's outputs —
+    The remapping is the "wiring" of ports --- connecting one node's inputs to another node's outputs ---
     so it presupposes knowledge of the tree topology.
 
-    # Output Write Semantics
+    **Output write semantics**
+
     Output ports are written internally by the node itself (typically inside ``update()``).
     External callers should not write to output ports in production code; writing from outside
     is only expected in unit tests where the blackboard is seeded manually.
 
-    # Composites / Decorators Scope
-    ``PortsMixin`` can be mixed into any ``Behaviour`` subclass — leaves, composites, and decorators.
+    **Composites / decorators scope**
+
+    ``PortsMixin`` can be mixed into any ``Behaviour`` subclass --- leaves, composites, and decorators.
     However, this migration does not ship ports-enabled composite or decorator implementations.
     Those can be contributed in separate follow-up PRs.
 
-    # Example
-    ```python
-    class ConsumerProducer(PortsMixin, py_trees.behaviour.Behaviour):
-        @classmethod
-        def input_ports(cls):
-            return {"input": (str, True)}
+    **Example**::
 
-        @classmethod
-        def output_ports(cls):
-            return {"output": (str, True)}
+        class ConsumerProducer(PortsMixin, py_trees.behaviour.Behaviour):
+            @classmethod
+            def input_ports(cls):
+                return {"input": (str, True)}
 
-        def update(self):
-            input_val = self.get_input("input")
-            self.set_output("output", f"Processed({input_val})")
-            return py_trees.common.Status.SUCCESS
-    ```
+            @classmethod
+            def output_ports(cls):
+                return {"output": (str, True)}
+
+            def update(self):
+                input_val = self.get_input("input")
+                self._set_output("output", f"Processed({input_val})")
+                return py_trees.common.Status.SUCCESS
     """
 
     @classmethod
@@ -269,33 +278,36 @@ class PortsMixin(_MixinBase):
         Registers all declared input and output ports with the blackboard client, optionally applying custom key
         remappings, and sets the namespace and logger.
 
-        This method must be called before using `get_input()`, `set_output()`, or accessing the `blackboard`
-        or `logger` properties.
+        This method must be called before using ``get_input()``, ``_set_output()``, or accessing the
+        ``blackboard`` or ``logger`` properties.
 
-        # Port Remapping Rules
-        1. If a port is *not* in `port_remappings`, its blackboard key is automatically
-        constructed as: `/{subtree_namespace}/{port_name}`.
-        2. If a remapped key starts with a `/`, it is treated as an absolute/global key.
-        3. If a remapped key does *not* start with `/`, it is treated as a key relative to the given namespace,
-        i.e., `/{subtree_namespace}/{remapped_key}`.
+        **Port remapping rules**
 
-        # General Notes
-        1. The underlying data store is currently the `py_trees.blackboard`, but this is abstracted.
-        2. However, the API of PortsMixin abstracts from the concept of a blackboard, so the underlying
+        1. If a port is *not* in ``port_remappings``, its blackboard key is automatically constructed as
+           ``/{subtree_namespace}/{port_name}``.
+        2. If a remapped key starts with ``/``, it is treated as an absolute/global key.
+        3. If a remapped key does *not* start with ``/``, it is treated as a key relative to the given
+           namespace, i.e. ``/{subtree_namespace}/{remapped_key}``.
+
+        **General notes**
+
+        1. The underlying data store is currently the ``py_trees.blackboard``, but this is abstracted.
+        2. However, the API of ``PortsMixin`` abstracts from the concept of a blackboard, so the underlying
            implementation could change later.
-        3. Think of a "data key" as a generic handle to some shared data storage (like a key in a map), which can be
-           remapped to match external system requirements.
+        3. Think of a "data key" as a generic handle to some shared data storage (like a key in a map),
+           which can be remapped to match external system requirements.
 
         Arguments:
             port_remappings (dict): Optional dictionary mapping port names to custom blackboard keys.
-            subtree_namespace (str): Namespace to scope the blackboard client (default: "/").
-            logger: Optional logger-like object with debug()/info()/warning()/error() methods.
-                When None, falls back to self.logger (the native py_trees logger).
+            subtree_namespace (str): Namespace to scope the blackboard client (default: ``"/"``).
+            logger: Optional logger-like object with ``debug()``/``info()``/``warning()``/``error()`` methods.
+                When ``None``, falls back to ``self.logger`` (the native py_trees logger).
 
         Raises:
-            KeyError: If a port in `port_remappings` is not declared in the port definitions.
+            KeyError: If a port in ``port_remappings`` is not declared in the port definitions.
 
-        This function must be called before using `get_input`, `set_output`, or accessing the blackboard property.
+        This function must be called before using ``get_input``, ``_set_output``, or accessing the
+        ``blackboard`` property.
         """
         if port_remappings is None:
             port_remappings = {}
@@ -723,19 +735,18 @@ class PortsMixin(_MixinBase):
 
 class BehaviourWithPorts(PortsMixin, py_trees.behaviour.Behaviour):
     """
-    Base class for behaviors with typed input and output ports (see `PortsMixin`).
+    Base class for behaviours with typed input and output ports (see :class:`PortsMixin`).
 
     Subclassing requirements:
 
-    - Each subclass must implement the `input_ports` and `output_ports` class methods to specify its input and
-      output ports.
-    - Each subclass must implement the `update()` method to define its behavior.
-    - Other methods from `py_trees.behaviour.Behaviour` may be overridden as needed.
+    - Each subclass must implement the ``input_ports`` and ``output_ports`` class methods to specify
+      its input and output ports.
+    - Each subclass must implement the ``update()`` method to define its behaviour.
+    - Other methods from :class:`py_trees.behaviour.Behaviour` may be overridden as needed.
 
-    Example usage:
+    Example usage::
 
-        ```python
-        class ExampleBehavior(BehaviourWithPorts):
+        class ExampleBehaviour(BehaviourWithPorts):
             @classmethod
             def input_ports(cls):
                 return {"input_data": (str, True)}
@@ -745,17 +756,17 @@ class BehaviourWithPorts(PortsMixin, py_trees.behaviour.Behaviour):
                 return {"output_data": (str, True)}
 
             def update(self):
-                # Implementation of the behavior
-        ```
+                # Implementation of the behaviour
+                ...
 
-    Status semantics for `update()`:
+    Status semantics for ``update()``:
 
-    - Returning `FAILURE` indicates a **technical error** (e.g., service call failures, exceptions)
-      that may potentially be handled by nodes such as `Retry`.
-    - If not resolved, a `FAILURE` will cause the entire tree to fail.
-    - Do **not** use `FAILURE` as an expected logical outcome, just so that nodes like `Retry` can handle those
-      (e.g., when no objects are detected in an image - that is a valid result, not a failure).
-      Instead, indicate such logical outcomes via node outputs (e.g., an empty list of detected objects).
+    - Returning ``FAILURE`` indicates a **technical error** (e.g. service call failures, exceptions)
+      that may potentially be handled by nodes such as ``Retry``.
+    - If not resolved, a ``FAILURE`` will cause the entire tree to fail.
+    - Do **not** use ``FAILURE`` as an expected logical outcome, just so that nodes like ``Retry`` can
+      handle those (e.g. when no objects are detected in an image --- that is a valid result, not a failure).
+      Instead, indicate such logical outcomes via node outputs (e.g. an empty list of detected objects).
     """
 
     def __init__(self, name: str, **kwargs: Any) -> None:

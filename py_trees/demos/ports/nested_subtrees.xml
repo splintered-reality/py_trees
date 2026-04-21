@@ -1,0 +1,65 @@
+<root main_tree_to_execute="MainTree">
+  <!--
+  ================================================================
+  SubTree Interface: ArmPickupRoutine
+  Expected input ports (must be provided by caller):
+    - arm_in
+  Intended output ports (caller may remap/use):
+    - arm_out
+
+  Internal-only keys (used inside subtree, not part of external contract):
+    - after_open
+    - after_approach
+  ================================================================
+  -->
+  <BehaviorTree ID="ArmPickupRoutine">
+    <Sequence name="ArmPickupRoutineSeq">
+      <AddMissionStep name="open_gripper" report_in="{arm_in}" step="open gripper" report_out="{after_open}" />
+      <AddMissionStep name="approach_box" report_in="{after_open}" step="approach box" report_out="{after_approach}" />
+      <AddMissionStep name="close_gripper" report_in="{after_approach}" step="close gripper" report_out="{arm_out}" />
+    </Sequence>
+  </BehaviorTree>
+
+  <!--
+  ================================================================
+  SubTree Interface: PickupFromTableRoutine
+  Expected input ports (must be provided by caller):
+    - pickup_in
+  Intended output ports (caller may remap/use):
+    - pickup_out
+
+  Internal-only keys (used inside subtree, not part of external contract):
+    - after_drive
+    - after_pick
+  ================================================================
+  -->
+  <BehaviorTree ID="PickupFromTableRoutine">
+    <Sequence name="PickupFromTableSeq">
+      <AddMissionStep name="drive_to_table" report_in="{pickup_in}" step="drive to table" report_out="{after_drive}" />
+      <SubTree ID="ArmPickupRoutine" name="ArmPickupSubtree" arm_in="{after_drive}" arm_out="{after_pick}" />
+      <AddMissionStep name="lift_box" report_in="{after_pick}" step="lift box" report_out="{pickup_out}" />
+    </Sequence>
+  </BehaviorTree>
+
+  <!--
+  MainTree orchestration:
+    - Seeds mission_report
+    - Calls PickupFromTableRoutine (nested subtree chain)
+    - Reads mission_done_report
+  -->
+  <BehaviorTree ID="MainTree">
+    <Sequence name="MainMissionSeq">
+      <StartMissionReport
+        name="start_report"
+        robot_name="mobile_manipulator_1"
+        mission_name="pickup delivery box"
+        report="{mission_report}" />
+      <SubTree
+        ID="PickupFromTableRoutine"
+        name="PickupSubtree"
+        pickup_in="{mission_report}"
+        pickup_out="{mission_done_report}" />
+      <ReadMissionReport name="read_report" report="{mission_done_report}" />
+    </Sequence>
+  </BehaviorTree>
+</root>
