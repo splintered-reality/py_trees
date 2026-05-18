@@ -31,8 +31,8 @@ blackboard, or similar structure.
 Remapping table example::
 
     {
-        "curly_reference": "/absolute/path",
-        "curly_reference2": "{curly_reference}",
+        "absolute_value": "/absolute/path",
+        "curly_reference": "{absolute_value}",
     }
 
 Keys are resolved recursively until an absolute path is found. This allows flexible wiring of data flow between
