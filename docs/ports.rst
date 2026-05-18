@@ -13,59 +13,44 @@ Overview
 --------
 
 **Ports** add a structured way of wiring up data exchange between nodes.
-Each node defines the data it reads and writes as **input** and **output**
-ports. The ports are wired to blackboard keys (the *remapping*), and port
-values are type-checked at runtime. This allows for a defined and constrained
-way of data exchange between nodes which is less error-prone and easier to debug
-than simply writing data on the blackboard and letting nodes read from and
-write to that entry directly.
+Each node defines the data it reads and writes as **input** and **output** ports.
+The ports are wired to blackboard keys (the *remapping*), and port values are type-checked at runtime.
+This allows for a defined and constrained way of data exchange between nodes which is less error-prone and easier to debug than simply writing data on the blackboard and letting nodes read from and write to that entry directly.
 
 Why use ports?
 ~~~~~~~~~~~~~~
 
-Using ports instead of ad-hoc blackboard reads and writes pays off in
-several concrete ways:
+Using ports instead of ad-hoc blackboard reads and writes pays off in several concrete ways:
 
-* **Explicit data contracts.**  A node's ``input_ports()`` and
-  ``output_ports()`` declarations *are* its data-flow API.  A reader can
-  see at a glance what a node consumes and produces without reading
-  through its :meth:`~py_trees.behaviour.Behaviour.update` method.
+* **Explicit data contracts.**
+  A node's ``input_ports()`` and ``output_ports()`` declarations *are* its data-flow API.
+  A reader can see at a glance what a node consumes and produces without reading through its :meth:`~py_trees.behaviour.Behaviour.update` method.
 
-* **Structured, early error detection.**  Port values are type-checked
-  at runtime (``TypeError`` on mismatched writes/reads), required
-  inputs without data raise :class:`~py_trees.ports.NoDataAvailable`
-  instead of returning ``None`` silently, and misconfiguration (a
-  remap for a port that isn't declared, or a port type that can't
-  accept the wiring) surfaces at setup time rather than deep in a tick.
+* **Structured, early error detection.**
+  Port values are type-checked at runtime (``TypeError`` on mismatched writes/reads), required inputs without data raise :class:`~py_trees.ports.NoDataAvailable` instead of returning ``None`` silently, and misconfiguration (a remap for a port that isn't declared, or a port type that can't accept the wiring) surfaces at setup time rather than deep in a tick.
 
-* **XML authoring.**  Once a library of port-enabled nodes exists,
-  trees become declarative data. Non-programmers can read and edit
-  tree structure (and the data wiring) without touching Python.  See
-  the :ref:`XML parser section <py-trees-demo-ports-xml-tree-program>`
-  below.
+* **XML authoring.**
+  Once a library of port-enabled nodes exists, trees become declarative data.
+  Non-programmers can read and edit tree structure (and the data wiring) without touching Python.
+  See the :ref:`XML parser section <py-trees-demo-ports-xml-tree-program>` below.
 
-* **Reusable subtrees via rewiring.**  A subtree is configured
-  from the outside by rewiring its port remappings. A subtree can be re-used
-  with different inputs and outputs without touching the internal code.
-  In combination with the XML parser, this concept of re-usable subtrees
-  becomes really powerful to quickly put together new behaviors.
+* **Reusable subtrees via rewiring.**
+  A subtree is configured from the outside by rewiring its port remappings.
+  A subtree can be re-used with different inputs and outputs without touching the internal code.
+  In combination with the XML parser, this concept of re-usable subtrees becomes really powerful to quickly put together new behaviors.
 
-* **Automatic subtree isolation.**  Sibling subtrees can freely reuse
-  the same port names internally; the subtree namespace scopes them on
-  the blackboard so they don't collide.
+* **Automatic subtree isolation.**
+  Sibling subtrees can freely reuse the same port names internally; the subtree namespace scopes them on the blackboard so they don't collide.
 
-* **Refactoring safety.**  Changing the blackboard key a data item
-  lives under is a *rewiring* change at setup time, not a code change
-  scattered across every node that used to read or write that key by
-  name.
+* **Refactoring safety.**
+  Changing the blackboard key a data item lives under is a *rewiring* change at setup time, not a code change scattered across every node that used to read or write that key by name.
 
-* **Easier to test.**  A single node can be exercised in isolation by
-  wiring its ports to known blackboard keys, seeding the inputs, and
-  ticking once.  No tree scaffolding required; the ports contract
-  becomes the test surface.
+* **Easier to test.**
+  A single node can be exercised in isolation by wiring its ports to known blackboard keys, seeding the inputs, and ticking once.
+  No tree scaffolding required; the ports contract becomes the test surface.
 
-The primary API is :class:`py_trees.ports.PortsMixin`.  Concrete nodes
-typically inherit from the convenience base
+The primary API is :class:`py_trees.ports.PortsMixin`.
+Concrete nodes typically inherit from the convenience base
 :class:`py_trees.ports.BehaviourWithPorts`, which combines the mixin with
 :class:`py_trees.behaviour.Behaviour`:
 
@@ -95,11 +80,9 @@ typically inherit from the convenience base
 Wiring (remapping) and type checking
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Ports become usable after :meth:`~py_trees.ports.PortsMixin.setup_ports`
-has been called with the *port remappings* (the "wiring").  Remappings
-map each port to an absolute or relative blackboard key.
-The purpose of remapping is to "wire" one node's output port(s)
-to another node's input port(s) so they can exchange data.
+Ports become usable after :meth:`~py_trees.ports.PortsMixin.setup_ports` has been called with the *port remappings* (the "wiring").
+Remappings map each port to an absolute or relative blackboard key.
+The purpose of remapping is to "wire" one node's output port(s) to another node's input port(s) so they can exchange data.
 
 .. code-block:: python
 
@@ -112,24 +95,17 @@ to another node's input port(s) so they can exchange data.
        }
    )
 
-In the example above, another node's output ports would typically be remapped to
-``/numbers/a`` and ``/numbers/b`` and thereby provide the input for the ``Multiply`` node.
+In the example above, another node's output ports would typically be remapped to ``/numbers/a`` and ``/numbers/b`` and thereby provide the input for the ``Multiply`` node.
 
 .. note:: Why is ``setup_ports()`` a separate call?
-    Because the remapping table
-    usually cannot be computed until the entire tree topology is known —
-    either the user assembles it by hand or a parser generates it from
-    e.g. XML (more on that next).  See :class:`py_trees.ports.PortsMixin` for the full contract
-    and semantics.
+    Because the remapping table usually cannot be computed until the entire tree topology is known — either the user assembles it by hand or a parser generates it from e.g. XML (more on that next).
+    See :class:`py_trees.ports.PortsMixin` for the full contract and semantics.
 
 Experimental XML parser
 -----------------------
 
-The module :mod:`py_trees.parsers.behaviour_tree_xml` ships an
-(experimental) parser for the `BehaviorTree.CPP
-<https://www.behaviortree.dev/docs/learn-the-basics/main_concepts>`_
-XML format.  It builds a py_trees tree from an XML file and
-auto-generates the port remappings for every node.
+The module :mod:`py_trees.parsers.behaviour_tree_xml` ships an (experimental) parser for the `BehaviorTree.CPP <https://www.behaviortree.dev/docs/learn-the-basics/main_concepts>`_ XML format.
+It builds a py_trees tree from an XML file and auto-generates the port remappings for every node.
 
 .. code-block:: python
 
@@ -140,8 +116,7 @@ auto-generates the port remappings for every node.
        init_lookup={"MyNode": MyNode, "OtherNode": OtherNode, ...},
    )
 
-See the :ref:`demos <ports-demos-section-label>` below for working
-examples.
+See the :ref:`demos <ports-demos-section-label>` below for working examples.
 
 .. _ports-xml-attributes-label:
 
@@ -150,19 +125,12 @@ XML attributes: ports *and* constructor arguments
 
 Attributes on a node's XML tag serve **two** distinct purposes:
 
-1. Attribute names that match a declared port (``input_ports()`` or
-   ``output_ports()``) are treated as **port remappings**.  Values may be
-   ``{curly_key}`` references (wired to the remapping table) or literal
-   constants (type-converted according to the port's declared type).
+1. Attribute names that match a declared port (``input_ports()`` or ``output_ports()``) are treated as **port remappings**.
+   Values may be ``{curly_key}`` references (wired to the remapping table) or literal constants (type-converted according to the port's declared type).
 
-2. Attribute names that do **not** match any declared port are treated as
-   **constructor keyword arguments** and forwarded to the class
-   constructor.  Values are type-converted based on the constructor's type
-   annotations (strings to ``int`` / ``float`` / ``bool`` / enum / etc.);
-   un-annotated parameters receive the raw string.  ``{curly_key}``
-   references are *not* allowed for constructor kwargs --- they raise a
-   ``ValueError`` at parse time, because constructor kwargs can't be
-   re-wired at runtime the way ports can.
+2. Attribute names that do **not** match any declared port are treated as **constructor keyword arguments** and forwarded to the class constructor.
+   Values are type-converted based on the constructor's type annotations (strings to ``int`` / ``float`` / ``bool`` / enum / etc.); un-annotated parameters receive the raw string.
+   ``{curly_key}`` references are *not* allowed for constructor kwargs --- they raise a ``ValueError`` at parse time, because constructor kwargs can't be re-wired at runtime the way ports can.
 
 Example::
 
@@ -192,58 +160,39 @@ Example::
 Scope, limitations, and how to extend
 -------------------------------------
 
-The current ports framework is deliberately minimal.  It ships the
-:class:`~py_trees.ports.PortsMixin` contract, the convenience
-:class:`~py_trees.ports.BehaviourWithPorts` base, an experimental XML parser,
-and four demos. It is the base for extensions to be added in future.
+The current ports framework is deliberately minimal.
+It ships the :class:`~py_trees.ports.PortsMixin` contract, the convenience :class:`~py_trees.ports.BehaviourWithPorts` base, an experimental XML parser, and four demos.
+It is the base for extensions to be added in future.
 A few things you should be aware of, and suggestions on how to fill the gaps yourself:
 
 **1. No port-aware behaviours, decorators, or composites are shipped.**
 
    ``py_trees.ports`` provides the *mechanism* for typed input/output ports.
-   It does **not** currently ship any concrete behaviours that use ports
-   (e.g. there is no ``Retry`` with ports). The library of port-enabled nodes is the user's domain:
-   you define ``PortsMixin``-derived classes that actually *do something* with the input/output data.
+   It does **not** currently ship any concrete behaviours that use ports (e.g. there is no ``Retry`` with ports).
+   The library of port-enabled nodes is the user's domain: you define ``PortsMixin``-derived classes that actually *do something* with the input/output data.
 
 **2. Built-in decorators and composites cannot be wired through ports from XML.**
 
-   The XML parser supports four built-in composite tags natively
-   (``<Sequence>``, ``<Selector>`` / ``<Fallback>``, ``<Parallel>``).  For
-   these tags, only a **fixed** set of XML attributes is consumed:
+   The XML parser supports four built-in composite tags natively (``<Sequence>``, ``<Selector>`` / ``<Fallback>``, ``<Parallel>``).
+   For these tags, only a **fixed** set of XML attributes is consumed:
 
    * ``<Sequence>`` / ``<Selector>`` / ``<Fallback>``: ``name``, ``memory``
    * ``<Parallel>``: ``name``, ``policy`` (one of ``success_on_all``,
      ``success_on_one``, ``success_on_selected``)
 
    **Any other attribute on a built-in composite tag is silently ignored.**
-   For example, ``<Parallel synchronise="true">`` has no effect, and
-   port-style attributes on these tags are dropped without warning.  This
-   is also why you cannot take the number of attempts for a
-   :class:`py_trees.decorators.Retry` from a port value via XML --- the
-   parser only wires ports (and forwards constructor kwargs; see
-   :ref:`ports-xml-attributes-label` above) on classes registered in
-   ``init_lookup`` that derive from :class:`~py_trees.ports.PortsMixin`.
+   For example, ``<Parallel synchronise="true">`` has no effect, and port-style attributes on these tags are dropped without warning.
+   This is also why you cannot take the number of attempts for a :class:`py_trees.decorators.Retry` from a port value via XML --- the parser only wires ports (and forwards constructor kwargs; see :ref:`ports-xml-attributes-label` above) on classes registered in ``init_lookup`` that derive from :class:`~py_trees.ports.PortsMixin`.
    Built-in decorators aren't recognised as XML tags at all.
 
 **3. The pattern: port-aware wrapper classes.**
 
-   To make an existing upstream behaviour, decorator, or composite
-   port-aware, wrap it in a small adapter class that combines
-   :class:`~py_trees.ports.PortsMixin` with the upstream class and reads
-   its runtime parameters from input ports.
+   To make an existing upstream behaviour, decorator, or composite port-aware, wrap it in a small adapter class that combines :class:`~py_trees.ports.PortsMixin` with the upstream class and reads its runtime parameters from input ports.
 
-   The recommended naming is to keep the short upstream class name
-   (``Retry``, ``Repeat``, ``Parallel``, …) and place the port-aware
-   version under a ``ports`` submodule that mirrors the upstream layout
-   (e.g. ``py_trees.ports.decorators.Retry`` alongside the upstream
-   ``py_trees.decorators.Retry``).  The import path carries the "ported"
-   information, so the class name stays short and matches its upstream
-   counterpart.
+   The recommended naming is to keep the short upstream class name (``Retry``, ``Repeat``, ``Parallel``, …) and place the port-aware version under a ``ports`` submodule that mirrors the upstream layout (e.g. ``py_trees.ports.decorators.Retry`` alongside the upstream ``py_trees.decorators.Retry``).
+   The import path carries the "ported" information, so the class name stays short and matches its upstream counterpart.
 
-   Example: a port-aware :class:`~py_trees.decorators.Retry` that takes its
-   ``num_failures`` from an input port --- intended to live in
-   ``py_trees.ports.decorators`` when contributed upstream, or in your
-   own project's ``ports`` submodule:
+   Example: a port-aware :class:`~py_trees.decorators.Retry` that takes its ``num_failures`` from an input port --- intended to live in ``py_trees.ports.decorators`` when contributed upstream, or in your own project's ``ports`` submodule:
 
    .. code-block:: python
 
@@ -279,10 +228,7 @@ A few things you should be aware of, and suggestions on how to fill the gaps you
               self.num_failures = self.get_input("num_failures")
               super().initialise()
 
-   Users import it as ``from py_trees.ports.decorators import Retry`` (or
-   the equivalent path in their own project) --- the import path
-   disambiguates it from the upstream ``py_trees.decorators.Retry``,
-   so the class name stays clean.
+   Users import it as ``from py_trees.ports.decorators import Retry`` (or the equivalent path in their own project) --- the import path disambiguates it from the upstream ``py_trees.decorators.Retry``, so the class name stays clean.
 
    The XML then can accept the input via (remapped) ports::
 
@@ -292,27 +238,17 @@ A few things you should be aware of, and suggestions on how to fill the gaps you
 
 .. note:: Contributing port-enabled extensions upstream is encouraged!
 
-   If you build a generally useful port-aware wrapper --- for example, a
-   port-enabled :class:`~py_trees.decorators.Retry`,
-   :class:`~py_trees.decorators.Repeat`,
-   :class:`~py_trees.composites.Parallel`, or
-   :class:`~py_trees.timers.Timer` --- please consider contributing it
-   back to py_trees under the matching ``py_trees.ports.*`` subpackage
-   (``py_trees.ports.decorators``, ``py_trees.ports.composites``,
-   ``py_trees.ports.timers``, and so on, mirroring the upstream module
-   layout).  A shared library of canonical port-aware adapters saves
-   every user from re-implementing the same wrappers.  Open a PR against
-   the `py_trees devel branch
-   <https://github.com/splintered-reality/py_trees>`_ and we will happily
-   review it.
+   If you build a generally useful port-aware wrapper --- for example, a port-enabled :class:`~py_trees.decorators.Retry`, :class:`~py_trees.decorators.Repeat`, :class:`~py_trees.composites.Parallel`, or :class:`~py_trees.timers.Timer` --- please consider contributing it back to py_trees under the matching ``py_trees.ports.*`` subpackage (``py_trees.ports.decorators``, ``py_trees.ports.composites``, ``py_trees.ports.timers``, and so on, mirroring the upstream module layout).
+   A shared library of canonical port-aware adapters saves every user from re-implementing the same wrappers.
+   Open a PR against the `py_trees devel branch <https://github.com/splintered-reality/py_trees>`_ and we will happily review it.
 
 .. _ports-demos-section-label:
 
 Demos
 -----
 
-Four demos are shipped with the library.  Each demo has a CLI entry
-point installed with the package.
+Four demos are shipped with the library.
+Each demo has a CLI entry point installed with the package.
 
 .. list-table::
    :header-rows: 1
@@ -355,10 +291,8 @@ Alternatively, without the entry point:
 py-trees-demo-ports-basic
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A single :class:`~py_trees.ports.BehaviourWithPorts` node that reads two
-floats, multiplies them, and writes the product to an explicitly
-remapped blackboard key.  The demo seeds the inputs on the blackboard,
-ticks the node once, and prints the three values.
+A single :class:`~py_trees.ports.BehaviourWithPorts` node that reads two floats, multiplies them, and writes the product to an explicitly remapped blackboard key.
+The demo seeds the inputs on the blackboard, ticks the node once, and prints the three values.
 
 .. literalinclude:: ../py_trees/demos/ports/basic.py
    :language: python
@@ -370,13 +304,9 @@ ticks the node once, and prints the three values.
 py-trees-demo-ports-remapping
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Two independent 3-step pipelines (``GenerateValue`` → ``AppendSuffix``
-→ ``ReadResult``) are run in separate subtree namespaces
-(``/pipeline_a`` and ``/pipeline_b``).  Both pipelines use the **same**
-port names internally; the subtree namespace keeps them fully
-isolated.  The demo also shows that an unremapped output (the
-``value`` status field on ``AppendSuffix``) gets its own
-UUID-scoped default key so it does not clash with the pipeline wiring.
+Two independent 3-step pipelines (``GenerateValue`` → ``AppendSuffix`` → ``ReadResult``) are run in separate subtree namespaces (``/pipeline_a`` and ``/pipeline_b``).
+Both pipelines use the **same** port names internally; the subtree namespace keeps them fully isolated.
+The demo also shows that an unremapped output (the ``value`` status field on ``AppendSuffix``) gets its own UUID-scoped default key so it does not clash with the pipeline wiring.
 
 .. literalinclude:: ../py_trees/demos/ports/remapping.py
    :language: python
@@ -388,11 +318,9 @@ UUID-scoped default key so it does not clash with the pipeline wiring.
 py-trees-demo-ports-xml-tree
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A small behaviour tree is loaded from XML.  A subtree
-``ComposeGreeting`` produces a greeting and appends a suffix; the
-main tree wires the subtree's result to a consumer that prints it.
-This demo exercises the parser's support for ``<SubTree>`` remapping,
-port resolution, and constant (non-``{key}``) attribute values.
+A small behaviour tree is loaded from XML.
+A subtree ``ComposeGreeting`` produces a greeting and appends a suffix; the main tree wires the subtree's result to a consumer that prints it.
+This demo exercises the parser's support for ``<SubTree>`` remapping, port resolution, and constant (non-``{key}``) attribute values.
 
 .. literalinclude:: ../py_trees/demos/ports/xml_tree.py
    :language: python
@@ -409,11 +337,9 @@ port resolution, and constant (non-``{key}``) attribute values.
 py-trees-demo-ports-nested-subtrees
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A robotics-style pickup mission built from nested subtrees
-(``PickupFromTableRoutine`` which in turn uses ``ArmPickupRoutine``).
+A robotics-style pickup mission built from nested subtrees (``PickupFromTableRoutine`` which in turn uses ``ArmPickupRoutine``).
 Each subtree has an explicit port contract documented in the XML.
-The demo shows how port remappings propagate through multiple
-layers of subtrees while internal keys remain local to their subtree.
+The demo shows how port remappings propagate through multiple layers of subtrees while internal keys remain local to their subtree.
 
 .. literalinclude:: ../py_trees/demos/ports/nested_subtrees.py
    :language: python
