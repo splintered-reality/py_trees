@@ -610,10 +610,6 @@ class PortsMixin(_MixinBase):
             )
         value = self.blackboard_client.get(port_name)
 
-        # DEEP DEBUG
-        # self.log_debug(f"Reading blackboard variable "
-        #                f"'{self._get_blackboard_key(port_name)}' yielded {value}.")
-
         if value is None:
             raise NotImplementedError(
                 "Support for None values has not yet been considered."
@@ -679,9 +675,6 @@ class PortsMixin(_MixinBase):
         port_type = self.output_ports()[port_name].type
         if not self._is_instance_of_type(value, port_type):
             raise TypeError(f"{self.name}: Value '{value}' is not of type {port_type}")
-        # DEEP DEBUG
-        # self.log_debug(f"Setting blackboard variable "
-        #                f"'{self._get_blackboard_key(port_name)}' to value '{value}'")
 
         self.blackboard_client.set(port_name, value)
 
