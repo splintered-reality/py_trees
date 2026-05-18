@@ -18,7 +18,7 @@ from functools import partial
 from typing import Any
 
 import py_trees
-from py_trees._ports_utils import (
+from py_trees.ports_utils import (
     find_node_by_class,
     find_node_by_name,
     generate_node_name,

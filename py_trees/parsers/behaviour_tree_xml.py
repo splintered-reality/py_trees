@@ -120,7 +120,7 @@ from copy import deepcopy
 from typing import Any
 
 import py_trees
-from py_trees._ports_utils import (
+from py_trees.ports_utils import (
     apply_type_hints,
     generate_node_name,
     NOOP_LOGGER,

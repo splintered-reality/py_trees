@@ -7,7 +7,7 @@
 # Documentation
 ##############################################################################
 
-"""Private helpers shared between :mod:`py_trees.ports` and :mod:`py_trees.parsers`."""
+"""Helpers shared between :mod:`py_trees.ports` and :mod:`py_trees.parsers`."""
 
 ##############################################################################
 # Imports
@@ -75,6 +75,7 @@ NOOP_LOGGER = _NoOpLogger()
 
 
 def _try_bool(value: str) -> bool:
+    """Convert common textual boolean values to ``bool``."""
     lowered = value.strip().lower()
     if lowered in ("true", "1", "yes", "on"):
         return True
@@ -84,6 +85,7 @@ def _try_bool(value: str) -> bool:
 
 
 def _is_enum_type(tp: type) -> bool:
+    """Return whether *tp* is an :class:`Enum` subclass."""
     try:
         return inspect.isclass(tp) and issubclass(tp, Enum)
     except TypeError:
@@ -91,6 +93,7 @@ def _is_enum_type(tp: type) -> bool:
 
 
 def _convert_to_enum(value: str, enum_type: type[Enum]) -> Enum:
+    """Convert *value* to an enum member by name or compatible value."""
     for member in enum_type:
         if member.name.lower() == value.strip().lower():
             return member
@@ -114,6 +117,7 @@ def _convert_to_enum(value: str, enum_type: type[Enum]) -> Enum:
 
 
 def _convert_simple(value: str, target_type: type) -> Any:
+    """Convert *value* to a supported scalar type, or return it unchanged."""
     if target_type is str:
         return value
     if target_type is bool:
@@ -414,6 +418,7 @@ def _find_node_by_name_recursive(
     results: list,
     stop_at_first: bool = False,
 ) -> bool:
+    """Depth-first implementation for :func:`find_node_by_name`."""
     mod_node_name = (
         get_base_name(node.name, strip_uuid=strip_uuid) if strip_prefix else node.name
     )

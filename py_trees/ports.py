@@ -20,7 +20,7 @@ from typing import Any, TYPE_CHECKING
 
 import py_trees
 
-from ._ports_utils import (
+from .ports_utils import (
     convert_str_to_type,
     LogLevel,
     PortsLogger,
