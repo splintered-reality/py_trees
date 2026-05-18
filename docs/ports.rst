@@ -57,20 +57,20 @@ Concrete nodes typically inherit from the convenience base
 .. code-block:: python
 
    import py_trees
-   from py_trees.ports import BehaviourWithPorts
+   from py_trees.ports import BehaviourWithPorts, PortInformation
 
    class Multiply(BehaviourWithPorts):
        @classmethod
        def input_ports(cls):
            return {
-               "a": (float, True),   # (type, required)
-               "b": (float, True),
+               "a": PortInformation(type=float, required=True),
+               "b": PortInformation(type=float, required=True),
            }
 
        @classmethod
        def output_ports(cls):
            return {
-               "product": (float, True),
+               "product": PortInformation(type=float, required=True),
            }
 
        def update(self):
@@ -138,11 +138,11 @@ Example::
 
        @classmethod
        def input_ports(cls):
-           return {"name_key": (str, True)}
+           return {"name_key": PortInformation(type=str, required=True)}
 
        @classmethod
        def output_ports(cls):
-           return {"greeting": (str, True)}
+           return {"greeting": PortInformation(type=str, required=True)}
 
        def __init__(self, name: str, prefix: str = "Hello", **kwargs):
            super().__init__(name=name, **kwargs)
@@ -198,14 +198,14 @@ A few things you should be aware of, and suggestions on how to fill the gaps you
 
       # py_trees/ports/decorators.py  (or yourproject/ports/decorators.py)
       import py_trees
-      from py_trees.ports import PortsMixin
+      from py_trees.ports import PortInformation, PortsMixin
 
       class Retry(PortsMixin, py_trees.decorators.Retry):
           """Retry that reads its failure budget from an input port."""
 
           @classmethod
           def input_ports(cls):
-              return {"num_failures": (int, True)}
+              return {"num_failures": PortInformation(type=int, required=True)}
 
           @classmethod
           def output_ports(cls):

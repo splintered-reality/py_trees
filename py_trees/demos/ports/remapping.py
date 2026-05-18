@@ -19,7 +19,7 @@ from typing import Any
 
 import py_trees
 
-from py_trees.ports import BehaviourWithPorts
+from py_trees.ports import BehaviourWithPorts, PortInformation
 
 ##############################################################################
 # Classes
@@ -42,7 +42,7 @@ class GenerateValue(BehaviourWithPorts):
     @classmethod
     def output_ports(cls) -> dict:
         """Return the output port declarations."""
-        return {"value": (str, True)}
+        return {"value": PortInformation(type=str, required=True)}
 
     def update(self) -> py_trees.common.Status:
         """Generate a random value and write it to the output port."""
@@ -62,14 +62,14 @@ class AppendSuffix(BehaviourWithPorts):
     @classmethod
     def input_ports(cls) -> dict:
         """Return the input port declarations."""
-        return {"text_in": (str, True)}
+        return {"text_in": PortInformation(type=str, required=True)}
 
     @classmethod
     def output_ports(cls) -> dict:
         """Return the output port declarations."""
         return {
-            "text_out": (str, True),
-            "value": (str, True),
+            "text_out": PortInformation(type=str, required=True),
+            "value": PortInformation(type=str, required=True),
         }
 
     def update(self) -> py_trees.common.Status:
@@ -86,7 +86,7 @@ class ReadResult(BehaviourWithPorts):
     @classmethod
     def input_ports(cls) -> dict:
         """Return the input port declarations."""
-        return {"value": (str, True)}
+        return {"value": PortInformation(type=str, required=True)}
 
     @classmethod
     def output_ports(cls) -> dict:

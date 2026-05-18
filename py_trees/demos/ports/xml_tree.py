@@ -19,7 +19,7 @@ import py_trees
 
 from py_trees.ports_utils import find_node_by_class
 from py_trees.parsers.behaviour_tree_xml import parse_behaviour_tree_xml
-from py_trees.ports import BehaviourWithPorts
+from py_trees.ports import BehaviourWithPorts, PortInformation
 
 ##############################################################################
 # Classes
@@ -37,7 +37,7 @@ class GreetingProducer(BehaviourWithPorts):
     @classmethod
     def output_ports(cls) -> dict:
         """Return the output port declarations."""
-        return {"output": (str, True)}
+        return {"output": PortInformation(type=str, required=True)}
 
     def update(self) -> py_trees.common.Status:
         """Write a fixed greeting to the output port."""
@@ -52,14 +52,14 @@ class AddSuffix(BehaviourWithPorts):
     def input_ports(cls) -> dict:
         """Return the input port declarations."""
         return {
-            "input": (str, True),
-            "suffix": (str, True),
+            "input": PortInformation(type=str, required=True),
+            "suffix": PortInformation(type=str, required=True),
         }
 
     @classmethod
     def output_ports(cls) -> dict:
         """Return the output port declarations."""
-        return {"output": (str, True)}
+        return {"output": PortInformation(type=str, required=True)}
 
     def update(self) -> py_trees.common.Status:
         """Append ``suffix`` to ``input`` and write the result to ``output``."""
@@ -75,7 +75,7 @@ class PrintConsumer(BehaviourWithPorts):
     @classmethod
     def input_ports(cls) -> dict:
         """Return the input port declarations."""
-        return {"input": (str, True)}
+        return {"input": PortInformation(type=str, required=True)}
 
     @classmethod
     def output_ports(cls) -> dict:

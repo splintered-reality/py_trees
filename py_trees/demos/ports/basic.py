@@ -15,7 +15,7 @@
 
 import py_trees
 
-from py_trees.ports import BehaviourWithPorts
+from py_trees.ports import BehaviourWithPorts, PortInformation
 
 ##############################################################################
 # Classes
@@ -29,15 +29,15 @@ class Multiply(BehaviourWithPorts):
     def input_ports(cls) -> dict:
         """Return the input port declarations."""
         return {
-            "a": (float, True),
-            "b": (float, True),
+            "a": PortInformation(type=float, required=True),
+            "b": PortInformation(type=float, required=True),
         }
 
     @classmethod
     def output_ports(cls) -> dict:
         """Return the output port declarations."""
         return {
-            "product": (float, True),
+            "product": PortInformation(type=float, required=True),
         }
 
     def update(self) -> py_trees.common.Status:
