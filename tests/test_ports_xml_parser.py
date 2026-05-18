@@ -24,7 +24,7 @@ from py_trees._ports_utils import (
     generate_node_name,
     strip_trailing_uuid4,
 )
-from py_trees.parsers.behaviour_tree_xml import parse_behaviour_tree_xml
+from py_trees.parsers.behaviour_tree_xml import is_key, parse_behaviour_tree_xml
 
 from py_trees.ports import BehaviourWithPorts
 
@@ -132,6 +132,24 @@ class TestXMLParser(unittest.TestCase):
 
     def tearDown(self) -> None:
         os.unlink(self.tempfile.name)
+
+    def test_is_key_rejects_malformed_braces(self) -> None:
+        self.assertIsNone(is_key("/absolute/path"))
+        self.assertIsNone(is_key("relative_value"))
+        self.assertEqual(is_key("{logical_key}").group(1), "logical_key")
+
+        malformed_values = [
+            "{missing_close",
+            "missing_open}",
+            "{{nested}}",
+            "{first}{second}",
+            "prefix{key}",
+            "{key}suffix",
+        ]
+        for value in malformed_values:
+            with self.subTest(value=value):
+                with self.assertRaises(ValueError):
+                    is_key(value)
 
     def test_xml_parser_remapping(self) -> None:
         """Ensure remapping between subtrees works correctly."""

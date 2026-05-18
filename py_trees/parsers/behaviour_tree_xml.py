@@ -159,12 +159,22 @@ def build_bt_index(root: ET.Element) -> dict[str, ET.Element]:
 
 def is_key(value: str) -> re.Match | None:
     """Return a regex match if *value* is a ``{key}`` reference."""
-    return CURLY_PATTERN.match(value)
+    open_braces = value.count("{")
+    close_braces = value.count("}")
+    if open_braces == 0 and close_braces == 0:
+        return None
+    if open_braces != 1 or close_braces != 1:
+        raise ValueError(f"Malformed key reference '{value}'")
+
+    match = CURLY_PATTERN.match(value)
+    if not match:
+        raise ValueError(f"Malformed key reference '{value}'")
+    return match
 
 
 def get_key_name(value: str) -> str:
     """Extract the key name from a ``{key}`` reference string."""
-    match = CURLY_PATTERN.match(value)
+    match = is_key(value)
     assert match, f"Key '{value}' is not a valid key"
     return match.group(1)
 
@@ -188,7 +198,7 @@ def resolve_key_remapping(key: str, remapping_table: dict[str, str]) -> str:
     """
     visited = set()
     while True:
-        match = CURLY_PATTERN.match(key)
+        match = is_key(key)
         if not match:
             # If not a curly-brace key, it must be an absolute key. Check that this is the case (raise an error if not)
             # and then return the key.
