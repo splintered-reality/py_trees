@@ -274,35 +274,18 @@ def reset_blackboard_key(
     key_name: str,
     node_name: str = "unknown",
 ) -> None:
-    """Clear the stored value for *key_name* on *blackboard_client*."""
+    """Clear the stored value for *key_name* via its registered client."""
     if not blackboard_client.is_registered(key_name):
         raise KeyError(
             f"{node_name}: Port '{key_name}' is not registered in the blackboard client."
         )
 
-    client = blackboard_client
-    if hasattr(client, "unset"):
-        client.unset(key_name)
-        return
-
     try:
-        py_trees.blackboard.Blackboard.unset(key_name)
-        return
-    except AttributeError:
-        pass
-
-    bb = py_trees.blackboard.Blackboard()
-    try:
-        storage = getattr(bb, "storage", None)
-        if isinstance(storage, dict) and key_name in storage:
-            del storage[key_name]
-            return
-    except Exception:
-        pass
-
-    raise RuntimeError(
-        f"{node_name}: Unable to reset port '{key_name}': no supported unset/erase path on this py_trees version."
-    )
+        blackboard_client.unset(key_name)
+    except Exception as e:
+        raise RuntimeError(
+            f"{node_name}: Unable to reset port '{key_name}'."
+        ) from e
 
 
 def uuid4_regex(at_end: bool = False) -> str:
