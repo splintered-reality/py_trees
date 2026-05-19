@@ -88,7 +88,7 @@ Robotics:
 
 ## Maintainers
 
-Daniel Stonier ([@stonier](https://github.com/stonier)), Naveed Usmani ([@naveedhd](https://github.com/naveedhd)), Michal Staniaszek ([@heuristicus](https://github.com/heuristicus)), Sebastian Castro ([@sea-bass](https://github.com/sea-bass)).
+Daniel Stonier ([@stonier](https://github.com/stonier)), Sebastian Castro ([@sea-bass](https://github.com/sea-bass)).
 
 ## Acknowledgments
 
