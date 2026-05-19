@@ -1,6 +1,6 @@
 # PyTrees
 
-[[About](#about)] [[What's New?](#whats-new)] [[Documentation](#documentation)] [[Getting Started](#getting-started)] [[Next Steps](#next-steps)] [[Acknowledgments](#acknowledgments)] [[Releases](#releases)]
+[[About](#about)] [[What's New?](#whats-new)] [[Documentation](#documentation)] [[Getting Started](#getting-started)] [[Next Steps](#next-steps)] [[Maintainers](#maintainers)] [[Acknowledgments](#acknowledgments)] [[Releases](#releases)]
 
 ----
 
@@ -18,6 +18,7 @@ Brief feature list:
 
 ## What's New?
 
+* [2026-05-19] Typed input/output ports for behaviours, with XML parser support.
 * [2025-11-13] New `ForEach` decorator.
 * [2025-11-13] New `CompareBlackboardVariables` behaviour, with comparison expressions that allow callables.
 * [2025-01-11] Support for Python 3.12 was added, and Python 3.8 was dropped.
@@ -85,85 +86,15 @@ Robotics:
 * [py_trees_ros](https://github.com/splintered-reality/py_trees_ros) - a tree manager and behaviours designed for use specifically with `ROS2`
 * [py_trees_ros_viewer](https://github.com/splintered-reality/py_trees_ros_viewer) - a `Qt/ROS2` implementation of `py_trees_js`
 
-## Acknowledgments
-
-`py_trees` has grown thanks to contributions from the community. Entries are grouped by feature, with newest first. PR links are included so handles can be verified manually — once verified, the PR reference may be removed.
-
-### Typed input/output ports (2026)
-
-Port declarations, type validation, and XML parser. Contributed by [Sunrise Robotics](https://sunriserobotics.co/). Work performed by Jennifer Buehler ([@JenniferBuehler](https://github.com/JenniferBuehler)) while engaged at Sunrise Robotics as Robotics Engineer.
-
-### 2.4.x — ForEach, CompareBlackboardVariables, callables in comparisons (2025)
-
-* **`ForEach` decorator** — Jorge Santos Simón ([@corot](https://github.com/corot)) · [PR #476](https://github.com/splintered-reality/py_trees/pull/476)
-* **`CompareBlackboardVariables` behaviour** — Jorge Santos Simón ([@corot](https://github.com/corot)) · [PR #472](https://github.com/splintered-reality/py_trees/pull/472)
-* **Callables in `ComparisonExpression`** — Jorge Santos Simón ([@corot](https://github.com/corot)) · [PR #468](https://github.com/splintered-reality/py_trees/pull/468)
-* **`typing.Any` for kwargs type hints, release management** — Sebastian Castro ([@sea-bass](https://github.com/sea-bass)) · [PR #475](https://github.com/splintered-reality/py_trees/pull/475)
-* **Replace type checks with instance checks** — FrankvVeelen ([@FrankvVeelen](https://github.com/FrankvVeelen)) · [PR #479](https://github.com/splintered-reality/py_trees/pull/479)
-* **Short-circuit evaluation in `all()` via generator expressions** — Lei Zhang ([@coolbeevip](https://github.com/coolbeevip)) · [PR #470](https://github.com/splintered-reality/py_trees/pull/470)
-* **Remove `py` package (pytest-benchmark)** — Robert Tang-Kong ([@tangkong](https://github.com/tangkong)) · [PR #466](https://github.com/splintered-reality/py_trees/pull/466)
-* **Docs typo fix** — Sid Sarasvati ([@sidsarasvati](https://github.com/sidsarasvati)) · [PR #464](https://github.com/splintered-reality/py_trees/pull/464)
-
-### 2.3.x — Python 3.12 support, ProbabilisticBehaviour (2025)
-
-* **Python 3.12 support, CI modernisation, mypy fixes, tick-tock improvements** — Sebastian Castro ([@sea-bass](https://github.com/sea-bass)) · [PR #454](https://github.com/splintered-reality/py_trees/pull/454), [PR #444](https://github.com/splintered-reality/py_trees/pull/444)
-* **`ProbabilisticBehaviour`** — [@gitpushoriginmaster](https://github.com/gitpushoriginmaster)
-* **Parallel `SuccessOnOne` short-circuit fix** — wanfeng ([@starrye](https://github.com/starrye)) · [PR #440](https://github.com/splintered-reality/py_trees/pull/440)
-* **`typing.Sequence` for composite `children` argument** — Efe Mert Demir ([@emdemir](https://github.com/emdemir)) · [PR #436](https://github.com/splintered-reality/py_trees/pull/436)
-* **Timer duration type-check fix** — Naveed Usmani ([@naveedhd](https://github.com/naveedhd)) · [PR #456](https://github.com/splintered-reality/py_trees/pull/456)
-* **Docs: ticking tree, make target fix** — Nino Walker ([@ninowalker](https://github.com/ninowalker)) · [PR #430](https://github.com/splintered-reality/py_trees/pull/430)
-* **Fixed broken examples** — [@Tunglies](https://github.com/Tunglies)
-* **Dev environment polish (VSCode extensions, devcontainers, README)** — Daniel Stonier ([@stonier](https://github.com/stonier))
-
-### 2.2.x — Sequences & selectors with/without memory (2023)
-
-* **Sequences and selectors with and without memory, `Repeat`/`Retry` decorators, explicit composite/behaviour arguments, poetry + tox + mypy + black/usort, new abstract base classes, `StatusQueue`** — Daniel Stonier ([@stonier](https://github.com/stonier)) · [PR #389](https://github.com/splintered-reality/py_trees/pull/389), [PR #380](https://github.com/splintered-reality/py_trees/pull/380), [PR #376](https://github.com/splintered-reality/py_trees/pull/376), [PR #375](https://github.com/splintered-reality/py_trees/pull/375), [PR #371](https://github.com/splintered-reality/py_trees/pull/371), [PR #370](https://github.com/splintered-reality/py_trees/pull/370)
-* **Display bugfix for off-the-grid blackboard client nodes, exclusive-write edge styling** — Matt Sprague (handle unverified) · [PR #383](https://github.com/splintered-reality/py_trees/pull/383)
-* **Docs: `py_trees.common.Access` added to modules** — Jan-Hendrik Ewers ([@iwishiwasaneagle](https://github.com/iwishiwasaneagle)) · [PR #347](https://github.com/splintered-reality/py_trees/pull/347)
-* **Typos** — Liang Fok (handle unverified)
-* **Tutorial URL update** — Andrew Best ([@andrewbest-tri](https://github.com/andrewbest-tri))
-
-### 2.1.x — Chooser deprecated, API housekeeping (2020–2021)
-
-* **Chain-able `add_children()` for composites** — [@iovsiann](https://github.com/iovsiann) · [PR #290](https://github.com/splintered-reality/py_trees/pull/290)
-* **Bugfix: current-child setting while moving through children** — Sara Sinback ([@sinback](https://github.com/sinback)) · [PR #304](https://github.com/splintered-reality/py_trees/pull/304)
-* **Blackboard fix** — Gabriel Rodrigues ([@gabrielsr](https://github.com/gabrielsr)) · [PR #302](https://github.com/splintered-reality/py_trees/pull/302)
-* **`Chooser` deprecation, `either_or` idiom, `TickCounter`, `CheckBlackboardVariableValues`, `ComparisonExpression`, mypy conformance** — Daniel Stonier ([@stonier](https://github.com/stonier))
-
-### 2.0.x — Blackboards V2 (2019)
-
-* **Blackboards V2: namespaced clients, read/write access control, exclusive-write access, key remappings, activity stream, required keys, `Access` enum, `DisplaySnapshotVisitor`** — Daniel Stonier ([@stonier](https://github.com/stonier)) · [PR #250](https://github.com/splintered-reality/py_trees/pull/250), [PR #259](https://github.com/splintered-reality/py_trees/pull/259), [PR #260](https://github.com/splintered-reality/py_trees/pull/260)
-* **`show_only_visited` indentation fix** — [@andrewbest-tri](https://github.com/andrewbest-tri) · [PR #273](https://github.com/splintered-reality/py_trees/pull/273)
-* **Additional Parallel behaviour tests** — Sachit Vithaldas ([@sachit-tri](https://github.com/sachit-tri)) · [PR #244](https://github.com/splintered-reality/py_trees/pull/244)
-
-### 1.2.x — `shutdown()`, `EternalGuard`, `StatusToBlackboard` (2019)
-
-* **`Behaviour.shutdown()`, `EternalGuard` decorator + idiom, `StatusToBlackboard` decorator, `xhtml_tree` display** — Daniel Stonier ([@stonier](https://github.com/stonier)) · [PR #193](https://github.com/splintered-reality/py_trees/pull/193), [PR #195](https://github.com/splintered-reality/py_trees/pull/195)
-* **`Visitor.finalise()` method** — Jan Feil ([@jfeil](https://github.com/jfeil)) · [PR #191](https://github.com/splintered-reality/py_trees/pull/191)
-* **Timer licence header fix** — Naveed Usmani ([@naveedhd](https://github.com/naveedhd)) · [PR #188](https://github.com/splintered-reality/py_trees/pull/188)
-
-### 1.0.x — New-style decorators (2019)
-
-* **New-style decorators in `py_trees.decorators`, tip-in-ascii-tree highlighting, flexible `setup()` via kwargs, `add_visitor()`** — Daniel Stonier ([@stonier](https://github.com/stonier)) · [PR #143](https://github.com/splintered-reality/py_trees/pull/143), [PR #148](https://github.com/splintered-reality/py_trees/pull/148)
-* **Unicode-char fallbacks when stdout is not UTF-8, synchronous tree setup on infinite timeout, double-edge fix, section labels** — Sachit Vithaldas ([@sachit-tri](https://github.com/sachit-tri)) · [PR #155](https://github.com/splintered-reality/py_trees/pull/155), [PR #158](https://github.com/splintered-reality/py_trees/pull/158), [PR #161](https://github.com/splintered-reality/py_trees/pull/161), [PR #166](https://github.com/splintered-reality/py_trees/pull/166)
-* **`Blackboard.unset()`, parent field correctly set in `Behaviour.replace_child()`** — Kevin Greene ([@kgreenek](https://github.com/kgreenek)) · [PR #119](https://github.com/splintered-reality/py_trees/pull/119)
-* **Windows compatibility (keypress handling)** — Fredrik Baberg ([@fredrikbaberg](https://github.com/fredrikbaberg)) · [PR #112](https://github.com/splintered-reality/py_trees/pull/112)
-* **Documentation / code typo fixes** — Chris Lalancette ([@clalancette](https://github.com/clalancette)) · [PR #111](https://github.com/splintered-reality/py_trees/pull/111)
-
-### 0.x — Foundations (2015–2018)
-
-* **Initial implementation of behaviour trees in Python, `OneShot`, `PickUpWhereYouLeftOff` idioms, ROS 2 compatibility, dot-tree/ASCII-tree display, visitors and generators, ComparisonExpression, namespaces consolidation** — Daniel Stonier ([@stonier](https://github.com/stonier))
-* **Blackboard watcher/monitor, `SubBlackboard`, subscriber behaviours, `Imposter` tick fixes, meta `add_child()`, license / docstring cleanup** — Naveed Usmani ([@naveedhd](https://github.com/naveedhd)) · [PR #34](https://github.com/splintered-reality/py_trees/pull/34), [PR #55](https://github.com/splintered-reality/py_trees/pull/55), [PR #57](https://github.com/splintered-reality/py_trees/pull/57), [PR #59](https://github.com/splintered-reality/py_trees/pull/59), [PR #60](https://github.com/splintered-reality/py_trees/pull/60)
-* **`gopher_behaviours`: elevator transfer & autonomous rides (field-test-era behaviours)** — Marcus Liebhardt (handle unverified)
-* **Maintainer handover & project metadata** — Michal Staniaszek ([@heuristicus](https://github.com/heuristicus))
-* **Python 2/3 compatibility** — Aadesh Neupane ([@aadeshnpn](https://github.com/aadeshnpn)) · [PR #66](https://github.com/splintered-reality/py_trees/pull/66)
-* **Improved error logging** — Alex V ([@asmodehn](https://github.com/asmodehn))
-* **Test/doc dependency isolation from installed deps, pytest fix for issue #80** — Sachit Vithaldas ([@sachit-tri](https://github.com/sachit-tri)) · [PR #72](https://github.com/splintered-reality/py_trees/pull/72), [PR #81](https://github.com/splintered-reality/py_trees/pull/81)
-* **Early maintenance & packaging** — [@dwlee](https://github.com/dwlee), Alexander Reimann (handle unverified)
-
-### Maintainers
+## Maintainers
 
 Daniel Stonier ([@stonier](https://github.com/stonier)), Naveed Usmani ([@naveedhd](https://github.com/naveedhd)), Michal Staniaszek ([@heuristicus](https://github.com/heuristicus)), Sebastian Castro ([@sea-bass](https://github.com/sea-bass)).
+
+## Acknowledgments
+
+Contributors are welcome to add themselves here in future PRs.
+
+* Port declarations, type validation, and XML parser: contributed by [Sunrise Robotics](https://sunriserobotics.co/).
 
 ## Releases
 
