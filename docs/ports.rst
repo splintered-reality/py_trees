@@ -32,7 +32,7 @@ Using ports instead of ad-hoc blackboard reads and writes pays off in several co
 * **XML authoring.**
   Once a library of port-enabled nodes exists, trees become declarative data.
   Non-programmers can read and edit tree structure (and the data wiring) without touching Python.
-  See the :ref:`XML parser section <py-trees-demo-ports-xml-tree-program>` below.
+  See the :ref:`XML parser section <ports-xml-parser-label>` below.
 
 * **Reusable subtrees via rewiring.**
   A subtree is configured from the outside by rewiring its port remappings.
@@ -100,6 +100,8 @@ In the example above, another node's output ports would typically be remapped to
 .. note:: Why is ``setup_ports()`` a separate call?
     Because the remapping table usually cannot be computed until the entire tree topology is known — either the user assembles it by hand or a parser generates it from e.g. XML (more on that next).
     See :class:`py_trees.ports.PortsMixin` for the full contract and semantics.
+
+.. _ports-xml-parser-label:
 
 Experimental XML parser
 -----------------------

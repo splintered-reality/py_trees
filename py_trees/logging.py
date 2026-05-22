@@ -90,7 +90,6 @@ class Logger(object):
         Args:
            msg: the message to log
         """
-        global level
         if level < Level.INFO:
             console.logdebug(self.prefix + msg)
 
@@ -101,7 +100,6 @@ class Logger(object):
         Args:
            msg: the message to log
         """
-        global level
         if level < Level.WARN:
             console.loginfo(self.prefix + msg)
 
@@ -112,7 +110,6 @@ class Logger(object):
         Args:
            msg: the message to log
         """
-        global level
         if level < Level.ERROR:
             console.logwarn(self.prefix + msg)
 
