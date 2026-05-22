@@ -176,7 +176,7 @@ def get_key_name(value: str) -> str:
     """Extract the key name from a ``{key}`` reference string."""
     match = is_key(value)
     assert match, f"Key '{value}' is not a valid key"
-    return match.group(1)
+    return str(match.group(1))
 
 
 def resolve_key_remapping(key: str, remapping_table: dict[str, str]) -> str:

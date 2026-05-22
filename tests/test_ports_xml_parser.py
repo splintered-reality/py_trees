@@ -138,7 +138,9 @@ class TestXMLParser(unittest.TestCase):
     def test_is_key_rejects_malformed_braces(self) -> None:
         self.assertIsNone(is_key("/absolute/path"))
         self.assertIsNone(is_key("relative_value"))
-        self.assertEqual(is_key("{logical_key}").group(1), "logical_key")
+        match = is_key("{logical_key}")
+        assert match is not None
+        self.assertEqual(match.group(1), "logical_key")
 
         malformed_values = [
             "{missing_close",

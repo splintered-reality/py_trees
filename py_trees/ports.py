@@ -220,9 +220,9 @@ class PortsMixin(_MixinBase):
             KeyError: If the port name is not defined in either input or output ports.
         """
         if port_name in cls.input_ports():
-            return cls.input_ports()[port_name].data_type
+            return cls.input_ports()[port_name].data_type  # type: ignore[no-any-return]
         elif port_name in cls.output_ports():
-            return cls.output_ports()[port_name].data_type
+            return cls.output_ports()[port_name].data_type  # type: ignore[no-any-return]
         else:
             raise KeyError(f"Port '{port_name}' not defined.")
 
