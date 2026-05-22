@@ -335,7 +335,7 @@ class Blackboard(object):
 
     @staticmethod
     def keys_filtered_by_clients(
-        client_ids: typing.Union[typing.Set[uuid.UUID], typing.List[uuid.UUID]]
+        client_ids: typing.Union[typing.Set[uuid.UUID], typing.List[uuid.UUID]],
     ) -> typing.Set[str]:
         """
         Get the set of blackboard keys filtered by client unique identifiers.

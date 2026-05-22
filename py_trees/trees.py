@@ -82,9 +82,7 @@ def setup(
         # it will work in most situations. If a windows user is running into
         # problems, work with them to resolve it.
         _SIGNAL = signal.SIGINT  # noqa
-    # This will be used as a global variable in the signal handler.
-    # Mypy has trouble with global variables that are not module variables.
-    #   https://github.com/python/mypy/issues/5732
+    # Track progress for timeout diagnostics in the signal handler.
     current_behaviour_name: typing.Optional[str] = None
 
     def on_timer_timed_out() -> None:
@@ -95,18 +93,17 @@ def setup(
         unused_frame: types.FrameType,
         original_signal_handler: typing.Optional[signal.Handlers],
     ) -> None:
-        global current_behaviour_name
         signal.signal(_SIGNAL, original_signal_handler)
         raise RuntimeError(
-            f"tree setup interrupted or timed out [{current_behaviour_name}]"  # type: ignore[name-defined]
+            f"tree setup interrupted or timed out [{current_behaviour_name}]"
         )
 
     def visited_setup() -> None:
-        global current_behaviour_name
+        nonlocal current_behaviour_name
         if visitor is not None:
             visitor.initialise()
         for node in root.iterate():
-            current_behaviour_name = node.name  # type: ignore[name-defined]
+            current_behaviour_name = node.name
             node.setup(**kwargs)
             if visitor is not None:
                 node.visit(visitor)

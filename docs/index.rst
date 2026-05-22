@@ -17,6 +17,7 @@ Py Trees
    composites
    decorators
    blackboards
+   ports
    idioms
    trees
    visualisation

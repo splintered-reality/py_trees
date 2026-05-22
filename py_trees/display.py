@@ -583,7 +583,7 @@ def dot_tree(
         )
 
     def add_blackboard_nodes(
-        blackboard_id_name_map: typing.Dict[uuid.UUID, str]
+        blackboard_id_name_map: typing.Dict[uuid.UUID, str],
     ) -> None:
         data = blackboard.Blackboard.storage
         metadata = blackboard.Blackboard.metadata
@@ -745,15 +745,11 @@ def render_dot_tree(
         filename_wo_extension_to_convert
     )
     filenames: typing.Dict[str, str] = {}
-    for extension, writer in {
-        "dot": graph.write,
-        "png": graph.write_png,
-        "svg": graph.write_svg,
-    }.items():
+    for extension, file_format in (("dot", "raw"), ("png", "png"), ("svg", "svg")):
         filename = filename_wo_extension + "." + extension
         pathname = os.path.join(target_directory, filename)
         print("Writing {}".format(pathname))
-        writer(pathname)
+        graph.write(pathname, format=file_format)
         filenames[extension] = pathname
     return filenames
 

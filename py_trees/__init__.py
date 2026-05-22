@@ -24,6 +24,7 @@ from . import display  # usort:skip
 from . import idioms  # usort:skip
 from . import logging  # usort:skip
 from . import meta  # usort:skip
+from . import ports  # usort:skip
 from . import syntax_highlighting  # usort:skip
 from . import tests  # usort:skip
 from . import timers  # usort:skip

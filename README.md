@@ -1,6 +1,6 @@
 # PyTrees
 
-[[About](#about)] [[What's New?](#whats-new)] [[Documentation](#documentation)] [[Getting Started](#getting-started)] [[Next Steps](#next-steps)] [[Releases](#releases)]
+[[About](#about)] [[What's New?](#whats-new)] [[Documentation](#documentation)] [[Getting Started](#getting-started)] [[Next Steps](#next-steps)] [[Maintainers](#maintainers)] [[Acknowledgments](#acknowledgments)] [[Releases](#releases)]
 
 ----
 
@@ -18,6 +18,7 @@ Brief feature list:
 
 ## What's New?
 
+* [2026-05-19] Typed input/output ports for behaviours, with XML parser support.
 * [2025-11-13] New `ForEach` decorator.
 * [2025-11-13] New `CompareBlackboardVariables` behaviour, with comparison expressions that allow callables.
 * [2025-01-11] Support for Python 3.12 was added, and Python 3.8 was dropped.
@@ -84,6 +85,16 @@ Visualisation:
 Robotics:
 * [py_trees_ros](https://github.com/splintered-reality/py_trees_ros) - a tree manager and behaviours designed for use specifically with `ROS2`
 * [py_trees_ros_viewer](https://github.com/splintered-reality/py_trees_ros_viewer) - a `Qt/ROS2` implementation of `py_trees_js`
+
+## Maintainers
+
+Daniel Stonier ([@stonier](https://github.com/stonier)), Sebastian Castro ([@sea-bass](https://github.com/sea-bass)).
+
+## Acknowledgments
+
+Contributors are welcome to add themselves here in future PRs.
+
+* Port declarations, type validation, and XML parser: contributed by [Sunrise Robotics](https://sunriserobotics.co/).
 
 ## Releases
 
