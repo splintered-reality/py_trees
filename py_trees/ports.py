@@ -60,7 +60,7 @@ class NoDataAvailable(Exception):  # noqa: N818
 class PortInformation:
     """Static declaration for one typed input or output port."""
 
-    type: Any  # noqa: A003 - "type" is the public field name for port declarations.
+    data_type: Any
     required: bool = True
     description: str = ""
 
@@ -102,11 +102,11 @@ class PortsMixin(_MixinBase):
         class MyBehaviour(PortsMixin, py_trees.behaviour.Behaviour):
             @classmethod
             def input_ports(cls):
-                return {"input": PortInformation(type=str, required=True)}
+                return {"input": PortInformation(data_type=str, required=True)}
 
             @classmethod
             def output_ports(cls):
-                return {"output": PortInformation(type=str, required=True)}
+                return {"output": PortInformation(data_type=str, required=True)}
 
             def __init__(self, name: str):
                 super().__init__(name=name)
@@ -119,7 +119,7 @@ class PortsMixin(_MixinBase):
     Port specification format in ``input_ports()`` and ``output_ports()``::
 
         {
-            "<port_name>": PortInformation(type=<expected_type>, required=<bool>),
+            "<port_name>": PortInformation(data_type=<expected_type>, required=<bool>),
         }
 
     Input and output port names must be unique across both sets; overlapping names are not allowed and
@@ -182,11 +182,11 @@ class PortsMixin(_MixinBase):
         class ConsumerProducer(PortsMixin, py_trees.behaviour.Behaviour):
             @classmethod
             def input_ports(cls):
-                return {"input": PortInformation(type=str, required=True)}
+                return {"input": PortInformation(data_type=str, required=True)}
 
             @classmethod
             def output_ports(cls):
-                return {"output": PortInformation(type=str, required=True)}
+                return {"output": PortInformation(data_type=str, required=True)}
 
             def update(self):
                 input_val = self.get_input("input")
@@ -220,9 +220,9 @@ class PortsMixin(_MixinBase):
             KeyError: If the port name is not defined in either input or output ports.
         """
         if port_name in cls.input_ports():
-            return cls.input_ports()[port_name].type
+            return cls.input_ports()[port_name].data_type
         elif port_name in cls.output_ports():
-            return cls.output_ports()[port_name].type
+            return cls.output_ports()[port_name].data_type
         else:
             raise KeyError(f"Port '{port_name}' not defined.")
 
@@ -363,7 +363,7 @@ class PortsMixin(_MixinBase):
                     # Replacing the DOT_REPLACEMENT with the actual dot (see comment in DOT_REPLACEMENT definition)
                     value = raw_value.replace(DOT_REPLACEMENT, ".")
 
-                    port_type = self.input_ports()[port].type
+                    port_type = self.input_ports()[port].data_type
                     try:
                         updated_value = convert_str_to_type(
                             value, port_type, logger=self._ports_logger
@@ -614,7 +614,7 @@ class PortsMixin(_MixinBase):
             raise NotImplementedError(
                 "Support for None values has not yet been considered."
             )
-        port_type = self.input_ports()[port_name].type
+        port_type = self.input_ports()[port_name].data_type
         if not self._is_instance_of_type(value, port_type):
             raise TypeError(
                 f"{self.name}: Value '{value}' is not of type {port_type}, but {type(value)}"
@@ -651,7 +651,7 @@ class PortsMixin(_MixinBase):
             raise NotImplementedError(
                 "Support for explicit None values has not yet been considered."
             )
-        port_type = self.output_ports()[port_name].type
+        port_type = self.output_ports()[port_name].data_type
         if not self._is_instance_of_type(value, port_type):
             raise TypeError(f"{self.name}: Value '{value}' is not of type {port_type}")
         return value
@@ -672,7 +672,7 @@ class PortsMixin(_MixinBase):
         """
         if port_name not in self.output_ports():
             raise KeyError(f"{self.name}: Output port '{port_name}' not defined.")
-        port_type = self.output_ports()[port_name].type
+        port_type = self.output_ports()[port_name].data_type
         if not self._is_instance_of_type(value, port_type):
             raise TypeError(f"{self.name}: Value '{value}' is not of type {port_type}")
 
@@ -774,11 +774,11 @@ class BehaviourWithPorts(PortsMixin, py_trees.behaviour.Behaviour):
         class ExampleBehaviour(BehaviourWithPorts):
             @classmethod
             def input_ports(cls):
-                return {"input_data": PortInformation(type=str, required=True)}
+                return {"input_data": PortInformation(data_type=str, required=True)}
 
             @classmethod
             def output_ports(cls):
-                return {"output_data": PortInformation(type=str, required=True)}
+                return {"output_data": PortInformation(data_type=str, required=True)}
 
             def update(self):
                 # Implementation of the behaviour

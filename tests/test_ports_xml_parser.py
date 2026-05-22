@@ -61,7 +61,7 @@ class Wait(BehaviourWithPorts):
 
     @classmethod
     def input_ports(cls) -> dict:
-        return {cls.INPUT_DURATION_MS_PORT: PortInformation(type=int, required=True)}
+        return {cls.INPUT_DURATION_MS_PORT: PortInformation(data_type=int, required=True)}
 
     @classmethod
     def output_ports(cls) -> dict:
@@ -193,11 +193,11 @@ class TestXMLParser(unittest.TestCase):
         class CustomBehaviourWithPorts(BehaviourWithPorts):
             @classmethod
             def input_ports(cls) -> dict:
-                return {"in": PortInformation(type=str, required=False)}
+                return {"in": PortInformation(data_type=str, required=False)}
 
             @classmethod
             def output_ports(cls) -> dict:
-                return {"out": PortInformation(type=str, required=False)}
+                return {"out": PortInformation(data_type=str, required=False)}
 
             def __init__(self, name: str, extra_arg: str, **kwargs: Any) -> None:
                 super().__init__(name, **kwargs)
@@ -520,11 +520,11 @@ class TestXMLParser(unittest.TestCase):
         class EchoCtorArgs(BehaviourWithPorts):
             @classmethod
             def input_ports(cls) -> dict:
-                return {"in": PortInformation(type=str, required=False)}  # not used here
+                return {"in": PortInformation(data_type=str, required=False)}  # not used here
 
             @classmethod
             def output_ports(cls) -> dict:
-                return {"out": PortInformation(type=str, required=False)}  # not used here
+                return {"out": PortInformation(data_type=str, required=False)}  # not used here
 
             def __init__(
                 self, name: str, greeting: str, times: str, flag: str, **kwargs: Any
@@ -571,11 +571,11 @@ class TestXMLParser(unittest.TestCase):
         class PortAndCtor(BehaviourWithPorts):
             @classmethod
             def input_ports(cls) -> dict:
-                return {"in": PortInformation(type=str, required=True)}  # only this is a port
+                return {"in": PortInformation(data_type=str, required=True)}  # only this is a port
 
             @classmethod
             def output_ports(cls) -> dict:
-                return {"out": PortInformation(type=str, required=False)}
+                return {"out": PortInformation(data_type=str, required=False)}
 
             def __init__(self, name: str, label: str, **kwargs: Any) -> None:
                 super().__init__(name, **kwargs)
@@ -680,7 +680,7 @@ class TestXMLParser(unittest.TestCase):
 
             @classmethod
             def output_ports(cls) -> dict:
-                return {"out": PortInformation(type=str, required=True)}
+                return {"out": PortInformation(data_type=str, required=True)}
 
             def update(self) -> py_trees.common.Status:
                 self._set_output("out", "direct-ports-leaf-ran")

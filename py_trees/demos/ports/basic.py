@@ -29,15 +29,15 @@ class Multiply(BehaviourWithPorts):
     def input_ports(cls) -> dict:
         """Return the input port declarations."""
         return {
-            "a": PortInformation(type=float, required=True),
-            "b": PortInformation(type=float, required=True),
+            "a": PortInformation(data_type=float, required=True),
+            "b": PortInformation(data_type=float, required=True),
         }
 
     @classmethod
     def output_ports(cls) -> dict:
         """Return the output port declarations."""
         return {
-            "product": PortInformation(type=float, required=True),
+            "product": PortInformation(data_type=float, required=True),
         }
 
     def update(self) -> py_trees.common.Status:

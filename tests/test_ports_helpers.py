@@ -24,7 +24,7 @@ class Producer(BehaviourWithPorts):
 
     @classmethod
     def output_ports(cls) -> dict:
-        return {cls.OUTPUT_PORT: PortInformation(type=str, required=True)}
+        return {cls.OUTPUT_PORT: PortInformation(data_type=str, required=True)}
 
     def update(self) -> py_trees.common.Status:
         self._set_output(
@@ -39,11 +39,11 @@ class ConsumerProducer(BehaviourWithPorts):
 
     @classmethod
     def input_ports(cls) -> dict:
-        return {cls.INPUT_PORT: PortInformation(type=str, required=True)}
+        return {cls.INPUT_PORT: PortInformation(data_type=str, required=True)}
 
     @classmethod
     def output_ports(cls) -> dict:
-        return {cls.OUTPUT_PORT: PortInformation(type=str, required=True)}
+        return {cls.OUTPUT_PORT: PortInformation(data_type=str, required=True)}
 
     def update(self) -> py_trees.common.Status:
         input_value = self.get_input(self.INPUT_PORT)
@@ -58,7 +58,7 @@ class Consumer(BehaviourWithPorts):
 
     @classmethod
     def input_ports(cls) -> dict:
-        return {cls.INPUT_PORT: PortInformation(type=str, required=True)}
+        return {cls.INPUT_PORT: PortInformation(data_type=str, required=True)}
 
     @classmethod
     def output_ports(cls) -> dict:
@@ -77,7 +77,7 @@ class FloatConsumer(BehaviourWithPorts):
 
     @classmethod
     def input_ports(cls) -> dict:
-        return {cls.INPUT_PORT: PortInformation(type=float, required=True)}
+        return {cls.INPUT_PORT: PortInformation(data_type=float, required=True)}
 
     @classmethod
     def output_ports(cls) -> dict:

@@ -33,14 +33,14 @@ class StartMissionReport(BehaviourWithPorts):
     def input_ports(cls) -> dict:
         """Return the input port declarations."""
         return {
-            "robot_name": PortInformation(type=str, required=True),
-            "mission_name": PortInformation(type=str, required=True),
+            "robot_name": PortInformation(data_type=str, required=True),
+            "mission_name": PortInformation(data_type=str, required=True),
         }
 
     @classmethod
     def output_ports(cls) -> dict:
         """Return the output port declarations."""
-        return {"report": PortInformation(type=str, required=True)}
+        return {"report": PortInformation(data_type=str, required=True)}
 
     def update(self) -> py_trees.common.Status:
         """Combine ``robot_name`` and ``mission_name`` into the initial report."""
@@ -57,14 +57,14 @@ class AddMissionStep(BehaviourWithPorts):
     def input_ports(cls) -> dict:
         """Return the input port declarations."""
         return {
-            "report_in": PortInformation(type=str, required=True),
-            "step": PortInformation(type=str, required=True),
+            "report_in": PortInformation(data_type=str, required=True),
+            "step": PortInformation(data_type=str, required=True),
         }
 
     @classmethod
     def output_ports(cls) -> dict:
         """Return the output port declarations."""
-        return {"report_out": PortInformation(type=str, required=True)}
+        return {"report_out": PortInformation(data_type=str, required=True)}
 
     def update(self) -> py_trees.common.Status:
         """Append ``step`` to ``report_in`` and write to ``report_out``."""
@@ -80,7 +80,7 @@ class ReadMissionReport(BehaviourWithPorts):
     @classmethod
     def input_ports(cls) -> dict:
         """Return the input port declarations."""
-        return {"report": PortInformation(type=str, required=True)}
+        return {"report": PortInformation(data_type=str, required=True)}
 
     @classmethod
     def output_ports(cls) -> dict:

@@ -37,7 +37,7 @@ class GreetingProducer(BehaviourWithPorts):
     @classmethod
     def output_ports(cls) -> dict:
         """Return the output port declarations."""
-        return {"output": PortInformation(type=str, required=True)}
+        return {"output": PortInformation(data_type=str, required=True)}
 
     def update(self) -> py_trees.common.Status:
         """Write a fixed greeting to the output port."""
@@ -52,14 +52,14 @@ class AddSuffix(BehaviourWithPorts):
     def input_ports(cls) -> dict:
         """Return the input port declarations."""
         return {
-            "input": PortInformation(type=str, required=True),
-            "suffix": PortInformation(type=str, required=True),
+            "input": PortInformation(data_type=str, required=True),
+            "suffix": PortInformation(data_type=str, required=True),
         }
 
     @classmethod
     def output_ports(cls) -> dict:
         """Return the output port declarations."""
-        return {"output": PortInformation(type=str, required=True)}
+        return {"output": PortInformation(data_type=str, required=True)}
 
     def update(self) -> py_trees.common.Status:
         """Append ``suffix`` to ``input`` and write the result to ``output``."""
@@ -75,7 +75,7 @@ class PrintConsumer(BehaviourWithPorts):
     @classmethod
     def input_ports(cls) -> dict:
         """Return the input port declarations."""
-        return {"input": PortInformation(type=str, required=True)}
+        return {"input": PortInformation(data_type=str, required=True)}
 
     @classmethod
     def output_ports(cls) -> dict:

@@ -63,14 +63,14 @@ Concrete nodes typically inherit from the convenience base
        @classmethod
        def input_ports(cls):
            return {
-               "a": PortInformation(type=float, required=True),
-               "b": PortInformation(type=float, required=True),
+               "a": PortInformation(data_type=float, required=True),
+               "b": PortInformation(data_type=float, required=True),
            }
 
        @classmethod
        def output_ports(cls):
            return {
-               "product": PortInformation(type=float, required=True),
+               "product": PortInformation(data_type=float, required=True),
            }
 
        def update(self):
@@ -140,11 +140,11 @@ Example::
 
        @classmethod
        def input_ports(cls):
-           return {"name_key": PortInformation(type=str, required=True)}
+           return {"name_key": PortInformation(data_type=str, required=True)}
 
        @classmethod
        def output_ports(cls):
-           return {"greeting": PortInformation(type=str, required=True)}
+           return {"greeting": PortInformation(data_type=str, required=True)}
 
        def __init__(self, name: str, prefix: str = "Hello", **kwargs):
            super().__init__(name=name, **kwargs)
@@ -207,7 +207,7 @@ A few things you should be aware of, and suggestions on how to fill the gaps you
 
           @classmethod
           def input_ports(cls):
-              return {"num_failures": PortInformation(type=int, required=True)}
+              return {"num_failures": PortInformation(data_type=int, required=True)}
 
           @classmethod
           def output_ports(cls):

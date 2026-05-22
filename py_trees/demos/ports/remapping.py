@@ -42,7 +42,7 @@ class GenerateValue(BehaviourWithPorts):
     @classmethod
     def output_ports(cls) -> dict:
         """Return the output port declarations."""
-        return {"value": PortInformation(type=str, required=True)}
+        return {"value": PortInformation(data_type=str, required=True)}
 
     def update(self) -> py_trees.common.Status:
         """Generate a random value and write it to the output port."""
@@ -62,14 +62,14 @@ class AppendSuffix(BehaviourWithPorts):
     @classmethod
     def input_ports(cls) -> dict:
         """Return the input port declarations."""
-        return {"text_in": PortInformation(type=str, required=True)}
+        return {"text_in": PortInformation(data_type=str, required=True)}
 
     @classmethod
     def output_ports(cls) -> dict:
         """Return the output port declarations."""
         return {
-            "text_out": PortInformation(type=str, required=True),
-            "value": PortInformation(type=str, required=True),
+            "text_out": PortInformation(data_type=str, required=True),
+            "value": PortInformation(data_type=str, required=True),
         }
 
     def update(self) -> py_trees.common.Status:
@@ -86,7 +86,7 @@ class ReadResult(BehaviourWithPorts):
     @classmethod
     def input_ports(cls) -> dict:
         """Return the input port declarations."""
-        return {"value": PortInformation(type=str, required=True)}
+        return {"value": PortInformation(data_type=str, required=True)}
 
     @classmethod
     def output_ports(cls) -> dict:
