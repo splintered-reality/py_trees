@@ -18,15 +18,15 @@ from functools import partial
 from typing import Any
 
 import py_trees
+from py_trees.parsers.behaviour_tree_xml import is_key, parse_behaviour_tree_xml
+
+from py_trees.ports import BehaviourWithPorts, PortInformation
 from py_trees.ports_utils import (
     find_node_by_class,
     find_node_by_name,
     generate_node_name,
     strip_trailing_uuid4,
 )
-from py_trees.parsers.behaviour_tree_xml import is_key, parse_behaviour_tree_xml
-
-from py_trees.ports import BehaviourWithPorts, PortInformation
 
 from .test_ports_helpers import Consumer, ConsumerProducer, Producer
 
@@ -61,7 +61,9 @@ class Wait(BehaviourWithPorts):
 
     @classmethod
     def input_ports(cls) -> dict:
-        return {cls.INPUT_DURATION_MS_PORT: PortInformation(data_type=int, required=True)}
+        return {
+            cls.INPUT_DURATION_MS_PORT: PortInformation(data_type=int, required=True)
+        }
 
     @classmethod
     def output_ports(cls) -> dict:
@@ -520,11 +522,15 @@ class TestXMLParser(unittest.TestCase):
         class EchoCtorArgs(BehaviourWithPorts):
             @classmethod
             def input_ports(cls) -> dict:
-                return {"in": PortInformation(data_type=str, required=False)}  # not used here
+                return {
+                    "in": PortInformation(data_type=str, required=False)
+                }  # not used here
 
             @classmethod
             def output_ports(cls) -> dict:
-                return {"out": PortInformation(data_type=str, required=False)}  # not used here
+                return {
+                    "out": PortInformation(data_type=str, required=False)
+                }  # not used here
 
             def __init__(
                 self, name: str, greeting: str, times: str, flag: str, **kwargs: Any
@@ -571,7 +577,9 @@ class TestXMLParser(unittest.TestCase):
         class PortAndCtor(BehaviourWithPorts):
             @classmethod
             def input_ports(cls) -> dict:
-                return {"in": PortInformation(data_type=str, required=True)}  # only this is a port
+                return {
+                    "in": PortInformation(data_type=str, required=True)
+                }  # only this is a port
 
             @classmethod
             def output_ports(cls) -> dict:

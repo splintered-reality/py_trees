@@ -22,9 +22,9 @@ from typing import Any, TYPE_CHECKING
 import py_trees
 
 from .ports_utils import (
+    convert_str_to_type,
     LogLevel,
     PortsLogger,
-    convert_str_to_type,
     reset_blackboard_key,
     sanitize_name_for_blackboard_use,
     set_feedback_and_log,

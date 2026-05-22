@@ -283,9 +283,7 @@ def reset_blackboard_key(
     try:
         blackboard_client.unset(key_name)
     except Exception as e:
-        raise RuntimeError(
-            f"{node_name}: Unable to reset port '{key_name}'."
-        ) from e
+        raise RuntimeError(f"{node_name}: Unable to reset port '{key_name}'.") from e
 
 
 def uuid4_regex(at_end: bool = False) -> str:
