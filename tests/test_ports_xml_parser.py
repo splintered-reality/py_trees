@@ -987,7 +987,7 @@ class TestAutoRegistration(unittest.TestCase):
         root_node = parse_behaviour_tree_xml(self.tempfile.name)
         py_trees.trees.BehaviourTree(root_node).tick()
         cons = find_node_by_name(root_node, "cons", strip_prefix=True)
-        self.assertIsInstance(cons, Consumer)
+        assert isinstance(cons, Consumer)
         self.assertEqual(cons.consumed_value, "Producer[/:prod]")
 
     def test_auto_register_false_with_empty_lookup_raises(self) -> None:

@@ -281,24 +281,23 @@ class TestBehaviourWithPorts(unittest.TestCase):
         self.assertEqual(cons.get_input("input"), "wired")
 
 
+class _RegistryLeaf(BehaviourWithPorts, register=False):
+    """Concrete leaf used to exercise the registry; itself kept out of it."""
+
+    @classmethod
+    def input_ports(cls) -> dict:
+        return {}
+
+    @classmethod
+    def output_ports(cls) -> dict:
+        return {}
+
+    def update(self) -> py_trees.common.Status:
+        return py_trees.common.Status.SUCCESS
+
+
 class TestPortsClassRegistry(unittest.TestCase):
-    """Auto-registration of PortsMixin subclasses for the XML parser."""
-
-    @staticmethod
-    def _make_leaf(**clskwargs: object) -> type:
-        class _Leaf(BehaviourWithPorts, **clskwargs):  # type: ignore[misc]
-            @classmethod
-            def input_ports(cls) -> dict:
-                return {}
-
-            @classmethod
-            def output_ports(cls) -> dict:
-                return {}
-
-            def update(self) -> py_trees.common.Status:
-                return py_trees.common.Status.SUCCESS
-
-        return _Leaf
+    """Auto-registration of PortsMixin subclasses for tree parsers."""
 
     def test_concrete_subclass_is_registered(self) -> None:
         # Producer is a concrete BehaviourWithPorts imported by the test helpers.
@@ -311,14 +310,18 @@ class TestPortsClassRegistry(unittest.TestCase):
         self.assertNotIn("BehaviourWithPorts", registry)
 
     def test_tag_alias_at_definition(self) -> None:
-        leaf = self._make_leaf(tag="AliasTag")
+        class AliasedLeaf(_RegistryLeaf, tag="AliasTag"):
+            pass
+
         registry = get_ports_registry()
-        self.assertIs(registry.get("AliasTag"), leaf)
-        self.assertNotIn(leaf.__name__, registry)
+        self.assertIs(registry.get("AliasTag"), AliasedLeaf)
+        self.assertNotIn("AliasedLeaf", registry)
 
     def test_register_false_opts_out(self) -> None:
-        leaf = self._make_leaf(register=False)
-        self.assertNotIn(leaf.__name__, get_ports_registry())
+        class HiddenLeaf(_RegistryLeaf, register=False):
+            pass
+
+        self.assertNotIn("HiddenLeaf", get_ports_registry())
 
     def test_register_ports_class_aliases(self) -> None:
         register_ports_class("ProducerAlias", Producer)
@@ -329,12 +332,16 @@ class TestPortsClassRegistry(unittest.TestCase):
             register_ports_class("NotAPort", py_trees.behaviour.Behaviour)
 
     def test_duplicate_name_warns_and_last_wins(self) -> None:
-        first = self._make_leaf(register=False)
-        second = self._make_leaf(register=False)
-        register_ports_class("DupTag", first)
+        class FirstLeaf(_RegistryLeaf, register=False):
+            pass
+
+        class SecondLeaf(_RegistryLeaf, register=False):
+            pass
+
+        register_ports_class("DupTag", FirstLeaf)
         with self.assertWarns(UserWarning):
-            register_ports_class("DupTag", second)
-        self.assertIs(get_ports_registry().get("DupTag"), second)
+            register_ports_class("DupTag", SecondLeaf)
+        self.assertIs(get_ports_registry().get("DupTag"), SecondLeaf)
 
 
 if __name__ == "__main__":

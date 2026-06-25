@@ -121,12 +121,7 @@ from typing import Any
 
 import py_trees
 
-from py_trees.ports import (
-    CONST_PREFIX,
-    DOT_REPLACEMENT,
-    get_ports_registry,
-    PortsMixin,
-)
+from py_trees.ports import CONST_PREFIX, DOT_REPLACEMENT, get_ports_registry, PortsMixin
 from py_trees.ports_utils import (
     apply_type_hints,
     generate_node_name,
