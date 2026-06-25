@@ -262,30 +262,28 @@ def get_absolute_reference(value: str, subtree_namespace: str) -> str:
     return subtree_namespace.rstrip("/") + "/" + value
 
 
-def get_class_from_init_lookup(
-    class_name: str, init_lookup: dict
-) -> type["PortsMixin"]:
+def get_class_from_registry(class_name: str, node_registry: dict) -> type["PortsMixin"]:
     """
-    Get the class from the init_lookup dictionary, ensuring it is a subclass of :class:`PortsMixin`.
+    Get the class from the node_registry dictionary, ensuring it is a subclass of :class:`PortsMixin`.
 
     Args:
         class_name (str): The name of the class to look up.
-        init_lookup (dict): A dictionary mapping class names to class constructors or partial callables,
+        node_registry (dict): A dictionary mapping class names to class constructors or partial callables,
             e.g. ``{"Producer": Producer, "Consumer": partial(Consumer, name=name)}``.
 
     Returns:
         The class (subclass of :class:`PortsMixin`).
 
     Raises:
-        KeyError: If the class name is not found in the init_lookup.
+        KeyError: If the class name is not found in the node_registry.
         TypeError: If the entry is not a class or partial callable,
             or if the class is not a subclass of :class:`PortsMixin`.
     """
-    if class_name not in init_lookup:
+    if class_name not in node_registry:
         raise KeyError(
-            f"Class name '{class_name}' not found in init_lookup: {init_lookup}"
+            f"Class name '{class_name}' not found in node_registry: {node_registry}"
         )
-    entry = init_lookup[class_name]
+    entry = node_registry[class_name]
 
     # Case 1: Direct class reference
     if inspect.isclass(entry):
@@ -305,10 +303,9 @@ def get_class_from_init_lookup(
 def parse_behaviour_tree_xml(
     xml_file: str,
     main_tree_id: str | None = None,
-    init_lookup: dict | None = None,
+    node_registry: dict | str = "auto",
     logger: PortsLogger | None = None,
     search_paths: list[str] | None = None,
-    auto_register: bool = True,
 ) -> py_trees.behaviour.Behaviour:
     """
     Parse the XML file and build the behavior tree.
@@ -321,42 +318,57 @@ def parse_behaviour_tree_xml(
     into the current document. If any imported BehaviorTree ID already exists, a
     ValueError is raised.
 
-    Node classes are resolved from two sources, merged in this order::
+    Node classes are resolved from ``node_registry``, which is either:
 
-        lookup = (auto-registered PortsMixin classes) | (init_lookup or {})
+    * ``"auto"`` (the default) --- resolve every XML tag from the global registry of
+      auto-registered :class:`~py_trees.ports.PortsMixin` subclasses. Importing your
+      node classes is enough to make them usable; no explicit mapping is needed.
+    * a ``dict`` mapping tag -> class / callable --- use *exactly* this mapping and
+      ignore the auto-registry. Use this to inject dependencies via
+      ``functools.partial`` (e.g. ``{"Wait": partial(Wait, factory=f)}``), to alias
+      tags, or to sandbox the parser to a fixed set of classes.
 
-    so an explicit ``init_lookup`` entry always overrides an auto-registered
-    class of the same name. Auto-registration (on by default) means any imported
-    :class:`~py_trees.ports.PortsMixin` subclass is usable in XML without an
-    ``init_lookup`` entry; ``init_lookup`` remains useful for ``functools.partial``
-    dependency injection, inline aliasing, and overrides. Set ``auto_register=False``
-    to resolve classes exclusively from ``init_lookup``.
+    To combine auto-registration with a few explicit entries, build the dict on top
+    of the auto-registry::
+
+        node_registry={**py_trees.ports.get_ports_registry(), "Wait": partial(Wait, factory=f)}
 
     Args:
         xml_file (str): Path to the main XML file.
         main_tree_id (str | None): ID of the tree to execute; if None, read from 'main_tree_to_execute'.
-        init_lookup (dict | None): Optional mapping from tag -> constructor/partial for PortsMixin
-            nodes. Overrides auto-registered classes of the same name.
+        node_registry (dict | str): ``"auto"`` to resolve from the auto-registry, or a
+            ``{tag: class/partial}`` dict to use exclusively. Defaults to ``"auto"``.
         logger (PortsLogger | None): Optional logger (NoOp if None).
         search_paths (list[str] | None): Optional extra directories to resolve imports.
-        auto_register (bool): Include auto-registered PortsMixin subclasses in the lookup
-            (default True). Set to False to use only ``init_lookup``.
 
     Returns:
         The root py_trees.behaviour.Behaviour for the requested tree.
 
     Raises:
-        ValueError: If no node classes are available (empty ``init_lookup`` and
-            ``auto_register=False`` or empty registry) or the main BehaviorTree ID is not found.
+        ValueError: If ``node_registry`` is a string other than ``"auto"``, if no node
+            classes are available, or the main BehaviorTree ID is not found.
+        TypeError: If ``node_registry`` is neither a dict nor a string.
         FileNotFoundError / RuntimeError: From the import pre-pass if relevant.
     """
     if logger is None:
         logger = NOOP_LOGGER
-    init_lookup = (get_ports_registry() if auto_register else {}) | (init_lookup or {})
-    if not init_lookup:
+    if isinstance(node_registry, str):
+        if node_registry != "auto":
+            raise ValueError(
+                f"node_registry string must be 'auto', got {node_registry!r}."
+            )
+        node_registry = get_ports_registry()
+    elif isinstance(node_registry, dict):
+        node_registry = dict(node_registry)
+    else:
+        raise TypeError(
+            "node_registry must be a dict (tag -> class/partial) or the string "
+            f"'auto', got {type(node_registry).__name__}."
+        )
+    if not node_registry:
         raise ValueError(
-            "No node classes available to the parser: provide an init_lookup and/or "
-            "define/import PortsMixin subclasses with auto_register=True."
+            "No node classes available to the parser: pass node_registry='auto' "
+            "with your PortsMixin subclasses imported, or an explicit {tag: class} dict."
         )
 
     xml_tree = ET.parse(xml_file)
@@ -385,7 +397,7 @@ def parse_behaviour_tree_xml(
     tree = build_tree_from_xml(
         bt_elem,
         remapping_table={},
-        init_lookup=init_lookup,
+        node_registry=node_registry,
         bt_index=bt_index,
         logger=logger,
         subtree_namespace="/",
@@ -580,7 +592,7 @@ def build_port_remappings(
 
 def instantiate_ports_node(
     elem: ET.Element,
-    init_lookup: dict,
+    node_registry: dict,
     remapping_table: dict[str, str],
     subtree_namespace: str,
     logger: PortsLogger = NOOP_LOGGER,
@@ -590,14 +602,14 @@ def instantiate_ports_node(
     """
     Instantiate any PortsMixin-based node (leaf or composite).
 
-    - looks up the class via `init_lookup` (validated with `get_class_from_init_lookup`)
+    - looks up the class via `node_registry` (validated with `get_class_from_registry`)
     - builds port remappings from `elem.attrib`
     - constructs the instance (using `name` attribute or class_name)
     - calls `setup_ports(...)`
 
     Args:
         elem: The XML element to parse.
-        init_lookup (dict): Mapping from class names (str) to callables (constructors or partials)
+        node_registry (dict): Mapping from class names (str) to callables (constructors or partials)
             that return ``PortsMixin``-derived instances.
         remapping_table (dict): Mapping from keys (str) to absolute keys (str).
         subtree_namespace (str): The namespace for this subtree.
@@ -609,12 +621,12 @@ def instantiate_ports_node(
         PortsMixin: the fully initialised node.
     """
     portsmixin_name = elem.tag
-    # Get the class definition from init_lookup - needed to check the ports.
+    # Get the class definition from node_registry - needed to check the ports.
     try:
-        cls = get_class_from_init_lookup(portsmixin_name, init_lookup)
+        cls = get_class_from_registry(portsmixin_name, node_registry)
     except KeyError:
         raise NotImplementedError(
-            f"Class name '{portsmixin_name}' not found in init_lookup.Supporting other types is still TODO."
+            f"Class name '{portsmixin_name}' not found in node_registry.Supporting other types is still TODO."
         )
 
     port_remappings = build_port_remappings(
@@ -634,9 +646,9 @@ def instantiate_ports_node(
         f"PortsMixin node '{instance_name}' in namespace {subtree_namespace} remappings: {port_remappings}"
     )
 
-    if portsmixin_name not in init_lookup:
+    if portsmixin_name not in node_registry:
         raise ValueError(
-            f"PortsMixin class '{portsmixin_name}' not found in init_lookup table"
+            f"PortsMixin class '{portsmixin_name}' not found in node_registry table"
         )
 
     constructor_kwargs = constructor_kwargs or {}  # create constructor_kwargs
@@ -664,7 +676,7 @@ def instantiate_ports_node(
             )
             constructor_kwargs[attrib_key] = attrib_value
 
-    ctor_callable = init_lookup[portsmixin_name]
+    ctor_callable = node_registry[portsmixin_name]
     # Try to convert the constructor arguments to the correct type.
     ignore_keys = {"child", "children", "behaviour_class_name"}
     constructor_kwargs, success = apply_type_hints(
@@ -677,7 +689,7 @@ def instantiate_ports_node(
         )
     try:
         # Pass the behaviour_class_name (the tag/registry name) to the constructor
-        node: PortsMixin = init_lookup[portsmixin_name](
+        node: PortsMixin = node_registry[portsmixin_name](
             name=instance_name,
             behaviour_class_name=portsmixin_name,
             **constructor_kwargs,
@@ -700,7 +712,7 @@ def instantiate_ports_node(
 def build_tree_from_xml(
     elem: ET.Element,
     remapping_table: dict[str, str],
-    init_lookup: dict,
+    node_registry: dict,
     bt_index: dict,
     logger: PortsLogger = NOOP_LOGGER,
     subtree_namespace: str = "/",
@@ -712,7 +724,7 @@ def build_tree_from_xml(
     Args:
         elem: XML element
         remapping_table (dict[str, str]): Remapping table.
-        init_lookup (dict): Mapping from class names (str) to callables (constructors or partials)
+        node_registry (dict): Mapping from class names (str) to callables (constructors or partials)
             that return ``PortsMixin``-derived instances.
         bt_index (dict[str, BehaviorTree]): dictionary {ID: BehaviorTree element} for subtree lookup.
         subtree_namespace (str): current blackboard namespace.
@@ -757,7 +769,7 @@ def build_tree_from_xml(
             child_node = build_tree_from_xml(
                 child,
                 remapping_table,
-                init_lookup,
+                node_registry,
                 bt_index,
                 logger=logger,
                 subtree_namespace=subtree_namespace,
@@ -796,7 +808,7 @@ def build_tree_from_xml(
         elif tag in PARENT_NODES_WITH_PORTS_TAGS:
             # Instantiate ports-enabled composite
             constructor_kwargs: dict[str, Any] = {}
-            cls = get_class_from_init_lookup(elem.tag, init_lookup)
+            cls = get_class_from_registry(elem.tag, node_registry)
             if issubclass(cls, py_trees.decorators.Decorator):
                 if not len(children) == 1:
                     raise ValueError(
@@ -807,7 +819,7 @@ def build_tree_from_xml(
                 constructor_kwargs["children"] = children
             node = instantiate_ports_node(
                 elem=elem,
-                init_lookup=init_lookup,
+                node_registry=node_registry,
                 remapping_table=remapping_table,
                 subtree_namespace=subtree_namespace,
                 logger=logger,
@@ -845,7 +857,7 @@ def build_tree_from_xml(
         return build_tree_from_xml(
             child_elems[0],
             remapping_table,
-            init_lookup,
+            node_registry,
             bt_index,
             logger=logger,
             subtree_namespace=subtree_namespace,
@@ -875,19 +887,19 @@ def build_tree_from_xml(
         return build_tree_from_xml(
             subtree_elem,
             new_remapping,
-            init_lookup,
+            node_registry,
             bt_index,
             logger=logger,
             subtree_namespace=new_namespace,
             parent_names_str=((parent_names_str + ".") if parent_names_str else "")
             + subtree_name,
         )
-    elif elem.tag in init_lookup:
+    elif elem.tag in node_registry:
         # Leaf PortsMixin node (any PortsMixin + Behaviour combination).
         logger.debug(f"Creating PortsMixin leaf node for tag {elem.tag}.")
         node = instantiate_ports_node(
             elem=elem,
-            init_lookup=init_lookup,
+            node_registry=node_registry,
             remapping_table=remapping_table,
             subtree_namespace=subtree_namespace,
             logger=logger,

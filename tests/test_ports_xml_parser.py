@@ -20,7 +20,7 @@ from typing import Any
 import py_trees
 from py_trees.parsers.behaviour_tree_xml import is_key, parse_behaviour_tree_xml
 
-from py_trees.ports import BehaviourWithPorts, PortInformation
+from py_trees.ports import BehaviourWithPorts, get_ports_registry, PortInformation
 from py_trees.ports_utils import (
     find_node_by_class,
     find_node_by_name,
@@ -217,7 +217,7 @@ class TestXMLParser(unittest.TestCase):
 
         try:
             root_node = parse_behaviour_tree_xml(
-                temp_xml_path, init_lookup=custom_lookup, logger=StdoutLogger()
+                temp_xml_path, node_registry=custom_lookup, logger=StdoutLogger()
             )
             custom = find_node_by_class(root_node, CustomBehaviourWithPorts)
             self.assertIsNotNone(custom)
@@ -427,10 +427,10 @@ class TestXMLParser(unittest.TestCase):
         self.tempfile.write(self.xml)
         self.tempfile.close()
 
-        init_lookup = {"Wait": partial(Wait, factory=self.factory)}
+        node_registry = {"Wait": partial(Wait, factory=self.factory)}
 
         root_node = parse_behaviour_tree_xml(
-            self.tempfile.name, init_lookup=init_lookup, logger=StdoutLogger()
+            self.tempfile.name, node_registry=node_registry, logger=StdoutLogger()
         )
         btree = py_trees.trees.BehaviourTree(root_node)
 
@@ -467,7 +467,7 @@ class TestXMLParser(unittest.TestCase):
         # Getting from the registry
         SMALL_JOINT_NAMES = [f"robot_small_joint_{i}" for i in range(1, 7)]
         BIG_JOINT_NAMES = [f"robot_big_joint_{i}" for i in range(1, 7)]
-        init_lookup = get_behaviors_lookup(
+        node_registry = get_behaviors_lookup(
             self.factory,
             {
                 0: RobotData("robot_small", SMALL_JOINT_NAMES, None),
@@ -476,7 +476,7 @@ class TestXMLParser(unittest.TestCase):
         )
 
         root_node = parse_behaviour_tree_xml(
-            self.tempfile.name, init_lookup=init_lookup, logger=StdoutLogger()
+            self.tempfile.name, node_registry=node_registry, logger=StdoutLogger()
         )
         btree = py_trees.trees.BehaviourTree(root_node)
 
@@ -958,8 +958,8 @@ class TestXMLParserImports(unittest.TestCase):
             os.unlink(temp_xml_path)
 
 
-class TestAutoRegistration(unittest.TestCase):
-    """Auto-registration and the optional ``init_lookup`` in the XML parser."""
+class TestNodeRegistry(unittest.TestCase):
+    """The ``node_registry`` argument: ``"auto"`` vs an explicit dict."""
 
     XML = """<root main_tree_to_execute="MainTree">
         <BehaviorTree ID="MainTree">
@@ -982,45 +982,63 @@ class TestAutoRegistration(unittest.TestCase):
     def tearDown(self) -> None:
         os.unlink(self.tempfile.name)
 
-    def test_auto_only_no_init_lookup(self) -> None:
-        """Classes resolve purely via auto-registration when no init_lookup is given."""
+    def test_auto_is_the_default(self) -> None:
+        """With no node_registry, every tag resolves from the auto-registry."""
         root_node = parse_behaviour_tree_xml(self.tempfile.name)
         py_trees.trees.BehaviourTree(root_node).tick()
         cons = find_node_by_name(root_node, "cons", strip_prefix=True)
         assert isinstance(cons, Consumer)
         self.assertEqual(cons.consumed_value, "Producer[/:prod]")
 
-    def test_auto_register_false_with_empty_lookup_raises(self) -> None:
-        """With auto-registration off and no init_lookup, there are no classes to use."""
-        with self.assertRaises(ValueError):
-            parse_behaviour_tree_xml(self.tempfile.name, auto_register=False)
+    def test_auto_string_is_equivalent_to_default(self) -> None:
+        """Passing node_registry="auto" explicitly behaves like the default."""
+        root_node = parse_behaviour_tree_xml(self.tempfile.name, node_registry="auto")
+        cons = find_node_by_name(root_node, "cons", strip_prefix=True)
+        self.assertIsInstance(cons, Consumer)
 
-    def test_auto_register_false_uses_only_init_lookup(self) -> None:
-        """With auto-registration off, a class missing from init_lookup is not found."""
+    def test_invalid_registry_string_raises(self) -> None:
+        with self.assertRaises(ValueError):
+            parse_behaviour_tree_xml(self.tempfile.name, node_registry="nope")
+
+    def test_non_dict_non_str_registry_raises(self) -> None:
+        with self.assertRaises(TypeError):
+            parse_behaviour_tree_xml(
+                self.tempfile.name,
+                node_registry=["Producer"],  # type: ignore[arg-type]
+            )
+
+    def test_empty_dict_raises(self) -> None:
+        """An explicit empty registry leaves the parser with no classes."""
+        with self.assertRaises(ValueError):
+            parse_behaviour_tree_xml(self.tempfile.name, node_registry={})
+
+    def test_explicit_dict_replaces_auto(self) -> None:
+        """A dict is used exclusively: a tag missing from it is not resolved."""
         with self.assertRaises(ValueError):
             parse_behaviour_tree_xml(
                 self.tempfile.name,
-                init_lookup={"Producer": Producer},  # Consumer deliberately omitted
-                auto_register=False,
+                node_registry={"Producer": Producer},  # Consumer deliberately omitted
             )
 
-    def test_init_lookup_overrides_registry(self) -> None:
-        """An init_lookup entry shadows the auto-registered class of the same name."""
+    def test_explicit_entry_overrides_auto_via_spread(self) -> None:
+        """Spreading the auto-registry lets one entry override a single tag."""
 
         class OverrideProducer(Producer, register=False):
             pass
 
         root_node = parse_behaviour_tree_xml(
-            self.tempfile.name, init_lookup={"Producer": OverrideProducer}
+            self.tempfile.name,
+            node_registry={**get_ports_registry(), "Producer": OverrideProducer},
         )
         prod = find_node_by_name(root_node, "prod", strip_prefix=True)
         self.assertIsInstance(prod, OverrideProducer)
 
-    def test_auto_plus_partial_injection(self) -> None:
-        """Auto-registration resolves classes; init_lookup injects runtime deps via partial."""
+    def test_partial_injection_alongside_auto(self) -> None:
+        """The documented pattern: auto-registry spread plus a partial for DI."""
         xml = """<root main_tree_to_execute="MainTree">
             <BehaviorTree ID="MainTree">
               <Sequence>
+                <Producer name="prod" output="{final}" />
                 <Wait name="w" input_duration_ms="0" />
               </Sequence>
             </BehaviorTree>
@@ -1029,14 +1047,19 @@ class TestAutoRegistration(unittest.TestCase):
             tf.write(xml)
             temp_xml_path = tf.name
         try:
-            # Wait needs a `factory` dependency -> supplied via init_lookup partial,
-            # while still benefiting from auto-registration for any other classes.
+            # Producer resolves via the auto-registry spread; Wait needs a `factory`
+            # dependency, supplied via a partial that only the per-call dict can carry.
             root_node = parse_behaviour_tree_xml(
                 temp_xml_path,
-                init_lookup={"Wait": partial(Wait, factory=DummyFactory())},
+                node_registry={
+                    **get_ports_registry(),
+                    "Wait": partial(Wait, factory=DummyFactory()),
+                },
             )
-            node = find_node_by_name(root_node, "w", strip_prefix=True)
-            self.assertIsInstance(node, Wait)
+            wait = find_node_by_name(root_node, "w", strip_prefix=True)
+            prod = find_node_by_name(root_node, "prod", strip_prefix=True)
+            self.assertIsInstance(wait, Wait)
+            self.assertIsInstance(prod, Producer)
         finally:
             os.unlink(temp_xml_path)
 

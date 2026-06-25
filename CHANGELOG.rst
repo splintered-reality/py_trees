@@ -3,8 +3,6 @@ Release Notes
 
 Forthcoming
 -----------
-* [ports] Auto-register ``PortsMixin`` subclasses for the XML parser; ``init_lookup`` is now optional
-* [ports] Add ``register_ports_class()`` / ``get_ports_registry()`` and ``parse_behaviour_tree_xml(..., auto_register=True)``
 
 2.4.0 (2025-11-13)
 ------------------
