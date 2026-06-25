@@ -121,7 +121,12 @@ from typing import Any
 
 import py_trees
 
-from py_trees.ports import CONST_PREFIX, DOT_REPLACEMENT, PortsMixin
+from py_trees.ports import (
+    CONST_PREFIX,
+    DOT_REPLACEMENT,
+    get_ports_registry,
+    PortsMixin,
+)
 from py_trees.ports_utils import (
     apply_type_hints,
     generate_node_name,
@@ -308,6 +313,7 @@ def parse_behaviour_tree_xml(
     init_lookup: dict | None = None,
     logger: PortsLogger | None = None,
     search_paths: list[str] | None = None,
+    auto_register: bool = True,
 ) -> py_trees.behaviour.Behaviour:
     """
     Parse the XML file and build the behavior tree.
@@ -320,24 +326,43 @@ def parse_behaviour_tree_xml(
     into the current document. If any imported BehaviorTree ID already exists, a
     ValueError is raised.
 
+    Node classes are resolved from two sources, merged in this order::
+
+        lookup = (auto-registered PortsMixin classes) | (init_lookup or {})
+
+    so an explicit ``init_lookup`` entry always overrides an auto-registered
+    class of the same name. Auto-registration (on by default) means any imported
+    :class:`~py_trees.ports.PortsMixin` subclass is usable in XML without an
+    ``init_lookup`` entry; ``init_lookup`` remains useful for ``functools.partial``
+    dependency injection, inline aliasing, and overrides. Set ``auto_register=False``
+    to resolve classes exclusively from ``init_lookup``.
+
     Args:
         xml_file (str): Path to the main XML file.
         main_tree_id (str | None): ID of the tree to execute; if None, read from 'main_tree_to_execute'.
-        init_lookup (dict): Mapping from tag -> constructor/partial for PortsMixin nodes (required).
+        init_lookup (dict | None): Optional mapping from tag -> constructor/partial for PortsMixin
+            nodes. Overrides auto-registered classes of the same name.
         logger (PortsLogger | None): Optional logger (NoOp if None).
         search_paths (list[str] | None): Optional extra directories to resolve imports.
+        auto_register (bool): Include auto-registered PortsMixin subclasses in the lookup
+            (default True). Set to False to use only ``init_lookup``.
 
     Returns:
         The root py_trees.behaviour.Behaviour for the requested tree.
 
     Raises:
-        ValueError: If init_lookup is missing or the main BehaviorTree ID is not found.
+        ValueError: If no node classes are available (empty ``init_lookup`` and
+            ``auto_register=False`` or empty registry) or the main BehaviorTree ID is not found.
         FileNotFoundError / RuntimeError: From the import pre-pass if relevant.
     """
     if logger is None:
         logger = NOOP_LOGGER
-    if init_lookup is None:
-        raise ValueError("init_lookup dictionary must be provided")
+    init_lookup = (get_ports_registry() if auto_register else {}) | (init_lookup or {})
+    if not init_lookup:
+        raise ValueError(
+            "No node classes available to the parser: provide an init_lookup and/or "
+            "define/import PortsMixin subclasses with auto_register=True."
+        )
 
     xml_tree = ET.parse(xml_file)
     root = xml_tree.getroot()

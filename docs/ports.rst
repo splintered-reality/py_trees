@@ -113,12 +113,86 @@ It builds a py_trees tree from an XML file and auto-generates the port remapping
 
    from py_trees.parsers.behaviour_tree_xml import parse_behaviour_tree_xml
 
-   root = parse_behaviour_tree_xml(
-       "my_tree.xml",
-       init_lookup={"MyNode": MyNode, "OtherNode": OtherNode, ...},
-   )
+   root = parse_behaviour_tree_xml("my_tree.xml")
 
-See the :ref:`demos <ports-demos-section-label>` below for working examples.
+How the parser maps each XML tag to a Python class is covered in
+:ref:`Resolving node classes <ports-xml-class-resolution-label>` just below.
+The :ref:`demos <ports-demos-section-label>` further down show complete working examples.
+
+.. _ports-xml-class-resolution-label:
+
+Resolving node classes
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+An XML tag like ``<MyNode>`` is just a name --- before the parser can build the node it has
+to find the Python class that name refers to. This section explains how that lookup happens
+and how you can steer it.
+
+By default it is automatic: every concrete :class:`~py_trees.ports.PortsMixin` subclass
+registers itself (under its class name) the moment it is defined. So as long as your node
+classes have been imported, the parser can find them by tag with no extra configuration.
+
+For the cases automatic lookup can't handle on its own, the parser also accepts an
+``init_lookup`` argument --- a plain ``{tag: class}`` dictionary you pass in explicitly.
+Reach for it when you want to
+
+* construct a node with extra arguments (e.g. inject a dependency via ``functools.partial``),
+* expose a class under a tag other than its class name (aliasing), or
+* bypass the automatic registry entirely and stay fully explicit.
+
+When both are present they are merged, with ``init_lookup`` winning on conflicts::
+
+    lookup = (auto-registered PortsMixin classes) | (init_lookup or {})
+
+In practice this comes down to four usage patterns:
+
+1. **Auto-only** --- define your :class:`~py_trees.ports.PortsMixin` subclasses, import them,
+   and parse:
+
+   .. code-block:: python
+
+      from py_trees.parsers.behaviour_tree_xml import parse_behaviour_tree_xml
+      from my_nodes import MyNode, OtherNode  # importing is enough to register them
+
+      root = parse_behaviour_tree_xml("my_tree.xml")
+
+2. **Auto + partial injection** --- auto-registration handles the class lookup while
+   ``init_lookup`` injects runtime dependencies:
+
+   .. code-block:: python
+
+      from functools import partial
+
+      root = parse_behaviour_tree_xml(
+          "my_tree.xml",
+          init_lookup={"Wait": partial(Wait, factory=my_factory)},
+      )
+
+3. **Aliasing** --- register a class under an extra tag, either inline on the class
+   definition or via the helper for classes you cannot modify:
+
+   .. code-block:: python
+
+      class Foo(PortsMixin, py_trees.behaviour.Behaviour, tag="Bar"):
+          ...
+
+      # or, for a third-party class:
+      from py_trees.ports import register_ports_class
+      register_ports_class("Bar", Foo)
+
+4. **Fully explicit** --- opt out of the registry entirely (strict / sandboxed):
+
+   .. code-block:: python
+
+      root = parse_behaviour_tree_xml(
+          "my_tree.xml",
+          init_lookup={"MyNode": MyNode, "OtherNode": OtherNode},
+          auto_register=False,
+      )
+
+Pass ``register=False`` on a class definition to keep a particular subclass out of the
+registry. Still-abstract classes (e.g. :class:`~py_trees.ports.BehaviourWithPorts` itself,
+which does not implement ``input_ports`` / ``output_ports``) are never registered.
 
 .. _ports-xml-attributes-label:
 
@@ -184,7 +258,9 @@ A few things you should be aware of, and suggestions on how to fill the gaps you
 
    **Any other attribute on a built-in composite tag is silently ignored.**
    For example, ``<Parallel synchronise="true">`` has no effect, and port-style attributes on these tags are dropped without warning.
-   This is also why you cannot take the number of attempts for a :class:`py_trees.decorators.Retry` from a port value via XML --- the parser only wires ports (and forwards constructor kwargs; see :ref:`ports-xml-attributes-label` above) on classes registered in ``init_lookup`` that derive from :class:`~py_trees.ports.PortsMixin`.
+   This is also why you cannot take the number of attempts for a :class:`py_trees.decorators.Retry` from a port value via XML ---
+   the parser only wires ports (and forwards constructor kwargs; see :ref:`ports-xml-attributes-label` above) on resolved classes that derive from
+   :class:`~py_trees.ports.PortsMixin` (whether auto-registered or supplied via ``init_lookup``; see :ref:`ports-xml-class-resolution-label` above).
    Built-in decorators aren't recognised as XML tags at all.
 
 **3. The pattern: port-aware wrapper classes.**

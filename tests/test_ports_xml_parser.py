@@ -1026,5 +1026,88 @@ class TestXMLParserImports(unittest.TestCase):
             os.unlink(temp_xml_path)
 
 
+class TestAutoRegistration(unittest.TestCase):
+    """Auto-registration and the optional ``init_lookup`` in the XML parser."""
+
+    XML = """<root main_tree_to_execute="MainTree">
+        <BehaviorTree ID="MainTree">
+          <Sequence>
+            <Producer name="prod" output="{final}" />
+            <Consumer name="cons" input="{final}" />
+          </Sequence>
+        </BehaviorTree>
+      </root>"""
+
+    def setUp(self) -> None:
+        py_trees.blackboard.Blackboard.clear()
+        # Producer/Consumer are concrete BehaviourWithPorts -> auto-registered on import.
+        self.tempfile = tempfile.NamedTemporaryFile(
+            delete=False, mode="w", suffix=".xml"
+        )
+        self.tempfile.write(self.XML)
+        self.tempfile.close()
+
+    def tearDown(self) -> None:
+        os.unlink(self.tempfile.name)
+
+    def test_auto_only_no_init_lookup(self) -> None:
+        """Classes resolve purely via auto-registration when no init_lookup is given."""
+        root_node = parse_behaviour_tree_xml(self.tempfile.name)
+        py_trees.trees.BehaviourTree(root_node).tick()
+        cons = find_node_by_name(root_node, "cons", strip_prefix=True)
+        self.assertIsInstance(cons, Consumer)
+        self.assertEqual(cons.consumed_value, "Producer[/:prod]")
+
+    def test_auto_register_false_with_empty_lookup_raises(self) -> None:
+        """With auto-registration off and no init_lookup, there are no classes to use."""
+        with self.assertRaises(ValueError):
+            parse_behaviour_tree_xml(self.tempfile.name, auto_register=False)
+
+    def test_auto_register_false_uses_only_init_lookup(self) -> None:
+        """With auto-registration off, a class missing from init_lookup is not found."""
+        with self.assertRaises(ValueError):
+            parse_behaviour_tree_xml(
+                self.tempfile.name,
+                init_lookup={"Producer": Producer},  # Consumer deliberately omitted
+                auto_register=False,
+            )
+
+    def test_init_lookup_overrides_registry(self) -> None:
+        """An init_lookup entry shadows the auto-registered class of the same name."""
+
+        class OverrideProducer(Producer, register=False):
+            pass
+
+        root_node = parse_behaviour_tree_xml(
+            self.tempfile.name, init_lookup={"Producer": OverrideProducer}
+        )
+        prod = find_node_by_name(root_node, "prod", strip_prefix=True)
+        self.assertIsInstance(prod, OverrideProducer)
+
+    def test_auto_plus_partial_injection(self) -> None:
+        """Auto-registration resolves classes; init_lookup injects runtime deps via partial."""
+        xml = """<root main_tree_to_execute="MainTree">
+            <BehaviorTree ID="MainTree">
+              <Sequence>
+                <Wait name="w" input_duration_ms="0" />
+              </Sequence>
+            </BehaviorTree>
+          </root>"""
+        with tempfile.NamedTemporaryFile(delete=False, mode="w", suffix=".xml") as tf:
+            tf.write(xml)
+            temp_xml_path = tf.name
+        try:
+            # Wait needs a `factory` dependency -> supplied via init_lookup partial,
+            # while still benefiting from auto-registration for any other classes.
+            root_node = parse_behaviour_tree_xml(
+                temp_xml_path,
+                init_lookup={"Wait": partial(Wait, factory=DummyFactory())},
+            )
+            node = find_node_by_name(root_node, "w", strip_prefix=True)
+            self.assertIsInstance(node, Wait)
+        finally:
+            os.unlink(temp_xml_path)
+
+
 if __name__ == "__main__":
     unittest.main()
