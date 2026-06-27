@@ -468,7 +468,7 @@ class TestXMLParser(unittest.TestCase):
     def test_ctor_args_passed_as_kwargs(self) -> None:
         """
         Non-port XML attributes must be passed as constructor kwargs.
-        Values are left as strings (no automatic type coercion).
+        Values are automatically converted based on the type hints in the constructor.
         """
 
         class EchoCtorArgs(BehaviourWithPorts):
@@ -480,7 +480,7 @@ class TestXMLParser(unittest.TestCase):
             def output_ports(cls) -> dict:
                 return {"out": PortInformation(data_type=str, required=False)}  # not used here
 
-            def __init__(self, name: str, greeting: str, times: str, flag: str, **kwargs: Any) -> None:
+            def __init__(self, name: str, greeting: str, times: float | None, flag: bool, **kwargs: Any) -> None:
                 super().__init__(name, **kwargs)
                 self.greeting = greeting
                 self.times = times
@@ -498,16 +498,14 @@ class TestXMLParser(unittest.TestCase):
             tf.write(xml)
             path = tf.name
 
-        try:
-            root = parse_behaviour_tree_xml(path, logger=StdoutLogger())
-            node = find_node_by_class(root, EchoCtorArgs)
-            self.assertIsNotNone(node)
-            # No auto type-casting: still strings
-            self.assertEqual(node.greeting, "hello")
-            self.assertEqual(node.times, "3")
-            self.assertEqual(node.flag, "true")
-        finally:
-            os.unlink(path)
+        root = parse_behaviour_tree_xml(path, logger=StdoutLogger())
+        node = find_node_by_class(root, EchoCtorArgs)
+        self.assertIsNotNone(node)
+        self.assertEqual(node.greeting, "hello")
+        self.assertEqual(node.times, 3.0)
+        self.assertEqual(node.flag, True)
+
+        os.unlink(path)
 
     def test_mixed_ports_and_ctor_kwargs(self) -> None:
         """
