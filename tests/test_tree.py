@@ -41,7 +41,7 @@ class SleepInSetup(py_trees.behaviour.Behaviour):
         self.duration = duration
 
     def setup(self, **kwargs: typing.Any) -> None:
-        self.logger.debug("{}.setup() [{}][{}]".format(self.__class__.__name__, self.name, time.time()))
+        self.logger.debug(f"{self.__class__.__name__}.setup() [{self.name}][{time.time()}]")
         time.sleep(self.duration)
 
     def update(self) -> py_trees.common.Status:
@@ -58,7 +58,7 @@ class SetupVisitor(py_trees.visitors.VisitorBase):
         super().__init__(full=True)
 
     def run(self, behaviour: py_trees.behaviour.Behaviour) -> None:
-        behaviour.logger.debug("{}.setup() [Visited: {}]".format(self.__class__.__name__, behaviour.name))
+        behaviour.logger.debug(f"{self.__class__.__name__}.setup() [Visited: {behaviour.name}]")
 
 
 def create_fffrrs_repeat_status_queue(name: str) -> py_trees.behaviours.StatusQueue:
@@ -679,7 +679,7 @@ def test_tree_setup() -> None:
     try:
         tree.setup(timeout=4 * duration)
     except RuntimeError:
-        assert False, "should not have timed out"
+        raise AssertionError("should not have timed out") from None
     time.sleep(duration)  # give the setup timer thread a chance to be cancelled
     assert threading.active_count() == 1
 
@@ -704,7 +704,7 @@ def test_tree_setup() -> None:
     try:
         tree.setup(timeout=4 * duration, visitor=visitor)
     except RuntimeError:
-        assert False, "should not have timed out"
+        raise AssertionError("should not have timed out") from None
     time.sleep(duration)  # give the setup timer thread a chance to be cancelled
     assert threading.active_count() == 1
 
@@ -714,7 +714,7 @@ def test_tree_setup() -> None:
     try:
         tree.setup()
     except RuntimeError:
-        assert False, "should not have timed out"
+        raise AssertionError("should not have timed out") from None
     time.sleep(duration)  # give the setup timer thread a chance to be cancelled
     assert threading.active_count() == 1
 
@@ -758,14 +758,14 @@ def test_pre_post_tick_activity_sequence() -> None:
     ]
     print("")
     assert len(breadcrumbs) == len(expected_breadcrumbs)
-    for expected, actual in zip(expected_breadcrumbs, breadcrumbs):
+    for expected, actual in zip(expected_breadcrumbs, breadcrumbs, strict=False):
         print(
             console.green
             + "Breadcrumb..................."
             + console.cyan
-            + "{} ".format(expected)
+            + f"{expected} "
             + console.yellow
-            + "[{}]".format(actual)
+            + f"[{actual}]"
         )
         assert expected == actual
 

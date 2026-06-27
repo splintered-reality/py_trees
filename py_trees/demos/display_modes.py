@@ -27,7 +27,6 @@ A py_trees demo.
 
 import argparse
 import itertools
-import typing
 
 import py_trees
 import py_trees.console as console
@@ -63,7 +62,7 @@ def description() -> str:
     return s
 
 
-def epilog() -> typing.Optional[str]:
+def epilog() -> str | None:
     """
     Print a noodly epilog for --help.
 
@@ -139,7 +138,7 @@ def main() -> None:
     for tick in range(2):
         tree.tick()
         for show_visited, show_status in itertools.product([False, True], [False, True]):
-            console.banner("Tick {} / show_only_visited=={} / show_status=={}".format(tick, show_visited, show_status))
+            console.banner(f"Tick {tick} / show_only_visited=={show_visited} / show_status=={show_status}")
             print(
                 py_trees.display.unicode_tree(
                     tree.root,

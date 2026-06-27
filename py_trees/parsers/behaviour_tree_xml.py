@@ -576,10 +576,10 @@ def instantiate_ports_node(
     # Get the class definition from init_lookup - needed to check the ports.
     try:
         cls = get_class_from_init_lookup(portsmixin_name, init_lookup)
-    except KeyError:
+    except KeyError as e:
         raise NotImplementedError(
             f"Class name '{portsmixin_name}' not found in init_lookup.Supporting other types is still TODO."
-        )
+        ) from e
 
     port_remappings = build_port_remappings(
         elem=elem,

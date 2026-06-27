@@ -22,7 +22,7 @@ from py_trees.blackboard import Blackboard
 ##############################################################################
 
 
-class Motley(object):
+class Motley:
     """
     To test nested access on the blackboard
     """
@@ -31,10 +31,10 @@ class Motley(object):
         self.nested = "nested"
 
 
-class create_blackboards(object):
+class create_blackboards:
     def __enter__(
         self,
-    ) -> typing.Tuple[py_trees.blackboard.Client, py_trees.blackboard.Client, str]:
+    ) -> tuple[py_trees.blackboard.Client, py_trees.blackboard.Client, str]:
         self.foo = create_blackboard_foo()
         self.bar = create_blackboard_bar()
         self.namespace = ""
@@ -50,10 +50,10 @@ class create_blackboards(object):
         self.bar.unregister(clear=True)
 
 
-class create_namespaced_blackboards(object):
+class create_namespaced_blackboards:
     def __enter__(
         self,
-    ) -> typing.Tuple[py_trees.blackboard.Client, py_trees.blackboard.Client, str]:
+    ) -> tuple[py_trees.blackboard.Client, py_trees.blackboard.Client, str]:
         self.namespace = "/woohoo"
         self.foo = create_blackboard_foo(namespace=self.namespace)
         self.bar = create_blackboard_bar(namespace=self.namespace)
@@ -70,9 +70,7 @@ class create_namespaced_blackboards(object):
 
 
 # mypy assistance
-BlackboardCreators = typing.List[
-    typing.Union[typing.Type[create_blackboards], typing.Type[create_namespaced_blackboards]]
-]
+BlackboardCreators = list[type[create_blackboards] | type[create_namespaced_blackboards]]
 
 
 def blackboard_creators() -> BlackboardCreators:
@@ -80,7 +78,7 @@ def blackboard_creators() -> BlackboardCreators:
 
 
 def create_blackboard_foo(
-    namespace: typing.Optional[str] = None,
+    namespace: str | None = None,
 ) -> py_trees.blackboard.Client:
     """
     Create a blackboard client with a few variables.
@@ -96,7 +94,7 @@ def create_blackboard_foo(
 
 
 def create_blackboard_bar(
-    namespace: typing.Optional[str] = None,
+    namespace: str | None = None,
 ) -> py_trees.blackboard.Client:
     """
     Create another blackboard client with a few variables.
@@ -121,8 +119,8 @@ def create_blackboard_bar(
 def test_client_print_blackboard() -> None:
     console.banner("Client Construction & Print")
     with create_blackboards() as (foo, bar, unused_namespace):
-        print("{0}".format(foo))
-        print("{0}".format(bar))
+        print(f"{foo}")
+        print(f"{bar}")
     assert True
 
 
@@ -216,22 +214,22 @@ def test_is_registered() -> None:
         ("/aha/dude", py_trees.common.Access.WRITE),
     }:
         result = blackboard.is_registered(key)
-        print("is_registered({}).......[{}][True]".format(key, result))
+        print(f"is_registered({key}).......[{result}][True]")
         assert result is True
         result = blackboard.is_registered(key, access)
-        print("is_registered({}, {}).......[{}][True]".format(key, access, result))
+        print(f"is_registered({key}, {access}).......[{result}][True]")
         assert result is True
         access = py_trees.common.Access.READ if access == py_trees.common.Access.WRITE else py_trees.common.Access.WRITE
         result = blackboard.is_registered(key, access)
-        print("is_registered({}, {}).......[{}][False]".format(key, access, result))
+        print(f"is_registered({key}, {access}).......[{result}][False]")
         assert result is False
     for key in {"/aha/foobar", "/aha/dudette"}:
         result = blackboard.is_registered(key)
-        print("is_registered({}).......[{}][False]".format(key, result))
+        print(f"is_registered({key}).......[{result}][False]")
         assert result is False
     for key in {"/foo", "/dude"}:
         result = blackboard.is_registered(key)
-        print("is_registered({}).......[{}][False]".format(key, result))
+        print(f"is_registered({key}).......[{result}][False]")
         assert result is False
     blackboard.unregister(clear=True)
 
@@ -244,7 +242,7 @@ def test_key_exists() -> None:
             assert foo.exists("dude")
             if namespace:
                 py_trees.tests.print_assert_details("'/woohoo/dude' exists", Blackboard.exists("dude"), True)
-                assert Blackboard.exists(name="{}/dude".format(namespace))
+                assert Blackboard.exists(name=f"{namespace}/dude")
 
             with pytest.raises(AttributeError) as context:  # if raised, context survives
                 print("Checking existence of non-existant 'dude_not_here'")
@@ -267,8 +265,8 @@ def test_nested_exists() -> None:
             print("foo.exists('motley.not_here') [{}][{}]".format(foo.exists("motley.not_here"), False))
             assert not foo.exists("motley.not_here")
 
-            namespaced_name = "{}/motley.nested".format(namespace)
-            print("Blackboard.exists({}) [{}][{}]".format(namespaced_name, Blackboard.exists(namespaced_name), True))
+            namespaced_name = f"{namespace}/motley.nested"
+            print(f"Blackboard.exists({namespaced_name}) [{Blackboard.exists(namespaced_name)}][{True}]")
             assert Blackboard.exists(namespaced_name)
 
 
@@ -321,7 +319,7 @@ def test_nested_write() -> None:
             assert foo.motley.nested == "via_set_overwrite"
             print("Write bar.set('motley.nested', '{}', overwrite=False)".format("try_to_overwrite"))
             result = bar.set("motley.nested", "try_to_overwrite", overwrite=False)
-            print("  'result' == {} [{}]".format(False, result))
+            print(f"  'result' == {False} [{result}]")
             print("  'foo.motley.nested' == {} [{}]".format("via_set_overwrite", foo.motley.nested))
             assert foo.motley.nested == "via_set_overwrite"
 
@@ -343,20 +341,20 @@ def test_key_filters() -> None:
     for create in blackboard_creators():
         with create() as (foo, bar, unused_namespace):
             no_of_keys = len(Blackboard.keys())
-            print("{}".format(Blackboard.keys()))
-            print("# Registered keys: {} [{}]".format(no_of_keys, 5))
+            print(f"{Blackboard.keys()}")
+            print(f"# Registered keys: {no_of_keys} [{5}]")
             assert no_of_keys == 5
             no_of_keys = len(Blackboard.keys_filtered_by_regex("dud"))
-            print("# Keys by regex 'dud': {} [{}]".format(no_of_keys, 2))
+            print(f"# Keys by regex 'dud': {no_of_keys} [{2}]")
             assert no_of_keys == 2
             no_of_keys = len(Blackboard.keys_filtered_by_clients({foo.unique_identifier}))
-            print("# Keys by id [foo.id] {} [{}]".format(no_of_keys, 4))
+            print(f"# Keys by id [foo.id] {no_of_keys} [{4}]")
             assert no_of_keys == 4
             no_of_keys = len(Blackboard.keys_filtered_by_clients({bar.unique_identifier}))
-            print("# Keys by id [bar.id] {} [{}]".format(no_of_keys, 4))
+            print(f"# Keys by id [bar.id] {no_of_keys} [{4}]")
             assert no_of_keys == 4
             no_of_keys = len(Blackboard.keys_filtered_by_clients({foo.unique_identifier, bar.unique_identifier}))
-            print("# Keys by id [foo.id, bar.id] {} [{}]".format(no_of_keys, 5))
+            print(f"# Keys by id [foo.id, bar.id] {no_of_keys} [{5}]")
             assert no_of_keys == 5
             # show the convenience list -> set helper is ok
             no_of_keys = len(Blackboard.keys_filtered_by_clients([foo.unique_identifier]))
@@ -409,7 +407,7 @@ def test_activity_stream() -> None:
         py_trees.blackboard.ActivityType.UNSET,
     ]
     assert Blackboard.activity_stream is not None
-    for item, expected in zip(Blackboard.activity_stream.data, expected_types):
+    for item, expected in zip(Blackboard.activity_stream.data, expected_types, strict=False):
         assert item.activity_type == expected.value
     blackboard.unregister(clear=True)
 
@@ -430,7 +428,7 @@ def test_dicts() -> None:
         with create() as (foo, bar, unused_namespace):
             foo.dude = {"Bob": 5, "Bill": 3}
             value = bar.dude["Bob"]
-            print("Read Bob's score: {} [{}]".format(value, 5))
+            print(f"Read Bob's score: {value} [{5}]")
             assert value == 5
 
 
@@ -491,18 +489,18 @@ def test_unregister_key() -> None:
     console.banner("Unregister Keys")
     for create in blackboard_creators():
         with create() as (foo, bar, namespace):
-            print("'{}/foo' in foo.write".format(namespace))
-            assert "{}/foo".format(namespace) in foo.write
+            print(f"'{namespace}/foo' in foo.write")
+            assert f"{namespace}/foo" in foo.write
             print("Foo unregisters 'foo'")
             foo.unregister_key("foo")
-            print("'{}/foo' not in foo.write".format(namespace))
-            assert "{}/foo".format(namespace) not in foo.write
+            print(f"'{namespace}/foo' not in foo.write")
+            assert f"{namespace}/foo" not in foo.write
             print("Bar unregisters 'dudette' with clearing")
-            print("'{}/dudette' not in bar.write".format(namespace))
+            print(f"'{namespace}/dudette' not in bar.write")
             bar.unregister_key("dudette", clear=True)
-            assert "{}/dudette".format(namespace) not in bar.write
-            print("'{}/dudette' not on the blackboard".format(namespace))
-            assert "{}/dudette".format(namespace) not in Blackboard.storage
+            assert f"{namespace}/dudette" not in bar.write
+            print(f"'{namespace}/dudette' not on the blackboard")
+            assert f"{namespace}/dudette" not in Blackboard.storage
 
 
 def test_required_keys() -> None:
@@ -525,7 +523,7 @@ def test_required_keys() -> None:
         print("Key exists - expecting no KeyError")
         blackboard.verify_required_keys_exist()
     except KeyError:
-        assert False
+        raise AssertionError() from None
     blackboard.unregister()
 
 
@@ -544,9 +542,7 @@ def test_absolute_name() -> None:
         ("/foo/", "foo/bar", "/foo/foo/bar"),
     ]
     for namespace, key, absolute_name in test_tuples:
-        print(
-            "[{}][{}]..........[{}][{}]".format(namespace, key, absolute_name, Blackboard.absolute_name(namespace, key))
-        )
+        print(f"[{namespace}][{key}]..........[{absolute_name}][{Blackboard.absolute_name(namespace, key)}]")
         assert absolute_name == Blackboard.absolute_name(namespace, key)
 
 
@@ -564,9 +560,7 @@ def test_relative_name() -> None:
         ("/foo/", "/foo/bar", "bar"),
     ]
     for namespace, key, absolute_name in test_tuples:
-        print(
-            "[{}][{}]..........[{}][{}]".format(namespace, key, absolute_name, Blackboard.absolute_name(namespace, key))
-        )
+        print(f"[{namespace}][{key}]..........[{absolute_name}][{Blackboard.absolute_name(namespace, key)}]")
         assert absolute_name == Blackboard.relative_name(namespace, key)
 
     namespace = "/bar"
@@ -595,7 +589,7 @@ def test_client_absolute_name() -> None:
     for namespace, key, absolute_name in test_tuples:
         blackboard = py_trees.blackboard.Client(name="Blackboard", namespace=namespace)
         blackboard.register_key(key=key, access=py_trees.common.Access.READ)
-        print("[{}][{}]..........[{}][{}]".format(namespace, key, absolute_name, blackboard.absolute_name(key)))
+        print(f"[{namespace}][{key}]..........[{absolute_name}][{blackboard.absolute_name(key)}]")
         assert absolute_name == blackboard.absolute_name(key)
 
 

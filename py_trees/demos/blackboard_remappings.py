@@ -26,7 +26,6 @@ A py_trees demo.
 ##############################################################################
 
 import argparse
-import typing
 
 import py_trees
 import py_trees.console as console
@@ -61,7 +60,7 @@ def description() -> str:
     return s
 
 
-def epilog() -> typing.Optional[str]:
+def epilog() -> str | None:
     """
     Print a noodly epilog for --help.
 
@@ -92,7 +91,7 @@ def command_line_argument_parser() -> argparse.ArgumentParser:
 class Remap(py_trees.behaviour.Behaviour):
     """Custom writer that submits a more complicated variable to the blackboard."""
 
-    def __init__(self, name: str, remap_to: typing.Dict[str, str]):
+    def __init__(self, name: str, remap_to: dict[str, str]):
         """
         Set up the blackboard and remap variables.
 
@@ -101,7 +100,7 @@ class Remap(py_trees.behaviour.Behaviour):
             remap_to: remappings (from variable name to variable name)
         """
         super().__init__(name=name)
-        self.logger.debug("%s.__init__()" % (self.__class__.__name__))
+        self.logger.debug(f"{self.__class__.__name__}.__init__()")
         self.blackboard = self.attach_blackboard_client()
         self.blackboard.register_key(
             key="/foo/bar/wow",
@@ -114,7 +113,7 @@ class Remap(py_trees.behaviour.Behaviour):
 
         This beaviour always returns :data:`~py_trees.common.Status.SUCCESS`.
         """
-        self.logger.debug("%s.update()" % (self.__class__.__name__))
+        self.logger.debug(f"{self.__class__.__name__}.update()")
         self.blackboard.foo.bar.wow = "colander"
 
         return py_trees.common.Status.SUCCESS

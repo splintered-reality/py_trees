@@ -40,9 +40,9 @@ def assert_details(text: str, expected: AssertResultType, result: AssertResultTy
         + text
         + "." * (70 - len(text))
         + console.cyan
-        + "{}".format(expected)
+        + f"{expected}"
         + console.yellow
-        + " [{}]".format(result)
+        + f" [{result}]"
         + console.reset
     )
 

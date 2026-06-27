@@ -32,7 +32,6 @@ A py_trees demo.
 import argparse
 import operator
 import sys
-import typing
 
 import py_trees
 import py_trees.console as console
@@ -68,7 +67,7 @@ def description() -> str:
     return s
 
 
-def epilog() -> typing.Optional[str]:
+def epilog() -> str | None:
     """
     Print a noodly epilog for --help.
 
@@ -103,7 +102,7 @@ def command_line_argument_parser() -> argparse.ArgumentParser:
     return parser
 
 
-class Nested(object):
+class Nested:
     """A more complex object to interact with on the blackboard."""
 
     def __init__(self) -> None:
@@ -128,14 +127,14 @@ class BlackboardWriter(py_trees.behaviour.Behaviour):
         self.blackboard.register_key(key="dude", access=py_trees.common.Access.READ)
         self.blackboard.register_key(key="spaghetti", access=py_trees.common.Access.WRITE)
 
-        self.logger.debug("%s.__init__()" % (self.__class__.__name__))
+        self.logger.debug(f"{self.__class__.__name__}.__init__()")
 
     def update(self) -> py_trees.common.Status:
         """Write a dictionary to the blackboard.
 
         This beaviour always returns :data:`~py_trees.common.Status.SUCCESS`.
         """
-        self.logger.debug("%s.update()" % (self.__class__.__name__))
+        self.logger.debug(f"{self.__class__.__name__}.update()")
         try:
             _ = self.blackboard.dude
         except KeyError:
@@ -184,7 +183,7 @@ class ParamsAndState(py_trees.behaviour.Behaviour):
         try:
             self.state.current_speed = self.parameters.default_speed
         except KeyError as e:
-            raise RuntimeError("parameter 'default_speed' not found [{}]".format(str(e)))
+            raise RuntimeError(f"parameter 'default_speed' not found [{str(e)}]") from e
 
     def update(self) -> py_trees.common.Status:
         """

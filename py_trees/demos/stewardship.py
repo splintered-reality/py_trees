@@ -27,7 +27,6 @@ A py_trees demo.
 import argparse
 import sys
 import time
-import typing
 
 import py_trees
 import py_trees.console as console
@@ -70,7 +69,7 @@ def description() -> str:
     return s
 
 
-def epilog() -> typing.Optional[str]:
+def epilog() -> str | None:
     """
     Print a noodly epilog for --help.
 
@@ -113,7 +112,7 @@ def command_line_argument_parser() -> argparse.ArgumentParser:
 
 def pre_tick_handler(behaviour_tree: py_trees.trees.BehaviourTree) -> None:
     """Generate a simple pre-tick banner printing to stdout."""
-    print("\n--------- Run %s ---------\n" % behaviour_tree.count)
+    print(f"\n--------- Run {behaviour_tree.count} ---------\n")
 
 
 class SuccessEveryN(py_trees.behaviours.SuccessEveryN):
@@ -181,8 +180,8 @@ class Finisher(py_trees.behaviour.Behaviour):
         """
         print(console.green + "---------------------------" + console.reset)
         print(console.bold + "        Finisher" + console.reset)
-        print(console.green + "  Count : {}".format(self.blackboard.count) + console.reset)
-        print(console.green + "  Period: {}".format(self.blackboard.period) + console.reset)
+        print(console.green + f"  Count : {self.blackboard.count}" + console.reset)
+        print(console.green + f"  Period: {self.blackboard.period}" + console.reset)
         print(console.green + "---------------------------" + console.reset)
         return py_trees.common.Status.SUCCESS
 

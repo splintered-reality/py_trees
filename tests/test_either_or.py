@@ -8,7 +8,6 @@
 ##############################################################################
 
 import operator
-import typing
 
 import py_trees
 
@@ -17,7 +16,7 @@ import py_trees
 ##############################################################################
 
 
-def create_root() -> typing.Tuple[
+def create_root() -> tuple[
     py_trees.behaviour.Behaviour,
     py_trees.behaviour.Behaviour,
     py_trees.behaviour.Behaviour,

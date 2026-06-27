@@ -32,7 +32,7 @@ from py_trees.common import Status
 ##############################################################################
 
 
-class Nested(object):
+class Nested:
     def __init__(self) -> None:
         self.foo = "bar"
 
@@ -90,12 +90,12 @@ def test_variable_exists() -> None:
             Status.FAILURE,
         )
     )
-    for b, unused in tuples:
+    for b, _unused in tuples:
         b.tick_once()
     py_trees.tests.print_assert_banner()
     for b, asserted_result in tuples:
         py_trees.tests.print_assert_details(
-            text="looking for '{}'".format(b.variable_name),
+            text=f"looking for '{b.variable_name}'",
             expected=asserted_result,
             result=b.status,
         )
@@ -130,12 +130,12 @@ def test_wait_for_variable() -> None:
             Status.RUNNING,
         )
     )
-    for b, unused in tuples:
+    for b, _unused in tuples:
         b.tick_once()
     py_trees.tests.print_assert_banner()
     for b, asserted_result in tuples:
         py_trees.tests.print_assert_details(
-            text="waiting for '{}'".format(b.variable_name),
+            text=f"waiting for '{b.variable_name}'",
             expected=asserted_result,
             result=b.status,
         )
@@ -316,9 +316,9 @@ def test_check_variable_value() -> None:
             Status.FAILURE,
         )
     )
-    for b, unused in tuples:
+    for b, _unused in tuples:
         b.tick_once()
-        print("Feedback message {}".format(b.feedback_message))
+        print(f"Feedback message {b.feedback_message}")
     print("")
     py_trees.tests.print_assert_banner()
     for b, asserted_result in tuples:
@@ -376,9 +376,9 @@ def test_check_variable_value_inverted() -> None:
             Status.SUCCESS,
         )
     )
-    for b, unused in tuples:
+    for b, _unused in tuples:
         b.tick_once()
-        print("Feedback message {}".format(b.feedback_message))
+        print(f"Feedback message {b.feedback_message}")
     print("")
     py_trees.tests.print_assert_banner()
     for b, asserted_result in tuples:
@@ -436,9 +436,9 @@ def test_wait_for_variable_value() -> None:
             Status.RUNNING,
         )
     )
-    for b, unused in tuples:
+    for b, _unused in tuples:
         b.tick_once()
-        print("Feedback message {}".format(b.feedback_message))
+        print(f"Feedback message {b.feedback_message}")
     print("")
     py_trees.tests.print_assert_banner()
     for b, asserted_result in tuples:
@@ -472,7 +472,7 @@ def test_check_variable_values() -> None:
         text: str
         result: py_trees.common.Status
 
-    datasets: typing.List[DataSets] = [
+    datasets: list[DataSets] = [
         {
             "a": "a",
             "b": "b",

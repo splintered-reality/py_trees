@@ -28,7 +28,6 @@ import argparse
 import functools
 import sys
 import time
-import typing
 
 import py_trees
 import py_trees.console as console
@@ -66,7 +65,7 @@ def description(root: py_trees.behaviour.Behaviour) -> str:
     return s
 
 
-def epilog() -> typing.Optional[str]:
+def epilog() -> str | None:
     """
     Print a noodly epilog for --help.
 
@@ -108,7 +107,7 @@ def pre_tick_handler(behaviour_tree: py_trees.trees.BehaviourTree) -> None:
     Args:
        behaviour_tree: the tree to tick (used to fetch the count number)
     """
-    print("\n--------- Run %s ---------\n" % behaviour_tree.count)
+    print(f"\n--------- Run {behaviour_tree.count} ---------\n")
 
 
 def post_tick_handler(

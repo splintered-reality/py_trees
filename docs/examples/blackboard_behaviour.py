@@ -41,6 +41,6 @@ configuration.register_key("init", access=py_trees.common.Access.WRITE)  # Regis
 configuration.init = 3  # Set the initial value for 'foo_parameters_init'
 
 foo = Foo(name="The Foo")
-for i in range(1, 8):
+for _i in range(1, 8):
     foo.tick_once()
-    print("Number of Noodles: {}".format(foo.feedback_message))
+    print(f"Number of Noodles: {foo.feedback_message}")

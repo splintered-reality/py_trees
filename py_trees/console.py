@@ -179,8 +179,8 @@ def read_single_keypress() -> str:
             return read_single_keypress_windows()
         except ImportError as e_windows:
             raise ImportError(
-                "Neither unix nor windows implementations supported [{}][{}]".format(str(e_unix), str(e_windows))
-            )
+                f"Neither unix nor windows implementations supported [{str(e_unix)}][{str(e_windows)}]"
+            ) from e_windows
 
 
 ##############################################################################
@@ -210,11 +210,11 @@ has_colours = console_has_colours()
 if has_colours:
     # reset = "\x1b[0;0m"
     reset = "\x1b[0m"
-    bold = "\x1b[%sm" % "1"
-    dim = "\x1b[%sm" % "2"
-    underlined = "\x1b[%sm" % "4"
-    blink = "\x1b[%sm" % "5"
-    black, red, green, yellow, blue, magenta, cyan, white = ["\x1b[%sm" % str(i) for i in range(30, 38)]
+    bold = "\x1b[{}m".format("1")
+    dim = "\x1b[{}m".format("2")
+    underlined = "\x1b[{}m".format("4")
+    blink = "\x1b[{}m".format("5")
+    black, red, green, yellow, blue, magenta, cyan, white = [f"\x1b[{str(i)}m" for i in range(30, 38)]
     (
         bold_black,
         bold_red,
@@ -423,10 +423,10 @@ if __name__ == "__main__":
     print(cyan + "    Name" + reset + ": " + yellow + "Dude" + reset)
     print(f"Has Unicode: {has_unicode()}")
     print("Unicode Characters:\n")
-    print("lightning_bolt: {}".format(lightning_bolt))
-    print("double_vertical_line: {}".format(double_vertical_line))
-    print("check_mark: {}".format(check_mark))
-    print("multiplication_x: {}".format(multiplication_x))
-    print("left_arrow: {}".format(left_arrow))
-    print("right_arrow: {}".format(right_arrow))
-    print("circled_m: {}".format(circled_m))
+    print(f"lightning_bolt: {lightning_bolt}")
+    print(f"double_vertical_line: {double_vertical_line}")
+    print(f"check_mark: {check_mark}")
+    print(f"multiplication_x: {multiplication_x}")
+    print(f"left_arrow: {left_arrow}")
+    print(f"right_arrow: {right_arrow}")
+    print(f"circled_m: {circled_m}")

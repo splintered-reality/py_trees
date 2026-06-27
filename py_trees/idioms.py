@@ -14,7 +14,6 @@
 ##############################################################################
 
 import operator
-import typing
 
 from . import behaviour, behaviours, blackboard, common, composites, decorators
 
@@ -23,7 +22,7 @@ from . import behaviour, behaviours, blackboard, common, composites, decorators
 ##############################################################################
 
 
-def pick_up_where_you_left_off(name: str, tasks: typing.List[behaviour.BehaviourSubClass]) -> behaviour.Behaviour:
+def pick_up_where_you_left_off(name: str, tasks: list[behaviour.BehaviourSubClass]) -> behaviour.Behaviour:
     """
     Create an idiom that enables a sequence of tasks to pick up where it left off.
 
@@ -93,10 +92,10 @@ def pick_up_where_you_left_off(name: str, tasks: typing.List[behaviour.Behaviour
 
 
 def either_or(
-    conditions: typing.List[common.ComparisonExpression],
-    subtrees: typing.List[behaviour.Behaviour],
+    conditions: list[common.ComparisonExpression],
+    subtrees: list[behaviour.Behaviour],
     name: str = "Either Or",
-    namespace: typing.Optional[str] = None,
+    namespace: str | None = None,
 ) -> behaviour.Behaviour:
     """
     Create an idiom with selector-like qualities, but no priority concerns.
@@ -154,9 +153,7 @@ def either_or(
     .. todo:: a version for which other subtrees can preempt (in an unprioritised manner) the active branch
     """
     if len(conditions) != len(subtrees):
-        raise ValueError(
-            "Must be the same number of conditions as subtrees [{} != {}]".format(len(conditions), len(subtrees))
-        )
+        raise ValueError(f"Must be the same number of conditions as subtrees [{len(conditions)} != {len(subtrees)}]")
     root = composites.Sequence(name=name, memory=True)
     configured_namespace: str = (
         namespace
@@ -176,7 +173,7 @@ def either_or(
     )
     chooser = composites.Selector(name="Chooser", memory=False)
     for counter in range(1, len(conditions) + 1):
-        sequence = composites.Sequence(name="Option {}".format(str(counter)), memory=True)
+        sequence = composites.Sequence(name=f"Option {str(counter)}", memory=True)
         variable_name = configured_namespace + blackboard.Blackboard.separator + str(counter)
         disabled = behaviours.CheckBlackboardVariableValue(
             name="Enabled?",

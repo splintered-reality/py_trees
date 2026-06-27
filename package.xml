@@ -8,10 +8,6 @@
     Pythonic implementation of behaviour trees.
   </description>
 
-  <author email="d.stonier@gmail.com">Daniel Stonier</author>
-  <author>Michal Staniaszek</author>
-  <author>Naveed Usmani</author>
-
   <maintainer email="d.stonier@gmail.com">Daniel Stonier</maintainer>
   <maintainer email="sebas.a.castro@gmail.com">Sebastian Castro</maintainer>
 

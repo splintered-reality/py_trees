@@ -35,16 +35,14 @@ def test_symbols() -> None:
 
     for symbols in symbol_groups:
         print(
-            "Status: [{0}][{1}][{2}][{3}]".format(
-                symbols[py_trees.common.Status.SUCCESS],
-                symbols[py_trees.common.Status.FAILURE],
-                symbols[py_trees.common.Status.INVALID],
-                symbols[py_trees.common.Status.RUNNING],
-            )
+            f"Status: [{symbols[py_trees.common.Status.SUCCESS]}]"
+            f"[{symbols[py_trees.common.Status.FAILURE]}]"
+            f"[{symbols[py_trees.common.Status.INVALID]}]"
+            f"[{symbols[py_trees.common.Status.RUNNING]}]"
         )
 
         print(
-            "Classes: [{0}][{1}][{2}][{3}]".format(
+            "Classes: [{}][{}][{}][{}]".format(
                 symbols["behaviour"],
                 symbols["sequence_with_memory"],
                 symbols["selector_with_memory"],
@@ -107,7 +105,7 @@ def test_text_trees() -> None:
     py_trees.tests.print_assert_banner()
     for snippet_name, snippet in snippets.items():
         for b in root.iterate():
-            py_trees.tests.print_assert_details("{} in {}".format(b.name, snippet_name), True, b.name in snippet)
+            py_trees.tests.print_assert_details(f"{b.name} in {snippet_name}", True, b.name in snippet)
             assert b.name in snippet
 
     py_trees.tests.print_assert_details(
@@ -135,7 +133,7 @@ def test_text_trees() -> None:
         py_trees.tests.print_assert_details("xml ParseError", None, None)
     except xml.etree.ElementTree.ParseError as e:
         py_trees.tests.print_assert_details("xml ParseError", None, str(e))
-        assert False, "failed to parse the xhtml snippet as valid xml"
+        raise AssertionError("failed to parse the xhtml snippet as valid xml") from e
 
 
 def test_ascii_snapshot_priority_interrupt() -> None:

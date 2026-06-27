@@ -22,7 +22,6 @@ Bless my noggin with a tickle from your noodly appendages!
 ##############################################################################
 
 import enum
-import typing
 
 from . import console
 
@@ -72,7 +71,7 @@ level: Level = Level.INFO
 ##############################################################################
 
 
-class Logger(object):
+class Logger:
     """
     Simple logger object.
 
@@ -80,7 +79,7 @@ class Logger(object):
     :vartype override: bool
     """
 
-    def __init__(self, name: typing.Optional[str] = None):
+    def __init__(self, name: str | None = None):
         self.prefix = "{:<20}".format(name.replace("\n", " ")) + " : " if name else ""
 
     def debug(self, msg: str) -> None:

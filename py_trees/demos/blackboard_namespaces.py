@@ -26,7 +26,6 @@ A py_trees demo.
 ##############################################################################
 
 import argparse
-import typing
 
 import py_trees
 import py_trees.console as console
@@ -60,7 +59,7 @@ def description() -> str:
     return s
 
 
-def epilog() -> typing.Optional[str]:
+def epilog() -> str | None:
     """
     Print a noodly epilog for --help.
 

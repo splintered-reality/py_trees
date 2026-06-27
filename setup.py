@@ -3,7 +3,7 @@
 ################################################################################
 # This is a minimal setup.py for enabling ROS builds.
 #
-# For all other modes of development, use poetry and pyproject.toml
+# For all other modes of development, use uv and pyproject.toml
 ################################################################################
 
 from setuptools import find_packages, setup
@@ -13,7 +13,7 @@ install_requires = ["setuptools", "pydot"]
 # Some duplication of properties in:
 #  - setup.py,           (ros / legacy)
 #  - package.xml         (ros)
-#  - pyproject.toml      (poetry)
+#  - pyproject.toml      (uv)
 #  - py_trees/version.py (common)
 # Keep them in sync.
 d = setup(

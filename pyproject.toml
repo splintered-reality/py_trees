@@ -98,20 +98,20 @@ branch = true
 
 [tool.ruff]
 line-length = 120
+# Keep in step with the requires-python floor so pyupgrade never rewrites to syntax
+# (e.g., PEP 695 generics) that won't parse on the oldest supported python.
 target-version = "py310"
-# Match the locations tox used to lint.
 include = ["py_trees/**/*.py", "tests/**/*.py", "docs/examples/**/*.py"]
 
 [tool.ruff.lint]
-# This set mirrors what the old flake8 + flake8-docstrings + usort stack
-# enforced. `B` (flake8-bugbear) and `UP` (pyupgrade) are cheap, worthwhile
-# upgrades to enable next - add them here when ready to address their findings.
 select = [
     "E",   # pycodestyle errors
     "W",   # pycodestyle warnings
     "F",   # pyflakes
     "I",   # isort (import ordering, replaces usort)
     "D",   # pydocstyle (docstrings, replaces flake8-docstrings)
+    "B",   # flake8-bugbear (bugs & design beyond pep8)
+    "UP",  # pyupgrade (modernize syntax for the target python)
 ]
 ignore = [
     "D105",  # magic method docstrings
@@ -143,10 +143,8 @@ python-version = "3.10"
 include = ["py_trees", "tests"]
 
 [tool.ty.rules]
-# ty (still pre-1.0) conservatively refuses to call attributes typed as a bare
-# `typing.Callable` ("its signature is not known"). The py_trees comparison
-# expressions store exactly such callables, so this rule is pure noise here.
+# ty (still pre-1.0) conservatively refuses to call attributes typed as a bare `typing.Callable` ("its signature is not known").
+# The py_trees comparison expressions store exactly such callables, so this rule is pure noise here.
 call-top-callable = "ignore"
-# Many pre-existing `# type: ignore[<mypy-code>]` comments use mypy's error
-# codes, which ty does not recognise; don't flag them as redundant.
+# Many pre-existing `# type: ignore[<mypy-code>]` comments use mypy's error codes, which ty does not recognise; don't flag them as redundant.
 unused-ignore-comment = "ignore"

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """Example demonstrating the use of a sequence control node with memory."""
 
 import py_trees

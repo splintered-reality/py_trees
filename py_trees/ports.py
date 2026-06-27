@@ -355,8 +355,8 @@ class PortsMixin(_MixinBase):
                     try:
                         updated_value = convert_str_to_type(value, port_type, logger=self._ports_logger)
                         self.log_debug(f"Port {port}: Converted const value '{value}' to type {port_type}.")
-                    except ValueError:
-                        raise ValueError(f"Cannot convert Value '{value}' to type {port_type}")
+                    except ValueError as e:
+                        raise ValueError(f"Cannot convert Value '{value}' to type {port_type}") from e
                     key = local_key  # Remap to the local key holding the constant value
                     self._blackboard_client.set(key, updated_value)
                 # Resolve relative remap targets under the subtree namespace.

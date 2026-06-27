@@ -32,7 +32,7 @@ logger = py_trees.logging.Logger("Tests")
 
 class DummyDecorator(py_trees.decorators.Decorator):
     def __init__(self, name: str, child: py_trees.behaviour.Behaviour):
-        super(DummyDecorator, self).__init__(name=name, child=child)
+        super().__init__(name=name, child=child)
 
     def update(self) -> py_trees.common.Status:
         return py_trees.common.Status.INVALID

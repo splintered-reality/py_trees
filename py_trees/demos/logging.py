@@ -73,7 +73,7 @@ def description(root: py_trees.behaviour.Behaviour) -> str:
     return s
 
 
-def epilog() -> typing.Optional[str]:
+def epilog() -> str | None:
     """
     Print a noodly epilog for --help.
 

@@ -4,7 +4,7 @@
 import py_trees
 
 
-class Nested(object):
+class Nested:
     """Simple object that contains a few attributes."""
 
     def __init__(self) -> None:

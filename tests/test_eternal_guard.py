@@ -7,7 +7,6 @@
 # Imports
 ##############################################################################
 
-import typing
 
 import py_trees
 import py_trees.console as console
@@ -18,7 +17,7 @@ import py_trees.tests
 ##############################################################################
 
 
-def create_tasks() -> typing.List[py_trees.behaviour.Behaviour]:
+def create_tasks() -> list[py_trees.behaviour.Behaviour]:
     return [
         py_trees.behaviours.StatusQueue(
             name="R-R-S",
@@ -41,7 +40,7 @@ def impl_eternal_guard_checks(
     name: str,
     root: py_trees.behaviour.Behaviour,
     eternal_guard: py_trees.behaviour.Behaviour,
-    tasks: typing.List[py_trees.behaviour.Behaviour],
+    tasks: list[py_trees.behaviour.Behaviour],
 ) -> None:
     console.banner(name)
 
@@ -119,7 +118,7 @@ def test_eternal_guard_decorator() -> None:
         return True
 
     # emulate py_trees.behaviours.StatusQueue
-    class Count(object):
+    class Count:
         def __init__(self) -> None:
             self.results = [
                 py_trees.common.Status.FAILURE,

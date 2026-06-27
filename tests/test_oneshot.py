@@ -9,7 +9,6 @@
 
 # enable some python3 compatibility options:
 # (unicode_literals not compatible with python2 uuid module)
-from __future__ import absolute_import, print_function
 
 import py_trees
 import py_trees.console as console
@@ -48,7 +47,7 @@ def test_oneshot_with_fail_causes_reentry() -> None:
     ]:
         for policy in py_trees.common.OneShotPolicy:
             # Setup
-            console.banner("{} w/ Failure Causes Reentry [policy: {}]".format(title, policy.name))
+            console.banner(f"{title} w/ Failure Causes Reentry [policy: {policy.name}]")
             py_trees.tests.clear_blackboard()
 
             # Tree
@@ -76,17 +75,17 @@ def test_oneshot_with_fail_causes_reentry() -> None:
                 console.cyan
                 + "  OneShot Status: "
                 + console.yellow
-                + "{}".format(oneshot.status)
+                + f"{oneshot.status}"
                 + console.reset
-                + " [{}]".format(py_trees.common.Status.FAILURE)
+                + f" [{py_trees.common.Status.FAILURE}]"
             )
             print(
                 console.cyan
                 + "  Child Status  : "
                 + console.yellow
-                + "{}".format(fail_then_run.status)
+                + f"{fail_then_run.status}"
                 + console.reset
-                + " [{}]".format(py_trees.common.Status.FAILURE)
+                + f" [{py_trees.common.Status.FAILURE}]"
             )
             assert oneshot.status == py_trees.common.Status.FAILURE
             assert fail_then_run.status == py_trees.common.Status.FAILURE
@@ -118,17 +117,17 @@ def test_oneshot_with_fail_causes_reentry() -> None:
                 console.cyan
                 + "  OneShot Status: "
                 + console.yellow
-                + "{}".format(oneshot.status)
+                + f"{oneshot.status}"
                 + console.reset
-                + " [{}]".format(expected_oneshot_status[policy])
+                + f" [{expected_oneshot_status[policy]}]"
             )
             print(
                 console.cyan
                 + "  Child Status  : "
                 + console.yellow
-                + "{}".format(fail_then_run.status)
+                + f"{fail_then_run.status}"
                 + console.reset
-                + " [{}]".format(expected_behaviour_status[title][policy])
+                + f" [{expected_behaviour_status[title][policy]}]"
             )
             assert oneshot.status == expected_oneshot_status[policy]
             assert fail_then_run.status == expected_behaviour_status[title][policy]
@@ -162,7 +161,7 @@ def untest_oneshot_with_subtrees_and_interrupt() -> None:
             ("Idiom", idiom_oneshot),
             ("Decorator", decorator_oneshot),
         ]:
-            console.banner("{} w/ {} and Interrupt".format(title, worker_subtree.name))
+            console.banner(f"{title} w/ {worker_subtree.name} and Interrupt")
             py_trees.tests.clear_blackboard()
 
             # Tree with higher priority branch
@@ -197,17 +196,17 @@ def untest_oneshot_with_subtrees_and_interrupt() -> None:
                 console.cyan
                 + "  OneShot Status: "
                 + console.yellow
-                + "{}".format(oneshot.status)
+                + f"{oneshot.status}"
                 + console.reset
-                + " [{}]".format(py_trees.common.Status.INVALID)
+                + f" [{py_trees.common.Status.INVALID}]"
             )
             print(
                 console.cyan
                 + "  Child Status  : "
                 + console.yellow
-                + "{}".format(worker_subtree.status)
+                + f"{worker_subtree.status}"
                 + console.reset
-                + " [{}]".format(py_trees.common.Status.INVALID)
+                + f" [{py_trees.common.Status.INVALID}]"
             )
             assert oneshot.status == py_trees.common.Status.INVALID
             assert worker_subtree.status == py_trees.common.Status.INVALID
@@ -223,17 +222,17 @@ def untest_oneshot_with_subtrees_and_interrupt() -> None:
                 console.cyan
                 + "  OneShot Status: "
                 + console.yellow
-                + "{}".format(oneshot.status)
+                + f"{oneshot.status}"
                 + console.reset
-                + " [{}]".format(py_trees.common.Status.SUCCESS)
+                + f" [{py_trees.common.Status.SUCCESS}]"
             )
             print(
                 console.cyan
                 + "  Child Status  : "
                 + console.yellow
-                + "{}".format(worker_subtree.status)
+                + f"{worker_subtree.status}"
                 + console.reset
-                + " [{}]".format(py_trees.common.Status.INVALID)
+                + f" [{py_trees.common.Status.INVALID}]"
             )
             assert oneshot.status == py_trees.common.Status.SUCCESS
             assert worker_subtree.status == py_trees.common.Status.INVALID  # type: ignore[unreachable]

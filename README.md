@@ -18,6 +18,7 @@ Brief feature list:
 
 ## What's New?
 
+* [2026-06-27] Modernized project infrastructure with `uv`, added support for Python 3.14.
 * [2026-05-19] Typed input/output ports for behaviours, with XML parser support.
 * [2025-11-13] New `ForEach` decorator.
 * [2025-11-13] New `CompareBlackboardVariables` behaviour, with comparison expressions that allow callables.
@@ -58,7 +59,8 @@ $ uv run pytest -s tests/
 # https://github.com/splintered-reality/py_trees/blob/devel/CONTRIBUTING.md
 ```
 
-See [DEVELOPING.md](DEVELOPING.md) for more detail. And be froody.
+See [DEVELOPING.md](DEVELOPING.md) for more detail.
+And be froody.
 
 ## Next Steps
 

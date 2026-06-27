@@ -65,7 +65,7 @@ def description() -> str:
     return s
 
 
-def epilog() -> typing.Optional[str]:
+def epilog() -> str | None:
     """
     Print a noodly epilog for --help.
 
@@ -133,8 +133,8 @@ class Action(py_trees.behaviour.Behaviour):
 
     def __init__(self, name: str):
         """Configure the name of the behaviour."""
-        super(Action, self).__init__(name)
-        self.logger.debug("%s.__init__()" % (self.__class__.__name__))
+        super().__init__(name)
+        self.logger.debug(f"{self.__class__.__name__}.__init__()")
 
     def setup(self, **kwargs: typing.Any) -> None:
         """Kickstart the separate process this behaviour will work with.
@@ -142,7 +142,7 @@ class Action(py_trees.behaviour.Behaviour):
         Ordinarily this process will be already running. In this case,
         setup is usually just responsible for verifying it exists.
         """
-        self.logger.debug("%s.setup()->connections to an external process" % (self.__class__.__name__))
+        self.logger.debug(f"{self.__class__.__name__}.setup()->connections to an external process")
         self.parent_connection, self.child_connection = multiprocessing.Pipe()
         self.planning = multiprocessing.Process(target=planning, args=(self.child_connection,))
         atexit.register(self.planning.terminate)
@@ -150,7 +150,7 @@ class Action(py_trees.behaviour.Behaviour):
 
     def initialise(self) -> None:
         """Reset a counter variable."""
-        self.logger.debug("%s.initialise()->sending new goal" % (self.__class__.__name__))
+        self.logger.debug(f"{self.__class__.__name__}.initialise()->sending new goal")
         self.parent_connection.send(["new goal"])
         self.percentage_completion = 0
 
@@ -164,22 +164,16 @@ class Action(py_trees.behaviour.Behaviour):
         if new_status == py_trees.common.Status.SUCCESS:
             self.feedback_message = "Processing finished"
             self.logger.debug(
-                "%s.update()[%s->%s][%s]"
-                % (
-                    self.__class__.__name__,
-                    self.status,
-                    new_status,
-                    self.feedback_message,
-                )
+                f"{self.__class__.__name__}.update()[{self.status}->{new_status}][{self.feedback_message}]"
             )
         else:
-            self.feedback_message = "{0}%".format(self.percentage_completion)
-            self.logger.debug("%s.update()[%s][%s]" % (self.__class__.__name__, self.status, self.feedback_message))
+            self.feedback_message = f"{self.percentage_completion}%"
+            self.logger.debug(f"{self.__class__.__name__}.update()[{self.status}][{self.feedback_message}]")
         return new_status
 
     def terminate(self, new_status: py_trees.common.Status) -> None:
         """Nothing to clean up in this example."""
-        self.logger.debug("%s.terminate()[%s->%s]" % (self.__class__.__name__, self.status, new_status))
+        self.logger.debug(f"{self.__class__.__name__}.terminate()[{self.status}->{new_status}]")
 
 
 ##############################################################################

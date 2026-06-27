@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """Example demonstrating the use of one-shot decorator nodes."""
 
 import py_trees

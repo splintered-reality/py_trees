@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """Example demonstrating the use of the "pick up where you left off" idiom."""
 
 import py_trees

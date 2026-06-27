@@ -303,9 +303,8 @@ def test_parallel_synchronisation() -> None:
     print("success_every_second.status == py_trees.common.Status.SUCCESS")
     assert success_every_second.status == py_trees.common.Status.SUCCESS
     print(
-        "success [id: {}] did not get ticked [snapshot: {}]".format(
-            success.id, [str(ident) for ident in snapshot_visitor.visited.keys()]
-        )
+        f"success [id: {success.id}] did not get ticked "
+        f"[snapshot: {[str(ident) for ident in snapshot_visitor.visited.keys()]}]"
     )
     assert success.id not in snapshot_visitor.visited
 

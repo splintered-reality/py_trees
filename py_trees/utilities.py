@@ -117,7 +117,7 @@ class Process(multiprocessing.Process):
         return self._exception
 
 
-def which(program: str) -> typing.Optional[str]:
+def which(program: str) -> str | None:
     """
     Call the command line 'which' tool (convenience wrapper).
 

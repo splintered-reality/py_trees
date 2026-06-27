@@ -68,10 +68,10 @@ class Access(enum.Enum):
 ##############################################################################
 
 
-class ParallelPolicy(object):
+class ParallelPolicy:
     """Configurable policies for :py:class:`~py_trees.composites.Parallel` behaviours."""
 
-    class Base(object):
+    class Base:
         """Base class for parallel policies. Should never be used directly."""
 
         def __init__(self, synchronise: bool = False):
@@ -128,7 +128,7 @@ class ParallelPolicy(object):
         def __init__(
             self,
             # TODO should be behaviour.Behaviour, but cyclic imports -> redesign
-            children: typing.List[typing.Any],
+            children: list[typing.Any],
             synchronise: bool = True,
         ):
             """
@@ -186,7 +186,7 @@ class ClearingPolicy(enum.IntEnum):
 ComparisonV = typing.TypeVar("ComparisonV")
 
 
-class ComparisonExpression(object):
+class ComparisonExpression:
     """
     Store the parameters for a univariate comparison operation.
 
@@ -215,7 +215,7 @@ class ComparisonExpression(object):
     def __init__(
         self,
         variable: str,
-        value: typing.Union[ComparisonV, typing.Callable[[], ComparisonV]],
+        value: ComparisonV | typing.Callable[[], ComparisonV],
         operator: typing.Callable[[ComparisonV, ComparisonV], bool],
     ):
         """Initialise variables.
