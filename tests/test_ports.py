@@ -11,7 +11,6 @@
 import unittest
 
 import py_trees
-
 from py_trees.ports import NoDataAvailable
 
 from .test_ports_helpers import Consumer, ConsumerProducer, Producer
@@ -21,9 +20,7 @@ from .test_ports_helpers import Consumer, ConsumerProducer, Producer
 # test_behavior_with_ports.py to here.
 class TestPortsMixin(unittest.TestCase):
     def setUp(self) -> None:
-        self.mixin = Producer(
-            "test"
-        )  # Use Producer class so we don't have to worry about PortsMixin abstract methods
+        self.mixin = Producer("test")  # Use Producer class so we don't have to worry about PortsMixin abstract methods
 
     def test_basic_types(self) -> None:
         self.assertTrue(self.mixin._is_instance_of_type(5, int))
@@ -35,9 +32,7 @@ class TestPortsMixin(unittest.TestCase):
     def test_list_of_int(self) -> None:
         self.assertTrue(self.mixin._is_instance_of_type([1, 2, 3], list[int]))
         self.assertFalse(self.mixin._is_instance_of_type([1, "2", 3], list[int]))
-        self.assertTrue(
-            self.mixin._is_instance_of_type([], list[int])
-        )  # empty list is valid
+        self.assertTrue(self.mixin._is_instance_of_type([], list[int]))  # empty list is valid
 
     def test_union_type(self) -> None:
         T = int | str
@@ -89,9 +84,7 @@ class TestBehaviourWithPorts(unittest.TestCase):
         cap = Consumer("FaultyInput")
         cap.setup_ports(port_remappings={"input": "/sometest/input"})
         blackboard_client = py_trees.blackboard.Client(name="SomeoneElse")
-        blackboard_client.register_key(
-            key="/sometest/input", access=py_trees.common.Access.WRITE, required=True
-        )
+        blackboard_client.register_key(key="/sometest/input", access=py_trees.common.Access.WRITE, required=True)
         blackboard_client.set("/sometest/input", 123)
         with self.assertRaises(TypeError):
             cap.get_input("input")
@@ -119,9 +112,7 @@ class TestBehaviourWithPorts(unittest.TestCase):
 
         self.assertEqual(prod_a.get_last_output("output"), "value_a")
         self.assertEqual(prod_b.get_last_output("output"), "value_b")
-        self.assertNotEqual(
-            prod_a._get_blackboard_key("output"), prod_b._get_blackboard_key("output")
-        )
+        self.assertNotEqual(prod_a._get_blackboard_key("output"), prod_b._get_blackboard_key("output"))
 
     def test_multilevel_remapping(self) -> None:
         """Test that multi-level port remapping through nested subtrees propagates values correctly."""
@@ -220,9 +211,7 @@ class TestBehaviourWithPorts(unittest.TestCase):
 
         # Now set a value and ensure it overrides the default. We also need to re-register the key because
         # input ports are only registered with read access.
-        cons.blackboard_client.register_key(
-            key="/shared", access=py_trees.common.Access.WRITE, required=True
-        )
+        cons.blackboard_client.register_key(key="/shared", access=py_trees.common.Access.WRITE, required=True)
         cons.blackboard_client.set("/shared", "ActualValue")
         self.assertEqual(cons.get_input("input", default=default_value), "ActualValue")
 
@@ -246,12 +235,8 @@ class TestBehaviourWithPorts(unittest.TestCase):
         prod_a = Producer("prod_a")
         prod_b = Producer("prod_b")
 
-        prod_a.setup_ports(
-            port_remappings={"output": "transfer"}, subtree_namespace="/ns1"
-        )
-        prod_b.setup_ports(
-            port_remappings={"output": "transfer"}, subtree_namespace="/ns2"
-        )
+        prod_a.setup_ports(port_remappings={"output": "transfer"}, subtree_namespace="/ns1")
+        prod_b.setup_ports(port_remappings={"output": "transfer"}, subtree_namespace="/ns2")
 
         # Keys should resolve to their respective subtree namespaces.
         self.assertEqual(prod_a._get_blackboard_key("output"), "/ns1/transfer")

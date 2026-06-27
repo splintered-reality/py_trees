@@ -48,9 +48,7 @@ def test_oneshot_with_fail_causes_reentry() -> None:
     ]:
         for policy in py_trees.common.OneShotPolicy:
             # Setup
-            console.banner(
-                "{} w/ Failure Causes Reentry [policy: {}]".format(title, policy.name)
-            )
+            console.banner("{} w/ Failure Causes Reentry [policy: {}]".format(title, policy.name))
             py_trees.tests.clear_blackboard()
 
             # Tree
@@ -159,9 +157,7 @@ def untest_oneshot_with_subtrees_and_interrupt() -> None:
             child=worker_subtree,
             policy=py_trees.common.OneShotPolicy.ON_SUCCESSFUL_COMPLETION,
         )
-        idiom_oneshot = py_trees.idioms.oneshot(
-            name="OneShot", variable_name="oneshot", behaviour=worker_subtree
-        )
+        idiom_oneshot = py_trees.idioms.oneshot(name="OneShot", variable_name="oneshot", behaviour=worker_subtree)
         for title, oneshot in [
             ("Idiom", idiom_oneshot),
             ("Decorator", decorator_oneshot),

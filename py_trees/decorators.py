@@ -105,9 +105,7 @@ class Decorator(behaviour.Behaviour):
     def __init__(self, name: str, child: behaviour.Behaviour):
         # Checks
         if not isinstance(child, behaviour.Behaviour):
-            raise TypeError(
-                "A decorator's child must be an instance of py_trees.behaviours.Behaviour"
-            )
+            raise TypeError("A decorator's child must be an instance of py_trees.behaviours.Behaviour")
         # Initialise
         super().__init__(name=name)
         self.children.append(child)
@@ -134,8 +132,7 @@ class Decorator(behaviour.Behaviour):
         new_status = self.update()
         if new_status not in list(common.Status):
             self.logger.error(
-                "A behaviour returned an invalid status, setting to INVALID [%s][%s]"
-                % (new_status, self.name)
+                "A behaviour returned an invalid status, setting to INVALID [%s][%s]" % (new_status, self.name)
             )
             new_status = common.Status.INVALID
         if new_status != common.Status.RUNNING:
@@ -221,17 +218,13 @@ class Repeat(Decorator):
             return common.Status.FAILURE
         elif self.decorated.status == common.Status.SUCCESS:
             self.success += 1
-            self.feedback_message = (
-                f"success [status: {self.success} success from {self.num_success}]"
-            )
+            self.feedback_message = f"success [status: {self.success} success from {self.num_success}]"
             if self.success == self.num_success:
                 return common.Status.SUCCESS
             else:
                 return common.Status.RUNNING
         else:  # RUNNING
-            self.feedback_message = (
-                f"running [status: {self.success} success from {self.num_success}]"
-            )
+            self.feedback_message = f"running [status: {self.success} success from {self.num_success}]"
             return common.Status.RUNNING
 
 
@@ -276,14 +269,10 @@ class Retry(Decorator):
                 self.feedback_message = f"final failure [status: {self.failures} failure from {self.num_failures}]"
                 return common.Status.FAILURE
         elif self.decorated.status == common.Status.RUNNING:
-            self.feedback_message = (
-                f"running [status: {self.failures} failure from {self.num_failures}]"
-            )
+            self.feedback_message = f"running [status: {self.failures} failure from {self.num_failures}]"
             return common.Status.RUNNING
         else:  # SUCCESS
-            self.feedback_message = (
-                f"succeeded [status: {self.failures} failure from {self.num_failures}]"
-            )
+            self.feedback_message = f"succeeded [status: {self.failures} failure from {self.num_failures}]"
             return common.Status.SUCCESS
 
 
@@ -302,9 +291,7 @@ class StatusToBlackboard(Decorator):
         self.variable_name = variable_name
         name_components = variable_name.split(".")
         self.key = name_components[0]
-        self.key_attributes = ".".join(
-            name_components[1:]
-        )  # empty string if no other parts
+        self.key_attributes = ".".join(name_components[1:])  # empty string if no other parts
         self.blackboard = self.attach_blackboard_client(self.name)
         self.blackboard.register_key(key=self.key, access=common.Access.WRITE)
 
@@ -314,9 +301,7 @@ class StatusToBlackboard(Decorator):
 
         Returns: the decorated child's status
         """
-        self.blackboard.set(
-            name=self.variable_name, value=self.decorated.status, overwrite=True
-        )
+        self.blackboard.set(name=self.variable_name, value=self.decorated.status, overwrite=True)
         return self.decorated.status
 
 
@@ -406,9 +391,7 @@ class EternalGuard(Decorator):
         # it as well. When typing_extensions are available (very recent) more generally, can use
         # Protocols to handle it. Probably also a sign that it's not a very clean api though...
         condition: typing.Any,
-        blackboard_keys: typing.Optional[
-            typing.Union[typing.List[str], typing.Set[str]]
-        ] = None,
+        blackboard_keys: typing.Optional[typing.Union[typing.List[str], typing.Set[str]]] = None,
     ):
         if blackboard_keys is None:
             blackboard_keys = []
@@ -436,11 +419,7 @@ class EternalGuard(Decorator):
         if isinstance(result, common.Status):
             result = False if result == common.Status.FAILURE else True
         elif not isinstance(result, bool):
-            error_message = (
-                "conditional check must return 'bool' or 'common.Status' [{}]".format(
-                    type(result)
-                )
-            )
+            error_message = "conditional check must return 'bool' or 'common.Status' [{}]".format(type(result))
             self.logger.error("The {}".format(error_message))
             raise RuntimeError(error_message)
 
@@ -508,21 +487,14 @@ class Timeout(Decorator):
             the behaviour's new status :class:`~py_trees.common.Status`
         """
         current_time = time.monotonic()
-        if (
-            self.decorated.status == common.Status.RUNNING
-            and current_time > self.finish_time
-        ):
+        if self.decorated.status == common.Status.RUNNING and current_time > self.finish_time:
             self.feedback_message = "timed out"
-            self.logger.debug(
-                "{}.update() {}".format(self.__class__.__name__, self.feedback_message)
-            )
+            self.logger.debug("{}.update() {}".format(self.__class__.__name__, self.feedback_message))
             # invalidate the decorated (i.e. cancel it), could also put this logic in a terminate() method
             self.decorated.stop(common.Status.INVALID)
             return common.Status.FAILURE
         if self.decorated.status == common.Status.RUNNING:
-            self.feedback_message = "time still ticking ... [remaining: {}s]".format(
-                self.finish_time - current_time
-            )
+            self.feedback_message = "time still ticking ... [remaining: {}s]".format(self.finish_time - current_time)
         else:
             self.feedback_message = "child finished before timeout triggered"
         return self.decorated.status
@@ -585,9 +557,7 @@ class Count(Decorator):
 
     def terminate(self, new_status: common.Status) -> None:
         """Increment the completion / interruption counters."""
-        self.logger.debug(
-            "%s.terminate(%s->%s)" % (self.__class__.__name__, self.status, new_status)
-        )
+        self.logger.debug("%s.terminate(%s->%s)" % (self.__class__.__name__, self.status, new_status))
         if new_status == common.Status.INVALID:
             self.interrupt_count += 1
         elif new_status == common.Status.SUCCESS:
@@ -634,9 +604,7 @@ class OneShot(Decorator):
     .. seealso:: :meth:`py_trees.idioms.oneshot`
     """
 
-    def __init__(
-        self, name: str, child: behaviour.Behaviour, policy: common.OneShotPolicy
-    ):
+    def __init__(self, name: str, child: behaviour.Behaviour, policy: common.OneShotPolicy):
         """
         Init with the decorated child.
 
@@ -686,17 +654,11 @@ class OneShot(Decorator):
         status result.
         """
         if not self.final_status and new_status in self.policy.value:
-            self.logger.debug(
-                "{}.terminate({})[oneshot completed]".format(
-                    self.__class__.__name__, new_status
-                )
-            )
+            self.logger.debug("{}.terminate({})[oneshot completed]".format(self.__class__.__name__, new_status))
             self.feedback_message = "oneshot completed"
             self.final_status = new_status
         else:
-            self.logger.debug(
-                "{}.terminate({})".format(self.__class__.__name__, new_status)
-            )
+            self.logger.debug("{}.terminate({})".format(self.__class__.__name__, new_status))
 
 
 class Inverter(Decorator):
@@ -741,9 +703,7 @@ class RunningIsFailure(Decorator):
         """
         if self.decorated.status == common.Status.RUNNING:
             self.feedback_message = "running is failure" + (
-                " [%s]" % self.decorated.feedback_message
-                if self.decorated.feedback_message
-                else ""
+                " [%s]" % self.decorated.feedback_message if self.decorated.feedback_message else ""
             )
             return common.Status.FAILURE
         else:
@@ -763,9 +723,7 @@ class RunningIsSuccess(Decorator):
         """
         if self.decorated.status == common.Status.RUNNING:
             self.feedback_message = "running is success" + (
-                " [%s]" % self.decorated.feedback_message
-                if self.decorated.feedback_message
-                else ""
+                " [%s]" % self.decorated.feedback_message if self.decorated.feedback_message else ""
             )
             return common.Status.SUCCESS
         self.feedback_message = self.decorated.feedback_message
@@ -784,9 +742,7 @@ class FailureIsSuccess(Decorator):
         """
         if self.decorated.status == common.Status.FAILURE:
             self.feedback_message = "failure is success" + (
-                " [%s]" % self.decorated.feedback_message
-                if self.decorated.feedback_message
-                else ""
+                " [%s]" % self.decorated.feedback_message if self.decorated.feedback_message else ""
             )
             return common.Status.SUCCESS
         self.feedback_message = self.decorated.feedback_message
@@ -805,9 +761,7 @@ class FailureIsRunning(Decorator):
         """
         if self.decorated.status == common.Status.FAILURE:
             self.feedback_message = "failure is running" + (
-                " [%s]" % self.decorated.feedback_message
-                if self.decorated.feedback_message
-                else ""
+                " [%s]" % self.decorated.feedback_message if self.decorated.feedback_message else ""
             )
             return common.Status.RUNNING
         self.feedback_message = self.decorated.feedback_message
@@ -826,9 +780,7 @@ class SuccessIsFailure(Decorator):
         """
         if self.decorated.status == common.Status.SUCCESS:
             self.feedback_message = "success is failure" + (
-                " [%s]" % self.decorated.feedback_message
-                if self.decorated.feedback_message
-                else ""
+                " [%s]" % self.decorated.feedback_message if self.decorated.feedback_message else ""
             )
             return common.Status.FAILURE
         self.feedback_message = self.decorated.feedback_message
@@ -846,9 +798,7 @@ class SuccessIsRunning(Decorator):
             the behaviour's new status :class:`~py_trees.common.Status`
         """
         if self.decorated.status == common.Status.SUCCESS:
-            self.feedback_message = (
-                "success is running [%s]" % self.decorated.feedback_message
-            )
+            self.feedback_message = "success is running [%s]" % self.decorated.feedback_message
             return common.Status.RUNNING
         self.feedback_message = self.decorated.feedback_message
         return self.decorated.status
@@ -889,8 +839,7 @@ class Condition(Decorator):
         """
         self.logger.debug("%s.update()" % self.__class__.__name__)
         self.feedback_message = (
-            f"'{self.decorated.name}' has status {self.decorated.status}, "
-            f"waiting for {self.succeed_status}"
+            f"'{self.decorated.name}' has status {self.decorated.status}, waiting for {self.succeed_status}"
         )
         if self.decorated.status == self.succeed_status:
             return common.Status.SUCCESS
@@ -933,9 +882,7 @@ class ForEach(Decorator):
     the next item. We keep running until the iterable is exhausted.
     """
 
-    def __init__(
-        self, name: str, child: behaviour.Behaviour, source_key: str, target_key: str
-    ):
+    def __init__(self, name: str, child: behaviour.Behaviour, source_key: str, target_key: str):
         """
         Initialise the ForEach decorator.
 
@@ -958,9 +905,7 @@ class ForEach(Decorator):
         """Reset iteration on first tick."""
         iterable = self.blackboard.get(self.source_key) or []
         if not isinstance(iterable, Iterable):
-            raise TypeError(
-                f"[{self.name}] source_key '{self.source_key}' is not an iterable"
-            )
+            raise TypeError(f"[{self.name}] source_key '{self.source_key}' is not an iterable")
         self._iterator = iter(iterable)
         self._advance()
 

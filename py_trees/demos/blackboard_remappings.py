@@ -69,11 +69,7 @@ def epilog() -> typing.Optional[str]:
        the noodly message
     """
     if py_trees.console.has_colours:
-        return (
-            console.cyan
-            + "And his noodly appendage reached forth to tickle the blessed...\n"
-            + console.reset
-        )
+        return console.cyan + "And his noodly appendage reached forth to tickle the blessed...\n" + console.reset
     else:
         return None
 
@@ -131,9 +127,7 @@ class Remap(py_trees.behaviour.Behaviour):
 
 def main() -> None:
     """Entry point for the demo script."""
-    _ = (
-        command_line_argument_parser().parse_args()
-    )  # configuration only, no arg processing
+    _ = command_line_argument_parser().parse_args()  # configuration only, no arg processing
     print(description())
     py_trees.logging.level = py_trees.logging.Level.DEBUG
     py_trees.blackboard.Blackboard.enable_activity_stream(maximum_size=100)

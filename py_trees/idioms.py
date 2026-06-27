@@ -23,9 +23,7 @@ from . import behaviour, behaviours, blackboard, common, composites, decorators
 ##############################################################################
 
 
-def pick_up_where_you_left_off(
-    name: str, tasks: typing.List[behaviour.BehaviourSubClass]
-) -> behaviour.Behaviour:
+def pick_up_where_you_left_off(name: str, tasks: typing.List[behaviour.BehaviourSubClass]) -> behaviour.Behaviour:
     """
     Create an idiom that enables a sequence of tasks to pick up where it left off.
 
@@ -157,9 +155,7 @@ def either_or(
     """
     if len(conditions) != len(subtrees):
         raise ValueError(
-            "Must be the same number of conditions as subtrees [{} != {}]".format(
-                len(conditions), len(subtrees)
-            )
+            "Must be the same number of conditions as subtrees [{} != {}]".format(len(conditions), len(subtrees))
         )
     root = composites.Sequence(name=name, memory=True)
     configured_namespace: str = (
@@ -180,17 +176,11 @@ def either_or(
     )
     chooser = composites.Selector(name="Chooser", memory=False)
     for counter in range(1, len(conditions) + 1):
-        sequence = composites.Sequence(
-            name="Option {}".format(str(counter)), memory=True
-        )
-        variable_name = (
-            configured_namespace + blackboard.Blackboard.separator + str(counter)
-        )
+        sequence = composites.Sequence(name="Option {}".format(str(counter)), memory=True)
+        variable_name = configured_namespace + blackboard.Blackboard.separator + str(counter)
         disabled = behaviours.CheckBlackboardVariableValue(
             name="Enabled?",
-            check=common.ComparisonExpression(
-                variable=variable_name, value=True, operator=operator.eq
-            ),
+            check=common.ComparisonExpression(variable=variable_name, value=True, operator=operator.eq),
         )
         sequence.add_children([disabled, subtrees[counter - 1]])
         chooser.add_child(sequence)
@@ -232,9 +222,7 @@ def oneshot(
     oneshot_with_guard = composites.Sequence(name="Oneshot w/ Guard", memory=True)
     check_not_done = decorators.Inverter(
         name="Not Completed?",
-        child=behaviours.CheckBlackboardVariableExists(
-            name="Completed?", variable_name=variable_name
-        ),
+        child=behaviours.CheckBlackboardVariableExists(name="Completed?", variable_name=variable_name),
     )
     set_flag_on_success = behaviours.SetBlackboardVariable(
         name="Mark Done\n[SUCCESS]",
@@ -262,17 +250,13 @@ def oneshot(
             variable_value=common.Status.FAILURE,
             overwrite=True,
         )
-        bookkeeping.add_children(
-            [set_flag_on_failure, behaviours.Failure(name="Failure")]
-        )
+        bookkeeping.add_children([set_flag_on_failure, behaviours.Failure(name="Failure")])
         oneshot_handler.add_children([sequence, bookkeeping])
         oneshot_with_guard.add_child(oneshot_handler)
 
     oneshot_result = behaviours.CheckBlackboardVariableValue(
         name="Oneshot Result",
-        check=common.ComparisonExpression(
-            variable=variable_name, value=common.Status.SUCCESS, operator=operator.eq
-        ),
+        check=common.ComparisonExpression(variable=variable_name, value=common.Status.SUCCESS, operator=operator.eq),
     )
     subtree_root.add_children([oneshot_with_guard, oneshot_result])
     return subtree_root

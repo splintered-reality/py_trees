@@ -29,46 +29,36 @@ Brief feature list:
 
 ## Getting Started
 
-You can get started on Codespaces (with no mismatched environment issues and in under 5 minutes) [1]:
-
-1. Fork the project to your personal account
-2. Click on Code -> Codespaces -> + Create a Codespace
-3. Enter the Terminal
+This project uses [`uv`](https://docs.astral.sh/uv/).
+Install it, clone the repo, and you're up and running in under 5 minutes:
 
 ```
-# Install Dependencies
-(docker) zen@py_trees:/workspaces/py_trees$ poetry install
+# Install dependencies into a .venv
+$ uv sync
 
 # Explore the demos
-(docker) zen@py_trees:/workspaces/py_trees$ poetry shell
-(py-trees-py3.10) (docker) zen@py_trees:/workspaces/py_trees$ py-trees-demo-<tab>-<tab>
+$ uv run py-trees-demo-<tab>-<tab>
 py-trees-demo-action-behaviour            py-trees-demo-context-switching           py-trees-demo-logging
 py-trees-demo-behaviour-lifecycle         py-trees-demo-display-modes               py-trees-demo-pick-up-where-you-left-off
 py-trees-demo-blackboard                  py-trees-demo-dot-graphs                  py-trees-demo-selector
 py-trees-demo-blackboard-namespaces       py-trees-demo-either-or                   py-trees-demo-sequence
 py-trees-demo-blackboard-remappings       py-trees-demo-eternal-guard               py-trees-demo-tree-stewardship
-(py-trees-py3.10) (docker) zen@py_trees:/workspaces/py_trees$ py-trees-demo-blackboard
+$ uv run py-trees-demo-blackboard
 ...
-(py-trees-py3.10) (docker) zen@py_trees:/workspaces/py_trees$ exit
 
 # Hack some Code
 
-# Run the Formatter, Tests, Linters and Mypy
-(docker) zen@py_trees:/workspaces/py_trees$ poetry run tox -l
-py310 py312 format check mypy310 mypy312
-(docker) zen@py_trees:/workspaces/py_trees$ poetry run tox -e format
-...
-(docker) zen@py_trees:/workspaces/py_trees$ poetry run tox -e py310
-...
-(docker) zen@py_trees:/workspaces/py_trees$ poetry run tox -e check
-...
+# Run the Formatter, Linter, Type-Checker and Tests
+$ uv run ruff format
+$ uv run ruff check
+$ uv run ty check
+$ uv run pytest -s tests/
 
 # Contribute a PR!
 # https://github.com/splintered-reality/py_trees/blob/devel/CONTRIBUTING.md
 ```
 
-[1] All of the above will, of course, work in a local environment if you have `poetry` installed.
-If you're using `VSCode` you don't even need that, just reopen the project in the [devcontainer](.devcontainer/devcontainer.json) and be froody.
+See [DEVELOPING.md](DEVELOPING.md) for more detail. And be froody.
 
 ## Next Steps
 
@@ -77,18 +67,19 @@ On PyPi:
 * [py_trees_js](https://pypi.org/project/py-trees-js/)
 
 Examples:
-* [ReadTheDocs - PyTrees ROS Tutorials](https://py-trees-ros-tutorials.readthedocs.io/en/devel/index.html) - significantly more edifying than the demos, these incrementally walk through the process of building a decision making layer for a robot. These use ROS2 (sparsely), but merely browsing should be enlightening regardless.
+* [ReadTheDocs - PyTrees ROS Tutorials](https://py-trees-ros-tutorials.readthedocs.io/en/devel/index.html) - significantly more edifying than the demos, these incrementally walk through the process of building a decision making layer for a robot. These use ROS 2 (sparsely), but merely browsing should be enlightening regardless.
 
 Visualisation:
 * [py_trees_js](https://github.com/splintered-reality/py_trees_js) - a javascript library for building your own runtime visualisation tool
 
 Robotics:
 * [py_trees_ros](https://github.com/splintered-reality/py_trees_ros) - a tree manager and behaviours designed for use specifically with `ROS2`
-* [py_trees_ros_viewer](https://github.com/splintered-reality/py_trees_ros_viewer) - a `Qt/ROS2` implementation of `py_trees_js`
+* [py_trees_ros_viewer](https://github.com/splintered-reality/py_trees_ros_viewer) - a `Qt/ROS 2` implementation of `py_trees_js`
 
 ## Maintainers
 
-Daniel Stonier ([@stonier](https://github.com/stonier)), Sebastian Castro ([@sea-bass](https://github.com/sea-bass)).
+* Daniel Stonier ([@stonier](https://github.com/stonier))
+* Sebastian Castro ([@sea-bass](https://github.com/sea-bass))
 
 ## Acknowledgments
 

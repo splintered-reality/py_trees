@@ -65,7 +65,7 @@ class Level(enum.IntEnum):
 
 
 # module variable
-level = Level.INFO
+level: Level = Level.INFO
 
 ##############################################################################
 # Logger Class

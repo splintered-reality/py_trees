@@ -56,6 +56,10 @@ d = setup(
             "py-trees-demo-selector = py_trees.demos.selector:main",
             "py-trees-demo-sequence = py_trees.demos.sequence:main",
             "py-trees-demo-tree-stewardship = py_trees.demos.stewardship:main",
+            "py-trees-demo-ports-basic = py_trees.demos.ports.basic:main",
+            "py-trees-demo-ports-nested-subtrees = py_trees.demos.ports.nested_subtrees:main",
+            "py-trees-demo-ports-remapping = py_trees.demos.ports.remapping:main",
+            "py-trees-demo-ports-xml-tree = py_trees.demos.ports.xml_tree:main",
         ],
     },
 )

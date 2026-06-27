@@ -1,57 +1,40 @@
 name: pre-merge
 
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
-
 on:
   pull_request:
   workflow_dispatch:
 
 jobs:
-  pre-merge:
+  lint:
     runs-on: ubuntu-24.04
-    strategy:
-      matrix:
-        python-version: ["3.10", "3.12"]
-        include:
-          - python-version: "3.10"
-            python-py-version: "py310"
-          - python-version: "3.12"
-            python-py-version: "py312"
-    container:
-      image: ghcr.io/${{ github.repository }}-ci:${{ matrix.python-py-version }}-poetry-bullseye
-      credentials:
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-
     steps:
     - uses: actions/checkout@v4
-    - name: Poetry Venv Dir
-      run: |
-        echo "VENV_DIR=$(poetry config virtualenvs.path)" >> $GITHUB_ENV
-
-    - name: Restore the Cache
-      id: cache-deps
-      uses: actions/cache@v4
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
       with:
-        path: ${{ env.VENV_DIR }}
-        # bump the suffix if you need to force-refresh the cache
-        key: py-trees-ci-cache-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock', '**/tox.ini') }}-1
+        enable-cache: true
+    - name: Install dependencies
+      run: uv sync --locked
+    - name: Ruff (format)
+      run: uv run ruff format --check
+    - name: Ruff (lint)
+      run: uv run ruff check
+    - name: ty (type check)
+      run: uv run ty check
 
-    # Install all deps, sans the project (--no-root)
-    - name: Poetry - Install Dependencies
-      run: poetry install --no-interaction --no-root
-      if: steps.cache-deps.outputs.cache-hit != 'true'
-
-    # Project is installed separately to avoid always invalidating the cache
-    - name: Poetry - Install Project
-      run: poetry install --no-interaction
-
-    # TODO: Caching above doesn't make much sense when tox effectively re-installs deps
-    - name: Tox - Tests
-      run: poetry run tox --workdir ${{ env.VENV_DIR }} -e ${{ matrix.python-py-version }}
-    - name: Tox - Formatters, Linters
-      run: poetry run tox --workdir ${{ env.VENV_DIR }} -e check
-    - name: Tox - MyPy
-      run: poetry run tox --workdir ${{ env.VENV_DIR }} -e my${{ matrix.python-py-version }}
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.12", "3.14"]
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+    - name: Install dependencies
+      run: uv sync --locked --python ${{ matrix.python-version }}
+    - name: Pytest
+      run: uv run --python ${{ matrix.python-version }} pytest -s --cov=py_trees tests/

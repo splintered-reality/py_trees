@@ -50,7 +50,7 @@ def create_behaviour_from_function(
         func: a drop-in for the :meth:`~py_trees.behaviour.Behaviour.update` method
         module: suppliment it with a __module__ name if required (otherwise it will default to 'abc.')
     """
-    class_name = func.__name__.capitalize()
+    class_name = func.__name__.capitalize()  # type: ignore
 
     def init(self: behaviour.Behaviour, name: str = class_name) -> None:
         behaviour.Behaviour.__init__(self, name=name)

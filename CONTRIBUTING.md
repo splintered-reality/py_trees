@@ -4,9 +4,11 @@ Successfully collaborating on common problems is always an edifying experience t
 
 ## Development Environment
 
-Short of having a poetry environment of your own, you can make use of github's codespaces.
+This project uses [uv](https://docs.astral.sh/uv/). Once it's installed, `uv sync`
+gets you a fully provisioned environment.
 
-Refer to the [README - Getting Started](../README.md#geting-started) for details.
+Refer to [DEVELOPING.md](./DEVELOPING.md) and the
+[README - Getting Started](../README.md#getting-started) for details.
 
 ## Pull Requests
 
@@ -28,13 +30,12 @@ If it is a feature or bugfix that you'd like to see backported to one of the rel
 
 Be sure to state clearly in the pull request's **description** (this helps expedite review):
 
-* The motivation, i.e. what problem is this solving.
+* The motivation, i.e., what problem is this solving.
 * A concise summary of what was done (and why if relevant).
 
 ### Pre-Merge Checks
 
-CI get cranky on a variety of things - if it complains, make sure your PR is passing the following checks
-locally.
+CI get cranky on a variety of things - if it complains, make sure your PR is passing the following checks locally.
 
 * [Test-Lint-Format](./DEVELOPING.md#test-format-lint)
 * [Make Docs](./DEVELOPING#documentation)
@@ -47,7 +48,8 @@ locally.
 
 ### Review
 
-Once submitted, a reviewer will be assigned. You do not need to select. If no-one has self-assigned in a reasonable time window, feel free to append a *friendly bump* comment to your PR.
+Once submitted, a reviewer will be assigned. You do not need to select.
+If no-one has self-assigned in a reasonable time window, feel free to append a *friendly bump* comment to your PR.
 
 ### Merging
 

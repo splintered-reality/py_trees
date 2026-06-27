@@ -8,10 +8,11 @@
 # Imports
 ##############################################################################
 
+import pytest
+
 import py_trees
 import py_trees.console as console
 import py_trees.tests
-import pytest
 
 ##############################################################################
 # Logging Level
@@ -31,15 +32,14 @@ def test_probabilistic_behaviour_workflow() -> None:
     with pytest.raises(ValueError) as context:  # if raised, context survives
         # intentional error -> silence mypy
         unused_root = py_trees.behaviours.ProbabilisticBehaviour(  # noqa: F841 [unused]
-            name="ProbabilisticBehaviour", weights="invalid_type"  # type: ignore[arg-type]
+            name="ProbabilisticBehaviour",
+            weights="invalid_type",  # type: ignore
         )
         py_trees.tests.print_assert_details("ValueError raised", "raised", "not raised")
     py_trees.tests.print_assert_details("ValueError raised", "yes", "yes")
     assert "ValueError" == context.typename
 
-    root = py_trees.behaviours.ProbabilisticBehaviour(
-        name="ProbabilisticBehaviour", weights=[0.0, 0.0, 1.0]
-    )
+    root = py_trees.behaviours.ProbabilisticBehaviour(name="ProbabilisticBehaviour", weights=[0.0, 0.0, 1.0])
 
     py_trees.tests.print_assert_details(
         text="task not yet ticked",

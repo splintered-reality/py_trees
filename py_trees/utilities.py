@@ -67,7 +67,7 @@ def is_primitive(incoming: typing.Any) -> bool:
     Returns:
         True or false, depending on the check against the reserved primitives
     """
-    return type(incoming) in is_primitive.primitives  # type: ignore[attr-defined]
+    return type(incoming) in is_primitive.primitives  # type: ignore
 
 
 def truncate(original: str, length: int) -> str:

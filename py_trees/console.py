@@ -35,7 +35,6 @@ These colour definitions can be used in the following way:
 import os
 import sys
 
-
 ##############################################################################
 # Special Characters
 ##############################################################################
@@ -66,9 +65,7 @@ def has_unicode(encoding: str = sys.stdout.encoding) -> bool:
     return True
 
 
-def define_symbol_or_fallback(
-    original: str, fallback: str, encoding: str = sys.stdout.encoding
-) -> str:
+def define_symbol_or_fallback(original: str, fallback: str, encoding: str = sys.stdout.encoding) -> str:
     """
     Go unicode, or fallback to ascii.
 
@@ -150,13 +147,7 @@ def read_single_keypress() -> str:
         attrs[2] &= ~(termios.CSIZE | termios.PARENB)
         attrs[2] |= termios.CS8
         # lflag
-        attrs[3] &= ~(
-            termios.ECHONL
-            | termios.ECHO
-            | termios.ICANON
-            | termios.ISIG
-            | termios.IEXTEN
-        )
+        attrs[3] &= ~(termios.ECHONL | termios.ECHO | termios.ICANON | termios.ISIG | termios.IEXTEN)
         termios.tcsetattr(fd, termios.TCSANOW, attrs)
         # turn off non-blocking
         fcntl.fcntl(fd, fcntl.F_SETFL, flags_save & ~os.O_NONBLOCK)
@@ -188,9 +179,7 @@ def read_single_keypress() -> str:
             return read_single_keypress_windows()
         except ImportError as e_windows:
             raise ImportError(
-                "Neither unix nor windows implementations supported [{}][{}]".format(
-                    str(e_unix), str(e_windows)
-                )
+                "Neither unix nor windows implementations supported [{}][{}]".format(str(e_unix), str(e_windows))
             )
 
 
@@ -206,9 +195,7 @@ def console_has_colours() -> bool:
     # From django.core.management.color.supports_color
     #   https://github.com/django/django/blob/master/django/core/management/color.py
     plat = sys.platform
-    supported_platform = plat != "Pocket PC" and (
-        plat != "win32" or "ANSICON" in os.environ
-    )
+    supported_platform = plat != "Pocket PC" and (plat != "win32" or "ANSICON" in os.environ)
     # isatty is not always implemented, #6223.
     is_a_tty = hasattr(sys.stdout, "isatty") and sys.stdout.isatty()
     if not supported_platform or not is_a_tty:
@@ -227,9 +214,7 @@ if has_colours:
     dim = "\x1b[%sm" % "2"
     underlined = "\x1b[%sm" % "4"
     blink = "\x1b[%sm" % "5"
-    black, red, green, yellow, blue, magenta, cyan, white = [
-        "\x1b[%sm" % str(i) for i in range(30, 38)
-    ]
+    black, red, green, yellow, blue, magenta, cyan, white = ["\x1b[%sm" % str(i) for i in range(30, 38)]
     (
         bold_black,
         bold_red,

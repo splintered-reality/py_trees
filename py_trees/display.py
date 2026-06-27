@@ -144,11 +144,7 @@ def _generate_text_tree(
     _visited = visited if visited else {}
     _previously_visited = previously_visited if previously_visited else {}
     # default to unicode if stdout supports it, ascii otherwise
-    _symbols = (
-        symbols
-        if symbols
-        else (unicode_symbols if console.has_unicode() else ascii_symbols)
-    )
+    _symbols = symbols if symbols else (unicode_symbols if console.has_unicode() else ascii_symbols)
 
     if root.tip() is not None:
         tip = root.tip()
@@ -180,9 +176,7 @@ def _generate_text_tree(
         else:
             return s
 
-    def generate_lines(
-        root: behaviour.Behaviour, internal_indent: int
-    ) -> typing.Iterator[str]:
+    def generate_lines(root: behaviour.Behaviour, internal_indent: int) -> typing.Iterator[str]:
         def assemble_single_line(b: behaviour.Behaviour) -> str:
             font_weight = True if (b.id == tip_id) else False
             s = ""
@@ -475,23 +469,23 @@ def dot_tree(
         symbols = unicode_symbols if console.has_unicode() else ascii_symbols
         if isinstance(behaviour, composites.Composite):
             try:
-                if behaviour.memory:  # type: ignore[attr-defined]
+                if behaviour.memory:  # type: ignore
                     prefix += symbols["memory"]  # console.circled_m
             except AttributeError:
                 pass
             try:
-                if behaviour.policy.synchronise:  # type: ignore[attr-defined]
+                if behaviour.policy.synchronise:  # type: ignore
                     prefix += symbols["synchronised"]  # console.lightning_bolt
             except AttributeError:
                 pass
             try:
-                policy = behaviour.policy.__class__.__name__  # type: ignore[attr-defined]
+                policy = behaviour.policy.__class__.__name__  # type: ignore
             except AttributeError:
                 pass
             try:
                 indices = [
                     str(behaviour.children.index(child))
-                    for child in behaviour.policy.children  # type: ignore[attr-defined]
+                    for child in behaviour.policy.children  # type: ignore
                 ]
                 policy += "({})".format(", ".join(sorted(indices)))
             except AttributeError:
@@ -506,13 +500,9 @@ def dot_tree(
     fontsize = 9
     blackboard_colour = "blue"  # "dimgray"
     graph = pydot.Dot(graph_type="digraph", ordering="out")
-    graph.set_name(
-        "pastafarianism"
-    )  # consider making this unique to the tree sometime, e.g. based on the root name
+    graph.set_name("pastafarianism")  # consider making this unique to the tree sometime, e.g. based on the root name
     # fonts: helvetica, times-bold, arial (times-roman is the default, but this helps some viewers, like kgraphviewer)
-    graph.set_graph_defaults(
-        fontname="times-roman"
-    )  # splines='curved' is buggy on 16.04, but would be nice to have
+    graph.set_graph_defaults(fontname="times-roman")  # splines='curved' is buggy on 16.04, but would be nice to have
     graph.set_node_defaults(fontname="times-roman")
     graph.set_edge_defaults(fontname="times-roman")
     (node_shape, node_colour, node_font_colour) = get_node_attributes(root)
@@ -562,13 +552,9 @@ def dot_tree(
                 edge = pydot.Edge(root_dot_name, node_name)
                 graph.add_edge(edge)
                 if c.children != []:
-                    add_children_and_edges(
-                        c, node, node_name, visibility_level, collapse_decorators
-                    )
+                    add_children_and_edges(c, node, node_name, visibility_level, collapse_decorators)
 
-    add_children_and_edges(
-        root, node_root, root.name, visibility_level, collapse_decorators
-    )
+    add_children_and_edges(root, node_root, root.name, visibility_level, collapse_decorators)
 
     def create_blackboard_client_node(blackboard_client_name: str) -> pydot.Node:
         return pydot.Node(
@@ -741,9 +727,7 @@ def render_dot_tree(
         with_qualified_names=with_qualified_names,
     )
     filename_wo_extension_to_convert = root.name if name is None else name
-    filename_wo_extension = utilities.get_valid_filename(
-        filename_wo_extension_to_convert
-    )
+    filename_wo_extension = utilities.get_valid_filename(filename_wo_extension_to_convert)
     filenames: typing.Dict[str, str] = {}
     for extension, file_format in (("dot", "raw"), ("png", "png"), ("svg", "svg")):
         filename = filename_wo_extension + "." + extension
@@ -762,9 +746,7 @@ def render_dot_tree(
 def _generate_text_blackboard(
     key_filter: typing.Optional[typing.Union[typing.Set[str], typing.List[str]]] = None,
     regex_filter: typing.Optional[str] = None,
-    client_filter: typing.Optional[
-        typing.Union[typing.Set[uuid.UUID], typing.List[uuid.UUID]]
-    ] = None,
+    client_filter: typing.Optional[typing.Union[typing.Set[uuid.UUID], typing.List[uuid.UUID]]] = None,
     keys_to_highlight: typing.Optional[typing.List[str]] = None,
     display_only_key_metadata: bool = False,
     indent: int = 0,
@@ -791,14 +773,8 @@ def _generate_text_blackboard(
 
     .. seealso:: :meth:`py_trees.display.unicode_blackboard`
     """
-    _keys_to_highlight: typing.List[str] = (
-        keys_to_highlight if keys_to_highlight else []
-    )
-    _symbols = (
-        symbols
-        if symbols
-        else (unicode_symbols if console.has_unicode() else ascii_symbols)
-    )
+    _keys_to_highlight: typing.List[str] = keys_to_highlight if keys_to_highlight else []
+    _symbols = symbols if symbols else (unicode_symbols if console.has_unicode() else ascii_symbols)
 
     def style(s: str, font_weight: bool = False) -> str:
         if font_weight:
@@ -821,13 +797,7 @@ def _generate_text_blackboard(
             s = ""
             lines = ("{0}".format(value)).split("\n")
             if len(lines) > 1:
-                s += (
-                    console.cyan
-                    + indent
-                    + "{0: <{1}}".format(key, key_width)
-                    + console.white
-                    + ":\n"
-                )
+                s += console.cyan + indent + "{0: <{1}}".format(key, key_width) + console.white + ":\n"
                 for line in lines:
                     s += console.yellow + indent + "  {0}\n".format(line)
             else:
@@ -852,15 +822,11 @@ def _generate_text_blackboard(
         ) -> str:
             s = ""
             s += console.cyan + indent + "{0: <{1}}".format(key, key_width + 1) + ": "
-            client_uuids = list(
-                set(metadata.read) | set(metadata.write) | set(metadata.exclusive)
-            )
+            client_uuids = list(set(metadata.read) | set(metadata.write) | set(metadata.exclusive))
             prefix = ""
             metastrings = []
             for client_uuid in client_uuids:
-                metastring = prefix + "{0}".format(
-                    utilities.truncate(blackboard.Blackboard.clients[client_uuid], 11)
-                )
+                metastring = prefix + "{0}".format(utilities.truncate(blackboard.Blackboard.clients[client_uuid], 11))
                 metastring += " ("
                 if client_uuid in metadata.read:
                     metastring += "r"
@@ -917,20 +883,13 @@ def _generate_text_blackboard(
             blackboard_storage[key] = "-"
 
     title = "Clients" if display_only_key_metadata else "Data"
-    s = (
-        console.green
-        + _symbols["space"] * indent
-        + "Blackboard {}\n".format(title)
-        + console.reset
-    )
+    s = console.green + _symbols["space"] * indent + "Blackboard {}\n".format(title) + console.reset
     if key_filter:
         s += _symbols["space"] * (indent + 2) + "Filter: '{}'\n".format(key_filter)
     elif regex_filter:
         s += _symbols["space"] * (indent + 2) + "Filter: '{}'\n".format(regex_filter)
     elif client_filter:
-        s += _symbols["space"] * (indent + 2) + "Filter: {}\n".format(
-            str(client_filter)
-        )
+        s += _symbols["space"] * (indent + 2) + "Filter: {}\n".format(str(client_filter))
     for line in generate_lines(blackboard_storage, blackboard_metadata, indent):
         s += "{}".format(line)
     return s
@@ -939,9 +898,7 @@ def _generate_text_blackboard(
 def ascii_blackboard(
     key_filter: typing.Optional[typing.Union[typing.Set[str], typing.List[str]]] = None,
     regex_filter: typing.Optional[str] = None,
-    client_filter: typing.Optional[
-        typing.Union[typing.Set[uuid.UUID], typing.List[uuid.UUID]]
-    ] = None,
+    client_filter: typing.Optional[typing.Union[typing.Set[uuid.UUID], typing.List[uuid.UUID]]] = None,
     keys_to_highlight: typing.Optional[typing.List[str]] = None,
     display_only_key_metadata: bool = False,
     indent: int = 0,
@@ -981,9 +938,7 @@ def ascii_blackboard(
 def unicode_blackboard(
     key_filter: typing.Optional[typing.Union[typing.Set[str], typing.List[str]]] = None,
     regex_filter: typing.Optional[str] = None,
-    client_filter: typing.Optional[
-        typing.Union[typing.Set[uuid.UUID], typing.List[uuid.UUID]]
-    ] = None,
+    client_filter: typing.Optional[typing.Union[typing.Set[uuid.UUID], typing.List[uuid.UUID]]] = None,
     keys_to_highlight: typing.Optional[typing.List[str]] = None,
     display_only_key_metadata: bool = False,
     indent: int = 0,
@@ -1041,23 +996,13 @@ def _generate_text_activity(
         activity_stream = blackboard.Blackboard.activity_stream.data
     s = ""
     if show_title:
-        s += (
-            space * indent
-            + console.green
-            + "Blackboard Activity Stream"
-            + console.reset
-            + "\n"
-        )
+        s += space * indent + console.green + "Blackboard Activity Stream" + console.reset + "\n"
     if activity_stream is not None:
         key_width = 0
         client_width = 0
         for item in activity_stream:
             key_width = len(item.key) if len(item.key) > key_width else key_width
-            client_width = (
-                len(item.client_name)
-                if len(item.client_name) > client_width
-                else client_width
-            )
+            client_width = len(item.client_name) if len(item.client_name) > client_width else client_width
         client_width = min(client_width, 20)
         type_width = len("ACCESS_DENIED")
         value_width = 80 - key_width - 3 - type_width - 3 - client_width - 3
@@ -1069,9 +1014,7 @@ def _generate_text_activity(
             s += console.white + "|" + space
             s += (
                 "{0: <{1}}".format(
-                    utilities.truncate(
-                        item.client_name.replace("\n", "_"), client_width
-                    ),
+                    utilities.truncate(item.client_name.replace("\n", "_"), client_width),
                     client_width,
                 )
                 + space
@@ -1081,22 +1024,16 @@ def _generate_text_activity(
                 s += (
                     symbols["left_arrow"]
                     + space
-                    + "{}\n".format(
-                        utilities.truncate(str(item.current_value), value_width)
-                    )
+                    + "{}\n".format(utilities.truncate(str(item.current_value), value_width))
                 )
             elif item.activity_type == blackboard.ActivityType.WRITE.value:
                 s += console.green
                 s += symbols["right_arrow"] + space
-                s += "{}\n".format(
-                    utilities.truncate(str(item.current_value), value_width)
-                )
+                s += "{}\n".format(utilities.truncate(str(item.current_value), value_width))
             elif item.activity_type == blackboard.ActivityType.ACCESSED.value:
                 s += console.yellow
                 s += symbols["left_right_arrow"] + space
-                s += "{}\n".format(
-                    utilities.truncate(str(item.current_value), value_width)
-                )
+                s += "{}\n".format(utilities.truncate(str(item.current_value), value_width))
             elif item.activity_type == blackboard.ActivityType.ACCESS_DENIED.value:
                 s += console.red
                 s += console.multiplication_x + space
@@ -1108,17 +1045,13 @@ def _generate_text_activity(
             elif item.activity_type == blackboard.ActivityType.NO_OVERWRITE.value:
                 s += console.yellow
                 s += console.forbidden_circle + space
-                s += "{}\n".format(
-                    utilities.truncate(str(item.current_value), value_width)
-                )
+                s += "{}\n".format(utilities.truncate(str(item.current_value), value_width))
             elif item.activity_type == blackboard.ActivityType.UNSET.value:
                 s += "\n"
             elif item.activity_type == blackboard.ActivityType.INITIALISED.value:
                 s += console.green
                 s += symbols["right_arrow"] + space
-                s += "{}\n".format(
-                    utilities.truncate(str(item.current_value), value_width)
-                )
+                s += "{}\n".format(utilities.truncate(str(item.current_value), value_width))
             else:
                 s += "unknown operation\n"
         s = s.rstrip("\n")

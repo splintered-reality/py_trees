@@ -35,9 +35,7 @@ def print_assert_banner() -> None:
 AssertResultType = typing.TypeVar("AssertResultType")
 
 
-def print_assert_details(
-    text: str, expected: AssertResultType, result: AssertResultType
-) -> None:
+def print_assert_details(text: str, expected: AssertResultType, result: AssertResultType) -> None:
     """
     Pretty print the expected and actual results for an assertion.
 
@@ -75,7 +73,7 @@ def tick_tree(
     *,
     visitors: typing.Optional[typing.List[visitors.VisitorBase]] = None,
     print_snapshot: bool = False,
-    print_blackboard: bool = False
+    print_blackboard: bool = False,
 ) -> None:
     """
     Tick the tree for a specified # ticks and run a variety of debugging helpers.
@@ -90,11 +88,7 @@ def tick_tree(
     """
     if visitors is None:
         visitors = []
-    print(
-        "\n================== Iteration {}-{} ==================\n".format(
-            from_tick, to_tick
-        )
-    )
+    print("\n================== Iteration {}-{} ==================\n".format(from_tick, to_tick))
     for i in range(from_tick, to_tick + 1):
         for visitor in visitors:
             visitor.initialise()

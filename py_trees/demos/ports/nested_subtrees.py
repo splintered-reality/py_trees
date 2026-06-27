@@ -18,7 +18,6 @@ from pathlib import Path
 import py_trees
 from py_trees.parsers.behaviour_tree_xml import parse_behaviour_tree_xml
 from py_trees.ports import BehaviourWithPorts, PortInformation
-
 from py_trees.ports_utils import find_node_by_class
 
 ##############################################################################

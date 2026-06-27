@@ -1,60 +1,38 @@
-[tool.poetry]
+[project]
 name = "py_trees"
 version = "2.4.0"
 description = "pythonic implementation of behaviour trees"
-authors = ["Daniel Stonier", "Naveed Usmani", "Michal Staniaszek"]
-maintainers = ["Daniel Stonier <d.stonier@gmail.com>", "Sebastian Castro <sebas.a.castro@gmail.com>"]
+authors = [
+    { name = "Daniel Stonier" },
+    { name = "Naveed Usmani" },
+    { name = "Michal Staniaszek" },
+]
+maintainers = [
+    { name = "Daniel Stonier", email = "d.stonier@gmail.com" },
+    { name = "Sebastian Castro", email = "sebas.a.castro@gmail.com" },
+]
 readme = "README.md"
-license = "BSD"
-homepage = "https://github.com/splintered-reality/py_trees"
-repository = "https://github.com/splintered-reality/py_trees"
-documentation = "https://py-trees.readthedocs.io/en/devel/"
-packages = [
-    { include = "py_trees" },
-]
+license = "BSD-3-Clause"
+requires-python = ">=3.10,<4.0"
+keywords = ["py_trees", "py-trees", "behaviour-trees"]
 classifiers = [
-    'Environment :: Console',
-    'Intended Audience :: Developers',
-    'License :: OSI Approved :: BSD License',
-    'Programming Language :: Python',
-    'Topic :: Scientific/Engineering :: Artificial Intelligence',
-    'Topic :: Software Development :: Libraries'
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries",
 ]
-keywords=["py_trees", "py-trees", "behaviour-trees"]
-
-[tool.poetry.dependencies]
-python = ">=3.9,<4.0"
-pydot = ">=1.4"
-
-[tool.poetry.group.dev.dependencies]
-tox = ">=3.26"
-tox-poetry-installer = {extras = ["poetry"], version = ">=0.9.0"}
-pytest = [
-    { version = ">=7.1", python = ">=3.9,<4.0" }
+dependencies = [
+    "pydot>=1.4",
 ]
-pytest-console-scripts = ">=1.3"
-pytest-cov = ">=3.0.0"             # transitively depends on coverage[toml]
 
-[tool.poetry.group.format.dependencies]
-ufmt = ">=2.0"                     # black (style) + usort (import order)
+[project.urls]
+Homepage = "https://github.com/splintered-reality/py_trees"
+Repository = "https://github.com/splintered-reality/py_trees"
+Documentation = "https://py-trees.readthedocs.io/en/devel/"
 
-[tool.poetry.group.static.dependencies]
-mypy = ">=0.991"
-
-[tool.poetry.group.lint.dependencies]
-# strongly recommended
-flake8 = ">=5.0"                  # combines pyflakes (errors) & pycodestyle (pep8 style)
-flake8-docstrings = ">=1.6"       # docstrings (integrates pydocstyle)
-darglint = ">=1.8"                # checks docstrings match implementation
-# optional, these go above and beyond
-flake8-bugbear = ">=22.9"         # bugs & design not strictly pep8
-
-[tool.poetry.group.docs.dependencies]
-sphinx = "<6"
-sphinx-rtd-theme = ">=1.1"        # not yet ready for sphinx 6
-sphinx-argparse = ">=0.4"
-
-[tool.poetry.scripts]
+[project.scripts]
 py-trees-render = "py_trees.programs.render:main"
 py-trees-demo-action-behaviour = "py_trees.demos.action:main"
 py-trees-demo-behaviour-lifecycle = "py_trees.demos.lifecycle:main"
@@ -76,6 +54,99 @@ py-trees-demo-selector = "py_trees.demos.selector:main"
 py-trees-demo-sequence = "py_trees.demos.sequence:main"
 py-trees-demo-tree-stewardship = "py_trees.demos.stewardship:main"
 
+# Development dependencies (PEP 735). Install everything with `uv sync`.
+[dependency-groups]
+test = [
+    "pytest>=7.1",
+    "pytest-console-scripts>=1.3",
+    "pytest-cov>=3.0.0",
+]
+lint = [
+    "ruff>=0.6",
+]
+types = [
+    "ty>=0.0.1a1",
+]
+docs = [
+    "sphinx<6",
+    "sphinx-rtd-theme>=1.1",
+    "sphinx-argparse>=0.4",
+]
+dev = [
+    { include-group = "test" },
+    { include-group = "lint" },
+    { include-group = "types" },
+    { include-group = "docs" },
+]
+
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["py_trees"]
+
+[tool.coverage.run]
+source = ["py_trees"]
+# Explore conditional branches (important):
+#   https://coverage.readthedocs.io/en/latest/branch.html#branch
+branch = true
+
+###########################
+# Ruff: formatter + linter
+###########################
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+# Match the locations tox used to lint.
+include = ["py_trees/**/*.py", "tests/**/*.py", "docs/examples/**/*.py"]
+
+[tool.ruff.lint]
+# This set mirrors what the old flake8 + flake8-docstrings + usort stack
+# enforced. `B` (flake8-bugbear) and `UP` (pyupgrade) are cheap, worthwhile
+# upgrades to enable next - add them here when ready to address their findings.
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort (import ordering, replaces usort)
+    "D",   # pydocstyle (docstrings, replaces flake8-docstrings)
+]
+ignore = [
+    "D105",  # magic method docstrings
+    "D107",  # prefer documenting __init__ args in the class docstring
+]
+
+[tool.ruff.lint.pydocstyle]
+# Sphinx-style docstrings; pep257 convention relaxes the conflicting one-liner
+# rules (e.g. D203/D212/D213) that previously lived in the flake8 ignore list.
+convention = "pep257"
+
+[tool.ruff.lint.mccabe]
+max-complexity = 15
+
+[tool.ruff.lint.per-file-ignores]
+# Relax docstring & assert checks in the tests dir.
+"tests/*" = ["D", "S101"]
+# Re-exports (`from . import ...`) in package __init__ files.
+"py_trees/__init__.py" = ["F401"]
+
+##########################
+# ty: static type checker
+##########################
+
+[tool.ty.environment]
+python-version = "3.10"
+
+[tool.ty.src]
+include = ["py_trees", "tests"]
+
+[tool.ty.rules]
+# ty (still pre-1.0) conservatively refuses to call attributes typed as a bare
+# `typing.Callable` ("its signature is not known"). The py_trees comparison
+# expressions store exactly such callables, so this rule is pure noise here.
+call-top-callable = "ignore"
+# Many pre-existing `# type: ignore[<mypy-code>]` comments use mypy's error
+# codes, which ty does not recognise; don't flag them as redundant.
+unused-ignore-comment = "ignore"

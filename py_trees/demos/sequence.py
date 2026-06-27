@@ -45,9 +45,7 @@ def description() -> str:
        the program description string
     """
     content = "Demonstrates sequences in action.\n\n"
-    content += (
-        "A sequence is populated with 2-tick jobs that are allowed to run through to\n"
-    )
+    content += "A sequence is populated with 2-tick jobs that are allowed to run through to\n"
     content += "completion.\n"
 
     if py_trees.console.has_colours:
@@ -72,11 +70,7 @@ def epilog() -> typing.Optional[str]:
        the noodly message
     """
     if py_trees.console.has_colours:
-        return (
-            console.cyan
-            + "And his noodly appendage reached forth to tickle the blessed...\n"
-            + console.reset
-        )
+        return console.cyan + "And his noodly appendage reached forth to tickle the blessed...\n" + console.reset
     else:
         return None
 
@@ -93,9 +87,7 @@ def command_line_argument_parser() -> argparse.ArgumentParser:
         epilog=epilog(),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument(
-        "-r", "--render", action="store_true", help="render dot tree to file"
-    )
+    parser.add_argument("-r", "--render", action="store_true", help="render dot tree to file")
     return parser
 
 

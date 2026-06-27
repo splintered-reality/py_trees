@@ -11,6 +11,4 @@ if __name__ == "__main__":
     a2 = py_trees.behaviours.Success(name="Action 2")
     a3 = py_trees.behaviours.Success(name="Action 3")
     root.add_children([guard, a1, a2, a3])
-    py_trees.display.render_dot_tree(
-        root, py_trees.common.string_to_visibility_level("all")
-    )
+    py_trees.display.render_dot_tree(root, py_trees.common.string_to_visibility_level("all"))
