@@ -182,6 +182,52 @@ def convert_str_to_type(value: str, target_type: type | UnionType, logger: Ports
     return value
 
 
+def collect_type_hints(constructor: Callable) -> dict[str, Any]:
+    """Collect parameter type hints from a constructor.
+
+    When ``constructor`` is a class, the method resolution order (MRO) is walked so
+    that a type hint declared on a parent's ``__init__`` is still found when the
+    subclass forwards ``**kwargs`` to ``super().__init__()``, and therefore does
+    not declare the parameter itself, or declares it without an annotation.
+
+    The most-derived annotation for a given parameter name wins: walking the MRO
+    from subclass to base and only recording the first hint seen per parameter.
+
+    Args:
+        constructor: A class (whose ``__init__`` chain is inspected) or a callable.
+
+    Returns:
+        dict[str, Any]: Mapping of parameter name to its type annotation. Parameters
+            without an annotation anywhere in the hierarchy are omitted, as are
+            ``self`` and any ``*args``/``**kwargs`` catch-alls.
+    """
+    classes = constructor.__mro__ if inspect.isclass(constructor) else (constructor,)
+
+    hints: dict[str, Any] = {}
+    for klass in classes:
+        func = klass.__init__ if inspect.isclass(klass) else klass
+        try:
+            sig = inspect.signature(func)
+        except (TypeError, ValueError):
+            # Built-ins (e.g. object.__init__ on some interpreters) may not be
+            # introspectable; just skip them and keep walking the hierarchy.
+            continue
+
+        for pname, param in sig.parameters.items():
+            if pname == "self":
+                continue
+            if param.kind in (inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD):
+                continue
+            if param.annotation is inspect._empty:
+                continue
+            # The first hint found wins => the most-derived class in the MRO.
+            if pname in hints:
+                continue
+            hints[pname] = param.annotation
+
+    return hints
+
+
 def apply_type_hints(
     constructor: Callable,
     kwargs: dict[str, Any],
@@ -207,13 +253,7 @@ def apply_type_hints(
     if logger is None:
         logger = NOOP_LOGGER
 
-    sig = inspect.signature(constructor.__init__ if inspect.isclass(constructor) else constructor)
-    hints: dict[str, Any] = {}
-    for pname, param in sig.parameters.items():
-        if pname == "self":
-            continue
-        if param.annotation is not inspect._empty:
-            hints[pname] = param.annotation
+    hints = collect_type_hints(constructor)
 
     converted: dict[str, Any] = {}
     success = True

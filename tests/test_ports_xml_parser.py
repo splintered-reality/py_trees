@@ -83,6 +83,34 @@ class Wait(BehaviourWithPorts):
         return self.get_input(self.INPUT_DURATION_MS_PORT)
 
 
+class EchoCtorArgs(BehaviourWithPorts):
+    """Behaviour that tests interpreting constructor type hints for type coercion from XML ports."""
+
+    @classmethod
+    def input_ports(cls) -> dict:
+        return {"in": PortInformation(data_type=str, required=False)}  # not used here
+
+    @classmethod
+    def output_ports(cls) -> dict:
+        return {"out": PortInformation(data_type=str, required=False)}  # not used here
+
+    def __init__(self, name: str, greeting: str, times: float | None, flag: bool, **kwargs: Any) -> None:
+        super().__init__(name, **kwargs)
+        self.greeting = greeting
+        self.times = times
+        self.flag = flag
+
+
+class EchoCtorArgsChild(EchoCtorArgs):
+    """
+    Behaviour that tests interpreting constructor type hints for type coercion from XML ports,
+    but from its parent class.
+    """
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+
 @dataclass
 class RobotData:
     type: str
@@ -471,21 +499,6 @@ class TestXMLParser(unittest.TestCase):
         Values are automatically converted based on the type hints in the constructor.
         """
 
-        class EchoCtorArgs(BehaviourWithPorts):
-            @classmethod
-            def input_ports(cls) -> dict:
-                return {"in": PortInformation(data_type=str, required=False)}  # not used here
-
-            @classmethod
-            def output_ports(cls) -> dict:
-                return {"out": PortInformation(data_type=str, required=False)}  # not used here
-
-            def __init__(self, name: str, greeting: str, times: float | None, flag: bool, **kwargs: Any) -> None:
-                super().__init__(name, **kwargs)
-                self.greeting = greeting
-                self.times = times
-                self.flag = flag
-
         xml = """<root main_tree_to_execute="Main">
         <BehaviorTree ID="Main">
           <Sequence>
@@ -500,6 +513,33 @@ class TestXMLParser(unittest.TestCase):
 
         root = parse_behaviour_tree_xml(path, logger=StdoutLogger())
         node = find_node_by_class(root, EchoCtorArgs)
+        self.assertIsNotNone(node)
+        self.assertEqual(node.greeting, "hello")
+        self.assertEqual(node.times, 3.0)
+        self.assertEqual(node.flag, True)
+
+        os.unlink(path)
+
+    def test_ctor_args_passed_as_kwargs_in_parent_class(self) -> None:
+        """
+        Non-port XML attributes must be passed as constructor kwargs.
+        Values are automatically converted based on the type hints in the parent class constructor.
+        """
+
+        xml = """<root main_tree_to_execute="Main">
+        <BehaviorTree ID="Main">
+          <Sequence>
+            <EchoCtorArgsChild name="E1" greeting="hello" times="3" flag="true"/>
+          </Sequence>
+        </BehaviorTree>
+      </root>"""
+
+        with tempfile.NamedTemporaryFile(delete=False, mode="w", suffix=".xml") as tf:
+            tf.write(xml)
+            path = tf.name
+
+        root = parse_behaviour_tree_xml(path, logger=StdoutLogger())
+        node = find_node_by_class(root, EchoCtorArgsChild)
         self.assertIsNotNone(node)
         self.assertEqual(node.greeting, "hello")
         self.assertEqual(node.times, 3.0)
