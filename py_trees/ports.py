@@ -15,6 +15,7 @@
 
 import types
 import typing
+import warnings
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any, TYPE_CHECKING
@@ -40,8 +41,8 @@ if TYPE_CHECKING:
 else:
     _MixinBase = ABC
 
-# Const Prefix for parsing direct values to the XML parser
-# Any entry having this prefix should be interpreted as a direct value (not key) to the XML parser
+# Const Prefix for parsing direct values from a tree parser
+# Any entry having this prefix should be interpreted as a direct value (not key) by a parser
 CONST_PREFIX = "__const_"
 
 # Dots are a problem in strings used as direct values in input ports, because a dot is
@@ -63,6 +64,65 @@ class PortInformation:
     data_type: Any
     required: bool = True
     description: str = ""
+
+
+##############################################################################
+# Class registry for tree parsers
+##############################################################################
+
+# Maps a tag (lookup name) to a concrete PortsMixin subclass. Populated
+# automatically by PortsMixin.__init_subclass__. Defining and importing a
+# PortsMixin subclass is enough to make it resolvable by tag, e.g. from a parser.
+_REGISTRY: dict[str, type["PortsMixin"]] = {}
+
+
+def register_ports_class(tag: str, cls: type) -> None:
+    """
+    Register *cls* under *tag* in the global ports registry.
+
+    Use this to alias a class under an additional tag, or to register a
+    third-party :class:`PortsMixin` subclass that cannot be modified to pass
+    ``tag=`` / ``register=`` at definition time.
+
+    Args:
+        tag: The tag (lookup name) to register under.
+        cls: A concrete subclass of :class:`PortsMixin`.
+
+    Raises:
+        TypeError: If *cls* is not a subclass of :class:`PortsMixin`.
+    """
+    if not (isinstance(cls, type) and issubclass(cls, PortsMixin)):
+        raise TypeError(
+            f"Cannot register '{tag}': {cls!r} is not a PortsMixin subclass."
+        )
+    existing = _REGISTRY.get(tag)
+    if existing is not None and existing is not cls:
+        warnings.warn(
+            f"Ports class tag '{tag}' is already registered to "
+            f"'{existing.__name__}'; overriding with '{cls.__name__}' (last wins).",
+            stacklevel=2,
+        )
+    _REGISTRY[tag] = cls
+
+
+def get_ports_registry() -> dict[str, type["PortsMixin"]]:
+    """Return a shallow copy of the global ports registry (``{tag: class}``)."""
+    return dict(_REGISTRY)
+
+
+def _ports_class_is_abstract(cls: type) -> bool:
+    """
+    Return whether *cls* still has unimplemented abstract methods.
+
+    This intentionally scans the resolved attributes rather than reading
+    ``cls.__abstractmethods__``: ``__init_subclass__`` runs *before* ``ABCMeta``
+    populates ``__abstractmethods__`` on the new class, so that attribute is not
+    yet reliable at registration time.
+    """
+    return any(
+        getattr(getattr(cls, name, None), "__isabstractmethod__", False)
+        for name in dir(cls)
+    )
 
 
 class PortsMixin(_MixinBase):
@@ -143,7 +203,7 @@ class PortsMixin(_MixinBase):
 
     **Blackboard namespace strategy**
 
-    When a port is **not** explicitly remapped (via XML or constructor arguments), a dedicated storage key
+    When a port is **not** explicitly remapped (via a remapping table or constructor arguments), a dedicated storage key
     is generated, so that sibling nodes with the same port name do not accidentally share data. This
     "synthesised" key is derived from:
 
@@ -193,6 +253,28 @@ class PortsMixin(_MixinBase):
                 self._set_output("output", f"Processed({input_val})")
                 return py_trees.common.Status.SUCCESS
     """
+
+    def __init_subclass__(
+        cls, *, tag: str | None = None, register: bool = True, **kwargs: Any
+    ) -> None:
+        """
+        Auto-register concrete subclasses so parsers can resolve them by tag.
+
+        Defining a concrete ``PortsMixin`` subclass registers it under its class
+        name (or *tag*, if given) in the global ports registry, so a parser can
+        resolve it by tag.
+
+        Args:
+            tag: Optional explicit tag (lookup name). Defaults to ``cls.__name__``.
+            register: Set to ``False`` to skip auto-registration for this class.
+
+        Still-abstract subclasses (e.g. :class:`BehaviourWithPorts`, which does
+        not implement ``input_ports`` / ``output_ports``) are never registered.
+        """
+        super().__init_subclass__(**kwargs)
+        if not register or _ports_class_is_abstract(cls):
+            return
+        register_ports_class(tag if tag is not None else cls.__name__, cls)
 
     @classmethod
     @abstractmethod
@@ -256,7 +338,7 @@ class PortsMixin(_MixinBase):
             *args: Positional arguments passed to the parent class (typically py_trees.behaviour.Behaviour).
             behaviour_class_name: The name under which this behavior class is registered (e.g., in a registry).
                 Typically corresponds to the class name itself, but can also be an alias
-                for partial instantiations or custom registrations (with XML parsing, this would be the XML tag name).
+                for partial instantiations or custom registrations (with a tree parser, this would be the tag name).
                 If None, defaults to the actual class name (self.__class__.__name__).
             **kwargs: Additional keyword arguments passed to the parent class.
 
