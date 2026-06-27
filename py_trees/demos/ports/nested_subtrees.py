@@ -107,13 +107,7 @@ def main() -> None:
     py_trees.blackboard.Blackboard.clear()
 
     xml_file = Path(__file__).with_name("nested_subtrees.xml")
-    init_lookup = {
-        "StartMissionReport": StartMissionReport,
-        "AddMissionStep": AddMissionStep,
-        "ReadMissionReport": ReadMissionReport,
-    }
-
-    root = parse_behaviour_tree_xml(str(xml_file), init_lookup=init_lookup)
+    root = parse_behaviour_tree_xml(str(xml_file))
     tree = py_trees.trees.BehaviourTree(root)
     tree.tick()
 

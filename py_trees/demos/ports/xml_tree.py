@@ -100,12 +100,7 @@ def main() -> None:
     py_trees.blackboard.Blackboard.clear()
 
     xml_file = Path(__file__).with_name("xml_tree.xml")
-    init_lookup = {
-        "GreetingProducer": GreetingProducer,
-        "AddSuffix": AddSuffix,
-        "PrintConsumer": PrintConsumer,
-    }
-    root = parse_behaviour_tree_xml(str(xml_file), init_lookup=init_lookup)
+    root = parse_behaviour_tree_xml(str(xml_file))
 
     tree = py_trees.trees.BehaviourTree(root)
     tree.tick()

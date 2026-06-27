@@ -11,7 +11,12 @@
 import unittest
 
 import py_trees
-from py_trees.ports import NoDataAvailable
+from py_trees.ports import (
+    BehaviourWithPorts,
+    NoDataAvailable,
+    get_ports_registry,
+    register_ports_class,
+)
 
 from .test_ports_helpers import Consumer, ConsumerProducer, Producer
 
@@ -259,6 +264,69 @@ class TestBehaviourWithPorts(unittest.TestCase):
 
         prod._set_output("output", "wired")
         self.assertEqual(cons.get_input("input"), "wired")
+
+
+class _RegistryLeaf(BehaviourWithPorts, register=False):
+    """Concrete leaf used to exercise the registry; itself kept out of it."""
+
+    @classmethod
+    def input_ports(cls) -> dict:
+        return {}
+
+    @classmethod
+    def output_ports(cls) -> dict:
+        return {}
+
+    def update(self) -> py_trees.common.Status:
+        return py_trees.common.Status.SUCCESS
+
+
+class TestPortsClassRegistry(unittest.TestCase):
+    """Auto-registration of PortsMixin subclasses for tree parsers."""
+
+    def test_concrete_subclass_is_registered(self) -> None:
+        # Producer is a concrete BehaviourWithPorts imported by the test helpers.
+        self.assertIs(get_ports_registry().get("Producer"), Producer)
+
+    def test_abstract_bases_are_not_registered(self) -> None:
+        # Neither the mixin nor the still-abstract convenience base is registered.
+        registry = get_ports_registry()
+        self.assertNotIn("PortsMixin", registry)
+        self.assertNotIn("BehaviourWithPorts", registry)
+
+    def test_tag_alias_at_definition(self) -> None:
+        class AliasedLeaf(_RegistryLeaf, tag="AliasTag"):
+            pass
+
+        registry = get_ports_registry()
+        self.assertIs(registry.get("AliasTag"), AliasedLeaf)
+        self.assertNotIn("AliasedLeaf", registry)
+
+    def test_register_false_opts_out(self) -> None:
+        class HiddenLeaf(_RegistryLeaf, register=False):
+            pass
+
+        self.assertNotIn("HiddenLeaf", get_ports_registry())
+
+    def test_register_ports_class_aliases(self) -> None:
+        register_ports_class("ProducerAlias", Producer)
+        self.assertIs(get_ports_registry().get("ProducerAlias"), Producer)
+
+    def test_register_ports_class_rejects_non_portsmixin(self) -> None:
+        with self.assertRaises(TypeError):
+            register_ports_class("NotAPort", py_trees.behaviour.Behaviour)
+
+    def test_duplicate_name_warns_and_last_wins(self) -> None:
+        class FirstLeaf(_RegistryLeaf, register=False):
+            pass
+
+        class SecondLeaf(_RegistryLeaf, register=False):
+            pass
+
+        register_ports_class("DupTag", FirstLeaf)
+        with self.assertWarns(UserWarning):
+            register_ports_class("DupTag", SecondLeaf)
+        self.assertIs(get_ports_registry().get("DupTag"), SecondLeaf)
 
 
 if __name__ == "__main__":

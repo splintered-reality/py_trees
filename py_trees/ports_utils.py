@@ -161,7 +161,7 @@ def convert_str_to_type(value: str, target_type: type | UnionType, logger: Ports
 
     if origin is list:
         (inner_type,) = get_args(target_type) or (str,)
-        parts = [p.strip() for p in value.split(",")] if value.strip() else []
+        parts = [p.strip() for p in re.split(r"[,;]", value)] if value.strip() else []
         try:
             return [convert_str_to_type(p, inner_type, logger) for p in parts]
         except Exception:
@@ -169,7 +169,7 @@ def convert_str_to_type(value: str, target_type: type | UnionType, logger: Ports
 
     if origin is tuple:
         inner_types = get_args(target_type)
-        parts = [p.strip() for p in value.split(",")]
+        parts = [p.strip() for p in re.split(r"[,;]", value)]
         converted = []
         for i, p in enumerate(parts):
             t = inner_types[i] if i < len(inner_types) else str
