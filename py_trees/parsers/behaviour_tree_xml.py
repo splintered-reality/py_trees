@@ -132,23 +132,17 @@ from py_trees.ports_utils import (
 CURLY_PATTERN = re.compile(r"^{(.+)}$")
 
 # All composite or decorator tags which can have children and have ports (case-insensitive)
-# Migration note: this hard-coded set is a known limitation.
-# A follow-up should replace it with dynamic PortsMixin detection.
-PARENT_NODES_WITH_PORTS_TAGS = {
-    "ifelse",
-    "repeat",
-    "retry",
-    "caseswitch",
-    "ifdataavailable",
-    "ifnodataavailable",
+DECORATOR_NODES = {
+    name.lower(): obj 
+    for name, obj in inspect.getmembers(py_trees.decorators, inspect.isclass)
+    if obj.__module__ == py_trees.decorators.__name__
+    and issubclass(obj, py_trees.decorators.Decorator)
+    and obj is not py_trees.decorators
 }
+
 # All composite or decorator tags which can have children (case-insensitive)
-PARENT_NODES_TAGS = set(PARENT_NODES_WITH_PORTS_TAGS) | {
-    "sequence",
-    "selector",
-    "fallback",
-    "parallel",
-}
+COMPOSITE_NODES_TAGS = {"sequence", "selector", "fallback", "parallel"}
+PARENT_NODES_TAGS = set(DECORATOR_NODES) | COMPOSITE_NODES_TAGS
 
 
 def build_bt_index(root: ET.Element) -> dict[str, ET.Element]:
@@ -770,28 +764,35 @@ def build_tree_from_xml(
             }
             node = py_trees.composites.Parallel(
                 name=node_name,
-                policy=mapping.get(policy, py_trees.common.ParallelPolicy.SuccessOnAll)(),  # type: ignore
+                policy=mapping[policy](),  # type: ignore
                 children=children,
             )
-        elif tag in PARENT_NODES_WITH_PORTS_TAGS:
-            # Instantiate ports-enabled composite
+        elif tag in DECORATOR_NODES:
+            # Instantiate built-in decorators, including extracting constructor arguments using type hints.
             constructor_kwargs: dict[str, Any] = {}
-            cls = get_class_from_registry(elem.tag, node_registry)
+            cls = DECORATOR_NODES[tag]
             if issubclass(cls, py_trees.decorators.Decorator):
                 if not len(children) == 1:
                     raise ValueError(f"Decorator '{elem.tag}' must have exactly one child, but got {len(children)}.")
                 constructor_kwargs["child"] = children[0] if children else None
             else:
                 constructor_kwargs["children"] = children
-            node = instantiate_ports_node(
-                elem=elem,
-                node_registry=node_registry,
-                remapping_table=remapping_table,
-                subtree_namespace=subtree_namespace,
-                logger=logger,
-                constructor_kwargs=constructor_kwargs,
-                parent_names_str=parent_names_str,
-            )
+
+            for key in elem.keys():
+                if key == "name":
+                    continue
+                constructor_kwargs[key] = elem.attrib.get(key)
+
+            ignore_keys = {"child", "children", "behaviour_class_name"}
+            constructor_kwargs, success = apply_type_hints(cls, constructor_kwargs, logger=logger, ignore=ignore_keys)
+            if not success:
+                logger.warning(
+                    "Failed to apply type hints to constructor arguments. See error log. " \
+                    "Proceeding, but leaving the conversion to the constructors."
+                )
+
+            node = cls(name=node_name, **constructor_kwargs)
+
         else:
             raise NotImplementedError(f"Unknown composite tag: {tag}")
 
