@@ -14,7 +14,7 @@ jobs:
       with:
         enable-cache: true
     - name: Install dependencies
-      run: uv sync --locked
+      run: uv sync
     - name: Ruff (format)
       run: uv run ruff format --check
     - name: Ruff (lint)
@@ -35,6 +35,6 @@ jobs:
       with:
         enable-cache: true
     - name: Install dependencies
-      run: uv sync --locked --python ${{ matrix.python-version }}
+      run: uv sync --python ${{ matrix.python-version }}
     - name: Pytest
       run: uv run --python ${{ matrix.python-version }} pytest -s --cov=py_trees tests/
