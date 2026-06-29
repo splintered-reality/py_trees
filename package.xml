@@ -11,7 +11,7 @@
   <maintainer email="d.stonier@gmail.com">Daniel Stonier</maintainer>
   <maintainer email="sebas.a.castro@gmail.com">Sebastian Castro</maintainer>
 
-  <license>BSD</license>
+  <license>BSD-3-Clause</license>
 
   <url type="website">https://py-trees.readthedocs.io/en/devel/</url>
   <url type="repository">https://github.com/splintered-reality/py_trees</url>
