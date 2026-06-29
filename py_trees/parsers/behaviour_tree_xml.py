@@ -133,7 +133,7 @@ CURLY_PATTERN = re.compile(r"^{(.+)}$")
 
 # All composite or decorator tags which can have children and have ports (case-insensitive)
 DECORATOR_NODES = {
-    name.lower(): obj 
+    name.lower(): obj
     for name, obj in inspect.getmembers(py_trees.decorators, inspect.isclass)
     if obj.__module__ == py_trees.decorators.__name__
     and issubclass(obj, py_trees.decorators.Decorator)
@@ -787,7 +787,7 @@ def build_tree_from_xml(
             constructor_kwargs, success = apply_type_hints(cls, constructor_kwargs, logger=logger, ignore=ignore_keys)
             if not success:
                 logger.warning(
-                    "Failed to apply type hints to constructor arguments. See error log. " \
+                    "Failed to apply type hints to constructor arguments. See error log. "
                     "Proceeding, but leaving the conversion to the constructors."
                 )
 
