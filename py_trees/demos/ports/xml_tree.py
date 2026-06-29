@@ -18,7 +18,6 @@ from pathlib import Path
 import py_trees
 from py_trees.parsers.behaviour_tree_xml import parse_behaviour_tree_xml
 from py_trees.ports import BehaviourWithPorts, PortInformation
-
 from py_trees.ports_utils import find_node_by_class
 
 ##############################################################################
@@ -63,9 +62,7 @@ class AddSuffix(BehaviourWithPorts):
 
     def update(self) -> py_trees.common.Status:
         """Append ``suffix`` to ``input`` and write the result to ``output``."""
-        self._set_output(
-            "output", f"{self.get_input('input')}{self.get_input('suffix')}"
-        )
+        self._set_output("output", f"{self.get_input('input')}{self.get_input('suffix')}")
         return py_trees.common.Status.SUCCESS
 
 

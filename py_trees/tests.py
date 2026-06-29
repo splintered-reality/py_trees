@@ -35,9 +35,7 @@ def print_assert_banner() -> None:
 AssertResultType = typing.TypeVar("AssertResultType")
 
 
-def print_assert_details(
-    text: str, expected: AssertResultType, result: AssertResultType
-) -> None:
+def print_assert_details(text: str, expected: AssertResultType, result: AssertResultType) -> None:
     """
     Pretty print the expected and actual results for an assertion.
 
@@ -51,9 +49,9 @@ def print_assert_details(
         + text
         + "." * (70 - len(text))
         + console.cyan
-        + "{}".format(expected)
+        + f"{expected}"
         + console.yellow
-        + " [{}]".format(result)
+        + f" [{result}]"
         + console.reset
     )
 
@@ -65,7 +63,7 @@ def pre_tick_visitor(behaviour_tree: trees.BehaviourTree) -> None:
     Args:
         behavior_tree: unused
     """
-    print("\n--------- Run %s ---------\n" % behaviour_tree.count)
+    print(f"\n--------- Run {behaviour_tree.count} ---------\n")
 
 
 def tick_tree(
@@ -73,9 +71,9 @@ def tick_tree(
     from_tick: int,
     to_tick: int,
     *,
-    visitors: typing.Optional[typing.List[visitors.VisitorBase]] = None,
+    visitors: list[visitors.VisitorBase] | None = None,
     print_snapshot: bool = False,
-    print_blackboard: bool = False
+    print_blackboard: bool = False,
 ) -> None:
     """
     Tick the tree for a specified # ticks and run a variety of debugging helpers.
@@ -90,15 +88,11 @@ def tick_tree(
     """
     if visitors is None:
         visitors = []
-    print(
-        "\n================== Iteration {}-{} ==================\n".format(
-            from_tick, to_tick
-        )
-    )
+    print(f"\n================== Iteration {from_tick}-{to_tick} ==================\n")
     for i in range(from_tick, to_tick + 1):
         for visitor in visitors:
             visitor.initialise()
-        print(("\n--------- Run %s ---------\n" % i))
+        print(f"\n--------- Run {i} ---------\n")
         for node in root.tick():
             for visitor in visitors:
                 node.visit(visitor)
@@ -116,7 +110,7 @@ def clear_blackboard() -> None:
     blackboard.Blackboard.metadata = {}
 
 
-def print_summary(nodes: typing.List[behaviour.Behaviour]) -> None:
+def print_summary(nodes: list[behaviour.Behaviour]) -> None:
     """Print status details for a list of behaviours.
 
     Args:
@@ -124,4 +118,4 @@ def print_summary(nodes: typing.List[behaviour.Behaviour]) -> None:
     """
     print("\n--------- Summary ---------\n")
     for node in nodes:
-        print("%s" % node)
+        print(f"{node}")

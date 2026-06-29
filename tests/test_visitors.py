@@ -67,12 +67,10 @@ def test_snapshot_visitor() -> None:
     debug_visitor = py_trees.visitors.DebugVisitor()
     snapshot_visitor = py_trees.visitors.SnapshotVisitor()
 
-    for i, result in zip(range(1, 5), [True, False, False, True]):
-        py_trees.tests.tick_tree(
-            root, i, i, visitors=[debug_visitor, snapshot_visitor], print_snapshot=True
-        )
+    for i, result in zip(range(1, 5), [True, False, False, True], strict=False):
+        py_trees.tests.tick_tree(root, i, i, visitors=[debug_visitor, snapshot_visitor], print_snapshot=True)
         print("--------- Assertions ---------\n")
-        print("snapshot_visitor.changed == {}".format(result))
+        print(f"snapshot_visitor.changed == {result}")
         assert snapshot_visitor.changed is result
 
     print("Done")

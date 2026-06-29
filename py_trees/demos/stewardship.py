@@ -27,7 +27,6 @@ A py_trees demo.
 import argparse
 import sys
 import time
-import typing
 
 import py_trees
 import py_trees.console as console
@@ -45,9 +44,7 @@ def description() -> str:
        the program description string
     """
     content = "A demonstration of tree stewardship.\n\n"
-    content += (
-        "A slightly less trivial tree that uses a simple stdout pre-tick handler\n"
-    )
+    content += "A slightly less trivial tree that uses a simple stdout pre-tick handler\n"
     content += "and both the debug and snapshot visitors for logging and displaying\n"
     content += "the state of the tree.\n"
     content += "\n"
@@ -72,7 +69,7 @@ def description() -> str:
     return s
 
 
-def epilog() -> typing.Optional[str]:
+def epilog() -> str | None:
     """
     Print a noodly epilog for --help.
 
@@ -80,11 +77,7 @@ def epilog() -> typing.Optional[str]:
        the noodly message
     """
     if py_trees.console.has_colours:
-        return (
-            console.cyan
-            + "And his noodly appendage reached forth to tickle the blessed...\n"
-            + console.reset
-        )
+        return console.cyan + "And his noodly appendage reached forth to tickle the blessed...\n" + console.reset
     else:
         return None
 
@@ -102,9 +95,7 @@ def command_line_argument_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     group = parser.add_mutually_exclusive_group()
-    group.add_argument(
-        "-r", "--render", action="store_true", help="render dot tree to file"
-    )
+    group.add_argument("-r", "--render", action="store_true", help="render dot tree to file")
     group.add_argument(
         "--render-with-blackboard-variables",
         action="store_true",
@@ -121,7 +112,7 @@ def command_line_argument_parser() -> argparse.ArgumentParser:
 
 def pre_tick_handler(behaviour_tree: py_trees.trees.BehaviourTree) -> None:
     """Generate a simple pre-tick banner printing to stdout."""
-    print("\n--------- Run %s ---------\n" % behaviour_tree.count)
+    print(f"\n--------- Run {behaviour_tree.count} ---------\n")
 
 
 class SuccessEveryN(py_trees.behaviours.SuccessEveryN):
@@ -189,14 +180,8 @@ class Finisher(py_trees.behaviour.Behaviour):
         """
         print(console.green + "---------------------------" + console.reset)
         print(console.bold + "        Finisher" + console.reset)
-        print(
-            console.green + "  Count : {}".format(self.blackboard.count) + console.reset
-        )
-        print(
-            console.green
-            + "  Period: {}".format(self.blackboard.period)
-            + console.reset
-        )
+        print(console.green + f"  Count : {self.blackboard.count}" + console.reset)
+        print(console.green + f"  Period: {self.blackboard.period}" + console.reset)
         print(console.green + "---------------------------" + console.reset)
         return py_trees.common.Status.SUCCESS
 
@@ -255,9 +240,7 @@ def main() -> None:
     behaviour_tree.add_pre_tick_handler(pre_tick_handler)
     behaviour_tree.visitors.append(py_trees.visitors.DebugVisitor())
     behaviour_tree.visitors.append(
-        py_trees.visitors.DisplaySnapshotVisitor(
-            display_blackboard=True, display_activity_stream=True
-        )
+        py_trees.visitors.DisplaySnapshotVisitor(display_blackboard=True, display_activity_stream=True)
     )
     behaviour_tree.setup(timeout=15)
 

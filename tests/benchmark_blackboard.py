@@ -19,7 +19,7 @@ import py_trees.console as console
 ##############################################################################
 
 
-class Motley(object):
+class Motley:
     """
     To test nested access on the blackboard
     """
@@ -28,14 +28,12 @@ class Motley(object):
         self.nested = "nested"
 
 
-class create_blackboards(object):
+class create_blackboards:
     def __enter__(
         self,
-    ) -> typing.Tuple[py_trees.blackboard.Client, py_trees.blackboard.Client]:
+    ) -> tuple[py_trees.blackboard.Client, py_trees.blackboard.Client]:
         self.root = py_trees.blackboard.Client(name="Root")
-        self.parameters = py_trees.blackboard.Client(
-            name="Namespaced", namespace="parameters"
-        )
+        self.parameters = py_trees.blackboard.Client(name="Namespaced", namespace="parameters")
         return (self.root, self.parameters)
 
     def __exit__(
@@ -74,7 +72,7 @@ def benchmark_registration() -> None:
                 + console.reset
                 + ": "
                 + console.yellow
-                + "{0:.3f}".format(duration)
+                + f"{duration:.3f}"
                 + console.reset
             )
         start_time = time.monotonic()
@@ -86,19 +84,17 @@ def benchmark_registration() -> None:
         + console.reset
         + ": "
         + console.yellow
-        + "{0:.3f}".format(duration)
+        + f"{duration:.3f}"
         + console.reset
     )
 
     with create_blackboards() as (root, parameters):
-        remaps = {i: "/state/{}".format(i) for i in range(0, 1000)}
+        remaps = {i: f"/state/{i}" for i in range(0, 1000)}
         print("Remaps (x1000)")
         for blackboard in (root, parameters):
             start_time = time.monotonic()
             for i in range(0, 1000):
-                blackboard.register_key(
-                    key=str(i), access=py_trees.common.Access.READ, remap_to=remaps[i]
-                )
+                blackboard.register_key(key=str(i), access=py_trees.common.Access.READ, remap_to=remaps[i])
             duration = time.monotonic() - start_time
             print(
                 " - "
@@ -107,7 +103,7 @@ def benchmark_registration() -> None:
                 + console.reset
                 + ": "
                 + console.yellow
-                + "{0:.3f}".format(duration)
+                + f"{duration:.3f}"
                 + console.reset
             )
         start_time = time.monotonic()
@@ -119,7 +115,7 @@ def benchmark_registration() -> None:
         + console.reset
         + ": "
         + console.yellow
-        + "{0:.3f}".format(duration)
+        + f"{duration:.3f}"
         + console.reset
     )
 
@@ -133,45 +129,38 @@ def benchmark_read() -> None:
             for blackboard in (root, parameters):
                 for i in range(0, 1000):
                     if with_remaps:
-                        remaps = {
-                            i: "/state/{}/colander_{}".format(
-                                blackboard.name.lower(), i
-                            )
-                            for i in range(0, 1000)
-                        }
+                        remaps = {i: f"/state/{blackboard.name.lower()}/colander_{i}" for i in range(0, 1000)}
                         suffix = " with Remaps"
                         blackboard.register_key(
-                            key="colander_{}".format(i),
+                            key=f"colander_{i}",
                             access=py_trees.common.Access.READ,
                             remap_to=remaps[i],
                         )
                     else:
                         suffix = ""
                         blackboard.register_key(
-                            key="colander_{}".format(i),
+                            key=f"colander_{i}",
                             access=py_trees.common.Access.READ,
                         )
             for i in range(0, 1000):
                 if with_remaps:
                     for blackboard in (root, parameters):
                         py_trees.blackboard.Blackboard.set(
-                            "/state/{}/colander_{}".format(blackboard.name.lower(), i),
+                            f"/state/{blackboard.name.lower()}/colander_{i}",
                             i,
                         )
                 else:
-                    py_trees.blackboard.Blackboard.set("/colander_{}".format(i), i)
-                    py_trees.blackboard.Blackboard.set(
-                        "/parameters/colander_{}".format(i), i
-                    )
+                    py_trees.blackboard.Blackboard.set(f"/colander_{i}", i)
+                    py_trees.blackboard.Blackboard.set(f"/parameters/colander_{i}", i)
             relative_names = {}
-            absolute_names: typing.Dict[str, typing.Dict[int, str]] = {
+            absolute_names: dict[str, dict[int, str]] = {
                 "Root": {},
                 "Namespaced": {},
             }
             for i in range(0, 1000):
-                relative_names[i] = "colander_{}".format(i)
-                absolute_names["Root"][i] = "/colander_{}".format(i)
-                absolute_names["Namespaced"][i] = "/parameters/colander_{}".format(i)
+                relative_names[i] = f"colander_{i}"
+                absolute_names["Root"][i] = f"/colander_{i}"
+                absolute_names["Namespaced"][i] = f"/parameters/colander_{i}"
             print("Relative Names" + suffix)
             for blackboard in (root, parameters):
                 start_time = time.monotonic()
@@ -186,7 +175,7 @@ def benchmark_read() -> None:
                     + console.reset
                     + ": "
                     + console.yellow
-                    + "{0:.3f}".format(duration)
+                    + f"{duration:.3f}"
                     + console.reset
                 )
             print("Absolute Names" + suffix)
@@ -204,7 +193,7 @@ def benchmark_read() -> None:
                     + console.reset
                     + ": "
                     + console.yellow
-                    + "{0:.3f}".format(duration)
+                    + f"{duration:.3f}"
                     + console.reset
                 )
 
@@ -221,10 +210,7 @@ def benchmark_write() -> None:
             for blackboard in (root, parameters):
                 for i in range(0, 1000):
                     if with_remaps:
-                        remaps = {
-                            i: "/state/{}/{}".format(blackboard.name.lower(), i)
-                            for i in range(0, 1000)
-                        }
+                        remaps = {i: f"/state/{blackboard.name.lower()}/{i}" for i in range(0, 1000)}
                         suffix = " with Remaps"
                         blackboard.register_key(
                             key=str(i),
@@ -238,14 +224,14 @@ def benchmark_write() -> None:
                             access=py_trees.common.Access.WRITE,
                         )
             relative_names = {}
-            absolute_names: typing.Dict[str, typing.Dict[int, str]] = {
+            absolute_names: dict[str, dict[int, str]] = {
                 "Root": {},
                 "Namespaced": {},
             }
             for i in range(0, 1000):
                 relative_names[i] = str(i)
-                absolute_names["Root"][i] = "/{}".format(str(i))
-                absolute_names["Namespaced"][i] = "/parameters/{}".format(str(i))
+                absolute_names["Root"][i] = f"/{str(i)}"
+                absolute_names["Namespaced"][i] = f"/parameters/{str(i)}"
             print("Relative Names" + suffix)
             for blackboard in (root, parameters):
                 start_time = time.monotonic()
@@ -260,7 +246,7 @@ def benchmark_write() -> None:
                     + console.reset
                     + ": "
                     + console.yellow
-                    + "{0:.3f}".format(duration)
+                    + f"{duration:.3f}"
                     + console.reset
                 )
             print("Absolute Names" + suffix)
@@ -278,7 +264,7 @@ def benchmark_write() -> None:
                     + console.reset
                     + ": "
                     + console.yellow
-                    + "{0:.3f}".format(duration)
+                    + f"{duration:.3f}"
                     + console.reset
                 )
 

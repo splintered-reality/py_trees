@@ -23,7 +23,6 @@ runs its own method on the behaviour to do as it wishes - logging, introspecting
 # Imports
 ##############################################################################
 
-import typing
 import uuid
 
 from . import behaviour, blackboard, common, display
@@ -33,7 +32,7 @@ from . import behaviour, blackboard, common, display
 ##############################################################################
 
 
-class VisitorBase(object):
+class VisitorBase:
     """
     Parent template for visitor types.
 
@@ -80,7 +79,7 @@ class DebugVisitor(VisitorBase):
     """
 
     def __init__(self) -> None:
-        super(DebugVisitor, self).__init__(full=False)
+        super().__init__(full=False)
 
     def run(self, behaviour: behaviour.Behaviour) -> None:
         """
@@ -91,17 +90,10 @@ class DebugVisitor(VisitorBase):
         """
         if behaviour.feedback_message:
             behaviour.logger.debug(
-                "%s.run() [%s][%s]"
-                % (
-                    self.__class__.__name__,
-                    behaviour.feedback_message,
-                    behaviour.status,
-                )
+                f"{self.__class__.__name__}.run() [{behaviour.feedback_message}][{behaviour.status}]"
             )
         else:
-            behaviour.logger.debug(
-                "%s.run() [%s]" % (self.__class__.__name__, behaviour.status)
-            )
+            behaviour.logger.debug(f"{self.__class__.__name__}.run() [{behaviour.status}]")
 
 
 class SnapshotVisitor(VisitorBase):
@@ -131,10 +123,10 @@ class SnapshotVisitor(VisitorBase):
     def __init__(self) -> None:
         super().__init__(full=False)
         self.changed = False
-        self.visited: typing.Dict[uuid.UUID, common.Status] = {}
-        self.previously_visited: typing.Dict[uuid.UUID, common.Status] = {}
-        self.visited_blackboard_keys: typing.Set[str] = set()
-        self.visited_blackboard_client_ids: typing.Set[uuid.UUID] = set()
+        self.visited: dict[uuid.UUID, common.Status] = {}
+        self.previously_visited: dict[uuid.UUID, common.Status] = {}
+        self.visited_blackboard_keys: set[str] = set()
+        self.visited_blackboard_client_ids: set[uuid.UUID] = set()
 
     def initialise(self) -> None:
         """Store the last snapshot for comparison with the next incoming snapshot.
@@ -167,9 +159,7 @@ class SnapshotVisitor(VisitorBase):
         # blackboards
         for b in behaviour.blackboards:
             self.visited_blackboard_client_ids.add(b.id())
-            self.visited_blackboard_keys = (
-                self.visited_blackboard_keys | b.read | b.write | b.exclusive
-            )
+            self.visited_blackboard_keys = self.visited_blackboard_keys | b.read | b.write | b.exclusive
 
 
 class DisplaySnapshotVisitor(SnapshotVisitor):
@@ -201,7 +191,7 @@ class DisplaySnapshotVisitor(SnapshotVisitor):
 
     def initialise(self) -> None:
         """Reset and initialise all variables."""
-        self.root: typing.Optional[behaviour.Behaviour] = None
+        self.root: behaviour.Behaviour | None = None
         super().initialise()
         if self.display_activity_stream:
             if blackboard.Blackboard.activity_stream is not None:

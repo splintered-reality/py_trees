@@ -18,7 +18,6 @@ import string
 from typing import Any
 
 import py_trees
-
 from py_trees.ports import BehaviourWithPorts, PortInformation
 
 ##############################################################################
@@ -141,10 +140,7 @@ def run_pipeline(namespace: str, prefix: str, suffix: str) -> str:
     step2.tick_once()
     step3.tick_once()
 
-    print(
-        f"[TEST PROBE] value of unremapped value of step2: "
-        f"{step2.get_last_output('value')}"
-    )
+    print(f"[TEST PROBE] value of unremapped value of step2: {step2.get_last_output('value')}")
     return step3.result
 
 

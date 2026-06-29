@@ -27,7 +27,6 @@ A py_trees demo.
 
 import argparse
 import itertools
-import typing
 
 import py_trees
 import py_trees.console as console
@@ -63,7 +62,7 @@ def description() -> str:
     return s
 
 
-def epilog() -> typing.Optional[str]:
+def epilog() -> str | None:
     """
     Print a noodly epilog for --help.
 
@@ -71,11 +70,7 @@ def epilog() -> typing.Optional[str]:
        the noodly message
     """
     if py_trees.console.has_colours:
-        return (
-            console.cyan
-            + "And his noodly appendage reached forth to tickle the blessed...\n"
-            + console.reset
-        )
+        return console.cyan + "And his noodly appendage reached forth to tickle the blessed...\n" + console.reset
     else:
         return None
 
@@ -111,20 +106,12 @@ def create_root() -> py_trees.behaviour.Behaviour:
     root.add_child(child3)
     queue = [py_trees.common.Status.RUNNING]
     eventually = py_trees.common.Status.SUCCESS
-    child.add_child(
-        py_trees.behaviours.StatusQueue(name="RS", queue=queue, eventually=eventually)
-    )
-    child2.add_child(
-        py_trees.behaviours.StatusQueue(name="RS", queue=queue, eventually=eventually)
-    )
+    child.add_child(py_trees.behaviours.StatusQueue(name="RS", queue=queue, eventually=eventually))
+    child2.add_child(py_trees.behaviours.StatusQueue(name="RS", queue=queue, eventually=eventually))
     child2_child1 = py_trees.composites.Sequence(name="Child2_child1", memory=True)
-    child2_child1.add_child(
-        py_trees.behaviours.StatusQueue(name="RS", queue=queue, eventually=eventually)
-    )
+    child2_child1.add_child(py_trees.behaviours.StatusQueue(name="RS", queue=queue, eventually=eventually))
     child2.add_child(child2_child1)
-    child3.add_child(
-        py_trees.behaviours.StatusQueue(name="RS", queue=queue, eventually=eventually)
-    )
+    child3.add_child(py_trees.behaviours.StatusQueue(name="RS", queue=queue, eventually=eventually))
     return root
 
 
@@ -135,20 +122,14 @@ def create_root() -> py_trees.behaviour.Behaviour:
 
 def main() -> None:
     """Entry point for the demo script."""
-    _ = (
-        command_line_argument_parser().parse_args()
-    )  # configuration only, no args to process
+    _ = command_line_argument_parser().parse_args()  # configuration only, no args to process
     print(description())
-    print(
-        "-------------------------------------------------------------------------------"
-    )
+    print("-------------------------------------------------------------------------------")
     print("$ py_trees.blackboard.Client(name='Blackboard')")
     print("$ foo.register_key(key='dude', access=py_trees.common.Access.WRITE)")
     print("$ foo.register_key(key='/dudette', access=py_trees.common.Access.WRITE)")
     print("$ foo.register_key(key='/foo/bar/wow', access=py_trees.common.Access.WRITE)")
-    print(
-        "-------------------------------------------------------------------------------"
-    )
+    print("-------------------------------------------------------------------------------")
 
     snapshot_visitor = py_trees.visitors.SnapshotVisitor()
     tree = py_trees.trees.BehaviourTree(create_root())
@@ -156,14 +137,8 @@ def main() -> None:
 
     for tick in range(2):
         tree.tick()
-        for show_visited, show_status in itertools.product(
-            [False, True], [False, True]
-        ):
-            console.banner(
-                "Tick {} / show_only_visited=={} / show_status=={}".format(
-                    tick, show_visited, show_status
-                )
-            )
+        for show_visited, show_status in itertools.product([False, True], [False, True]):
+            console.banner(f"Tick {tick} / show_only_visited=={show_visited} / show_status=={show_status}")
             print(
                 py_trees.display.unicode_tree(
                     tree.root,

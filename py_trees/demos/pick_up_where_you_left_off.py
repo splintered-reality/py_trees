@@ -28,7 +28,6 @@ import argparse
 import functools
 import sys
 import time
-import typing
 
 import py_trees
 import py_trees.console as console
@@ -59,12 +58,7 @@ def description(root: py_trees.behaviour.Behaviour) -> str:
     if py_trees.console.has_colours:
         banner_line = console.green + "*" * 79 + "\n" + console.reset
         s = banner_line
-        s += (
-            console.bold_white
-            + "Pick Up Where you Left Off".center(79)
-            + "\n"
-            + console.reset
-        )
+        s += console.bold_white + "Pick Up Where you Left Off".center(79) + "\n" + console.reset
         s += banner_line
         s += "\n"
         s += content
@@ -77,7 +71,7 @@ def description(root: py_trees.behaviour.Behaviour) -> str:
     return s
 
 
-def epilog() -> typing.Optional[str]:
+def epilog() -> str | None:
     """
     Print a noodly epilog for --help.
 
@@ -85,11 +79,7 @@ def epilog() -> typing.Optional[str]:
        the noodly message
     """
     if py_trees.console.has_colours:
-        return (
-            console.cyan
-            + "And his noodly appendage reached forth to tickle the blessed...\n"
-            + console.reset
-        )
+        return console.cyan + "And his noodly appendage reached forth to tickle the blessed...\n" + console.reset
     else:
         return None
 
@@ -107,9 +97,7 @@ def command_line_argument_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     group = parser.add_mutually_exclusive_group()
-    group.add_argument(
-        "-r", "--render", action="store_true", help="render dot tree to file"
-    )
+    group.add_argument("-r", "--render", action="store_true", help="render dot tree to file")
     group.add_argument(
         "-i",
         "--interactive",
@@ -126,7 +114,7 @@ def pre_tick_handler(behaviour_tree: py_trees.trees.BehaviourTree) -> None:
         behaviour_tree (:class:`~py_trees.trees.BehaviourTree`): the tree custodian
 
     """
-    print("\n--------- Run %s ---------\n" % behaviour_tree.count)
+    print(f"\n--------- Run {behaviour_tree.count} ---------\n")
 
 
 def post_tick_handler(
@@ -171,9 +159,7 @@ def create_root() -> py_trees.behaviour.Behaviour:
         name="Running is Failure",
         child=py_trees.behaviours.Periodic(name="High Priority", n=3),
     )
-    piwylo = py_trees.idioms.pick_up_where_you_left_off(
-        name="Pick Up\nWhere You\nLeft Off", tasks=[task_one, task_two]
-    )
+    piwylo = py_trees.idioms.pick_up_where_you_left_off(name="Pick Up\nWhere You\nLeft Off", tasks=[task_one, task_two])
     root = py_trees.composites.Selector(name="Root", memory=False)
     root.add_children([high_priority_interrupt, piwylo])
 
@@ -206,9 +192,7 @@ def main() -> None:
     behaviour_tree.add_pre_tick_handler(pre_tick_handler)
     behaviour_tree.visitors.append(py_trees.visitors.DebugVisitor())
     snapshot_visitor = py_trees.visitors.SnapshotVisitor()
-    behaviour_tree.add_post_tick_handler(
-        functools.partial(post_tick_handler, snapshot_visitor)
-    )
+    behaviour_tree.add_post_tick_handler(functools.partial(post_tick_handler, snapshot_visitor))
     behaviour_tree.visitors.append(snapshot_visitor)
     behaviour_tree.setup(timeout=15)
 

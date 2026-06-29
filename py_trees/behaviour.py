@@ -64,25 +64,15 @@ class Behaviour(abc.ABC):
 
     def __init__(self, name: str):
         if not isinstance(name, str):
-            raise TypeError(
-                "a behaviour name should be a string, but you passed in {}".format(
-                    type(name)
-                )
-            )
-        self.id = (
-            uuid.uuid4()
-        )  # used to uniquely identify this node (helps with removing children from a tree)
+            raise TypeError(f"a behaviour name should be a string, but you passed in {type(name)}")
+        self.id = uuid.uuid4()  # used to uniquely identify this node (helps with removing children from a tree)
         self.name: str = name
-        self.blackboards: typing.List[blackboard.Client] = []
-        self.qualified_name = "{}/{}".format(
-            self.__class__.__qualname__, self.name
-        )  # convenience
+        self.blackboards: list[blackboard.Client] = []
+        self.qualified_name = f"{self.__class__.__qualname__}/{self.name}"  # convenience
         self.status = common.Status.INVALID
         self.iterator = self.tick()
-        self.parent: typing.Optional[Behaviour] = (
-            None  # will get set if a behaviour is added to a composite
-        )
-        self.children: typing.List[Behaviour] = []  # only set by composite behaviours
+        self.parent: Behaviour | None = None  # will get set if a behaviour is added to a composite
+        self.children: list[Behaviour] = []  # only set by composite behaviours
         self.logger = logging.Logger(name)
         self.feedback_message = ""  # useful for debugging, or human readable updates, but not necessary to implement
         self.blackbox_level = common.BlackBoxLevel.NOT_A_BLACKBOX
@@ -236,9 +226,7 @@ class Behaviour(abc.ABC):
     # Private Methods - use inside a behaviour
     ############################################
 
-    def attach_blackboard_client(
-        self, name: typing.Optional[str] = None, namespace: typing.Optional[str] = None
-    ) -> blackboard.Client:
+    def attach_blackboard_client(self, name: str | None = None, namespace: str | None = None) -> blackboard.Client:
         """
         Create and attach a blackboard to this behaviour.
 
@@ -251,7 +239,7 @@ class Behaviour(abc.ABC):
         """
         if name is None:
             count = len(self.blackboards)
-            name = self.name if (count == 0) else self.name + "-{}".format(count)
+            name = self.name if (count == 0) else self.name + f"-{count}"
         new_blackboard = blackboard.Client(name=name, namespace=namespace)
         self.blackboards.append(new_blackboard)
         return new_blackboard
@@ -303,16 +291,13 @@ class Behaviour(abc.ABC):
            Users should not override this method to provide custom tick behaviour. The
            :meth:`~py_trees.behaviour.Behaviour.update` method has been provided for that purpose.
         """
-        self.logger.debug("%s.tick()" % (self.__class__.__name__))
+        self.logger.debug(f"{self.__class__.__name__}.tick()")
         if self.status != common.Status.RUNNING:
             self.initialise()
         # don't set self.status yet, terminate() may need to check what the current state is first
         new_status = self.update()
         if new_status not in list(common.Status):
-            self.logger.error(
-                "A behaviour returned an invalid status, setting to INVALID [%s][%s]"
-                % (new_status, self.name)
-            )
+            self.logger.error(f"A behaviour returned an invalid status, setting to INVALID [{new_status}][{self.name}]")
             new_status = common.Status.INVALID
         if new_status != common.Status.RUNNING:
             self.stop(new_status)
@@ -338,8 +323,7 @@ class Behaviour(abc.ABC):
         """
         for child in self.children:
             if not direct_descendants:
-                for node in child.iterate():
-                    yield node
+                yield from child.iterate()
             else:
                 yield child
         yield self
@@ -373,14 +357,9 @@ class Behaviour(abc.ABC):
            :meth:`~py_trees.behaviour.Behaviour.terminate` method has been provided for that purpose.
         """
         self.logger.debug(
-            "%s.stop(%s)"
-            % (
+            "{}.stop({})".format(
                 self.__class__.__name__,
-                (
-                    "%s->%s" % (self.status, new_status)
-                    if self.status != new_status
-                    else "%s" % new_status
-                ),
+                (f"{self.status}->{new_status}" if self.status != new_status else f"{new_status}"),
             )
         )
         self.terminate(new_status)
@@ -408,9 +387,7 @@ class Behaviour(abc.ABC):
             b = b.parent
         return False
 
-    def has_parent_with_instance_type(
-        self, instance_type: "typing.Type[Behaviour]"
-    ) -> bool:
+    def has_parent_with_instance_type(self, instance_type: type[Behaviour]) -> bool:
         """
         Search this behaviour's ancestors for one of the specified type.
 
@@ -427,7 +404,7 @@ class Behaviour(abc.ABC):
             b = b.parent
         return False
 
-    def tip(self) -> typing.Optional[Behaviour]:
+    def tip(self) -> Behaviour | None:
         """
         Get the *tip* of this behaviour's subtree (if it has one).
 

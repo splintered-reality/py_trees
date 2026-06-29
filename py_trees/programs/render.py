@@ -26,7 +26,6 @@ import argparse
 import importlib
 import json
 import sys
-import typing
 
 import py_trees
 import py_trees.console as console
@@ -36,7 +35,7 @@ import py_trees.console as console
 ##############################################################################
 
 
-def examples() -> typing.List[str]:
+def examples() -> list[str]:
     """
     Usage examples as a string message for --help's description.
 
@@ -48,9 +47,7 @@ def examples() -> typing.List[str]:
         prefix + " py_trees.demos.stewardship.create_tree" + console.reset,
         prefix + " --with-blackboard-variables" + console.reset,
         prefix + " --name=foo py_trees.demos.stewardship.create_tree" + console.reset,
-        prefix
-        + ' --kwargs=\'{"level":"all"}\' py_trees.demos.dot_graphs.create_tree'
-        + console.reset,
+        prefix + ' --kwargs=\'{"level":"all"}\' py_trees.demos.dot_graphs.create_tree' + console.reset,
     ]
     return examples
 
@@ -83,12 +80,12 @@ def description() -> str:
         s += console.bold + "**Examples**" + console.reset + "\n\n"
         s += ".. code-block:: bash\n"
         s += "    \n"
-        s += "\n".join(["    $ {0}".format(example) for example in examples()])
+        s += "\n".join([f"    $ {example}" for example in examples()])
         s += "\n"
     return s
 
 
-def epilog() -> typing.Optional[str]:
+def epilog() -> str | None:
     """
     Print a noodly epilog for --help.
 
@@ -96,11 +93,7 @@ def epilog() -> typing.Optional[str]:
        the noodly message
     """
     if py_trees.console.has_colours:
-        return (
-            console.cyan
-            + "And his noodly appendage reached forth to tickle the blessed...\n"
-            + console.reset
-        )
+        return console.cyan + "And his noodly appendage reached forth to tickle the blessed...\n" + console.reset
     else:
         return None
 
@@ -181,9 +174,7 @@ def main() -> None:
         try:
             module_itself = importlib.import_module(module_name)
         except ImportError:
-            console.logerror(
-                "Could not import module [{0}]".format(module_or_class_name)
-            )
+            console.logerror(f"Could not import module [{module_or_class_name}]")
             sys.exit(1)
     if class_name is not None:
         class_type = getattr(module_itself, class_name)

@@ -27,7 +27,6 @@ A py_trees demo.
 import argparse
 import sys
 import time
-import typing
 
 import py_trees
 import py_trees.console as console
@@ -44,15 +43,11 @@ def description() -> str:
     Returns:
        the program description string
     """
-    content = (
-        "Higher priority switching and interruption in the children of a selector.\n"
-    )
+    content = "Higher priority switching and interruption in the children of a selector.\n"
     content += "\n"
     content += "In this example the higher priority child is setup to fail initially,\n"
     content += "falling back to the continually running second child. On the third\n"
-    content += (
-        "tick, the first child succeeds and cancels the hitherto running child.\n"
-    )
+    content += "tick, the first child succeeds and cancels the hitherto running child.\n"
     if py_trees.console.has_colours:
         banner_line = console.green + "*" * 79 + "\n" + console.reset
         s = banner_line
@@ -67,7 +62,7 @@ def description() -> str:
     return s
 
 
-def epilog() -> typing.Optional[str]:
+def epilog() -> str | None:
     """
     Print a noodly epilog for --help.
 
@@ -75,11 +70,7 @@ def epilog() -> typing.Optional[str]:
        the noodly message
     """
     if py_trees.console.has_colours:
-        return (
-            console.cyan
-            + "And his noodly appendage reached forth to tickle the blessed...\n"
-            + console.reset
-        )
+        return console.cyan + "And his noodly appendage reached forth to tickle the blessed...\n" + console.reset
     else:
         return None
 
@@ -96,9 +87,7 @@ def command_line_argument_parser() -> argparse.ArgumentParser:
         epilog=epilog(),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument(
-        "-r", "--render", action="store_true", help="render dot tree to file"
-    )
+    parser.add_argument("-r", "--render", action="store_true", help="render dot tree to file")
     return parser
 
 
@@ -150,7 +139,7 @@ def main() -> None:
     root.setup_with_descendants()
     for i in range(1, 4):
         try:
-            print("\n--------- Tick {0} ---------\n".format(i))
+            print(f"\n--------- Tick {i} ---------\n")
             root.tick_once()
             print("\n")
             print(py_trees.display.unicode_tree(root=root, show_status=True))

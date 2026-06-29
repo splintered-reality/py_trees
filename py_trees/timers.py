@@ -53,24 +53,18 @@ class Timer(behaviour.Behaviour):
     """
 
     def __init__(self, name: str = "Timer", duration: float = 5.0):
-        super(Timer, self).__init__(name)
+        super().__init__(name)
         if not isinstance(duration, (int, float)):
-            raise TypeError(
-                "Timer: duration should be int or float, but you passed in {}".format(
-                    type(duration)
-                )
-            )
+            raise TypeError(f"Timer: duration should be int or float, but you passed in {type(duration)}")
         self.duration: float = duration
         self.finish_time: float = 0.0
-        self.feedback_message: str = "duration set to '{0}'s".format(self.duration)
+        self.feedback_message: str = f"duration set to '{self.duration}'s"
 
     def initialise(self) -> None:
         """Store the expected finishing time."""
-        self.logger.debug("%s.initialise()" % self.__class__.__name__)
+        self.logger.debug(f"{self.__class__.__name__}.initialise()")
         self.finish_time = time.time() + self.duration
-        self.feedback_message = "configured to fire in '{0}' seconds".format(
-            self.duration
-        )
+        self.feedback_message = f"configured to fire in '{self.duration}' seconds"
 
     def update(self) -> common.Status:
         """
@@ -81,15 +75,13 @@ class Timer(behaviour.Behaviour):
             :data:`~py_trees.common.Status.SUCCESS`.
 
         """
-        self.logger.debug("%s.update()" % self.__class__.__name__)
+        self.logger.debug(f"{self.__class__.__name__}.update()")
         current_time = time.time()
         if current_time > self.finish_time:
-            self.feedback_message = "timer ran out [{0}]".format(self.duration)
+            self.feedback_message = f"timer ran out [{self.duration}]"
             return common.Status.SUCCESS
         else:
             # do not show the time, it causes the tree to be 'changed' every tick
             # and we don't want to spam visualisations with almost meaningless updates
-            self.feedback_message = (
-                "still running"  # (%s)" % (self.finish_time - current_time)
-            )
+            self.feedback_message = "still running"  # (%s)" % (self.finish_time - current_time)
             return common.Status.RUNNING

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """Example showing how to create and tick a simple behaviour tree."""
 
 import py_trees

@@ -27,7 +27,6 @@ A py_trees demo.
 import argparse
 import sys
 import time
-import typing
 
 import py_trees
 import py_trees.console as console
@@ -46,24 +45,12 @@ def description() -> str:
     """
     content = "Demonstrates context switching with parallels and sequences.\n"
     content += "\n"
-    content += (
-        "A context switching behaviour is run in parallel with a work sequence.\n"
-    )
-    content += (
-        "Switching the context occurs in the initialise() and terminate() methods\n"
-    )
-    content += (
-        "of the context switching behaviour. Note that whether the sequence results\n"
-    )
-    content += (
-        "in failure or success, the context switch behaviour will always call the\n"
-    )
-    content += (
-        "terminate() method to restore the context. It will also call terminate()\n"
-    )
-    content += (
-        "to restore the context in the event of a higher priority parent cancelling\n"
-    )
+    content += "A context switching behaviour is run in parallel with a work sequence.\n"
+    content += "Switching the context occurs in the initialise() and terminate() methods\n"
+    content += "of the context switching behaviour. Note that whether the sequence results\n"
+    content += "in failure or success, the context switch behaviour will always call the\n"
+    content += "terminate() method to restore the context. It will also call terminate()\n"
+    content += "to restore the context in the event of a higher priority parent cancelling\n"
     content += "this parallel subtree.\n"
     if py_trees.console.has_colours:
         banner_line = console.green + "*" * 79 + "\n" + console.reset
@@ -79,7 +66,7 @@ def description() -> str:
     return s
 
 
-def epilog() -> typing.Optional[str]:
+def epilog() -> str | None:
     """
     Print a noodly epilog for --help.
 
@@ -87,11 +74,7 @@ def epilog() -> typing.Optional[str]:
        the noodly message
     """
     if py_trees.console.has_colours:
-        return (
-            console.cyan
-            + "And his noodly appendage reached forth to tickle the blessed...\n"
-            + console.reset
-        )
+        return console.cyan + "And his noodly appendage reached forth to tickle the blessed...\n" + console.reset
     else:
         return None
 
@@ -108,9 +91,7 @@ def command_line_argument_parser() -> argparse.ArgumentParser:
         epilog=epilog(),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument(
-        "-r", "--render", action="store_true", help="render dot tree to file"
-    )
+    parser.add_argument("-r", "--render", action="store_true", help="render dot tree to file")
     return parser
 
 
@@ -130,12 +111,12 @@ class ContextSwitch(py_trees.behaviour.Behaviour):
 
     def __init__(self, name: str = "ContextSwitch"):
         """Initialise with a behaviour name."""
-        super(ContextSwitch, self).__init__(name)
+        super().__init__(name)
         self.feedback_message = "no context"
 
     def initialise(self) -> None:
         """Backup and set a new context."""
-        self.logger.debug("%s.initialise()[switch context]" % (self.__class__.__name__))
+        self.logger.debug(f"{self.__class__.__name__}.initialise()[switch context]")
         # Some actions that:
         #   1. retrieve the current context from somewhere
         #   2. cache the context internally
@@ -144,18 +125,12 @@ class ContextSwitch(py_trees.behaviour.Behaviour):
 
     def update(self) -> py_trees.common.Status:
         """Just returns RUNNING while it waits for other activities to finish."""
-        self.logger.debug(
-            "%s.update()[RUNNING][%s]"
-            % (self.__class__.__name__, self.feedback_message)
-        )
+        self.logger.debug(f"{self.__class__.__name__}.update()[RUNNING][{self.feedback_message}]")
         return py_trees.common.Status.RUNNING
 
     def terminate(self, new_status: py_trees.common.Status) -> None:
         """Restore the context with the previously backed up context."""
-        self.logger.debug(
-            "%s.terminate()[%s->%s][restore context]"
-            % (self.__class__.__name__, self.status, new_status)
-        )
+        self.logger.debug(f"{self.__class__.__name__}.terminate()[{self.status}->{new_status}][restore context]")
         # Some actions that:
         #   1. restore the cached context
         self.feedback_message = "restored context"
@@ -168,9 +143,7 @@ def create_root() -> py_trees.behaviour.Behaviour:
     Returns:
         the root behaviour
     """
-    root = py_trees.composites.Parallel(
-        name="Parallel", policy=py_trees.common.ParallelPolicy.SuccessOnOne()
-    )
+    root = py_trees.composites.Parallel(name="Parallel", policy=py_trees.common.ParallelPolicy.SuccessOnOne())
     context_switch = ContextSwitch(name="Context")
     sequence = py_trees.composites.Sequence(name="Sequence", memory=True)
     for job in ["Action 1", "Action 2"]:
@@ -211,10 +184,10 @@ def main() -> None:
     root.setup_with_descendants()
     for i in range(1, 6):
         try:
-            print("\n--------- Tick {0} ---------\n".format(i))
+            print(f"\n--------- Tick {i} ---------\n")
             root.tick_once()
             print("\n")
-            print("{}".format(py_trees.display.unicode_tree(root, show_status=True)))
+            print(f"{py_trees.display.unicode_tree(root, show_status=True)}")
             time.sleep(1.0)
         except KeyboardInterrupt:
             break

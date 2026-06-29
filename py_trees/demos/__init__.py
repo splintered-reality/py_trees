@@ -13,17 +13,19 @@
 ##############################################################################
 
 # fmt: off
-from . import action  # usort:skip  # noqa: F401
-from . import blackboard  # usort:skip  # noqa: F401
-from . import blackboard_namespaces  # usort:skip  # noqa: F401
-from . import blackboard_remappings  # usort:skip  # noqa: F401
-from . import context_switching  # usort:skip  # noqa: F401
-from . import display_modes  # usort:skip  # noqa: F401
-from . import dot_graphs  # usort:skip  # noqa: F401
-from . import either_or  # usort:skip  # noqa: F401
-from . import lifecycle  # usort:skip  # noqa: F401
-from . import ports  # usort:skip  # noqa: F401
-from . import selector  # usort:skip  # noqa: F401
-from . import sequence  # usort:skip  # noqa: F401
-from . import stewardship  # usort:skip  # noqa: F401
+from . import (
+    action,  # noqa: F401
+    blackboard,  # noqa: F401
+    blackboard_namespaces,  # noqa: F401
+    blackboard_remappings,  # noqa: F401
+    context_switching,  # noqa: F401
+    display_modes,  # noqa: F401
+    dot_graphs,  # noqa: F401
+    either_or,  # noqa: F401
+    lifecycle,  # noqa: F401
+    ports,  # noqa: F401
+    selector,  # noqa: F401
+    sequence,  # noqa: F401
+    stewardship,  # noqa: F401
+)
 # fmt: on

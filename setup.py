@@ -3,7 +3,7 @@
 ################################################################################
 # This is a minimal setup.py for enabling ROS builds.
 #
-# For all other modes of development, use poetry and pyproject.toml
+# For all other modes of development, use uv and pyproject.toml
 ################################################################################
 
 from setuptools import find_packages, setup
@@ -13,7 +13,7 @@ install_requires = ["setuptools", "pydot"]
 # Some duplication of properties in:
 #  - setup.py,           (ros / legacy)
 #  - package.xml         (ros)
-#  - pyproject.toml      (poetry)
+#  - pyproject.toml      (uv)
 #  - py_trees/version.py (common)
 # Keep them in sync.
 d = setup(
@@ -56,6 +56,10 @@ d = setup(
             "py-trees-demo-selector = py_trees.demos.selector:main",
             "py-trees-demo-sequence = py_trees.demos.sequence:main",
             "py-trees-demo-tree-stewardship = py_trees.demos.stewardship:main",
+            "py-trees-demo-ports-basic = py_trees.demos.ports.basic:main",
+            "py-trees-demo-ports-nested-subtrees = py_trees.demos.ports.nested_subtrees:main",
+            "py-trees-demo-ports-remapping = py_trees.demos.ports.remapping:main",
+            "py-trees-demo-ports-xml-tree = py_trees.demos.ports.xml_tree:main",
         ],
     },
 )

@@ -12,12 +12,11 @@ import threading
 import time
 import typing
 
+import pytest
+
 import py_trees
 import py_trees.console as console
 import py_trees.tests
-
-import pytest
-
 
 ##############################################################################
 # Logging Level
@@ -42,11 +41,7 @@ class SleepInSetup(py_trees.behaviour.Behaviour):
         self.duration = duration
 
     def setup(self, **kwargs: typing.Any) -> None:
-        self.logger.debug(
-            "{}.setup() [{}][{}]".format(
-                self.__class__.__name__, self.name, time.time()
-            )
-        )
+        self.logger.debug(f"{self.__class__.__name__}.setup() [{self.name}][{time.time()}]")
         time.sleep(self.duration)
 
     def update(self) -> py_trees.common.Status:
@@ -63,9 +58,7 @@ class SetupVisitor(py_trees.visitors.VisitorBase):
         super().__init__(full=True)
 
     def run(self, behaviour: py_trees.behaviour.Behaviour) -> None:
-        behaviour.logger.debug(
-            "{}.setup() [Visited: {}]".format(self.__class__.__name__, behaviour.name)
-        )
+        behaviour.logger.debug(f"{self.__class__.__name__}.setup() [Visited: {behaviour.name}]")
 
 
 def create_fffrrs_repeat_status_queue(name: str) -> py_trees.behaviours.StatusQueue:
@@ -106,15 +99,9 @@ def test_selector_composite() -> None:
     console.banner("Selector")
     visitor = py_trees.visitors.DebugVisitor()
     tree = py_trees.composites.Selector(name="Selector", memory=False)
-    a = py_trees.decorators.Count(
-        name="Count A", child=create_fffrrs_repeat_status_queue(name="A")
-    )
-    b = py_trees.decorators.Count(
-        name="Count B", child=create_fffrrs_repeat_status_queue(name="B")
-    )
-    c = py_trees.decorators.Count(
-        name="Count C", child=create_rrr_continuous_success_status_queue(name="C")
-    )
+    a = py_trees.decorators.Count(name="Count A", child=create_fffrrs_repeat_status_queue(name="A"))
+    b = py_trees.decorators.Count(name="Count B", child=create_fffrrs_repeat_status_queue(name="B"))
+    c = py_trees.decorators.Count(name="Count C", child=create_rrr_continuous_success_status_queue(name="C"))
     tree.add_child(a)
     tree.add_child(b)
     tree.add_child(c)
@@ -223,15 +210,11 @@ def test_mixed_tree() -> None:
             eventually=py_trees.common.Status.FAILURE,
         ),
     )
-    c = py_trees.decorators.Count(
-        name="Count C", child=create_rrr_continuous_success_status_queue(name="C")
-    )
+    c = py_trees.decorators.Count(name="Count C", child=create_rrr_continuous_success_status_queue(name="C"))
     sequence.add_child(b)
     sequence.add_child(c)
 
-    d = py_trees.decorators.Count(
-        name="Count D", child=create_rrr_continuous_success_status_queue(name="D")
-    )
+    d = py_trees.decorators.Count(name="Count D", child=create_rrr_continuous_success_status_queue(name="D"))
     root = py_trees.composites.Selector(name="Selector", memory=False)
     root.add_child(a)
     root.add_child(sequence)
@@ -422,9 +405,7 @@ def test_success_failure_tree() -> None:
     console.banner("Success Failure Tree")
     root = py_trees.composites.Selector(name="Root", memory=False)
     failure = py_trees.behaviours.Failure(name="Failure")
-    failure2 = py_trees.decorators.Inverter(
-        name="Failure2", child=py_trees.behaviours.Success(name="Success")
-    )
+    failure2 = py_trees.decorators.Inverter(name="Failure2", child=py_trees.behaviours.Success(name="Success"))
     success = py_trees.behaviours.Success(name="Success")
     root.add_child(failure)
     root.add_child(failure2)
@@ -620,63 +601,45 @@ def test_failed_tree() -> None:
 def test_tree_errors() -> None:
     console.banner("Tree Errors")
     invalid_root = 5.0
-    print(
-        "__init__ raises a 'TypeError' due to invalid root variable type being passed"
-    )
+    print("__init__ raises a 'TypeError' due to invalid root variable type being passed")
 
     with pytest.raises(TypeError) as context:  # if raised, context survives
         # intentional error -> silence mypy
-        py_trees.trees.BehaviourTree(invalid_root)  # type: ignore[arg-type]
+        py_trees.trees.BehaviourTree(invalid_root)  # type: ignore
         py_trees.tests.print_assert_details("TypeError raised", "raised", "not raised")
     py_trees.tests.print_assert_details("TypeError raised", "yes", "yes")
     assert "TypeError" == context.typename
-    py_trees.tests.print_assert_details(
-        "  substring match", "instance", f"{context.value}"
-    )
+    py_trees.tests.print_assert_details("  substring match", "instance", f"{context.value}")
     assert "instance" in str(context.value)
 
     root = py_trees.behaviours.Success(name="Success")
     print("__init__ raises a 'RuntimeError' because we try to prune the root node")
 
-    with pytest.raises(
-        RuntimeError
-    ) as cant_prune_root_context:  # if raised, context survives
+    with pytest.raises(RuntimeError) as cant_prune_root_context:  # if raised, context survives
         tree = py_trees.trees.BehaviourTree(root)
         tree.prune_subtree(root.id)
-        py_trees.tests.print_assert_details(
-            "RuntimeError raised", "raised", "not raised"
-        )
+        py_trees.tests.print_assert_details("RuntimeError raised", "raised", "not raised")
     py_trees.tests.print_assert_details("RuntimeError raised", "yes", "yes")
     assert "RuntimeError" == cant_prune_root_context.typename
-    py_trees.tests.print_assert_details(
-        "  substring match", "prune", f"{cant_prune_root_context.value}"
-    )
+    py_trees.tests.print_assert_details("  substring match", "prune", f"{cant_prune_root_context.value}")
     assert "prune" in str(cant_prune_root_context.value)
 
     root = py_trees.behaviours.Success(name="Success")
     new_subtree = py_trees.behaviours.Success(name="Success")
     print("__init__ raises a 'RuntimeError' because we try to replace the root node")
 
-    with pytest.raises(
-        RuntimeError
-    ) as cant_replace_root_context:  # if raised, context survives
+    with pytest.raises(RuntimeError) as cant_replace_root_context:  # if raised, context survives
         tree = py_trees.trees.BehaviourTree(root)
         tree.replace_subtree(root.id, new_subtree)
-        py_trees.tests.print_assert_details(
-            "RuntimeError raised", "raised", "not raised"
-        )
+        py_trees.tests.print_assert_details("RuntimeError raised", "raised", "not raised")
     py_trees.tests.print_assert_details("RuntimeError raised", "yes", "yes")
     assert "RuntimeError" == cant_replace_root_context.typename
-    py_trees.tests.print_assert_details(
-        "  substring match", "replace", f"{cant_replace_root_context.value}"
-    )
+    py_trees.tests.print_assert_details("  substring match", "replace", f"{cant_replace_root_context.value}")
     assert "replace" in str(cant_replace_root_context.value)
 
     root = py_trees.behaviours.Success(name="Success")
     new_subtree = py_trees.behaviours.Success(name="Success")
-    print(
-        "__init__ raises a 'TypeError' because we try to insert a subtree beneath a standalone behaviour"
-    )
+    print("__init__ raises a 'TypeError' because we try to insert a subtree beneath a standalone behaviour")
 
     with pytest.raises(TypeError) as context:  # if raised, context survives
         tree = py_trees.trees.BehaviourTree(root)
@@ -684,9 +647,7 @@ def test_tree_errors() -> None:
         py_trees.tests.print_assert_details("TypeError raised", "raised", "not raised")
     py_trees.tests.print_assert_details("TypeError raised", "yes", "yes")
     assert "TypeError" == context.typename
-    py_trees.tests.print_assert_details(
-        "  substring match", "Composite", f"{context.value}"
-    )
+    py_trees.tests.print_assert_details("  substring match", "Composite", f"{context.value}")
     assert "Composite" in str(context.value)
 
 
@@ -700,74 +661,50 @@ def test_tree_setup() -> None:
     root.add_children([first, second, third])
     tree = py_trees.trees.BehaviourTree(root=root)
     print("\n--------- Assertions ---------\n")
-    print(
-        console.cyan + "Short Timeout: " + console.yellow + "No Visitor" + console.reset
-    )
+    print(console.cyan + "Short Timeout: " + console.yellow + "No Visitor" + console.reset)
 
     with pytest.raises(RuntimeError) as context:  # if raised, context survives
         tree.setup(timeout=2 * duration)
-        py_trees.tests.print_assert_details(
-            "RuntimeError raised", "raised", "not raised"
-        )
+        py_trees.tests.print_assert_details("RuntimeError raised", "raised", "not raised")
     py_trees.tests.print_assert_details("RuntimeError raised", "yes", "yes")
     assert "RuntimeError" == context.typename
-    py_trees.tests.print_assert_details(
-        "  substring match", "timed out", f"{context.value}"
-    )
+    py_trees.tests.print_assert_details("  substring match", "timed out", f"{context.value}")
     assert "timed out" in str(context.value)
 
     time.sleep(duration)  # give the setup timer thread a chance to be cancelled
     assert threading.active_count() == 1
 
     print("\n--------- Assertions ---------\n")
-    print(
-        console.cyan + "Short timeout: " + console.yellow + "No Visitor" + console.reset
-    )
+    print(console.cyan + "Short timeout: " + console.yellow + "No Visitor" + console.reset)
     try:
         tree.setup(timeout=4 * duration)
     except RuntimeError:
-        assert False, "should not have timed out"
+        raise AssertionError("should not have timed out") from None
     time.sleep(duration)  # give the setup timer thread a chance to be cancelled
     assert threading.active_count() == 1
 
     print("\n--------- Assertions ---------\n")
-    print(
-        console.cyan
-        + "Long Timeout: "
-        + console.yellow
-        + "With Visitor"
-        + console.reset
-    )
+    print(console.cyan + "Long Timeout: " + console.yellow + "With Visitor" + console.reset)
     visitor = SetupVisitor()
 
     with pytest.raises(RuntimeError) as context:  # if raised, context survives
         tree.setup(timeout=2 * duration, visitor=visitor)
-        py_trees.tests.print_assert_details(
-            "RuntimeError raised", "raised", "not raised"
-        )
+        py_trees.tests.print_assert_details("RuntimeError raised", "raised", "not raised")
     py_trees.tests.print_assert_details("RuntimeError raised", "yes", "yes")
     assert "RuntimeError" == context.typename
-    py_trees.tests.print_assert_details(
-        "  substring match", "timed out", f"{context.value}"
-    )
+    py_trees.tests.print_assert_details("  substring match", "timed out", f"{context.value}")
     assert "timed out" in str(context.value)
 
     time.sleep(duration)  # give the setup timer thread a chance to be cancelled
     assert threading.active_count() == 1
 
     print("\n--------- Assertions ---------\n")
-    print(
-        console.cyan
-        + "Long timeout: "
-        + console.yellow
-        + "With Visitor"
-        + console.reset
-    )
+    print(console.cyan + "Long timeout: " + console.yellow + "With Visitor" + console.reset)
     visitor = SetupVisitor()
     try:
         tree.setup(timeout=4 * duration, visitor=visitor)
     except RuntimeError:
-        assert False, "should not have timed out"
+        raise AssertionError("should not have timed out") from None
     time.sleep(duration)  # give the setup timer thread a chance to be cancelled
     assert threading.active_count() == 1
 
@@ -777,7 +714,7 @@ def test_tree_setup() -> None:
     try:
         tree.setup()
     except RuntimeError:
-        assert False, "should not have timed out"
+        raise AssertionError("should not have timed out") from None
     time.sleep(duration)  # give the setup timer thread a chance to be cancelled
     assert threading.active_count() == 1
 
@@ -821,14 +758,14 @@ def test_pre_post_tick_activity_sequence() -> None:
     ]
     print("")
     assert len(breadcrumbs) == len(expected_breadcrumbs)
-    for expected, actual in zip(expected_breadcrumbs, breadcrumbs):
+    for expected, actual in zip(expected_breadcrumbs, breadcrumbs, strict=False):
         print(
             console.green
             + "Breadcrumb..................."
             + console.cyan
-            + "{} ".format(expected)
+            + f"{expected} "
             + console.yellow
-            + "[{}]".format(actual)
+            + f"[{actual}]"
         )
         assert expected == actual
 

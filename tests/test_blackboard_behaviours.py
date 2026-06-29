@@ -11,13 +11,13 @@
 import operator
 import typing
 
+import pytest
+
 import py_trees
 import py_trees.console as console
 import py_trees.tests
-import pytest
 from py_trees.behaviours import CheckBlackboardVariableExists, WaitForBlackboardVariable
 from py_trees.blackboard import Blackboard, Client
-
 from py_trees.common import Status
 
 ##############################################################################
@@ -32,7 +32,7 @@ from py_trees.common import Status
 ##############################################################################
 
 
-class Nested(object):
+class Nested:
     def __init__(self) -> None:
         self.foo = "bar"
 
@@ -80,26 +80,22 @@ def test_variable_exists() -> None:
     )
     tuples.append(
         (
-            CheckBlackboardVariableExists(
-                name="check_nested_foo_exists", variable_name="nested.foo"
-            ),
+            CheckBlackboardVariableExists(name="check_nested_foo_exists", variable_name="nested.foo"),
             Status.SUCCESS,
         )
     )
     tuples.append(
         (
-            CheckBlackboardVariableExists(
-                name="check_nested_bar_exists", variable_name="nested.bar"
-            ),
+            CheckBlackboardVariableExists(name="check_nested_bar_exists", variable_name="nested.bar"),
             Status.FAILURE,
         )
     )
-    for b, unused in tuples:
+    for b, _unused in tuples:
         b.tick_once()
     py_trees.tests.print_assert_banner()
     for b, asserted_result in tuples:
         py_trees.tests.print_assert_details(
-            text="looking for '{}'".format(b.variable_name),
+            text=f"looking for '{b.variable_name}'",
             expected=asserted_result,
             result=b.status,
         )
@@ -124,26 +120,22 @@ def test_wait_for_variable() -> None:
     )
     tuples.append(
         (
-            WaitForBlackboardVariable(
-                name="Wait for nested.foo", variable_name="nested.foo"
-            ),
+            WaitForBlackboardVariable(name="Wait for nested.foo", variable_name="nested.foo"),
             Status.SUCCESS,
         )
     )
     tuples.append(
         (
-            WaitForBlackboardVariable(
-                name="Wait for nested.bar", variable_name="nested.bar"
-            ),
+            WaitForBlackboardVariable(name="Wait for nested.bar", variable_name="nested.bar"),
             Status.RUNNING,
         )
     )
-    for b, unused in tuples:
+    for b, _unused in tuples:
         b.tick_once()
     py_trees.tests.print_assert_banner()
     for b, asserted_result in tuples:
         py_trees.tests.print_assert_details(
-            text="waiting for '{}'".format(b.variable_name),
+            text=f"waiting for '{b.variable_name}'",
             expected=asserted_result,
             result=b.status,
         )
@@ -158,9 +150,7 @@ def test_unset_blackboard_variable() -> None:
     clear_bar = py_trees.behaviours.UnsetBlackboardVariable(name="Clear Bar", key="bar")
     py_trees.display.unicode_blackboard()
     py_trees.tests.print_assert_banner()
-    py_trees.tests.print_assert_details(
-        text="'/foo' exists", expected=True, result="/foo" in Blackboard.storage.keys()
-    )
+    py_trees.tests.print_assert_details(text="'/foo' exists", expected=True, result="/foo" in Blackboard.storage.keys())
     assert "/foo" in Blackboard.storage.keys()
     print("Ticking 'Clear Foo' once...")
     clear_foo.tick_once()
@@ -202,15 +192,11 @@ def test_set_blackboard_variable() -> None:
     blackboard.unset("foo")
     py_trees.tests.print_assert_banner()
     set_foo.tick_once()
-    py_trees.tests.print_assert_details(
-        text="Set 'foo' (doesn't exist)", expected="bar", result=blackboard.foo
-    )
+    py_trees.tests.print_assert_details(text="Set 'foo' (doesn't exist)", expected="bar", result=blackboard.foo)
     assert "bar" == blackboard.foo
     blackboard.foo = "whoop"
     set_foo.tick_once()
-    py_trees.tests.print_assert_details(
-        text="Set 'foo' (exists)", expected="bar", result=blackboard.foo
-    )
+    py_trees.tests.print_assert_details(text="Set 'foo' (exists)", expected="bar", result=blackboard.foo)
     blackboard.unset("foo")
     py_trees.tests.print_assert_details(
         text="Set 'foo' Status",
@@ -225,9 +211,7 @@ def test_set_blackboard_variable() -> None:
     assert "bar" == blackboard.foo
     blackboard.foo = "whoop"
     conservative_set_foo.tick_once()
-    py_trees.tests.print_assert_details(
-        text="Conservative Set 'foo' (exists)", expected="whoop", result=blackboard.foo
-    )
+    py_trees.tests.print_assert_details(text="Conservative Set 'foo' (exists)", expected="whoop", result=blackboard.foo)
     assert "whoop" == blackboard.foo
     py_trees.tests.print_assert_details(
         text="Conservative Set 'foo' Status",
@@ -243,9 +227,7 @@ def test_set_blackboard_variable() -> None:
         overwrite=True,
     )
     nested_set_foo.tick_once()
-    py_trees.tests.print_assert_details(
-        text="Nested set foo (value)", expected="dude", result=blackboard.nested.foo
-    )
+    py_trees.tests.print_assert_details(text="Nested set foo (value)", expected="dude", result=blackboard.nested.foo)
     assert blackboard.nested.foo == "dude"
     py_trees.tests.print_assert_details(
         text="Nested set foo (status)",
@@ -277,14 +259,10 @@ def test_set_blackboard_variable() -> None:
         overwrite=True,
     )
     set_blackboard_variable_from_generator.tick_once()
-    py_trees.tests.print_assert_details(
-        text="Generated Foo", expected=1, result=blackboard.foo
-    )
+    py_trees.tests.print_assert_details(text="Generated Foo", expected=1, result=blackboard.foo)
     assert blackboard.foo == 1
     set_blackboard_variable_from_generator.tick_once()
-    py_trees.tests.print_assert_details(
-        text="Generated Foo", expected=2, result=blackboard.foo
-    )
+    py_trees.tests.print_assert_details(text="Generated Foo", expected=2, result=blackboard.foo)
     assert blackboard.foo == 2
 
 
@@ -297,9 +275,7 @@ def test_check_variable_value() -> None:
         (
             py_trees.behaviours.CheckBlackboardVariableValue(
                 name="check_foo_equals_bar",
-                check=py_trees.common.ComparisonExpression(
-                    variable="foo", value="bar", operator=operator.eq
-                ),
+                check=py_trees.common.ComparisonExpression(variable="foo", value="bar", operator=operator.eq),
             ),
             Status.SUCCESS,
         )
@@ -308,9 +284,7 @@ def test_check_variable_value() -> None:
         (
             py_trees.behaviours.CheckBlackboardVariableValue(
                 name="check_foo_equals_foo",
-                check=py_trees.common.ComparisonExpression(
-                    variable="foo", value="foo", operator=operator.eq
-                ),
+                check=py_trees.common.ComparisonExpression(variable="foo", value="foo", operator=operator.eq),
             ),
             Status.FAILURE,
         )
@@ -319,9 +293,7 @@ def test_check_variable_value() -> None:
         (
             py_trees.behaviours.CheckBlackboardVariableValue(
                 name="check_non_existant_bar_equals_bar",
-                check=py_trees.common.ComparisonExpression(
-                    variable="bar", value="bar", operator=operator.eq
-                ),
+                check=py_trees.common.ComparisonExpression(variable="bar", value="bar", operator=operator.eq),
             ),
             Status.FAILURE,
         )
@@ -330,9 +302,7 @@ def test_check_variable_value() -> None:
         (
             py_trees.behaviours.CheckBlackboardVariableValue(
                 name="check_nested_foo_equals_bar",
-                check=py_trees.common.ComparisonExpression(
-                    variable="nested.foo", value="bar", operator=operator.eq
-                ),
+                check=py_trees.common.ComparisonExpression(variable="nested.foo", value="bar", operator=operator.eq),
             ),
             Status.SUCCESS,
         )
@@ -341,22 +311,18 @@ def test_check_variable_value() -> None:
         (
             py_trees.behaviours.CheckBlackboardVariableValue(
                 name="check_nested_foo_equals_foo",
-                check=py_trees.common.ComparisonExpression(
-                    variable="nested.foo", value="foo", operator=operator.eq
-                ),
+                check=py_trees.common.ComparisonExpression(variable="nested.foo", value="foo", operator=operator.eq),
             ),
             Status.FAILURE,
         )
     )
-    for b, unused in tuples:
+    for b, _unused in tuples:
         b.tick_once()
-        print("Feedback message {}".format(b.feedback_message))
+        print(f"Feedback message {b.feedback_message}")
     print("")
     py_trees.tests.print_assert_banner()
     for b, asserted_result in tuples:
-        py_trees.tests.print_assert_details(
-            text=b.name, expected=asserted_result, result=b.status
-        )
+        py_trees.tests.print_assert_details(text=b.name, expected=asserted_result, result=b.status)
         assert b.status == asserted_result
 
 
@@ -369,9 +335,7 @@ def test_check_variable_value_inverted() -> None:
         (
             py_trees.behaviours.CheckBlackboardVariableValue(
                 name="check_foo_not_equals_bar",
-                check=py_trees.common.ComparisonExpression(
-                    variable="foo", value="bar", operator=operator.ne
-                ),
+                check=py_trees.common.ComparisonExpression(variable="foo", value="bar", operator=operator.ne),
             ),
             Status.FAILURE,
         )
@@ -380,9 +344,7 @@ def test_check_variable_value_inverted() -> None:
         (
             py_trees.behaviours.CheckBlackboardVariableValue(
                 name="check_foo_not_equals_foo",
-                check=py_trees.common.ComparisonExpression(
-                    variable="foo", value="foo", operator=operator.ne
-                ),
+                check=py_trees.common.ComparisonExpression(variable="foo", value="foo", operator=operator.ne),
             ),
             Status.SUCCESS,
         )
@@ -391,9 +353,7 @@ def test_check_variable_value_inverted() -> None:
         (
             py_trees.behaviours.CheckBlackboardVariableValue(
                 name="check_non_existant_bar_not_equals_bar",
-                check=py_trees.common.ComparisonExpression(
-                    variable="bar", value="bar", operator=operator.ne
-                ),
+                check=py_trees.common.ComparisonExpression(variable="bar", value="bar", operator=operator.ne),
             ),
             Status.FAILURE,
         )
@@ -402,9 +362,7 @@ def test_check_variable_value_inverted() -> None:
         (
             py_trees.behaviours.CheckBlackboardVariableValue(
                 name="check_nested_foo_not_equals_bar",
-                check=py_trees.common.ComparisonExpression(
-                    variable="nested.foo", value="bar", operator=operator.ne
-                ),
+                check=py_trees.common.ComparisonExpression(variable="nested.foo", value="bar", operator=operator.ne),
             ),
             Status.FAILURE,
         )
@@ -413,22 +371,18 @@ def test_check_variable_value_inverted() -> None:
         (
             py_trees.behaviours.CheckBlackboardVariableValue(
                 name="check_nested_foo_not_equals_foo",
-                check=py_trees.common.ComparisonExpression(
-                    variable="nested.foo", value="foo", operator=operator.ne
-                ),
+                check=py_trees.common.ComparisonExpression(variable="nested.foo", value="foo", operator=operator.ne),
             ),
             Status.SUCCESS,
         )
     )
-    for b, unused in tuples:
+    for b, _unused in tuples:
         b.tick_once()
-        print("Feedback message {}".format(b.feedback_message))
+        print(f"Feedback message {b.feedback_message}")
     print("")
     py_trees.tests.print_assert_banner()
     for b, asserted_result in tuples:
-        py_trees.tests.print_assert_details(
-            text=b.name, expected=asserted_result, result=b.status
-        )
+        py_trees.tests.print_assert_details(text=b.name, expected=asserted_result, result=b.status)
         assert b.status == asserted_result
 
 
@@ -441,9 +395,7 @@ def test_wait_for_variable_value() -> None:
         (
             py_trees.behaviours.WaitForBlackboardVariableValue(
                 name="check_foo_equals_bar",
-                check=py_trees.common.ComparisonExpression(
-                    variable="foo", value="bar", operator=operator.eq
-                ),
+                check=py_trees.common.ComparisonExpression(variable="foo", value="bar", operator=operator.eq),
             ),
             Status.SUCCESS,
         )
@@ -452,9 +404,7 @@ def test_wait_for_variable_value() -> None:
         (
             py_trees.behaviours.WaitForBlackboardVariableValue(
                 name="check_foo_equals_foo",
-                check=py_trees.common.ComparisonExpression(
-                    variable="foo", value="foo", operator=operator.eq
-                ),
+                check=py_trees.common.ComparisonExpression(variable="foo", value="foo", operator=operator.eq),
             ),
             Status.RUNNING,
         )
@@ -463,9 +413,7 @@ def test_wait_for_variable_value() -> None:
         (
             py_trees.behaviours.WaitForBlackboardVariableValue(
                 name="check_non_existant_bar_equals_bar",
-                check=py_trees.common.ComparisonExpression(
-                    variable="bar", value="bar", operator=operator.eq
-                ),
+                check=py_trees.common.ComparisonExpression(variable="bar", value="bar", operator=operator.eq),
             ),
             Status.RUNNING,
         )
@@ -474,9 +422,7 @@ def test_wait_for_variable_value() -> None:
         (
             py_trees.behaviours.WaitForBlackboardVariableValue(
                 name="check_nested_foo_equals_bar",
-                check=py_trees.common.ComparisonExpression(
-                    variable="nested.foo", value="bar", operator=operator.eq
-                ),
+                check=py_trees.common.ComparisonExpression(variable="nested.foo", value="bar", operator=operator.eq),
             ),
             Status.SUCCESS,
         )
@@ -485,22 +431,18 @@ def test_wait_for_variable_value() -> None:
         (
             py_trees.behaviours.WaitForBlackboardVariableValue(
                 name="check_nested_foo_equals_foo",
-                check=py_trees.common.ComparisonExpression(
-                    variable="nested.foo", value="foo", operator=operator.eq
-                ),
+                check=py_trees.common.ComparisonExpression(variable="nested.foo", value="foo", operator=operator.eq),
             ),
             Status.RUNNING,
         )
     )
-    for b, unused in tuples:
+    for b, _unused in tuples:
         b.tick_once()
-        print("Feedback message {}".format(b.feedback_message))
+        print(f"Feedback message {b.feedback_message}")
     print("")
     py_trees.tests.print_assert_banner()
     for b, asserted_result in tuples:
-        py_trees.tests.print_assert_details(
-            text=b.name, expected=asserted_result, result=b.status
-        )
+        py_trees.tests.print_assert_details(text=b.name, expected=asserted_result, result=b.status)
         assert b.status == asserted_result
 
 
@@ -512,18 +454,10 @@ def test_check_variable_values() -> None:
     b = py_trees.behaviours.CheckBlackboardVariableValues(
         name="Checks",
         checks=[
-            py_trees.common.ComparisonExpression(
-                variable="a", operator=operator.eq, value="a"
-            ),
-            py_trees.common.ComparisonExpression(
-                variable="b", operator=operator.eq, value="b"
-            ),
-            py_trees.common.ComparisonExpression(
-                variable="c", operator=operator.eq, value="c"
-            ),
-            py_trees.common.ComparisonExpression(
-                variable="d", operator=operator.eq, value="d"
-            ),
+            py_trees.common.ComparisonExpression(variable="a", operator=operator.eq, value="a"),
+            py_trees.common.ComparisonExpression(variable="b", operator=operator.eq, value="b"),
+            py_trees.common.ComparisonExpression(variable="c", operator=operator.eq, value="c"),
+            py_trees.common.ComparisonExpression(variable="d", operator=operator.eq, value="d"),
         ],
         operator=operator.and_,
         namespace="results",
@@ -538,7 +472,7 @@ def test_check_variable_values() -> None:
         text: str
         result: py_trees.common.Status
 
-    datasets: typing.List[DataSets] = [
+    datasets: list[DataSets] = [
         {
             "a": "a",
             "b": "b",
@@ -634,9 +568,7 @@ def test_check_blackboard_to_status() -> None:
     }:
         blackboard.status = result
         b.tick_once()
-        py_trees.tests.print_assert_details(
-            text=f"ToStatus - {result}", expected=result, result=b.status
-        )
+        py_trees.tests.print_assert_details(text=f"ToStatus - {result}", expected=result, result=b.status)
         assert b.status == blackboard.status
 
     blackboard.unset("status")
@@ -647,9 +579,7 @@ def test_check_blackboard_to_status() -> None:
         py_trees.tests.print_assert_details("KeyError raised", "raised", "not raised")
     py_trees.tests.print_assert_details("KeyError raised", "yes", "yes")
     assert "KeyError" == context.typename
-    py_trees.tests.print_assert_details(
-        "Substring match", "yet exist", f"{context.value}"
-    )
+    py_trees.tests.print_assert_details("Substring match", "yet exist", f"{context.value}")
     assert "yet exist" in str(context.value)
 
     blackboard.status = 5
@@ -660,7 +590,5 @@ def test_check_blackboard_to_status() -> None:
         py_trees.tests.print_assert_details("TypeError raised", "raised", "not raised")
     py_trees.tests.print_assert_details("TypeError raised", "yes", "yes")
     assert "TypeError" == typeerror_context.typename
-    py_trees.tests.print_assert_details(
-        "Substring match", "not of type", f"{typeerror_context.value}"
-    )
+    py_trees.tests.print_assert_details("Substring match", "not of type", f"{typeerror_context.value}")
     assert "not of type" in str(typeerror_context.value)

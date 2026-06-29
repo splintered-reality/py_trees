@@ -19,7 +19,7 @@ import uuid
 from collections.abc import Callable
 from enum import Enum
 from types import UnionType
-from typing import Any, get_args, get_origin, Protocol, Union
+from typing import Any, Protocol, Union, get_args, get_origin
 
 import py_trees
 
@@ -127,13 +127,11 @@ def _convert_simple(value: str, target_type: type) -> Any:
     if target_type is float:
         return float(value)
     if _is_enum_type(target_type):
-        return _convert_to_enum(value, target_type)
+        return _convert_to_enum(value, target_type)  # type: ignore
     return value
 
 
-def convert_str_to_type(
-    value: str, target_type: type | UnionType, logger: PortsLogger | None = None
-) -> Any:
+def convert_str_to_type(value: str, target_type: type | UnionType, logger: PortsLogger | None = None) -> Any:
     """Convert a string *value* to *target_type* (handles unions, list, tuple, enum)."""
     if logger is None:
         logger = NOOP_LOGGER
@@ -209,9 +207,7 @@ def apply_type_hints(
     if logger is None:
         logger = NOOP_LOGGER
 
-    sig = inspect.signature(
-        constructor.__init__ if inspect.isclass(constructor) else constructor
-    )
+    sig = inspect.signature(constructor.__init__ if inspect.isclass(constructor) else constructor)
     hints: dict[str, Any] = {}
     for pname, param in sig.parameters.items():
         if pname == "self":
@@ -261,9 +257,7 @@ def apply_type_hints(
             continue
 
         if converted[k] == v:
-            logger.warning(
-                f"Failed to convert '{k}: {v}' to type '{tp}'. Preserved original value."
-            )
+            logger.warning(f"Failed to convert '{k}: {v}' to type '{tp}'. Preserved original value.")
             success = False
 
     return converted, success
@@ -276,9 +270,7 @@ def reset_blackboard_key(
 ) -> None:
     """Clear the stored value for *key_name* via its registered client."""
     if not blackboard_client.is_registered(key_name):
-        raise KeyError(
-            f"{node_name}: Port '{key_name}' is not registered in the blackboard client."
-        )
+        raise KeyError(f"{node_name}: Port '{key_name}' is not registered in the blackboard client.")
 
     try:
         blackboard_client.unset(key_name)
@@ -335,9 +327,7 @@ def generate_node_name(
     return prefix + use_name
 
 
-def sanitize_name_for_blackboard_use(
-    component: str, extra_allowed_chars: str = ""
-) -> str:
+def sanitize_name_for_blackboard_use(component: str, extra_allowed_chars: str = "") -> str:
     """Replace characters py_trees treats as separators with underscores."""
     safe_extra = re.escape(extra_allowed_chars)
     expr_str = f"[^A-Za-z0-9_-{safe_extra}]"
@@ -385,9 +375,7 @@ def find_node_by_name(
         return results
 
     result_list: list[py_trees.behaviour.Behaviour] = []
-    _find_node_by_name_recursive(
-        node, name, strip_prefix, strip_uuid, result_list, stop_at_first=True
-    )
+    _find_node_by_name_recursive(node, name, strip_prefix, strip_uuid, result_list, stop_at_first=True)
     return result_list[0] if result_list else None
 
 
@@ -400,9 +388,7 @@ def _find_node_by_name_recursive(
     stop_at_first: bool = False,
 ) -> bool:
     """Depth-first implementation for :func:`find_node_by_name`."""
-    mod_node_name = (
-        get_base_name(node.name, strip_uuid=strip_uuid) if strip_prefix else node.name
-    )
+    mod_node_name = get_base_name(node.name, strip_uuid=strip_uuid) if strip_prefix else node.name
     if mod_node_name == name:
         results.append(node)
         if stop_at_first:
@@ -410,21 +396,15 @@ def _find_node_by_name_recursive(
 
     if hasattr(node, "children") and node.children:
         for c in node.children:
-            if _find_node_by_name_recursive(
-                c, name, strip_prefix, strip_uuid, results, stop_at_first
-            ):
+            if _find_node_by_name_recursive(c, name, strip_prefix, strip_uuid, results, stop_at_first):
                 return True
     elif hasattr(node, "child") and node.child:
-        if _find_node_by_name_recursive(
-            node.child, name, strip_prefix, strip_uuid, results, stop_at_first
-        ):
+        if _find_node_by_name_recursive(node.child, name, strip_prefix, strip_uuid, results, stop_at_first):  # type: ignore
             return True
     elif (
         hasattr(node, "decorated")
         and node.decorated
-        and _find_node_by_name_recursive(
-            node.decorated, name, strip_prefix, strip_uuid, results, stop_at_first
-        )
+        and _find_node_by_name_recursive(node.decorated, name, strip_prefix, strip_uuid, results, stop_at_first)  # type: ignore
     ):
         return True
 

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """Example demonstrating the use of one-shot decorator nodes."""
 
 import py_trees
@@ -17,6 +16,4 @@ if __name__ == "__main__":
         behaviour=sequence,
         policy=py_trees.common.OneShotPolicy.ON_COMPLETION,
     )
-    py_trees.display.render_dot_tree(
-        root, py_trees.common.string_to_visibility_level("all")
-    )
+    py_trees.display.render_dot_tree(root, py_trees.common.string_to_visibility_level("all"))

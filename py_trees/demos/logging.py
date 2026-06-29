@@ -73,7 +73,7 @@ def description(root: py_trees.behaviour.Behaviour) -> str:
     return s
 
 
-def epilog() -> typing.Optional[str]:
+def epilog() -> str | None:
     """
     Print a noodly epilog for --help.
 
@@ -81,11 +81,7 @@ def epilog() -> typing.Optional[str]:
        the noodly message
     """
     if py_trees.console.has_colours:
-        return (
-            console.cyan
-            + "And his noodly appendage reached forth to tickle the blessed...\n"
-            + console.reset
-        )
+        return console.cyan + "And his noodly appendage reached forth to tickle the blessed...\n" + console.reset
     else:
         return None
 
@@ -103,9 +99,7 @@ def command_line_argument_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     group = parser.add_mutually_exclusive_group()
-    group.add_argument(
-        "-r", "--render", action="store_true", help="render dot tree to file"
-    )
+    group.add_argument("-r", "--render", action="store_true", help="render dot tree to file")
     group.add_argument(
         "-i",
         "--interactive",

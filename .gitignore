@@ -1,3 +1,4 @@
+.claude
 .coverage
 .venv
 py_trees.egg-info
@@ -21,5 +22,4 @@ nosetests.html
 eclipse
 dump.json
 tests/blackboard.cprofile
-.tox
 testies

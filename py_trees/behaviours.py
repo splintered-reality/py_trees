@@ -35,7 +35,7 @@ def success(self: behaviour.Behaviour) -> common.Status:
     Returns:
         behaviour status
     """
-    self.logger.debug("%s.update()" % self.__class__.__name__)
+    self.logger.debug(f"{self.__class__.__name__}.update()")
     self.feedback_message = "success"
     return common.Status.SUCCESS
 
@@ -49,7 +49,7 @@ def failure(self: behaviour.Behaviour) -> common.Status:
     Returns:
         behaviour status
     """
-    self.logger.debug("%s.update()" % self.__class__.__name__)
+    self.logger.debug(f"{self.__class__.__name__}.update()")
     self.feedback_message = "failure"
     return common.Status.FAILURE
 
@@ -63,7 +63,7 @@ def running(self: behaviour.Behaviour) -> common.Status:
     Returns:
         behaviour status
     """
-    self.logger.debug("%s.update()" % self.__class__.__name__)
+    self.logger.debug(f"{self.__class__.__name__}.update()")
     self.feedback_message = "running"
     return common.Status.RUNNING
 
@@ -77,7 +77,7 @@ def dummy(self: behaviour.Behaviour) -> common.Status:
     Returns:
         behaviour status
     """
-    self.logger.debug("%s.update()" % self.__class__.__name__)
+    self.logger.debug(f"{self.__class__.__name__}.update()")
     self.feedback_message = "crash test dummy"
     return common.Status.RUNNING
 
@@ -123,7 +123,7 @@ class Periodic(behaviour.Behaviour):
     """
 
     def __init__(self, name: str, n: int):
-        super(Periodic, self).__init__(name)
+        super().__init__(name)
         self.count = 0
         self.period = n
         self.response = common.Status.RUNNING
@@ -169,10 +169,10 @@ class StatusQueue(behaviour.Behaviour):
     def __init__(
         self,
         name: str,
-        queue: typing.List[common.Status],
-        eventually: typing.Optional[common.Status],
+        queue: list[common.Status],
+        eventually: common.Status | None,
     ):
-        super(StatusQueue, self).__init__(name)
+        super().__init__(name)
         self.queue = queue
         self.eventually = eventually
         self.current_queue = copy.copy(queue)
@@ -184,7 +184,7 @@ class StatusQueue(behaviour.Behaviour):
         Returns:
             the :class:`~py_trees.common.Status` from the popped queue / eventual element
         """
-        self.logger.debug("%s.update()" % (self.__class__.__name__))
+        self.logger.debug(f"{self.__class__.__name__}.update()")
         if self.current_queue:
             status = self.current_queue.pop(0)
         elif self.eventually is not None:
@@ -201,9 +201,7 @@ class StatusQueue(behaviour.Behaviour):
         Args:
             new_status: the behaviour is transitioning to this new status
         """
-        self.logger.debug(
-            "%s.terminate(%s->%s)" % (self.__class__.__name__, self.status, new_status)
-        )
+        self.logger.debug(f"{self.__class__.__name__}.terminate({self.status}->{new_status})")
 
 
 class SuccessEveryN(behaviour.Behaviour):
@@ -223,7 +221,7 @@ class SuccessEveryN(behaviour.Behaviour):
     """
 
     def __init__(self, name: str, n: int):
-        super(SuccessEveryN, self).__init__(name)
+        super().__init__(name)
         self.count = 0
         self.every_n = n
 
@@ -235,7 +233,7 @@ class SuccessEveryN(behaviour.Behaviour):
             :data:`~py_trees.common.Status.SUCCESS` if the nth tick, :data:`~py_trees.common.Status.FAILURE` otherwise.
         """
         self.count += 1
-        self.logger.debug("%s.update()][%s]" % (self.__class__.__name__, self.count))
+        self.logger.debug(f"{self.__class__.__name__}.update()][{self.count}]")
         if self.count % self.every_n == 0:
             self.feedback_message = "now"
             return common.Status.SUCCESS
@@ -325,9 +323,7 @@ class BlackboardToStatus(behaviour.Behaviour):
         super().__init__(name=name)
         name_components = variable_name.split(".")
         self.key = name_components[0]
-        self.key_attributes = ".".join(
-            name_components[1:]
-        )  # empty string if no other parts
+        self.key_attributes = ".".join(name_components[1:])  # empty string if no other parts
         self.variable_name = variable_name
         self.blackboard = self.attach_blackboard_client()
         self.blackboard.register_key(key=self.key, access=common.Access.READ)
@@ -339,13 +335,11 @@ class BlackboardToStatus(behaviour.Behaviour):
         Returns:
              :data:`~py_trees.common.Status.SUCCESS` if key found, :data:`~py_trees.common.Status.FAILURE` otherwise.
         """
-        self.logger.debug("%s.update()" % self.__class__.__name__)
+        self.logger.debug(f"{self.__class__.__name__}.update()")
         # raises a KeyError if the variable doesn't exist
         status = self.blackboard.get(self.variable_name)
         if not isinstance(status, common.Status):
-            raise TypeError(
-                f"{self.variable_name} is not of type py_trees.common.Status"
-            )
+            raise TypeError(f"{self.variable_name} is not of type py_trees.common.Status")
         self.feedback_message = f"{self.variable_name}: {status}"
         return status
 
@@ -378,9 +372,7 @@ class CheckBlackboardVariableExists(behaviour.Behaviour):
         self.variable_name = variable_name
         name_components = variable_name.split(".")
         self.key = name_components[0]
-        self.key_attributes = ".".join(
-            name_components[1:]
-        )  # empty string if no other parts
+        self.key_attributes = ".".join(name_components[1:])  # empty string if no other parts
         self.blackboard = self.attach_blackboard_client()
         self.blackboard.register_key(key=self.key, access=common.Access.READ)
 
@@ -391,13 +383,13 @@ class CheckBlackboardVariableExists(behaviour.Behaviour):
         Returns:
              :data:`~py_trees.common.Status.SUCCESS` if key found, :data:`~py_trees.common.Status.FAILURE` otherwise.
         """
-        self.logger.debug("%s.update()" % self.__class__.__name__)
+        self.logger.debug(f"{self.__class__.__name__}.update()")
         try:
             _ = self.blackboard.get(self.variable_name)
-            self.feedback_message = "variable '{}' found".format(self.variable_name)
+            self.feedback_message = f"variable '{self.variable_name}' found"
             return common.Status.SUCCESS
         except KeyError:
-            self.feedback_message = "variable '{}' not found".format(self.variable_name)
+            self.feedback_message = f"variable '{self.variable_name}' not found"
             return common.Status.FAILURE
 
 
@@ -433,14 +425,14 @@ class WaitForBlackboardVariable(CheckBlackboardVariableExists):
         Returns:
              :data:`~py_trees.common.Status.SUCCESS` if key found, :data:`~py_trees.common.Status.RUNNING` otherwise.
         """
-        self.logger.debug("%s.update()" % self.__class__.__name__)
+        self.logger.debug(f"{self.__class__.__name__}.update()")
         new_status = super().update()
         # CheckBlackboardExists only returns SUCCESS || FAILURE
         if new_status == common.Status.SUCCESS:
-            self.feedback_message = "'{}' found".format(self.key)
+            self.feedback_message = f"'{self.key}' found"
             return common.Status.SUCCESS
         else:  # new_status == common.Status.FAILURE
-            self.feedback_message = "waiting for key '{}'...".format(self.key)
+            self.feedback_message = f"waiting for key '{self.key}'..."
             return common.Status.RUNNING
 
 
@@ -471,7 +463,7 @@ class UnsetBlackboardVariable(behaviour.Behaviour):
              :data:`~py_trees.common.Status.SUCCESS`
         """
         if self.blackboard.unset(self.key):
-            self.feedback_message = "'{}' found and removed".format(self.key)
+            self.feedback_message = f"'{self.key}' found and removed"
         else:
             self.feedback_message = "'{}' not found, nothing to remove"
         return common.Status.SUCCESS
@@ -492,21 +484,17 @@ class SetBlackboardVariable(behaviour.Behaviour):
         self,
         name: str,
         variable_name: str,
-        variable_value: typing.Union[typing.Any, typing.Callable[[], typing.Any]],
+        variable_value: typing.Any | typing.Callable[[], typing.Any],
         overwrite: bool,
     ):
         super().__init__(name=name)
         self.variable_name = variable_name
         name_components = variable_name.split(".")
         self.key = name_components[0]
-        self.key_attributes = ".".join(
-            name_components[1:]
-        )  # empty string if no other parts
+        self.key_attributes = ".".join(name_components[1:])  # empty string if no other parts
         self.blackboard = self.attach_blackboard_client()
         self.blackboard.register_key(key=self.key, access=common.Access.WRITE)
-        self.variable_value_generator = (
-            variable_value if callable(variable_value) else lambda: variable_value
-        )
+        self.variable_value_generator = variable_value if callable(variable_value) else lambda: variable_value
         self.overwrite = overwrite
 
     def update(self) -> common.Status:
@@ -554,9 +542,7 @@ class CheckBlackboardVariableValue(behaviour.Behaviour):
         self.check = check
         name_components = self.check.variable.split(".")
         self.key = name_components[0]
-        self.key_attributes = ".".join(
-            name_components[1:]
-        )  # empty string if no other parts
+        self.key_attributes = ".".join(name_components[1:])  # empty string if no other parts
         self.blackboard = self.attach_blackboard_client()
         self.blackboard.register_key(key=self.key, access=common.Access.READ)
 
@@ -568,7 +554,7 @@ class CheckBlackboardVariableValue(behaviour.Behaviour):
              :class:`~py_trees.common.Status`: :data:`~py_trees.common.Status.FAILURE`
                  if not matched, :data:`~py_trees.common.Status.SUCCESS` otherwise.
         """
-        self.logger.debug("%s.update()" % self.__class__.__name__)
+        self.logger.debug(f"{self.__class__.__name__}.update()")
         try:
             lhs_value = self.blackboard.get(self.key)
             if self.key_attributes:
@@ -581,29 +567,17 @@ class CheckBlackboardVariableValue(behaviour.Behaviour):
                     )
                     return common.Status.FAILURE
         except KeyError:
-            self.feedback_message = (
-                "key '{}' does not yet exist on the blackboard".format(
-                    self.check.variable
-                )
-            )
+            self.feedback_message = f"key '{self.check.variable}' does not yet exist on the blackboard"
             return common.Status.FAILURE
 
         rhs_value = self.check.value_generator()
-        success = self.check.operator(lhs_value, rhs_value)
+        success = self.check.operator(lhs_value, rhs_value)  # type: ignore
 
         if success:
-            self.feedback_message = "'%s' comparison succeeded [v: %s][e: %s]" % (
-                self.check.variable,
-                lhs_value,
-                rhs_value,
-            )
+            self.feedback_message = f"'{self.check.variable}' comparison succeeded [v: {lhs_value}][e: {rhs_value}]"
             return common.Status.SUCCESS
         else:
-            self.feedback_message = "'%s' comparison failed [v: %s][e: %s]" % (
-                self.check.variable,
-                lhs_value,
-                rhs_value,
-            )
+            self.feedback_message = f"'{self.check.variable}' comparison failed [v: {lhs_value}][e: {rhs_value}]"
             return common.Status.FAILURE
 
 
@@ -655,7 +629,7 @@ class CompareBlackboardVariables(behaviour.Behaviour):
              :class:`~py_trees.common.Status`: :data:`~py_trees.common.Status.FAILURE`
                  if not matched, :data:`~py_trees.common.Status.SUCCESS` otherwise.
         """
-        self.logger.debug("%s.update()" % self.__class__.__name__)
+        self.logger.debug(f"{self.__class__.__name__}.update()")
         try:
             lhs_value = self.blackboard.get(self.var1_key)
             rhs_value = self.blackboard.get(self.var2_key)
@@ -664,19 +638,13 @@ class CompareBlackboardVariables(behaviour.Behaviour):
             return common.Status.FAILURE
 
         if self.operator(lhs_value, rhs_value):
-            self.feedback_message = "'%s, %s' comparison succeeded [v1: %s][v2: %s]" % (
-                self.var1_key,
-                self.var2_key,
-                lhs_value,
-                rhs_value,
+            self.feedback_message = (
+                f"'{self.var1_key}, {self.var2_key}' comparison succeeded [v1: {lhs_value}][v2: {rhs_value}]"
             )
             return common.Status.SUCCESS
         else:
-            self.feedback_message = "'%s, %s' comparison failed [v1: %s][v2: %s]" % (
-                self.var1_key,
-                self.var2_key,
-                lhs_value,
-                rhs_value,
+            self.feedback_message = (
+                f"'{self.var1_key}, {self.var2_key}' comparison failed [v1: {lhs_value}][v2: {rhs_value}]"
             )
             return common.Status.FAILURE
 
@@ -751,31 +719,23 @@ class CheckBlackboardVariableValues(behaviour.Behaviour):
     def __init__(
         self,
         name: str,
-        checks: typing.List[common.ComparisonExpression],
+        checks: list[common.ComparisonExpression],
         operator: typing.Callable[[bool, bool], bool],
-        namespace: typing.Optional[str] = None,
+        namespace: str | None = None,
     ):
         super().__init__(name=name)
         self.checks = checks
         self.operator = operator
         self.blackboard = self.attach_blackboard_client()
         if len(checks) < 2:
-            raise ValueError(
-                "Must be at least two variables to operate on [only {} provided]".format(
-                    len(checks)
-                )
-            )
+            raise ValueError(f"Must be at least two variables to operate on [only {len(checks)} provided]")
         for check in self.checks:
-            self.blackboard.register_key(
-                key=blackboard.Blackboard.key(check.variable), access=common.Access.READ
-            )
+            self.blackboard.register_key(key=blackboard.Blackboard.key(check.variable), access=common.Access.READ)
         self.blackboard_results = None
         if namespace is not None:
             self.blackboard_results = self.attach_blackboard_client(namespace=namespace)
             for counter in range(1, len(self.checks) + 1):
-                self.blackboard_results.register_key(
-                    key=str(counter), access=common.Access.WRITE
-                )
+                self.blackboard_results.register_key(key=str(counter), access=common.Access.WRITE)
 
     def update(self) -> common.Status:
         """
@@ -785,32 +745,24 @@ class CheckBlackboardVariableValues(behaviour.Behaviour):
              :data:`~py_trees.common.Status.FAILURE` if key retrieval or logical
                  checks failed, :data:`~py_trees.common.Status.SUCCESS` otherwise.
         """
-        self.logger.debug("%s.update()" % self.__class__.__name__)
+        self.logger.debug(f"{self.__class__.__name__}.update()")
         results = []
         for check in self.checks:
             try:
                 value = self.blackboard.get(check.variable)
             except KeyError:
-                self.feedback_message = (
-                    "variable '{}' does not yet exist on the blackboard".format(
-                        check.variable
-                    )
-                )
+                self.feedback_message = f"variable '{check.variable}' does not yet exist on the blackboard"
                 return common.Status.FAILURE
-            results.append(check.operator(value, check.value_generator()))
+            results.append(check.operator(value, check.value_generator()))  # type: ignore
         if self.blackboard_results is not None:
             for counter in range(1, len(results) + 1):
                 self.blackboard_results.set(str(counter), results[counter - 1])
         logical_result = functools.reduce(self.operator, results)
         if logical_result:
-            self.feedback_message = "[{}]".format(
-                "|".join(["T" if result else "F" for result in results])
-            )
+            self.feedback_message = "[{}]".format("|".join(["T" if result else "F" for result in results]))
             return common.Status.SUCCESS
         else:
-            self.feedback_message = "[{}]".format(
-                "|".join(["T" if result else "F" for result in results])
-            )
+            self.feedback_message = "[{}]".format("|".join(["T" if result else "F" for result in results]))
             return common.Status.FAILURE
 
 
@@ -830,13 +782,11 @@ class ProbabilisticBehaviour(behaviour.Behaviour):
 
     """
 
-    def __init__(self, name: str, weights: typing.Optional[typing.List[float]] = None):
+    def __init__(self, name: str, weights: list[float] | None = None):
         if weights is not None and (type(weights) is not list or len(weights) != 3):
-            raise ValueError(
-                "Either all or none of the probabilities must be specified"
-            )
+            raise ValueError("Either all or none of the probabilities must be specified")
 
-        super(ProbabilisticBehaviour, self).__init__(name=name)
+        super().__init__(name=name)
 
         self._population = [
             common.Status.SUCCESS,
@@ -854,5 +804,5 @@ class ProbabilisticBehaviour(behaviour.Behaviour):
              :data:`~py_trees.common.Status.FAILURE` with probability weights[1] and
              :data:`~py_trees.common.Status.RUNNING` with probability weights[2].
         """
-        self.logger.debug("%s.update()" % self.__class__.__name__)
+        self.logger.debug(f"{self.__class__.__name__}.update()")
         return random.choices(self._population, self._weights, k=1)[0]

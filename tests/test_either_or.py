@@ -8,7 +8,6 @@
 ##############################################################################
 
 import operator
-import typing
 
 import py_trees
 
@@ -17,7 +16,7 @@ import py_trees
 ##############################################################################
 
 
-def create_root() -> typing.Tuple[
+def create_root() -> tuple[
     py_trees.behaviour.Behaviour,
     py_trees.behaviour.Behaviour,
     py_trees.behaviour.Behaviour,
@@ -62,12 +61,8 @@ def create_root() -> typing.Tuple[
     either_or = py_trees.idioms.either_or(
         name="EitherOr",
         conditions=[
-            py_trees.common.ComparisonExpression(
-                "joystick_one", "enabled", operator.eq
-            ),
-            py_trees.common.ComparisonExpression(
-                "joystick_two", "enabled", operator.eq
-            ),
+            py_trees.common.ComparisonExpression("joystick_one", "enabled", operator.eq),
+            py_trees.common.ComparisonExpression("joystick_two", "enabled", operator.eq),
         ],
         subtrees=[task_one, task_two],
         namespace="either_or",

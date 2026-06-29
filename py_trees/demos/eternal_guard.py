@@ -28,10 +28,8 @@ import argparse
 import functools
 import sys
 import time
-import typing
 
 import py_trees
-
 import py_trees.console as console
 
 ##############################################################################
@@ -67,7 +65,7 @@ def description(root: py_trees.behaviour.Behaviour) -> str:
     return s
 
 
-def epilog() -> typing.Optional[str]:
+def epilog() -> str | None:
     """
     Print a noodly epilog for --help.
 
@@ -75,11 +73,7 @@ def epilog() -> typing.Optional[str]:
        the noodly message
     """
     if py_trees.console.has_colours:
-        return (
-            console.cyan
-            + "And his noodly appendage reached forth to tickle the blessed...\n"
-            + console.reset
-        )
+        return console.cyan + "And his noodly appendage reached forth to tickle the blessed...\n" + console.reset
     else:
         return None
 
@@ -97,9 +91,7 @@ def command_line_argument_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     group = parser.add_mutually_exclusive_group()
-    group.add_argument(
-        "-r", "--render", action="store_true", help="render dot tree to file"
-    )
+    group.add_argument("-r", "--render", action="store_true", help="render dot tree to file")
     group.add_argument(
         "-i",
         "--interactive",
@@ -115,7 +107,7 @@ def pre_tick_handler(behaviour_tree: py_trees.trees.BehaviourTree) -> None:
     Args:
        behaviour_tree: the tree to tick (used to fetch the count number)
     """
-    print("\n--------- Run %s ---------\n" % behaviour_tree.count)
+    print(f"\n--------- Run {behaviour_tree.count} ---------\n")
 
 
 def post_tick_handler(
@@ -201,9 +193,7 @@ def main() -> None:
     behaviour_tree.add_pre_tick_handler(pre_tick_handler)
     behaviour_tree.visitors.append(py_trees.visitors.DebugVisitor())
     snapshot_visitor = py_trees.visitors.SnapshotVisitor()
-    behaviour_tree.add_post_tick_handler(
-        functools.partial(post_tick_handler, snapshot_visitor)
-    )
+    behaviour_tree.add_post_tick_handler(functools.partial(post_tick_handler, snapshot_visitor))
     behaviour_tree.visitors.append(snapshot_visitor)
     behaviour_tree.setup(timeout=15)
 

@@ -25,7 +25,6 @@ A py_trees demo.
 
 import argparse
 import subprocess
-import typing
 
 import py_trees
 import py_trees.console as console
@@ -55,42 +54,14 @@ def description() -> str:
         s += console.white
         s += console.bold + "    Generate Full Dot Graph" + console.reset + "\n"
         s += "\n"
-        s += console.cyan + "        {0}".format(name) + console.reset + "\n"
+        s += console.cyan + f"        {name}" + console.reset + "\n"
         s += "\n"
         s += console.bold + "    With Varying Visibility Levels" + console.reset + "\n"
         s += "\n"
-        s += (
-            console.cyan
-            + "        {0}".format(name)
-            + console.yellow
-            + " --level=all"
-            + console.reset
-            + "\n"
-        )
-        s += (
-            console.cyan
-            + "        {0}".format(name)
-            + console.yellow
-            + " --level=detail"
-            + console.reset
-            + "\n"
-        )
-        s += (
-            console.cyan
-            + "        {0}".format(name)
-            + console.yellow
-            + " --level=component"
-            + console.reset
-            + "\n"
-        )
-        s += (
-            console.cyan
-            + "        {0}".format(name)
-            + console.yellow
-            + " --level=big_picture"
-            + console.reset
-            + "\n"
-        )
+        s += console.cyan + f"        {name}" + console.yellow + " --level=all" + console.reset + "\n"
+        s += console.cyan + f"        {name}" + console.yellow + " --level=detail" + console.reset + "\n"
+        s += console.cyan + f"        {name}" + console.yellow + " --level=component" + console.reset + "\n"
+        s += console.cyan + f"        {name}" + console.yellow + " --level=big_picture" + console.reset + "\n"
         s += "\n"
         s += banner_line
     else:
@@ -98,7 +69,7 @@ def description() -> str:
     return s
 
 
-def epilog() -> typing.Optional[str]:
+def epilog() -> str | None:
     """
     Print a noodly epilog for --help.
 
@@ -106,11 +77,7 @@ def epilog() -> typing.Optional[str]:
        the noodly message
     """
     if py_trees.console.has_colours:
-        return (
-            console.cyan
-            + "And his noodly appendage reached forth to tickle the blessed...\n"
-            + console.reset
-        )
+        return console.cyan + "And his noodly appendage reached forth to tickle the blessed...\n" + console.reset
     else:
         return None
 
@@ -145,7 +112,7 @@ def create_tree(level: str) -> py_trees.behaviour.Behaviour:
     Returns:
         the root behaviour
     """
-    root = py_trees.composites.Selector(name="Demo Dot Graphs %s" % level, memory=False)
+    root = py_trees.composites.Selector(name=f"Demo Dot Graphs {level}", memory=False)
     first_blackbox = py_trees.composites.Sequence(name="BlackBox 1", memory=True)
     first_blackbox.add_child(py_trees.behaviours.Running("Worker"))
     first_blackbox.add_child(py_trees.behaviours.Running("Worker"))
@@ -184,12 +151,10 @@ def main() -> None:
 
     if py_trees.utilities.which("xdot"):
         try:
-            subprocess.call(["xdot", "demo_dot_graphs_%s.dot" % args.level])
+            subprocess.call(["xdot", f"demo_dot_graphs_{args.level}.dot"])
         except KeyboardInterrupt:
             pass
     else:
         print("")
-        console.logerror(
-            "No xdot viewer found, skipping display [hint: sudo apt install xdot]"
-        )
+        console.logerror("No xdot viewer found, skipping display [hint: sudo apt install xdot]")
         print("")

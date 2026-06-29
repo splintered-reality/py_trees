@@ -32,7 +32,6 @@ A py_trees demo.
 import argparse
 import operator
 import sys
-import typing
 
 import py_trees
 import py_trees.console as console
@@ -68,7 +67,7 @@ def description() -> str:
     return s
 
 
-def epilog() -> typing.Optional[str]:
+def epilog() -> str | None:
     """
     Print a noodly epilog for --help.
 
@@ -76,11 +75,7 @@ def epilog() -> typing.Optional[str]:
        the noodly message
     """
     if py_trees.console.has_colours:
-        return (
-            console.cyan
-            + "And his noodly appendage reached forth to tickle the blessed...\n"
-            + console.reset
-        )
+        return console.cyan + "And his noodly appendage reached forth to tickle the blessed...\n" + console.reset
     else:
         return None
 
@@ -98,9 +93,7 @@ def command_line_argument_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     render_group = parser.add_mutually_exclusive_group()
-    render_group.add_argument(
-        "-r", "--render", action="store_true", help="render dot tree to file"
-    )
+    render_group.add_argument("-r", "--render", action="store_true", help="render dot tree to file")
     render_group.add_argument(
         "--render-with-blackboard-variables",
         action="store_true",
@@ -109,7 +102,7 @@ def command_line_argument_parser() -> argparse.ArgumentParser:
     return parser
 
 
-class Nested(object):
+class Nested:
     """A more complex object to interact with on the blackboard."""
 
     def __init__(self) -> None:
@@ -132,18 +125,16 @@ class BlackboardWriter(py_trees.behaviour.Behaviour):
         super().__init__(name=name)
         self.blackboard = self.attach_blackboard_client()
         self.blackboard.register_key(key="dude", access=py_trees.common.Access.READ)
-        self.blackboard.register_key(
-            key="spaghetti", access=py_trees.common.Access.WRITE
-        )
+        self.blackboard.register_key(key="spaghetti", access=py_trees.common.Access.WRITE)
 
-        self.logger.debug("%s.__init__()" % (self.__class__.__name__))
+        self.logger.debug(f"{self.__class__.__name__}.__init__()")
 
     def update(self) -> py_trees.common.Status:
         """Write a dictionary to the blackboard.
 
         This beaviour always returns :data:`~py_trees.common.Status.SUCCESS`.
         """
-        self.logger.debug("%s.update()" % (self.__class__.__name__))
+        self.logger.debug(f"{self.__class__.__name__}.update()")
         try:
             _ = self.blackboard.dude
         except KeyError:
@@ -159,9 +150,7 @@ class BlackboardWriter(py_trees.behaviour.Behaviour):
         self.blackboard.spaghetti = {"type": "Carbonara", "quantity": 1}
         self.blackboard.spaghetti = {"type": "Gnocchi", "quantity": 2}
         try:
-            self.blackboard.set(
-                "spaghetti", {"type": "Bolognese", "quantity": 3}, overwrite=False
-            )
+            self.blackboard.set("spaghetti", {"type": "Bolognese", "quantity": 3}, overwrite=False)
         except AttributeError:
             pass
         return py_trees.common.Status.SUCCESS
@@ -186,21 +175,15 @@ class ParamsAndState(py_trees.behaviour.Behaviour):
         # they can also be nested, e.g. /agent/state, /agent/parameters
         self.parameters = self.attach_blackboard_client("Params", "parameters")
         self.state = self.attach_blackboard_client("State", "state")
-        self.parameters.register_key(
-            key="default_speed", access=py_trees.common.Access.READ
-        )
-        self.state.register_key(
-            key="current_speed", access=py_trees.common.Access.WRITE
-        )
+        self.parameters.register_key(key="default_speed", access=py_trees.common.Access.READ)
+        self.state.register_key(key="current_speed", access=py_trees.common.Access.WRITE)
 
     def initialise(self) -> None:
         """Initialise speed from the stored parameter variable on the blackboard."""
         try:
             self.state.current_speed = self.parameters.default_speed
         except KeyError as e:
-            raise RuntimeError(
-                "parameter 'default_speed' not found [{}]".format(str(e))
-            )
+            raise RuntimeError(f"parameter 'default_speed' not found [{str(e)}]") from e
 
     def update(self) -> py_trees.common.Status:
         """
@@ -233,9 +216,7 @@ def create_root() -> py_trees.behaviour.Behaviour:
     write_blackboard_variable = BlackboardWriter(name="Writer")
     check_blackboard_variable = py_trees.behaviours.CheckBlackboardVariableValue(
         name="Check Nested Foo",
-        check=py_trees.common.ComparisonExpression(
-            variable="nested.foo", value="bar", operator=operator.eq
-        ),
+        check=py_trees.common.ComparisonExpression(variable="nested.foo", value="bar", operator=operator.eq),
     )
     params_and_state = ParamsAndState(name="ParamsAndState")
     root.add_children(
@@ -262,9 +243,7 @@ def main() -> None:
     py_trees.blackboard.Blackboard.enable_activity_stream(maximum_size=100)
     blackboard = py_trees.blackboard.Client(name="Configuration")
     blackboard.register_key(key="dude", access=py_trees.common.Access.WRITE)
-    blackboard.register_key(
-        key="/parameters/default_speed", access=py_trees.common.Access.EXCLUSIVE_WRITE
-    )
+    blackboard.register_key(key="/parameters/default_speed", access=py_trees.common.Access.EXCLUSIVE_WRITE)
     blackboard.dude = "Bob"
     blackboard.parameters.default_speed = 30.0
 

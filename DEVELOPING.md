@@ -1,51 +1,67 @@
 # Developing
 
-[[Test-Format-Lint](#test-format-lint)] [[Documentation](#documentation)] [[Packaging]](#packaging)]
+[[Setup](#setup)] [[Test-Format-Lint](#test-format-lint)] [[Documentation](#documentation)] [[Packaging](#packaging)]
 
+This project uses
+
+* [`uv`](https://docs.astral.sh/uv/) for environment and dependency management
+* [`ruff`](https://docs.astral.sh/ruff/) for formatting & linting
+* [`ty`](https://github.com/astral-sh/ty) for static type checking
+
+## Setup
+
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/).
+Then, sync the project.
+This creates a `.venv` with all dev dependencies:
+
+```
+$ uv sync
+```
+
+That's it - prefix commands with `uv run` to execute them inside the environment,
+or activate it with `source .venv/bin/activate`.
 
 ## Test-Format-Lint
 
-Check against at least one of py310 / py312 [1].
-
 ```
-# Auto-format your code (if using VSCode, install the ufmt extension)
-$ poetry run tox -e format
+# Auto-format your code (install the 'charliermarsh.ruff' extension for VSCode)
+$ uv run ruff format
 
-# Style, Format
-$ poetry run tox -e check
+# Lint
+$ uv run ruff check          # add --fix to auto-fix
 
 # Type-Check
-$ poetry run tox -e mypy310
+$ uv run ty check
 
 # Tests
-$ poetry run tox -e py310
+$ uv run pytest -s tests/
+$ uv run pytest --cov=py_trees tests/   # with coverage
 ```
 
-[1] CI will test against both python versions for you, but should you wish to do so locally, open up two VSCode windows, one with the project opened in the default [py310 devcontainer](.devcontainer) and the other with the [py312 devcontainer](.devcontainer/py312).
+CI runs the tests against python 3.10, 3.12, and 3.14.
+To test against a specific version locally, pass `--python`, e.g. `uv run --python 3.12 pytest -s tests/`.
 
 ## Documentation
 
 Generate the docs, view them from `./docs/html` in a browser.
 
 ```
-# Install dependencies
-$ poetry install --with docs
-
 # Build
-$ poetry run make -C docs html
+$ uv run make -C docs html
 ```
 
-On Doc dependency changes, export the requirements for ReadTheDocs
+On doc dependency changes, export the requirements for ReadTheDocs:
 
 ```
-$ poetry export -f requirements.txt --with docs -o docs/requirements.txt
+$ uv export --no-hashes --no-emit-project --no-default-groups --group docs -o docs/requirements.txt
 ```
 
 ## Packaging
 
-If you have permission to publish on pypi:
-
 ```
-$ poetry config http-basic.pypi ${POETRY_HTTP_BASIC_PYPI_USERNAME} ${POETRY_HTTP_BASIC_PYPI_PASSWORD}
-$ poetry publish
+# Build the sdist & wheel into ./dist
+$ uv build
+
+# Publish to PyPI (requires credentials, e.g. UV_PUBLISH_TOKEN)
+$ uv publish
 ```

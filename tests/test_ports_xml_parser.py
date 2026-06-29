@@ -19,8 +19,7 @@ from typing import Any
 
 import py_trees
 from py_trees.parsers.behaviour_tree_xml import is_key, parse_behaviour_tree_xml
-
-from py_trees.ports import BehaviourWithPorts, get_ports_registry, PortInformation
+from py_trees.ports import BehaviourWithPorts, PortInformation, get_ports_registry
 from py_trees.ports_utils import (
     find_node_by_class,
     find_node_by_name,
@@ -61,9 +60,7 @@ class Wait(BehaviourWithPorts):
 
     @classmethod
     def input_ports(cls) -> dict:
-        return {
-            cls.INPUT_DURATION_MS_PORT: PortInformation(data_type=int, required=True)
-        }
+        return {cls.INPUT_DURATION_MS_PORT: PortInformation(data_type=int, required=True)}
 
     @classmethod
     def output_ports(cls) -> dict:
@@ -93,9 +90,7 @@ class RobotData:
     commander: object | None
 
 
-def get_behaviors_lookup(
-    factory: DummyFactory, _robot_data: dict[int, RobotData]
-) -> dict:
+def get_behaviors_lookup(factory: DummyFactory, _robot_data: dict[int, RobotData]) -> dict:
     return {"Wait": partial(Wait, factory=factory)}
 
 
@@ -118,9 +113,7 @@ class TestXMLParser(unittest.TestCase):
           </Sequence>
         </BehaviorTree>
       </root>"""
-        self.tempfile = tempfile.NamedTemporaryFile(
-            delete=False, mode="w", suffix=".xml"
-        )
+        self.tempfile = tempfile.NamedTemporaryFile(delete=False, mode="w", suffix=".xml")
         self.tempfile.write(self.xml)
         self.tempfile.close()
         self.factory = DummyFactory()
@@ -209,16 +202,10 @@ class TestXMLParser(unittest.TestCase):
             temp_xml_path = tf.name
 
         # Other classes auto-register; the partial injects the extra constructor arg.
-        custom_lookup = {
-            "CustomBehaviourWithPorts": partial(
-                CustomBehaviourWithPorts, extra_arg="hello-world"
-            )
-        }
+        custom_lookup = {"CustomBehaviourWithPorts": partial(CustomBehaviourWithPorts, extra_arg="hello-world")}
 
         try:
-            root_node = parse_behaviour_tree_xml(
-                temp_xml_path, node_registry=custom_lookup, logger=StdoutLogger()
-            )
+            root_node = parse_behaviour_tree_xml(temp_xml_path, node_registry=custom_lookup, logger=StdoutLogger())
             custom = find_node_by_class(root_node, CustomBehaviourWithPorts)
             self.assertIsNotNone(custom)
             self.assertEqual(custom.extra_arg, "hello-world")
@@ -295,9 +282,7 @@ class TestXMLParser(unittest.TestCase):
         </BehaviorTree>
         </root>"""
 
-        self.tempfile = tempfile.NamedTemporaryFile(
-            delete=False, mode="w", suffix=".xml"
-        )
+        self.tempfile = tempfile.NamedTemporaryFile(delete=False, mode="w", suffix=".xml")
         self.tempfile.write(self.xml)
         self.tempfile.close()
 
@@ -331,9 +316,7 @@ class TestXMLParser(unittest.TestCase):
         </BehaviorTree>
         </root>"""
 
-        self.tempfile = tempfile.NamedTemporaryFile(
-            delete=False, mode="w", suffix=".xml"
-        )
+        self.tempfile = tempfile.NamedTemporaryFile(delete=False, mode="w", suffix=".xml")
         self.tempfile.write(self.xml)
         self.tempfile.close()
 
@@ -378,9 +361,7 @@ class TestXMLParser(unittest.TestCase):
         </BehaviorTree>
         </root>"""
 
-        self.tempfile = tempfile.NamedTemporaryFile(
-            delete=False, mode="w", suffix=".xml"
-        )
+        self.tempfile = tempfile.NamedTemporaryFile(delete=False, mode="w", suffix=".xml")
         self.tempfile.write(self.xml)
         self.tempfile.close()
 
@@ -421,17 +402,13 @@ class TestXMLParser(unittest.TestCase):
         </BehaviorTree>
         </root>"""
 
-        self.tempfile = tempfile.NamedTemporaryFile(
-            delete=False, mode="w", suffix=".xml"
-        )
+        self.tempfile = tempfile.NamedTemporaryFile(delete=False, mode="w", suffix=".xml")
         self.tempfile.write(self.xml)
         self.tempfile.close()
 
         node_registry = {"Wait": partial(Wait, factory=self.factory)}
 
-        root_node = parse_behaviour_tree_xml(
-            self.tempfile.name, node_registry=node_registry, logger=StdoutLogger()
-        )
+        root_node = parse_behaviour_tree_xml(self.tempfile.name, node_registry=node_registry, logger=StdoutLogger())
         btree = py_trees.trees.BehaviourTree(root_node)
 
         start_time = time.time()
@@ -458,9 +435,7 @@ class TestXMLParser(unittest.TestCase):
         </BehaviorTree>
         </root>"""
 
-        self.tempfile = tempfile.NamedTemporaryFile(
-            delete=False, mode="w", suffix=".xml"
-        )
+        self.tempfile = tempfile.NamedTemporaryFile(delete=False, mode="w", suffix=".xml")
         self.tempfile.write(self.xml)
         self.tempfile.close()
 
@@ -475,9 +450,7 @@ class TestXMLParser(unittest.TestCase):
             },
         )
 
-        root_node = parse_behaviour_tree_xml(
-            self.tempfile.name, node_registry=node_registry, logger=StdoutLogger()
-        )
+        root_node = parse_behaviour_tree_xml(self.tempfile.name, node_registry=node_registry, logger=StdoutLogger())
         btree = py_trees.trees.BehaviourTree(root_node)
 
         start_time = time.time()
@@ -495,25 +468,19 @@ class TestXMLParser(unittest.TestCase):
     def test_ctor_args_passed_as_kwargs(self) -> None:
         """
         Non-port XML attributes must be passed as constructor kwargs.
-        Values are left as strings (no automatic type coercion).
+        Values are automatically converted based on the type hints in the constructor.
         """
 
         class EchoCtorArgs(BehaviourWithPorts):
             @classmethod
             def input_ports(cls) -> dict:
-                return {
-                    "in": PortInformation(data_type=str, required=False)
-                }  # not used here
+                return {"in": PortInformation(data_type=str, required=False)}  # not used here
 
             @classmethod
             def output_ports(cls) -> dict:
-                return {
-                    "out": PortInformation(data_type=str, required=False)
-                }  # not used here
+                return {"out": PortInformation(data_type=str, required=False)}  # not used here
 
-            def __init__(
-                self, name: str, greeting: str, times: str, flag: str, **kwargs: Any
-            ) -> None:
+            def __init__(self, name: str, greeting: str, times: float | None, flag: bool, **kwargs: Any) -> None:
                 super().__init__(name, **kwargs)
                 self.greeting = greeting
                 self.times = times
@@ -531,16 +498,14 @@ class TestXMLParser(unittest.TestCase):
             tf.write(xml)
             path = tf.name
 
-        try:
-            root = parse_behaviour_tree_xml(path, logger=StdoutLogger())
-            node = find_node_by_class(root, EchoCtorArgs)
-            self.assertIsNotNone(node)
-            # No auto type-casting: still strings
-            self.assertEqual(node.greeting, "hello")
-            self.assertEqual(node.times, "3")
-            self.assertEqual(node.flag, "true")
-        finally:
-            os.unlink(path)
+        root = parse_behaviour_tree_xml(path, logger=StdoutLogger())
+        node = find_node_by_class(root, EchoCtorArgs)
+        self.assertIsNotNone(node)
+        self.assertEqual(node.greeting, "hello")
+        self.assertEqual(node.times, 3.0)
+        self.assertEqual(node.flag, True)
+
+        os.unlink(path)
 
     def test_mixed_ports_and_ctor_kwargs(self) -> None:
         """
@@ -551,9 +516,7 @@ class TestXMLParser(unittest.TestCase):
         class PortAndCtor(BehaviourWithPorts):
             @classmethod
             def input_ports(cls) -> dict:
-                return {
-                    "in": PortInformation(data_type=str, required=True)
-                }  # only this is a port
+                return {"in": PortInformation(data_type=str, required=True)}  # only this is a port
 
             @classmethod
             def output_ports(cls) -> dict:
@@ -887,9 +850,7 @@ class TestXMLParserImports(unittest.TestCase):
 
     def test_imported_bt_missing_id(self) -> None:
         """Imported file containing a <BehaviorTree> without an ID raises ValueError."""
-        lib_path = self._write_temp_xml(
-            """<root><BehaviorTree><Sequence/></BehaviorTree></root>"""
-        )
+        lib_path = self._write_temp_xml("""<root><BehaviorTree><Sequence/></BehaviorTree></root>""")
         main_path = self._write_temp_xml(
             f"""<root main_tree_to_execute="Main">
           <Import src="{lib_path}"/>
@@ -913,9 +874,7 @@ class TestXMLParserImports(unittest.TestCase):
           </BehaviorTree>
           </root>"""
 
-        self.tempfile = tempfile.NamedTemporaryFile(
-            delete=False, mode="w", suffix=".xml"
-        )
+        self.tempfile = tempfile.NamedTemporaryFile(delete=False, mode="w", suffix=".xml")
         self.tempfile.write(self.xml)
         self.tempfile.close()
 
@@ -973,9 +932,7 @@ class TestNodeRegistry(unittest.TestCase):
     def setUp(self) -> None:
         py_trees.blackboard.Blackboard.clear()
         # Producer/Consumer are concrete BehaviourWithPorts -> auto-registered on import.
-        self.tempfile = tempfile.NamedTemporaryFile(
-            delete=False, mode="w", suffix=".xml"
-        )
+        self.tempfile = tempfile.NamedTemporaryFile(delete=False, mode="w", suffix=".xml")
         self.tempfile.write(self.XML)
         self.tempfile.close()
 
@@ -1004,7 +961,7 @@ class TestNodeRegistry(unittest.TestCase):
         with self.assertRaises(TypeError):
             parse_behaviour_tree_xml(
                 self.tempfile.name,
-                node_registry=["Producer"],  # type: ignore[arg-type]
+                node_registry=["Producer"],  # type: ignore
             )
 
     def test_empty_dict_raises(self) -> None:

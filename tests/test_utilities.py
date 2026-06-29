@@ -25,11 +25,7 @@ def test_valid_filenames() -> None:
         " Leading Space": "leading_space",
         "Trailing Space ": "trailing_space",
     }
-    print(
-        console.green
-        + "------------------ Assertions ------------------\n"
-        + console.reset
-    )
+    print(console.green + "------------------ Assertions ------------------\n" + console.reset)
     for name, expected_name in names.items():
         print(
             console.cyan
@@ -54,11 +50,7 @@ def test_get_fully_qualified_name() -> None:
         ),
         "py_trees.behaviours.Success": py_trees.behaviours.Success(name="Success"),
     }
-    print(
-        console.green
-        + "------------------ Assertions ------------------\n"
-        + console.reset
-    )
+    print(console.green + "------------------ Assertions ------------------\n" + console.reset)
     for expected_name, object_instance in pairs.items():
         print(
             console.cyan

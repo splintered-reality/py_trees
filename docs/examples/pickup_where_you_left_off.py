@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """Example demonstrating the use of the "pick up where you left off" idiom."""
 
 import py_trees
@@ -25,13 +24,7 @@ if __name__ == "__main__":
         name="High Priority Interrupt",
         child=py_trees.behaviours.Periodic(name="High Priority", n=3),
     )
-    piwylo = py_trees.idioms.pick_up_where_you_left_off(
-        name="Tasks", tasks=[task_one, task_two]
-    )
-    root = py_trees.composites.Selector(
-        name="Pick Up\nWhere You\nLeft Off", memory=False
-    )
+    piwylo = py_trees.idioms.pick_up_where_you_left_off(name="Tasks", tasks=[task_one, task_two])
+    root = py_trees.composites.Selector(name="Pick Up\nWhere You\nLeft Off", memory=False)
     root.add_children([high_priority_interrupt, piwylo])
-    py_trees.display.render_dot_tree(
-        root, py_trees.common.string_to_visibility_level("all")
-    )
+    py_trees.display.render_dot_tree(root, py_trees.common.string_to_visibility_level("all"))

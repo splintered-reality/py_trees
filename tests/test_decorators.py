@@ -11,10 +11,11 @@
 import time
 import typing
 
+import pytest
+
 import py_trees
 import py_trees.console as console
 import py_trees.tests
-import pytest
 
 ##############################################################################
 # Logging Level
@@ -31,7 +32,7 @@ logger = py_trees.logging.Logger("Tests")
 
 class DummyDecorator(py_trees.decorators.Decorator):
     def __init__(self, name: str, child: py_trees.behaviour.Behaviour):
-        super(DummyDecorator, self).__init__(name=name, child=child)
+        super().__init__(name=name, child=child)
 
     def update(self) -> py_trees.common.Status:
         return py_trees.common.Status.INVALID
@@ -46,14 +47,12 @@ def test_invalid_child() -> None:
     console.banner("Decorator Exceptions - Invalid Child Type")
     with pytest.raises(TypeError) as context:  # if raised, context survives
         # intentional error -> silence mypy
-        decorator = DummyDecorator(name="dummy", child=5)  # type: ignore[arg-type]
+        decorator = DummyDecorator(name="dummy", child=5)  # type: ignore
         print(f"Name: {decorator.name}")
         py_trees.tests.print_assert_details("TypeError raised", "raised", "not raised")
     py_trees.tests.print_assert_details("TypeError raised", "yes", "yes")
     assert "TypeError" == context.typename
-    py_trees.tests.print_assert_details(
-        "Substring match", "instance", f"{context.value}"
-    )
+    py_trees.tests.print_assert_details("Substring match", "instance", f"{context.value}")
     assert "instance" in str(context.value)
 
 
@@ -231,9 +230,7 @@ def test_failure_is_success_tree() -> None:
 
 def test_failure_is_running_tree() -> None:
     console.banner("Failure is Running Tree")
-    root = py_trees.composites.Parallel(
-        name="Root", policy=py_trees.common.ParallelPolicy.SuccessOnAll()
-    )
+    root = py_trees.composites.Parallel(name="Root", policy=py_trees.common.ParallelPolicy.SuccessOnAll())
     running = py_trees.decorators.FailureIsRunning(
         name="Failure Is Running", child=py_trees.behaviours.Running(name="Running")
     )
@@ -268,9 +265,7 @@ def test_failure_is_running_tree() -> None:
 
 def test_running_is_success_tree() -> None:
     console.banner("Running is Success Tree")
-    root = py_trees.composites.Parallel(
-        name="Root", policy=py_trees.common.ParallelPolicy.SuccessOnAll()
-    )
+    root = py_trees.composites.Parallel(name="Root", policy=py_trees.common.ParallelPolicy.SuccessOnAll())
     running = py_trees.decorators.RunningIsSuccess(
         name="Running is Success", child=py_trees.behaviours.Running(name="Running")
     )
@@ -309,9 +304,7 @@ def test_success_is_running_tree() -> None:
     failure = py_trees.decorators.SuccessIsRunning(
         name="Success is Running", child=py_trees.behaviours.Failure(name="Failure")
     )
-    parallel = py_trees.composites.Parallel(
-        name="Parallel", policy=py_trees.common.ParallelPolicy.SuccessOnAll()
-    )
+    parallel = py_trees.composites.Parallel(name="Parallel", policy=py_trees.common.ParallelPolicy.SuccessOnAll())
     running = py_trees.decorators.SuccessIsRunning(
         name="Success is Running", child=py_trees.behaviours.Running(name="Running")
     )
@@ -373,13 +366,9 @@ def test_inverter() -> None:
     root = py_trees.composites.Sequence(name="Root", memory=True)
     selector = py_trees.composites.Selector(name="Selector", memory=False)
     failure = py_trees.behaviours.Failure(name="Failure")
-    success_inverter = py_trees.decorators.Inverter(
-        name="Inverter", child=py_trees.behaviours.Success(name="Success")
-    )
+    success_inverter = py_trees.decorators.Inverter(name="Inverter", child=py_trees.behaviours.Success(name="Success"))
     success = py_trees.behaviours.Success(name="Success")
-    failure_inverter = py_trees.decorators.Inverter(
-        name="Inverter", child=py_trees.behaviours.Failure(name="Failure")
-    )
+    failure_inverter = py_trees.decorators.Inverter(name="Inverter", child=py_trees.behaviours.Failure(name="Failure"))
     selector.add_child(failure)
     selector.add_child(success_inverter)
     selector.add_child(success)
@@ -545,9 +534,7 @@ def test_condition() -> None:
         ],
         eventually=py_trees.common.Status.SUCCESS,
     )
-    condition = py_trees.decorators.Condition(
-        name="Condition", child=child, status=py_trees.common.Status.SUCCESS
-    )
+    condition = py_trees.decorators.Condition(name="Condition", child=child, status=py_trees.common.Status.SUCCESS)
 
     visitor = py_trees.visitors.DebugVisitor()
     py_trees.tests.tick_tree(condition, 1, 1, visitors=[visitor], print_snapshot=True)
@@ -579,9 +566,7 @@ def test_status_to_blackboard() -> None:
     console.banner("Status to Blackboard")
 
     child = py_trees.behaviours.Success(name="Success")
-    decorator = py_trees.decorators.StatusToBlackboard(
-        name="Status2BB", child=child, variable_name="foo"
-    )
+    decorator = py_trees.decorators.StatusToBlackboard(name="Status2BB", child=child, variable_name="foo")
     blackboard = py_trees.blackboard.Client()
     blackboard.register_key(key="foo", access=py_trees.common.Access.READ)
     decorator.tick_once()
@@ -630,9 +615,7 @@ def test_for_each_fixed(iterable: typing.Iterable[int]) -> None:
     blackboard.register_key(key="element", access=py_trees.common.Access.READ)
     blackboard.register_key(key="iterable", access=py_trees.common.Access.WRITE)
     blackboard.iterable = iterable
-    decorator = py_trees.decorators.ForEach(
-        name="ForEach", child=child, source_key="iterable", target_key="element"
-    )
+    decorator = py_trees.decorators.ForEach(name="ForEach", child=child, source_key="iterable", target_key="element")
 
     decorator.tick_once()  # run first element
     print("\n--------- Tick 1 ---------\n")
@@ -696,9 +679,7 @@ def test_for_each_append() -> None:
     blackboard.register_key(key="element", access=py_trees.common.Access.READ)
     blackboard.register_key(key="iterable", access=py_trees.common.Access.WRITE)
     blackboard.iterable = [1, 2, 3]
-    decorator = py_trees.decorators.ForEach(
-        name="ForEach", child=child, source_key="iterable", target_key="element"
-    )
+    decorator = py_trees.decorators.ForEach(name="ForEach", child=child, source_key="iterable", target_key="element")
 
     decorator.tick_once()
     print("\n--------- Tick 1 ---------\n")
@@ -740,9 +721,7 @@ def test_for_each_delete() -> None:
     blackboard.register_key(key="element", access=py_trees.common.Access.READ)
     blackboard.register_key(key="iterable", access=py_trees.common.Access.WRITE)
     blackboard.iterable = [1, 2, 3, 4]
-    decorator = py_trees.decorators.ForEach(
-        name="ForEach", child=child, source_key="iterable", target_key="element"
-    )
+    decorator = py_trees.decorators.ForEach(name="ForEach", child=child, source_key="iterable", target_key="element")
 
     decorator.tick_once()
     print("\n--------- Tick 1 ---------\n")

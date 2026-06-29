@@ -11,7 +11,6 @@
 from typing import Any
 
 import py_trees
-
 from py_trees.ports import BehaviourWithPorts, PortInformation, PortsMixin
 
 
@@ -27,9 +26,7 @@ class Producer(BehaviourWithPorts):
         return {cls.OUTPUT_PORT: PortInformation(data_type=str, required=True)}
 
     def update(self) -> py_trees.common.Status:
-        self._set_output(
-            self.OUTPUT_PORT, f"Producer[{self.subtree_namespace}:{self.name}]"
-        )
+        self._set_output(self.OUTPUT_PORT, f"Producer[{self.subtree_namespace}:{self.name}]")
         return py_trees.common.Status.SUCCESS
 
 
@@ -47,9 +44,7 @@ class ConsumerProducer(BehaviourWithPorts):
 
     def update(self) -> py_trees.common.Status:
         input_value = self.get_input(self.INPUT_PORT)
-        self._set_output(
-            self.OUTPUT_PORT, f"{input_value}[{self.subtree_namespace}:{self.name}]"
-        )
+        self._set_output(self.OUTPUT_PORT, f"{input_value}[{self.subtree_namespace}:{self.name}]")
         return py_trees.common.Status.SUCCESS
 
 
