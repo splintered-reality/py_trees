@@ -8,7 +8,6 @@
 
 from setuptools import find_packages, setup
 
-install_requires = ["setuptools", "pydot"]
 
 # Some duplication of properties in:
 #  - setup.py,           (ros / legacy)
@@ -21,7 +20,10 @@ d = setup(
     version="2.4.0",
     packages=find_packages(exclude=["tests*", "docs*"]),
     package_data={"py_trees": ["py.typed"]},
-    install_requires=install_requires,
+    data_files=[
+        ("share/ament_index/resource_index/packages", ["resource/py_trees"]),
+        ("share/py_trees", ["package.xml"]),
+    ],
     author="Daniel Stonier, Naveed Usmani, Michal Staniaszek",
     maintainer="Daniel Stonier <d.stonier@gmail.com>, Sebastian Castro <sebas.a.castro@gmail.com>",
     url="https://github.com/splintered-reality/py_trees",

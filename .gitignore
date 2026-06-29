@@ -7,6 +7,8 @@ py_trees.egg-info
 *.pyc
 *.png
 *.svg
+install
+log
 build
 dist
 deb_dist
