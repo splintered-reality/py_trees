@@ -13,7 +13,11 @@ maintainers = [
 ]
 readme = "README.md"
 license = { text = "BSD" }
-requires-python = ">=3.10,<4.0"
+# NOTE: deliberately omitted. `colcon build` (ament_python) introspects setup.py via
+# colcon-python-setup-py, which repr()s + ast.literal_eval()s the setuptools metadata.
+# setuptools merges this PEP 621 field as a packaging.SpecifierSet, whose repr
+# (`<SpecifierSet(...)>`) is not a valid literal and breaks the colcon build.
+# requires-python = ">=3.10,<4.0"
 keywords = ["py_trees", "py-trees", "behaviour-trees"]
 classifiers = [
     "Environment :: Console",
