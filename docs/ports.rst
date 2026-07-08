@@ -227,6 +227,67 @@ Example::
    <Greeting name="hello_node" name_key="{target}" prefix="Howdy"/>
    <!--       ^^^ behaviour name   ^^^ port remap    ^^^ ctor kwarg  -->
 
+.. _ports-xml-includes-label:
+
+Composing trees from multiple files
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Subtrees do not have to live in the same file as the tree that uses them.
+A top-level ``<Include>`` (or ``<Import>``) element pulls all ``<BehaviorTree>``
+definitions from another XML file into the current document before parsing,
+so you can maintain a library of reusable subtrees in separate files:
+
+.. code-block:: xml
+
+   <!-- subtree_library.xml -->
+   <root>
+     <BehaviorTree ID="LibraryTree">
+       <Sequence>
+         <Producer name="LibProducer" output="{lib_out}"/>
+       </Sequence>
+     </BehaviorTree>
+   </root>
+
+.. code-block:: xml
+
+   <!-- main_tree.xml -->
+   <root main_tree_to_execute="MainTree">
+     <Include src="subtree_library.xml"/>
+     <BehaviorTree ID="MainTree">
+       <Sequence>
+         <SubTree ID="LibraryTree" name="Library" lib_out="{final}"/>
+         <Consumer name="FinalConsumer" input="{final}"/>
+       </Sequence>
+     </BehaviorTree>
+   </root>
+
+The path in ``src=`` (``file=`` is accepted as an alias) is resolved in order:
+
+1. As an absolute path, if it is one.
+2. Relative to the directory of the *including* XML file.
+3. Against each directory in the ``search_paths`` argument of
+   :func:`~py_trees.parsers.behaviour_tree_xml.parse_behaviour_tree_xml`.
+
+So if the library file lives somewhere other than next to the main file --- say a
+shared ``subtrees/`` directory --- pass that directory via ``search_paths``:
+
+.. code-block:: python
+
+   root = parse_behaviour_tree_xml(
+       "main_tree.xml",
+       search_paths=["/path/to/subtrees"],
+   )
+
+A few more rules to be aware of:
+
+* Includes are only recognised as **top-level** children of ``<root>``; an
+  ``<Include>`` nested inside a ``<BehaviorTree>`` is an error.
+* Includes are processed **recursively** --- an included file may itself include
+  further files --- and cycles are detected and skipped.
+* All BehaviorTree IDs must be unique across the main file and everything it
+  includes; a collision raises ``ValueError``.
+* ``main_tree_to_execute`` may refer to a tree defined in an included file.
+
 Scope, limitations, and how to extend
 -------------------------------------
 
