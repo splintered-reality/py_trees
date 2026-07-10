@@ -137,12 +137,16 @@ DECORATOR_NODES = {
     for name, obj in inspect.getmembers(py_trees.decorators, inspect.isclass)
     if obj.__module__ == py_trees.decorators.__name__
     and issubclass(obj, py_trees.decorators.Decorator)
-    and obj is not py_trees.decorators
+    and obj is not py_trees.decorators.Decorator
 }
 
 # All composite or decorator tags which can have children (case-insensitive)
 COMPOSITE_NODES_TAGS = {"sequence", "selector", "fallback", "parallel"}
 PARENT_NODES_TAGS = set(DECORATOR_NODES) | COMPOSITE_NODES_TAGS
+
+
+class XMLParserError(Exception):
+    """Exception raised due to XML parsing failure."""
 
 
 def build_bt_index(root: ET.Element) -> dict[str, ET.Element]:
@@ -667,8 +671,7 @@ def instantiate_ports_node(
             **constructor_kwargs,
         )
     except Exception as e:  # Catch everything that may go wrong in the constructor
-        # TODO: make XMLParserError to be more specific
-        raise ValueError(
+        raise XMLParserError(
             f"Failed to instantiate '{portsmixin_name}' with args {constructor_kwargs} "
             f"(check: does the instantiated class have kwargs in __init__?): {e}"
         ) from e
@@ -713,8 +716,26 @@ def build_tree_from_xml(
     """
     tag = elem.tag.lower()
     logger.debug(f"Processing tag: '{elem.tag}' with attributes {elem.attrib}. Remapping table: {remapping_table}")
-    # Composite/Decorator nodes which can have children:
-    if tag in PARENT_NODES_TAGS:
+    if elem.tag in node_registry:
+        # Prioritize nodes that are in the registry, which could even be user overrides for built-ins.
+        # This is any leaf PortsMixin node (any PortsMixin + Behaviour combination).
+        logger.debug(f"Creating PortsMixin leaf node for tag {elem.tag}.")
+        node = instantiate_ports_node(
+            elem=elem,
+            node_registry=node_registry,
+            remapping_table=remapping_table,
+            subtree_namespace=subtree_namespace,
+            logger=logger,
+            parent_names_str=parent_names_str,
+        )
+        if not (isinstance(node, PortsMixin) and isinstance(node, py_trees.behaviour.Behaviour)):
+            raise TypeError(
+                f"XML tag '{elem.tag}' did not instantiate a PortsMixin + "
+                f"py_trees.behaviour.Behaviour; got {type(node).__name__}"
+            )
+        return node
+    elif tag in PARENT_NODES_TAGS:
+        # Composite/Decorator nodes which can have children:
         node_name = generate_node_name(
             explicit_name=elem.attrib.get("name", None),
             general_name=elem.tag,
@@ -771,12 +792,9 @@ def build_tree_from_xml(
             # Instantiate built-in decorators, including extracting constructor arguments using type hints.
             constructor_kwargs: dict[str, Any] = {}
             cls = DECORATOR_NODES[tag]
-            if issubclass(cls, py_trees.decorators.Decorator):
-                if not len(children) == 1:
-                    raise ValueError(f"Decorator '{elem.tag}' must have exactly one child, but got {len(children)}.")
-                constructor_kwargs["child"] = children[0] if children else None
-            else:
-                constructor_kwargs["children"] = children
+            if len(children) != 1:
+                raise ValueError(f"Decorator '{elem.tag}' must have exactly one child, but got {len(children)}.")
+            constructor_kwargs["child"] = children[0] if children else None
 
             for key in elem.keys():
                 if key == "name":
@@ -791,7 +809,13 @@ def build_tree_from_xml(
                     "Proceeding, but leaving the conversion to the constructors."
                 )
 
-            node = cls(name=node_name, **constructor_kwargs)
+            try:
+                node = cls(name=node_name, **constructor_kwargs)
+            except Exception as e:  # Catch everything that may go wrong in the constructor
+                raise XMLParserError(
+                    f"Failed to instantiate '{tag}' with args {constructor_kwargs} "
+                    f"(check: does the instantiated class have kwargs in __init__?): {e}"
+                ) from e
 
         else:
             raise NotImplementedError(f"Unknown composite tag: {tag}")
@@ -852,23 +876,6 @@ def build_tree_from_xml(
             subtree_namespace=new_namespace,
             parent_names_str=((parent_names_str + ".") if parent_names_str else "") + subtree_name,
         )
-    elif elem.tag in node_registry:
-        # Leaf PortsMixin node (any PortsMixin + Behaviour combination).
-        logger.debug(f"Creating PortsMixin leaf node for tag {elem.tag}.")
-        node = instantiate_ports_node(
-            elem=elem,
-            node_registry=node_registry,
-            remapping_table=remapping_table,
-            subtree_namespace=subtree_namespace,
-            logger=logger,
-            parent_names_str=parent_names_str,
-        )
-        if not (isinstance(node, PortsMixin) and isinstance(node, py_trees.behaviour.Behaviour)):
-            raise TypeError(
-                f"XML tag '{elem.tag}' did not instantiate a PortsMixin + "
-                f"py_trees.behaviour.Behaviour; got {type(node).__name__}"
-            )
-        return node
     else:
         logger.error(f"Unsupported tag encountered: {elem.tag}")
         raise ValueError(

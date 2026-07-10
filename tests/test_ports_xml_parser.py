@@ -633,6 +633,37 @@ class TestXMLParser(unittest.TestCase):
             parse_behaviour_tree_xml(path, logger=StdoutLogger())
         os.unlink(path)
 
+    def test_decorator_node(self) -> None:
+        """Verify that a built-in decorator is instantiated with typed constructor kwargs."""
+        xml = """<root main_tree_to_execute="MainTree">
+          <BehaviorTree ID="MainTree">
+            <Sequence>
+              <Repeat num_success="-1">
+                <Producer name="prod" output="{out}" />
+              </Repeat>
+            </Sequence>
+          </BehaviorTree>
+        </root>"""
+
+        with tempfile.NamedTemporaryFile(delete=False, mode="w", suffix=".xml") as tf:
+            tf.write(xml)
+            path = tf.name
+
+        try:
+            root = parse_behaviour_tree_xml(path, logger=StdoutLogger())
+            repeat = find_node_by_class(root, py_trees.decorators.Repeat)
+            self.assertIsNotNone(repeat)
+            self.assertEqual(repeat.num_success, -1)
+            self.assertIsInstance(repeat.num_success, int)
+            self.assertIsInstance(repeat.decorated, Producer)
+
+            # num_success=-1 repeats indefinitely, so the decorator stays RUNNING.
+            btree = py_trees.trees.BehaviourTree(root)
+            btree.tick()
+            self.assertEqual(repeat.status, py_trees.common.Status.RUNNING)
+        finally:
+            os.unlink(path)
+
     def test_direct_portsmixin_leaf_accepted(self) -> None:
         """
         A leaf class that is ``PortsMixin + Behaviour`` (not via ``BehaviourWithPorts``)
