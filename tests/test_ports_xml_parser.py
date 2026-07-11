@@ -181,7 +181,7 @@ class TestXMLParser(unittest.TestCase):
 
     def test_grandparent_xml(self) -> None:
         """Test XML parser with grandparent-child relationships and correct value propagation."""
-        xml_path = os.path.join(os.path.dirname(__file__), "grandparent_test.xml")
+        xml_path = os.path.join(os.path.dirname(__file__), "xml", "grandparent_test.xml")
         root_node = parse_behaviour_tree_xml(xml_path, logger=StdoutLogger())
         btree = py_trees.trees.BehaviourTree(root_node)
         btree.tick()
@@ -918,6 +918,33 @@ class TestXMLParserImports(unittest.TestCase):
             c = find_node_by_name(root, "C", strip_prefix=True)
             assert isinstance(c, Consumer)
             self.assertEqual(c.consumed_value, "Producer[/L:L.MySeq.P]")
+
+    def test_include_subtree_file_with_search_paths(self) -> None:
+        """A subtree <Include>d from a sibling directory resolves via 'search_paths'.
+
+        Uses the on-disk fixtures in tests/xml/: the main tree includes
+        'subtree_library.xml', which lives in tests/xml/subtrees/ and is therefore
+        only found when that directory is passed via 'search_paths'.
+        """
+        xml_dir = os.path.join(os.path.dirname(__file__), "xml")
+        main_path = os.path.join(xml_dir, "main_tree_with_include.xml")
+        root = parse_behaviour_tree_xml(
+            main_path,
+            logger=StdoutLogger(),
+            search_paths=[os.path.join(xml_dir, "subtrees")],
+        )
+        tree = py_trees.trees.BehaviourTree(root)
+        tree.tick()
+        consumer = find_node_by_name(root, "FinalConsumer", strip_prefix=True)
+        assert isinstance(consumer, Consumer)
+        self.assertEqual(consumer.consumed_value, "Producer[/Library:Library.LibSeq.LibProducer]")
+
+    def test_include_subtree_file_without_search_paths_fails(self) -> None:
+        """Without 'search_paths', the include in tests/xml/ cannot be resolved."""
+        xml_dir = os.path.join(os.path.dirname(__file__), "xml")
+        main_path = os.path.join(xml_dir, "main_tree_with_include.xml")
+        with self.assertRaises(FileNotFoundError):
+            parse_behaviour_tree_xml(main_path, logger=StdoutLogger())
 
     def test_imported_bt_missing_id(self) -> None:
         """Imported file containing a <BehaviorTree> without an ID raises ValueError."""
