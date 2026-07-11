@@ -1,0 +1,14 @@
+<root main_tree_to_execute="MainTree">
+  <!--
+    The included file lives in the sibling 'subtrees' directory, so it can only
+    be resolved by passing search_paths=[.../tests/xml/subtrees] to
+    parse_behaviour_tree_xml(). Without it, parsing raises FileNotFoundError.
+  -->
+  <Include src="subtree_library.xml"/>
+  <BehaviorTree ID="MainTree">
+    <Sequence>
+      <SubTree ID="LibraryTree" name="Library" lib_out="{final}"/>
+      <Consumer name="FinalConsumer" input="{final}"/>
+    </Sequence>
+  </BehaviorTree>
+</root>
