@@ -824,7 +824,7 @@ def build_tree_from_xml(
             }
             node = py_trees.composites.Parallel(
                 name=node_name,
-                policy=mapping[policy](),  # type: ignore
+                policy=mapping.get(policy, py_trees.common.ParallelPolicy.SuccessOnOne)(),  # type: ignore
                 children=children,
             )
         elif tag in DECORATOR_NODES:
