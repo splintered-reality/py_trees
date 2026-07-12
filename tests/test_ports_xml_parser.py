@@ -19,7 +19,7 @@ from typing import Any
 
 import py_trees
 from py_trees.parsers.behaviour_tree_xml import is_key, parse_behaviour_tree_xml
-from py_trees.ports import BehaviourWithPorts, PortInformation, get_ports_registry
+from py_trees.ports import BehaviourWithPorts, PortInformation, PortsMixin, get_ports_registry
 from py_trees.ports_utils import (
     find_node_by_class,
     find_node_by_name,
@@ -632,6 +632,122 @@ class TestXMLParser(unittest.TestCase):
         with self.assertRaises(ValueError):
             parse_behaviour_tree_xml(path, logger=StdoutLogger())
         os.unlink(path)
+
+    def test_decorator_node(self) -> None:
+        """Verify that a built-in decorator is instantiated with typed constructor kwargs."""
+        xml = """<root main_tree_to_execute="MainTree">
+          <BehaviorTree ID="MainTree">
+            <Sequence>
+              <Repeat num_success="-1">
+                <Producer name="prod" output="{out}" />
+              </Repeat>
+            </Sequence>
+          </BehaviorTree>
+        </root>"""
+
+        with tempfile.NamedTemporaryFile(delete=False, mode="w", suffix=".xml") as tf:
+            tf.write(xml)
+            path = tf.name
+
+        try:
+            root = parse_behaviour_tree_xml(path, logger=StdoutLogger())
+            repeat = find_node_by_class(root, py_trees.decorators.Repeat)
+            self.assertIsNotNone(repeat)
+            self.assertEqual(repeat.num_success, -1)
+            self.assertIsInstance(repeat.num_success, int)
+            self.assertIsInstance(repeat.decorated, Producer)
+
+            # num_success=-1 repeats indefinitely, so the decorator stays RUNNING.
+            btree = py_trees.trees.BehaviourTree(root)
+            btree.tick()
+            self.assertEqual(repeat.status, py_trees.common.Status.RUNNING)
+        finally:
+            os.unlink(path)
+
+    def test_decorator_ports_node(self) -> None:
+        """Verify that a decorator with ports is instantiated correctly."""
+
+        class RepeatWithPorts(PortsMixin, py_trees.decorators.Repeat):
+            """A `py_trees.decorators.Repeat` decorator that also exposes ports."""
+
+            @classmethod
+            def input_ports(cls) -> dict:
+                return {}
+
+            @classmethod
+            def output_ports(cls) -> dict:
+                return {"count": PortInformation(data_type=int, required=False)}
+
+        xml = """<root main_tree_to_execute="MainTree">
+          <BehaviorTree ID="MainTree">
+            <Sequence>
+              <RepeatWithPorts num_success="5">
+                <Producer name="prod" output="{out}" />
+              </RepeatWithPorts>
+            </Sequence>
+          </BehaviorTree>
+        </root>"""
+
+        with tempfile.NamedTemporaryFile(delete=False, mode="w", suffix=".xml") as tf:
+            tf.write(xml)
+            path = tf.name
+
+        try:
+            root = parse_behaviour_tree_xml(path, logger=StdoutLogger())
+            repeat = find_node_by_class(root, RepeatWithPorts)
+            self.assertIsNotNone(repeat)
+            self.assertEqual(repeat.num_success, 5)
+            self.assertIsInstance(repeat.num_success, int)
+            self.assertIsInstance(repeat.decorated, Producer)
+
+            # num_success=-1 repeats indefinitely, so the decorator stays RUNNING.
+            btree = py_trees.trees.BehaviourTree(root)
+            btree.tick()
+            self.assertEqual(repeat.status, py_trees.common.Status.RUNNING)
+        finally:
+            os.unlink(path)
+
+    def test_composite_ports_node(self) -> None:
+        """Verify that a decorator with ports is instantiated correctly."""
+
+        class SequenceWithPorts(PortsMixin, py_trees.composites.Sequence):
+            """A `py_trees.composites.Sequence` composite that also exposes ports."""
+
+            @classmethod
+            def input_ports(cls) -> dict:
+                return {}
+
+            @classmethod
+            def output_ports(cls) -> dict:
+                return {}
+
+        xml = """<root main_tree_to_execute="MainTree">
+          <BehaviorTree ID="MainTree">
+            <SequenceWithPorts memory="true">
+                <Producer name="prod1" output="{out1}" />
+                <Producer name="prod2" output="{out2}" />
+            </SequenceWithPorts>
+          </BehaviorTree>
+        </root>"""
+
+        with tempfile.NamedTemporaryFile(delete=False, mode="w", suffix=".xml") as tf:
+            tf.write(xml)
+            path = tf.name
+
+        try:
+            root = parse_behaviour_tree_xml(path, logger=StdoutLogger())
+            sequence = find_node_by_class(root, SequenceWithPorts)
+            self.assertIsNotNone(sequence)
+            self.assertIsInstance(sequence.children, list)
+            self.assertEqual(len(sequence.children), 2)
+            self.assertIsInstance(sequence.children[0], Producer)
+            self.assertIsInstance(sequence.children[1], Producer)
+
+            btree = py_trees.trees.BehaviourTree(root)
+            btree.tick()
+            self.assertEqual(sequence.status, py_trees.common.Status.SUCCESS)
+        finally:
+            os.unlink(path)
 
     def test_direct_portsmixin_leaf_accepted(self) -> None:
         """
