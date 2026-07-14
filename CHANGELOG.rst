@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+Forthcoming
+-----------
+* [composites] Restart memory sequences when the current child is replaced (`#421 <https://github.com/splintered-reality/py_trees/issues/421>`_)
+
 2.5.0 (2026-07-13)
 ------------------
 * [ports] Improve handling of decorator nodes in XML parser (`#498 <https://github.com/splintered-reality/py_trees/issues/498>`_)

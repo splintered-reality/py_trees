@@ -525,11 +525,8 @@ class Sequence(Composite):
             self.initialise()  # user specific initialisation
         elif self.memory and self.current_child is not None:
             index = self.children.index(self.current_child)
-        elif not self.memory:
-            self.current_child = self.children[0] if self.children else None
         else:
-            # previous conditional checks should cover all variations
-            raise RuntimeError("Sequence reached an unknown / invalid state")
+            self.current_child = self.children[0] if self.children else None
 
         # nothing to do
         if not self.children:
