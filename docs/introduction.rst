@@ -4,11 +4,23 @@ Introduction
 Quick Start
 -----------
 
-If you'd like to fast forward to some action, browse the :ref:`demos-section-label` or
-read through the `ROS2 Robotics Tutorials`_ which incrementally create a significantly
-more complex behaviour tree for a robotics scenario (ROS2 knowledge not needed).
+This project is available on:
 
-.. _`ROS2 Robotics Tutorials`: https://py-trees-ros-tutorials.readthedocs.io/en/release-2.0.x/tutorials.html
+* `PyPi <https://pypi.org/project/py_trees/>`_: ``pip install py_trees``
+* `conda-forge <https://anaconda.org/channels/conda-forge/packages/py-trees/overview>`_: ``conda install conda-forge::py-trees``
+
+Alternatively, you can clone the repo, install `uv <https://docs.astral.sh/uv/>`_, and you're up and running in under 5 minutes:
+
+.. code-block:: bash
+
+    uv sync
+    uv run py-trees-demo-blackboard  # or other demos
+
+If you'd like to fast forward to some action, browse the :ref:`demos-section-label` or
+read through the `ROS 2 Robotics Tutorials`_ which incrementally create a significantly
+more complex behaviour tree for a robotics scenario (ROS 2 knowledge not needed).
+
+.. _`ROS 2 Robotics Tutorials`: https://py-trees-ros-tutorials.readthedocs.io/en/release-2.0.x/tutorials.html
 
 .. _background-section:
 
