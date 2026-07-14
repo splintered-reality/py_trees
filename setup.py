@@ -32,14 +32,13 @@ d = setup(
     classifiers=[
         "Environment :: Console",
         "Intended Audience :: Developers",
-        "License :: OSI Approved :: BSD License",
         "Programming Language :: Python",
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
         "Topic :: Software Development :: Libraries",
     ],
     description="pythonic implementation of behaviour trees",
     long_description="A behaviour tree implementation for rapid development of small scale decision making engines that don't need to be real time reactive.",
-    license="BSD",
+    license="BSD-3-Clause",
     entry_points={
         "console_scripts": [
             "py-trees-render = py_trees.programs.render:main",
