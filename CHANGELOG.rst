@@ -1,8 +1,8 @@
 Release Notes
 =============
 
-Forthcoming
------------
+2.5.0 (2026-07-13)
+------------------
 * [ports] Improve handling of decorator nodes in XML parser (`#498 <https://github.com/splintered-reality/py_trees/issues/498>`_)
 * [ports] Add tests for including subtrees in other files (`#500 <https://github.com/splintered-reality/py_trees/issues/500>`_)
 * [ports] Convert constructor kwargs to types defined in parent classes (`#496 <https://github.com/splintered-reality/py_trees/issues/496>`_)
