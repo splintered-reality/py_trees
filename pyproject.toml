@@ -12,7 +12,7 @@ maintainers = [
     { name = "Sebastian Castro", email = "sebas.a.castro@gmail.com" },
 ]
 readme = "README.md"
-license = { text = "BSD" }
+license = "BSD-3-Clause"
 # NOTE: deliberately omitted. `colcon build` (ament_python) introspects setup.py via
 # colcon-python-setup-py, which repr()s + ast.literal_eval()s the setuptools metadata.
 # setuptools merges this PEP 621 field as a packaging.SpecifierSet, whose repr
@@ -22,7 +22,6 @@ keywords = ["py_trees", "py-trees", "behaviour-trees"]
 classifiers = [
     "Environment :: Console",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: BSD License",
     "Programming Language :: Python",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Software Development :: Libraries",
