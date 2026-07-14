@@ -31,8 +31,12 @@ Brief feature list:
 
 ## Getting Started
 
-This project uses [`uv`](https://docs.astral.sh/uv/).
-Install it, clone the repo, and you're up and running in under 5 minutes:
+Released versions of PyTrees can be installed directly from:
+
+* [PyPi](https://pypi.org/project/py_trees/): `pip install py_trees`
+* [conda-forge](https://anaconda.org/channels/conda-forge/packages/py-trees/overview): `conda install conda-forge::py-trees`
+
+Alternatively, you can clone the repo, install [`uv`](https://docs.astral.sh/uv/), and you're up and running in under 5 minutes:
 
 ```
 # Install dependencies into a .venv
