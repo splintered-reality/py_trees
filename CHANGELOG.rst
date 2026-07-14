@@ -3,6 +3,17 @@ Release Notes
 
 Forthcoming
 -----------
+* [ports] Improve handling of decorator nodes in XML parser (`#498 <https://github.com/splintered-reality/py_trees/issues/498>`_)
+* [ports] Add tests for including subtrees in other files (`#500 <https://github.com/splintered-reality/py_trees/issues/500>`_)
+* [ports] Convert constructor kwargs to types defined in parent classes (`#496 <https://github.com/splintered-reality/py_trees/issues/496>`_)
+* [infra] Update lock file to use Python 3.10 (`#501 <https://github.com/splintered-reality/py_trees/issues/501>`_)
+* [infra] Fix colcon build (at the expense of specifying `requires-python`) (`#497 <https://github.com/splintered-reality/py_trees/issues/497>`_)
+* [infra] Use old setuptools license definition in pyproject.toml to make ROS buildfarm happy
+* [infra] Modernize dev environment to use uv, ruff, and ty (`#495 <https://github.com/splintered-reality/py_trees/issues/495>`_)
+* [ports] Add auto registration of PortsMixin classes (`#493 <https://github.com/splintered-reality/py_trees/issues/493>`_)
+* [ports] Split list/tuple value strings based on comma or semicolon (`#494 <https://github.com/splintered-reality/py_trees/issues/494>`_)
+* [behaviours] Add input/output ports and XML parser (`#487 <https://github.com/splintered-reality/py_trees/issues/487>`_)
+* Contributors: Jennifer Buehler, Sebastian Castro
 
 2.4.0 (2025-11-13)
 ------------------
