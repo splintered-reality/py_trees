@@ -12,7 +12,7 @@ maintainers = [
     { name = "Sebastian Castro", email = "sebas.a.castro@gmail.com" },
 ]
 readme = "README.md"
-license = "BSD-3-Clause"
+license = { text = "BSD-3-Clause" }
 # NOTE: deliberately omitted. `colcon build` (ament_python) introspects setup.py via
 # colcon-python-setup-py, which repr()s + ast.literal_eval()s the setuptools metadata.
 # setuptools merges this PEP 621 field as a packaging.SpecifierSet, whose repr
