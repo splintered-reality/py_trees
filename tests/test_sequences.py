@@ -277,3 +277,23 @@ def test_add_tick_remove_with_current_child() -> None:
     print(py_trees.display.unicode_tree(root, show_status=True))
     py_trees.tests.print_assert_details("Current Child", None, root.current_child)
     assert root.current_child is None
+
+
+def test_replace_running_child_with_memory() -> None:
+    console.banner("Replace Running Child with Memory")
+    py_trees.tests.print_assert_banner()
+    root = py_trees.composites.Sequence(name="Sequence", memory=True)
+    running = py_trees.behaviours.Running(name="Running")
+    replacement = py_trees.behaviours.Success(name="Replacement")
+    root.add_child(running)
+
+    root.tick_once()
+    assert root.status == py_trees.common.Status.RUNNING
+    assert root.current_child is running
+
+    root.replace_child(child=running, replacement=replacement)
+    assert root.current_child is None
+
+    root.tick_once()
+    assert root.status == py_trees.common.Status.SUCCESS
+    assert root.current_child is replacement
