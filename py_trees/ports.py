@@ -428,7 +428,7 @@ class PortsMixin(_MixinBase):
 
                     port_type = self.input_ports()[port].data_type
                     try:
-                        updated_value = convert_str_to_type(value, port_type, logger=self._ports_logger)
+                        updated_value = convert_str_to_type(value, port_type, logger=self._ports_logger)[1]
                         self.log_debug(f"Port {port}: Converted const value '{value}' to type {port_type}.")
                     except ValueError as e:
                         raise ValueError(f"Cannot convert Value '{value}' to type {port_type}") from e
