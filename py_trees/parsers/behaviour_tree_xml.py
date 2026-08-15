@@ -301,6 +301,7 @@ def parse_behaviour_tree_xml(
     node_registry: dict | str = "auto",
     logger: PortsLogger | None = None,
     search_paths: list[str] | None = None,
+    input_mappings: dict[str, str] | None = None,
 ) -> py_trees.behaviour.Behaviour:
     """
     Parse the XML file and build the behavior tree.
@@ -335,6 +336,9 @@ def parse_behaviour_tree_xml(
             ``{tag: class/partial}`` dict to use exclusively. Defaults to ``"auto"``.
         logger (PortsLogger | None): Optional logger (NoOp if None).
         search_paths (list[str] | None): Optional extra directories to resolve imports.
+        input_mappings (dict[str, str]): Optional input key-value mappings that can override default
+            top-level behaviour tree port values. Note that the values must be strings, to match how
+            they would be defined in XML.
 
     Returns:
         The root py_trees.behaviour.Behaviour for the requested tree.
@@ -387,9 +391,17 @@ def parse_behaviour_tree_xml(
     logger.debug(f"[DEBUG] Starting parse of main tree ID='{main_tree_id}'")
     bt_elem = bt_index[main_tree_id]
 
+    # Apply any input mappings by just modifying the XML element.
+    if input_mappings is not None:
+        for k, v in input_mappings.items():
+            if not isinstance(v, str):
+                raise ValueError(f"Value in input mapping {k} -> {v} must be a string.")
+            bt_elem.attrib[k] = v
+    
+    remapping_table = build_subtree_remapping(bt_elem, bt_index, {}, "/", logger)
     tree = build_tree_from_xml(
         bt_elem,
-        remapping_table={},
+        remapping_table=remapping_table,
         node_registry=node_registry,
         bt_index=bt_index,
         logger=logger,
