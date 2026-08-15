@@ -101,6 +101,52 @@ In the example above, another node's output ports would typically be remapped to
     Because the remapping table usually cannot be computed until the entire tree topology is known — either the user assembles it by hand or a parser generates it from e.g. XML (more on that next).
     See :class:`py_trees.ports.PortsMixin` for the full contract and semantics.
 
+Default values
+~~~~~~~~~~~~~~
+
+A port can declare a ``default_value`` next to its type, so the fallback lives with the port declaration rather than being repeated at every call site:
+
+.. code-block:: python
+
+   @classmethod
+   def input_ports(cls):
+       return {
+           "timeout": PortInformation(data_type=float, default_value=5.0),
+       }
+
+   def update(self):
+       timeout = self.get_input("timeout")   # 5.0 unless something wrote to the port
+
+The semantics are:
+
+* **Validated at declaration time.**
+  The default is type-checked against ``data_type`` when the :class:`~py_trees.ports.PortInformation` is constructed, so a mismatch raises ``TypeError`` where the port is declared instead of surfacing on a tick.
+
+* **Applied whenever no data is available.**
+  That covers both an unwired port and a port wired to a key nothing has written to yet.
+  Any actual data on the port wins over the default.
+
+* **They make a port satisfiable, including a required one.**
+  ``required=True`` together with a default reads as "this node always needs a value here, and here is the fallback"; such a port never raises :class:`~py_trees.ports.NoDataAvailable`.
+  It is also not registered as a *required* blackboard key, so :meth:`~py_trees.blackboard.Client.verify_required_keys_exist` does not trip over it.
+
+* **A call-site default still wins.**
+  ``get_input("timeout", default=1.0)`` overrides the declared default for that read.
+
+* **Input defaults are read-side only.**
+  They are never written to the blackboard, so wiring a defaulted input port to a shared key does not seed that key for other readers.
+  Container defaults (e.g., a list) are deep-copied on the way out, so a caller mutating the returned value cannot corrupt the declaration shared by every instance of the class.
+
+* **Output defaults are seeded onto the blackboard.**
+  An output port's default is written by ``setup_ports()``, so nodes wired to that port read a value before the producing node has ticked; whatever the node writes later replaces it.
+  Unlike input defaults, this does touch shared state — if two output ports are wired to the same key, the last one set up wins.
+
+* **Reset returns a port to its default.**
+  :meth:`~py_trees.ports.PortsMixin.reset_port` (and ``reset_all_output_ports()``) re-seeds an output port that declares a default instead of leaving it empty, so the guarantee that readers always see a value survives a "new data epoch".
+  Ports without a default are cleared as before.
+
+Note that ``default_value=None`` means "no default declared" — ``None`` is not supported as a port value in any case.
+
 .. _ports-xml-parser-label:
 
 Experimental XML parser

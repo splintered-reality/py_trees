@@ -111,6 +111,25 @@ class EchoCtorArgsChild(EchoCtorArgs):
         super().__init__(**kwargs)
 
 
+class DefaultingConsumer(BehaviourWithPorts):
+    """Consumer whose input port declares a default value."""
+
+    @classmethod
+    def input_ports(cls) -> dict:
+        return {"input": PortInformation(data_type=str, required=True, default_value="fallback")}
+
+    @classmethod
+    def output_ports(cls) -> dict:
+        return {}
+
+    def update(self) -> py_trees.common.Status:
+        return py_trees.common.Status.SUCCESS
+
+    @property
+    def consumed_value(self) -> Any:
+        return self.get_input("input")
+
+
 @dataclass
 class RobotData:
     type: str
@@ -324,6 +343,40 @@ class TestXMLParser(unittest.TestCase):
 
         self.assertEqual(type(node.consumed_value), str)
         self.assertEqual(node.consumed_value, "ABC")
+
+    def test_port_default_values_from_XML(self) -> None:
+        """An unwired port falls back to its declared default; a direct value in the XML overrides it."""
+        self.xml = """<root main_tree_to_execute="MainTree">
+        <BehaviorTree ID="MainTree">
+          <Sequence>
+            <DefaultingConsumer name="defaulted" />
+            <DefaultingConsumer name="overridden" input="explicit" />
+            <DefaultingConsumer name="wired" input="{unwritten}" />
+          </Sequence>
+        </BehaviorTree>
+        </root>"""
+
+        self.tempfile = tempfile.NamedTemporaryFile(delete=False, mode="w", suffix=".xml")
+        self.tempfile.write(self.xml)
+        self.tempfile.close()
+
+        root_node = parse_behaviour_tree_xml(self.tempfile.name, logger=StdoutLogger())
+        py_trees.trees.BehaviourTree(root_node).tick()
+
+        # No attribute at all: the declared default is used.
+        node = find_node_by_name(root_node, "defaulted", strip_prefix=True)
+        assert isinstance(node, DefaultingConsumer)
+        self.assertEqual(node.consumed_value, "fallback")
+
+        # A direct (constant) value in the XML overrides the default.
+        node = find_node_by_name(root_node, "overridden", strip_prefix=True)
+        assert isinstance(node, DefaultingConsumer)
+        self.assertEqual(node.consumed_value, "explicit")
+
+        # Wired to a key that nothing has written to yet: the default still applies.
+        node = find_node_by_name(root_node, "wired", strip_prefix=True)
+        assert isinstance(node, DefaultingConsumer)
+        self.assertEqual(node.consumed_value, "fallback")
 
     def test_parsing_direct_values_to_XML(self) -> None:
         """Verify that direct values are successfully parsed via the XML parser."""

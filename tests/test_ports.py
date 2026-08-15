@@ -14,62 +14,61 @@ import py_trees
 from py_trees.ports import (
     BehaviourWithPorts,
     NoDataAvailable,
+    PortInformation,
     get_ports_registry,
     register_ports_class,
 )
+from py_trees.ports_utils import is_instance_of_type
 
-from .test_ports_helpers import Consumer, ConsumerProducer, Producer
+from .test_ports_helpers import Consumer, ConsumerProducer, Producer, seed_blackboard_value
 
 
 # TODO: Add more tests for PortsMixin methods as needed. There are also some tests that can be ported over from
 # test_behavior_with_ports.py to here.
-class TestPortsMixin(unittest.TestCase):
-    def setUp(self) -> None:
-        self.mixin = Producer("test")  # Use Producer class so we don't have to worry about PortsMixin abstract methods
-
+class TestIsInstanceOfType(unittest.TestCase):
     def test_basic_types(self) -> None:
-        self.assertTrue(self.mixin._is_instance_of_type(5, int))
-        self.assertTrue(self.mixin._is_instance_of_type(3.14, float))
-        self.assertTrue(self.mixin._is_instance_of_type("hello", str))
-        self.assertFalse(self.mixin._is_instance_of_type("5", int))
-        self.assertFalse(self.mixin._is_instance_of_type(5, str))
+        self.assertTrue(is_instance_of_type(5, int))
+        self.assertTrue(is_instance_of_type(3.14, float))
+        self.assertTrue(is_instance_of_type("hello", str))
+        self.assertFalse(is_instance_of_type("5", int))
+        self.assertFalse(is_instance_of_type(5, str))
 
     def test_list_of_int(self) -> None:
-        self.assertTrue(self.mixin._is_instance_of_type([1, 2, 3], list[int]))
-        self.assertFalse(self.mixin._is_instance_of_type([1, "2", 3], list[int]))
-        self.assertTrue(self.mixin._is_instance_of_type([], list[int]))  # empty list is valid
+        self.assertTrue(is_instance_of_type([1, 2, 3], list[int]))
+        self.assertFalse(is_instance_of_type([1, "2", 3], list[int]))
+        self.assertTrue(is_instance_of_type([], list[int]))  # empty list is valid
 
     def test_union_type(self) -> None:
         T = int | str
-        self.assertTrue(self.mixin._is_instance_of_type(5, T))
-        self.assertTrue(self.mixin._is_instance_of_type("hello", T))
-        self.assertFalse(self.mixin._is_instance_of_type(3.14, T))
+        self.assertTrue(is_instance_of_type(5, T))
+        self.assertTrue(is_instance_of_type("hello", T))
+        self.assertFalse(is_instance_of_type(3.14, T))
 
     def test_list_of_union(self) -> None:
         T = list[int | str]
-        self.assertTrue(self.mixin._is_instance_of_type([1, "a", 2], T))
-        self.assertFalse(self.mixin._is_instance_of_type([1, 2.0], T))
+        self.assertTrue(is_instance_of_type([1, "a", 2], T))
+        self.assertFalse(is_instance_of_type([1, 2.0], T))
 
     def test_or_operator(self) -> None:
         T = int | str
-        self.assertTrue(self.mixin._is_instance_of_type(5, T))
-        self.assertTrue(self.mixin._is_instance_of_type("hello", T))
-        self.assertFalse(self.mixin._is_instance_of_type(3.14, T))
+        self.assertTrue(is_instance_of_type(5, T))
+        self.assertTrue(is_instance_of_type("hello", T))
+        self.assertFalse(is_instance_of_type(3.14, T))
 
         T_list = list[int | str]
-        self.assertTrue(self.mixin._is_instance_of_type([1, "a", 2], T_list))
-        self.assertFalse(self.mixin._is_instance_of_type([1, 2.0], T_list))
+        self.assertTrue(is_instance_of_type([1, "a", 2], T_list))
+        self.assertFalse(is_instance_of_type([1, 2.0], T_list))
 
     def test_list_or_element(self) -> None:
         T = int | list[int]
-        self.assertTrue(self.mixin._is_instance_of_type(5, T))
-        self.assertTrue(self.mixin._is_instance_of_type([1, 2, 3], T))
-        self.assertFalse(self.mixin._is_instance_of_type("hello", T))
-        self.assertFalse(self.mixin._is_instance_of_type([1, "2"], T))
+        self.assertTrue(is_instance_of_type(5, T))
+        self.assertTrue(is_instance_of_type([1, 2, 3], T))
+        self.assertFalse(is_instance_of_type("hello", T))
+        self.assertFalse(is_instance_of_type([1, "2"], T))
 
     def test_not_implemented_for_dict(self) -> None:
         with self.assertRaises(NotImplementedError):
-            self.mixin._is_instance_of_type({"a": 1}, dict[str, int])
+            is_instance_of_type({"a": 1}, dict[str, int])
 
 
 class TestBehaviourWithPorts(unittest.TestCase):
@@ -264,6 +263,165 @@ class TestBehaviourWithPorts(unittest.TestCase):
 
         prod._set_output("output", "wired")
         self.assertEqual(cons.get_input("input"), "wired")
+
+
+class _DefaultingConsumer(BehaviourWithPorts, register=False):
+    """Consumer whose input ports declare default values."""
+
+    @classmethod
+    def input_ports(cls) -> dict:
+        return {
+            "input": PortInformation(data_type=str, required=True, default_value="fallback"),
+            "items": PortInformation(data_type=list[int], required=False, default_value=[1, 2]),
+        }
+
+    @classmethod
+    def output_ports(cls) -> dict:
+        return {}
+
+    def update(self) -> py_trees.common.Status:
+        return py_trees.common.Status.SUCCESS
+
+
+class _DefaultingProducer(BehaviourWithPorts, register=False):
+    """Producer whose output ports declare default values."""
+
+    @classmethod
+    def input_ports(cls) -> dict:
+        return {}
+
+    @classmethod
+    def output_ports(cls) -> dict:
+        return {
+            "output": PortInformation(data_type=str, default_value="initial"),
+            "items": PortInformation(data_type=list[int], default_value=[1, 2]),
+        }
+
+    def update(self) -> py_trees.common.Status:
+        self._set_output("output", "produced")
+        return py_trees.common.Status.SUCCESS
+
+
+class TestPortDefaultValues(unittest.TestCase):
+    """Default values declared on an input port's PortInformation."""
+
+    def setUp(self) -> None:
+        """Reset the blackboard before each test."""
+        py_trees.blackboard.Blackboard.clear()
+
+    def test_declared_default_returned_when_no_data(self) -> None:
+        """An unwired port with a declared default resolves to that default."""
+        cons = _DefaultingConsumer("cons")
+        cons.setup_ports()
+        self.assertEqual(cons.get_input("input"), "fallback")
+        self.assertEqual(cons.get_input("items"), [1, 2])
+
+    def test_data_overrides_declared_default(self) -> None:
+        """Actual data on the port takes precedence over the declared default."""
+        cons = _DefaultingConsumer("cons")
+        cons.setup_ports(port_remappings={"input": "/shared"})
+        seed_blackboard_value("/shared", "ActualValue")
+        self.assertEqual(cons.get_input("input"), "ActualValue")
+
+    def test_declared_default_applies_to_wired_but_unwritten_port(self) -> None:
+        """A port wired to a key that nobody has written to yet still falls back to the default."""
+        cons = _DefaultingConsumer("cons")
+        cons.setup_ports(port_remappings={"input": "/shared"})
+        self.assertEqual(cons.get_input("input"), "fallback")
+
+    def test_argument_default_overrides_declared_default(self) -> None:
+        """An explicit default= argument wins over the one declared on the port."""
+        cons = _DefaultingConsumer("cons")
+        cons.setup_ports()
+        self.assertEqual(cons.get_input("input", default="call_site"), "call_site")
+
+    def test_mutable_default_is_not_shared(self) -> None:
+        """Mutating a returned container default must not corrupt the port declaration."""
+        cons = _DefaultingConsumer("cons")
+        cons.setup_ports()
+        items = cons.get_input("items")
+        items.append(3)
+        self.assertEqual(cons.get_input("items"), [1, 2])
+        self.assertEqual(_DefaultingConsumer.input_ports()["items"].default_value, [1, 2])
+
+    def test_port_without_default_still_raises(self) -> None:
+        """A port with no declared default and no data raises, as before."""
+        cons = Consumer("cons")
+        cons.setup_ports()
+        with self.assertRaises(NoDataAvailable):
+            cons.get_input("input")
+
+    def test_required_port_with_default_is_not_a_required_blackboard_key(self) -> None:
+        """A required port with a default is always satisfiable, so it is not required on the blackboard."""
+        cons = _DefaultingConsumer("cons")
+        cons.setup_ports()
+        cons.blackboard_client.verify_required_keys_exist()  # must not raise
+
+        # ... whereas a required port without a default is registered as required.
+        plain = Consumer("plain")
+        plain.setup_ports()
+        with self.assertRaises(KeyError):
+            plain.blackboard_client.verify_required_keys_exist()
+
+    def test_default_value_type_is_validated_at_declaration(self) -> None:
+        """A default value that does not match the declared type is rejected on construction."""
+        with self.assertRaises(TypeError):
+            PortInformation(data_type=int, default_value="5")
+        with self.assertRaises(TypeError):
+            PortInformation(data_type=list[int], default_value=["a"])
+        with self.assertRaises(TypeError):
+            PortInformation(data_type=int | str, default_value=3.14)
+
+    def test_default_value_accepts_generic_and_union_types(self) -> None:
+        """Defaults are validated with the same type checking used for port reads."""
+        self.assertEqual(PortInformation(data_type=list[int], default_value=[1, 2]).default_value, [1, 2])
+        self.assertEqual(PortInformation(data_type=int | str, default_value="a").default_value, "a")
+
+    def test_has_default(self) -> None:
+        """``has_default`` distinguishes a declared default from none at all."""
+        self.assertTrue(PortInformation(data_type=int, default_value=0).has_default)
+        self.assertFalse(PortInformation(data_type=int).has_default)
+
+    def test_output_default_is_seeded_at_setup(self) -> None:
+        """An output default is written to the blackboard, so readers see it before the node ticks."""
+        prod = _DefaultingProducer("prod")
+        prod.setup_ports(port_remappings={"output": "/shared"})
+        self.assertEqual(prod.get_last_output("output"), "initial")
+
+        # A node wired to that output reads the seeded value without the producer having ticked.
+        cons = Consumer("cons")
+        cons.setup_ports(port_remappings={"input": "/shared"})
+        self.assertEqual(cons.get_input("input"), "initial")
+
+    def test_output_default_is_overwritten_by_the_node(self) -> None:
+        """Whatever the node writes replaces the seeded default."""
+        prod = _DefaultingProducer("prod")
+        prod.setup_ports()
+        prod.tick_once()
+        self.assertEqual(prod.get_last_output("output"), "produced")
+
+    def test_reset_restores_the_output_default(self) -> None:
+        """Resetting an output port with a default seeds it again rather than leaving it empty."""
+        prod = _DefaultingProducer("prod")
+        prod.setup_ports()
+        prod.tick_once()
+        prod.reset_all_output_ports()
+        self.assertEqual(prod.get_last_output("output"), "initial")
+
+    def test_reset_still_clears_an_output_without_a_default(self) -> None:
+        """Ports with no declared default keep the existing reset semantics."""
+        prod = Producer("prod")
+        prod.setup_ports()
+        prod.tick_once()
+        prod.reset_all_output_ports()
+        self.assertFalse(prod.blackboard_client.exists("output"))
+
+    def test_seeded_output_default_is_not_shared(self) -> None:
+        """Mutating a seeded container default must not corrupt the port declaration."""
+        prod = _DefaultingProducer("prod")
+        prod.setup_ports()
+        prod.get_last_output("items").append(3)
+        self.assertEqual(_DefaultingProducer.output_ports()["items"].default_value, [1, 2])
 
 
 class _RegistryLeaf(BehaviourWithPorts, register=False):
