@@ -86,6 +86,47 @@ class FloatConsumer(BehaviourWithPorts):
         return self.get_input(self.INPUT_PORT)
 
 
+class DefaultingConsumer(BehaviourWithPorts):
+    """Consumer whose input ports declare default values."""
+
+    @classmethod
+    def input_ports(cls) -> dict:
+        return {
+            "input": PortInformation(data_type=str, required=True, default_value="fallback"),
+            "items": PortInformation(data_type=list[int], required=False, default_value=[1, 2]),
+        }
+
+    @classmethod
+    def output_ports(cls) -> dict:
+        return {}
+
+    def update(self) -> py_trees.common.Status:
+        return py_trees.common.Status.SUCCESS
+
+    @property
+    def consumed_value(self) -> Any:
+        return self.get_input("input")
+
+
+class DefaultingProducer(BehaviourWithPorts):
+    """Producer whose output ports declare default values."""
+
+    @classmethod
+    def input_ports(cls) -> dict:
+        return {}
+
+    @classmethod
+    def output_ports(cls) -> dict:
+        return {
+            "output": PortInformation(data_type=str, default_value="initial"),
+            "items": PortInformation(data_type=list[int], default_value=[1, 2]),
+        }
+
+    def update(self) -> py_trees.common.Status:
+        self._set_output("output", "produced")
+        return py_trees.common.Status.SUCCESS
+
+
 # ---------- Tiny direct-only leaves (no ports needed) ----------
 
 

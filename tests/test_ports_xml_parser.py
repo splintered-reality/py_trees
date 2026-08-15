@@ -27,7 +27,7 @@ from py_trees.ports_utils import (
     strip_trailing_uuid4,
 )
 
-from .test_ports_helpers import Consumer, Producer
+from .test_ports_helpers import Consumer, DefaultingConsumer, Producer
 
 
 class StdoutLogger:
@@ -109,25 +109,6 @@ class EchoCtorArgsChild(EchoCtorArgs):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-
-
-class DefaultingConsumer(BehaviourWithPorts):
-    """Consumer whose input port declares a default value."""
-
-    @classmethod
-    def input_ports(cls) -> dict:
-        return {"input": PortInformation(data_type=str, required=True, default_value="fallback")}
-
-    @classmethod
-    def output_ports(cls) -> dict:
-        return {}
-
-    def update(self) -> py_trees.common.Status:
-        return py_trees.common.Status.SUCCESS
-
-    @property
-    def consumed_value(self) -> Any:
-        return self.get_input("input")
 
 
 @dataclass

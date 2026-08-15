@@ -20,7 +20,14 @@ from py_trees.ports import (
 )
 from py_trees.ports_utils import is_instance_of_type
 
-from .test_ports_helpers import Consumer, ConsumerProducer, Producer, seed_blackboard_value
+from .test_ports_helpers import (
+    Consumer,
+    ConsumerProducer,
+    DefaultingConsumer,
+    DefaultingProducer,
+    Producer,
+    seed_blackboard_value,
+)
 
 
 # TODO: Add more tests for PortsMixin methods as needed. There are also some tests that can be ported over from
@@ -265,43 +272,6 @@ class TestBehaviourWithPorts(unittest.TestCase):
         self.assertEqual(cons.get_input("input"), "wired")
 
 
-class _DefaultingConsumer(BehaviourWithPorts, register=False):
-    """Consumer whose input ports declare default values."""
-
-    @classmethod
-    def input_ports(cls) -> dict:
-        return {
-            "input": PortInformation(data_type=str, required=True, default_value="fallback"),
-            "items": PortInformation(data_type=list[int], required=False, default_value=[1, 2]),
-        }
-
-    @classmethod
-    def output_ports(cls) -> dict:
-        return {}
-
-    def update(self) -> py_trees.common.Status:
-        return py_trees.common.Status.SUCCESS
-
-
-class _DefaultingProducer(BehaviourWithPorts, register=False):
-    """Producer whose output ports declare default values."""
-
-    @classmethod
-    def input_ports(cls) -> dict:
-        return {}
-
-    @classmethod
-    def output_ports(cls) -> dict:
-        return {
-            "output": PortInformation(data_type=str, default_value="initial"),
-            "items": PortInformation(data_type=list[int], default_value=[1, 2]),
-        }
-
-    def update(self) -> py_trees.common.Status:
-        self._set_output("output", "produced")
-        return py_trees.common.Status.SUCCESS
-
-
 class TestPortDefaultValues(unittest.TestCase):
     """Default values declared on an input port's PortInformation."""
 
@@ -311,38 +281,38 @@ class TestPortDefaultValues(unittest.TestCase):
 
     def test_declared_default_returned_when_no_data(self) -> None:
         """An unwired port with a declared default resolves to that default."""
-        cons = _DefaultingConsumer("cons")
+        cons = DefaultingConsumer("cons")
         cons.setup_ports()
         self.assertEqual(cons.get_input("input"), "fallback")
         self.assertEqual(cons.get_input("items"), [1, 2])
 
     def test_data_overrides_declared_default(self) -> None:
         """Actual data on the port takes precedence over the declared default."""
-        cons = _DefaultingConsumer("cons")
+        cons = DefaultingConsumer("cons")
         cons.setup_ports(port_remappings={"input": "/shared"})
         seed_blackboard_value("/shared", "ActualValue")
         self.assertEqual(cons.get_input("input"), "ActualValue")
 
     def test_declared_default_applies_to_wired_but_unwritten_port(self) -> None:
         """A port wired to a key that nobody has written to yet still falls back to the default."""
-        cons = _DefaultingConsumer("cons")
+        cons = DefaultingConsumer("cons")
         cons.setup_ports(port_remappings={"input": "/shared"})
         self.assertEqual(cons.get_input("input"), "fallback")
 
     def test_argument_default_overrides_declared_default(self) -> None:
         """An explicit default= argument wins over the one declared on the port."""
-        cons = _DefaultingConsumer("cons")
+        cons = DefaultingConsumer("cons")
         cons.setup_ports()
         self.assertEqual(cons.get_input("input", default="call_site"), "call_site")
 
     def test_mutable_default_is_not_shared(self) -> None:
         """Mutating a returned container default must not corrupt the port declaration."""
-        cons = _DefaultingConsumer("cons")
+        cons = DefaultingConsumer("cons")
         cons.setup_ports()
         items = cons.get_input("items")
         items.append(3)
         self.assertEqual(cons.get_input("items"), [1, 2])
-        self.assertEqual(_DefaultingConsumer.input_ports()["items"].default_value, [1, 2])
+        self.assertEqual(DefaultingConsumer.input_ports()["items"].default_value, [1, 2])
 
     def test_port_without_default_still_raises(self) -> None:
         """A port with no declared default and no data raises, as before."""
@@ -353,7 +323,7 @@ class TestPortDefaultValues(unittest.TestCase):
 
     def test_required_port_with_default_is_not_a_required_blackboard_key(self) -> None:
         """A required port with a default is always satisfiable, so it is not required on the blackboard."""
-        cons = _DefaultingConsumer("cons")
+        cons = DefaultingConsumer("cons")
         cons.setup_ports()
         cons.blackboard_client.verify_required_keys_exist()  # must not raise
 
@@ -384,7 +354,7 @@ class TestPortDefaultValues(unittest.TestCase):
 
     def test_output_default_is_seeded_at_setup(self) -> None:
         """An output default is written to the blackboard, so readers see it before the node ticks."""
-        prod = _DefaultingProducer("prod")
+        prod = DefaultingProducer("prod")
         prod.setup_ports(port_remappings={"output": "/shared"})
         self.assertEqual(prod.get_last_output("output"), "initial")
 
@@ -395,14 +365,14 @@ class TestPortDefaultValues(unittest.TestCase):
 
     def test_output_default_is_overwritten_by_the_node(self) -> None:
         """Whatever the node writes replaces the seeded default."""
-        prod = _DefaultingProducer("prod")
+        prod = DefaultingProducer("prod")
         prod.setup_ports()
         prod.tick_once()
         self.assertEqual(prod.get_last_output("output"), "produced")
 
     def test_reset_restores_the_output_default(self) -> None:
         """Resetting an output port with a default seeds it again rather than leaving it empty."""
-        prod = _DefaultingProducer("prod")
+        prod = DefaultingProducer("prod")
         prod.setup_ports()
         prod.tick_once()
         prod.reset_all_output_ports()
@@ -418,10 +388,10 @@ class TestPortDefaultValues(unittest.TestCase):
 
     def test_seeded_output_default_is_not_shared(self) -> None:
         """Mutating a seeded container default must not corrupt the port declaration."""
-        prod = _DefaultingProducer("prod")
+        prod = DefaultingProducer("prod")
         prod.setup_ports()
         prod.get_last_output("items").append(3)
-        self.assertEqual(_DefaultingProducer.output_ports()["items"].default_value, [1, 2])
+        self.assertEqual(DefaultingProducer.output_ports()["items"].default_value, [1, 2])
 
 
 class _RegistryLeaf(BehaviourWithPorts, register=False):
