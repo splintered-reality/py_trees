@@ -397,7 +397,7 @@ def parse_behaviour_tree_xml(
             if not isinstance(v, str):
                 raise ValueError(f"Value in input mapping {k} -> {v} must be a string.")
             bt_elem.attrib[k] = v
-    
+
     remapping_table = build_subtree_remapping(bt_elem, bt_index, {}, "/", logger)
     tree = build_tree_from_xml(
         bt_elem,

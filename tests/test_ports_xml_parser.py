@@ -33,7 +33,7 @@ from py_trees.ports_utils import (
     strip_trailing_uuid4,
 )
 
-from .test_ports_helpers import Consumer, Producer
+from .test_ports_helpers import Consumer, FloatConsumer, Producer
 
 
 class StdoutLogger:
@@ -452,25 +452,19 @@ class TestXMLParser(unittest.TestCase):
         btree = py_trees.trees.BehaviourTree(root_node)
         btree.tick()
 
-        node = find_node_by_name(root_node, "AllDefaults.Consumer")
-        self.assertEqual(node.consumed_value, "default_str")
-        node = find_node_by_name(root_node, "AllDefaults.FloatConsumer")
-        self.assertEqual(node.consumed_value, 42)
+        for subtree_name, expected_str, expected_float in (
+            ("AllDefaults", "default_str", 42),
+            ("FirstInputSet", "override_str", 42),
+            ("SecondInputSet", "default_str", 67),
+            ("BothInputsSet", "another_str", 9001),
+        ):
+            node = find_node_by_name(root_node, f"{subtree_name}.Consumer")
+            assert isinstance(node, Consumer)
+            self.assertEqual(node.consumed_value, expected_str)
 
-        node = find_node_by_name(root_node, "FirstInputSet.Consumer")
-        self.assertEqual(node.consumed_value, "override_str")
-        node = find_node_by_name(root_node, "FirstInputSet.FloatConsumer")
-        self.assertEqual(node.consumed_value, 42)
-
-        node = find_node_by_name(root_node, "SecondInputSet.Consumer")
-        self.assertEqual(node.consumed_value, "default_str")
-        node = find_node_by_name(root_node, "SecondInputSet.FloatConsumer")
-        self.assertEqual(node.consumed_value, 67)
-
-        node = find_node_by_name(root_node, "BothInputsSet.Consumer")
-        self.assertEqual(node.consumed_value, "another_str")
-        node = find_node_by_name(root_node, "BothInputsSet.FloatConsumer")
-        self.assertEqual(node.consumed_value, 9001)
+            node = find_node_by_name(root_node, f"{subtree_name}.FloatConsumer")
+            assert isinstance(node, FloatConsumer)
+            self.assertEqual(node.consumed_value, expected_float)
 
     def test_top_level_default_ports(self) -> None:
         """Verify that top-level behaviour default ports take effect as intended."""
@@ -494,10 +488,13 @@ class TestXMLParser(unittest.TestCase):
         btree.tick()
 
         node = find_node_by_name(root_node, "Consumer", strip_prefix=True)
+        assert isinstance(node, Consumer)
         self.assertEqual(node.consumed_value, "default_str")
-        node = find_node_by_name(root_node, "FloatConsumer", strip_prefix=True)
+
+        float_node = find_node_by_name(root_node, "FloatConsumer", strip_prefix=True)
+        assert isinstance(float_node, FloatConsumer)
         with self.assertRaises(NoDataAvailable):
-            self.assertEqual(node.consumed_value, 42)
+            self.assertEqual(float_node.consumed_value, 42)
 
         # Setting input values should override the inputs appropriately.
         root_node = parse_behaviour_tree_xml(
@@ -509,12 +506,12 @@ class TestXMLParser(unittest.TestCase):
         btree.tick()
 
         node = find_node_by_name(root_node, "Consumer", strip_prefix=True)
+        assert isinstance(node, Consumer)
         self.assertEqual(node.consumed_value, "override_str")
-        node = find_node_by_name(root_node, "FloatConsumer", strip_prefix=True)
-        self.assertEqual(node.consumed_value, 67)
-        
 
-
+        float_node = find_node_by_name(root_node, "FloatConsumer", strip_prefix=True)
+        assert isinstance(float_node, FloatConsumer)
+        self.assertEqual(float_node.consumed_value, 67)
 
     def test_wait_node(self) -> None:
         """Verify that the duration value is successfully used by the Wait node."""
