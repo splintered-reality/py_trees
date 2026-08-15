@@ -444,6 +444,7 @@ def add_new_key_to_remapping_table(value: str, remapping_table: dict[str, str], 
 
 def build_subtree_remapping(
     elem: ET.Element,
+    bt_index: dict[str, ET.Element],
     remapping_table: dict[str, str],
     parent_namespace: str,
     logger: PortsLogger = NOOP_LOGGER,
@@ -451,11 +452,13 @@ def build_subtree_remapping(
     """
     Process the <SubTree> XML element.
 
-    The remapping table is updated to include the remappings from the <subtreeplus> or <subtree> element.
+    The remapping table is updated to include the remappings from the <subtreeplus> or <subtree> element,
+    as well as any default port values inherited from the underlying <behaviortree> definition.
     The subtree is then instantiated with the new remapping table.
 
     Args:
         elem: The <SubTree> (or <SubTreePlus>) XML element.
+        bt_index (dict[str, ET.Element]): dictionary {ID: BehaviorTree element} for subtree lookup.
         remapping_table: Parent remapping table (logical name -> absolute key).
         parent_namespace: Absolute namespace of the parent tree.
         logger: Optional logger.
@@ -478,6 +481,15 @@ def build_subtree_remapping(
             continue
         logger.debug(f"Checking to add new key for SubTree attribute: {k} -> {v}")
         add_new_key_to_remapping_table(v, remapping_table=remapping_table, subtree_namespace=parent_namespace)
+
+    # Also include any default args in the behavior tree definition that were not remapped in the subtree instance.
+    bt_elem = bt_index[elem.attrib["ID"]]
+    for k, v in bt_elem.attrib.items():
+        if k in ("ID", "name"):
+            continue
+        logger.debug(f"Checking to add new key for default BehaviorTree attribute: {k} -> {v}")
+        add_new_key_to_remapping_table(v, remapping_table=remapping_table, subtree_namespace=parent_namespace)
+
     logger.debug(f"Updated remapping table: {remapping_table}")
 
     # Build the new remapping table for this subtree. We build a new remapping table because we need to ensure that
@@ -489,7 +501,9 @@ def build_subtree_remapping(
     # If the value is a key and it is already in the remapping table, we resolve it to its absolute path.
     # Example: `<SubTree ID="subtree1" in="{other_key}" />` - we need resolve {other_key} to its absolute
     # path (using the parent remapping) and then add `in -> resolved({other_key})` to the new remapping table.
-    for k, v in elem.attrib.items():
+    attrib_dict = bt_elem.attrib.copy()  # the copy is necessary!
+    attrib_dict.update(elem.attrib)
+    for k, v in attrib_dict.items():
         if k in ("ID", "name"):
             continue
         logger.debug(f"Processing SubTree attribute: {k} -> {v}")
@@ -506,6 +520,7 @@ def build_subtree_remapping(
             v = resolve_direct_value_remapping(v, remapping_table)
             logger.debug(f"[Direct value] Adding remapping from parent remapping table: {k} -> {v}")
         new_remapping[k] = v
+
     logger.debug(f"Subtree '{elem.attrib['ID']}' new remapping table: {new_remapping}")
     return new_remapping
 
@@ -678,7 +693,7 @@ def build_tree_from_xml(
     elem: ET.Element,
     remapping_table: dict[str, str],
     node_registry: dict,
-    bt_index: dict,
+    bt_index: dict[str, ET.Element],
     logger: PortsLogger = NOOP_LOGGER,
     subtree_namespace: str = "/",
     parent_names_str: str = "",
@@ -691,7 +706,7 @@ def build_tree_from_xml(
         remapping_table (dict[str, str]): Remapping table.
         node_registry (dict): Mapping from class names (str) to callables (constructors or partials)
             that return ``PortsMixin``-derived instances.
-        bt_index (dict[str, BehaviorTree]): dictionary {ID: BehaviorTree element} for subtree lookup.
+        bt_index (dict[str, ET.Element]): dictionary {ID: BehaviorTree element} for subtree lookup.
         subtree_namespace (str): current blackboard namespace.
         logger: Optional logger-like object.
         parent_names_str (str): Dot-separated string of parent names for logging context and generating node names.
@@ -880,6 +895,7 @@ def build_tree_from_xml(
             f"<BehaviorTree ID='{elem.attrib.get('ID', '')}'> must have exactly one child (the root node), "
             f"but found {len(child_elems)} children."
         )
+
         return build_tree_from_xml(
             child_elems[0],
             remapping_table,
@@ -904,7 +920,7 @@ def build_tree_from_xml(
         # Build the new namespace by prepending the subtree ID
         new_namespace = get_absolute_reference(subtree_name, subtree_namespace)
         # Build the new remapping table for this subtree.
-        new_remapping = build_subtree_remapping(elem, remapping_table, subtree_namespace, logger)
+        new_remapping = build_subtree_remapping(elem, bt_index, remapping_table, subtree_namespace, logger)
         # Recursively build the subtree with the new remapping table
         return build_tree_from_xml(
             subtree_elem,

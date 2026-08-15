@@ -418,6 +418,55 @@ class TestXMLParser(unittest.TestCase):
 
         self.assertEqual(node.consumed_value, expected_value)
 
+    def test_subtree_default_ports(self) -> None:
+        """Verify that subtree default ports take effect as intended."""
+        self.xml = """<root main_tree_to_execute="MainTree">
+        <BehaviorTree ID="SubTree" input1="default_str" input2="42">
+          <Sequence>
+            <Consumer name="Consumer" input="{input1}"/>
+            <FloatConsumer name="FloatConsumer" input="{input2}"/>
+          </Sequence>
+        </BehaviorTree>
+
+        <BehaviorTree ID="MainTree">
+          <Sequence>
+            <SubTree ID="SubTree" name="AllDefaults" />
+            <SubTree ID="SubTree" name="FirstInputSet" input1="override_str" />
+            <SubTree ID="SubTree" name="SecondInputSet" input2="67" />
+            <SubTree ID="SubTree" name="BothInputsSet" input1="another_str" input2="9001" />
+          </Sequence>
+        </BehaviorTree>
+        </root>"""
+
+        self.tempfile = tempfile.NamedTemporaryFile(delete=False, mode="w", suffix=".xml")
+        self.tempfile.write(self.xml)
+        self.tempfile.close()
+
+        root_node = parse_behaviour_tree_xml(self.tempfile.name, logger=StdoutLogger())
+        btree = py_trees.trees.BehaviourTree(root_node)
+        btree.tick()
+
+        node = find_node_by_name(root_node, "AllDefaults.Consumer")
+        self.assertEqual(node.consumed_value, "default_str")
+        node = find_node_by_name(root_node, "AllDefaults.FloatConsumer")
+        self.assertEqual(node.consumed_value, 42)
+
+        node = find_node_by_name(root_node, "FirstInputSet.Consumer")
+        self.assertEqual(node.consumed_value, "override_str")
+        node = find_node_by_name(root_node, "FirstInputSet.FloatConsumer")
+        self.assertEqual(node.consumed_value, 42)
+
+        node = find_node_by_name(root_node, "SecondInputSet.Consumer")
+        self.assertEqual(node.consumed_value, "default_str")
+        node = find_node_by_name(root_node, "SecondInputSet.FloatConsumer")
+        self.assertEqual(node.consumed_value, 67)
+
+        node = find_node_by_name(root_node, "BothInputsSet.Consumer")
+        self.assertEqual(node.consumed_value, "another_str")
+        node = find_node_by_name(root_node, "BothInputsSet.FloatConsumer")
+        self.assertEqual(node.consumed_value, 9001)
+
+
     def test_wait_node(self) -> None:
         """Verify that the duration value is successfully used by the Wait node."""
         wait_duration_ms = 500
