@@ -83,6 +83,12 @@ class TestConvertStrToType(unittest.TestCase):
             (9, "hello", True),
         )
 
+    def test_union_member_order_does_not_matter(self) -> None:
+        # An unsupported member reports failure without raising, so it must not stop the
+        # remaining members from being tried.
+        self.assertEqual(convert_str_to_type("5", dict | int), (True, 5))
+        self.assertEqual(convert_str_to_type("5", int | dict), (True, 5))
+
     def test_union_with_str_fallback_reports_success(self) -> None:
         # A value that fails the enum branch but matches the trailing `str` branch of a
         # Union is a legitimate successful conversion, not a failure.
@@ -185,6 +191,20 @@ class TestApplyTypeHints(unittest.TestCase):
         self.assertTrue(success)
         self.assertEqual(converted["unexpected_kwarg"], 123)
         self.assertIsInstance(converted["unexpected_kwarg"], int)
+
+    def test_any_kwargs_catch_all_is_a_pass_through(self) -> None:
+        # `**kwargs: Any` is the convention throughout py_trees, so an unknown attribute must
+        # stay a string and still count as a success. Note that on Python 3.10 `typing.Any` is
+        # not a class, so this also covers conversion of a non-class annotation.
+        class AnyKwargsTarget:
+            def __init__(self, name: str, **kwargs: Any):  # pragma: no cover - only signature used
+                pass
+
+        raw = {"name": "node", "unhinted": "42"}
+        success, converted = apply_type_hints(AnyKwargsTarget, raw, self.logger)
+        self.assertTrue(success)
+        self.assertEqual(converted["unhinted"], "42")
+        self.assertIsInstance(converted["unhinted"], str)
 
     def test_no_type_hint_available(self) -> None:
         raw = {"totally_unknown": "value"}
