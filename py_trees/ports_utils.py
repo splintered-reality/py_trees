@@ -13,6 +13,7 @@
 # Imports
 ##############################################################################
 
+import importlib
 import inspect
 import re
 import uuid
@@ -116,32 +117,70 @@ def _convert_to_enum(value: str, enum_type: type[Enum]) -> Enum:
     raise ValueError(f"Cannot convert '{value}' to enum {enum_type.__name__}")
 
 
-def _convert_simple(value: str, target_type: type) -> Any:
+def str_to_type(type_spec: str) -> type:
+    """
+    Resolve a fully-qualified or built-in type name into the actual type.
+
+    A fully-qualified name includes the module path, e.g. ``'package.module.Type'``.
+    Built-in types can be specified by their simple name, e.g. ``'int'``, ``'str'``, ``'list'``, etc.
+    Raises :class:`ValueError` if the type cannot be resolved.
+    """
+    module_name, partition, type_name = type_spec.rpartition(".")
+    if not partition:
+        builtins_dict = vars(__import__("builtins"))
+        candidate = builtins_dict.get(type_spec)
+        if isinstance(candidate, type):
+            return candidate
+
+    if not module_name:
+        raise ValueError("Type specification must include module path, e.g. 'package.module.Type'.")
+    module = importlib.import_module(module_name)
+    resolved = getattr(module, type_name)
+    if not isinstance(resolved, type):
+        raise TypeError(f"Resolved '{type_spec}' to non-type object {resolved!r}.")
+    return resolved
+
+
+def _convert_simple(value: str, target_type: type) -> tuple[bool, Any]:
     """Convert *value* to a supported scalar type, or return it unchanged."""
     if target_type is str:
-        return value
+        return True, value
     if target_type is bool:
-        return _try_bool(value)
+        return True, _try_bool(value)
     if target_type is int:
-        return int(value)
+        return True, int(value)
     if target_type is float:
-        return float(value)
+        return True, float(value)
     if _is_enum_type(target_type):
-        return _convert_to_enum(value, target_type)  # type: ignore
-    return value
+        return True, _convert_to_enum(value, target_type)  # type: ignore
+    # Fallback: leave as string
+    return False, value
 
 
-def convert_str_to_type(value: str, target_type: type | UnionType, logger: PortsLogger | None = None) -> Any:
+def convert_str_to_type(
+    value: str, target_type: type | UnionType, logger: PortsLogger | None = None
+) -> tuple[bool, Any]:
     """Convert a string *value* to *target_type* (handles unions, list, tuple, enum)."""
     if logger is None:
         logger = NOOP_LOGGER
+
+    # If target type is `type`, the result needs to be parsed to a type. Example: 'float' -> <class 'float'>
+    if target_type is type:
+        try:
+            return True, str_to_type(value)
+        except (ValueError, ImportError, AttributeError, TypeError):
+            pass  # Fall back to try to parse it further down
+
     origin = get_origin(target_type)
 
     if isinstance(target_type, type) and issubclass(target_type, list):
         origin = list
 
     if origin is None:
-        assert isinstance(target_type, type)
+        if not isinstance(target_type, type):
+            # Not a runtime type (e.g. typing.Any on Python 3.10, or a stringised annotation):
+            # there is nothing we can convert to, so report failure and keep the string.
+            return False, value
         return _convert_simple(value, target_type)
 
     if origin is Union or origin is UnionType:
@@ -149,23 +188,28 @@ def convert_str_to_type(value: str, target_type: type | UnionType, logger: Ports
         has_none = any(a is type(None) for a in args)  # noqa: E721
         lowered = value.strip().lower()
         if has_none and (lowered == "" or lowered == "none" or lowered == "null"):
-            return None
+            return True, None
         for arg in args:
             if arg is type(None):  # noqa: E721
                 continue
             try:
-                return convert_str_to_type(value, arg, logger)
+                arg_success, arg_value = convert_str_to_type(value, arg, logger)
             except Exception:
                 continue
-        return value
+            # A member reporting failure is no better than one that raised: try the next one.
+            if arg_success:
+                return True, arg_value
+        return False, value
 
     if origin is list:
         (inner_type,) = get_args(target_type) or (str,)
         parts = [p.strip() for p in re.split(r"[,;]", value)] if value.strip() else []
         try:
-            return [convert_str_to_type(p, inner_type, logger) for p in parts]
+            results = [convert_str_to_type(p, inner_type, logger) for p in parts]
+            successes = [s for s, _ in results]
+            return all(successes), [r for _, r in results]
         except Exception:
-            return [p.strip() for p in parts]
+            return False, [p.strip() for p in parts]
 
     if origin is tuple:
         inner_types = get_args(target_type)
@@ -176,10 +220,11 @@ def convert_str_to_type(value: str, target_type: type | UnionType, logger: Ports
             try:
                 converted.append(convert_str_to_type(p, t, logger))
             except Exception:
-                converted.append(p)
-        return tuple(converted)
+                converted.append((False, p))
+        successes = [s for s, _ in converted]
+        return all(successes), tuple(r for _, r in converted)
 
-    return value
+    return False, value
 
 
 def is_instance_of_type(value: Any, expected_type: Any) -> bool:
@@ -233,8 +278,10 @@ def collect_type_hints(constructor: Callable) -> dict[str, Any]:
 
     Returns:
         dict[str, Any]: Mapping of parameter name to its type annotation. Parameters
-            without an annotation anywhere in the hierarchy are omitted, as are
-            ``self`` and any ``*args``/``**kwargs`` catch-alls.
+            without an annotation anywhere in the hierarchy are omitted, as is
+            ``self`` and any ``*args`` catch-all. A ``**kwargs`` catch-all is kept
+            (typically under the key ``"kwargs"``) so callers can fall back to it
+            for keys that don't have their own individual type hint.
     """
     classes = constructor.__mro__ if inspect.isclass(constructor) else (constructor,)
 
@@ -251,7 +298,7 @@ def collect_type_hints(constructor: Callable) -> dict[str, Any]:
         for pname, param in sig.parameters.items():
             if pname == "self":
                 continue
-            if param.kind in (inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD):
+            if param.kind is inspect.Parameter.VAR_POSITIONAL:
                 continue
             if param.annotation is inspect._empty:
                 continue
@@ -268,7 +315,7 @@ def apply_type_hints(
     kwargs: dict[str, Any],
     logger: PortsLogger | None = None,
     ignore: set[str] | None = None,
-) -> tuple[dict[str, Any], bool]:
+) -> tuple[bool, dict[str, Any]]:
     """
     Convert XML string kwargs into hinted types from the constructor signature.
 
@@ -276,12 +323,19 @@ def apply_type_hints(
 
     - If `constructor` is a class, its `__init__` is inspected (excluding `self`).
     - Only parameters that have type annotations are converted.
+    - A key with no individual type hint falls back to the constructor's `**kwargs`
+      annotation, if any (e.g. dynamic keys consumed by a `**kwargs: SomeType` catch-all).
+      The catch-all is looked up by the conventional name `kwargs`, so one declared under
+      another name (e.g. `**options`) provides no fallback.
+    - An unconstrained target type (`Any`, `object`) counts as a success with the string kept,
+      since any value satisfies it.
     - On conversion failure, the original string is preserved and a warning is printed.
       The function return indicates that there was a failure in one of the values.
 
     Returns:
-        tuple[dict[str, Any], bool]: The converted dictionary and a flag set to False if one of
-           the values was attempted bo convert but it failed (a warning was also printed then).
+        tuple[bool, dict[str, Any]]: Success of conversion (True if all values were successfully
+            converted, False if any conversion failed, a warning was also printed then), and the
+            converted dictionary.
     """
     if ignore is None:
         ignore = set()
@@ -297,9 +351,10 @@ def apply_type_hints(
             converted[k] = v
             continue
 
-        tp = hints.get(k)
+        # Obtain the type hint with fallback to the constructor's **kwargs annotation, if any.
+        tp = hints.get(k, hints.get("kwargs"))
         # Default behavior: keep the original value.
-        # Warning will be printed at the end of this loop if it is not overwritten.
+        # Warning will be printed at the end of this loop if it failed to be converted.
         converted[k] = v
 
         # No type hint given: keep the original value
@@ -311,6 +366,10 @@ def apply_type_hints(
         # Target type hint exists. Handle conversion, if needed.
         if tp is str:
             # Target type is already a string: no need to do anything.
+            continue
+
+        if tp is Any or tp is object:
+            # The target puts no constraint on the value, so string is already fine.
             continue
 
         # Not a string: if the target is already of the correct type, we can just keep it as-is.
@@ -325,17 +384,16 @@ def apply_type_hints(
             continue
 
         try:
-            converted[k] = convert_str_to_type(v, tp, logger)
-        except ValueError as e:
+            conversion_success, converted[k] = convert_str_to_type(v, tp, logger)
+            if not conversion_success:
+                logger.warning(f"Failed to convert '{k}: {v}' to type '{tp}'. Result: '{converted[k]}'.")
+                success = False
+        except Exception as e:
+            # Resolving a type by name can raise anything the target module raises on import.
             logger.warning(f"Failed to convert '{k}: {v}' to type '{tp}': {e}")
             success = False
-            continue
 
-        if converted[k] == v:
-            logger.warning(f"Failed to convert '{k}: {v}' to type '{tp}'. Preserved original value.")
-            success = False
-
-    return converted, success
+    return success, converted
 
 
 def reset_blackboard_key(
