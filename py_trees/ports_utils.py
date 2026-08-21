@@ -125,14 +125,13 @@ def str_to_type(type_spec: str) -> type:
     Built-in types can be specified by their simple name, e.g. ``'int'``, ``'str'``, ``'list'``, etc.
     Raises :class:`ValueError` if the type cannot be resolved.
     """
-    if "." not in type_spec:
+    module_name, partition, type_name = type_spec.rpartition(".")
+    if not partition:
         builtins_dict = vars(__import__("builtins"))
         candidate = builtins_dict.get(type_spec)
         if isinstance(candidate, type):
             return candidate
-        raise ValueError("Type specification must include module path, e.g. 'package.module.Type'.")
 
-    module_name, _, type_name = type_spec.rpartition(".")
     if not module_name:
         raise ValueError("Type specification must include module path, e.g. 'package.module.Type'.")
     module = importlib.import_module(module_name)

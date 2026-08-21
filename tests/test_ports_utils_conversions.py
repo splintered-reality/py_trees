@@ -45,19 +45,21 @@ class ColorStr(Enum):
 
 class TestConvertStrToType(unittest.TestCase):
     def test_primitives_and_enums(self) -> None:
-        self.assertEqual(convert_str_to_type("true", bool)[1], True)
-        self.assertEqual(convert_str_to_type("False", bool)[1], False)
-        self.assertEqual(convert_str_to_type(" 7 ", int)[1], 7)
-        self.assertAlmostEqual(convert_str_to_type("2.5", float)[1], 2.5)
-        self.assertEqual(convert_str_to_type("hello", str)[1], "hello")
+        self.assertEqual(convert_str_to_type("true", bool), (True, True))
+        self.assertEqual(convert_str_to_type("False", bool), (True, False))
+        self.assertEqual(convert_str_to_type(" 7 ", int), (True, 7))
+        success, value = convert_str_to_type("2.5", float)
+        self.assertTrue(success)
+        self.assertAlmostEqual(value, 2.5)
+        self.assertEqual(convert_str_to_type("hello", str), (True, "hello"))
 
         # enum by NAME (case-insensitive)
-        self.assertEqual(convert_str_to_type("green", ColorInt)[1], ColorInt.GREEN)
-        self.assertEqual(convert_str_to_type("BLUE", ColorStr)[1], ColorStr.BLUE)
+        self.assertEqual(convert_str_to_type("green", ColorInt), (True, ColorInt.GREEN))
+        self.assertEqual(convert_str_to_type("BLUE", ColorStr), (True, ColorStr.BLUE))
 
         # enum by VALUE (int-backed / str-backed)
-        self.assertEqual(convert_str_to_type("2", ColorInt)[1], ColorInt.GREEN)
-        self.assertEqual(convert_str_to_type("blue", ColorStr)[1], ColorStr.BLUE)
+        self.assertEqual(convert_str_to_type("2", ColorInt), (True, ColorInt.GREEN))
+        self.assertEqual(convert_str_to_type("blue", ColorStr), (True, ColorStr.BLUE))
 
     def test_type_target(self) -> None:
         # target_type `type` resolves the string to an actual type object.
@@ -67,20 +69,20 @@ class TestConvertStrToType(unittest.TestCase):
         self.assertEqual(convert_str_to_type("bool", type), (True, bool))
 
     def test_optional_union_lists_tuples(self) -> None:
-        self.assertIsNone(convert_str_to_type("", int | None)[1])
-        self.assertIsNone(convert_str_to_type("None", int | None)[1])
-        self.assertEqual(convert_str_to_type("42", int | str)[1], 42)
-        self.assertEqual(convert_str_to_type("forty-two", int | str)[1], "forty-two")
+        self.assertEqual(convert_str_to_type("", int | None), (True, None))
+        self.assertEqual(convert_str_to_type("None", int | None), (True, None))
+        self.assertEqual(convert_str_to_type("42", int | str), (True, 42))
+        self.assertEqual(convert_str_to_type("forty-two", int | str), (True, "forty-two"))
 
-        self.assertEqual(convert_str_to_type("1, 2,3", list[int])[1], [1, 2, 3])
+        self.assertEqual(convert_str_to_type("1, 2,3", list[int]), (True, [1, 2, 3]))
         self.assertEqual(
-            convert_str_to_type("RED, green", list[ColorInt])[1],
-            [ColorInt.RED, ColorInt.GREEN],
+            convert_str_to_type("RED, green", list[ColorInt]),
+            (True, [ColorInt.RED, ColorInt.GREEN]),
         )
 
         self.assertEqual(
-            convert_str_to_type("9, hello, true", tuple[int, str, bool])[1],
-            (9, "hello", True),
+            convert_str_to_type("9, hello, true", tuple[int, str, bool]),
+            (True, (9, "hello", True)),
         )
 
     def test_union_member_order_does_not_matter(self) -> None:
