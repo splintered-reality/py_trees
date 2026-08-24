@@ -57,20 +57,13 @@ class DummyFactory:
 
 
 class Wait(BehaviourWithPorts):
-    INPUT_DURATION_MS_PORT = "input_duration_ms"
+    INPUT_PORTS = {"input_duration_ms": PortInformation(data_type=int, required=True)}
+    OUTPUT_PORTS = {}
 
     def __init__(self, name: str, factory: DummyFactory, **kwargs: Any) -> None:
         super().__init__(name=name, **kwargs)
         self._factory = factory
         self.start_time = 0.0
-
-    @classmethod
-    def input_ports(cls) -> dict:
-        return {cls.INPUT_DURATION_MS_PORT: PortInformation(data_type=int, required=True)}
-
-    @classmethod
-    def output_ports(cls) -> dict:
-        return {}
 
     def initialise(self) -> None:
         self.start_time = time.time()
@@ -86,19 +79,14 @@ class Wait(BehaviourWithPorts):
 
     @property
     def duration_value_ms(self) -> Any:
-        return self.get_input(self.INPUT_DURATION_MS_PORT)
+        return self.get_input("input_duration_ms")
 
 
 class EchoCtorArgs(BehaviourWithPorts):
     """Behaviour that tests interpreting constructor type hints for type coercion from XML ports."""
 
-    @classmethod
-    def input_ports(cls) -> dict:
-        return {"in": PortInformation(data_type=str, required=False)}  # not used here
-
-    @classmethod
-    def output_ports(cls) -> dict:
-        return {"out": PortInformation(data_type=str, required=False)}  # not used here
+    INPUT_PORTS = {"in": PortInformation(data_type=str, required=False)}  # not used here
+    OUTPUT_PORTS = {"out": PortInformation(data_type=str, required=False)}  # not used here
 
     def __init__(self, name: str, greeting: str, times: float | None, flag: bool, **kwargs: Any) -> None:
         super().__init__(name, **kwargs)
@@ -211,13 +199,8 @@ class TestXMLParser(unittest.TestCase):
         """Test custom behavior with an additional argument."""
 
         class CustomBehaviourWithPorts(BehaviourWithPorts):
-            @classmethod
-            def input_ports(cls) -> dict:
-                return {"in": PortInformation(data_type=str, required=False)}
-
-            @classmethod
-            def output_ports(cls) -> dict:
-                return {"out": PortInformation(data_type=str, required=False)}
+            INPUT_PORTS = {"in": PortInformation(data_type=str, required=False)}
+            OUTPUT_PORTS = {"out": PortInformation(data_type=str, required=False)}
 
             def __init__(self, name: str, extra_arg: str, **kwargs: Any) -> None:
                 super().__init__(name, **kwargs)
@@ -683,13 +666,8 @@ class TestXMLParser(unittest.TestCase):
         """
 
         class PortAndCtor(BehaviourWithPorts):
-            @classmethod
-            def input_ports(cls) -> dict:
-                return {"in": PortInformation(data_type=str, required=True)}  # only this is a port
-
-            @classmethod
-            def output_ports(cls) -> dict:
-                return {"out": PortInformation(data_type=str, required=False)}
+            INPUT_PORTS = {"in": PortInformation(data_type=str, required=True)}  # only this is a port
+            OUTPUT_PORTS = {"out": PortInformation(data_type=str, required=False)}
 
             def __init__(self, name: str, label: str, **kwargs: Any) -> None:
                 super().__init__(name, **kwargs)
@@ -734,13 +712,8 @@ class TestXMLParser(unittest.TestCase):
         """
 
         class TakesKeyString(BehaviourWithPorts):
-            @classmethod
-            def input_ports(cls) -> dict:
-                return {}  # no ports at all
-
-            @classmethod
-            def output_ports(cls) -> dict:
-                return {}
+            INPUT_PORTS = {}  # no ports at all
+            OUTPUT_PORTS = {}
 
             def __init__(self, name: str, token: str) -> None:
                 super().__init__(name)
@@ -799,13 +772,8 @@ class TestXMLParser(unittest.TestCase):
         class RepeatWithPorts(PortsMixin, py_trees.decorators.Repeat):
             """A `py_trees.decorators.Repeat` decorator that also exposes ports."""
 
-            @classmethod
-            def input_ports(cls) -> dict:
-                return {}
-
-            @classmethod
-            def output_ports(cls) -> dict:
-                return {"count": PortInformation(data_type=int, required=False)}
+            INPUT_PORTS = {}
+            OUTPUT_PORTS = {"count": PortInformation(data_type=int, required=False)}
 
         xml = """<root main_tree_to_execute="MainTree">
           <BehaviorTree ID="MainTree">
@@ -842,13 +810,8 @@ class TestXMLParser(unittest.TestCase):
         class SequenceWithPorts(PortsMixin, py_trees.composites.Sequence):
             """A `py_trees.composites.Sequence` composite that also exposes ports."""
 
-            @classmethod
-            def input_ports(cls) -> dict:
-                return {}
-
-            @classmethod
-            def output_ports(cls) -> dict:
-                return {}
+            INPUT_PORTS = {}
+            OUTPUT_PORTS = {}
 
         xml = """<root main_tree_to_execute="MainTree">
           <BehaviorTree ID="MainTree">
@@ -892,16 +855,11 @@ class TestXMLParser(unittest.TestCase):
         class DirectPortsLeaf(PortsMixin, py_trees.behaviour.Behaviour):
             """PortsMixin leaf that does NOT go through BehaviourWithPorts."""
 
+            INPUT_PORTS = {}
+            OUTPUT_PORTS = {"out": PortInformation(data_type=str, required=True)}
+
             def __init__(self, name: str, **kwargs: Any) -> None:
                 super().__init__(name=name, **kwargs)
-
-            @classmethod
-            def input_ports(cls) -> dict:
-                return {}
-
-            @classmethod
-            def output_ports(cls) -> dict:
-                return {"out": PortInformation(data_type=str, required=True)}
 
             def update(self) -> py_trees.common.Status:
                 self._set_output("out", "direct-ports-leaf-ran")

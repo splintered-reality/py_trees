@@ -28,20 +28,13 @@ from py_trees.ports import BehaviourWithPorts, PortInformation
 class GenerateValue(BehaviourWithPorts):
     """Step 1: generate a random value and write it to an output port."""
 
+    INPUT_PORTS = {}
+    OUTPUT_PORTS = {"value": PortInformation(data_type=str, required=True)}
+
     def __init__(self, name: str, prefix: str = "value", **kwargs: Any) -> None:
         """Initialise the behaviour with *prefix* used in the generated value."""
         super().__init__(name=name, **kwargs)
         self._prefix = prefix
-
-    @classmethod
-    def input_ports(cls) -> dict:
-        """Return the input port declarations."""
-        return {}
-
-    @classmethod
-    def output_ports(cls) -> dict:
-        """Return the output port declarations."""
-        return {"value": PortInformation(data_type=str, required=True)}
 
     def update(self) -> py_trees.common.Status:
         """Generate a random value and write it to the output port."""
@@ -53,23 +46,16 @@ class GenerateValue(BehaviourWithPorts):
 class AppendSuffix(BehaviourWithPorts):
     """Step 2: read one string, append a suffix, and write the updated string."""
 
+    INPUT_PORTS = {"text_in": PortInformation(data_type=str, required=True)}
+    OUTPUT_PORTS = {
+        "text_out": PortInformation(data_type=str, required=True),
+        "value": PortInformation(data_type=str, required=True),
+    }
+
     def __init__(self, name: str, suffix: str, **kwargs: Any) -> None:
         """Initialise the behaviour with a *suffix* to append."""
         super().__init__(name=name, **kwargs)
         self._suffix = suffix
-
-    @classmethod
-    def input_ports(cls) -> dict:
-        """Return the input port declarations."""
-        return {"text_in": PortInformation(data_type=str, required=True)}
-
-    @classmethod
-    def output_ports(cls) -> dict:
-        """Return the output port declarations."""
-        return {
-            "text_out": PortInformation(data_type=str, required=True),
-            "value": PortInformation(data_type=str, required=True),
-        }
 
     def update(self) -> py_trees.common.Status:
         """Append the suffix and write both the processed text and a status string."""
@@ -82,15 +68,8 @@ class AppendSuffix(BehaviourWithPorts):
 class ReadResult(BehaviourWithPorts):
     """Step 3: read the final pipeline value so it can be inspected."""
 
-    @classmethod
-    def input_ports(cls) -> dict:
-        """Return the input port declarations."""
-        return {"value": PortInformation(data_type=str, required=True)}
-
-    @classmethod
-    def output_ports(cls) -> dict:
-        """Return the output port declarations."""
-        return {}
+    INPUT_PORTS = {"value": PortInformation(data_type=str, required=True)}
+    OUTPUT_PORTS = {}
 
     def update(self) -> py_trees.common.Status:
         """Return SUCCESS; the value is read via :attr:`result`."""

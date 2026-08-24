@@ -28,18 +28,11 @@ from py_trees.ports_utils import find_node_by_class
 class StartMissionReport(BehaviourWithPorts):
     """Create the initial mission report text."""
 
-    @classmethod
-    def input_ports(cls) -> dict:
-        """Return the input port declarations."""
-        return {
-            "robot_name": PortInformation(data_type=str, required=True),
-            "mission_name": PortInformation(data_type=str, required=True),
-        }
-
-    @classmethod
-    def output_ports(cls) -> dict:
-        """Return the output port declarations."""
-        return {"report": PortInformation(data_type=str, required=True)}
+    INPUT_PORTS = {
+        "robot_name": PortInformation(data_type=str, required=True),
+        "mission_name": PortInformation(data_type=str, required=True),
+    }
+    OUTPUT_PORTS = {"report": PortInformation(data_type=str, required=True)}
 
     def update(self) -> py_trees.common.Status:
         """Combine ``robot_name`` and ``mission_name`` into the initial report."""
@@ -52,18 +45,11 @@ class StartMissionReport(BehaviourWithPorts):
 class AddMissionStep(BehaviourWithPorts):
     """Append one mission step to the report text."""
 
-    @classmethod
-    def input_ports(cls) -> dict:
-        """Return the input port declarations."""
-        return {
-            "report_in": PortInformation(data_type=str, required=True),
-            "step": PortInformation(data_type=str, required=True),
-        }
-
-    @classmethod
-    def output_ports(cls) -> dict:
-        """Return the output port declarations."""
-        return {"report_out": PortInformation(data_type=str, required=True)}
+    INPUT_PORTS = {
+        "report_in": PortInformation(data_type=str, required=True),
+        "step": PortInformation(data_type=str, required=True),
+    }
+    OUTPUT_PORTS = {"report_out": PortInformation(data_type=str, required=True)}
 
     def update(self) -> py_trees.common.Status:
         """Append ``step`` to ``report_in`` and write to ``report_out``."""
@@ -76,15 +62,8 @@ class AddMissionStep(BehaviourWithPorts):
 class ReadMissionReport(BehaviourWithPorts):
     """Final node that exposes the finished report for printing."""
 
-    @classmethod
-    def input_ports(cls) -> dict:
-        """Return the input port declarations."""
-        return {"report": PortInformation(data_type=str, required=True)}
-
-    @classmethod
-    def output_ports(cls) -> dict:
-        """Return the output port declarations."""
-        return {}
+    INPUT_PORTS = {"report": PortInformation(data_type=str, required=True)}
+    OUTPUT_PORTS = {}
 
     def update(self) -> py_trees.common.Status:
         """Return SUCCESS; the report is read via :attr:`final_report`."""
