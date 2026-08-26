@@ -51,6 +51,20 @@ CONST_PREFIX = "__const_"
 DOT_REPLACEMENT = "__DOT__"
 
 
+def decode_const_value(key: str) -> str:
+    """
+    Decode the direct value embedded in a const placeholder key.
+
+    Args:
+        key: A key containing a ``CONST_PREFIX`` placeholder, e.g. ``/__const_10__DOT__0``.
+
+    Returns:
+        The original direct value as a string, e.g. ``10.0``.
+    """
+    raw_value = key.split(CONST_PREFIX, 1)[1]
+    return raw_value.replace(DOT_REPLACEMENT, ".")
+
+
 class NoDataAvailable(Exception):  # noqa: N818
     """Exception raised when a required data has not (yet) been written to the port."""
 
@@ -460,9 +474,7 @@ class PortsMixin(_MixinBase):
                     self._blackboard_client.register_key(key=local_key, access=py_trees.common.Access.WRITE)
 
                     # Obtaining the initial direct value
-                    raw_value = key.split(CONST_PREFIX, 1)[1]
-                    # Replacing the DOT_REPLACEMENT with the actual dot (see comment in DOT_REPLACEMENT definition)
-                    value = raw_value.replace(DOT_REPLACEMENT, ".")
+                    value = decode_const_value(key)
 
                     port_type = self.input_ports()[port].data_type
                     try:
