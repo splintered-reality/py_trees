@@ -229,11 +229,8 @@ def resolve_direct_value_remapping(key: str, remapping_table: dict[str, str]) ->
         The resolved value from the remapping table.
 
     Raises:
-        ValueError: If the prefixed key is not found in the remapping table or is of invalid format.
+        ValueError: If the prefixed key is not found in the remapping table.
     """
-    if key.startswith("/"):
-        raise ValueError(f"Key '{key}' is of invalid format")
-
     encoded_key = key.replace(".", DOT_REPLACEMENT)
     key = f"{CONST_PREFIX}{encoded_key}"
 
