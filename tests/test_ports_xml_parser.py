@@ -19,7 +19,13 @@ from typing import Any
 
 import py_trees
 from py_trees.parsers.behaviour_tree_xml import is_key, parse_behaviour_tree_xml
-from py_trees.ports import BehaviourWithPorts, PortInformation, PortsMixin, get_ports_registry
+from py_trees.ports import (
+    BehaviourWithPorts,
+    NoDataAvailable,
+    PortInformation,
+    PortsMixin,
+    get_ports_registry,
+)
 from py_trees.ports_utils import (
     find_node_by_class,
     find_node_by_name,
@@ -27,7 +33,7 @@ from py_trees.ports_utils import (
     strip_trailing_uuid4,
 )
 
-from .test_ports_helpers import Consumer, Producer
+from .test_ports_helpers import Consumer, FloatConsumer, Producer
 
 
 class StdoutLogger:
@@ -417,6 +423,95 @@ class TestXMLParser(unittest.TestCase):
         expected_value = "100"
 
         self.assertEqual(node.consumed_value, expected_value)
+
+    def test_subtree_default_ports(self) -> None:
+        """Verify that subtree default ports take effect as intended."""
+        self.xml = """<root main_tree_to_execute="MainTree">
+        <BehaviorTree ID="SubTree" input1="default_str" input2="42">
+          <Sequence>
+            <Consumer name="Consumer" input="{input1}"/>
+            <FloatConsumer name="FloatConsumer" input="{input2}"/>
+          </Sequence>
+        </BehaviorTree>
+
+        <BehaviorTree ID="MainTree">
+          <Sequence>
+            <SubTree ID="SubTree" name="AllDefaults" />
+            <SubTree ID="SubTree" name="FirstInputSet" input1="override_str" />
+            <SubTree ID="SubTree" name="SecondInputSet" input2="67" />
+            <SubTree ID="SubTree" name="BothInputsSet" input1="another_str" input2="9001" />
+          </Sequence>
+        </BehaviorTree>
+        </root>"""
+
+        self.tempfile = tempfile.NamedTemporaryFile(delete=False, mode="w", suffix=".xml")
+        self.tempfile.write(self.xml)
+        self.tempfile.close()
+
+        root_node = parse_behaviour_tree_xml(self.tempfile.name, logger=StdoutLogger())
+        btree = py_trees.trees.BehaviourTree(root_node)
+        btree.tick()
+
+        for subtree_name, expected_str, expected_float in (
+            ("AllDefaults", "default_str", 42),
+            ("FirstInputSet", "override_str", 42),
+            ("SecondInputSet", "default_str", 67),
+            ("BothInputsSet", "another_str", 9001),
+        ):
+            node = find_node_by_name(root_node, f"{subtree_name}.Consumer")
+            assert isinstance(node, Consumer)
+            self.assertEqual(node.consumed_value, expected_str)
+
+            node = find_node_by_name(root_node, f"{subtree_name}.FloatConsumer")
+            assert isinstance(node, FloatConsumer)
+            self.assertEqual(node.consumed_value, expected_float)
+
+    def test_top_level_default_ports(self) -> None:
+        """Verify that top-level behaviour default ports take effect as intended."""
+        # In this tree, input1 has a default value but input2 does not.
+        self.xml = """<root main_tree_to_execute="MainTree">
+        <BehaviorTree ID="MainTree" input1="default_str">
+          <Sequence>
+            <Consumer name="Consumer" input="{input1}"/>
+            <FloatConsumer name="FloatConsumer" input="{input2}"/>
+          </Sequence>
+        </BehaviorTree>
+        </root>"""
+
+        self.tempfile = tempfile.NamedTemporaryFile(delete=False, mode="w", suffix=".xml")
+        self.tempfile.write(self.xml)
+        self.tempfile.close()
+
+        # Run without mappings. This should fail in FloatConsumer because no port was set.
+        root_node = parse_behaviour_tree_xml(self.tempfile.name, logger=StdoutLogger())
+        btree = py_trees.trees.BehaviourTree(root_node)
+        btree.tick()
+
+        node = find_node_by_name(root_node, "Consumer", strip_prefix=True)
+        assert isinstance(node, Consumer)
+        self.assertEqual(node.consumed_value, "default_str")
+
+        float_node = find_node_by_name(root_node, "FloatConsumer", strip_prefix=True)
+        assert isinstance(float_node, FloatConsumer)
+        with self.assertRaises(NoDataAvailable):
+            self.assertEqual(float_node.consumed_value, 42)
+
+        # Setting input values should override the inputs appropriately.
+        root_node = parse_behaviour_tree_xml(
+            self.tempfile.name,
+            logger=StdoutLogger(),
+            input_mappings={"input1": "override_str", "input2": "67"},
+        )
+        btree = py_trees.trees.BehaviourTree(root_node)
+        btree.tick()
+
+        node = find_node_by_name(root_node, "Consumer", strip_prefix=True)
+        assert isinstance(node, Consumer)
+        self.assertEqual(node.consumed_value, "override_str")
+
+        float_node = find_node_by_name(root_node, "FloatConsumer", strip_prefix=True)
+        assert isinstance(float_node, FloatConsumer)
+        self.assertEqual(float_node.consumed_value, 67)
 
     def test_wait_node(self) -> None:
         """Verify that the duration value is successfully used by the Wait node."""
