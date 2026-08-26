@@ -24,20 +24,13 @@ from py_trees.ports import BehaviourWithPorts, PortInformation
 class Multiply(BehaviourWithPorts):
     """Read two floats and write their product."""
 
-    @classmethod
-    def input_ports(cls) -> dict:
-        """Return the input port declarations."""
-        return {
-            "a": PortInformation(data_type=float, required=True),
-            "b": PortInformation(data_type=float, required=True),
-        }
-
-    @classmethod
-    def output_ports(cls) -> dict:
-        """Return the output port declarations."""
-        return {
-            "product": PortInformation(data_type=float, required=True),
-        }
+    INPUT_PORTS = {
+        "a": PortInformation(data_type=float, required=True),
+        "b": PortInformation(data_type=float, required=True),
+    }
+    OUTPUT_PORTS = {
+        "product": PortInformation(data_type=float, required=True),
+    }
 
     def update(self) -> py_trees.common.Status:
         """Multiply the two inputs and write the result to the output port."""

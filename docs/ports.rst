@@ -23,7 +23,7 @@ Why use ports?
 Using ports instead of ad-hoc blackboard reads and writes pays off in several concrete ways:
 
 * **Explicit data contracts.**
-  A node's ``input_ports()`` and ``output_ports()`` declarations *are* its data-flow API.
+  A node's ``INPUT_PORTS`` and ``OUTPUT_PORTS`` declarations *are* its data-flow API.
   A reader can see at a glance what a node consumes and produces without reading through its :meth:`~py_trees.behaviour.Behaviour.update` method.
 
 * **Structured, early error detection.**
@@ -60,18 +60,13 @@ Concrete nodes typically inherit from the convenience base
    from py_trees.ports import BehaviourWithPorts, PortInformation
 
    class Multiply(BehaviourWithPorts):
-       @classmethod
-       def input_ports(cls):
-           return {
-               "a": PortInformation(data_type=float, required=True),
-               "b": PortInformation(data_type=float, required=True),
-           }
-
-       @classmethod
-       def output_ports(cls):
-           return {
-               "product": PortInformation(data_type=float, required=True),
-           }
+       INPUT_PORTS = {
+           "a": PortInformation(data_type=float, required=True),
+           "b": PortInformation(data_type=float, required=True),
+       }
+       OUTPUT_PORTS = {
+           "product": PortInformation(data_type=float, required=True),
+       }
 
        def update(self):
            self._set_output("product", self.get_input("a") * self.get_input("b"))
@@ -108,11 +103,9 @@ A port can declare a ``default_value`` next to its type, so the fallback lives w
 
 .. code-block:: python
 
-   @classmethod
-   def input_ports(cls):
-       return {
-           "timeout": PortInformation(data_type=float, default_value=5.0),
-       }
+   INPUT_PORTS = {
+       "timeout": PortInformation(data_type=float, default_value=5.0),
+   }
 
    def update(self):
        timeout = self.get_input("timeout")   # 5.0 unless something wrote to the port
@@ -232,7 +225,7 @@ then resolves under the alias in the ``"auto"`` path:
 
 Pass ``register=False`` on a class definition to keep a particular subclass out of the
 registry. Still-abstract classes (e.g. :class:`~py_trees.ports.BehaviourWithPorts` itself,
-which does not implement ``input_ports`` / ``output_ports``) are never registered.
+which does not declare ``INPUT_PORTS`` / ``OUTPUT_PORTS``) are never registered.
 
 .. _ports-xml-attributes-label:
 
@@ -241,7 +234,7 @@ XML attributes: ports *and* constructor arguments
 
 Attributes on a node's XML tag serve **two** distinct purposes:
 
-1. Attribute names that match a declared port (``input_ports()`` or ``output_ports()``) are treated as **port remappings**.
+1. Attribute names that match a declared port (``INPUT_PORTS`` or ``OUTPUT_PORTS``) are treated as **port remappings**.
    Values may be ``{curly_key}`` references (wired to the remapping table) or literal constants (type-converted according to the port's declared type).
 
 2. Attribute names that do **not** match any declared port are treated as **constructor keyword arguments** and forwarded to the class constructor.
@@ -252,13 +245,8 @@ Example::
 
    class Greeting(BehaviourWithPorts):
 
-       @classmethod
-       def input_ports(cls):
-           return {"name_key": PortInformation(data_type=str, required=True)}
-
-       @classmethod
-       def output_ports(cls):
-           return {"greeting": PortInformation(data_type=str, required=True)}
+       INPUT_PORTS = {"name_key": PortInformation(data_type=str, required=True)}
+       OUTPUT_PORTS = {"greeting": PortInformation(data_type=str, required=True)}
 
        def __init__(self, name: str, prefix: str = "Hello", **kwargs):
            super().__init__(name=name, **kwargs)
@@ -456,13 +444,8 @@ A few things you should be aware of, and suggestions on how to fill the gaps you
       class Retry(PortsMixin, py_trees.decorators.Retry):
           """Retry that reads its failure budget from an input port."""
 
-          @classmethod
-          def input_ports(cls):
-              return {"num_failures": PortInformation(data_type=int, required=True)}
-
-          @classmethod
-          def output_ports(cls):
-              return {}
+          INPUT_PORTS = {"num_failures": PortInformation(data_type=int, required=True)}
+          OUTPUT_PORTS = {}
 
           def __init__(
               self,

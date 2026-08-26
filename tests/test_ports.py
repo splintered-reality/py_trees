@@ -397,13 +397,8 @@ class TestPortDefaultValues(unittest.TestCase):
 class _RegistryLeaf(BehaviourWithPorts, register=False):
     """Concrete leaf used to exercise the registry; itself kept out of it."""
 
-    @classmethod
-    def input_ports(cls) -> dict:
-        return {}
-
-    @classmethod
-    def output_ports(cls) -> dict:
-        return {}
+    INPUT_PORTS = {}
+    OUTPUT_PORTS = {}
 
     def update(self) -> py_trees.common.Status:
         return py_trees.common.Status.SUCCESS

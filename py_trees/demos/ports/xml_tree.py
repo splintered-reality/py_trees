@@ -28,15 +28,8 @@ from py_trees.ports_utils import find_node_by_class
 class GreetingProducer(BehaviourWithPorts):
     """Produce a greeting string."""
 
-    @classmethod
-    def input_ports(cls) -> dict:
-        """Return the input port declarations."""
-        return {}
-
-    @classmethod
-    def output_ports(cls) -> dict:
-        """Return the output port declarations."""
-        return {"output": PortInformation(data_type=str, required=True)}
+    INPUT_PORTS = {}
+    OUTPUT_PORTS = {"output": PortInformation(data_type=str, required=True)}
 
     def update(self) -> py_trees.common.Status:
         """Write a fixed greeting to the output port."""
@@ -47,18 +40,11 @@ class GreetingProducer(BehaviourWithPorts):
 class AddSuffix(BehaviourWithPorts):
     """Append a configurable suffix to an input string."""
 
-    @classmethod
-    def input_ports(cls) -> dict:
-        """Return the input port declarations."""
-        return {
-            "input": PortInformation(data_type=str, required=True),
-            "suffix": PortInformation(data_type=str, required=True),
-        }
-
-    @classmethod
-    def output_ports(cls) -> dict:
-        """Return the output port declarations."""
-        return {"output": PortInformation(data_type=str, required=True)}
+    INPUT_PORTS = {
+        "input": PortInformation(data_type=str, required=True),
+        "suffix": PortInformation(data_type=str, required=True),
+    }
+    OUTPUT_PORTS = {"output": PortInformation(data_type=str, required=True)}
 
     def update(self) -> py_trees.common.Status:
         """Append ``suffix`` to ``input`` and write the result to ``output``."""
@@ -69,15 +55,8 @@ class AddSuffix(BehaviourWithPorts):
 class PrintConsumer(BehaviourWithPorts):
     """Capture the final value for display."""
 
-    @classmethod
-    def input_ports(cls) -> dict:
-        """Return the input port declarations."""
-        return {"input": PortInformation(data_type=str, required=True)}
-
-    @classmethod
-    def output_ports(cls) -> dict:
-        """Return the output port declarations."""
-        return {}
+    INPUT_PORTS = {"input": PortInformation(data_type=str, required=True)}
+    OUTPUT_PORTS = {}
 
     def update(self) -> py_trees.common.Status:
         """Return SUCCESS; the value is read via :attr:`consumed_value`."""
