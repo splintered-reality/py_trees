@@ -273,6 +273,80 @@ Example::
    <Greeting name="hello_node" name_key="{target}" prefix="Howdy"/>
    <!--       ^^^ behaviour name   ^^^ port remap    ^^^ ctor kwarg  -->
 
+.. _ports-xml-default-inputs-label:
+
+Setting default inputs for subtrees
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A ``<BehaviorTree>`` definition can carry attributes of its own.
+Every attribute other than ``ID`` and ``name`` is a **default input** for that tree:
+a value used for the matching key whenever an instance of the tree does not supply one itself.
+This lets a reusable subtree ship with sensible values baked in, so callers only have to override what they actually care about.
+
+.. code-block:: xml
+
+   <root main_tree_to_execute="MainTree">
+     <BehaviorTree ID="Greeter" greeting="Hello" volume="5">
+       <Sequence>
+         <Speak name="Speak" text="{greeting}" volume="{volume}"/>
+       </Sequence>
+     </BehaviorTree>
+
+     <BehaviorTree ID="MainTree">
+       <Sequence>
+         <SubTree ID="Greeter" name="Default"/>                        <!-- "Hello", 5 -->
+         <SubTree ID="Greeter" name="Loud" volume="11"/>               <!-- "Hello", 11 -->
+         <SubTree ID="Greeter" name="Custom" greeting="Howdy"/>        <!-- "Howdy", 5  -->
+       </Sequence>
+     </BehaviorTree>
+   </root>
+
+Resolution is per key: an attribute on the ``<SubTree>`` element wins, and every key it leaves out
+falls back to the default on the ``<BehaviorTree>`` definition.
+Defaults are written exactly like any other XML attribute value.
+A literal constant is type-converted according to the declared port type
+(so ``volume="5"`` reaches an ``int`` port as ``5``), and a ``{curly_key}`` reference is wired through the remapping table as usual.
+Note that a ``{curly_key}`` default is resolved in the scope of whoever *instantiates* the subtree,
+not inside the subtree itself, so it behaves like a remapping the caller would have written by hand.
+Literal defaults are usually the clearer choice.
+
+Defaults for the top-level tree
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The same mechanism applies to the tree named by ``main_tree_to_execute``.
+Attributes on *its* ``<BehaviorTree>`` element are the defaults for the tree as a whole.
+Since there is no enclosing ``<SubTree>`` element to override them from, those defaults are overridden
+from Python instead, via the ``input_mappings`` argument of
+:func:`~py_trees.parsers.behaviour_tree_xml.parse_behaviour_tree_xml`:
+
+.. code-block:: xml
+
+   <root main_tree_to_execute="MainTree">
+     <BehaviorTree ID="MainTree" greeting="Hello">
+       <Sequence>
+         <Speak name="Speak" text="{greeting}" volume="{volume}"/>
+       </Sequence>
+     </BehaviorTree>
+   </root>
+
+.. code-block:: python
+
+   root = parse_behaviour_tree_xml(
+       "my_tree.xml",
+       input_mappings={"greeting": "Howdy", "volume": "11"},
+   )
+
+This makes the top-level tree parameterisable from the calling application without having to
+edit (or template) the XML for each run.
+
+A few rules to be aware of:
+
+* ``input_mappings`` values must be **strings**, matching how they would have been written as
+  XML attributes (pass ``"11"``, not ``11``). A non-string value raises ``ValueError`` at parse time.
+* ``input_mappings`` both overrides existing defaults and supplies keys the XML never defaulted at all (``volume`` in the example above).
+* A required input port left with neither a default nor a mapping is not an error at parse time.
+  It raises :class:`~py_trees.ports.NoDataAvailable` if and when the node first reads it during a tick.
+
 .. _ports-xml-includes-label:
 
 Composing trees from multiple files
