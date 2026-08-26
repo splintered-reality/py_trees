@@ -227,6 +227,41 @@ def convert_str_to_type(
     return False, value
 
 
+def is_instance_of_type(value: Any, expected_type: Any) -> bool:
+    """
+    Check if a value is an instance of a specific type.
+
+    Extends Python's isinstance() to check for generic types, such as lists.
+
+    Currently this only supports basic types (int, float, etc.) and the generic types Union and list.
+    Add additional type support as needed.
+
+    Args:
+        value (Any): The value to check.
+        expected_type (Any): The expected type.
+
+    Returns:
+        bool: True if the value is an instance of the expected type, False otherwise.
+
+    Raises:
+        NotImplementedError: If type checking for the specific generic type is not implemented.
+    """
+    origin = get_origin(expected_type)
+    args = get_args(expected_type)
+    # Handle union types first
+    if origin is Union or origin is UnionType:  # Need to also check types.UnionType to cover | syntax
+        return any(is_instance_of_type(value, arg) for arg in args)
+    # Handle other generics
+    if origin is not None:
+        if not isinstance(value, origin):
+            return False
+        if origin is list and args:
+            return all(is_instance_of_type(v, args[0]) for v in value)
+        raise NotImplementedError(f"Type checking for generic type '{origin}' is not implemented.")
+    else:
+        return isinstance(value, expected_type)
+
+
 def collect_type_hints(constructor: Callable) -> dict[str, Any]:
     """Collect parameter type hints from a constructor.
 

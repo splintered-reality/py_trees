@@ -13,8 +13,7 @@
 # Imports
 ##############################################################################
 
-import types
-import typing
+import copy
 import warnings
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -26,6 +25,7 @@ from .ports_utils import (
     LogLevel,
     PortsLogger,
     convert_str_to_type,
+    is_instance_of_type,
     reset_blackboard_key,
     sanitize_name_for_blackboard_use,
     set_feedback_and_log,
@@ -59,11 +59,41 @@ class NoDataAvailable(Exception):  # noqa: N818
 
 @dataclass(frozen=True)
 class PortInformation:
-    """Static declaration for one typed input or output port."""
+    """
+    Static declaration for one input or output port.
+
+    Args:
+        data_type: The type of the data carried by this port.
+            Values read from or written to the port are checked against it at runtime.
+        required: Whether the port must resolve to data. Required input ports without data
+            raise :class:`NoDataAvailable` when read, unless a *default_value* is declared,
+            which always satisfies the requirement.
+        description: Optional human-readable description of the port.
+        default_value: Optional initial value for the port, validated against *data_type*
+            at construction time. ``None`` means that no default value is declared.
+
+    Raises:
+        TypeError: If *default_value* does not match *data_type*.
+    """
 
     data_type: Any
     required: bool = True
     description: str = ""
+    default_value: Any = None
+
+    def __post_init__(self) -> None:
+        """Validate the declared default value against the declared data type."""
+        if self.default_value is None:
+            return
+        if not is_instance_of_type(self.default_value, self.data_type):
+            raise TypeError(
+                f"Default value '{self.default_value}' is not of type {self.data_type}, but {type(self.default_value)}."
+            )
+
+    @property
+    def has_default(self) -> bool:
+        """Return whether this port declares a default value."""
+        return self.default_value is not None
 
 
 ##############################################################################
@@ -149,7 +179,7 @@ class PortsMixin(_MixinBase):
     These port definitions are used to:
 
     1. Register blackboard keys for communication.
-    2. Enforce type and presence validation at runtime.
+    2. Enforce type, default values, and presence validation at runtime.
     3. Provide clear contracts for each behaviour's data dependencies and outputs.
 
     Example usage::
@@ -157,7 +187,7 @@ class PortsMixin(_MixinBase):
         class MyBehaviour(PortsMixin, py_trees.behaviour.Behaviour):
             @classmethod
             def input_ports(cls):
-                return {"input": PortInformation(data_type=str, required=True)}
+                return {"input": PortInformation(data_type=str, default_value="foo", required=True)}
 
             @classmethod
             def output_ports(cls):
@@ -305,6 +335,9 @@ class PortsMixin(_MixinBase):
     def is_port_required(cls, port_name: str) -> bool:
         """Return whether the specified port is marked as required.
 
+        Note that a port declaring a default value is always satisfiable, even when marked
+        as required, since the default is applied whenever no data is available.
+
         Args:
             port_name (str): The name of the input or output port.
 
@@ -442,10 +475,12 @@ class PortsMixin(_MixinBase):
                 # like "transfer" would become the global literal key "/transfer"
                 # and collide across sibling subtrees.
                 key = py_trees.blackboard.Blackboard.absolute_name(subtree_namespace, key)
+                # A port with a default value is satisfiable without data on the blackboard, so it
+                # must not be registered as required (that would fail verify_required_keys_exist()).
                 self._blackboard_client.register_key(
                     key=port,
                     access=py_trees.common.Access.READ,
-                    required=self.is_port_required(port),
+                    required=self.is_port_required(port) and not self.input_ports()[port].has_default,
                     remap_to=key,
                 )
                 abs_port_name = self.blackboard_client.absolute_name(port)
@@ -475,7 +510,7 @@ class PortsMixin(_MixinBase):
                 self._blackboard_client.register_key(
                     key=port,
                     access=py_trees.common.Access.READ,
-                    required=self.is_port_required(port),
+                    required=self.is_port_required(port) and not self.input_ports()[port].has_default,
                     remap_to=storage_key,
                 )
         for port in self.output_ports():
@@ -488,6 +523,20 @@ class PortsMixin(_MixinBase):
                     required=self.is_port_required(port),
                     remap_to=storage_key,
                 )
+
+        # Seed declared defaults on output ports, so that readers wired to them see a value
+        # before this node has ticked. Input defaults are *not* seeded: they are applied on the
+        # read side by get_input(), so they cannot leak into a key that other nodes read from.
+        for port, port_information in self.output_ports().items():
+            if port_information.has_default:
+                self._seed_output_default(port, port_information)
+
+    def _seed_output_default(self, port_name: str, port_information: PortInformation) -> None:
+        """Write the declared default of an output port to the blackboard."""
+        # Deep copy so that whoever reads the value back cannot mutate the port declaration
+        # shared by every instance of this class.
+        self._set_output(port_name, copy.deepcopy(port_information.default_value))
+        self.log_debug(f"Port {port_name}: Seeded default value '{port_information.default_value}'.")
 
     @property
     def subtree_namespace(self) -> str:
@@ -522,40 +571,6 @@ class PortsMixin(_MixinBase):
             str: The registered name of this behavior class.
         """
         return self._behaviour_class_name
-
-    def _is_instance_of_type(self, value: Any, expected_type: Any) -> bool:
-        """
-        Check if a value is an instance of a specific type.
-
-        Extends Python's isinstance() to check for generic types, such as lists.
-
-        Currently this only supports basic types (int, float, etc.) and the generic types Union and list.
-        Add additional type support as needed.
-
-        Args:
-            value (Any): The value to check.
-            expected_type (type): The expected type.
-
-        Returns:
-            bool: True if the value is an instance of the expected type, False otherwise.
-
-        Raises:
-            NotImplementedError: If type checking for the specific generic type is not implemented.
-        """
-        origin = typing.get_origin(expected_type)
-        args = typing.get_args(expected_type)
-        # Handle union types first
-        if origin is typing.Union or origin is types.UnionType:  # Need to also check types.UnionType to cover | syntax
-            return any(self._is_instance_of_type(value, arg) for arg in args)
-        # Handle other generics
-        if origin is not None:
-            if not isinstance(value, origin):
-                return False
-            if origin is list and args:
-                return all(self._is_instance_of_type(v, args[0]) for v in value)
-            raise NotImplementedError(f"Type checking for generic type '{origin}' is not implemented.")
-        else:
-            return isinstance(value, expected_type)
 
     def get_logger(self) -> PortsLogger:
         """Return the logger instance.
@@ -606,10 +621,19 @@ class PortsMixin(_MixinBase):
     def get_input(self, port_name: str, default: Any = None) -> Any:
         """Read the value of the given input port from the blackboard.
 
+        When no data is available on the port, the fallbacks are applied in this order:
+
+        1. The *default* argument given here, if it is not ``None``.
+        2. The ``default_value`` declared on the port's :class:`PortInformation`, if it has one.
+           Declared defaults are deep-copied on the way out, so a caller mutating the returned
+           value cannot corrupt the class-level declaration.
+        3. Otherwise, :class:`NoDataAvailable` is raised.
+
         Args:
             port_name (str): The name of the input port to read from the blackboard.
             default (Any): Optional default value to return if the port has no input data.
-            If set to `None`, no default is accepted.
+                It takes precedence over a default declared on the port.
+                If set to `None`, only a default declared on the port (if any) is accepted.
         Return:
             Any: The value retrieved from the blackboard for the specified input port or the default.
 
@@ -623,10 +647,16 @@ class PortsMixin(_MixinBase):
         if not self.blackboard_client.is_registered(port_name):
             raise KeyError(f"{self.name}: Input port '{port_name}' is not registered in the blackboard client.")
         # Get the value from the blackboard
-        # If the port is not set, return the default value if provided, otherwise raise an error.
+        # If the port is not set, fall back to a default (argument first, then the declared
+        # default value on the port), otherwise raise an error.
         if not self.blackboard_client.exists(port_name):
             if default is not None:
                 return default
+            port_information = self.input_ports()[port_name]
+            if port_information.has_default:
+                # Deep copy so that a caller mutating a container default (e.g. a list) does not
+                # modify the port declaration shared by every instance of this class.
+                return copy.deepcopy(port_information.default_value)
             raise NoDataAvailable(
                 f"{self.name}: Input port '{port_name}' (mapped to "
                 f"'{self._get_blackboard_key(port_name)}') has no data available."
@@ -636,13 +666,16 @@ class PortsMixin(_MixinBase):
         if value is None:
             raise NotImplementedError("Support for None values has not yet been considered.")
         port_type = self.input_ports()[port_name].data_type
-        if not self._is_instance_of_type(value, port_type):
+        if not is_instance_of_type(value, port_type):
             raise TypeError(f"{self.name}: Value '{value}' is not of type {port_type}, but {type(value)}")
         return value
 
     def get_last_output(self, port_name: str) -> Any:
         """
         Return the last output which the node wrote at this port.
+
+        If the port declares a default value, that default is present from ``setup_ports()``
+        onwards, so this returns it until the node writes something.
 
         Args:
             port_name (str): The name of the output port to read from the blackboard.
@@ -665,7 +698,7 @@ class PortsMixin(_MixinBase):
         if value is None:
             raise NotImplementedError("Support for explicit None values has not yet been considered.")
         port_type = self.output_ports()[port_name].data_type
-        if not self._is_instance_of_type(value, port_type):
+        if not is_instance_of_type(value, port_type):
             raise TypeError(f"{self.name}: Value '{value}' is not of type {port_type}")
         return value
 
@@ -686,21 +719,22 @@ class PortsMixin(_MixinBase):
         if port_name not in self.output_ports():
             raise KeyError(f"{self.name}: Output port '{port_name}' not defined.")
         port_type = self.output_ports()[port_name].data_type
-        if not self._is_instance_of_type(value, port_type):
+        if not is_instance_of_type(value, port_type):
             raise TypeError(f"{self.name}: Value '{value}' is not of type {port_type}")
 
         self.blackboard_client.set(port_name, value)
 
     def reset_port(self, port_name: str) -> None:
         """
-        Clear the value stored for a (usually output) port.
+        Reset a (usually output) port to its initial state.
 
         Keeps the key registered (READ/WRITE permissions unaffected), but removes
         the stored value. Intended for use-cases like "new data epoch" where
         downstream nodes should not read stale outputs.
 
         This will have the effect that subsequent
-        `blackboard_client.exists(port_name)` returns False again
+        `blackboard_client.exists(port_name)` returns False again, unless the port is an
+        output port declaring a default value. In that case, that default is seeded again.
 
         Raises:
             KeyError: if the port is unknown or not registered.
@@ -711,16 +745,21 @@ class PortsMixin(_MixinBase):
 
         reset_blackboard_key(self.blackboard_client, port_name, node_name=self.name)
 
+        output_port_information = self.output_ports().get(port_name)
+        if output_port_information is not None and output_port_information.has_default:
+            self._seed_output_default(port_name, output_port_information)
+
     def reset_all_output_ports(self) -> None:
         """
-        Clear all output ports registered on this node.
+        Reset all output ports registered on this node to their initial state.
 
         Keeps the keys registered (READ/WRITE permissions unaffected), but removes
         the stored values. Intended for use-cases like "new data epoch" where
         downstream nodes should not read stale outputs.
 
         This will have the effect that subsequent
-        `blackboard_client.exists(port_name)` returns False again
+        `blackboard_client.exists(port_name)` returns False again, except for ports declaring
+        a default value, which are seeded again (see :meth:`reset_port`).
 
         Raises:
             KeyError: if any port is unknown or not registered.
