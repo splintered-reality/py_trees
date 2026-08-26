@@ -18,7 +18,7 @@ from functools import partial
 from typing import Any
 
 import py_trees
-from py_trees.parsers.behaviour_tree_xml import is_key, parse_behaviour_tree_xml
+from py_trees.parsers.behaviour_tree_xml import XMLParserError, is_key, parse_behaviour_tree_xml
 from py_trees.ports import (
     BehaviourWithPorts,
     NoDataAvailable,
@@ -765,6 +765,53 @@ class TestXMLParser(unittest.TestCase):
             self.assertEqual(repeat.status, py_trees.common.Status.RUNNING)
         finally:
             os.unlink(path)
+
+    def test_decorator_ctor_arg_from_subtree_constant(self) -> None:
+        """A built-in decorator inside a subtree receives a constant passed via the SubTree tag."""
+        xml = """<root main_tree_to_execute="MainTree">
+          <BehaviorTree ID="MainTree">
+            <Sequence>
+              <SubTree ID="SubTree" name="Sub" duration="10.0"/>
+            </Sequence>
+          </BehaviorTree>
+          <BehaviorTree ID="SubTree">
+            <Timeout duration="{duration}">
+              <Producer name="prod" output="{out}" />
+            </Timeout>
+          </BehaviorTree>
+        </root>"""
+
+        with tempfile.NamedTemporaryFile(delete=False, mode="w", suffix=".xml") as tf:
+            tf.write(xml)
+            path = tf.name
+        self.addCleanup(os.unlink, path)
+
+        root = parse_behaviour_tree_xml(path, logger=StdoutLogger())
+        timeout = find_node_by_class(root, py_trees.decorators.Timeout)
+        self.assertIsNotNone(timeout)
+        self.assertEqual(timeout.duration, 10.0)
+        self.assertIsInstance(timeout.duration, float)
+
+    def test_decorator_ctor_arg_from_runtime_key_raises(self) -> None:
+        """A built-in decorator attribute referencing a runtime blackboard key raises an error."""
+        xml = """<root main_tree_to_execute="MainTree">
+          <BehaviorTree ID="MainTree">
+            <Sequence>
+              <Producer name="prod" output="{duration}" />
+              <Timeout duration="{duration}">
+                <Producer name="prod2" output="{out}" />
+              </Timeout>
+            </Sequence>
+          </BehaviorTree>
+        </root>"""
+
+        with tempfile.NamedTemporaryFile(delete=False, mode="w", suffix=".xml") as tf:
+            tf.write(xml)
+            path = tf.name
+        self.addCleanup(os.unlink, path)
+
+        with self.assertRaises(XMLParserError):
+            parse_behaviour_tree_xml(path, logger=StdoutLogger())
 
     def test_decorator_ports_node(self) -> None:
         """Verify that a decorator with ports is instantiated correctly."""

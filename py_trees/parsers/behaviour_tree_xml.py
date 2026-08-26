@@ -120,7 +120,7 @@ from copy import deepcopy
 from typing import Any
 
 import py_trees
-from py_trees.ports import CONST_PREFIX, DOT_REPLACEMENT, PortsMixin, get_ports_registry
+from py_trees.ports import CONST_PREFIX, DOT_REPLACEMENT, PortsMixin, decode_const_value, get_ports_registry
 from py_trees.ports_utils import (
     NOOP_LOGGER,
     PortsLogger,
@@ -865,7 +865,22 @@ def build_tree_from_xml(
             for key in elem.keys():
                 if key == "name":
                     continue
-                constructor_kwargs[key] = elem.attrib.get(key)
+                value = elem.attrib[key]
+                if is_key(value):
+                    # A curly-brace reference must resolve to a constant at parse time: built-in
+                    # nodes take these values as constructor arguments, so they cannot wait for
+                    # a value to appear on the blackboard at runtime. The decoded value stays a
+                    # string here; apply_type_hints() below converts it to the type declared in
+                    # the constructor signature.
+                    resolved = resolve_key_remapping(value, remapping_table)
+                    if CONST_PREFIX not in resolved:
+                        raise XMLParserError(
+                            f"'{elem.tag}' (name='{node_name}'): attribute '{key}'='{value}' resolves to "
+                            f"the runtime blackboard key '{resolved}', but constructor arguments of "
+                            f"built-in nodes require values that are constant at parse time."
+                        )
+                    value = decode_const_value(resolved)
+                constructor_kwargs[key] = value
 
             ignore_keys = {"child", "children", "behaviour_class_name"}
             success, constructor_kwargs = apply_type_hints(cls, constructor_kwargs, logger=logger, ignore=ignore_keys)
