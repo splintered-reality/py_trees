@@ -17,17 +17,9 @@ Brief feature list:
 * Serialise to a dot graph or render to ascii/unicode in a terminal.
 * Tested on Linux and Mac (YMMV with Windows).
 
-## What's New?
-
-* [2026-06-27] Modernized project infrastructure with `uv`, added support for Python 3.14.
-* [2026-05-19] Typed input/output ports for behaviours, with XML parser support.
-* [2025-11-13] New `ForEach` decorator.
-* [2025-11-13] New `CompareBlackboardVariables` behaviour, with comparison expressions that allow callables.
-* [2025-01-11] Support for Python 3.12 was added, and Python 3.8 was dropped.
-
 ## Documentation
 
-[![devel][docs-devel-image]][docs-devel] [![2.5.x][docs-2.5.x-image]][docs-2.5.x] [![2.4.x][docs-2.4.x-image]][docs-2.4.x] [![2.3.x][docs-2.3.x-image]][docs-2.3.x] [![2.2.x][docs-2.2.x-image]][docs-2.2.x]
+[![devel][docs-devel-image]][docs-devel] [![2.6.x][docs-2.6.x-image]][docs-2.6.x] [![2.5.x][docs-2.5.x-image]][docs-2.5.x] [![2.4.x][docs-2.4.x-image]][docs-2.4.x] [![2.3.x][docs-2.3.x-image]][docs-2.3.x]
 
 ## Getting Started
 
@@ -73,6 +65,9 @@ On PyPi:
 * [py_trees](https://pypi.org/project/py-trees/)
 * [py_trees_js](https://pypi.org/project/py-trees-js/)
 
+On conda-forge:
+* [py_trees](https://anaconda.org/conda-forge/py-trees)
+
 Examples:
 * [ReadTheDocs - PyTrees ROS Tutorials](https://py-trees-ros-tutorials.readthedocs.io/en/devel/index.html) - significantly more edifying than the demos, these incrementally walk through the process of building a decision making layer for a robot. These use ROS 2 (sparsely), but merely browsing should be enlightening regardless.
 
@@ -96,6 +91,7 @@ Contributors are welcome to add themselves here in future PRs.
 
 ## Releases
 
+* `2.6.x` - Improvements to Ports API and XML file parsing, including default values and performance improvements.
 * `2.5.x` - New Ports API with XML file parsing, modernized dev environment with `uv`, support Python 3.14.
 * `2.4.x` - New ForEach decorator, new CompareBlackboardVariables behaviour, and callables in comparison expressions.
 * `2.3.x` - Support for Python 3.12 was added, and Python 3.8 was dropped.
@@ -107,13 +103,12 @@ Contributors are welcome to add themselves here in future PRs.
 * `1.0.x` - Behaviours, Decorators, Composites, Blackboards, Tree Management and Viz tools.
 * `0.y.x` - First open source pre-releases.
 
-| | Devel | 2.5.x | 2.4.x | 2.3.x | 2.2.x |
+| | Devel | 2.6.x | 2.5.x | 2.4.x | 2.3.x |
 |:---:|:---:|:---:|:---:|:---:|:---:|
-| Sources | [![devel][sources-devel-image]][sources-devel] | [![2.5.x][sources-2.5.x-image]][sources-2.5.x] | [![2.4.x][sources-2.4.x-image]][sources-2.4.x] | [![2.3.x][sources-2.3.x-image]][sources-2.3.x] | [![2.2.x][sources-2.2.x-image]][sources-2.2.x] |
-| Compatibility | [![Python 3.14][python314-image]][python314-docs]<br/>[![Python 3.12][python312-image]][python312-docs]<br/>[![Python 3.10][python310-image]][python310-docs] | [![Python 3.14][python314-image]][python314-docs]<br/>[![Python 3.12][python312-image]][python312-docs]<br/>[![Python 3.10][python310-image]][python310-docs] | [![Python 3.12][python312-image]][python312-docs]<br/>[![Python 3.10][python310-image]][python310-docs] | [![Python 3.12][python312-image]][python312-docs]<br/>[![Python 3.10][python310-image]][python310-docs] | [![Python 3.10][python310-image]][python310-docs]<br/>[![Python 3.8][python38-image]][python38-docs] |
-| CI | [![devel-Status][devel-build-status-image]][devel-build-status] | [![2.5.x-Status][2.5.x-build-status-image]][2.5.x-build-status] | [![2.4.x-Status][2.4.x-build-status-image]][2.4.x-build-status] | [![2.3.x-Status][2.3.x-build-status-image]][2.3.x-build-status] | [![2.2.x-Status][2.2.x-build-status-image]][2.2.x-build-status] |
-| Documentation | [![devel-Docs][rtd-devel-image]][docs-devel] | [![2.5.x-Docs][rtd-2.5.x-image]][docs-2.5.x] | [![2.4.x-Docs][rtd-2.4.x-image]][docs-2.4.x] | [![2.3.x-Docs][rtd-2.3.x-image]][docs-2.3.x] | [![2.2.x-Docs][rtd-2.2.x-image]][docs-2.2.x] |
-
+| Sources | [![devel][sources-devel-image]][sources-devel] | [![2.6.x][sources-2.6.x-image]][sources-2.6.x] | [![2.5.x][sources-2.5.x-image]][sources-2.5.x] | [![2.4.x][sources-2.4.x-image]][sources-2.4.x] | [![2.3.x][sources-2.3.x-image]][sources-2.3.x] |
+| Compatibility | [![Python 3.14][python314-image]][python314-docs]<br/>[![Python 3.12][python312-image]][python312-docs]<br/>[![Python 3.10][python310-image]][python310-docs] | [![Python 3.14][python314-image]][python314-docs]<br/>[![Python 3.12][python312-image]][python312-docs]<br/>[![Python 3.10][python310-image]][python310-docs] | [![Python 3.14][python314-image]][python314-docs]<br/>[![Python 3.12][python312-image]][python312-docs]<br/>[![Python 3.10][python310-image]][python310-docs] | [![Python 3.12][python312-image]][python312-docs]<br/>[![Python 3.10][python310-image]][python310-docs] | [![Python 3.12][python312-image]][python312-docs]<br/>[![Python 3.10][python310-image]][python310-docs] |
+| CI | [![devel-Status][devel-build-status-image]][devel-build-status] | [![2.6.x-Status][2.6.x-build-status-image]][2.6.x-build-status] | [![2.5.x-Status][2.5.x-build-status-image]][2.5.x-build-status] | [![2.4.x-Status][2.4.x-build-status-image]][2.4.x-build-status] | [![2.3.x-Status][2.3.x-build-status-image]][2.3.x-build-status] |
+| Documentation | [![devel-Docs][rtd-devel-image]][docs-devel] | [![2.6.x-Docs][rtd-2.6.x-image]][docs-2.6.x] | [![2.5.x-Docs][rtd-2.5.x-image]][docs-2.5.x] | [![2.4.x-Docs][rtd-2.4.x-image]][docs-2.4.x] | [![2.3.x-Docs][rtd-2.3.x-image]][docs-2.3.x] |
 
 [license-image]: https://img.shields.io/badge/License-BSD%203--Clause-orange.svg?style=plastic
 [license]: LICENSE
@@ -129,41 +124,41 @@ Contributors are welcome to add themselves here in future PRs.
 
 [devel-build-status-image]: https://github.com/splintered-reality/py_trees/actions/workflows/pre-merge.yaml/badge.svg
 [devel-build-status]: https://github.com/splintered-reality/py_trees/actions/workflows/pre-merge.yaml
+[2.6.x-build-status-image]: https://github.com/splintered-reality/py_trees/actions/workflows/pre-merge.yaml/badge.svg?branch=release/2.6.x
+[2.6.x-build-status]: https://github.com/splintered-reality/py_trees/actions/workflows/pre-merge.yaml
 [2.5.x-build-status-image]: https://github.com/splintered-reality/py_trees/actions/workflows/pre-merge.yaml/badge.svg?branch=release/2.5.x
 [2.5.x-build-status]: https://github.com/splintered-reality/py_trees/actions/workflows/pre-merge.yaml
 [2.4.x-build-status-image]: https://github.com/splintered-reality/py_trees/actions/workflows/pre-merge.yaml/badge.svg?branch=release/2.4.x
 [2.4.x-build-status]: https://github.com/splintered-reality/py_trees/actions/workflows/pre-merge.yaml
 [2.3.x-build-status-image]: https://github.com/splintered-reality/py_trees/actions/workflows/pre-merge.yaml/badge.svg?branch=release/2.3.x
 [2.3.x-build-status]: https://github.com/splintered-reality/py_trees/actions/workflows/pre-merge.yaml
-[2.2.x-build-status-image]: https://github.com/splintered-reality/py_trees/actions/workflows/pre-merge.yaml/badge.svg?branch=release/2.2.x
-[2.2.x-build-status]: https://github.com/splintered-reality/py_trees/actions/workflows/pre-merge.yaml
 
 [docs-devel]: http://py-trees.readthedocs.io/
+[docs-2.6.x]: http://py-trees.readthedocs.io/en/release-2.6.x/
 [docs-2.5.x]: http://py-trees.readthedocs.io/en/release-2.5.x/
 [docs-2.4.x]: http://py-trees.readthedocs.io/en/release-2.4.x/
 [docs-2.3.x]: http://py-trees.readthedocs.io/en/release-2.3.x/
-[docs-2.2.x]: http://py-trees.readthedocs.io/en/release-2.2.x/
 
 [docs-devel-image]: http://img.shields.io/badge/docs-devel-brightgreen.svg?style=plastic
+[docs-2.6.x-image]: http://img.shields.io/badge/docs-2.6.x-brightgreen.svg?style=plastic
 [docs-2.5.x-image]: http://img.shields.io/badge/docs-2.5.x-brightgreen.svg?style=plastic
 [docs-2.4.x-image]: http://img.shields.io/badge/docs-2.4.x-brightgreen.svg?style=plastic
 [docs-2.3.x-image]: http://img.shields.io/badge/docs-2.3.x-brightgreen.svg?style=plastic
-[docs-2.2.x-image]: http://img.shields.io/badge/docs-2.2.x-brightgreen.svg?style=plastic
 
 [rtd-devel-image]: https://readthedocs.org/projects/py-trees/badge/?version=devel&style=plastic
+[rtd-2.6.x-image]: https://readthedocs.org/projects/py-trees/badge/?version=release-2.6.x&style=plastic
 [rtd-2.5.x-image]: https://readthedocs.org/projects/py-trees/badge/?version=release-2.5.x&style=plastic
 [rtd-2.4.x-image]: https://readthedocs.org/projects/py-trees/badge/?version=release-2.4.x&style=plastic
 [rtd-2.3.x-image]: https://readthedocs.org/projects/py-trees/badge/?version=release-2.3.x&style=plastic
-[rtd-2.2.x-image]: https://readthedocs.org/projects/py-trees/badge/?version=release-2.2.x&style=plastic
 
 [sources-devel]: https://github.com/splintered-reality/py_trees/tree/devel
+[sources-2.6.x]: https://github.com/splintered-reality/py_trees/tree/release/2.6.x
 [sources-2.5.x]: https://github.com/splintered-reality/py_trees/tree/release/2.5.x
 [sources-2.4.x]: https://github.com/splintered-reality/py_trees/tree/release/2.4.x
 [sources-2.3.x]: https://github.com/splintered-reality/py_trees/tree/release/2.3.x
-[sources-2.2.x]: https://github.com/splintered-reality/py_trees/tree/release/2.2.x
 
 [sources-devel-image]: http://img.shields.io/badge/sources-devel-blue.svg?style=plastic
+[sources-2.6.x-image]: http://img.shields.io/badge/sources-2.6.x-blue.svg?style=plastic
 [sources-2.5.x-image]: http://img.shields.io/badge/sources-2.5.x-blue.svg?style=plastic
 [sources-2.4.x-image]: http://img.shields.io/badge/sources-2.4.x-blue.svg?style=plastic
 [sources-2.3.x-image]: http://img.shields.io/badge/sources-2.3.x-blue.svg?style=plastic
-[sources-2.2.x-image]: http://img.shields.io/badge/sources-2.2.x-blue.svg?style=plastic

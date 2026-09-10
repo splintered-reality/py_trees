@@ -1,6 +1,20 @@
 Release Notes
 =============
 
+2.6.0 (2026-09-10)
+------------------
+* [ports] Do not raise error if a port value starts with a `/` (`#514 <https://github.com/splintered-reality/py_trees/issues/514>`_)
+* [ports] Handle blackboard keys in parsing XML for built-in behaviors (`#513 <https://github.com/splintered-reality/py_trees/issues/513>`_)
+* [ports] Change input/output port declarations to class attributes (`#511 <https://github.com/splintered-reality/py_trees/issues/511>`_)
+* [ports] Add default values to PortInformation (`#510 <https://github.com/splintered-reality/py_trees/issues/510>`_)
+* [ports] Top-level input port default values in behavior tree XML (`#509 <https://github.com/splintered-reality/py_trees/issues/509>`_)
+* [ports] Support ports that are types and treat string ports conversion properly. (`#507 <https://github.com/splintered-reality/py_trees/issues/507>`_)
+* [composites] Recover memory sequences after child replacement (`#505 <https://github.com/splintered-reality/py_trees/issues/505>`_)
+* [infra] Use older license syntax to make ROS happy
+* [infra] Fix build warnings (`#506 <https://github.com/splintered-reality/py_trees/issues/506>`_)
+* [docs] Add installation and getting started instructions (`#504 <https://github.com/splintered-reality/py_trees/issues/504>`_)
+* Contributors: Filip Grčar, Jennifer Buehler, Sanjay Santhanam, Sebastian Castro
+
 2.5.0 (2026-07-13)
 ------------------
 * [ports] Improve handling of decorator nodes in XML parser (`#498 <https://github.com/splintered-reality/py_trees/issues/498>`_)
