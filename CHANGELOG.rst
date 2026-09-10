@@ -1,8 +1,8 @@
 Release Notes
 =============
 
-Forthcoming
------------
+2.6.0 (2026-09-10)
+------------------
 * [ports] Do not raise error if a port value starts with a `/` (`#514 <https://github.com/splintered-reality/py_trees/issues/514>`_)
 * [ports] Handle blackboard keys in parsing XML for built-in behaviors (`#513 <https://github.com/splintered-reality/py_trees/issues/513>`_)
 * [ports] Change input/output port declarations to class attributes (`#511 <https://github.com/splintered-reality/py_trees/issues/511>`_)
