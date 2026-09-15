@@ -62,6 +62,11 @@ $ uv export --no-hashes --no-emit-project --no-default-groups --group docs -o do
 # Build the sdist & wheel into ./dist
 $ uv build
 
-# Publish to PyPI (requires credentials, e.g. UV_PUBLISH_TOKEN)
+# Publish to PyPI manually (requires credentials, e.g. UV_PUBLISH_TOKEN)
 $ uv publish
 ```
+
+Releases are normally published by CI instead: pushing a tag of the form `x.y.z`
+(e.g. `2.6.0`) runs `.github/workflows/publish.yaml`, which checks that the tag
+matches the version in `pyproject.toml`, builds the distributions and uploads them
+to PyPI via trusted publishing (no token needed).
