@@ -1,0 +1,47 @@
+name: publish
+
+on:
+  push:
+    tags:
+      # Bare semantic version tags, e.g. 2.6.0
+      - '[0-9]+.[0-9]+.[0-9]+'
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+    - name: Check the tag matches the project version
+      run: |
+        version="$(uv version --short)"
+        if [ "${version}" != "${GITHUB_REF_NAME}" ]; then
+          echo "Tag '${GITHUB_REF_NAME}' does not match pyproject.toml version '${version}'" >&2
+          exit 1
+        fi
+    - name: Build sdist and wheel
+      run: uv build
+    - uses: actions/upload-artifact@v4
+      with:
+        name: dist
+        path: dist/
+        if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-24.04
+    environment:
+      name: pypi
+      url: https://pypi.org/project/py_trees/${{ github.ref_name }}
+    permissions:
+      id-token: write  # required for PyPI trusted publishing
+    steps:
+    - uses: actions/download-artifact@v4
+      with:
+        name: dist
+        path: dist/
+    - name: Publish to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
