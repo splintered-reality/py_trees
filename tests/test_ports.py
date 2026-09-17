@@ -13,6 +13,7 @@ import unittest
 import py_trees
 from py_trees.ports import (
     BehaviourWithPorts,
+    CONST_PREFIX,
     NoDataAvailable,
     PortInformation,
     get_ports_registry,
@@ -392,6 +393,23 @@ class TestPortDefaultValues(unittest.TestCase):
         prod.setup_ports()
         prod.get_last_output("items").append(3)
         self.assertEqual(DefaultingProducer.output_ports()["items"].default_value, [1, 2])
+
+    def test_const_conversion_error_includes_node_context(self) -> None:
+        """A failed const-value conversion should name the behaviour class and instance."""
+
+        class FloatPort(BehaviourWithPorts):
+            INPUT_PORTS = {"value": PortInformation(data_type=float, required=True)}
+            OUTPUT_PORTS = {}
+
+            def update(self) -> py_trees.common.Status:
+                return py_trees.common.Status.SUCCESS
+
+        node = FloatPort("float_port_node")
+        bad_key = f"{CONST_PREFIX}"  # Assert this raises an error
+        with self.assertRaises(ValueError) as ctx:
+            node.setup_ports(port_remappings={"value": bad_key})
+        self.assertIn("FloatPort", str(ctx.exception))
+        self.assertIn("float_port_node", str(ctx.exception))
 
 
 class _RegistryLeaf(BehaviourWithPorts, register=False):
