@@ -12,8 +12,8 @@ import unittest
 
 import py_trees
 from py_trees.ports import (
-    BehaviourWithPorts,
     CONST_PREFIX,
+    BehaviourWithPorts,
     NoDataAvailable,
     PortInformation,
     get_ports_registry,

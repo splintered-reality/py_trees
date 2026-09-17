@@ -1,7 +1,11 @@
-name: pre-merge
+name: ci
 
 on:
   pull_request:
+  push:
+    branches:
+      - devel
+      - "release/**"
   workflow_dispatch:
 
 jobs:
