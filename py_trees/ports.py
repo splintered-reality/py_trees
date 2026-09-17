@@ -480,9 +480,15 @@ class PortsMixin(_MixinBase):
                     try:
                         converted, updated_value = convert_str_to_type(value, port_type, logger=self._ports_logger)
                     except ValueError as e:
-                        raise ValueError(f"Cannot convert Value '{value}' to type {port_type}") from e
+                        raise ValueError(
+                            f"Cannot convert Value '{value}' to type {port_type} in behavior name '{self.name}'"
+                            f"(type '{self._behaviour_class_name}')"
+                        ) from e
                     if not converted:
-                        raise ValueError(f"Cannot convert Value '{value}' to type {port_type}")
+                        raise ValueError(
+                            f"Cannot convert Value '{value}' to type {port_type} in behavior name '{self.name}'"
+                            f"(type '{self._behaviour_class_name}')"
+                        )
                     self.log_debug(f"Port {port}: Converted const value '{value}' to type {port_type}.")
                     key = local_key  # Remap to the local key holding the constant value
                     self._blackboard_client.set(key, updated_value)
