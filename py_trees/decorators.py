@@ -274,7 +274,10 @@ class Retry(Decorator):
             self.feedback_message = f"running [status: {self.failures} failure from {self.num_failures}]"
             return common.Status.RUNNING
         elif self.decorated.status == common.Status.INVALID:
-            self.feedback_message = f"invalid child [status: {self.failures} failure from {self.num_failures}]"
+            self.feedback_message = (
+                f"child invalid, aborting without counting it as an attempt "
+                f"[status: {self.failures} failure from {self.num_failures}]"
+            )
             return common.Status.INVALID
         else:  # SUCCESS
             self.feedback_message = f"succeeded [status: {self.failures} failure from {self.num_failures}]"
