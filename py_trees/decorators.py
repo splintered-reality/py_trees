@@ -209,6 +209,7 @@ class Repeat(Decorator):
             :data:`~py_trees.common.Status.SUCCESS` on nth success,
             :data:`~py_trees.common.Status.RUNNING` on running, or pre-nth success
             :data:`~py_trees.common.Status.FAILURE` failure.
+            :data:`~py_trees.common.Status.INVALID` if the child is invalid.
         """
         if self.decorated.status == common.Status.FAILURE:
             self.feedback_message = f"failed, aborting [status: {self.success} success from {self.num_success}]"
@@ -220,6 +221,9 @@ class Repeat(Decorator):
                 return common.Status.SUCCESS
             else:
                 return common.Status.RUNNING
+        elif self.decorated.status == common.Status.INVALID:
+            self.feedback_message = f"invalid child [status: {self.success} success from {self.num_success}]"
+            return common.Status.INVALID
         else:  # RUNNING
             self.feedback_message = f"running [status: {self.success} success from {self.num_success}]"
             return common.Status.RUNNING
@@ -256,6 +260,7 @@ class Retry(Decorator):
             :data:`~py_trees.common.Status.SUCCESS` on success,
             :data:`~py_trees.common.Status.RUNNING` on running, or pre-nth failure
             :data:`~py_trees.common.Status.FAILURE` only on the nth failure.
+            :data:`~py_trees.common.Status.INVALID` if the child is invalid.
         """
         if self.decorated.status == common.Status.FAILURE:
             self.failures += 1
@@ -268,6 +273,12 @@ class Retry(Decorator):
         elif self.decorated.status == common.Status.RUNNING:
             self.feedback_message = f"running [status: {self.failures} failure from {self.num_failures}]"
             return common.Status.RUNNING
+        elif self.decorated.status == common.Status.INVALID:
+            self.feedback_message = (
+                f"child invalid, aborting without counting it as an attempt "
+                f"[status: {self.failures} failure from {self.num_failures}]"
+            )
+            return common.Status.INVALID
         else:  # SUCCESS
             self.feedback_message = f"succeeded [status: {self.failures} failure from {self.num_failures}]"
             return common.Status.SUCCESS

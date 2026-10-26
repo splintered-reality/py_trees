@@ -124,6 +124,36 @@ def test_repeat_interrupting_failure() -> None:
     assert child.status == py_trees.common.Status.FAILURE
 
 
+def test_repeat_invalid_child() -> None:
+    console.banner("Repeat - Invalid Child")
+    child = py_trees.behaviours.StatusQueue(
+        name="S-I",
+        queue=[
+            py_trees.common.Status.SUCCESS,
+            py_trees.common.Status.INVALID,
+        ],
+        eventually=None,
+    )
+    decorator = py_trees.decorators.Repeat(name="Repeat", num_success=2, child=child)
+    decorator.tick_once()
+    print("\n--------- Tick 1 ---------\n")
+    print("decorator.status == py_trees.common.Status.RUNNING")
+    assert decorator.status == py_trees.common.Status.RUNNING
+    print("decorator.success == 1")
+    assert decorator.success == 1
+    print("child.status == py_trees.common.Status.SUCCESS")
+    assert child.status == py_trees.common.Status.SUCCESS
+
+    decorator.tick_once()
+    print("\n--------- Tick 2 ---------\n")
+    print("decorator.status == py_trees.common.Status.INVALID")
+    assert decorator.status == py_trees.common.Status.INVALID
+    print("decorator.success == 1")
+    assert decorator.success == 1
+    print("child.status == py_trees.common.Status.INVALID")
+    assert child.status == py_trees.common.Status.INVALID
+
+
 def test_retry_until_success() -> None:
     console.banner("Retry - Until Success")
     child = py_trees.behaviours.StatusQueue(
@@ -202,6 +232,54 @@ def test_retry_eventual_failure() -> None:
     assert decorator.failures == 2
     print("child.status == py_trees.common.Status.FAILURE")
     assert child.status == py_trees.common.Status.FAILURE
+
+
+def test_retry_invalid_child() -> None:
+    console.banner("Retry - Invalid Child")
+    child = py_trees.behaviours.StatusQueue(
+        name="F-I",
+        queue=[
+            py_trees.common.Status.FAILURE,
+            py_trees.common.Status.INVALID,
+        ],
+        eventually=None,
+    )
+    decorator = py_trees.decorators.Retry(name="Retry", num_failures=3, child=child)
+    decorator.tick_once()
+    print("\n--------- Tick 1 ---------\n")
+    print("decorator.status == py_trees.common.Status.RUNNING")
+    assert decorator.status == py_trees.common.Status.RUNNING
+    print("decorator.failures == 1")
+    assert decorator.failures == 1
+    print("child.status == py_trees.common.Status.FAILURE")
+    assert child.status == py_trees.common.Status.FAILURE
+
+    decorator.tick_once()
+    print("\n--------- Tick 2 ---------\n")
+    print("decorator.status == py_trees.common.Status.INVALID")
+    assert decorator.status == py_trees.common.Status.INVALID
+    print("decorator.failures == 1")
+    assert decorator.failures == 1
+    print("child.status == py_trees.common.Status.INVALID")
+    assert child.status == py_trees.common.Status.INVALID
+
+
+def test_retry_immediately_invalid_child() -> None:
+    console.banner("Retry - Immediately Invalid Child")
+    child = py_trees.behaviours.StatusQueue(
+        name="I",
+        queue=[py_trees.common.Status.INVALID],
+        eventually=None,
+    )
+    decorator = py_trees.decorators.Retry(name="Retry", num_failures=2, child=child)
+    decorator.tick_once()
+    print("\n--------- Tick 1 ---------\n")
+    print("decorator.status == py_trees.common.Status.INVALID")
+    assert decorator.status == py_trees.common.Status.INVALID
+    print("decorator.failures == 0")
+    assert decorator.failures == 0
+    print("child.status == py_trees.common.Status.INVALID")
+    assert child.status == py_trees.common.Status.INVALID
 
 
 def test_failure_is_success_tree() -> None:
