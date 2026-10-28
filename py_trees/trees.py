@@ -86,7 +86,12 @@ def setup(
     current_behaviour_name: str | None = None
 
     def on_timer_timed_out() -> None:
-        os.kill(os.getpid(), _SIGNAL)
+        if os.name == "nt":
+            # os.kill with SIGINT terminates the Windows process without
+            # invoking the Python handler that raises the timeout exception.
+            signal.raise_signal(_SIGNAL)
+        else:
+            os.kill(os.getpid(), _SIGNAL)
 
     def signal_handler(
         unused_signum: int,
