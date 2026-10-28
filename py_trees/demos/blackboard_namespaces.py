@@ -15,10 +15,16 @@ A py_trees demo.
    :func: command_line_argument_parser
    :prog: py-trees-demo-blackboard-namespaces
 
-.. figure:: images/blackboard_namespaces.png
-   :align: center
+The demo registers keys in the root namespace and the ``/foo`` namespace.
+After assigning their values, the final blackboard output is::
 
-   Console Screenshot
+    Blackboard Data
+        /brilliant  : False
+        /dude       : Bob
+        /dudette    : Jade
+        /foo/awesome: True
+        /foo/bar/wow: foobar
+        /foo/clever : True
 """
 
 ##############################################################################
