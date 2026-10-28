@@ -124,7 +124,7 @@ def post_tick_handler(
     Print data about the part of the tree visited.
 
     Args:
-        snapshot_handler: gather data about the part of the tree visited
+        snapshot_visitor: gather data about the part of the tree visited
         behaviour_tree: tree to gather data from
     """
     print(

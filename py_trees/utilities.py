@@ -163,7 +163,7 @@ def get_valid_filename(s: str) -> str:
         'johns_portrait_in_2004.jpg'
 
     Args:
-        program (:obj:`str`): string to convert to a valid filename
+        s (:obj:`str`): string to convert to a valid filename
 
     Returns:
         :obj:`str`: a representation of the specified string as a valid filename

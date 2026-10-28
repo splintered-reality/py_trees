@@ -61,7 +61,7 @@ def pre_tick_visitor(behaviour_tree: trees.BehaviourTree) -> None:
     Tree tick banner.
 
     Args:
-        behavior_tree: unused
+        behaviour_tree: unused
     """
     print(f"\n--------- Run {behaviour_tree.count} ---------\n")
 

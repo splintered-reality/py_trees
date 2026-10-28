@@ -162,7 +162,7 @@ class StatusQueue(behaviour.Behaviour):
 
     Args:
         name: name of the behaviour
-        sequence: list of status values to cycle through
+        queue: list of status values to cycle through
         eventually: status to use eventually, None to re-cycle the sequence
     """
 
@@ -705,7 +705,7 @@ class CheckBlackboardVariableValues(behaviour.Behaviour):
 
     Args:
         checks: a list of comparison checks to apply to blackboard variables
-        logical_operator: a logical check to apply across the results of the blackboard variable checks
+        operator: a logical check to apply across the results of the blackboard variable checks
         name: name of the behaviour
         namespace: optionally store results of the checks (boolean) under this namespace
 

@@ -140,7 +140,6 @@ def either_or(
         conditions: list of triggers that ultimately select the subtree to enable
         subtrees: list of subtrees to tick from in the either_or operation
         name: the name to use for this idiom's root behaviour
-        preemptible: whether the subtrees may preempt (interrupt) each other
         namespace: this idiom's private variables will be put behind this namespace
 
     Raises:

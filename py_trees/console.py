@@ -317,7 +317,7 @@ def debug(msg: str) -> None:
     """Print a debug message.
 
     Args:
-       str: message to print
+       msg: message to print
     """
     print(green + msg + reset)
 
@@ -326,7 +326,7 @@ def warning(msg: str) -> None:
     """Print a warning message.
 
     Args:
-       str: message to print
+       msg: message to print
     """
     print(yellow + msg + reset)
 
@@ -335,7 +335,7 @@ def info(msg: str) -> None:
     """Print an info message.
 
     Args:
-       str: message to print
+       msg: message to print
     """
     print(msg)
 
@@ -344,7 +344,7 @@ def error(msg: str) -> None:
     """Print an error message.
 
     Args:
-       str: message to print
+       msg: message to print
     """
     print(red + msg + reset)
 
