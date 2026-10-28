@@ -65,7 +65,7 @@ def status_colour_code(status: common.Status) -> str:
     This is used for syntax highlighting in various modes.
 
     Args:
-        Status: behaviour status
+        status: behaviour status
 
     Returns:
         console colour code associated with the status
