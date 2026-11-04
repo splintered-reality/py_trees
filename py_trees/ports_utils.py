@@ -246,6 +246,8 @@ def is_instance_of_type(value: Any, expected_type: Any) -> bool:
     Raises:
         NotImplementedError: If type checking for the specific generic type is not implemented.
     """
+    if expected_type is Any:
+        return True
     origin = get_origin(expected_type)
     args = get_args(expected_type)
     # Handle union types first
