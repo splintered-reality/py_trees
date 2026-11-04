@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+Forthcoming
+-----------
+* [docs] Align the blackboard namespace demo output with its code (`#521 <https://github.com/splintered-reality/py_trees/pull/521>`_)
+
 2.6.0 (2026-09-10)
 ------------------
 * [ports] Do not raise error if a port value starts with a `/` (`#514 <https://github.com/splintered-reality/py_trees/issues/514>`_)
