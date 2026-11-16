@@ -682,6 +682,9 @@ def render_dot_tree(
     """
     Render the dot tree to dot, svg, png. files.
 
+    Files are written using UTF-8 encoding, so non-ASCII behaviour names are
+    preserved regardless of the platform locale.
+
     By default, these are saved in the current
     working directory and will be named with the root behaviour name.
 
@@ -732,7 +735,9 @@ def render_dot_tree(
         filename = filename_wo_extension + "." + extension
         pathname = os.path.join(target_directory, filename)
         print(f"Writing {pathname}")
-        graph.write(pathname, format=file_format)
+        # Always write UTF-8: the default is locale dependent (e.g. cp1254 on Windows)
+        # and fails on behaviour names that are not representable in that encoding (#437).
+        graph.write(pathname, format=file_format, encoding="utf-8")
         filenames[extension] = pathname
     return filenames
 

@@ -9,7 +9,11 @@
 ##############################################################################
 
 import functools
+import pathlib
 import xml.etree.ElementTree
+from unittest import mock
+
+import pydot
 
 import py_trees
 import py_trees.console as console
@@ -182,3 +186,37 @@ def test_ascii_snapshot_priority_interrupt() -> None:
     print("\n--------- Assertions ---------\n")
     print("Invalidated Lower Priority Symbol '-' is displayed")
     assert "-" in last_line
+
+
+def test_render_dot_tree_requests_utf8(tmp_path: pathlib.Path) -> None:
+    """
+    Every dot/svg/png write must explicitly request UTF-8.
+
+    The default encoding is locale dependent (e.g. cp1254 on Windows), which
+    raises UnicodeEncodeError for behaviour names outside that charset (#437).
+    """
+    console.banner("Render Dot Tree - UTF-8 Encoding")
+    # ASCII root keeps the printed pathname safe on non-UTF-8 consoles; the
+    # non-ASCII child name is what exercises the dot content (#437).
+    root = py_trees.composites.Sequence(name="Root", memory=True)
+    root.add_child(py_trees.behaviours.Success(name="动作一"))
+
+    with mock.patch.object(pydot.Dot, "write", autospec=True, return_value=True) as write:
+        display.render_dot_tree(root, target_directory=str(tmp_path))
+
+    assert {call.kwargs["format"] for call in write.call_args_list} == {"raw", "png", "svg"}
+    assert all(call.kwargs["encoding"] == "utf-8" for call in write.call_args_list)
+
+
+def test_render_dot_tree_unicode_names(tmp_path: pathlib.Path) -> None:
+    """Non-ASCII behaviour names round-trip through the rendered dot file."""
+    console.banner("Render Dot Tree - Unicode Names")
+    root = py_trees.composites.Sequence(name="Root", memory=True)
+    root.add_child(py_trees.behaviours.Success(name="动作一"))
+
+    # PNG/SVG generation shells out to graphviz; only the raw dot file is under test.
+    with mock.patch.object(pydot.Dot, "create", return_value=b""):
+        filenames = display.render_dot_tree(root, target_directory=str(tmp_path))
+
+    dot = pathlib.Path(filenames["dot"]).read_text(encoding="utf-8")
+    assert "动作一" in dot
